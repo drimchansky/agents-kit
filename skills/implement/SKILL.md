@@ -1,7 +1,6 @@
 ---
 name: implement
 description: Execute code changes with pre-analysis, pattern matching, and validation
-disable-model-invocation: true
 ---
 
 # Implement
