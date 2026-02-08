@@ -1,6 +1,6 @@
 ---
 name: explain
-description: Explain code, features, or architecture at any level of abstraction
+description: Explain, walk through, or describe how code, a feature, or the architecture works
 disable-model-invocation: true
 ---
 

@@ -24,83 +24,19 @@ Universal rules for AI coding agents. Applied to all projects.
 ### Working With Code
 
 - Read before writing — understand the existing code before modifying it
-- Verify changes work — run linters, type checks, or tests when available
 - Make changes that are easy to review — small, focused, well-described
 - Don't introduce new dependencies without justification
 - Don't remove or rename public APIs without checking all consumers
 
-## Code Style
+## Workflow
 
-### Naming Conventions
-
-- **Variables/Functions**: camelCase (`fetchUser`, `isValid`)
-- **Classes/Components/Types**: PascalCase (`UserProfile`, `SearchInput`)
-- **Constants**: SCREAMING_SNAKE_CASE (`MAX_RETRY_COUNT`, `API_BASE_URL`)
-- **Files**: Match the primary export
-- **Booleans**: Use `is`, `has`, `should`, `can` prefixes (`isLoading`, `hasError`)
-- **Event handlers**: `handle` prefix for handlers, `on` prefix for props
-
-### Functions
-
-- Single responsibility — do one thing well
-- Limit parameters to 3; use an options object for more
-- Prefer pure functions; isolate side effects
-- Use early returns to reduce nesting
-
-### Comments
-
-- Explain "why", not "what" — the code shows what, comments explain intent
-- Delete commented-out code; version control exists
-- Use JSDoc for public APIs and complex functions
-
-## TypeScript
-
-- Define precise types; avoid `any` — use `unknown` and narrow instead
-- Prefer type inference where types are obvious
-- Use union types and discriminated unions for known value sets
-- Use `readonly` for data that shouldn't be mutated
-- Avoid type assertions (`as`); prefer type guards
-
-## Error Handling
-
-- Never silently swallow errors — at minimum, log them
-- Provide user-friendly messages; keep technical details in logs
-- Use typed errors or error codes, not just message strings
-- Implement retry logic for transient failures (network, rate limits)
-- Design for partial failure — one broken feature shouldn't crash the app
-
-## Testing
-
-- Test behavior, not implementation details
-- Cover happy paths, edge cases, and error states
-- Each test should be independent — no shared mutable state
-- Use descriptive test names: `"displays error when submission fails"`
-- Mock external dependencies for determinism
-- Keep tests fast; slow tests don't get run
-
-## Security
-
-- Sanitize and validate all user input on both client and server
-- Never store secrets in client-side storage or commit them to version control
-- Validate permissions on the server — client checks are UX, not security
-- Keep dependencies updated; audit for known vulnerabilities
-- Never log passwords, tokens, or PII
-
-## Accessibility
-
-- Use semantic HTML — correct elements over generic divs with ARIA
-- All interactive elements must be keyboard accessible with visible focus indicators
-- Maintain sufficient color contrast (WCAG 2.1 AA)
-- Manage focus for dynamic content (modals, route transitions)
-- Respect `prefers-reduced-motion` for animations
-
-## Git
-
-- Don't commit anything yourself
+- Verify changes work — run linters, type checks, or tests when available
+- Prefer editing existing files over creating new ones
+- Only create files when there is no reasonable existing file to extend
+- Don't commit, stage changes or anything using Git yourself unless explicitly asked
 
 ## Dependencies
 
 - Evaluate before adding: is it maintained? What's the bundle cost? Could you write it in <50 lines?
 - Pin versions; use lockfiles
-- Prefer packages with good TypeScript support
-- One library per concern — don't install two state management solutions
+- One library per concern — don't install two solutions for the same thing

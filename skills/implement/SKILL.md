@@ -1,6 +1,7 @@
 ---
 name: implement
-description: Execute code changes with pre-analysis, pattern matching, and validation
+description: Build, implement, create, or add a feature — write code following project patterns with analysis and validation
+disable-model-invocation: true
 ---
 
 # Implement

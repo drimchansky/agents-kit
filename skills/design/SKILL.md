@@ -1,6 +1,7 @@
 ---
 name: design
-description: Analyze a task and create a structured implementation plan before coding
+description: Plan, design, or architect a feature — break down a task into steps, compare approaches, and define scope before coding
+disable-model-invocation: true
 ---
 
 # Design

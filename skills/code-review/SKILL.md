@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: Review code for correctness, impact, and adherence to project patterns
+description: Review code, PR, diff, or changes — check for bugs, impact, and adherence to project patterns
 disable-model-invocation: true
 ---
 
