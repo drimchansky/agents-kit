@@ -1,5 +1,5 @@
 ---
-name: code-style
+name: _code-style
 description: Naming conventions, function design, and comment guidelines for code style consistency. Apply when writing or reviewing code.
 ---
 
