@@ -7,13 +7,7 @@ Shared rules and skills for Cursor and Claude Code AI coding agents.
 ```
 agents-kit/
 ├── AGENTS.md       # Rules (single source of truth)
-├── skills/         # Skills (single source of truth)
-│   ├── code-review/SKILL.md
-│   ├── explain/SKILL.md
-│   ├── fix/SKILL.md
-│   ├── implement/SKILL.md
-│   ├── plan/SKILL.md
-│   └── refactor/SKILL.md
+├── skills          # Skills (single source of truth)
 ├── setup.sh        # Creates symlinks at ~/
 ├── README.md
 └── .gitignore
