@@ -1,7 +1,6 @@
 ---
-description: Naming conventions, function design, and comment guidelines for code style consistency
-globs: "*.{js,jsx,ts,tsx,mjs,cjs}"
-alwaysApply: false
+name: code-style
+description: Naming conventions, function design, and comment guidelines for code style consistency. Apply when writing or reviewing code.
 ---
 
 # Code Style

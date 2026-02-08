@@ -35,6 +35,10 @@ Universal rules for AI coding agents. Applied to all projects.
 - Only create files when there is no reasonable existing file to extend
 - Don't commit, stage changes or anything using Git yourself unless explicitly asked
 
+## Skills
+
+Skills prefixed with `_` are auto-applied — read their description at the start of every task when working with matching files. Check the skill's description to determine if it applies.
+
 ## Dependencies
 
 - Evaluate before adding: is it maintained? What's the bundle cost? Could you write it in <50 lines?
