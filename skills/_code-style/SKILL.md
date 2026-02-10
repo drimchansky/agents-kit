@@ -1,18 +1,9 @@
 ---
 name: _code-style
-description: Naming conventions, function design, and comment guidelines for code style consistency. Apply when writing or reviewing code.
+description: Function design and comment guidelines for code style consistency. Apply when writing or reviewing code.
 ---
 
 # Code Style
-
-## Naming Conventions
-
-- **Variables/Functions**: camelCase (`fetchUser`, `isValid`)
-- **Classes/Components/Types**: PascalCase (`UserProfile`, `SearchInput`)
-- **Constants**: SCREAMING_SNAKE_CASE (`MAX_RETRY_COUNT`, `API_BASE_URL`)
-- **Files**: Match the primary export
-- **Booleans**: Use `is`, `has`, `should`, `can` prefixes (`isLoading`, `hasError`)
-- **Event handlers**: `handle` prefix for handlers, `on` prefix for props
 
 ## Functions
 
@@ -25,4 +16,3 @@ description: Naming conventions, function design, and comment guidelines for cod
 
 - Explain "why", not "what" — the code shows what, comments explain intent
 - Delete commented-out code; version control exists
-- Use JSDoc for public APIs and complex functions

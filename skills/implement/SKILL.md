@@ -5,14 +5,16 @@ disable-model-invocation: true
 ---
 
 # Implement
- 
+
 Execute the requested changes by following the project's established patterns and conventions. Before writing code, understand the current system and make deliberate decisions. If context is missing or the request is ambiguous, ask for clarification rather than guessing.
+
+If a design plan was created earlier in this conversation, use it as your starting point — don't re-analyze from scratch.
 
 ## 1. Analyze Before Coding
 
 ### Understand the Request
 
-- Identify what the user *actually* wants, not just what they literally asked for
+- Identify what the user _actually_ wants, not just what they literally asked for
 - Clarify ambiguity upfront — a wrong implementation costs more than a question
 - Check if this already partially exists in the codebase before building from scratch
 

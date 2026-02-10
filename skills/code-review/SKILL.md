@@ -12,12 +12,12 @@ Review code for correctness, unintended impact, and adherence to project pattern
 
 Ask the user which type of review they want:
 
-| Type | Scope | Diff Source |
-|---|---|---|
-| **Pre-PR** | Current branch vs. base branch | `git diff <base>...HEAD` |
-| **Pre-commit** | Staged changes only | `git diff --cached` |
-| **Module** | All code in a specific module or directory | Full file reads, no diff |
-| **Project** | Overall project structure and patterns | Full codebase exploration |
+| Type           | Scope                                      | Diff Source               |
+| -------------- | ------------------------------------------ | ------------------------- |
+| **Pre-PR**     | Current branch vs. base branch             | `git diff <base>...HEAD`  |
+| **Pre-commit** | Staged changes only                        | `git diff --cached`       |
+| **Module**     | All code in a specific module or directory | Full file reads, no diff  |
+| **Project**    | Overall project structure and patterns     | Full codebase exploration |
 
 If the user doesn't specify, ask before proceeding — the review process differs significantly by type.
 
@@ -43,7 +43,7 @@ Review all changes in the current branch against the destination branch.
 
 ### Review Focus
 
-Apply the full review process: [What to Look For](#what-to-look-for), [What NOT to Flag](#what-not-to-flag), [Severity Calibration](#calibrate-severity).
+Apply the full review process: the "What to Look For", "What NOT to Flag", and "Calibrate Severity" sections below.
 
 ### Output
 
@@ -80,7 +80,7 @@ Skip deep impact analysis — that's for Pre-PR. Don't flag architectural concer
 
 **Commit message** — Generate a commit message for the staged changes:
 
-- First line: imperative mood, max 72 chars, describe *what* and *why* (not *how*)
+- First line: imperative mood, max 72 chars, describe _what_ and _why_ (not _how_)
 - Body (if needed): additional context for non-obvious changes, separated by blank line
 - Follow the project's existing commit message conventions (check `git log --oneline -10` for style)
 
@@ -201,14 +201,14 @@ Severity reflects **user and production impact**, not code aesthetics:
 
 Not all changes deserve equal attention:
 
-| Priority | What | Why |
-|---|---|---|
-| **High** | New logic, state changes, data flow | Where bugs live |
-| **High** | Changes to shared code (components, utils, types) | Widest blast radius |
-| **High** | Security-relevant code (auth, input handling, API) | Highest stakes |
-| **Medium** | New files and new abstractions | Design decisions that compound |
-| **Medium** | Test changes | Verify they test real behavior |
-| **Low** | Renames, formatting, import reordering | Unlikely to introduce bugs |
-| **Low** | Config and boilerplate changes | Skim for obvious errors |
+| Priority   | What                                               | Why                            |
+| ---------- | -------------------------------------------------- | ------------------------------ |
+| **High**   | New logic, state changes, data flow                | Where bugs live                |
+| **High**   | Changes to shared code (components, utils, types)  | Widest blast radius            |
+| **High**   | Security-relevant code (auth, input handling, API) | Highest stakes                 |
+| **Medium** | New files and new abstractions                     | Design decisions that compound |
+| **Medium** | Test changes                                       | Verify they test real behavior |
+| **Low**    | Renames, formatting, import reordering             | Unlikely to introduce bugs     |
+| **Low**    | Config and boilerplate changes                     | Skim for obvious errors        |
 
 For large diffs (20+ files): review types and interfaces first to understand the contract, then group remaining files by feature/concern rather than reviewing file-by-file.

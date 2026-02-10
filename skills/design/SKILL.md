@@ -15,9 +15,9 @@ If requirements are unclear, ask clarifying questions before planning.
 This skill is for structured, thorough analysis. It complements — not replaces — the built-in Plan modes in Cursor and Claude Code:
 
 - **Built-in Plan mode** — Lightweight, conversational. Use for quick directional discussions and iterating on ideas collaboratively.
-- **This skill (`@design`)** — Structured and methodical. Use when the task needs formal analysis with scope, steps, risks, and open questions documented.
+- **This skill (design)** — Structured and methodical. Use when the task needs formal analysis with scope, steps, risks, and open questions documented.
 
-Typical flow for complex tasks: **Plan mode** (quick discussion to align on direction) → **`@design`** (structured analysis) → **`@implement`** (execution based on the design).
+Typical flow for complex tasks: **Plan mode** (quick discussion to align on direction) → **design skill** (structured analysis) → **implement skill** (execution based on the design).
 
 For simpler tasks, skip straight to whichever step matches the complexity.
 

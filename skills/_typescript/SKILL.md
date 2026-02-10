@@ -1,9 +1,19 @@
 ---
 name: _typescript
-description: TypeScript type safety, precise types, utility types, and idiomatic patterns. Apply when writing or reviewing TypeScript code.
+description: TypeScript type safety, naming conventions, and idiomatic patterns. Apply when writing or reviewing TypeScript code.
 ---
 
 # TypeScript
+
+## Naming Conventions
+
+- **Variables/Functions**: camelCase (`fetchUser`, `isValid`)
+- **Classes/Components/Types**: PascalCase (`UserProfile`, `SearchInput`)
+- **Constants**: SCREAMING_SNAKE_CASE (`MAX_RETRY_COUNT`, `API_BASE_URL`)
+- **Files**: Match the primary export
+- **Booleans**: Use `is`, `has`, `should`, `can` prefixes (`isLoading`, `hasError`)
+- **Event handlers**: `handle` prefix for handlers, `on` prefix for props
+- Use JSDoc for public APIs and complex functions
 
 ## Types
 
