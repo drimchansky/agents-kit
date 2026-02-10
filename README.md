@@ -1,6 +1,6 @@
 # Agents Kit
 
-Shared rules and skills for Cursor and Claude Code AI coding agents.
+My shared skills for Cursor and Claude Code AI coding agents.
 
 ## Structure
 
