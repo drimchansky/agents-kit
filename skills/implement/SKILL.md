@@ -8,7 +8,10 @@ disable-model-invocation: true
 
 Execute the requested changes by following the project's established patterns and conventions. Before writing code, understand the current system and make deliberate decisions. If context is missing or the request is ambiguous, ask for clarification rather than guessing.
 
-If a design plan was created earlier in this conversation, use it as your starting point — don't re-analyze from scratch.
+If a design plan was created earlier in this conversation, **treat it as the source of truth** – follow its structure, sequence, and decisions. Don't re-analyze from scratch or deviate without reason. When something unexpected comes up during implementation (new constraints, missing APIs, incompatible patterns), assess the impact:
+
+- **Small or insignificant** (naming, minor ordering, trivial adjustments) — decide yourself and note what you changed
+- **Significant** (changes scope, alters architecture, affects other components, contradicts the plan) — stop and ask before proceeding
 
 ## 1. Analyze Before Coding
 
