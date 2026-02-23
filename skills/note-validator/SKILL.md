@@ -33,6 +33,6 @@ Your goal is to provide a list of improvements, suggestions, and information upd
 
 For each finding, produce a bullet with:
 
-- **[Category]** Summary of the issue → Suggested fix or action
+- Summary of the issue → Suggested fix or action
 
 Group bullets by category in the order listed above. Omit categories with no findings. End with a one-line overall assessment.

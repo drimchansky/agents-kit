@@ -74,6 +74,8 @@ Before completing:
 - [ ] Related code is updated (types, imports, tests, documentation)
 - [ ] No unintended side effects on shared code
 - [ ] Solution is as simple as possible for the requirements
+- [ ] **Run type checking** (`tsc --noEmit` or the project's equivalent) — zero errors before presenting results
+- [ ] **Run linting** (`lint` or the project's equivalent) — zero warnings/errors before presenting results
 
 ## Output Structure
 

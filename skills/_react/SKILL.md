@@ -13,6 +13,7 @@ description: React component patterns, hooks rules, performance, and state manag
 - Use named exports for components; match filename to component name
 - Derive state from props/other state instead of syncing with effects
 - Lift state only as high as needed — not higher
+- Don't extract components or helper abstractions for a single use site — inline until a second or third consumer proves the abstraction
 
 ## Hooks
 

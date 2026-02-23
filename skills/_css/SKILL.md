@@ -21,6 +21,16 @@ description: CSS patterns, layout, responsive design, and styling conventions. A
 - Use `clamp()` for fluid typography and spacing that scales between a min and max
 - Ensure content is usable without horizontal scrolling at 320px viewport width
 
+## Tailwind
+
+- Avoid arbitrary values (`max-h-[500px]`, `w-[calc(...)]`) — prefer design tokens, className props, or CSS custom properties
+- Use Tailwind's built-in scale values; if no scale value fits, consider whether a custom token belongs in the config
+- Don't mix Tailwind utilities with manual CSS for the same property — pick one approach per concern
+
+## CSS-Only Techniques
+
+- When implementing visual effects prefer pure CSS solutions over JS-driven approaches
+
 ## Conventions
 
 - Avoid magic numbers — use design tokens or variables for spacing, colors, and typography
