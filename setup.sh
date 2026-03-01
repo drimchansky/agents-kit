@@ -11,15 +11,28 @@ link() {
   echo "  $target -> $source"
 }
 
-mkdir -p ~/.cursor ~/.claude
+skills_dir=~/.claude/skills
 
-for dir in ~/.cursor/skills ~/.claude/skills; do
-  [ -d "$dir" ] && [ ! -L "$dir" ] && rm -rf "$dir"
-done
+# If skills dir is a symlink (e.g. from a previous setup), remove it
+# so we can create a real directory with individual skill symlinks
+[ -L "$skills_dir" ] && rm "$skills_dir"
+
+mkdir -p ~/.claude "$skills_dir"
 
 echo "Setting up symlinks:"
-link "$REPO_DIR/AGENTS.md" ~/AGENTS.md             # Cursor reads via directory walking
-link "$REPO_DIR/AGENTS.md" ~/.claude/CLAUDE.md     # Claude Code core rules
-link "$REPO_DIR/skills" ~/.claude/skills           # Claude Code skills
-link "$REPO_DIR/skills" ~/.cursor/skills           # Cursor skills
+link "$REPO_DIR/CLAUDE.md" ~/.claude/CLAUDE.md
+
+for skill in "$REPO_DIR"/skills/*/; do
+  name="$(basename "$skill")"
+  target="$skills_dir/$name"
+
+  if [ -d "$target" ] && [ ! -L "$target" ]; then
+    read -rp "  $name already exists in $skills_dir. Overwrite? [y/N] " answer
+    [[ "$answer" =~ ^[Yy]$ ]] || continue
+    rm -rf "$target"
+  fi
+
+  link "$skill" "$target"
+done
+
 echo "Done."

@@ -9,7 +9,7 @@ The user provides a task or feature request. They may include context about cons
 
 ## Workflow Context
 
-This skill complements — not replaces — the built-in Plan modes in Cursor and Claude Code:
+This skill complements — not replaces — the built-in Plan mode in Claude Code:
 
 - **Built-in Plan mode** — Lightweight, conversational. Quick directional discussions.
 - **This skill** — Structured and methodical. Formal analysis with scope, steps, risks, and open questions documented.

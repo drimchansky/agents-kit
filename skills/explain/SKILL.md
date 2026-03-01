@@ -1,7 +1,6 @@
 ---
 name: explain
 description: Explain how something works — code, libraries, APIs, protocols, concepts, or architecture. Use when the user asks to explain, walk through, describe, or teach any software engineering topic (examples include codebase internals, library APIs, domain concepts, protocols, design patterns, or how technologies work).
-disable-model-invocation: true
 ---
 
 This skill guides clear, structured explanations of any software engineering topic — from a single function to an entire architectural pattern, from codebase internals to external libraries and domain concepts.

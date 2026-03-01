@@ -1,13 +1,13 @@
 # Agents Kit
 
-My shared skills for Cursor and Claude Code AI coding agents.
+My skills for Claude Code.
 
 ## Structure
 
 ```
 agents-kit/
-├── AGENTS.md              # Core rules (agent behavior, workflow)
-├── skills/                # Shared skills for both tools
+├── CLAUDE.md              # Core rules (behavior overrides)
+├── skills/                # Shared skills
 ├── setup.sh               # Creates symlinks
 └── README.md
 ```
@@ -15,22 +15,20 @@ agents-kit/
 After running `setup.sh`, symlinks are created:
 
 ```
-~/AGENTS.md          -> <repo>/AGENTS.md          # Cursor reads via directory walking
-~/.claude/CLAUDE.md  -> <repo>/AGENTS.md          # Claude Code core rules
-~/.claude/skills     -> <repo>/skills             # Claude Code skills
-~/.cursor/skills     -> <repo>/skills             # Cursor skills
+~/.claude/CLAUDE.md              -> <repo>/CLAUDE.md
+~/.claude/skills/_typescript/    -> <repo>/skills/_typescript/
+~/.claude/skills/code-review/    -> <repo>/skills/code-review/
+...                              # one symlink per skill
 ```
 
 ## How It Works
 
 The kit has two parts:
 
-- **`AGENTS.md`** — Core agent behavior rules (decision making, communication, workflow). Loaded into every conversation.
-- **`skills/`** — Shared skills directory. Both `~/.cursor/skills` and `~/.claude/skills` point here. Each skill is a `SKILL.md` file with optional supporting files. Skills prefixed with `_` are auto-applied by convention (see `AGENTS.md`).
+- **`CLAUDE.md`** — Behavioral overrides that aren't part of Claude's defaults (scope matching, git constraints, dependency rules). Loaded into every conversation.
+- **`skills/`** — Each skill is symlinked individually into `~/.claude/skills/`. This lets you keep your own skills alongside the ones from this repo. Skills prefixed with `_` are auto-applied by convention (see `CLAUDE.md`).
 
-Edit once, both tools see the change.
-
-**Note:** `setup.sh` uses `ln -sfn`, which will overwrite existing symlinks or files at the target paths. If you have custom skills in `~/.cursor/skills` or `~/.claude/skills`, back them up first or move them into this repo.
+**Note:** If a skill with the same name already exists in `~/.claude/skills/`, `setup.sh` will ask before overwriting.
 
 ## Installation
 
