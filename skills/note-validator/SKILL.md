@@ -1,3 +1,8 @@
+---
+name: note-validator
+description: Analyze notes for quality, accuracy, and completeness. Use when asked to validate, review, check, or improve a personal knowledge base note.
+---
+
 # Note Validator
 
 Analyze the provided note for quality, completeness, and relevance.
@@ -34,5 +39,9 @@ Your goal is to provide a list of improvements, suggestions, and information upd
 For each finding, produce a bullet with:
 
 - Summary of the issue → Suggested fix or action
+
+Example:
+
+- "React 17 is the latest version" → Update to reflect React 19; note key changes (compiler, server components)
 
 Group bullets by category in the order listed above. Omit categories with no findings. End with a one-line overall assessment.

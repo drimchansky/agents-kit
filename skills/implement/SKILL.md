@@ -1,16 +1,17 @@
 ---
 name: implement
-description: Build, implement, create, or add a feature — write code following project patterns with analysis and validation
-disable-model-invocation: true
+description: Build, implement, create, or add a feature — write production-quality code following project patterns with analysis and validation. Use when the user asks to build, implement, create, code, or develop functionality (examples include adding features, building components, writing API endpoints, creating utilities, or implementing a design plan).
 ---
 
-# Implement
+This skill guides implementation of software features. It produces production-quality code — working, validated, and ready to ship — that follows the project's established patterns and conventions. Every decision is deliberate, every change is verified.
 
-Execute the requested changes by following the project's established patterns and conventions. Before writing code, understand the current system and make deliberate decisions. If context is missing or the request is ambiguous, ask for clarification rather than guessing.
+The user provides a feature request, task description, or design plan. They may include context about constraints, patterns to follow, or prior discussion.
 
-If a design plan was created earlier in this conversation, **treat it as the source of truth** – follow its structure, sequence, and decisions. Don't re-analyze from scratch or deviate without reason. When something unexpected comes up during implementation (new constraints, missing APIs, incompatible patterns), assess the impact:
+**CRITICAL**: If a design plan was created earlier in this conversation, treat it as the source of truth — follow its structure, sequence, and decisions. Don't re-analyze from scratch or deviate without reason.
 
-- **Small or insignificant** (naming, minor ordering, trivial adjustments) — decide yourself and note what you changed
+When something unexpected comes up during implementation (new constraints, missing APIs, incompatible patterns), assess the impact:
+
+- **Small** (naming, minor ordering, trivial adjustments) — decide yourself and note what you changed
 - **Significant** (changes scope, alters architecture, affects other components, contradicts the plan) — stop and ask before proceeding
 
 ## 1. Analyze Before Coding
@@ -29,12 +30,14 @@ If a design plan was created earlier in this conversation, **treat it as the sou
 
 ### Find Existing Patterns
 
-Search the codebase for similar implementations to use as models:
+**CRITICAL**: Always search the codebase for similar implementations before writing new code. Match what already exists.
 
 - Grep for similar component names, hook patterns, or API calls
 - Check how adjacent features handle the same concerns (data fetching, error handling, state)
 - Read the tests for similar features to understand expected behavior patterns
 - If no pattern exists, note it — you'll need to make a deliberate choice
+
+**NEVER** invent a new pattern when an existing one covers the same concern. Consistency across a codebase matters more than local perfection.
 
 ## 2. Make Decisions Explicitly
 
@@ -58,8 +61,6 @@ Sequence changes to minimize risk:
 
 ## 4. Know When to Stop
 
-Resist scope creep during implementation:
-
 - **Don't refactor while implementing** — If you spot something worth improving, note it separately
 - **Don't optimize prematurely** — Make it work correctly first
 - **Don't over-abstract** — If there's only one use case, don't build a framework
@@ -67,15 +68,23 @@ Resist scope creep during implementation:
 
 ## 5. Validate
 
-Before completing:
+**IMPORTANT**: Every implementation must pass these checks before presenting results.
 
 - [ ] Changes match the intent of the request, not just the letter
 - [ ] All touched code follows established repository patterns
 - [ ] Related code is updated (types, imports, tests, documentation)
 - [ ] No unintended side effects on shared code
 - [ ] Solution is as simple as possible for the requirements
-- [ ] **Run type checking** (`tsc --noEmit` or the project's equivalent) — zero errors before presenting results
-- [ ] **Run linting** (`lint` or the project's equivalent) — zero warnings/errors before presenting results
+- [ ] **Run type checking** (`tsc --noEmit` or the project's equivalent) — zero errors
+- [ ] **Run linting** (`lint` or the project's equivalent) — zero warnings/errors
+
+## Common Mistakes
+
+- **Coding before reading** — Writing new code without searching for existing patterns. Always explore first.
+- **Silent decisions** — Picking an approach without stating why. Every non-obvious choice should be noted.
+- **Scope creep** — Fixing "one more thing" while implementing. Note it and stay focused.
+- **Premature abstraction** — Building a framework for one use case. Three similar lines of code is better than a premature helper.
+- **Skipping validation** — Presenting code that doesn't type-check or lint. Always run the checks.
 
 ## Output Structure
 
