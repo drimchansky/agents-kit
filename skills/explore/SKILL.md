@@ -1,6 +1,6 @@
 ---
-name: explain
-description: Explain how something works — code, libraries, APIs, protocols, concepts, or architecture. Use when the user asks to explain, walk through, describe, or teach any software engineering topic (examples include codebase internals, library APIs, domain concepts, protocols, design patterns, or how technologies work).
+name: explore
+description: Explore how something works — code, libraries, APIs, protocols, concepts, or architecture. Use when the user asks to explore, explain, walk through, describe, or teach any software engineering topic (examples include codebase internals, library APIs, domain concepts, protocols, design patterns, or how technologies work).
 ---
 
 This skill guides clear, structured explanations of any software engineering topic — from a single function to an entire architectural pattern, from codebase internals to external libraries and domain concepts.
@@ -13,13 +13,13 @@ The user asks about something they want to understand. This can be code in the c
 
 Match the explanation level to the question:
 
-| Signal                                                     | Level            | Focus                                                                     |
-| ---------------------------------------------------------- | ---------------- | ------------------------------------------------------------------------- |
-| Points to a specific function, component, or module        | **Code**         | What it does, how it works, inputs/outputs, side effects                  |
-| Asks about a user flow, business feature, or behavior      | **Feature**      | Business purpose, user journey, data flow, key components                 |
-| Asks about structure, patterns, or how things fit together | **Architecture** | High-level overview, core concepts, organization, integrations            |
-| Asks about a library, API, protocol, or external tool      | **External**     | What it is, core API surface, mental model, how it fits into the project  |
-| Asks about a domain concept or engineering principle       | **Concept**      | Definition, why it matters, practical implications, common misconceptions |
+| Signal | Level | Focus |
+| --- | --- | --- |
+| Points to a specific function, component, or module | **Code** | What it does, how it works, inputs/outputs, side effects |
+| Asks about a user flow, business feature, or behavior | **Feature** | Business purpose, user journey, data flow, key components |
+| Asks about structure, patterns, or how things fit together | **Architecture** | High-level overview, core concepts, organization, integrations |
+| Asks about a library, API, protocol, or external tool | **External** | What it is, core API surface, mental model, how it fits into the project |
+| Asks about a domain concept or engineering principle | **Concept** | Definition, why it matters, practical implications, common misconceptions |
 
 When the question spans levels, start at the highest relevant level and drill down. When unclear, ask.
 
