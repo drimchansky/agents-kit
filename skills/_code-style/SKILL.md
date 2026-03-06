@@ -15,4 +15,5 @@ description: Function design and comment guidelines for code style consistency. 
 ## Comments
 
 - Explain "why", not "what" — the code shows what, comments explain intent
+- If something isn't instantly clear when you read it, leave a short "why" comment
 - Delete commented-out code; version control exists

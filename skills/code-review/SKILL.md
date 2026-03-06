@@ -181,6 +181,55 @@ The highest-value part of a review. For every change to shared code:
 - Are race conditions possible (concurrent state updates, unsynchronized async)?
 - Are edge cases handled (empty arrays, zero values, undefined, long strings)?
 
+### Framework Alignment
+
+Is the code working _with_ the library or _around_ it?
+
+- **Unnecessary wrappers** — Custom hooks that wrap a library (e.g., data fetching, form, auth providers) and return a subset of the original API add indirection without value. Prefer returning the library's native result and letting consumers use what they need.
+- **Reimplemented features** — Manual `useState` + `useEffect` for async status tracking when the library already provides loading/error/data states. Manual state machines when the library offers mutation/action primitives for the same flow.
+- **State syncing instead of deriving** — `useEffect` that copies state from one store/context to another. If two pieces of state must stay in sync, one should be derived from the other, not synced via effects.
+- **Fighting the provider** — Custom contexts that duplicate or mirror state already managed by an external provider library. Use the provider's hooks directly when possible.
+
+### Abstraction Justification
+
+Does the new abstraction earn its existence?
+
+- **Premature extraction** — A small component or utility (under ~20 lines) rarely needs its own module or package. Inline until a second or third consumer proves the abstraction.
+- **Wrapper types** — Custom type aliases that re-wrap a library's types without adding information. They obscure the original API and create maintenance burden.
+- **One-use helpers** — Functions extracted for "reusability" but called from exactly one place. They fragment logic without reducing complexity.
+
+### Interface Design
+
+Is the component or module's API composable and minimal?
+
+- **Composition over configuration** — Prefer `children`, render props, or slot patterns (`asChild`) over configuration props (`buttonProps`, `mode` flags). Boolean/mode props often signal a component doing too many things.
+- **Prop surface area** — Can the interface be smaller? Each prop is a contract that must be maintained.
+- **Generality** — For shared utilities: is the parameter signature general enough for reuse without being over-engineered?
+
+### State Persistence
+
+Is UI state stored in the right place?
+
+- **URL search params** — For state that should be shareable, bookmarkable, or deep-linkable (selected items, filters, active tabs, detail views).
+- **Ephemeral state** — For transient UI concerns (modals, hover, animation state). No persistence needed.
+- **localStorage** — Only for user preferences that genuinely should survive sessions and don't need to be shareable.
+- **Avoid multi-store sync** — The same conceptual state should live in one place. Syncing between stores (e.g., localStorage → context → URL) via effects creates bugs.
+
+### Design Spec Alignment
+
+If the change is UI-facing:
+
+- **Check design artifacts** — Verify against design specs (Figma, mockups, design comments). Flag discrepancies between implementation and design intent.
+- **Confirm display decisions** — Data that appears in the UI (metrics, labels, visibility of fields) should match what design/product decided, not assumptions from available data.
+
+### Cross-Project Consistency
+
+If sibling or related projects exist in the same organization:
+
+- **Naming divergence** — Different names for equivalent concepts across projects (e.g., `displayToMicro` vs `parseUnits`). Align naming when the concept is the same.
+- **Reinvented utilities** — Existing shared utilities in a common library that could be reused instead of reimplemented.
+- **Pattern drift** — Established conventions in older projects that should carry forward to new ones unless deliberately changed.
+
 ## What NOT to Flag
 
 - **Style preferences** that don't violate project conventions — if it's valid and consistent, leave it

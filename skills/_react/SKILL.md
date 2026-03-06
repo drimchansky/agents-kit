@@ -5,6 +5,8 @@ description: React component patterns, hooks rules, performance, and state manag
 
 # React
 
+Before applying these patterns, check the project's installed React version and verify API availability against the official docs online — APIs change between major versions.
+
 ## Components
 
 - Prefer composition over prop drilling — use children, render props, or context to pass behavior

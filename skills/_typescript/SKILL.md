@@ -24,6 +24,7 @@ description: TypeScript type safety, naming conventions, and idiomatic patterns.
 - Avoid type assertions (`as`); prefer type guards
 - Use `as const` for literal values that shouldn't widen
 - Prefer `interface` for object shapes that may be extended; use `type` for unions, intersections, and mapped types
+- Create specific type aliases for domain identifiers (e.g., `type ChainId = string`) instead of passing raw `string` everywhere — this makes function signatures self-documenting
 
 ## Discriminated Unions
 
