@@ -157,13 +157,27 @@ High-level review of overall project structure, patterns, and health. No diff �
 
 ## What to Look For
 
-Applies to all review types. Focus on what general rules don't cover:
+Applies to all review types. First, apply relevant auto-applied skills based on the file types touched — `_typescript` for TypeScript, `_react` for React components and hooks, `_tanstack-query` for query/mutation hooks, `_css` for styles, `_testing` for test files, etc. Treat their rules as additional review criteria alongside the sections below.
+
+Focus on what general rules don't cover:
+
+### Problem Verification
+
+Before reading the diff in detail:
+
+1. Understand the problem before evaluating the solution
+2. State the problem in one sentence: what behavior was wrong or missing?
+3. After reading the diff, verify: does it address the root cause, or just the symptom?
+4. For bug fixes specifically: is there now a test that would have caught this regression _before_ the fix existed? If not, the bug can silently reappear.
+5. For bug-class fixes: search for the same pattern elsewhere in the codebase — a fix in one place often applies to siblings
 
 ### Completeness
 
 - Is the feature/fix fully implemented, or are there gaps in the intent?
 - Are all related files updated — types, tests, error handling, documentation?
 - Are there partially implemented paths (TODO comments, placeholder logic, empty catch blocks)?
+- Are there related code sites with the same problem that weren't touched?
+- Does a new public function or hook have tests?
 
 ### Impact on Existing Code
 
@@ -205,6 +219,15 @@ Is the component or module's API composable and minimal?
 - **Composition over configuration** — Prefer `children`, render props, or slot patterns (`asChild`) over configuration props (`buttonProps`, `mode` flags). Boolean/mode props often signal a component doing too many things.
 - **Prop surface area** — Can the interface be smaller? Each prop is a contract that must be maintained.
 - **Generality** — For shared utilities: is the parameter signature general enough for reuse without being over-engineered?
+
+### Assumptions Audit
+
+For non-trivial decisions, ask: **what does this assume that could change?**
+
+- Assumes a specific API response shape, field presence, or ordering
+- Assumes a component is rendered exactly once, or in a specific context
+- Assumes a domain constant (decimals, timeout, threshold) is stable — if it's not, it should be a config value, not an inline literal
+- If an assumption is load-bearing, it should be enforced by types or validated at runtime — not silently depended on
 
 ### State Persistence
 

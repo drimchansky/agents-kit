@@ -26,6 +26,12 @@ Before applying these patterns, check the project's installed React version and 
 - Prefer `useReducer` over `useState` when state transitions depend on previous state or involve multiple related values
 - Avoid `useEffect` for things that can be computed during render — effects are for synchronization with external systems
 
+## Context and Providers
+
+- Keep navigation/redirect logic inside context providers or router utilities, not inside components or leaf components that happen to trigger it
+- Compute default values and infer implicit state (e.g., the initial form value from URL params) inside the provider that owns that state — components should receive ready-to-use values, not compute them
+- If a component is doing work that requires knowing about broader application context (routing, active chain, current user), that work belongs in a hook or provider, not inline in the component
+
 ## Performance
 
 - Don't optimize prematurely — measure first with React DevTools Profiler

@@ -36,6 +36,8 @@ Before applying these patterns, check the project's installed TanStack Query ver
 - Use `useMutation` for form submissions and other async write operations instead of manual `useState` for status/error/loading tracking
 - Use `onSuccess` to invalidate related queries, update the cache optimistically, or trigger navigation
 - Prefer `mutateAsync` when you need to await the result in a handler; use `mutate` with callbacks for fire-and-forget patterns
+- Don't mix read (polling) and write (mutation) concerns in the same hook — if a mutation needs to track an async process after it completes, use a separate `useQuery` with `refetchInterval` to observe that state
+- Access the currently-mutating item via `mutation.variables` instead of mirroring it with a separate `useState` — `variables` is always in sync with the in-flight mutation and clears automatically when the mutation settles
 
 ## Common Mistakes
 
@@ -43,3 +45,4 @@ Before applying these patterns, check the project's installed TanStack Query ver
 - **Duplicate queries** — Two hooks that call the same endpoint with different `queryKey` strings. Use `queryOptions` to share the config and `select` to differentiate.
 - **Missing key parameters** — `queryKey: ['user']` when the query fetches by ID. Should be `queryKey: ['user', userId]`.
 - **Invalidation mismatches** — Invalidating `['users']` but the query key is `['user', 'list']`. Centralize keys to prevent this.
+- **Mirrored mutating-item state** — `const [pendingId, setPendingId] = useState()` set in `onMutate` and cleared in `onSettled`. Read `mutation.variables` directly; it holds the in-flight call arguments with no manual sync required.
