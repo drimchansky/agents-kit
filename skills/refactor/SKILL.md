@@ -1,9 +1,9 @@
 ---
 name: refactor
-description: Plan and execute a refactor — assess code against production-readiness, define scope, and improve incrementally. Use when asked to refactor, clean up, improve, harden, or make code production-ready.
+description: Plan a refactor — assess code against production-readiness, define scope, and design incremental improvements. Use when asked to refactor, clean up, improve, harden, or make code production-ready.
 ---
 
-This skill guides planning and execution of code improvements toward production quality. Beyond restructuring, this includes fixing error handling gaps, tightening types, handling edge cases, and eliminating tech debt. The output is a refactoring plan — and optionally the execution — that makes code robust, clear, and ready to ship.
+This skill guides planning of code improvements toward production quality. Beyond restructuring, this includes fixing error handling gaps, tightening types, handling edge cases, and eliminating tech debt. The output is a refactoring plan — not code changes.
 
 The user identifies code to improve. They may specify what bothers them (duplication, fragile error handling, loose types, complexity) or ask for a general improvement.
 
@@ -14,9 +14,9 @@ This skill complements — not replaces — the built-in Plan mode in Claude Cod
 - **Built-in Plan mode** — Lightweight, conversational. Quick alignment on what to refactor and why.
 - **This skill** — Structured assessment. Gap analysis, sequenced steps, scope boundaries, and risk flags documented.
 
-Typical flow: **Plan mode** (align on goals) → **refactor skill** (structured analysis and execution) → **code-review skill** (verify the result).
+Typical flow: **Plan mode** (align on goals) → **refactor skill** (structured analysis) → **implement skill** (execution).
 
-For small, obvious cleanups, skip straight to execution.
+For simpler tasks, skip straight to whichever step matches the complexity.
 
 ## When to Plan (and When Not To)
 
@@ -35,7 +35,7 @@ For small, obvious cleanups, skip straight to execution.
 - The user has already specified the exact changes
 - The cleanup is smaller than the plan would be
 
-If the task doesn't warrant a full plan, say so and proceed directly.
+If the task doesn't warrant a full plan, say so and suggest proceeding directly with implementation.
 
 ## What Production-Ready Means
 
@@ -102,31 +102,13 @@ For each real risk:
 - How likely it is given what you found in exploration
 - How to mitigate before it becomes a problem
 
-## Execution
-
-When executing (either after plan approval or for small refactors that skip planning):
-
-- Change one concern at a time — don't combine a type fix with a logic change
-- Run type checking after each step, not just at the end
-- If a step breaks something unexpected, stop and understand why before continuing
-- Keep the public API stable unless the user explicitly asked to change it
-
-### Validate
-
-- [ ] All identified gaps are addressed or explicitly flagged as out of scope
-- [ ] Error paths are handled — no silent failures
-- [ ] Types are precise — no `any`, no unnecessary `as` assertions
-- [ ] Public API is preserved (or changes were explicitly requested and all callers updated)
-- [ ] Type checking and linting pass with zero errors
-- [ ] Code is simpler and more robust, not just different
-
 ## Common Mistakes
 
 - **Refactoring without understanding** — Moving code around without knowing what it does. Read first.
 - **Premature abstraction** — Extracting a helper for two instances. Wait for three.
-- **Big-bang refactors** — Rewriting an entire module in one step. If you can't verify incrementally, the steps are too large.
+- **Big-bang refactors** — Planning to rewrite an entire module in one step. If you can't verify incrementally, the steps are too large.
 - **Refactoring untested code without flagging it** — If there are no tests, say so. The user should know the risk.
-- **Gold-plating** — Adding defensive code for scenarios that can't happen. Be robust where data is uncertain, not everywhere.
+- **Gold-plating** — Planning defensive code for scenarios that can't happen. Be robust where data is uncertain, not everywhere.
 
 ## Output Structure
 
@@ -136,5 +118,4 @@ Adapt to task size — not every refactor needs every section:
 - **Scope** — In scope / out of scope
 - **Steps** — Ordered transformation steps with risk flags
 - **Risks** — Specific risks with mitigation strategies
-- **Changes** (after execution) — What was changed and why
-- **Verification** — How correctness was confirmed
+- **Open Questions** — Assumptions that need validation before or during implementation

@@ -55,7 +55,7 @@ Apply the full review process: the "What to Look For", "What NOT to Flag", and "
 
 ## Pre-commit Review
 
-Review staged changes before committing. Lighter touch than Pre-PR — focus on catching mistakes early.
+Review staged changes before committing.
 
 ### Setup
 
@@ -72,11 +72,11 @@ Prioritize:
 - **Accidental inclusions** — Debug logs, commented-out code, unrelated formatting changes, sensitive data
 - **Consistency** — Do changes follow existing patterns in the touched files?
 
-Skip deep impact analysis — that's for Pre-PR. Don't flag architectural concerns for staged changes.
+Apply the full review process: the "What to Look For", "What NOT to Flag", and "Calibrate Severity" sections below.
 
 ### Output
 
-**Review findings** (if any) — Same format as Pre-PR but expect fewer and lighter findings.
+**Review findings** (if any) — Same format as Pre-PR.
 
 **Commit message** — Generate a commit message for the staged changes:
 

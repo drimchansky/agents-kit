@@ -30,6 +30,18 @@ The kit has two parts:
 
 **Note:** If a skill with the same name already exists in `~/.claude/skills/`, `setup.sh` will ask before overwriting.
 
+## Workflow
+
+The skills follow a natural development workflow:
+
+1. **Understand** — `/explore` — Explore how something works — code, libraries, APIs, concepts, or architecture
+2. **Plan** — `/design` or `/refactor` — Break down a task into steps, compare approaches, and define scope before coding
+3. **Build** — `/implement` — Write production-quality code following project patterns
+4. **Review** — `/code-review` — Check for bugs, impact, and adherence to project patterns
+5. **Verify** — `/verify` — Verify a reported issue is real, identify root cause, and assess severity
+
+You don't need to use every step — pick whichever skills fit the task at hand.
+
 ## Installation
 
 ```bash
