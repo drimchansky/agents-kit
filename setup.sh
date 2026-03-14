@@ -32,6 +32,11 @@ for skill in "$REPO_DIR"/skills/*/; do
     rm -rf "$target"
   fi
 
+  if [ -L "$target" ] && [ "$(readlink "$target")" != "$skill" ]; then
+    read -rp "  $name symlink exists (-> $(readlink "$target")). Overwrite? [y/N] " answer
+    [[ "$answer" =~ ^[Yy]$ ]] || continue
+  fi
+
   link "$skill" "$target"
 done
 

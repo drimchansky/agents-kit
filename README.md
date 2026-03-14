@@ -33,8 +33,16 @@ The kit has two parts:
 ## Installation
 
 ```bash
-git clone <repo-url> ~/agents-kit
+git clone git@github.com:drimchansky/agents-kit.git
 ~/agents-kit/setup.sh
 ```
 
 The repo can be cloned anywhere — `setup.sh` resolves its own location automatically.
+
+To update later:
+
+```bash
+cd ~/agents-kit && git pull
+```
+
+No need to re-run `setup.sh` — symlinks point to the repo, so pulling updates the skills in place.
