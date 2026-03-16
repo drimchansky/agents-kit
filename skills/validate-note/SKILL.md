@@ -1,61 +1,123 @@
 ---
 name: validate-note
-description: Analyze notes for quality, accuracy, and completeness. Use when asked to validate, review, check, or improve a personal knowledge base note.
+description: Analyze notes for quality, accuracy, and completeness. Use when asked to validate, review, check, update, expand, or improve a personal knowledge base note.
 ---
 
 # Note Validator
 
-Validate all notes provided by the user. Analyze each note for quality, completeness, and relevance — and suggest important missing parts that would make the note more valuable.
+Validate all notes provided by the user. When multiple notes are provided, produce a separate findings block per note, each with its own overall assessment.
 
 These are personal knowledge base notes — optimize for the author's future reference, not for publication. Focus on issues that would mislead or fail future-you; skip nitpicks.
 
-Your goal is to provide a list of improvements, suggestions, and information updates. For every note, also identify important topics or sections that are absent but would significantly improve the note's usefulness.
-
 ## Analysis Criteria
 
-1. **Factual Accuracy**:
-    - Are there statements that are incorrect regardless of when they were written (misunderstandings, wrong numbers, flawed reasoning)?
-    - Flag claims that contradict well-established knowledge.
+Work through every step for each note, in order.
 
-2. **Information Actualization**:
-    - Flag claims that are time-sensitive or likely to have changed (versions, best practices, APIs, ecosystem standings).
-    - Use web search to verify when uncertain — do not guess or hallucinate corrections.
-    - If you cannot verify, say so explicitly rather than assuming the note is outdated.
+### 1. Infer Note Purpose
 
-3. **Completeness & Depth**:
-    - What key perspectives or details are missing?
-    - Are there unanswered questions or logical gaps?
-    - What important sections, concepts, or context would a reader expect to find but is absent?
+Before analyzing, identify what kind of note this is — cheatsheet, deep-dive study note, decision record, quick reference, troubleshooting guide, etc. State the inferred purpose in one sentence, then calibrate the analysis accordingly. A cheatsheet doesn't need the depth of a study note; a decision record should capture rationale, not tutorials.
 
-4. **Missing Parts** (always run this step):
-    - Suggest concrete additions that would make the note more complete.
-    - Include missing prerequisites, related concepts, caveats, examples, or references.
+### 2. Factual Accuracy
 
-5. **Suggestions for Improvement**:
-    - How can the note be made more useful or actionable?
-    - Are there related topics or resources that should be linked or mentioned?
+- Are there statements incorrect regardless of when written (misunderstandings, wrong numbers, flawed reasoning)?
+- Flag claims that contradict well-established knowledge.
 
-6. **Clarity & Structure** (Secondary):
-    - Is the note easy to understand?
-    - Are the main points distinct?
+### 3. Information Actualization
+
+- Flag claims that are time-sensitive or likely to have changed (versions, best practices, APIs, ecosystem standings).
+- Use web search to verify when uncertain — do not guess or hallucinate corrections.
+- If you cannot verify, say so explicitly rather than assuming the note is outdated.
+- When citing a correction from web search, include the source URL or note it as unverified.
+
+### 4. Completeness & Missing Parts
+
+Always run this step — every note has room to grow.
+
+- What internal gaps exist? (unanswered questions, logical jumps, unstated assumptions)
+- What additive content is absent but expected for this note type? (prerequisites, caveats, examples, edge cases, references)
+- What sections would a reader expect to find but are missing?
+
+### 5. Maintenance Health
+
+Long-term maintainability — will this note age well?
+
+- **Staleness signals** — Version numbers, dates, or ecosystem claims that will age badly. Suggest annotating them (e.g., "as of v5", "verify before using").
+- **Scope creep** — Is the note trying to cover too much? Flag if it should be split into multiple focused notes.
+- **Linkability** — Are there obvious related concepts or notes that should be cross-referenced?
+- **Update triggers** — What events (new version release, API change, ecosystem shift) should prompt a revisit?
+
+### 6. Learning Curve
+
+Turn the note into an active learning tool.
+
+- **Prerequisites** — What should the reader already know? Flag if unstated and non-obvious.
+- **Key takeaways** — Are the 2–3 most important insights clearly surfaced, or buried in detail?
+- **Practice hook** — Suggest one hands-on exercise or real-world scenario where this knowledge applies.
+- **Quiz prompts** — Suggest 1–2 self-test questions suitable for spaced repetition.
+
+### 7. Suggestions for Improvement
+
+- How can the note be made more useful or actionable?
+- Are there related resources worth linking?
+
+### 8. Clarity & Structure (Secondary)
+
+- Is the note easy to scan and understand?
+- Are the main points distinct and well-separated?
+
+---
 
 ## Formatting Rules
 
 - Use **lists** for all structured content — never tables.
 - Nested lists are allowed for sub-points.
 
+---
+
 ## Output Format
 
-For each finding, produce a bullet with:
+Start each note's findings with:
+
+> **Note:** [inferred purpose in one sentence]
+
+Then for each finding, produce a bullet:
 
 - Summary of the issue → Suggested fix or action
 
-Example:
-
-- "React 17 is the latest version" → Update to reflect React 19; note key changes (compiler, server components)
-
-Group bullets by category in the order listed above. Omit categories with no findings.
-
-Always include a **Missing Parts** section, even if the note is otherwise accurate — every note has room to grow.
+Group bullets by category in the order above. Omit categories with no findings — except **Completeness & Missing Parts** and **Learning Curve**, which always appear.
 
 End with a one-line overall assessment.
+
+---
+
+## Example
+
+**Input note:** "React useEffect runs after every render by default. Pass an empty array [] to run only on mount."
+
+---
+
+**Note:** Quick reference cheatsheet for React's useEffect hook.
+
+**Information Actualization**
+
+- React 19 introduced the compiler which may eliminate many useEffect patterns → Note that useEffect usage is evolving; link to React 19 compiler docs (unverified — verify at react.dev)
+
+**Completeness & Missing Parts**
+
+- No mention of cleanup function → Add: return a cleanup function to avoid memory leaks (e.g., clearing timers, cancelling subscriptions)
+- Missing: dependency array gotchas (stale closures, object identity) → Add a brief warning with example
+
+**Maintenance Health**
+
+- No version context → Annotate with "as of React 18"; update trigger: React 19 compiler GA
+
+**Learning Curve**
+
+- Key takeaway buried → Surface: "Omitting the dependency array = runs every render (usually a bug)"
+- Quiz prompts → "What happens if you omit the dependency array?" / "When do you need a cleanup function?"
+
+**Clarity & Structure**
+
+- Two distinct concepts (default behavior + mount-only) could be two separate bullets for scannability
+
+_Overall: Accurate but minimal — adding cleanup, dependency gotchas, and a version note would make this significantly more reliable as a reference._
