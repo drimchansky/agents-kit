@@ -1,6 +1,6 @@
 ---
 name: explore
-description: Explore how something works — code, libraries, APIs, protocols, concepts, or architecture. Use when the user asks to explore, explain, walk through, describe, or teach any software engineering topic (examples include codebase internals, library APIs, domain concepts, protocols, design patterns, or how technologies work).
+description: Explore how something works — code, libraries, APIs, protocols, concepts, or architecture. Use when the user asks to explore, explain, walk through, describe, teach, or analyze before planning any software engineering topic (examples include codebase internals, library APIs, domain concepts, protocols, design patterns, how technologies work, or what exists before planning a change).
 ---
 
 This skill guides clear, structured explanations of any software engineering topic — from a single function to an entire architectural pattern, from codebase internals to external libraries and domain concepts.
@@ -20,6 +20,7 @@ Match the explanation level to the question:
 | Asks about structure, patterns, or how things fit together | **Architecture** | High-level overview, core concepts, organization, integrations |
 | Asks about a library, API, protocol, or external tool | **External** | What it is, core API surface, mental model, how it fits into the project |
 | Asks about a domain concept or engineering principle | **Concept** | Definition, why it matters, practical implications, common misconceptions |
+| Asks what exists before planning a change or choosing an approach | **Pre-plan** | Constraints, blast radius, known alternatives, open questions |
 
 When the question spans levels, start at the highest relevant level and drill down. When unclear, ask.
 
@@ -35,6 +36,8 @@ Use specific strategies to build understanding before explaining:
 4. **Read tests** — Tests reveal intended behavior, edge cases, and usage patterns
 5. **Check comments, docs, and commit history** — Look for "why" context that isn't in the code itself
 6. **Identify the boundaries** — Know where your explanation stops; don't explain the entire codebase when asked about one module
+7. **Map constraints** — Identify load-bearing elements: public API consumers, shared types, test contracts, things that can't change without broad impact
+8. **Assess blast radius** — What code depends on the area being explored? Use Grep to trace usages.
 
 ### For external topics (libraries, APIs, concepts)
 
@@ -58,6 +61,16 @@ Open with _why_ this exists or _why_ it matters, not _what_ it is. "This module 
 - Highlight **non-obvious behavior** — gotchas, implicit assumptions, surprising side effects, common misconceptions
 - Use analogies when they genuinely clarify; skip them when they oversimplify
 
+### When Exploring for Planning
+
+If the user will use this output to make a decision (design, refactor, or implement), go beyond description:
+
+- **Surface constraints** — State explicitly what can't change and why (public API, downstream consumers, architectural invariants)
+- **Identify change points** — Where does the code naturally extend or branch? What's isolated vs. entangled?
+- **Discover alternatives** — Name 2–3 known approaches to achieving the goal (patterns in the codebase, common solutions, library capabilities). Don't fabricate — only surface options you can point to.
+- **Compare alternatives** — For each option, note: complexity to implement, coupling to existing code, reversibility. One sentence per axis is enough.
+- **Recommend** — Given the codebase, which fits best and why? Flag if you're uncertain.
+
 ## Common Pitfalls
 
 - **Explaining "how" when they asked "why"** — Restating the code in English isn't an explanation. Focus on intent and design rationale.
@@ -77,6 +90,8 @@ Before delivering the explanation:
 - [ ] Non-obvious behavior and gotchas are called out
 - [ ] Uncertainty is flagged where context is missing
 - [ ] Version-sensitive information has been verified via web search
+- [ ] If used before planning: constraints and load-bearing elements are identified
+- [ ] If alternatives exist and the user needs to choose: at least 2 are surfaced with trade-off notes
 
 ## Output Structure
 
@@ -85,5 +100,6 @@ Adapt to the level — don't force a rigid template. Include what's relevant:
 - **Purpose** — Why this exists or matters (always lead with this)
 - **How It Works** — Logic flow for code; user journey for features; organization for architecture; core API for libraries
 - **Key Details** — Parameters, return values, side effects, edge cases, error handling
-- **Connections** — Related code, dependencies, integration points, alternatives
+- **Constraints** — *(for pre-plan use)* What's load-bearing, what can't change, downstream consumers and coupling
+- **Connections** — Related code, dependencies, integration points; alternatives with trade-offs when planning (complexity, coupling, reversibility) and a recommendation if confident
 - **Entry Points** — Where to start reading for deeper exploration; links to docs for external topics
