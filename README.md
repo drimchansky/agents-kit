@@ -8,17 +8,17 @@ My skills for Claude Code.
 agents-kit/
 ├── CLAUDE.md              # Core rules (behavior overrides)
 ├── skills/                # Shared skills
-├── setup.sh               # Creates symlinks
+├── setup.sh               # Copies files to ~/.claude
 └── README.md
 ```
 
-After running `setup.sh`, symlinks are created:
+After running `setup.sh`, files are copied to `~/.claude/`:
 
 ```
-~/.claude/CLAUDE.md              -> <repo>/CLAUDE.md
-~/.claude/skills/_typescript/    -> <repo>/skills/_typescript/
-~/.claude/skills/code-review/    -> <repo>/skills/code-review/
-...                              # one symlink per skill
+~/.claude/CLAUDE.md
+~/.claude/skills/_typescript/
+~/.claude/skills/code-review/
+...                              # one directory per skill
 ```
 
 ## How It Works
@@ -26,9 +26,9 @@ After running `setup.sh`, symlinks are created:
 The kit has two parts:
 
 - **`CLAUDE.md`** — Behavioral overrides that aren't part of Claude's defaults (scope matching, git constraints, dependency rules). Loaded into every conversation.
-- **`skills/`** — Each skill is symlinked individually into `~/.claude/skills/`. This lets you keep your own skills alongside the ones from this repo. Skills prefixed with `_` are auto-applied by convention (see `CLAUDE.md`).
+- **`skills/`** — Each skill is copied individually into `~/.claude/skills/`. This lets you keep your own skills alongside the ones from this repo. Skills prefixed with `_` are auto-applied by convention (see `CLAUDE.md`).
 
-**Note:** If a skill with the same name already exists in `~/.claude/skills/`, `setup.sh` will ask before overwriting.
+**Note:** If you have your own skill with the same name as one in this repo, `setup.sh` will ask before overwriting it.
 
 ## Workflow
 
@@ -55,6 +55,5 @@ To update later:
 
 ```bash
 cd ~/agents-kit && git pull
+./setup.sh
 ```
-
-No need to re-run `setup.sh` — symlinks point to the repo, so pulling updates the skills in place.
