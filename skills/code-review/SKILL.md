@@ -39,7 +39,6 @@ Review all changes in the current branch against the destination branch.
 **Gather context:**
 
 - Read commit messages and PR description if available
-- Understand the original intent and scope
 
 ### Review Focus
 
@@ -157,27 +156,9 @@ High-level review of overall project structure, patterns, and health. No diff �
 
 ## What to Look For
 
-Applies to all review types. First, apply relevant auto-applied skills based on the file types touched — `_typescript` for TypeScript, `_react` for React components and hooks, `_tanstack-query` for query/mutation hooks, `_css` for styles, `_testing` for test files, etc. Treat their rules as additional review criteria alongside the sections below.
+Applies to all review types. First, apply relevant auto-applied skills based on the file types touched — `_typescript`, `_react`, `_tanstack-query`, `_css`, `_testing`, etc. Treat their rules as additional review criteria.
 
-Focus on what general rules don't cover:
-
-### Problem Verification
-
-Before reading the diff in detail:
-
-1. Understand the problem before evaluating the solution
-2. State the problem in one sentence: what behavior was wrong or missing?
-3. After reading the diff, verify: does it address the root cause, or just the symptom?
-4. For bug fixes specifically: is there now a test that would have caught this regression _before_ the fix existed? If not, the bug can silently reappear.
-5. For bug-class fixes: search for the same pattern elsewhere in the codebase — a fix in one place often applies to siblings
-
-### Completeness
-
-- Is the feature/fix fully implemented, or are there gaps in the intent?
-- Are all related files updated — types, tests, error handling, documentation?
-- Are there partially implemented paths (TODO comments, placeholder logic, empty catch blocks)?
-- Are there related code sites with the same problem that weren't touched?
-- Does a new public function or hook have tests?
+Focus on what general knowledge and auto-applied skills don't cover:
 
 ### Impact on Existing Code
 
@@ -188,37 +169,22 @@ The highest-value part of a review. For every change to shared code:
 - **Trace data flow changes** — If data shape changes, follow it through the pipeline to the UI
 - **Verify API contracts** — Breaking changes to interfaces or public APIs must be caught
 
-### Correctness
+### Problem Verification
 
-- Does the logic actually do what the commit message claims?
-- Are there off-by-one errors, missing null checks, unhandled async failures?
-- Are race conditions possible (concurrent state updates, unsynchronized async)?
-- Are edge cases handled (empty arrays, zero values, undefined, long strings)?
-
-### Framework Alignment
-
-Is the code working _with_ the library or _around_ it?
-
-- **Unnecessary wrappers** — Custom hooks that wrap a library (e.g., data fetching, form, auth providers) and return a subset of the original API add indirection without value. Prefer returning the library's native result and letting consumers use what they need.
-- **Reimplemented features** — Manual `useState` + `useEffect` for async status tracking when the library already provides loading/error/data states. Manual state machines when the library offers mutation/action primitives for the same flow.
-- **State syncing instead of deriving** — `useEffect` that copies state from one store/context to another. If two pieces of state must stay in sync, one should be derived from the other, not synced via effects.
-- **Fighting the provider** — Custom contexts that duplicate or mirror state already managed by an external provider library. Use the provider's hooks directly when possible.
+- Understand the problem before evaluating the solution — does the fix address the root cause, or just the symptom?
+- For bug fixes: is there now a test that would have caught this regression?
+- Search for the same pattern elsewhere in the codebase — a fix in one place often applies to siblings
 
 ### Abstraction Justification
 
-Does the new abstraction earn its existence?
-
-- **Premature extraction** — A small component or utility (under ~20 lines) rarely needs its own module or package. Inline until a second or third consumer proves the abstraction.
-- **Wrapper types** — Custom type aliases that re-wrap a library's types without adding information. They obscure the original API and create maintenance burden.
-- **One-use helpers** — Functions extracted for "reusability" but called from exactly one place. They fragment logic without reducing complexity.
+- **Premature extraction** — Under ~20 lines rarely needs its own module. Inline until a second or third consumer proves the abstraction.
+- **Wrapper types** — Custom type aliases that re-wrap a library's types without adding information obscure the original API.
+- **One-use helpers** — Functions extracted for "reusability" but called from exactly one place fragment logic without reducing complexity.
 
 ### Interface Design
 
-Is the component or module's API composable and minimal?
-
-- **Composition over configuration** — Prefer `children`, render props, or slot patterns (`asChild`) over configuration props (`buttonProps`, `mode` flags). Boolean/mode props often signal a component doing too many things.
-- **Prop surface area** — Can the interface be smaller? Each prop is a contract that must be maintained.
-- **Generality** — For shared utilities: is the parameter signature general enough for reuse without being over-engineered?
+- Prefer `children`, render props, or slot patterns over configuration props (`buttonProps`, `mode` flags). Boolean/mode props often signal a component doing too many things.
+- Can the interface be smaller? Each prop is a contract that must be maintained.
 
 ### Assumptions Audit
 
@@ -226,32 +192,27 @@ For non-trivial decisions, ask: **what does this assume that could change?**
 
 - Assumes a specific API response shape, field presence, or ordering
 - Assumes a component is rendered exactly once, or in a specific context
-- Assumes a domain constant (decimals, timeout, threshold) is stable — if it's not, it should be a config value, not an inline literal
-- If an assumption is load-bearing, it should be enforced by types or validated at runtime — not silently depended on
+- Assumes a domain constant is stable — if it's not, it should be a config value, not an inline literal
+- If an assumption is load-bearing, it should be enforced by types or validated at runtime
 
 ### State Persistence
 
-Is UI state stored in the right place?
-
-- **URL search params** — For state that should be shareable, bookmarkable, or deep-linkable (selected items, filters, active tabs, detail views).
-- **Ephemeral state** — For transient UI concerns (modals, hover, animation state). No persistence needed.
-- **localStorage** — Only for user preferences that genuinely should survive sessions and don't need to be shareable.
-- **Avoid multi-store sync** — The same conceptual state should live in one place. Syncing between stores (e.g., localStorage → context → URL) via effects creates bugs.
+- **URL search params** — For state that should be shareable, bookmarkable, or deep-linkable
+- **Ephemeral state** — For transient UI concerns (modals, hover, animation). No persistence needed.
+- **localStorage** — Only for user preferences that should survive sessions and don't need to be shareable.
+- **Avoid multi-store sync** — The same conceptual state should live in one place.
 
 ### Design Spec Alignment
 
-If the change is UI-facing:
-
-- **Check design artifacts** — Verify against design specs (Figma, mockups, design comments). Flag discrepancies between implementation and design intent.
-- **Confirm display decisions** — Data that appears in the UI (metrics, labels, visibility of fields) should match what design/product decided, not assumptions from available data.
+If the change is UI-facing, verify against design specs (Figma, mockups). Flag discrepancies between implementation and design intent.
 
 ### Cross-Project Consistency
 
-If sibling or related projects exist in the same organization:
+If sibling or related projects exist:
 
-- **Naming divergence** — Different names for equivalent concepts across projects (e.g., `displayToMicro` vs `parseUnits`). Align naming when the concept is the same.
-- **Reinvented utilities** — Existing shared utilities in a common library that could be reused instead of reimplemented.
-- **Pattern drift** — Established conventions in older projects that should carry forward to new ones unless deliberately changed.
+- **Naming divergence** — Different names for equivalent concepts across projects. Align when the concept is the same.
+- **Reinvented utilities** — Existing shared utilities that could be reused instead of reimplemented.
+- **Pattern drift** — Established conventions in older projects that should carry forward.
 
 ## What NOT to Flag
 

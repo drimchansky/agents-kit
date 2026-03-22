@@ -19,7 +19,6 @@ Before applying these patterns, check the project's installed React version and 
 
 ## Hooks
 
-- Follow the Rules of Hooks: only call at the top level, only call from React functions
 - Extract custom hooks when logic is reused or when a component's hook logic gets complex
 - Keep dependency arrays accurate — never suppress the exhaustive-deps lint
 - Use `useRef` for values that shouldn't trigger re-renders (timers, DOM refs, previous values)
@@ -38,11 +37,9 @@ Before applying these patterns, check the project's installed React version and 
 - Use `memo` only when a component re-renders often with the same props and rendering is expensive
 - Use `useMemo`/`useCallback` only when passing values to memoized children or when computation is genuinely expensive
 - Move static objects and arrays outside the component to avoid re-creating them on every render
-- Use `key` to reset component state intentionally; use stable, unique keys for lists (not array index)
 
 ## Patterns
 
-- Handle loading, error, and empty states explicitly — don't assume the happy path
 - Use error boundaries to catch and handle render errors gracefully
 - Prefer controlled components for forms; use uncontrolled with `useRef` only when integrating with non-React code
 - Use `children` as the default composition mechanism before reaching for render props or compound components

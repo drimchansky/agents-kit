@@ -5,25 +5,16 @@ description: Accessible markup, ARIA patterns, keyboard navigation, and inclusiv
 
 # Accessibility
 
-## Semantic HTML
+## Markup
 
-- Use the correct HTML element before reaching for ARIA — `<button>`, `<a>`, `<nav>`, `<main>`, `<dialog>`, `<form>`
 - Use heading levels (`h1`–`h6`) in logical order to create a navigable document outline
-- Use `<ul>`/`<ol>` for lists, `<table>` for tabular data — screen readers convey structure automatically
-- Don't use `<div>` or `<span>` with click handlers when a `<button>` or `<a>` is appropriate
-
-## ARIA
-
-- First rule of ARIA: don't use ARIA if a native HTML element provides the semantics
-- Every interactive custom widget needs a role, accessible name, and keyboard support
+- Prefer native HTML elements over ARIA — every interactive custom widget needs a role, accessible name, and keyboard support
 - Use `aria-label` or `aria-labelledby` to name elements that lack visible text
 - Use `aria-live` regions for dynamic content updates that should be announced (toast notifications, status messages)
 - Never use `aria-hidden="true"` on focusable elements
 
 ## Keyboard
 
-- All interactive elements must be reachable and operable via keyboard
-- Use native interactive elements (`<button>`, `<a>`, `<input>`) to get keyboard support for free
 - Custom widgets must handle `Enter`, `Space`, `Escape`, and arrow keys as appropriate for their role
 - Tab order should follow the visual reading order — avoid positive `tabindex` values
 - Trap focus inside modal dialogs; restore focus to the trigger on close

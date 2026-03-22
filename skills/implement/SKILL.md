@@ -18,7 +18,6 @@ When something unexpected comes up during implementation (new constraints, missi
 
 ### Understand the Request
 
-- Identify what the user _actually_ wants, not just what they literally asked for
 - Clarify ambiguity upfront — a wrong implementation costs more than a question
 - Check if this already partially exists in the codebase before building from scratch
 

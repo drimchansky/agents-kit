@@ -41,19 +41,15 @@ If the task doesn't warrant a full plan, say so and suggest proceeding directly 
 
 ### 1. Clarify Requirements
 
-- Restate the task in your own words to confirm understanding
-- Separate explicit requirements from implicit assumptions
-- List ambiguities or missing information — ask before proceeding if critical
+- Restate the task to confirm understanding; separate explicit requirements from assumptions
+- List ambiguities — ask before proceeding if critical
 - Identify what "done" looks like for this task
 
 ### 2. Explore the Codebase
 
 **CRITICAL**: Always ground the plan in what already exists. Read before designing.
 
-- Search for related implementations and patterns to use as models
-- Map affected files, components, and modules
-- Identify shared code in the blast radius
-- Understand data flow and state management in the affected area
+- Search for related implementations to use as models; map affected files and shared code in the blast radius
 - Note existing constraints (tech debt, API contracts, performance budgets)
 
 ### 3. Evaluate Approaches

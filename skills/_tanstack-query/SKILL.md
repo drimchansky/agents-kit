@@ -22,7 +22,6 @@ Before applying these patterns, check the project's installed TanStack Query ver
 
 ## Query Keys
 
-- Keys must include all parameters that affect the query result — missing a parameter causes stale data across different inputs
 - Use a `queryKeys` factory or helper to centralize key construction and avoid typos or drift between query and invalidation sites
 - When invalidating, match the key structure exactly — partial key matches with `queryClient.invalidateQueries` affect all queries that start with that prefix
 

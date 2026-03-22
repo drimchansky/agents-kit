@@ -7,11 +7,9 @@ description: CSS patterns, layout, responsive design, and styling conventions. A
 
 ## Layout
 
-- Use Flexbox for one-dimensional layout (row or column); use Grid for two-dimensional layout
 - Prefer `gap` over margins between flex/grid children
 - Avoid fixed widths on containers — use `max-width` with fluid defaults
 - Use logical properties (`margin-inline`, `padding-block`) for internationalization-friendly spacing
-- Don't use `float` for layout — it's for wrapping text around images
 
 ## Responsive Design
 
@@ -44,5 +42,4 @@ description: CSS patterns, layout, responsive design, and styling conventions. A
 - Don't set `height: 100%` without ensuring all ancestors have explicit heights
 - Avoid `overflow: hidden` as a band-aid — find and fix the element that overflows
 - Don't use `z-index` without a stacking context strategy — define named layers or a scale
-- Avoid `position: absolute` inside `position: static` parents — the absolute child won't be positioned relative to the parent
 - Don't animate `width`/`height`/`top`/`left` — use `transform` and `opacity` for performant animations

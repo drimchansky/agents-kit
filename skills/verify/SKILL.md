@@ -20,38 +20,18 @@ Before touching code, extract what's actually being claimed:
 
 If the report is vague, ask for clarification before investigating. A vague claim leads to a vague investigation.
 
-## 2. Locate the Code
+## 2. Investigate
 
-Find the relevant code and build context:
+- Read the target code and trace the data flow with the reported inputs
+- Check recent changes with `git log` — a recent change may have introduced the issue
+- Read existing tests — do they cover this scenario? Do they pass or fail?
 
-- **Read the target code** — The file, function, or component mentioned in the report
-- **Trace the data flow** — Follow inputs through the logic to understand what actually happens
-- **Check types and interfaces** — Do the contracts match the reported expectations?
-- **Read tests** — Do existing tests cover this scenario? Do they pass or fail?
-- **Check recent changes** — Use `git log` on the relevant files to see if a recent change could have introduced the issue
+Use the appropriate strategy:
 
-## 3. Reproduce the Issue
-
-Attempt to confirm the problem through evidence:
-
-### For logic bugs
-- Trace the execution path manually — walk through the code with the reported inputs
-- Identify the exact line or condition where behavior diverges from expectation
-- Check edge cases: null/undefined, empty arrays, zero values, boundary conditions
-
-### For type errors
-- Run type checking (`tsc --noEmit` or project equivalent) and check for related errors
-- Verify type definitions match runtime behavior
-
-### For runtime errors
-- Search for the error message in the codebase to understand its origin
-- Trace the conditions that trigger it
-- Check error handling paths — are errors caught, swallowed, or mishandled?
-
-### For behavioral issues
-- Compare against specification, design docs, or tests that define correct behavior
-- Check if the behavior is intentional (feature, not bug) — read comments, commit messages, PR descriptions
-- Look for related configuration or feature flags that might affect behavior
+- **Logic bugs** — Walk through with reported inputs; check edge cases (null, empty, zero, boundaries)
+- **Type errors** — Run `tsc --noEmit`; verify type definitions match runtime behavior
+- **Runtime errors** — Search for the error message in the codebase; trace the triggering conditions
+- **Behavioral issues** — Check if the behavior is intentional (comments, commit messages, feature flags)
 
 ## 4. Deliver Verdict
 

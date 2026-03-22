@@ -41,7 +41,9 @@ Always run this step — every note has room to grow.
 
 Long-term maintainability — will this note age well?
 
+- **Date-agnostic language** — Prefer anchoring to concepts over version numbers when the version isn't essential (e.g., "React's compiler (v19+)" over "React 19's new compiler"). Reserve specific versions for when they're load-bearing.
 - **Staleness signals** — Version numbers, dates, or ecosystem claims that will age badly. Suggest annotating them (e.g., "as of v5", "verify before using").
+- **Structural modifiability** — Can individual sections be updated independently? Flag monolithic prose that tangles multiple concerns — modular structure ages better.
 - **Scope creep** — Is the note trying to cover too much? Flag if it should be split into multiple focused notes.
 - **Linkability** — Are there obvious related concepts or notes that should be cross-referenced?
 - **Update triggers** — What events (new version release, API change, ecosystem shift) should prompt a revisit?
@@ -59,11 +61,6 @@ Turn the note into an active learning tool.
 
 - How can the note be made more useful or actionable?
 - Are there related resources worth linking?
-
-### 8. Clarity & Structure (Secondary)
-
-- Is the note easy to scan and understand?
-- Are the main points distinct and well-separated?
 
 ---
 
@@ -84,7 +81,7 @@ Then for each finding, produce a bullet:
 
 - Summary of the issue → Suggested fix or action
 
-Group bullets by category in the order above. Omit categories with no findings — except **Completeness & Missing Parts** and **Learning Curve**, which always appear.
+Group bullets by category in the order above. Omit categories with no findings — except **Completeness & Missing Parts**, which always appears. Include **Learning Curve** unless the note type makes it clearly inapplicable (e.g., a 2-line quick reference).
 
 End with a one-line overall assessment.
 
@@ -115,9 +112,5 @@ End with a one-line overall assessment.
 
 - Key takeaway buried → Surface: "Omitting the dependency array = runs every render (usually a bug)"
 - Quiz prompts → "What happens if you omit the dependency array?" / "When do you need a cleanup function?"
-
-**Clarity & Structure**
-
-- Two distinct concepts (default behavior + mount-only) could be two separate bullets for scannability
 
 _Overall: Accurate but minimal — adding cleanup, dependency gotchas, and a version note would make this significantly more reliable as a reference._

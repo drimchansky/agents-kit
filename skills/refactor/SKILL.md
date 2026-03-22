@@ -39,11 +39,7 @@ If the task doesn't warrant a full plan, say so and suggest proceeding directly 
 
 ## What Production-Ready Means
 
-- **Correct** — Edge cases handled, errors don't swallow silently, async failures have paths
-- **Typed precisely** — No `any`, no unnecessary assertions, discriminated unions where appropriate
-- **Robust** — Null checks where data is uncertain, validation at boundaries, graceful degradation
-- **Clear** — Intent is obvious, naming is accurate, complexity is justified
-- **Maintainable** — Single responsibility, no dead code, no premature abstraction
+Correct error handling and edge cases, precise types (no `any`), validation at boundaries, clear naming, no dead code or premature abstraction.
 
 ## Planning Process
 

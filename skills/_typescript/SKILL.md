@@ -7,11 +7,8 @@ description: TypeScript type safety, naming conventions, and idiomatic patterns.
 
 ## Naming Conventions
 
-- **Variables/Functions**: camelCase (`fetchUser`, `isValid`)
-- **Classes/Components/Types**: PascalCase (`UserProfile`, `SearchInput`)
 - **Constants**: SCREAMING_SNAKE_CASE (`MAX_RETRY_COUNT`, `API_BASE_URL`)
 - Extract magic numbers and magic bigints to named constants — they are not self-documenting and scatter the change surface when the value needs updating
-- **Files**: Match the primary export
 - **Booleans**: Use `is`, `has`, `should`, `can` prefixes (`isLoading`, `hasError`)
 - **Event handlers**: `handle` prefix for handlers, `on` prefix for props
 - Use JSDoc for public APIs and complex functions

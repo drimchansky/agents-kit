@@ -30,14 +30,10 @@ Use specific strategies to build understanding before explaining:
 
 ### For codebase questions
 
-1. **Read the target code** — Start with the file or function in question; read it fully, not just the signature
-2. **Trace callers and callees** — Search for usages to understand how it fits into the larger system
-3. **Check types and interfaces** — Read type definitions, interfaces, and prop types for the contract this code exposes
-4. **Read tests** — Tests reveal intended behavior, edge cases, and usage patterns
-5. **Check comments, docs, and commit history** — Look for "why" context that isn't in the code itself
-6. **Identify the boundaries** — Know where your explanation stops; don't explain the entire codebase when asked about one module
-7. **Map constraints** — Identify load-bearing elements: public API consumers, shared types, test contracts, things that can't change without broad impact
-8. **Assess blast radius** — What code depends on the area being explored? Use Grep to trace usages.
+1. **Read thoroughly** — Read the target code fully, then trace callers, callees, types, and tests
+2. **Check history** — Comments, docs, and commit history for "why" context not in the code
+3. **Map constraints** — Identify load-bearing elements: public API consumers, shared types, test contracts
+4. **Assess blast radius** — What code depends on this area? Grep to trace usages.
 
 ### For external topics (libraries, APIs, concepts)
 
