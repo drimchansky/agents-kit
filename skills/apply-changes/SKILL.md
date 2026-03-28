@@ -40,7 +40,7 @@ Copy modified and new files to the main repo, preserving directory structure. Re
 **IMPORTANT:**
 
 - Do NOT run `git add`, `git commit`, or create branches in the main repo
-- Do NOT copy non-source files (`.claude/`, `node_modules/`, build output, etc.)
+- Do NOT copy non-source files (agent metadata/config directories, `node_modules/`, build output, etc.)
 
 ### 5. Verify
 

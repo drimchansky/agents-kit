@@ -9,12 +9,12 @@ The user provides a task or feature request. They may include context about cons
 
 ## Workflow Context
 
-This skill complements — not replaces — the built-in Plan mode in Claude Code:
+This skill complements — not replaces — an agent's planning mode, if one exists:
 
-- **Built-in Plan mode** — Lightweight, conversational. Quick directional discussions.
+- **Planning mode** — Conversational alignment on direction and scope.
 - **This skill** — Structured and methodical. Formal analysis with scope, steps, risks, and open questions documented.
 
-Typical flow: **Plan mode** (align on direction) → **design skill** (structured analysis) → **implement skill** (execution).
+Typical flow: planning (align on direction) → **design skill** (structured analysis) → **implement skill** (execution).
 
 For simpler tasks, skip straight to whichever step matches the complexity.
 

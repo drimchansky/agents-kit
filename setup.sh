@@ -2,6 +2,8 @@
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
+CLAUDE_HOME="${HOME}/.claude"
+CODEX_HOME="${HOME}/.codex"
 
 copy() {
   local source="$1"
@@ -15,35 +17,68 @@ copy() {
   echo "  $(basename "$target")"
 }
 
-skills_dir=~/.claude/skills
+copy_managed_file() {
+  local source="$1"
+  local target="$2"
 
-# If skills dir is a symlink (e.g. from a previous setup), remove it
-# so we can create a real directory with individual skill copies
-[ -L "$skills_dir" ] && rm "$skills_dir"
+  if [ -L "$target" ]; then
+    rm "$target"
+  fi
 
-mkdir -p ~/.claude "$skills_dir"
+  copy "$source" "$target"
+}
 
-echo "Copying files:"
+copy_skill_dir() {
+  local source="$1"
+  local target="$2"
 
-# Remove old CLAUDE.md symlink from previous setup
-[ -L ~/.claude/CLAUDE.md ] && rm ~/.claude/CLAUDE.md
-
-copy "$REPO_DIR/CLAUDE.md" ~/.claude/CLAUDE.md
-
-for skill in "$REPO_DIR"/skills/*/; do
-  name="$(basename "$skill")"
-  target="$skills_dir/$name"
-
-  # Remove old symlink from previous setup
+  # If a managed target used to be a symlink, replace it with a real directory copy.
   if [ -L "$target" ]; then
     rm "$target"
   elif [ -d "$target" ] && [ ! -f "$target/.agents-kit" ]; then
-    read -rp "  $name already exists in $skills_dir. Overwrite? [y/N] " answer
-    [[ "$answer" =~ ^[Yy]$ ]] || continue
+    read -rp "  $(basename "$target") already exists in $(dirname "$target"). Overwrite? [y/N] " answer
+    [[ "$answer" =~ ^[Yy]$ ]] || return 0
   fi
 
-  copy "$skill" "$target"
+  copy "$source" "$target"
   touch "$target/.agents-kit"
-done
+}
 
+install_skills() {
+  local skills_dir="$1"
+
+  for skill in "$REPO_DIR"/skills/*/; do
+    local name
+    local target
+    name="$(basename "$skill")"
+    target="$skills_dir/$name"
+    copy_skill_dir "$skill" "$target"
+  done
+}
+
+install_claude() {
+  local skills_dir="$CLAUDE_HOME/skills"
+
+  [ -L "$skills_dir" ] && rm "$skills_dir"
+  mkdir -p "$CLAUDE_HOME" "$skills_dir"
+
+  echo "Installing Claude adapter:"
+  copy_managed_file "$REPO_DIR/AGENTS.md" "$CLAUDE_HOME/CLAUDE.md"
+  install_skills "$skills_dir"
+}
+
+install_codex() {
+  local skills_dir="$CODEX_HOME/skills"
+
+  [ -L "$skills_dir" ] && rm "$skills_dir"
+  mkdir -p "$CODEX_HOME" "$skills_dir"
+
+  echo "Installing Codex adapter:"
+  copy_managed_file "$REPO_DIR/AGENTS.md" "$CODEX_HOME/AGENTS.md"
+  install_skills "$skills_dir"
+}
+
+echo "Installing shared agents kit assets:"
+install_claude
+install_codex
 echo "Done."
