@@ -7,6 +7,7 @@
 - Don't introduce new dependencies without justification
 - Don't remove or rename public APIs without checking all consumers
 - Don't commit, stage changes, or otherwise mutate Git state unless explicitly asked
+- Don't guess — if requirements, intent, or context are not 100% clear, ask a clarifying question before proceeding
 
 ## Communication
 
