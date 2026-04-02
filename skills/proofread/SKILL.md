@@ -20,7 +20,7 @@ Review the provided message and suggest improvements. **Strictly preserve the au
 ## Rules
 
 - Suggest changes only when they fix a real problem — don't rephrase things that are already clear
-- For each suggestion, explain *why* briefly (e.g., "ambiguous reference", "fixes subject-verb agreement", "contradicts paragraph 2")
+- For each suggestion, explain _why_ briefly (e.g., "ambiguous reference", "fixes subject-verb agreement", "contradicts paragraph 2")
 - Never alter the author's voice — if the message is blunt, keep it blunt; if it's casual, keep it casual
 - Distinguish between errors (must fix) and improvements (could fix)
 - If the message is clean, say so — don't invent suggestions to fill space
@@ -35,4 +35,6 @@ Review the provided message and suggest improvements. **Strictly preserve the au
 
 - Quote or location → Suggestion → Why
 
-End with a one-line overall assessment. Omit empty sections.
+One-line overall assessment. Omit empty sections.
+
+**Updated version** — Full message with all fixes and improvements applied. Preserve original formatting and structure. If the message is clean with no changes, skip this section.
