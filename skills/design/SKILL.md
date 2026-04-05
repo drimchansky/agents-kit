@@ -14,7 +14,7 @@ This skill complements — not replaces — an agent's planning mode, if one exi
 - **Planning mode** — Conversational alignment on direction and scope.
 - **This skill** — Structured and methodical. Formal analysis with scope, steps, risks, and open questions documented.
 
-Typical flow: planning (align on direction) → **design skill** (structured analysis) → **implement skill** (execution).
+Typical flow: planning (align on direction) → **design skill** (structured analysis) → execution.
 
 For simpler tasks, skip straight to whichever step matches the complexity.
 

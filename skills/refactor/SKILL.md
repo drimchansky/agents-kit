@@ -14,7 +14,7 @@ This skill complements — not replaces — an agent's planning mode, if one exi
 - **Planning mode** — Conversational alignment on what to refactor and why.
 - **This skill** — Structured assessment. Gap analysis, sequenced steps, scope boundaries, and risk flags documented.
 
-Typical flow: planning (align on goals) → **refactor skill** (structured analysis) → **implement skill** (execution).
+Typical flow: planning (align on goals) → **refactor skill** (structured analysis) → execution.
 
 For simpler tasks, skip straight to whichever step matches the complexity.
 
