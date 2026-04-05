@@ -17,8 +17,14 @@
 ## Workflow
 
 - Read project CLAUDE.md / AGENTS.md before starting implementation in any new project
-- Use parallel agents for independent research and validation tasks
-- Run linter/typecheck after non-trivial changes before presenting results
+- Use parallel agents for independent tasks: exploring multiple modules, searching usage patterns across the codebase, running typecheck while reading code
+- Do not parallelize sequential edits to the same file or changes that depend on each other's output
+- When spawning parallel tasks, define what each agent investigates and how results will be merged
+- Before presenting results from non-trivial changes:
+    - Run typecheck and linter on changed files
+    - If tests exist for changed code, run them
+    - If changing exports or shared code, grep for all consumers and verify compatibility
+    - Remove debug artifacts (console.log, commented-out code, temporary variables)
 - When a task touches multiple files, batch related changes; don't make one edit per message
 
 ## Skills

@@ -2,8 +2,12 @@
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
-CLAUDE_HOME="${HOME}/.claude"
-CODEX_HOME="${HOME}/.codex"
+
+# Agent configurations: name|home_dir|rules_filename
+AGENTS=(
+  "Claude|${HOME}/.claude|CLAUDE.md"
+  "Codex|${HOME}/.codex|AGENTS.md"
+)
 
 copy() {
   local source="$1"
@@ -56,29 +60,23 @@ install_skills() {
   done
 }
 
-install_claude() {
-  local skills_dir="$CLAUDE_HOME/skills"
+install_agent() {
+  local name="$1"
+  local home_dir="$2"
+  local rules_filename="$3"
+  local skills_dir="$home_dir/skills"
 
   [ -L "$skills_dir" ] && rm "$skills_dir"
-  mkdir -p "$CLAUDE_HOME" "$skills_dir"
+  mkdir -p "$home_dir" "$skills_dir"
 
-  echo "Installing Claude adapter:"
-  copy_managed_file "$REPO_DIR/AGENTS.md" "$CLAUDE_HOME/CLAUDE.md"
-  install_skills "$skills_dir"
-}
-
-install_codex() {
-  local skills_dir="$CODEX_HOME/skills"
-
-  [ -L "$skills_dir" ] && rm "$skills_dir"
-  mkdir -p "$CODEX_HOME" "$skills_dir"
-
-  echo "Installing Codex adapter:"
-  copy_managed_file "$REPO_DIR/AGENTS.md" "$CODEX_HOME/AGENTS.md"
+  echo "Installing $name adapter:"
+  copy_managed_file "$REPO_DIR/AGENTS.md" "$home_dir/$rules_filename"
   install_skills "$skills_dir"
 }
 
 echo "Installing shared agents kit assets:"
-install_claude
-install_codex
+for entry in "${AGENTS[@]}"; do
+  IFS='|' read -r name home_dir rules_filename <<< "$entry"
+  install_agent "$name" "$home_dir" "$rules_filename"
+done
 echo "Done."

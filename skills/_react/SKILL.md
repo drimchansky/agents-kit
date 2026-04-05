@@ -5,7 +5,13 @@ description: React component patterns, hooks rules, performance, and state manag
 
 # React
 
-Before applying these patterns, check the project's installed React version and verify API availability against the official docs online — APIs change between major versions.
+Before applying these patterns, read the project's `package.json` for the installed React version.
+
+- **React <18** — No concurrent features, no `useId`, no automatic batching outside event handlers
+- **React 18** — Standard hooks patterns apply as written below
+- **React 19+** — Compiler handles memoization automatically; avoid manual `memo`/`useMemo`/`useCallback` unless the compiler is explicitly disabled. Check for new APIs (`use`, `useActionState`, `useOptimistic`) before reaching for older patterns.
+
+When uncertain about version-specific API availability, verify against the official docs online.
 
 ## Components
 

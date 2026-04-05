@@ -107,11 +107,9 @@ If the plan has assumptions that could invalidate the approach, surface them exp
 
 Match the plan's detail to the task's complexity:
 
-| Task Size                              | Plan Depth                                                |
-| -------------------------------------- | --------------------------------------------------------- |
-| Medium (2-5 files, clear pattern)      | Steps 1, 4, 5 — skip approach comparison, light on risks  |
-| Large (5-15 files, some ambiguity)     | All steps, moderate detail                                |
-| Complex (architectural, cross-cutting) | All steps, deep exploration, multiple approaches compared |
+- **Medium** (2-5 files, clear pattern) — Steps 1, 4, 5 — skip approach comparison, light on risks
+- **Large** (5-15 files, some ambiguity) — All steps, moderate detail
+- **Complex** (architectural, cross-cutting) — All steps, deep exploration, multiple approaches compared
 
 ## Updating the Plan
 

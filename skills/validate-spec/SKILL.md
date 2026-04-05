@@ -124,3 +124,11 @@ Aspects of the spec that are verified and ready to build — so the user knows w
 - **Rubber-stamping** — Saying everything looks good without checking. Every integration point needs code-level verification.
 - **Inventing problems** — Flagging theoretical issues that don't apply. Only surface concerns grounded in the actual codebase or domain.
 - **Ignoring domain constraints** — For protocol-level features, the chain or protocol may impose rules the spec doesn't mention. Surface these proactively.
+
+## Handoff
+
+If the spec passes validation and the user wants to proceed to design or implementation:
+
+- Summarize: confirmed requirements, resolved questions, remaining caveats, and any constraints discovered during codebase exploration
+- This summary serves as the starting input for the `design` skill — don't repeat exploration that was already done during validation
+- If critical questions remain unresolved, recommend addressing them before moving to design

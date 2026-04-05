@@ -13,14 +13,12 @@ The user asks about something they want to understand. This can be code in the c
 
 Match the explanation level to the question:
 
-| Signal | Level | Focus |
-| --- | --- | --- |
-| Points to a specific function, component, or module | **Code** | What it does, how it works, inputs/outputs, side effects |
-| Asks about a user flow, business feature, or behavior | **Feature** | Business purpose, user journey, data flow, key components |
-| Asks about structure, patterns, or how things fit together | **Architecture** | High-level overview, core concepts, organization, integrations |
-| Asks about a library, API, protocol, or external tool | **External** | What it is, core API surface, mental model, how it fits into the project |
-| Asks about a domain concept or engineering principle | **Concept** | Definition, why it matters, practical implications, common misconceptions |
-| Asks what exists before planning a change or choosing an approach | **Pre-plan** | Constraints, blast radius, known alternatives, open questions |
+- **Code** — Points to a specific function, component, or module → what it does, how it works, inputs/outputs, side effects
+- **Feature** — Asks about a user flow, business feature, or behavior → business purpose, user journey, data flow, key components
+- **Architecture** — Asks about structure, patterns, or how things fit together → high-level overview, core concepts, organization, integrations
+- **External** — Asks about a library, API, protocol, or external tool → what it is, core API surface, mental model, how it fits into the project
+- **Concept** — Asks about a domain concept or engineering principle → definition, why it matters, practical implications, common misconceptions
+- **Pre-plan** — Asks what exists before planning a change or choosing an approach → constraints, blast radius, known alternatives, open questions
 
 When the question spans levels, start at the highest relevant level and drill down. When unclear, ask.
 
@@ -96,6 +94,6 @@ Adapt to the level — don't force a rigid template. Include what's relevant:
 - **Purpose** — Why this exists or matters (always lead with this)
 - **How It Works** — Logic flow for code; user journey for features; organization for architecture; core API for libraries
 - **Key Details** — Parameters, return values, side effects, edge cases, error handling
-- **Constraints** — *(for pre-plan use)* What's load-bearing, what can't change, downstream consumers and coupling
+- **Constraints** — _(for pre-plan use)_ What's load-bearing, what can't change, downstream consumers and coupling
 - **Connections** — Related code, dependencies, integration points; alternatives with trade-offs when planning (complexity, coupling, reversibility) and a recommendation if confident
 - **Entry Points** — Where to start reading for deeper exploration; links to docs for external topics

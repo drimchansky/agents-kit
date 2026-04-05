@@ -8,7 +8,7 @@ Shared instructions and skills for Claude Code, Codex, and other coding agents.
 agents-kit/
 ├── AGENTS.md              # Shared rules (canonical source)
 ├── skills/                # Shared skills
-├── setup.sh               # Installs Claude and Codex assets
+├── setup.sh               # Installs agent assets
 └── README.md
 ```
 
@@ -30,7 +30,7 @@ The kit has two shared parts plus agent adapters:
 
 - **`AGENTS.md`** — The canonical, agent-neutral rules file. Codex can use it directly from the repo root, and Claude receives a copied `CLAUDE.md` generated from the same content.
 - **`skills/`** — Shared skills copied into each supported agent's skill directory. This lets you keep local agent-specific skills alongside the ones from this repo.
-- **Adapters** — `setup.sh` maps the shared content into each agent's expected home directory and naming conventions.
+- **Adapters** — `setup.sh` maps the shared content into each agent's expected home directory and naming conventions. To add a new agent, add an entry to the `AGENTS` array in `setup.sh`.
 
 **Note:** If you have your own skill with the same name as one in this repo, `setup.sh` will ask before overwriting it.
 

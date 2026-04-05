@@ -5,7 +5,12 @@ description: TanStack Query (React Query) patterns for data fetching, caching, m
 
 # TanStack Query
 
-Before applying these patterns, check the project's installed TanStack Query version and verify API availability against the official docs online — APIs change between major versions.
+Before applying these patterns, read the project's `package.json` for the installed `@tanstack/react-query` version.
+
+- **v4** — `useQuery({ queryKey, queryFn })` object syntax; `cacheTime` for GC; `onSuccess`/`onError`/`onSettled` callbacks on `useQuery` are supported.
+- **v5** — `cacheTime` renamed to `gcTime`; `useQuery` callbacks (`onSuccess`/`onError`/`onSettled`) removed — use `useEffect` or mutation callbacks instead; `queryOptions()` factory fully supported.
+
+When uncertain about version-specific API availability, verify against the official docs online.
 
 ## Custom Hooks
 

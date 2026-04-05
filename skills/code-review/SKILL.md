@@ -12,12 +12,10 @@ Review code for correctness, unintended impact, and adherence to project pattern
 
 Ask the user which type of review they want:
 
-| Type           | Scope                                      | Diff Source               |
-| -------------- | ------------------------------------------ | ------------------------- |
-| **Pre-PR**     | Current branch vs. base branch             | `git diff <base>...HEAD`  |
-| **Pre-commit** | Staged changes only                        | `git diff --cached`       |
-| **Module**     | All code in a specific module or directory | Full file reads, no diff  |
-| **Project**    | Overall project structure and patterns     | Full codebase exploration |
+- **Pre-PR** — Current branch vs. base branch → `git diff <base>...HEAD`
+- **Pre-commit** — Staged changes only → `git diff --cached`
+- **Module** — All code in a specific module or directory → full file reads, no diff
+- **Project** — Overall project structure and patterns → full codebase exploration
 
 If the user doesn't specify, ask before proceeding — the review process differs significantly by type.
 
@@ -234,14 +232,12 @@ Severity reflects **user and production impact**, not code aesthetics:
 
 Not all changes deserve equal attention:
 
-| Priority   | What                                               | Why                            |
-| ---------- | -------------------------------------------------- | ------------------------------ |
-| **High**   | New logic, state changes, data flow                | Where bugs live                |
-| **High**   | Changes to shared code (components, utils, types)  | Widest blast radius            |
-| **High**   | Security-relevant code (auth, input handling, API) | Highest stakes                 |
-| **Medium** | New files and new abstractions                     | Design decisions that compound |
-| **Medium** | Test changes                                       | Verify they test real behavior |
-| **Low**    | Renames, formatting, import reordering             | Unlikely to introduce bugs     |
-| **Low**    | Config and boilerplate changes                     | Skim for obvious errors        |
+- **High** — New logic, state changes, data flow (where bugs live)
+- **High** — Changes to shared code: components, utils, types (widest blast radius)
+- **High** — Security-relevant code: auth, input handling, API (highest stakes)
+- **Medium** — New files and new abstractions (design decisions that compound)
+- **Medium** — Test changes (verify they test real behavior)
+- **Low** — Renames, formatting, import reordering (unlikely to introduce bugs)
+- **Low** — Config and boilerplate changes (skim for obvious errors)
 
 For large diffs (20+ files): review types and interfaces first to understand the contract, then group remaining files by feature/concern rather than reviewing file-by-file.
