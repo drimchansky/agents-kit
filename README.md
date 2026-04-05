@@ -39,10 +39,11 @@ The kit has two shared parts plus agent adapters:
 The skills follow a natural development workflow:
 
 1. **Understand** — `explore` — Explore how something works: code, libraries, APIs, concepts, or architecture. Also use before planning to surface constraints, blast radius, and known alternatives.
-2. **Plan** — `design` or `refactor` — Break down a task into steps, compare approaches, and define scope before coding.
-3. **Build** — `implement` — Write production-quality code following project patterns.
-4. **Review** — `code-review` — Check for bugs, impact, and adherence to project patterns.
-5. **Verify** — `verify` — Verify a reported issue is real, identify root cause, and assess severity.
+2. **Validate** — `validate-spec` — Check a feature spec against the codebase for feasibility, conflicts, and missing details before planning begins.
+3. **Plan** — `design` or `refactor` — Break down a task into steps, compare approaches, and define scope before coding.
+4. **Build** — `implement` — Write production-quality code following project patterns.
+5. **Review** — `code-review` — Check for bugs, impact, and adherence to project patterns.
+6. **Verify** — `verify` — Verify a reported issue is real, identify root cause, and assess severity.
 
 You don't need to use every step — pick whichever skills fit the task at hand.
 
