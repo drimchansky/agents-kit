@@ -119,13 +119,21 @@ Plans are living documents. During implementation:
 - If scope changes, update step 4 explicitly
 - If new risks emerge, add them — don't silently absorb surprises
 
-## Common Mistakes
+## Don't Rationalize
 
-- **Planning without reading code** — Plans disconnected from reality. Always explore first.
-- **Over-planning simple tasks** — If the plan is longer than the implementation would be, skip it.
-- **Fabricating alternatives** — Don't invent approaches just to have a comparison. One good option stated clearly is better.
-- **Generic risk lists** — "There might be performance issues" is useless. Be specific or omit.
-- **Hiding unknowns** — A plan that pretends certainty where none exists is worse than one that says "I don't know yet."
+- "I already know the codebase well enough" — Read the code anyway. Memory drifts; the code is the truth.
+- "There's only one way to do this" — If you haven't explored alternatives, you don't know that.
+- "The risks are obvious, no need to list them" — Generic risk awareness is not risk identification. Be specific or admit there are none.
+- "This is too simple to plan" — If the user asked for a plan, the task warranted one.
+- "I'll figure out the scope during implementation" — Undefined scope produces undefined work. Bound it now.
+
+## Verification
+
+- [ ] Plan is grounded in actual code exploration, not assumptions
+- [ ] Each step is independently verifiable
+- [ ] Scope boundaries are explicit (in/out of scope stated)
+- [ ] Risks are specific to this task, not generic checklists
+- [ ] Open questions that could invalidate the approach are surfaced
 
 ## Output Structure
 

@@ -59,10 +59,18 @@ Present a clear conclusion with supporting evidence.
 - **What's missing** — What additional information, access, or reproduction steps would resolve it
 - **Best guess** — Your current assessment with stated uncertainty
 
-## Common Pitfalls
+## Don't Rationalize
 
-- **Fixing before verifying** — Don't write a fix. Verify first. Fixing an issue that isn't real wastes effort and can introduce new bugs.
-- **Confirming without evidence** — "Yeah, that looks like a bug" is not verification. Trace the code, show the path, point to the line.
-- **Dismissing without evidence** — "That should work fine" is not verification either. Prove it works.
-- **Tunnel vision** — Don't only look where the reporter points. The symptom may be in one place, but the cause in another.
-- **Ignoring context** — A behavior that looks wrong in isolation may be correct given business rules, backwards compatibility, or intentional trade-offs.
+- "That's definitely a bug" — Show the code path. Intuition isn't evidence.
+- "That should work fine" — Prove it. Trace the inputs through the code.
+- "I'll just fix it while I'm looking" — Verify first. Fixing unverified issues creates new bugs and skips root cause analysis.
+- "The reporter probably just misconfigured it" — Don't dismiss without evidence. Check.
+- "I've seen this before" — Past experience is a starting point, not a conclusion. Verify in this codebase.
+
+## Verification
+
+- [ ] Verdict supported by evidence (code paths, test results), not intuition
+- [ ] Root cause points to specific file and line (if confirmed)
+- [ ] Scope assessed — checked if the same pattern exists elsewhere
+- [ ] No fix was attempted — verification only
+- [ ] Missing information stated explicitly (if inconclusive)

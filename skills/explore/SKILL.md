@@ -65,27 +65,24 @@ If the user will use this output to make a decision (design, refactor, or implem
 - **Compare alternatives** — For each option, note: complexity to implement, coupling to existing code, reversibility. One sentence per axis is enough.
 - **Recommend** — Given the codebase, which fits best and why? Flag if you're uncertain.
 
-## Common Pitfalls
+## Don't Rationalize
 
-- **Explaining "how" when they asked "why"** — Restating the code in English isn't an explanation. Focus on intent and design rationale.
-- **Assuming context** — Don't reference concepts, patterns, or domain terms without briefly grounding them.
-- **Wrong depth** — A senior dev asking about architecture doesn't need `useState` explained. A newcomer asking "how does auth work" needs the full picture.
-- **Dumping code without narration** — Code snippets without explanation are not explanations.
-- **Speculating without flagging it** — If you're inferring rather than citing, say so explicitly.
-- **Stale information** — Don't explain library behavior from memory when a web search would confirm the current state. When in doubt, search.
+- "I know how this library works" — Check the docs. APIs change between versions. Web search is free.
+- "The code is self-explanatory" — If the user asked for an explanation, it wasn't self-explanatory to them.
+- "This is probably how it works" — Inference without flagging it as inference is misleading. Cite sources or say you're guessing.
+- "That's too much detail" — Match depth to the question. A question about internals needs internals.
+- "Here's the code" — Code without narration is not an explanation. Explain what it does and why.
 
-## Validation
-
-Before delivering the explanation:
+## Verification
 
 - [ ] Answers the actual question asked, not an adjacent one
 - [ ] Depth matches the audience and question scope
-- [ ] Claims are anchored to code or authoritative sources, not vague hand-waving
-- [ ] Non-obvious behavior and gotchas are called out
-- [ ] Uncertainty is flagged where context is missing
-- [ ] Version-sensitive information has been verified via web search
-- [ ] If used before planning: constraints and load-bearing elements are identified
-- [ ] If alternatives exist and the user needs to choose: at least 2 are surfaced with trade-off notes
+- [ ] Claims anchored to code or authoritative sources
+- [ ] Non-obvious behavior and gotchas called out
+- [ ] Uncertainty flagged where context is missing
+- [ ] Version-sensitive information verified via web search
+- [ ] If pre-plan: constraints and load-bearing elements identified
+- [ ] If alternatives exist: at least 2 surfaced with trade-off notes
 
 ## Output Structure
 

@@ -98,13 +98,21 @@ For each real risk:
 - How likely it is given what you found in exploration
 - How to mitigate before it becomes a problem
 
-## Common Mistakes
+## Don't Rationalize
 
-- **Refactoring without understanding** — Moving code around without knowing what it does. Read first.
-- **Premature abstraction** — Extracting a helper for two instances. Wait for three.
-- **Big-bang refactors** — Planning to rewrite an entire module in one step. If you can't verify incrementally, the steps are too large.
-- **Refactoring untested code without flagging it** — If there are no tests, say so. The user should know the risk.
-- **Gold-plating** — Planning defensive code for scenarios that can't happen. Be robust where data is uncertain, not everywhere.
+- "I'll just rewrite the whole thing" — Big-bang rewrites fail. Sequence incremental steps that each compile and pass tests.
+- "The tests will catch any regressions" — Only if tests exist and cover this code. Check first.
+- "This abstraction will be useful later" — If there's only one consumer, it's premature. Wait for three.
+- "The code is so bad I need to touch everything" — Define scope boundaries. Not everything needs fixing now.
+- "It's just moving code around" — Moving code changes imports, coupling, and blast radius. Treat it seriously.
+
+## Verification
+
+- [ ] Code was read thoroughly before planning
+- [ ] Safety net assessed — test gaps flagged explicitly
+- [ ] Each step compiles and passes tests on its own
+- [ ] Scope boundaries prevent creep into a rewrite
+- [ ] Risks are specific and mitigatable
 
 ## Output Structure
 

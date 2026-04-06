@@ -154,9 +154,9 @@ High-level review of overall project structure, patterns, and health. No diff �
 
 ## What to Look For
 
-Applies to all review types. First, apply relevant auto-applied skills based on the file types touched — `_typescript`, `_react`, `_tanstack-query`, `_css`, `_testing`, etc. Treat their rules as additional review criteria.
+Applies to all review types. Consult relevant reference checklists (`references/typescript.md`, `references/react.md`, `references/css.md`, `references/testing.md`, etc.) based on the file types touched.
 
-Focus on what general knowledge and auto-applied skills don't cover:
+Focus on what reference checklists don't cover:
 
 ### Impact on Existing Code
 
@@ -183,6 +183,19 @@ The highest-value part of a review. For every change to shared code:
 
 - Prefer `children`, render props, or slot patterns over configuration props (`buttonProps`, `mode` flags). Boolean/mode props often signal a component doing too many things.
 - Can the interface be smaller? Each prop is a contract that must be maintained.
+
+### Dead Code
+
+- Identify dead code explicitly: unused exports, unreachable branches, commented-out blocks
+- List what you found — don't silently skip or silently remove
+- Recommend removal only after confirming it's truly unused (grep for all references)
+
+### Multi-Model Review
+
+When reviewing AI-generated code (or your own output from an earlier step):
+
+- Apply the same standards as human-written code — AI output is not exempt from review
+- Watch for AI-specific patterns: overly verbose error handling, unnecessary abstractions, hallucinated APIs, inconsistent naming
 
 ### Assumptions Audit
 
@@ -241,3 +254,20 @@ Not all changes deserve equal attention:
 - **Low** — Config and boilerplate changes (skim for obvious errors)
 
 For large diffs (20+ files): review types and interfaces first to understand the contract, then group remaining files by feature/concern rather than reviewing file-by-file.
+
+## Don't Rationalize
+
+- "The code looks fine to me" — Trace all usage sites for changed shared code. "Looks fine" isn't a review.
+- "I would have done it differently" — Preference isn't a finding. Different isn't wrong.
+- "It's just a small change" — Small changes to shared code have the widest blast radius. Check consumers.
+- "The tests pass" — Passing tests prove the tests pass, not that the code is correct. Tests have gaps.
+- "I'll flag it next time" — Note it now. Use severity levels to indicate urgency.
+
+## Verification
+
+- [ ] All usage sites of modified shared code checked
+- [ ] Severity ratings reflect user/production impact, not aesthetics
+- [ ] No findings on unchanged code or style preferences
+- [ ] Bug fixes have regression tests (or the gap is flagged)
+- [ ] Dead code identified and listed explicitly
+- [ ] Assumptions in non-trivial decisions identified

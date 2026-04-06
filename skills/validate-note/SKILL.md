@@ -114,3 +114,12 @@ End with a one-line overall assessment.
 - Quiz prompts → "What happens if you omit the dependency array?" / "When do you need a cleanup function?"
 
 _Overall: Accurate but minimal — adding cleanup, dependency gotchas, and a version note would make this significantly more reliable as a reference._
+
+## Verification
+
+- [ ] Note purpose inferred and stated
+- [ ] Factual claims verified (web search for uncertain ones)
+- [ ] Completeness section always present
+- [ ] Findings are actionable — each has a suggested fix
+- [ ] Learning Curve included (unless clearly inapplicable)
+- [ ] Assessment calibrated to note type (cheatsheet vs. deep-dive vs. decision record)

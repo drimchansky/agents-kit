@@ -116,14 +116,21 @@ Numbered list of targeted questions. Each question should:
 
 Aspects of the spec that are verified and ready to build — so the user knows what doesn't need further discussion.
 
-## Common Mistakes
+## Don't Rationalize
 
-- **Validating without reading code** — Saying "that should work" based on naming conventions. Read the actual implementation.
-- **Designing instead of validating** — Proposing a full implementation plan. Stay in validation mode — flag what's missing, don't fill it in.
-- **Asking open-ended questions** — "How should this work?" is unhelpful. "Should the validator list exclude the source validator? Cosmos chains reject same-validator redelegation, so either filter the list or show an error" is actionable.
-- **Rubber-stamping** — Saying everything looks good without checking. Every integration point needs code-level verification.
-- **Inventing problems** — Flagging theoretical issues that don't apply. Only surface concerns grounded in the actual codebase or domain.
-- **Ignoring domain constraints** — For protocol-level features, the chain or protocol may impose rules the spec doesn't mention. Surface these proactively.
+- "The spec looks reasonable" — Check every integration point in the code. Reasonable isn't verified.
+- "This component can probably be reused" — Read the implementation. Names don't guarantee reusability.
+- "I'll note the gaps during implementation" — Surface them now. That's the entire point of validation.
+- "Everything looks good" — Rubber-stamping isn't validation. Every integration point needs code-level verification.
+- "That's a theoretical concern" — Only flag real issues, but don't dismiss concerns without checking the code.
+
+## Verification
+
+- [ ] Every integration point verified against actual source code
+- [ ] Each requirement has a clear verdict with evidence
+- [ ] Questions are targeted and explain why the answer matters
+- [ ] Gaps grouped by category with specific details
+- [ ] No design or implementation proposed — validation only
 
 ## Handoff
 

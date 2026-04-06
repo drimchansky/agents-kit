@@ -55,6 +55,7 @@ install_skills() {
     local name
     local target
     name="$(basename "$skill")"
+    [[ "$name" == .* ]] && continue
     target="$skills_dir/$name"
     copy_skill_dir "$skill" "$target"
   done

@@ -38,3 +38,11 @@ Review the provided message and suggest improvements. **Strictly preserve the au
 One-line overall assessment. Omit empty sections.
 
 **Updated version** — Full message with all fixes and improvements applied. Preserve original formatting and structure. If the message is clean with no changes, skip this section.
+
+## Verification
+
+- [ ] Author's voice and tone preserved
+- [ ] Checkable facts verified (web search if uncertain)
+- [ ] Errors distinguished from improvements
+- [ ] No suggestions that just rephrase without fixing a problem
+- [ ] Clean messages acknowledged as clean — no invented suggestions
