@@ -48,6 +48,22 @@ copy_managed_dir() {
   touch "$target/.agents-kit"
 }
 
+cleanup_stale() {
+  local installed_dir="$1"
+  local source_dir="$2"
+
+  for target in "$installed_dir"/*/; do
+    [ -d "$target" ] || continue
+    [ -f "$target/.agents-kit" ] || continue
+    local name
+    name="$(basename "$target")"
+    if [ ! -d "$source_dir/$name" ]; then
+      rm -rf "$target"
+      echo "  removed stale: $name"
+    fi
+  done
+}
+
 install_skills() {
   local skills_dir="$1"
 
@@ -59,6 +75,8 @@ install_skills() {
     target="$skills_dir/$name"
     copy_managed_dir "$skill" "$target"
   done
+
+  cleanup_stale "$skills_dir" "$REPO_DIR/skills"
 }
 
 install_agent() {
