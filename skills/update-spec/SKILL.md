@@ -1,6 +1,7 @@
 ---
 name: update-spec
-description: Create or update a specification — synthesize context from conversations, exploration, and feedback into a written spec file. Use when the user wants to write a project spec (AGENTS.md), a feature spec, or revise an existing spec based on new context or validation feedback.
+description: Creates or updates a specification — synthesizes context from conversations, exploration, and feedback into a written spec file. Use when asked to write a project spec, feature spec, or revise an existing spec.
+argument-hint: '[spec file path]'
 ---
 
 This skill produces a written specification file from scattered context — conversation history, exploration findings, validate-spec feedback, user statements, and codebase knowledge. It synthesizes, not transcribes.

@@ -1,6 +1,7 @@
 ---
 name: translate
-description: Translate text while preserving tone, context, and idiomatic correctness.
+description: Translates text while preserving tone, context, and idiomatic correctness.
+argument-hint: '[target language] [text]'
 ---
 
 ## Rules

@@ -1,6 +1,7 @@
 ---
 name: explore
-description: Explore how something works — code, libraries, APIs, protocols, concepts, or architecture. Use when the user asks to explore, explain, walk through, describe, teach, or analyze before planning any software engineering topic (examples include codebase internals, library APIs, domain concepts, protocols, design patterns, how technologies work, or what exists before planning a change).
+description: Explores how something works — code, libraries, APIs, protocols, concepts, or architecture. Use when asked to explore, explain, walk through, describe, teach, or analyze any software engineering topic before planning.
+argument-hint: '[topic or file path]'
 ---
 
 This skill guides clear, structured explanations of any software engineering topic — from a single function to an entire architectural pattern, from codebase internals to external libraries and domain concepts.

@@ -1,6 +1,7 @@
 ---
 name: verify
-description: Verify a described issue — reproduce it, check if it's real, identify root cause, and assess severity. Use when asked to verify, confirm, check, validate, or investigate a reported bug, issue, or problem.
+description: Verifies a described issue — reproduces it, checks if it's real, identifies root cause, and assesses severity. Use when asked to verify, confirm, check, validate, or investigate a reported bug, issue, or problem.
+argument-hint: '[issue description]'
 ---
 
 This skill guides verification of reported issues. Before fixing anything, confirm the problem actually exists, understand its root cause, and assess whether it's a real bug or a misunderstanding.

@@ -1,6 +1,6 @@
 ---
 name: validate-note
-description: Analyze notes for quality, accuracy, and completeness. Use when asked to validate, review, check, update, expand, or improve a personal knowledge base note.
+description: Analyzes notes for quality, accuracy, and completeness. Use when asked to validate, review, check, update, expand, or improve a personal knowledge base note.
 ---
 
 # Note Validator

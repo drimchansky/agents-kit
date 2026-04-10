@@ -1,6 +1,6 @@
 ---
 name: design
-description: Plan, design, or architect a feature — break down a task into steps, compare approaches, and define scope before coding. Use when the user asks to plan a feature, design a system, architect a solution, scope work, or evaluate approaches (examples include API design, data model planning, refactoring strategies, migration plans, or breaking down complex features into steps).
+description: Plans, designs, or architects a feature — breaks down a task into steps, compares approaches, and defines scope before coding. Use when asked to plan a feature, design a system, architect a solution, scope work, or evaluate approaches.
 ---
 
 This skill guides structured planning and design of software features. It produces an implementation plan — not code. The output is a clear analysis of what to build, how to build it, and what risks exist.

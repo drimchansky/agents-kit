@@ -1,6 +1,6 @@
 ---
 name: proofread
-description: Proofread a message for grammar, clarity, consistency, and factual accuracy while preserving the author's voice. Use when asked to proofread, check, review, or polish a message, email, or piece of writing.
+description: Proofreads a message for grammar, clarity, consistency, and factual accuracy while preserving the author's voice. Use when asked to proofread, check, review, or polish a message, email, or piece of writing.
 ---
 
 # Proofread

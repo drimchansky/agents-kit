@@ -1,6 +1,7 @@
 ---
 name: validate-spec
-description: Validate a feature specification against the current codebase — check feasibility, surface conflicts, identify missing details, and ask clarifying questions before implementation begins. Use when the user provides a spec, acceptance criteria, or feature requirements and wants them reviewed against the existing code.
+description: Validates a feature specification against the current codebase — checks feasibility, surfaces conflicts, and identifies missing details before implementation begins. Use when asked to review a spec or requirements against existing code.
+argument-hint: '[spec file path]'
 ---
 
 This skill validates a feature specification against the actual codebase before implementation begins. It catches infeasible requirements, missing details, pattern conflicts, and implicit assumptions — producing a clear assessment with targeted questions.

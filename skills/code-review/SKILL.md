@@ -1,6 +1,7 @@
 ---
 name: code-review
-description: Review code, PR, diff, or changes — check for bugs, impact, and adherence to project patterns. Use when asked to review, audit, or give feedback on code changes.
+description: Reviews code, PRs, diffs, or changes — checks for bugs, impact, and adherence to project patterns. Use when asked to review, audit, or give feedback on code changes.
+argument-hint: '[scope or file path]'
 disable-model-invocation: true
 ---
 

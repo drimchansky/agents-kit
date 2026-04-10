@@ -1,6 +1,6 @@
 ---
 name: refactor
-description: Plan a refactor — assess code against production-readiness, define scope, and design incremental improvements. Use when asked to refactor, clean up, improve, harden, or make code production-ready.
+description: Plans a refactor — assesses code against production-readiness, defines scope, and designs incremental improvements. Use when asked to refactor, clean up, improve, harden, or make code production-ready.
 ---
 
 This skill guides planning of code improvements toward production quality. Beyond restructuring, this includes fixing error handling gaps, tightening types, handling edge cases, and eliminating tech debt. The output is a refactoring plan — not code changes.
