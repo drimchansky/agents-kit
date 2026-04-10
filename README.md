@@ -29,11 +29,11 @@ After running `setup.sh`, the installer updates agent-specific locations:
 
 The kit has two shared parts plus agent adapters:
 
-- **`AGENTS.md`** — The canonical, agent-neutral rules file. Codex can use it directly from the repo root, and Claude receives a copied `CLAUDE.md` generated from the same content.
+- **`AGENTS.md`** — The canonical, agent-neutral rules file. `setup.sh` copies it into each agent's home directory, renaming as needed (e.g. `CLAUDE.md` for Claude).
 - **`skills/`** — Shared skills copied into each supported agent's skill directory. This lets you keep local agent-specific skills alongside the ones from this repo.
 - **Adapters** — `setup.sh` maps the shared content into each agent's expected home directory and naming conventions. To add a new agent, add an entry to the `AGENTS` array in `setup.sh`.
 
-**Note:** If you have your own skill with the same name as one in this repo, `setup.sh` will ask before overwriting it. `setup.sh` only adds or updates skills — it does not remove previously installed skills that are no longer in the repo.
+**Note:** If you have your own skill with the same name as one in this repo, `setup.sh` will ask before overwriting it. Skills installed by this kit that are later removed from the repo will be cleaned up automatically on the next run. Your own skills are never touched.
 
 ## Workflow
 
