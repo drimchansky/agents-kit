@@ -9,6 +9,15 @@ The user describes an issue — a bug report, error message, unexpected behavior
 
 **CRITICAL**: Do not fix the issue. Verify it. The goal is a clear verdict with evidence, not a patch.
 
+## Workflow Context
+
+When invoked after a `code-review`, treat the review's findings as the claims to verify. Each finding becomes a separate verification target.
+
+- **No specific findings mentioned** — verify all findings from the review, in severity order (critical → major → minor)
+- **User specifies findings** — verify only those; skip the rest
+
+For each finding, run the full process below (Understand the Claim → Investigate → Deliver Verdict). Present results as a list of verdicts — one per finding — so the user can see which review findings hold up and which don't.
+
 ## 1. Understand the Claim
 
 Before touching code, extract what's actually being claimed:
