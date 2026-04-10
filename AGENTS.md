@@ -49,7 +49,7 @@ Place at the end of your response. Scope discipline with nothing lost.
 
 ## References
 
-Reference checklists live in `skills/references/`. Consult the relevant checklist when writing or reviewing code in that domain (TypeScript, React, CSS, accessibility, testing, etc.).
+Reference checklists live in `references/`. Consult the relevant checklist when writing or reviewing code in that domain (TypeScript, React, CSS, accessibility, testing, etc.).
 
 ## Dependencies
 

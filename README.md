@@ -7,6 +7,7 @@ Shared instructions and skills for Claude Code, Codex, and other coding agents.
 ```
 agents-kit/
 ├── AGENTS.md              # Shared rules (canonical source)
+├── references/            # Domain checklists (TypeScript, React, CSS, etc.)
 ├── skills/                # Shared skills
 ├── setup.sh               # Installs agent assets
 └── README.md
@@ -16,10 +17,10 @@ After running `setup.sh`, the installer updates agent-specific locations:
 
 ```
 ~/.claude/CLAUDE.md
-~/.claude/skills/_typescript/
+~/.claude/skills/explore/
 ~/.claude/skills/code-review/
 ~/.codex/AGENTS.md
-~/.codex/skills/_typescript/
+~/.codex/skills/explore/
 ~/.codex/skills/code-review/
 ...                              # one directory per skill
 ```
@@ -32,7 +33,7 @@ The kit has two shared parts plus agent adapters:
 - **`skills/`** — Shared skills copied into each supported agent's skill directory. This lets you keep local agent-specific skills alongside the ones from this repo.
 - **Adapters** — `setup.sh` maps the shared content into each agent's expected home directory and naming conventions. To add a new agent, add an entry to the `AGENTS` array in `setup.sh`.
 
-**Note:** If you have your own skill with the same name as one in this repo, `setup.sh` will ask before overwriting it.
+**Note:** If you have your own skill with the same name as one in this repo, `setup.sh` will ask before overwriting it. `setup.sh` only adds or updates skills — it does not remove previously installed skills that are no longer in the repo.
 
 ## Workflow
 
@@ -45,6 +46,14 @@ The skills follow a natural development workflow:
 5. **Verify** — `verify` — Verify a reported issue is real, identify root cause, and assess severity.
 
 You don't need to use every step — pick whichever skills fit the task at hand.
+
+### Utility skills
+
+These don't belong to a specific workflow step but are available alongside the ones above:
+
+- `proofread` — Check a message for grammar, clarity, and factual accuracy.
+- `translate` — Translate text while preserving tone and context.
+- `validate-note` — Analyze personal knowledge base notes for quality and completeness.
 
 ## Installation
 

@@ -32,7 +32,7 @@ copy_managed_file() {
   copy "$source" "$target"
 }
 
-copy_skill_dir() {
+copy_managed_dir() {
   local source="$1"
   local target="$2"
 
@@ -57,7 +57,7 @@ install_skills() {
     name="$(basename "$skill")"
     [[ "$name" == .* ]] && continue
     target="$skills_dir/$name"
-    copy_skill_dir "$skill" "$target"
+    copy_managed_dir "$skill" "$target"
   done
 }
 
@@ -73,6 +73,7 @@ install_agent() {
   echo "Installing $name adapter:"
   copy_managed_file "$REPO_DIR/AGENTS.md" "$home_dir/$rules_filename"
   install_skills "$skills_dir"
+  copy_managed_dir "$REPO_DIR/references" "$home_dir/references"
 }
 
 echo "Installing shared agents kit assets:"
