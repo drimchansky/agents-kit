@@ -40,7 +40,7 @@ Place at the end of your response. Scope discipline with nothing lost.
 - Use parallel agents for independent tasks: exploring multiple modules, searching usage patterns across the codebase, running typecheck while reading code
 - Do not parallelize sequential edits to the same file or changes that depend on each other's output
 - When spawning parallel tasks, define what each agent investigates and how results will be merged
-- Before presenting results from non-trivial changes:
+- Before presenting results from any changes:
     - Run typecheck and linter on changed files
     - If tests exist for changed code, run them
     - If changing exports or shared code, grep for all consumers and verify compatibility
