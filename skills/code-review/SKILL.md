@@ -155,7 +155,7 @@ High-level review of overall project structure, patterns, and health. No diff â€
 
 ## What to Look For
 
-Applies to all review types. Consult relevant reference checklists (`references/typescript.md`, `references/react.md`, `references/css.md`, `references/testing.md`, etc.) based on the file types touched.
+Applies to all review types. Consult relevant reference checklists based on file types touched (`references/typescript.md`, `references/react.md`, `references/css.md`, `references/testing.md`, etc.) and review concerns (`references/security.md`, `references/performance.md`).
 
 Focus on what reference checklists don't cover:
 
