@@ -79,15 +79,21 @@ Explicitly state:
 
 ### 5. Break Down Steps
 
-Create an ordered list of implementation steps. Each step should be independently verifiable — either testable or reviewable on its own.
+Create an ordered list of implementation steps. Each step must be a **verifiable piece of work** — after completing it, there's a concrete way to confirm it worked before moving on.
 
-For each step: brief description, dependencies on prior steps, and risk level if elevated.
+For each step:
+
+- **What** — Brief description of the change (one concern per step)
+- **Verify** — How to confirm it works (run a test, check a behavior, see output, verify types pass)
+- **Depends on** — Prior steps required (if any)
+
+The verification criterion is non-negotiable. If you can't state how to verify a step, it's either too vague or too small to be a step.
 
 Step sizing:
 
-- Too coarse: "Implement the feature" — not actionable
-- Too fine: "Add import statement" — noise
-- Right size: "Add validation hook with error state for the form fields" — one concern, verifiable result
+- Too coarse: "Implement the feature" — not actionable, not verifiable as a unit
+- Too fine: "Add import statement" — noise, not independently meaningful
+- Right size: "Add validation hook with error state for the form fields" — one concern, verifiable by rendering the form and checking error states appear
 
 ### 6. Identify Risks
 
@@ -143,6 +149,6 @@ Adapt to task size — not every plan needs every section:
 - **Exploration Findings** — Key patterns, affected files, constraints discovered
 - **Approach** — Recommended approach with rationale (comparison table only if multiple viable options)
 - **Scope** — In scope / out of scope
-- **Steps** — Ordered implementation steps with dependencies and risk flags
+- **Steps** — Ordered implementation steps, each with a verification criterion
 - **Risks** — Specific risks with mitigation strategies
 - **Open Questions** — Assumptions that need validation before or during implementation
