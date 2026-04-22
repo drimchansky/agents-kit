@@ -1,6 +1,6 @@
 ---
 name: verify
-description: Verifies a described issue — reproduces it, checks if it's real, identifies root cause, and assesses severity. Use when asked to verify, confirm, check, validate, or investigate a reported bug, issue, or problem.
+description: Verifies a described issue — reproduces it, checks if it's real, identifies root cause, assesses severity, and discovers fix options. Use when asked to verify, confirm, check, validate, or investigate a reported bug, issue, or problem.
 argument-hint: '[issue description]'
 ---
 
@@ -8,7 +8,7 @@ This skill guides verification of reported issues. Before fixing anything, confi
 
 The user describes an issue — a bug report, error message, unexpected behavior, or something that "seems wrong." Your job is to determine whether it's a genuine problem and provide evidence either way.
 
-**CRITICAL**: Do not fix the issue. Verify it. The goal is a clear verdict with evidence, not a patch.
+**CRITICAL**: Do not fix the issue. Verify it first. The goal is a clear verdict with evidence, then — if confirmed — discovery of fix options. The user decides which fix to pursue.
 
 ## Workflow Context
 
@@ -43,7 +43,7 @@ Use the appropriate strategy:
 - **Runtime errors** — Search for the error message in the codebase; trace the triggering conditions
 - **Behavioral issues** — Check if the behavior is intentional (comments, commit messages, feature flags)
 
-## 4. Deliver Verdict
+## 3. Deliver Verdict
 
 Present a clear conclusion with supporting evidence.
 
@@ -54,6 +54,7 @@ Present a clear conclusion with supporting evidence.
 - **Reproduction** — The path through the code that triggers the issue
 - **Severity** — How bad is it? Who is affected? Is there a workaround?
 - **Scope** — Is this an isolated case, or does the same pattern exist elsewhere?
+- **Fix options** — Enumerate concrete approaches to resolve the issue (see below)
 
 ### If the issue is not an issue
 
@@ -69,6 +70,20 @@ Present a clear conclusion with supporting evidence.
 - **What's missing** — What additional information, access, or reproduction steps would resolve it
 - **Best guess** — Your current assessment with stated uncertainty
 
+## 4. Discover Fix Options (Confirmed Issues Only)
+
+After confirming an issue, identify concrete ways to fix it. Present options — don't pick one.
+
+For each option:
+
+- **Approach** — What changes, where
+- **Tradeoffs** — What it improves, what it risks or complicates
+- **Blast radius** — Which files, consumers, or flows are affected by the change
+
+Order options from most targeted (smallest change that fixes the issue) to most thorough (addresses root cause and related patterns). If a fix would also resolve scope issues found in other locations, note that.
+
+Do not implement any fix. Present the options and let the user choose.
+
 ## Don't Rationalize
 
 - "That's definitely a bug" — Show the code path. Intuition isn't evidence.
@@ -82,5 +97,6 @@ Present a clear conclusion with supporting evidence.
 - [ ] Verdict supported by evidence (code paths, test results), not intuition
 - [ ] Root cause points to specific file and line (if confirmed)
 - [ ] Scope assessed — checked if the same pattern exists elsewhere
-- [ ] No fix was attempted — verification only
+- [ ] Fix options presented with tradeoffs (if confirmed), ordered from targeted to thorough
+- [ ] No fix was attempted — verification and discovery only
 - [ ] Missing information stated explicitly (if inconclusive)
