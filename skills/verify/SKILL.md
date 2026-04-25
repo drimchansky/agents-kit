@@ -1,7 +1,8 @@
 ---
 name: verify
-description: Verifies a described issue — reproduces it, checks if it's real, identifies root cause, assesses severity, and discovers fix options. Use when asked to verify, confirm, check, validate, or investigate a reported bug, issue, or problem.
+description: Use when asked to verify, confirm, check, validate, or investigate a reported bug, issue, or problem.
 argument-hint: '[issue description]'
+disable-model-invocation: true
 ---
 
 This skill guides verification of reported issues. Before fixing anything, confirm the problem actually exists, understand its root cause, and assess whether it's a real bug or a misunderstanding.
@@ -9,6 +10,10 @@ This skill guides verification of reported issues. Before fixing anything, confi
 The user describes an issue — a bug report, error message, unexpected behavior, or something that "seems wrong." Your job is to determine whether it's a genuine problem and provide evidence either way.
 
 **CRITICAL**: Do not fix the issue. Verify it first. The goal is a clear verdict with evidence, then — if confirmed — discovery of fix options. The user decides which fix to pursue.
+
+## References
+
+Before working, read any applicable checklists from `references/`. Skip ones that don't apply.
 
 ## Workflow Context
 

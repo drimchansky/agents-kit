@@ -1,11 +1,17 @@
 ---
 name: proofread
-description: Proofreads a message for grammar, clarity, consistency, and factual accuracy while preserving the author's voice. Use when asked to proofread, check, review, or polish a message, email, or piece of writing.
+description: Use when asked to proofread, check, review, or polish a message, email, or piece of writing.
+argument-hint: '[message or file path]'
+disable-model-invocation: true
 ---
 
 # Proofread
 
 Review the provided message and suggest improvements. **Strictly preserve the author's original tone, voice, and style** — don't make casual writing formal or direct writing diplomatic.
+
+## References
+
+Before working, read any applicable checklists from `references/`. Skip ones that don't apply.
 
 ## Analysis Criteria
 

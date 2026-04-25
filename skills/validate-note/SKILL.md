@@ -1,6 +1,8 @@
 ---
 name: validate-note
-description: Analyzes notes for quality, accuracy, and completeness. Use when asked to validate, review, check, update, expand, or improve a personal knowledge base note.
+description: Use when asked to validate, review, check, update, expand, or improve a personal knowledge base note.
+argument-hint: '[note file path]'
+disable-model-invocation: true
 ---
 
 # Note Validator
@@ -8,6 +10,10 @@ description: Analyzes notes for quality, accuracy, and completeness. Use when as
 Validate all notes provided by the user. When multiple notes are provided, produce a separate findings block per note, each with its own overall assessment.
 
 These are personal knowledge base notes — optimize for the author's future reference, not for publication. Focus on issues that would mislead or fail future-you; skip nitpicks.
+
+## References
+
+Before working, read any applicable checklists from `references/`. Skip ones that don't apply.
 
 ## Analysis Criteria
 

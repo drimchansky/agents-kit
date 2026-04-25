@@ -1,7 +1,8 @@
 ---
 name: translate
-description: Translates text while preserving tone, context, and idiomatic correctness.
+description: Use when asked to translate text from one language to another.
 argument-hint: '[target language] [text]'
+disable-model-invocation: true
 ---
 
 ## Rules

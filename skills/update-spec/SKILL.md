@@ -1,7 +1,8 @@
 ---
 name: update-spec
-description: Creates or updates a specification — synthesizes context from conversations, exploration, and feedback into a written spec file. Use when asked to write a project spec, feature spec, or revise an existing spec.
+description: Use when asked to write, update, or revise a project spec or feature spec.
 argument-hint: '[spec file path]'
+disable-model-invocation: true
 ---
 
 This skill produces a written specification file from scattered context — conversation history, exploration findings, validate-spec feedback, user statements, and codebase knowledge. It synthesizes, not transcribes.
@@ -10,12 +11,16 @@ The user provides context about what they want specified. This may be an informa
 
 **CRITICAL**: Write the spec to a file. The output of this skill is a file on disk, not a conversation message. The spec must be written (or overwritten) in place — it is always the current truth. No revision history, no resolved-questions appendix, no changelog.
 
+## References
+
+Before working, read any applicable checklists from `references/`. Skip ones that don't apply.
+
 ## Workflow Context
 
 This skill sits between exploration and validation:
 
 ```
-explore → update-spec → validate-spec → design → implement
+explore → update-spec → validate-spec → design-plan → implement-plan
                ↑              |
                └──────────────┘  (iterate until spec passes)
 ```
@@ -68,7 +73,7 @@ A specific feature, technical change, or initiative. Written to a separate file 
 **Skip when:**
 
 - A spec already exists and the user wants it validated — use validate-spec directly
-- The user wants to design the implementation — use design
+- The user wants to design the implementation — use design-plan
 - The task is simple enough that a spec would be overhead (single-file change, obvious bug fix)
 - The user has a finished spec and wants to proceed — don't insert this step
 
@@ -218,4 +223,4 @@ When receiving back from validate-spec:
 - Read the validate-spec output (feasibility assessment, gaps, questions)
 - Ask the user to answer the outstanding questions
 - Re-run this skill in update mode to incorporate answers and address gaps
-- Repeat until validate-spec confirms the spec is ready for design
+- Repeat until validate-spec confirms the spec is ready for design-plan

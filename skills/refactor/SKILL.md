@@ -1,11 +1,17 @@
 ---
 name: refactor
-description: Plans a refactor — assesses code against production-readiness, defines scope, and designs incremental improvements. Use when asked to refactor, clean up, improve, harden, or make code production-ready.
+description: Use when asked to refactor, clean up, improve, harden, or make code production-ready.
+argument-hint: '[file or area to refactor]'
+disable-model-invocation: true
 ---
 
 This skill guides planning of code improvements toward production quality. Beyond restructuring, this includes fixing error handling gaps, tightening types, handling edge cases, and eliminating tech debt. The output is a refactoring plan — not code changes.
 
 The user identifies code to improve. They may specify what bothers them (duplication, fragile error handling, loose types, complexity) or ask for a general improvement.
+
+## References
+
+Before working, read any applicable checklists from `references/`. Skip ones that don't apply.
 
 ## Workflow Context
 

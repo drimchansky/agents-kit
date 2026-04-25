@@ -1,7 +1,8 @@
 ---
 name: validate-spec
-description: Validates a feature specification against the current codebase — checks feasibility, surfaces conflicts, and identifies missing details before implementation begins. Use when asked to review a spec or requirements against existing code.
+description: Use when asked to review or validate a spec or requirements against existing code.
 argument-hint: '[spec file path]'
+disable-model-invocation: true
 ---
 
 This skill validates a feature specification against the actual codebase before implementation begins. It catches infeasible requirements, missing details, pattern conflicts, and implicit assumptions — producing a clear assessment with targeted questions.
@@ -9,6 +10,10 @@ This skill validates a feature specification against the actual codebase before 
 The user provides a specification — acceptance criteria, feature requirements, a PRD, or an informal description of what they want built. Your job is to determine whether it can be built as described within the current codebase, and surface anything that needs resolution first.
 
 **CRITICAL**: Do not implement. Do not design the solution. Validate the specification. The output is a feasibility assessment with questions, not a plan or code.
+
+## References
+
+Before working, read any applicable checklists from `references/`. Skip ones that don't apply.
 
 ## When to Validate
 
@@ -135,8 +140,8 @@ Aspects of the spec that are verified and ready to build — so the user knows w
 
 ## Handoff
 
-If the spec passes validation and the user wants to proceed to design or implementation:
+If the spec passes validation and the user wants to proceed to design-plan:
 
 - Summarize: confirmed requirements, resolved questions, remaining caveats, and any constraints discovered during codebase exploration
-- This summary serves as the starting input for the `design` skill — don't repeat exploration that was already done during validation
-- If critical questions remain unresolved, recommend addressing them before moving to design
+- This summary serves as the starting input for the `design-plan` skill — don't repeat exploration that was already done during validation
+- If critical questions remain unresolved, recommend addressing them before moving to design-plan

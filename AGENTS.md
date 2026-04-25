@@ -49,7 +49,9 @@ Place at the end of your response. Scope discipline with nothing lost.
 
 ## References
 
-Reference checklists live in `references/`. Consult the relevant checklist when writing or reviewing code in that domain (TypeScript, React, CSS, accessibility, testing, etc.).
+Reference checklists live in `references/`. Consult any that apply when writing or reviewing code in that domain.
+
+Most skills in `skills/` direct the agent to load applicable references as part of their workflow. For ad-hoc work outside a skill, still consult them on your own — the same rule applies.
 
 ## Dependencies
 
