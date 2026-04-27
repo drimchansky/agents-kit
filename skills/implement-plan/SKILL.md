@@ -9,8 +9,8 @@ This skill executes a plan written by `design-plan` (or any plan in `.agents/pla
 
 The plan is the **contract**; the result file is the **append-only record**. Both live next to each other:
 
-- Plan: `.agents/plans/YYYY-MM-DD-<slug>.md`
-- Result: `.agents/plans/YYYY-MM-DD-<slug>.result.md`
+- Plan: `.agents/plans/<slug>.md`
+- Result: `.agents/plans/<slug>.result.md`
 
 **CRITICAL**: Both files are mutated by this skill. The plan is mutated _only_ to flip step checkboxes (`- [ ]` → `- [x]`), append result links, update the `Status:` header, and (when necessary) revise scope or steps. Everything else about the plan stays as written. The result file is the place for narrative — what shipped, what surprised you, what diverged.
 
@@ -24,7 +24,7 @@ Before working, read any applicable checklists from `references/`. Skip ones tha
 
 - The user asks to implement, execute, run, or carry out a plan
 - A plan exists in `.agents/plans/` and the user wants to start (or resume) work on it
-- The user references a plan file directly (e.g. "run `.agents/plans/2026-04-25-add-csv-export.md`")
+- The user references a plan file directly (e.g. "run `.agents/plans/add-csv-export.md`")
 
 **Skip when:**
 
@@ -55,12 +55,12 @@ Respect step `Depends on:` ordering regardless of mode.
 
 ### 3. Initialize the Result File (if it doesn't exist)
 
-Create `.agents/plans/YYYY-MM-DD-<slug>.result.md` with this header:
+Create `.agents/plans/<slug>.result.md` with this header:
 
 ```markdown
 # Result: <plan title>
 
-**Plan:** [./YYYY-MM-DD-<slug>.md](./YYYY-MM-DD-<slug>.md)
+**Plan:** [./<slug>.md](./<slug>.md)
 **Started:** YYYY-MM-DD
 **Status:** in-progress
 
@@ -79,7 +79,7 @@ For each step (or for the whole plan, if running end-to-end):
 4. **Mark the step DONE in the plan** — Flip `- [ ]` to `- [x]` for that step and append the result-section link:
 
     ```markdown
-    - [x] **What:** <unchanged> ([result](./YYYY-MM-DD-<slug>.result.md#step-1--add-csv-writer))
+    - [x] **What:** <unchanged> ([result](./<slug>.result.md#step-1--add-csv-writer))
     ```
 
 5. **Pause or continue** — In step-by-step mode, stop here and report progress. In full-plan mode, continue to the next step.
@@ -176,4 +176,4 @@ After execution (or at the end of a step-by-step pause), tell the user:
 - Which steps are done and which remain
 - Any deviations from the plan and why
 - Any blockers, open questions, or follow-ups recorded in the result file
-- Path to both files: `.agents/plans/YYYY-MM-DD-<slug>.md` and `.agents/plans/YYYY-MM-DD-<slug>.result.md`
+- Path to both files: `.agents/plans/<slug>.md` and `.agents/plans/<slug>.result.md`

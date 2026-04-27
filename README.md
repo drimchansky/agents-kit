@@ -46,7 +46,7 @@ The skills follow a natural development workflow:
 1. **Understand** — `explore` — Explore how something works: code, libraries, APIs, concepts, or architecture. Also use before planning to surface constraints, blast radius, and known alternatives.
 2. **Specify** — `update-spec` — Create or update a project or feature spec from conversation context, exploration findings, and validation feedback.
 3. **Validate** — `validate-spec` — Check a feature spec against the codebase for feasibility, conflicts, and missing details before planning begins.
-4. **Plan** — `design-plan` or `refactor` — Break a task into steps, compare approaches, define scope. `design-plan` writes the plan to `.agents/plans/YYYY-MM-DD-<slug>.md`.
+4. **Plan** — `design-plan` or `refactor` — Break a task into steps, compare approaches, define scope. `design-plan` writes the plan to `.agents/plans/<slug>.md`.
 5. **Implement** — `implement-plan` — Execute a plan from `.agents/plans/`. Updates a companion `*.result.md` and marks each step DONE in the plan as work completes. Supports full-plan or step-by-step execution.
 6. **Review** — `code-review` — Check for bugs, impact, and adherence to project patterns.
 7. **Verify** — `verify` — Verify a reported issue is real, identify root cause, and assess severity.
@@ -57,8 +57,8 @@ You don't need to use every step — pick whichever skills fit the task at hand.
 
 `design-plan` and `implement-plan` share a convention:
 
-- **Plan** — `.agents/plans/YYYY-MM-DD-<slug>.md` — the contract. Steps use `- [ ]` checkboxes that `implement-plan` flips to `- [x]` as work completes.
-- **Result** — `.agents/plans/YYYY-MM-DD-<slug>.result.md` — append-only record of what shipped, deviations, and surprises. One section per step (or one combined section for full-plan runs).
+- **Plan** — `.agents/plans/<slug>.md` — the contract. Steps use `- [ ]` checkboxes that `implement-plan` flips to `- [x]` as work completes.
+- **Result** — `.agents/plans/<slug>.result.md` — append-only record of what shipped, deviations, and surprises. One section per step (or one combined section for full-plan runs).
 
 ### Utility skills
 

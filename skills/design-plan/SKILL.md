@@ -47,12 +47,11 @@ If the task doesn't warrant a full plan, say so and suggest proceeding directly 
 
 ## Plan File Output
 
-**Location:** `.agents/plans/YYYY-MM-DD-<slug>.md` at the project root.
+**Location:** `.agents/plans/<slug>.md` at the project root.
 
-- `YYYY-MM-DD` — today's date
 - `<slug>` — derived from the task: 2–5 lowercase kebab-case words capturing the gist (e.g. `add-csv-export`, `migrate-auth-middleware`, `fix-stale-cache-invalidation`). Don't ask the user — derive it.
 
-If `.agents/plans/` doesn't exist, create it. If the same slug already has a plan for today, append a short suffix (`-2`, `-3`).
+If `.agents/plans/` doesn't exist, create it. If a plan with the same slug already exists, append a short suffix (`-2`, `-3`).
 
 The plan file is the **contract**. Once written, `implement-plan` consumes it and updates step checkboxes as work completes. Avoid rewriting the plan in place during planning iteration unless the user asks for revisions — refine through conversation, then write the final version.
 
@@ -159,7 +158,7 @@ Match the plan's detail to the task's complexity:
 
 ## Verification
 
-- [ ] Plan written to `.agents/plans/YYYY-MM-DD-<slug>.md`
+- [ ] Plan written to `.agents/plans/<slug>.md`
 - [ ] Slug derived from task, kebab-case, 2–5 words
 - [ ] Each step has `- [ ]` checkbox marker, **What**, **Verify**, **Depends on**
 - [ ] Plan is grounded in actual code exploration, not assumptions
@@ -176,7 +175,7 @@ Write the file with this top-level layout. Adapt sections to task size — not e
 # <task title>
 
 **Status:** ready
-**Result:** _(populated by `implement-plan`: link to `YYYY-MM-DD-<slug>.result.md`)_
+**Result:** _(populated by `implement-plan`: link to `<slug>.result.md`)_
 
 ## Task Understanding
 
@@ -223,7 +222,7 @@ Write the file with this top-level layout. Adapt sections to task size — not e
 
 After writing the plan, tell the user:
 
-- The path: `.agents/plans/YYYY-MM-DD-<slug>.md`
+- The path: `.agents/plans/<slug>.md`
 - Whether to proceed with `implement-plan` (and whether full-plan or step-by-step execution makes sense given the scope)
 - Any open questions that should be resolved before implementation begins
 

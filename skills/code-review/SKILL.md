@@ -1,13 +1,17 @@
 ---
 name: code-review
 description: Use when asked to review, audit, or give feedback on a PR, diff, module, or whole project.
-argument-hint: '[scope or file path]'
+argument-hint: '[scope or file path] [--no-checks]'
 disable-model-invocation: true
 ---
 
 # Code Review
 
 Review code for correctness, unintended impact, and adherence to project patterns. Start by determining the review scope.
+
+## Flags
+
+- `--no-checks` — Skip automated checks (lint, typecheck, tests, build, or any other tooling-driven verification). Focus exclusively on code analysis: read the code, reason about it, and produce findings. Do not invoke project scripts or run commands that execute code. Applies only to the Pre-PR and Pre-commit workflows, which have a "Run automated checks" step; Module and Project reviews don't run checks regardless.
 
 ## References
 
@@ -43,6 +47,11 @@ Review all changes in the current branch against the destination branch.
 
 - Read commit messages and PR description if available
 
+**Run automated checks** (skip if `--no-checks`):
+
+- Run project lint, typecheck, and tests on changed files where they exist
+- Treat failures and warnings as findings; record them with file location and severity
+
 ### Review Focus
 
 Apply the full review process: the "What to Look For", "What NOT to Flag", and "Calibrate Severity" sections below.
@@ -64,6 +73,11 @@ Review staged changes before committing.
 - Get staged diff: `git diff --cached`
 - If nothing is staged, inform the user and stop
 - Group changes by file and intent
+
+**Run automated checks** (skip if `--no-checks`):
+
+- Run project lint, typecheck, and tests on staged files where they exist
+- Treat failures and warnings as findings; record them with file location and severity
 
 ### Review Focus
 
