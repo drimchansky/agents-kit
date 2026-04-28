@@ -1,11 +1,11 @@
 ---
-name: code-review
+name: review-code
 description: Use when asked to review, audit, or give feedback on a PR, diff, module, or whole project.
 argument-hint: '[scope or file path] [--no-checks]'
 disable-model-invocation: true
 ---
 
-# Code Review
+# Review Code
 
 Review code for correctness, unintended impact, and adherence to project patterns. Start by determining the review scope.
 

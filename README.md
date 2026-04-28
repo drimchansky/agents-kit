@@ -39,30 +39,36 @@ The kit has two shared parts plus agent adapters:
 
 **Note:** If you have your own skill with the same name as one in this repo, `setup.sh` will ask before overwriting it. Skills installed by this kit that are later removed from the repo will be cleaned up automatically on the next run. Your own skills are never touched.
 
-## Workflow
+## Skills
 
-The skills follow a natural development workflow:
+Skills are organized into two groups: an **engineering workflow** that shapes the development loop, and a set of **utilities** for ad-hoc tasks.
 
-1. **Understand** — `explore` — Explore how something works: code, libraries, APIs, concepts, or architecture. Also use before planning to surface constraints, blast radius, and known alternatives.
-2. **Specify** — `update-spec` — Create or update a project or feature spec from conversation context, exploration findings, and validation feedback.
-3. **Validate** — `validate-spec` — Check a feature spec against the codebase for feasibility, conflicts, and missing details before planning begins.
-4. **Plan** — `design-plan` or `refactor` — Break a task into steps, compare approaches, define scope. `design-plan` writes the plan to `.agents/plans/<slug>.md`.
-5. **Implement** — `implement-plan` — Execute a plan from `.agents/plans/`. Updates a companion `*.result.md` and marks each step DONE in the plan as work completes. Supports full-plan or step-by-step execution.
-6. **Review** — `code-review` — Check for bugs, impact, and adherence to project patterns.
-7. **Verify** — `verify` — Verify a reported issue is real, identify root cause, and assess severity.
+### Engineering workflow
 
-You don't need to use every step — pick whichever skills fit the task at hand.
+The workflow runs roughly in order, but you don't need every step – pick whichever fits the task.
 
-### Plan and result files
+1. **Understand** — `explore` — Explore how something works: code, features, architecture, libraries, APIs, protocols, or domain concepts. Also use before planning to surface constraints, blast radius, and known alternatives.
+2. **Plan** — `design-plan` — Break a task into steps, compare approaches, define scope. Writes the plan to `.agents/plans/<slug>.md`.
+3. **Review the plan** — `review-plan` — Sanity-check the plan against the codebase: feasibility per step, missing details, pattern conflicts.
+4. **Implement** — `implement-plan` — Execute a plan from `.agents/plans/`. Updates a companion `*.result.md` and marks each step DONE in the plan as work completes. Supports full-plan or step-by-step execution.
+5. **Review the code** — `review-code` — Check the implementation for bugs, blast radius, and adherence to project patterns.
+6. **Verify issues** — `verify-issue` — Confirm a reported bug is real, identify root cause, and assess severity. Often run on findings from `review-code`.
+7. **Document** — `update-doc` — Write or refresh documentation based on the current implementation: README, AGENTS.md/CLAUDE.md, architecture notes, runbooks, etc.
+
+Cross-cutting (use whenever the codebase has drifted from its docs):
+
+- `validate-docs` — Audit existing documentation against the codebase for stale references, drifted descriptions, and missing context. Pairs with `update-doc` for the fix.
+
+#### Plan and result files
 
 `design-plan` and `implement-plan` share a convention:
 
 - **Plan** — `.agents/plans/<slug>.md` — the contract. Steps use `- [ ]` checkboxes that `implement-plan` flips to `- [x]` as work completes.
 - **Result** — `.agents/plans/<slug>.result.md` — append-only record of what shipped, deviations, and surprises. One section per step (or one combined section for full-plan runs).
 
-### Utility skills
+### Utilities
 
-These don't belong to a specific workflow step but are available alongside the ones above:
+Standalone skills that aren't tied to the engineering loop:
 
 - `proofread` — Check a message for grammar, clarity, and factual accuracy.
 - `translate` — Translate text while preserving tone and context.

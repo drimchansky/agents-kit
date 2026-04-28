@@ -15,17 +15,6 @@ The user provides a task or feature request. They may include context about cons
 
 Before working, read any applicable checklists from `references/`. Skip ones that don't apply.
 
-## Workflow Context
-
-This skill complements — not replaces — an agent's planning mode, if one exists:
-
-- **Planning mode** — Conversational alignment on direction and scope.
-- **This skill** — Structured and methodical. Formal analysis written to disk so it can be executed and tracked.
-
-Typical flow: planning (align on direction) → **design-plan** (structured analysis, plan file) → **implement-plan** (execute and track) → review/verify.
-
-For simpler tasks, skip straight to whichever step matches the complexity.
-
 ## When to Plan (and When Not To)
 
 **Plan when:**
@@ -65,7 +54,7 @@ The plan file is the **contract**. Once written, `implement-plan` consumes it an
 
 ### 2. Explore the Codebase
 
-**CRITICAL**: Always ground the plan in what already exists. Read before designing.
+**CRITICAL**: Always ground the plan in what already exists. Read before designing — this is the forward exploration pass; `review-plan` will independently verify assumptions later if invoked.
 
 - Search for related implementations to use as models; map affected files and shared code in the blast radius
 - Note existing constraints (tech debt, API contracts, performance budgets)
@@ -217,13 +206,3 @@ Write the file with this top-level layout. Adapt sections to task size — not e
 
 - ...
 ```
-
-## Handoff
-
-After writing the plan, tell the user:
-
-- The path: `.agents/plans/<slug>.md`
-- Whether to proceed with `implement-plan` (and whether full-plan or step-by-step execution makes sense given the scope)
-- Any open questions that should be resolved before implementation begins
-
-If the user intends to execute the plan manually (without `implement-plan`), point them at `implement-plan`'s "Plan Revisions Mid-Execution" section for the revision protocol when discoveries require updating the plan.

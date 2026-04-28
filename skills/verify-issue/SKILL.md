@@ -1,5 +1,5 @@
 ---
-name: verify
+name: verify-issue
 description: Use when asked to verify, confirm, check, validate, or investigate a reported bug, issue, or problem.
 argument-hint: '[issue description]'
 disable-model-invocation: true
@@ -15,14 +15,9 @@ The user describes an issue — a bug report, error message, unexpected behavior
 
 Before working, read any applicable checklists from `references/`. Skip ones that don't apply.
 
-## Workflow Context
+## Multiple Findings
 
-When invoked after a `code-review`, treat the review's findings as the claims to verify. Each finding becomes a separate verification target.
-
-- **No specific findings mentioned** — verify all findings from the review, in severity order (critical → major → minor)
-- **User specifies findings** — verify only those; skip the rest
-
-For each finding, run the full process below (Understand the Claim → Investigate → Deliver Verdict). Present results as a list of verdicts — one per finding — so the user can see which review findings hold up and which don't.
+When the input is a list of findings (e.g. from a code review), treat each as a separate verification target. Without explicit selection, verify all findings in severity order (critical → major → minor); when the user specifies a subset, verify only those. Present results as one verdict per finding.
 
 ## 1. Understand the Claim
 
