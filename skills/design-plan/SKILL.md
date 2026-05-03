@@ -13,7 +13,7 @@ Before doing anything else in this skill:
 2. Apply the rules it defines for the rest of this skill's execution.
 3. Output the following line verbatim to the user as a visible confirmation, **before** any other text or tool calls in this skill, on its own line:
 
-    ✅ Core rules applied (./AGENTS.md)
+    ✅ Core agents-kit rules applied (./AGENTS.md)
 
 The rules cover scope discipline, push-back behavior, communication style, and pre-presentation checks — they take precedence over default behavior unless the project's own conventions say otherwise.
 

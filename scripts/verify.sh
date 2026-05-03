@@ -59,10 +59,18 @@ done
 pass "symlink contract"
 
 step "4. Directive contract"
-missing=$(grep -L "## Core Rules" skills/*/SKILL.md || true)
-[ -z "$missing" ] || fail "SKILL.md files missing '## Core Rules' heading: $missing"
-missing=$(grep -L "✅ Core rules applied (./AGENTS.md)" skills/*/SKILL.md || true)
-[ -z "$missing" ] || fail "SKILL.md files missing confirmation line: $missing"
+# Engineering skills carry a sibling AGENTS.md symlink and must include the
+# Core Rules directive. Standalone skills (no symlink) are exempt by design.
+engineering_skills=()
+for skill in skills/*/; do
+  [ -L "${skill%/}/AGENTS.md" ] && engineering_skills+=("${skill%/}/SKILL.md")
+done
+if [ ${#engineering_skills[@]} -gt 0 ]; then
+  missing=$(grep -L "## Core Rules" "${engineering_skills[@]}" || true)
+  [ -z "$missing" ] || fail "SKILL.md files missing '## Core Rules' heading: $missing"
+  missing=$(grep -L "✅ Core agents-kit rules applied (./AGENTS.md)" "${engineering_skills[@]}" || true)
+  [ -z "$missing" ] || fail "SKILL.md files missing confirmation line: $missing"
+fi
 stale=$(grep -rln '\.\./\.\./AGENTS\.md' skills/ || true)
 [ -z "$stale" ] || fail "stale '../../AGENTS.md' refs found: $stale"
 pass "directive contract"
@@ -75,6 +83,9 @@ HOME="$fake_home" ./setup.sh >/dev/null
 [ ! -f "$fake_home/.codex/AGENTS.md" ] || fail "global ~/.codex/AGENTS.md was written"
 for agent in .claude .codex; do
   for skill in skills/*/; do
+    # Skip standalone skills — they ship without a sibling AGENTS.md and the
+    # install destination correctly has none either.
+    [ -L "${skill%/}/AGENTS.md" ] || continue
     name=$(basename "$skill")
     dest="$fake_home/$agent/skills/$name/AGENTS.md"
     if ! { [ -f "$dest" ] && [ ! -L "$dest" ] && diff -q "$dest" CORE_RULES.md >/dev/null; }; then

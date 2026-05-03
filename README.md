@@ -4,7 +4,7 @@ A personal agents kit for Claude Code, Codex, and other coding agents.
 
 ## What is this?
 
-A personal kit of skills, rules, and reference checklists for working with coding agents. Its core is an **engineering workflow** that wraps a coding agent in a structured development loop — **understand → plan → implement → review → verify → document** — alongside a small set of standalone **utilities** (proofreading, translation, etc.) for ad-hoc tasks. Each capability is a slash-command-style skill you invoke when you need it; skills share a common rule set (`CORE_RULES.md`) and a plan/result file convention so they hand off cleanly to each other.
+A personal kit of skills, rules, and reference checklists for working with coding agents. Its core is an **engineering workflow** that wraps a coding agent in a structured development loop — **understand → plan → implement → review → verify → document** — alongside a small set of standalone **utilities** (proofreading, translation, fact-checking) for ad-hoc tasks. Each capability is a slash-command-style skill you invoke when you need it; skills share a common rule set (`CORE_RULES.md`) and a plan/result file convention so they hand off cleanly to each other.
 
 The same kit installs into Claude Code (as a plugin) and Codex (via setup script), so it travels with you across agents.
 
@@ -26,14 +26,16 @@ Then try a skill:
 You'll know it's working when the agent's first line is:
 
 ```
-✅ Core rules applied (./AGENTS.md)
+✅ Core agents-kit rules applied (./AGENTS.md)
 ```
 
-If that line is missing, the skill's shared rules didn't load — see [How It Works](#how-it-works).
+That signal applies to **engineering-workflow skills** (like `/explore`). Standalone utilities — `/proofread`, `/translate`, `/fact-check` — are self-contained, don't load shared rules, and won't print this line.
+
+If that line is missing on an engineering skill, the skill's shared rules didn't load — see [How It Works](#how-it-works).
 
 ## Skills
 
-Skills are organized into two groups: an **engineering workflow** (9 skills) that shapes the development loop, and a set of **utilities** (2 skills) for ad-hoc tasks.
+Skills are organized into two groups: an **engineering workflow** (9 skills) that shapes the development loop, and a set of **utilities** (3 skills) for ad-hoc tasks.
 
 ### Engineering workflow
 
@@ -63,16 +65,17 @@ These files land in `.agents/` inside your consumer project. Commit or gitignore
 
 ### Reference checklists
 
-The kit also ships domain checklists in `references/engineering/` that engineering skills (especially `implement-plan` and `review-code`) consult when relevant: `accessibility`, `code-style`, `css`, `performance`, `react`, `security`, `tanstack-query`, `testing`, `typescript`. Other domains (e.g. prose, design) can live as siblings under `references/` as new subdirectories appear; the prose-only utilities (`proofread`, `translate`) deliberately omit a References block today.
+The kit also ships domain checklists in `references/engineering/` that engineering skills (especially `implement-plan` and `review-code`) consult when relevant: `accessibility`, `code-style`, `css`, `performance`, `react`, `security`, `tanstack-query`, `testing`, `typescript`. Other domains (e.g. prose, design) can live as siblings under `references/` as new subdirectories appear; the standalone utilities (`proofread`, `translate`, `fact-check`) deliberately omit a References block today.
 
 ### Utilities
 
 Standalone skills that aren't tied to the engineering loop:
 
-| Skill                                    | When to use                                                                                 | Example                   |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------- |
-| [`proofread`](skills/proofread/SKILL.md) | Polishing a message, email, or piece of writing for grammar, clarity, and factual accuracy. | `/proofread` (paste text) |
-| [`translate`](skills/translate/SKILL.md) | Moving content between languages while preserving tone and context.                         | `/translate to Spanish`   |
+| Skill                                      | When to use                                                                                          | Example                     |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------- | --------------------------- |
+| [`proofread`](skills/proofread/SKILL.md)   | Polishing a message, email, or piece of writing for grammar, clarity, and factual accuracy.          | `/proofread` (paste text)   |
+| [`translate`](skills/translate/SKILL.md)   | Moving content between languages while preserving tone and context.                                  | `/translate to Spanish`     |
+| [`fact-check`](skills/fact-check/SKILL.md) | Verifying factual claims against trustworthy live sources on the internet — not against pretraining. | `/fact-check` (paste claim) |
 
 ## Installation
 
@@ -107,7 +110,7 @@ git clone git@github.com:drimchansky/agents-kit.git ~/agents-kit
 
 The repo can be cloned anywhere — `setup.sh` resolves its own location automatically. The script copies `skills/` and `references/` into **both** `~/.claude/` and `~/.codex/` unconditionally (even if you only use one agent) and dereferences the per-skill `AGENTS.md` symlinks into real files at the install destination.
 
-**Windows note:** the kit's per-skill `AGENTS.md` files are Git symlinks. They check out correctly on macOS, Linux, and WSL. On native Windows, Git requires `core.symlinks=true` (default-on with modern Git for Windows + developer mode); without it, the symlinks materialize as text files containing the literal path `../../CORE_RULES.md` and the kit's rules won't load. Verify with `ls -la skills/explore/AGENTS.md` showing a real symlink before running `setup.sh`. WSL avoids the issue entirely.
+**Windows note:** the kit's per-engineering-skill `AGENTS.md` files are Git symlinks (standalone utility skills don't carry one). They check out correctly on macOS, Linux, and WSL. On native Windows, Git requires `core.symlinks=true` (default-on with modern Git for Windows + developer mode); without it, the symlinks materialize as text files containing the literal path `../../CORE_RULES.md` and the kit's rules won't load. Verify with `ls -la skills/explore/AGENTS.md` showing a real symlink before running `setup.sh`. WSL avoids the issue entirely.
 
 ### Updating
 
@@ -123,9 +126,9 @@ Plugin installs pick up changes the next time the plugin cache refreshes.
 The kit ships the rules **with each skill** instead of as a global instructions file:
 
 - **`CORE_RULES.md`** — The canonical, agent-neutral rules file. Lives once at the repo root and is distributed to each skill via a symlink.
-- **`skills/<name>/AGENTS.md`** — A relative symlink (`../../CORE_RULES.md`) inside every skill directory. The Claude Code plugin loader preserves symlinks in its cache, so they resolve at runtime; for non-plugin installs, `setup.sh` dereferences with `cp -L` and writes a real file copy into each installed skill directory. The sibling is named `AGENTS.md` so it feels native to AGENTS.md-aware tools at the consumer end.
+- **`skills/<name>/AGENTS.md`** — A relative symlink (`../../CORE_RULES.md`) inside every **engineering-workflow** skill directory. Standalone utility skills (`proofread`, `translate`, `fact-check`) ship without this sibling and load no shared rules. The Claude Code plugin loader preserves symlinks in its cache, so they resolve at runtime; for non-plugin installs, `setup.sh` dereferences with `cp -L` and writes a real file copy into each installed skill directory. The sibling is named `AGENTS.md` so it feels native to AGENTS.md-aware tools at the consumer end.
 - **`AGENTS.md`** (repo root) — Contributor-facing instructions for working on this kit. Not shipped to consumer projects.
-- **`skills/<name>/SKILL.md`** — Opens with a fixed "Core Rules" directive that instructs the agent to read the sibling `./AGENTS.md` first, apply its rules for the duration of the skill, and emit `✅ Core rules applied (./AGENTS.md)` as a visible confirmation before doing anything else. If the line doesn't appear in the agent's response, the rules weren't loaded.
+- **`skills/<name>/SKILL.md`** — Engineering-workflow skills open with a fixed "Core Rules" directive that instructs the agent to read the sibling `./AGENTS.md` first, apply its rules for the duration of the skill, and emit `✅ Core agents-kit rules applied (./AGENTS.md)` as a visible confirmation before doing anything else. If that line doesn't appear when invoking an engineering skill, the rules weren't loaded. Standalone utility skills omit this directive — their full guidance lives inline in `SKILL.md`.
 - **No global rules file is installed.** `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md` are no longer written by this kit. Rules apply only when a skill from the kit is invoked.
 - **Adapters** — `setup.sh` maps the shared content into each non-plugin agent's expected directory (`~/.claude/skills/`, `~/.codex/skills/`). To add a new agent, append to the `AGENTS` array in `setup.sh`.
 
