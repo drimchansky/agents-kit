@@ -5,6 +5,18 @@ argument-hint: '[doc file path]'
 disable-model-invocation: true
 ---
 
+## Core Rules
+
+Before doing anything else in this skill:
+
+1. Read the sibling file `./AGENTS.md` (relative to this `SKILL.md`).
+2. Apply the rules it defines for the rest of this skill's execution.
+3. Output the following line verbatim to the user as a visible confirmation, **before** any other text or tool calls in this skill, on its own line:
+
+    ✅ Core rules applied (./AGENTS.md)
+
+The rules cover scope discipline, push-back behavior, communication style, and pre-presentation checks — they take precedence over default behavior unless the project's own conventions say otherwise.
+
 This skill produces or updates a documentation file from the current state of the codebase. It synthesizes — reading the implementation, prior versions of the doc, and any conversation context — to write a doc that reflects what actually exists.
 
 The user provides a target doc and (optionally) what to focus on. This may be a new doc to create, an existing doc to bring up to date, or a specific area within a doc to revise. Your job is to produce a file on disk that matches reality.
@@ -15,7 +27,7 @@ For checking whether an existing doc is accurate before updating, use `validate-
 
 ## References
 
-Before working, read any applicable checklists from `references/`. Skip ones that don't apply.
+Before working, read any applicable checklists from `references/engineering/`. Skip ones that don't apply.
 
 ## Modes
 

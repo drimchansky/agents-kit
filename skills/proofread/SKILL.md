@@ -5,13 +5,21 @@ argument-hint: '[message or file path]'
 disable-model-invocation: true
 ---
 
+## Core Rules
+
+Before doing anything else in this skill:
+
+1. Read the sibling file `./AGENTS.md` (relative to this `SKILL.md`).
+2. Apply the rules it defines for the rest of this skill's execution.
+3. Output the following line verbatim to the user as a visible confirmation, **before** any other text or tool calls in this skill, on its own line:
+
+    ✅ Core rules applied (./AGENTS.md)
+
+The rules cover scope discipline, push-back behavior, communication style, and pre-presentation checks — they take precedence over default behavior unless the project's own conventions say otherwise.
+
 # Proofread
 
 Review the provided message and suggest improvements. **Strictly preserve the author's original tone, voice, and style** — don't make casual writing formal or direct writing diplomatic.
-
-## References
-
-Before working, read any applicable checklists from `references/`. Skip ones that don't apply.
 
 ## Analysis Criteria
 

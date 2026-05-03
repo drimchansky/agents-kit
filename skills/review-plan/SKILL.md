@@ -5,6 +5,18 @@ argument-hint: '[plan file path]'
 disable-model-invocation: true
 ---
 
+## Core Rules
+
+Before doing anything else in this skill:
+
+1. Read the sibling file `./AGENTS.md` (relative to this `SKILL.md`).
+2. Apply the rules it defines for the rest of this skill's execution.
+3. Output the following line verbatim to the user as a visible confirmation, **before** any other text or tool calls in this skill, on its own line:
+
+    ✅ Core rules applied (./AGENTS.md)
+
+The rules cover scope discipline, push-back behavior, communication style, and pre-presentation checks — they take precedence over default behavior unless the project's own conventions say otherwise.
+
 This skill validates an implementation plan against the actual codebase before execution begins. It catches infeasible steps, missing details, pattern conflicts, and implicit assumptions — producing a clear assessment with targeted questions.
 
 The user provides a plan — typically the output of `design-plan`, written to `.agents/plans/<slug>.md`. Your job is to determine whether the plan can be executed as written within the current codebase, and surface anything that needs resolution first.
@@ -13,7 +25,7 @@ The user provides a plan — typically the output of `design-plan`, written to `
 
 ## References
 
-Before working, read any applicable checklists from `references/`. Skip ones that don't apply.
+Before working, read any applicable checklists from `references/engineering/`. Skip ones that don't apply.
 
 ## Locate the Plan
 
@@ -48,6 +60,7 @@ Extract the concrete claims and steps:
 
 - **Goal** — What the plan is trying to accomplish
 - **Steps** — Each ordered step's "What", "Verify", and "Depends on"
+- **Checkpoints** — Any `### Checkpoint after Step N` blocks: where they're placed, what assertions they list (test suite, build, named end-to-end flow)
 - **Scope** — What's in / out of scope and why
 - **Integration points** — What existing code, components, APIs, or patterns the plan references or depends on
 - **Implicit assumptions** — What the plan takes for granted without stating (available APIs, existing components, data availability)
@@ -93,6 +106,7 @@ Look for what the plan doesn't say but the implementation will need:
 - **Missing analytics** — If the project tracks events, new user actions likely need tracking
 - **Missing patterns** — If the work needs a new pattern (new route, new context, new hook), the plan should acknowledge it
 - **Step ordering** — Are dependencies between steps correct? Is anything required out of order?
+- **Checkpoint placement** — For plans with more than ~5 steps, are checkpoints present every 2–3 steps? Does each checkpoint name a concrete end-to-end flow (e.g. "user can log in and see dashboard"), not a vague "core flow works"? Flag missing, misplaced, or vague checkpoints.
 - **Platform constraints** — Domain rules, protocol limitations, timing constraints that affect the work
 
 ### 5. Check Pattern Consistency
@@ -150,6 +164,7 @@ Aspects of the plan that are verified and ready to execute — so the user knows
 - [ ] Every integration point verified against actual source code
 - [ ] Each step has a clear verdict with evidence
 - [ ] Each step's verify criterion assessed for concreteness
+- [ ] Checkpoints (if plan >5 steps) assessed for placement and concrete end-to-end assertion
 - [ ] Questions are targeted and explain why the answer matters
 - [ ] Gaps grouped by category with specific details
 - [ ] No redesign or implementation proposed — review only

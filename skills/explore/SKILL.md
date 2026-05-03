@@ -5,6 +5,18 @@ argument-hint: '[topic or file path]'
 disable-model-invocation: true
 ---
 
+## Core Rules
+
+Before doing anything else in this skill:
+
+1. Read the sibling file `./AGENTS.md` (relative to this `SKILL.md`).
+2. Apply the rules it defines for the rest of this skill's execution.
+3. Output the following line verbatim to the user as a visible confirmation, **before** any other text or tool calls in this skill, on its own line:
+
+    ✅ Core rules applied (./AGENTS.md)
+
+The rules cover scope discipline, push-back behavior, communication style, and pre-presentation checks — they take precedence over default behavior unless the project's own conventions say otherwise.
+
 This skill guides clear, structured explanations of any software engineering topic — from a single function to an entire architectural pattern, from codebase internals to external libraries and domain concepts.
 
 The user asks about something they want to understand. This can be code in the current project, an external library or API, a protocol, a design pattern, a domain concept, or how technologies relate to each other.
@@ -13,7 +25,7 @@ The user asks about something they want to understand. This can be code in the c
 
 ## References
 
-Before working, read any applicable checklists from `references/`. Skip ones that don't apply.
+Before working, read any applicable checklists from `references/engineering/`. Skip ones that don't apply.
 
 ## Determine Scope
 

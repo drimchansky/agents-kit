@@ -5,6 +5,18 @@ argument-hint: '[scope or file path] [--no-checks]'
 disable-model-invocation: true
 ---
 
+## Core Rules
+
+Before doing anything else in this skill:
+
+1. Read the sibling file `./AGENTS.md` (relative to this `SKILL.md`).
+2. Apply the rules it defines for the rest of this skill's execution.
+3. Output the following line verbatim to the user as a visible confirmation, **before** any other text or tool calls in this skill, on its own line:
+
+    ✅ Core rules applied (./AGENTS.md)
+
+The rules cover scope discipline, push-back behavior, communication style, and pre-presentation checks — they take precedence over default behavior unless the project's own conventions say otherwise.
+
 # Review Code
 
 Review code for correctness, unintended impact, and adherence to project patterns. Start by determining the review scope.
@@ -15,7 +27,7 @@ Review code for correctness, unintended impact, and adherence to project pattern
 
 ## References
 
-Before working, read any applicable checklists from `references/`. Skip ones that don't apply.
+Before working, read any applicable checklists from `references/engineering/`. Skip ones that don't apply.
 
 ## 1. Determine Review Type
 
@@ -42,6 +54,8 @@ Review all changes in the current branch against the destination branch.
 - Exclude generated files (lockfiles, build artifacts, snapshots) unless manually edited
 - Group changes by intent: new feature, bug fix, refactor, configuration, tests
 - For each modified export or shared component — search all usages to understand blast radius
+- If the diff exceeds ~1000 non-generated lines and isn't a single logically cohesive change, the first finding is "split this PR" — large diffs hide bugs and exceed reviewer working memory
+- If the diff bundles refactoring with feature work or bug fixes, flag "separate the refactor" — mixed-purpose PRs are harder to review, harder to revert, and dilute commit history. Exception: refactors required _to enable_ the feature, which should be called out in the PR description.
 
 **Gather context:**
 
@@ -53,6 +67,8 @@ Review all changes in the current branch against the destination branch.
 - Treat failures and warnings as findings; record them with file location and severity
 
 ### Review Focus
+
+**Examine tests first.** Test diffs reveal intent and expected behavior. Read them before the implementation so you evaluate the code against what it's supposed to do, not what it appears to do.
 
 Apply the full review process: the "What to Look For", "What NOT to Flag", and "Calibrate Severity" sections below.
 
@@ -80,6 +96,8 @@ Review staged changes before committing.
 - Treat failures and warnings as findings; record them with file location and severity
 
 ### Review Focus
+
+**Examine tests first.** Staged test diffs reveal what behavior the change is supposed to produce. Read them before the implementation.
 
 Prioritize:
 
@@ -173,7 +191,7 @@ High-level review of overall project structure, patterns, and health. No diff �
 
 ## What to Look For
 
-Applies to all review types. Consult relevant reference checklists based on file types touched (`references/typescript.md`, `references/react.md`, `references/css.md`, `references/testing.md`, etc.) and review concerns (`references/security.md`, `references/performance.md`).
+Applies to all review types. Consult relevant reference checklists based on file types touched (`references/engineering/typescript.md`, `references/engineering/react.md`, `references/engineering/css.md`, `references/engineering/testing.md`, etc.) and review concerns (`references/engineering/security.md`, `references/engineering/performance.md`).
 
 Focus on what reference checklists don't cover:
 
@@ -198,6 +216,19 @@ The highest-value part of a review. For every change to shared code:
 - **Wrapper types** — Custom type aliases that re-wrap a library's types without adding information obscure the original API.
 - **One-use helpers** — Functions extracted for "reusability" but called from exactly one place fragment logic without reducing complexity.
 
+### Complexity Signals
+
+Concrete patterns to scan for. Flag as Minor by default; promote to Major if the pattern hides a bug (e.g., deep nesting masking a missing edge-case branch).
+
+- **Deep nesting** (3+ levels of `if`/`for`/`try`) — refactor candidate via guard clauses or extracted helpers
+- **Long functions** (~50+ lines, or one function with multiple distinct responsibilities) — split-into-named-pieces candidate
+- **Nested ternaries** — replace with if/else, switch, or a lookup map
+- **Boolean parameter flags** (`doThing(true, false)`) — prefer an options object or separate functions; positional booleans are unreadable at the call site
+- **Generic names** (`data`, `result`, `temp`, `val`, `item`) or **abbreviated names** (`usr`, `cfg`, `btn`, `evt`) — rename to describe the content; allow universal abbreviations (`id`, `url`, `api`)
+- **Repeated conditionals** — the same predicate in multiple places — extract to a named function
+
+For style-level findings (3-param function limit, single responsibility, "why" comments), defer to `references/engineering/code-style.md` instead of duplicating here.
+
 ### Interface Design
 
 - Prefer `children`, render props, or slot patterns over configuration props (`buttonProps`, `mode` flags). Boolean/mode props often signal a component doing too many things.
@@ -205,9 +236,11 @@ The highest-value part of a review. For every change to shared code:
 
 ### Dead Code
 
+Apply Chesterton's Fence: before recommending removal, understand why the code exists. Check `git blame`, read callers, look for non-obvious reasons (performance, platform constraint, historical bug fix). If you can't explain why it's there, flag it as a question, not a removal recommendation.
+
 - Identify dead code explicitly: unused exports, unreachable branches, commented-out blocks
-- List what you found — don't silently skip or silently remove
-- Recommend removal only after confirming it's truly unused (grep for all references)
+- List what you found and ask before removing it — don't delete silently
+- Confirm it's truly unused (grep for all references) before recommending removal
 
 ### Multi-Model Review
 
@@ -260,6 +293,12 @@ Severity reflects **user and production impact**, not code aesthetics:
 - 🟡 **Major** — Causes problems over time: missing tests for complex logic, performance regressions, incorrect types that hide bugs, shared code changes without verifying consumers. Should fix before merge.
 - 🟢 **Minor** — Could be better: simplification opportunities, minor duplication, non-blocking naming suggestions. Fix if convenient.
 
+When suggesting findings the user will paste as inline PR comments, prefix the comment text instead of using the emoji: `Critical:` (🔴, blocks merge), `Major:` (🟡, should fix before merge), `Nit:` / `Optional:` (🟢, non-blocking), `FYI:` (informational, no action requested).
+
+## Approval Bar
+
+Approve when the change **definitely improves overall code health**, even if it isn't perfect. The bar is improvement over the current state, not perfection — chasing perfect blocks shippable improvements. Block merge only when Critical findings remain. Major findings should be fixed before merge but don't get rubber-stamped as "fix in follow-up." Minor findings approve-with-comment.
+
 ## Prioritize Review Effort
 
 Not all changes deserve equal attention:
@@ -281,6 +320,9 @@ For large diffs (20+ files): review types and interfaces first to understand the
 - "It's just a small change" — Small changes to shared code have the widest blast radius. Check consumers.
 - "The tests pass" — Passing tests prove the tests pass, not that the code is correct. Tests have gaps.
 - "I'll flag it next time" — Note it now. Use severity levels to indicate urgency.
+- "Fix it in a follow-up PR" — Deferred fixes don't get fixed. Block on it now or accept it forever; don't pretend a Critical finding is a follow-up.
+- "It's mostly good, just approve" — Rubber-stamping is not review. If you didn't trace the shared-code consumers, you didn't review them.
+- "This code is obviously dead/redundant" — Chesterton's Fence: check `git blame` and callers before recommending removal or simplification. Accumulated complexity often has a real reason; if you can't explain why it's there, ask, don't remove.
 
 ## Verification
 

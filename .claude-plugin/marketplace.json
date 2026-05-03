@@ -1,0 +1,16 @@
+{
+    "name": "drimchansky-agents-kit",
+    "owner": {
+        "name": "Nikita Chernov"
+    },
+    "metadata": {
+        "description": "A personal agents kit for Claude Code, Codex, and other coding agents."
+    },
+    "plugins": [
+        {
+            "name": "agents-kit",
+            "description": "A personal agents kit for Claude Code, Codex, and other coding agents.",
+            "source": "./"
+        }
+    ]
+}

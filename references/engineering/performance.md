@@ -2,7 +2,7 @@
 
 ## Rendering
 
-Consult `references/react.md` for React-specific memoization patterns.
+Consult `references/engineering/react.md` for React-specific memoization patterns.
 
 - [ ] Large lists use virtualization (`react-window`, `@tanstack/virtual`) — not raw `.map()` over hundreds of items
 - [ ] Expensive derivations computed once and cached, not recomputed every render cycle

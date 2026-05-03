@@ -5,6 +5,18 @@ argument-hint: '[doc file path]'
 disable-model-invocation: true
 ---
 
+## Core Rules
+
+Before doing anything else in this skill:
+
+1. Read the sibling file `./AGENTS.md` (relative to this `SKILL.md`).
+2. Apply the rules it defines for the rest of this skill's execution.
+3. Output the following line verbatim to the user as a visible confirmation, **before** any other text or tool calls in this skill, on its own line:
+
+    ✅ Core rules applied (./AGENTS.md)
+
+The rules cover scope discipline, push-back behavior, communication style, and pre-presentation checks — they take precedence over default behavior unless the project's own conventions say otherwise.
+
 This skill validates existing documentation against the codebase. It catches stale references, drifted descriptions, missing context, and silent assumptions — producing a clear assessment of what's accurate, what's wrong, and what's missing.
 
 The user provides a documentation file (or points at a documentation area). This can be a README, project rules file (AGENTS.md / CLAUDE.md), architecture note, ADR, API doc, runbook, or feature spec. Your job is to verify whether the document still matches reality and surface what needs to be updated.
@@ -15,7 +27,7 @@ For new documentation written from current implementation, use `update-doc`. For
 
 ## References
 
-Before working, read any applicable checklists from `references/`. Skip ones that don't apply.
+Before working, read any applicable checklists from `references/engineering/`. Skip ones that don't apply.
 
 ## When to Validate
 

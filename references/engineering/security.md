@@ -35,7 +35,20 @@
 
 - [ ] No `npm install` of unmaintained or suspiciously low-download packages
 - [ ] `package-lock.json` / `pnpm-lock.yaml` committed and reviewed for unexpected changes
-- [ ] Dependency updates checked for known vulnerabilities (`npm audit`)
+- [ ] Dependency updates checked for known vulnerabilities (`npm audit` / `pnpm audit`)
+
+### Triaging audit findings
+
+Severity alone is not the decision. Triage on **severity × reachability × runtime-vs-dev**:
+
+- **Critical / High, reachable in production code path** — fix immediately (update, patch, or replace the dependency)
+- **Critical / High, dev-only or unreachable code path** — fix soon, but not a release blocker
+- **Critical / High, no patched version available** — evaluate workarounds, consider replacing the dependency, or allowlist with a documented review date
+- **Moderate, reachable in production** — fix in the next release cycle
+- **Moderate, dev-only** — track in backlog, fix when convenient
+- **Low** — fold into routine dependency updates
+
+Key questions: is the vulnerable function actually called in your code path? Is the dependency runtime or dev-only? Is the vulnerability exploitable in your deployment context (e.g., a server-side flaw in a client-only app)? When deferring, document the reason and a review date.
 
 ## Common Mistakes
 
