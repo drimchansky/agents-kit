@@ -11,15 +11,15 @@ Before doing anything else in this skill:
 
 1. Read the sibling file `./AGENTS.md` (relative to this `SKILL.md`).
 2. Apply the rules it defines for the rest of this skill's execution.
-3. Output the following line verbatim to the user as a visible confirmation, **before** any other text or tool calls in this skill, on its own line:
+3. Output the following line as a visible confirmation, **before** any other text or tool calls in this skill, on its own line — substitute `<version>` with the value on the **Version** line at the top of `./AGENTS.md`:
 
-    ✅ Core agents-kit rules applied (./AGENTS.md)
+    ✅ Core agents-kit@<version> rules applied
 
 The rules cover scope discipline, push-back behavior, communication style, and pre-presentation checks — they take precedence over default behavior unless the project's own conventions say otherwise.
 
 This skill validates an implementation plan against the actual codebase before execution begins. It catches infeasible steps, missing details, pattern conflicts, and implicit assumptions — producing a clear assessment with targeted questions.
 
-The user provides a plan — typically the output of `design-plan`, written to `.agents/plans/<slug>.md`. Your job is to determine whether the plan can be executed as written within the current codebase, and surface anything that needs resolution first.
+The user provides a plan — typically the output of `design-plan`, written to `.agents/tasks/<slug>/<task-slug>.plan.md`. Your job is to determine whether the plan can be executed as written within the current codebase, and surface anything that needs resolution first.
 
 **CRITICAL**: Do not implement. Do not redesign the solution. Validate the plan. The output is a feasibility assessment with questions, not a revised plan or code.
 
@@ -29,13 +29,13 @@ Before working, read any applicable checklists from `references/engineering/`. S
 
 ## Locate the Plan
 
-If the user gives an explicit path, use it. Otherwise:
+If the user gives an explicit path, use it. Otherwise resolve in two levels:
 
-- Default location is `.agents/plans/<slug>.md` at the project root
-- If multiple plans exist, list them and ask which one to review
-- Skip files ending in `.result.md` — those are execution records, not plans
+- Task directory: `.agents/tasks/<slug>/` at the project root. If the user gave only a slug, descend into it.
+- Plan file inside the directory: pick from `*.plan.md` (skip `*.result.md` — those are execution records).
+- If multiple task directories or multiple plans exist, list candidates and ask which one to review.
 
-Read the plan in full before assessing anything.
+Read the plan **and the sibling `CONTEXT.md`** in full before assessing anything. `CONTEXT.md` carries the shared problem statement, scope summary, key assumptions, and external references that apply to every plan in the directory — it is authoritative input for grounding, not optional.
 
 ## When to Review
 

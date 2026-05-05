@@ -1,6 +1,6 @@
 ---
 name: implement-plan
-description: Use when asked to implement, execute, run, or carry out a plan from `.agents/plans/`.
+description: Use when asked to implement, execute, run, or carry out a plan from `.agents/tasks/<slug>/`.
 argument-hint: '[plan file path]'
 disable-model-invocation: true
 ---
@@ -11,20 +11,21 @@ Before doing anything else in this skill:
 
 1. Read the sibling file `./AGENTS.md` (relative to this `SKILL.md`).
 2. Apply the rules it defines for the rest of this skill's execution.
-3. Output the following line verbatim to the user as a visible confirmation, **before** any other text or tool calls in this skill, on its own line:
+3. Output the following line as a visible confirmation, **before** any other text or tool calls in this skill, on its own line — substitute `<version>` with the value on the **Version** line at the top of `./AGENTS.md`:
 
-    ✅ Core agents-kit rules applied (./AGENTS.md)
+    ✅ Core agents-kit@<version> rules applied
 
 The rules cover scope discipline, push-back behavior, communication style, and pre-presentation checks — they take precedence over default behavior unless the project's own conventions say otherwise.
 
-This skill executes a plan written by `design-plan` (or any plan in `.agents/plans/` that follows the same format). It implements the work, updates a companion **result file** as it goes, and marks each step `DONE` in the plan with a link back to the result section.
+This skill executes a plan written by `design-plan` (or any plan in `.agents/tasks/<slug>/` that follows the same format). It implements the work, updates a companion **result file** as it goes, and marks each step `DONE` in the plan with a link back to the result section.
 
-The plan is the **contract**; the result file is the **append-only record**. Both live next to each other:
+The plan is the **contract**; the result file is the **append-only record**; `CONTEXT.md` is the **shared static context** for every plan in the task directory. All three live side by side:
 
-- Plan: `.agents/plans/<slug>.md`
-- Result: `.agents/plans/<slug>.result.md`
+- Context: `.agents/tasks/<slug>/CONTEXT.md` (read-only for this skill)
+- Plan: `.agents/tasks/<slug>/<task-slug>.plan.md`
+- Result: `.agents/tasks/<slug>/<task-slug>.result.md`
 
-**CRITICAL**: Both files are mutated by this skill. The plan is mutated _only_ to flip step checkboxes (`- [ ]` → `- [x]`), append result links, update the `Status:` header, and (when necessary) revise scope or steps. Everything else about the plan stays as written. The result file is the place for narrative — what shipped, what surprised you, what diverged.
+**CRITICAL**: The plan and result files are mutated by this skill; `CONTEXT.md` is not. The plan is mutated _only_ to flip step checkboxes (`- [ ]` → `- [x]`), append result links, update the `Status:` header, and (when necessary) revise scope or steps. Everything else about the plan stays as written. The result file is the place for narrative — what shipped, what surprised you, what diverged.
 
 ## References
 
@@ -35,12 +36,12 @@ Before working, read any applicable checklists from `references/engineering/`. S
 **Use when:**
 
 - The user asks to implement, execute, run, or carry out a plan
-- A plan exists in `.agents/plans/` and the user wants to start (or resume) work on it
-- The user references a plan file directly (e.g. "run `.agents/plans/add-csv-export.md`")
+- A plan exists in `.agents/tasks/<slug>/` and the user wants to start (or resume) work on it
+- The user references a plan file directly (e.g. "run `.agents/tasks/add-csv-export/add-csv-export.plan.md`")
 
 **Skip when:**
 
-- No plan file exists yet — direct the user to `design-plan` first
+- No task directory exists yet — direct the user to `design-plan` first
 - The work is small enough that a plan would be overhead — implement directly
 - The plan is still being iterated on and not yet finalized
 
@@ -61,11 +62,18 @@ Before touching any code, identify what you're building against and where author
 
 ### 1. Locate and Load the Plan
 
-- If the user gave a path, use it
-- Otherwise, list `.agents/plans/*.md` and filter out any whose name ends in `.result.md`; show the remaining candidates and ask which one
-- Read the plan fully before doing anything
+Discovery is two-level — first the task directory, then the plan inside it:
 
-If a companion `*.result.md` already exists, read it too — work may have been partially done in a prior session. Pick up where it left off; do not redo completed steps.
+- **If the user gave a full plan path**, use it directly. Derive the task directory from its parent.
+- **If the user gave a slug only** (e.g. `add-csv-export`), resolve to `.agents/tasks/<slug>/`. Inside, list `*.plan.md` files (filter out `*.result.md`):
+    - Exactly one plan → use it.
+    - Multiple plans → show them and ask which one. If filenames are numbered (`01-`, `02-`), surface the order; respect blocking order if the user asks to "run them all".
+    - No plans → tell the user the directory exists but has no plan; suggest `design-plan` to create one.
+- **If the user gave nothing**, list `.agents/tasks/*/` directories and ask which task. Then descend per the rule above.
+
+Read the plan fully before doing anything. Read the sibling `CONTEXT.md` too — it carries the shared problem statement, scope summary, key assumptions, and any external references that apply to every plan in the directory. Treat `CONTEXT.md` as authoritative for cross-plan context; never modify it from this skill.
+
+If a companion `<task-slug>.result.md` already exists, read it too — work may have been partially done in a prior session. Pick up where it left off; do not redo completed steps.
 
 ### 2. Decide Execution Mode
 
@@ -78,26 +86,29 @@ Respect step `Depends on:` ordering regardless of mode.
 
 ### 3. Initialize the Result File (if it doesn't exist)
 
-Create `.agents/plans/<slug>.result.md` with this header:
+Status values used in this skill (`to-do`, `executing`, `done`) and their transitions are registered in `references/engineering/task-lifecycle.md`. That file is the single source of truth — if a value below disagrees with the registry, the registry wins.
+
+Create `.agents/tasks/<slug>/<task-slug>.result.md` with this header:
 
 ```markdown
 # Result: <plan title>
 
-**Plan:** [./<slug>.md](./<slug>.md)
+**Plan:** [./<task-slug>.plan.md](./<task-slug>.plan.md)
+**Context:** [./CONTEXT.md](./CONTEXT.md)
 **Started:** YYYY-MM-DD
-**Status:** in-progress
+**Status:** executing
 
 ---
 ```
 
-Update the plan's `**Result:**` line to link to this file.
+Update the plan's `**Result:**` line to link to this file (`./<task-slug>.result.md`), and flip the plan's `**Status:**` from `to-do` to `executing` to mark that work has begun.
 
 ### 4. Execute Steps
 
 For each step (or for the whole plan, if running end-to-end):
 
 1. **Implement** — Make the changes the step describes. Stay inside the plan's defined scope.
-    - **If the step is fixing a bug** (rather than adding new behavior), apply the **Prove-It pattern**: write a failing test that reproduces the bug *first*, watch it fail (confirming the bug exists), then implement the fix and watch the test pass. The reproduction test becomes the step's verify criterion and a permanent regression guard.
+    - **If the step is fixing a bug** (rather than adding new behavior), apply the **Prove-It pattern**: write a failing test that reproduces the bug _first_, watch it fail (confirming the bug exists), then implement the fix and watch the test pass. The reproduction test becomes the step's verify criterion and a permanent regression guard.
     - Before writing framework-specific code, confirm you've consulted the docs identified in Step 0. If the step touches a domain covered by `references/engineering/` (React, TypeScript, CSS, security, testing, performance, accessibility, tanstack-query), read the relevant checklist now.
 2. **Verify** — Two gates, both required:
     - **Step verify** — run the step's plan-defined `Verify` criterion. Proves the new behavior works.
@@ -106,7 +117,7 @@ For each step (or for the whole plan, if running end-to-end):
 4. **Mark the step DONE in the plan** — Flip `- [ ]` to `- [x]` for that step and append the result-section link:
 
     ```markdown
-    - [x] **What:** <unchanged> ([result](./<slug>.result.md#step-1--add-csv-writer))
+    - [x] **What:** <unchanged> ([result](./<task-slug>.result.md#step-1--add-csv-writer))
     ```
 
 5. **Pause or continue** — In step-by-step mode, stop here and report progress. In full-plan mode, continue to the next step.
@@ -213,8 +224,8 @@ A good rule of thumb: if you're about to write more than ~100 lines before the n
 
 When the last step completes:
 
-- Update the plan's `**Status:**` to `complete`
-- Update the result file's `**Status:**` to `complete` and add a closing `**Completed:** YYYY-MM-DD` line
+- Update the plan's `**Status:**` to `done`
+- Update the result file's `**Status:**` to `done` and add a closing `**Completed:** YYYY-MM-DD` line
 - Run the standard pre-presentation checks from `./AGENTS.md` (typecheck, linter, tests, consumer grep)
 - Summarize for the user: what shipped, any deviations, any open follow-ups
 
@@ -250,6 +261,7 @@ When the last step completes:
 - [ ] Existing result file (if any) read; completed steps not redone
 - [ ] Result file initialized with header pointing back to the plan
 - [ ] Plan's `**Result:**` line points to the result file
+- [ ] Plan's `**Status:**` flipped from `to-do` to `executing` when execution began
 - [ ] Bug-fix steps have a failing reproduction test that now passes
 - [ ] Each completed step's plan-defined verify criterion was actually run and passed
 - [ ] Health verify (typecheck, linter, existing test suite) was green between steps
@@ -258,5 +270,5 @@ When the last step completes:
 - [ ] Result file sections follow the per-step template (or full-run template)
 - [ ] Every `### Checkpoint after Step N` in the plan was run, all asserted assertions passed, and a checkpoint section was appended to the result file
 - [ ] Plan revisions (if any) recorded in result file `**Deviations from plan:**`
-- [ ] On finalize: both files' `**Status:**` updated to `complete`
+- [ ] On finalize: both files' `**Status:**` updated to `done`
 - [ ] Pre-presentation checks from `./AGENTS.md` (typecheck, linter, tests, consumer grep) re-run on the full changed surface

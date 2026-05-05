@@ -11,13 +11,13 @@ Before doing anything else in this skill:
 
 1. Read the sibling file `./AGENTS.md` (relative to this `SKILL.md`).
 2. Apply the rules it defines for the rest of this skill's execution.
-3. Output the following line verbatim to the user as a visible confirmation, **before** any other text or tool calls in this skill, on its own line:
+3. Output the following line as a visible confirmation, **before** any other text or tool calls in this skill, on its own line — substitute `<version>` with the value on the **Version** line at the top of `./AGENTS.md`:
 
-    ✅ Core agents-kit rules applied (./AGENTS.md)
+    ✅ Core agents-kit@<version> rules applied
 
 The rules cover scope discipline, push-back behavior, communication style, and pre-presentation checks — they take precedence over default behavior unless the project's own conventions say otherwise.
 
-This skill produces an implementation plan as a file in `.agents/plans/`. The plan is the contract that `implement-plan` later executes against.
+This skill produces an implementation plan as a file inside `.agents/tasks/<slug>/`. The plan is the contract that `implement-plan` later executes against. Each task directory groups one or more related plans plus a shared `CONTEXT.md`.
 
 The user provides a task or feature request. They may include context about constraints, preferences, or prior discussion.
 
@@ -49,11 +49,13 @@ If the task doesn't warrant a full plan, say so and suggest proceeding directly 
 
 ## Plan File Output
 
-**Location:** `.agents/plans/<slug>.md` at the project root.
+**Location:** `.agents/tasks/<slug>/<task-slug>.plan.md` at the project root.
 
-- `<slug>` — derived from the task: 2–5 lowercase kebab-case words capturing the gist (e.g. `add-csv-export`, `migrate-auth-middleware`, `fix-stale-cache-invalidation`). Don't ask the user — derive it.
+- `<slug>` — names the **task directory** that holds `CONTEXT.md` plus every plan and result for the effort. Derived from the task: 2–5 lowercase kebab-case words capturing the gist (e.g. `add-csv-export`, `migrate-auth-middleware`, `fix-stale-cache-invalidation`). Don't ask the user — derive it. **If the user passed a slug that resolves to an existing `.agents/tasks/<slug>/` directory (typically from `refine-idea`), reuse it — don't create a new one.**
+- `<task-slug>` — names the plan file within the directory. For a single-plan task, mirror the directory name: `.agents/tasks/add-csv-export/add-csv-export.plan.md`. For a directory that holds multiple related plans, use a distinct task slug per plan (e.g. `schema.plan.md`, `api.plan.md`, `ui.plan.md`).
+- **Numbering:** prefix `<task-slug>` with `NN-` (e.g. `01-schema.plan.md`, `02-api.plan.md`) **only when** plans must be implemented in a specific blocking order. Omit numbering when plans are independent or can land in any order.
 
-If `.agents/plans/` doesn't exist, create it. If a plan with the same slug already exists, append a short suffix (`-2`, `-3`).
+If `.agents/tasks/<slug>/` doesn't exist, create it. If a plan file with the same `<task-slug>` already exists, append a short suffix (`-2`, `-3`).
 
 The plan file is the **contract**. Once written, `implement-plan` consumes it and updates step checkboxes as work completes. Avoid rewriting the plan in place during planning iteration unless the user asks for revisions — refine through conversation, then write the final version.
 
@@ -65,17 +67,65 @@ The plan file is the **contract**. Once written, `implement-plan` consumes it an
 - List ambiguities — ask before proceeding if critical
 - Identify what "done" looks like for this task
 
-### 2. Check for a Refined Idea
+### 2. Resolve the Task Directory and Read CONTEXT.md
 
-A one-pager from `refine-idea` (in `.agents/ideas/<slug>.md`) is the authoritative input for this plan when one exists. **Don't try to auto-discover it** — slugs re-derived from a task phrasing don't reliably match the slug `refine-idea` chose, and silently picking the wrong file is worse than picking none.
+The task directory `.agents/tasks/<slug>/` is the authoritative home for this plan and any sibling plans. `CONTEXT.md` inside it is the shared context every plan in the directory builds on.
 
-The user must pass the source explicitly — either a slug (e.g. `/design-plan weekly-digest-email`) or a path (`/design-plan .agents/ideas/weekly-digest-email.md`):
+Resolve the directory in this order:
 
-- **User passed a slug or path that resolves to a file** — read it; treat its problem statement, target user, MVP scope, "Not Doing" list, and key assumptions as inputs to the plan. Don't re-derive scope from scratch.
-- **User passed a slug or path that doesn't resolve** — say so, list the `*.md` files in `.agents/ideas/` (if any), and ask which one (if any) was meant. None is a valid answer.
-- **User passed no slug or path** — proceed without a one-pager; do not block, do not auto-pick from `.agents/ideas/`. If you suspect there should be one, ask once.
+- **User passed a slug that resolves to an existing `.agents/tasks/<slug>/`** — reuse it. Read `CONTEXT.md` if present; treat its problem statement, target user, MVP scope, "Not Doing" list, key assumptions, and any references as inputs. List existing `*.plan.md` files so you don't duplicate or conflict with prior work.
+- **User passed a slug with no matching directory** — create `.agents/tasks/<slug>/`. If `CONTEXT.md` doesn't exist, write a skeleton (template below) before drafting the plan. Confirm the slug with the user only if it differs meaningfully from what they typed.
+- **User passed no slug** — derive one from the task description and proceed as above.
 
-The one-pager's `**Plan:**` field is intentionally a placeholder until this skill writes the plan. After writing the plan file (final step below), update that field in place to link the new `.agents/plans/<slug>.md`.
+If multiple `.agents/tasks/*/` directories look like plausible matches for the user's request, list them and ask — don't guess.
+
+#### CONTEXT.md skeleton (created when missing)
+
+The skeleton below is the canonical CONTEXT.md schema, shared with `refine-idea` (which produces it via Phases 1–3) so downstream consumers (`review-plan`, `implement-plan`, and the design-plan reuse step) read the same section names regardless of how the task started. When `design-plan` skips the idea step, populate `Problem Statement` and `Key Assumptions to Validate` from the user's task description; leave the other sections as placeholders for the user to fill in.
+
+```markdown
+# <task name>
+
+**Status:** drafted-by-design-plan
+
+## Problem Statement
+
+<one-sentence framing of what this task is solving>
+
+## Target User & Success
+
+- **Who:** <specific user / role — placeholder; ask or fill in when known>
+- **Success looks like:** <observable outcome — placeholder; ask or fill in when known>
+
+## Recommended Direction
+
+<the chosen direction and why — leave as a placeholder if the user hasn't run `refine-idea`; revisit before starting work>
+
+## Key Assumptions to Validate
+
+- [ ] <assumption that, if wrong, would invalidate the plan> — <how to test it>
+
+## MVP Scope
+
+- **In:** <minimum to test the core assumption — placeholder; fill in once scope is clear>
+- **Out:** <what's deferred — placeholder>
+
+## Not Doing (and Why)
+
+- <intentional exclusion — placeholder; surface explicit trade-offs as the plan develops>
+
+## Open Questions
+
+- <question the plan can't yet answer — placeholder>
+
+## References
+
+_(External links, pasted specs, ticket numbers, screenshots, cross-cutting notes. Read by every plan in this task directory.)_
+```
+
+`CONTEXT.md`'s `**Status:**` is a one-shot origin marker; the plan file owns the working lifecycle. Full status vocabulary across all task files is registered in `references/engineering/task-lifecycle.md` — read it once if you're unsure which value to write.
+
+The user is expected to enrich `CONTEXT.md` over time (links, specs, decisions). Don't dump per-step notes, approach rationale, or verify criteria into it — those belong in the plan or its result file. Placeholder sections are intentional: leave them in place even if empty so downstream skills can find the same section names.
 
 ### 3. Explore the Codebase
 
@@ -203,7 +253,10 @@ Match the plan's detail to the task's complexity:
 
 ## Verification
 
-- [ ] Plan written to `.agents/plans/<slug>.md`
+- [ ] Task directory `.agents/tasks/<slug>/` exists (reused if it already existed, created otherwise)
+- [ ] `CONTEXT.md` present in the task directory; skeleton written if it didn't exist
+- [ ] Plan written to `.agents/tasks/<slug>/<task-slug>.plan.md` — mirroring the directory name for single-plan tasks, distinct task slug per plan otherwise
+- [ ] Numbering prefix (`NN-`) used **only** when plans have a blocking order
 - [ ] Slug derived from task, kebab-case, 2–5 words
 - [ ] Each step has `- [ ]` checkbox marker, **What**, **Verify**, **Depends on**
 - [ ] Plan is grounded in actual code exploration, not assumptions
@@ -214,7 +267,6 @@ Match the plan's detail to the task's complexity:
 - [ ] Scope boundaries are explicit (in/out of scope stated)
 - [ ] Risks are specific to this task, not generic checklists
 - [ ] Open questions that could invalidate the approach are surfaced
-- [ ] If a `refine-idea` one-pager was used as input, its `**Plan:**` field now links to the new plan file
 
 ## Plan File Structure
 
@@ -223,8 +275,9 @@ Write the file with this top-level layout. Adapt sections to task size — not e
 ```markdown
 # <task title>
 
-**Status:** ready
-**Result:** _(populated by `implement-plan`: link to `<slug>.result.md`)_
+**Status:** to-do
+**Context:** [./CONTEXT.md](./CONTEXT.md)
+**Result:** _(populated by `implement-plan`: link to `./<task-slug>.result.md`)_
 
 ## Task Understanding
 
@@ -272,3 +325,5 @@ Write the file with this top-level layout. Adapt sections to task size — not e
 
 - ...
 ```
+
+The plan file's `**Status:**` value (`to-do` here) is part of the lifecycle owned by `implement-plan`. Full vocabulary and transitions for plan and result files are registered in `references/engineering/task-lifecycle.md` — that's the single source of truth across all task artifacts.

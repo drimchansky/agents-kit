@@ -1,5 +1,7 @@
 # Rules
 
+**Version:** 1.2.0 — kept in sync with `.claude-plugin/plugin.json`. Agents reading this file substitute the value above wherever they are asked to render `<version>` (e.g. the Core Rules confirmation line each skill prints on entry).
+
 > **Priority**: Project codebase consistency takes precedence. If the codebase follows different patterns, match those first. These rules apply when no established pattern exists.
 
 - Match the scope of changes to the scope of the request; don't refactor adjacent code unless asked
