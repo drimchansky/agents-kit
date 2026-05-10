@@ -70,7 +70,7 @@ Git stores symlinks as mode `120000` blobs whose content is the literal target p
     ln -s ../../CORE_RULES.md skills/<name>/AGENTS.md
     ```
 
-6. Add a row for the new skill in `README.md` — either the engineering-workflow table or the utilities table. The plugin loader and `setup.sh` auto-discover skills from `skills/<name>/SKILL.md` (no manifest registration needed), but `README.md` is hand-curated and won't list the skill otherwise.
+6. Add a bullet for the new skill in `README.md` — either the engineering-workflow list or the utilities list. The plugin loader and `setup.sh` auto-discover skills from `skills/<name>/SKILL.md` (no manifest registration needed), but `README.md` is hand-curated and won't list the skill otherwise.
 
 ## Editing the standard directive
 
@@ -97,10 +97,10 @@ Beyond CI, contract-critical things the editor of a change is responsible for sp
 ## Repo conventions
 
 - The kit is dev-tools-on-unix targeted; symlinks are non-negotiable.
-- New top-level files: describe them in `README.md`'s `## How It Works` section (prose, one bullet per file in the same shape as the existing entries for `CORE_RULES.md`, `skills/<name>/AGENTS.md`, etc.). The README has no separate file-tree block — `## How It Works` is the canonical spot.
+- New top-level files: describe them in `docs/how-it-works.md` (prose, one bullet per file in the same shape as the existing entries for `CORE_RULES.md`, `skills/<name>/AGENTS.md`, etc.). The README has no separate file-tree block and no longer carries a `## How It Works` section — `docs/how-it-works.md` is the canonical spot.
 - `references/` is partitioned by domain. Today only `references/engineering/` exists (TypeScript, React, CSS, review, security, performance, testing, accessibility, code-style, tanstack-query, task-lifecycle); future domains (e.g. prose, design) can live as sibling subdirectories. Every engineering skill carries the same `## References` block that says "read any applicable checklists from `references/engineering/`", so adding a new engineering checklist requires no per-skill change — it picks up automatically. Standalone skills (`proofread`, `translate`, `fact-check`) intentionally omit the References block: code-domain checklists don't apply to their work, and there's no prose-domain references subdirectory yet. When you add one, mirror the engineering convention: a per-domain subdirectory and a matching `## References` block in the skills that need it.
 
 ## Not in scope (here)
 
-- Don't document end-user / consumer behavior in this file — that belongs in `README.md`.
+- Don't document end-user / consumer behavior in this file — that belongs in `README.md` or `docs/`.
 - Don't restate `CORE_RULES.md` rules here — the rules live in `CORE_RULES.md` and ship to consumers via the skill sibling. This file describes the _contract_ around them, not the rules themselves.
