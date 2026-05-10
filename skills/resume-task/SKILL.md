@@ -17,9 +17,9 @@ Before doing anything else in this skill:
 
 The rules cover scope discipline, push-back behavior, communication style, and pre-presentation checks — they take precedence over default behavior unless the project's own conventions say otherwise.
 
-This skill loads an existing task in `.agents/tasks/<slug>/` and produces a chat-only briefing — used to resume work after time away, hand off, review what was done, or answer questions about a task — whether in progress, blocked, or already shipped. It reads the three task artifacts (`CONTEXT.md`, every `*.plan.md`, every `*.result.md`), reconstructs state from `- [ ]` / `- [x]` checkboxes, checks for drift between the plan's claims and current code/git, and prints a structured brief.
+This skill loads an existing task in `.agents/tasks/<slug>/` and produces a chat-only briefing — used to resume work after time away, hand off, review what was done, or answer questions about a task — whether in progress, blocked, or already shipped. It reads the four task artifacts (`CONTEXT.md`, every `*.spec.md`, every `*.plan.md`, every `*.result.md`), reconstructs state from `- [ ]` / `- [x]` checkboxes, checks for drift between the plan's claims and current code/git, and prints a structured brief.
 
-**CRITICAL**: This skill is **read-only across the repo** — task files (`CONTEXT.md`, `*.plan.md`, `*.result.md`) and source code are observed but never modified (no write, edit, rename, delete). The skill also never mutates git state (no add, commit, checkout, stash). Reading implementation code is **expected and required** — the drift check in Step 4 greps shipped paths and opens cited files to verify the plan still matches reality. Output is **chat only** — do not write a `BRIEF.md` artifact. Briefings stale within hours and a fourth file would contradict the three-file contract that `design-plan` and `implement-plan` rely on.
+**CRITICAL**: This skill is **read-only across the repo** — task files (`CONTEXT.md`, `*.spec.md`, `*.plan.md`, `*.result.md`) and source code are observed but never modified (no write, edit, rename, delete). The skill also never mutates git state (no add, commit, checkout, stash). Reading implementation code is **expected and required** — the drift check in Step 4 greps shipped paths and opens cited files to verify the plan still matches reality. Output is **chat only** — do not write a `BRIEF.md` artifact. Briefings stale within hours and a fifth file would contradict the four-file contract that `plan-task` and `implement-plan` rely on.
 
 ## References
 
@@ -37,7 +37,7 @@ Read `references/engineering/` checklists only if you decide to dig into a pendi
 
 **Skip when:**
 
-- No task directory exists yet → suggest `refine-idea` or `design-plan`
+- No task directory exists yet → suggest `refine-idea` or `plan-task`
 - Ready to actually execute the next step → use `implement-plan` directly (it reads the same artifacts as a prelude to writing code)
 - The task is fresh with no result file yet → just read the plan; there is no state to reconstruct
 - The user wants feasibility validation, not status → use `review-plan`
@@ -49,10 +49,10 @@ Read `references/engineering/` checklists only if you decide to dig into a pendi
 Discovery is two-level — first the task directory, then the plan(s) inside it. Mirror `implement-plan`'s rules:
 
 - **If the user gave a full plan path**, use it directly. Derive the task directory from its parent.
-- **If the user gave a slug only** (e.g. `add-csv-export`), resolve to `.agents/tasks/<slug>/`. Inside, list `*.plan.md` files (filter out `*.result.md`):
+- **If the user gave a slug only** (e.g. `add-csv-export`), resolve to `.agents/tasks/<slug>/`. Inside, list `*.plan.md` files (filter out `*.spec.md` and `*.result.md`):
     - Exactly one plan → use it.
     - Multiple plans → brief them all together; surface order if filenames are numbered (`01-`, `02-`).
-    - No plans → tell the user the directory exists but has no plan; suggest `design-plan`.
+    - No plans → tell the user the directory exists but has no plan; suggest `plan-task`.
 - **If the user gave nothing**, list `.agents/tasks/*/` directories and ask which task. Then descend per the rule above.
 
 Don't guess between ambiguous candidates — ask.
@@ -62,12 +62,16 @@ Don't guess between ambiguous candidates — ask.
 Read in full, not skim:
 
 - `.agents/tasks/<slug>/CONTEXT.md` — the shared static context (problem statement, scope summary, key assumptions, references).
-- Every `*.plan.md` in the directory — note each plan's `**Status:**` header.
-- Every `*.result.md` — note `**Status:**`, find the latest per-step or full-run section, and capture every `**Blocked:**` block verbatim.
+- Every `*.spec.md` in the directory — capture each spec's description and the full bullet list of acceptance criteria. Note any criterion marked `_(unresolved: ...)_`.
+- Every `*.plan.md` in the directory — note each plan's `**Status:**` header and its `**Spec:**` link.
+- Every `*.result.md` — note `**Status:**`, find the latest per-step or full-run section, capture every `**Blocked:**` block verbatim, and capture any `## Acceptance` section verbatim.
 
-Status values across these three files are defined in `references/engineering/task-lifecycle.md` — consult it if you encounter an unfamiliar value, and use the **pairing rule** there to flag inconsistencies (e.g. plan `executing` with no result file, plan `done` with result `executing`).
+Status values across the lifecycle-bearing files are defined in `references/engineering/task-lifecycle.md` — consult it if you encounter an unfamiliar value, and use the **pairing rule** there to flag inconsistencies (e.g. plan `executing` with no result file, plan `done` with result `executing`). The spec file has no status — it's a static input.
 
-If `CONTEXT.md` is missing, flag it in the brief — that's a sign the task was scaffolded outside the standard flow.
+Flag in the brief:
+
+- `CONTEXT.md` missing → task scaffolded outside the standard flow.
+- A plan with no sibling `*.spec.md` of the same stem → `plan-task` was expected to produce one; without it the acceptance gate cannot run.
 
 ### 3. Reconstruct State from Checkboxes
 
@@ -97,6 +101,7 @@ The drift check is the load-bearing value over `cat plan.md` — without it, the
     - **Pending path that already exists** → tag `info`. Worth noting (the step may already be partially done, or the filename collides with unrelated code) but not blocking.
 3. **Symbol-survival check.** For each cited symbol in a result file's `**Shipped:**` block, grep the named file. Flag symbols that are gone, renamed, or moved.
 4. **Implementation-vs-record sanity check.** Open one or two `**Shipped:**` files from the latest result entry and confirm the changes the result describes are visibly present (not reverted, not refactored away). For the next pending step, read the files it will touch and flag if the surrounding code has shifted enough that the step's verify criterion no longer applies cleanly.
+5. **Spec sanity check.** If the result file has an `## Acceptance` section, spot-check one criterion tagged `met` against the live behavior — open the file or run the command it cites and confirm the behavior still holds. If the result file has no `## Acceptance` section but the plan is `done`, that itself is drift (the acceptance gate was skipped); flag it `block`. If a `met` criterion no longer holds, flag it `warn` so the user can re-run the gate before relying on the prior result.
 
 Tag each finding `info` (FYI), `warn` (review before resuming), or `block` (plan needs update before execution can proceed).
 
@@ -112,12 +117,20 @@ Assemble per the output template below. Print to chat. Do not write any file.
 # Resume: <task title>
 
 **Task dir:** `.agents/tasks/<slug>/`
+**Spec(s):** `<task-slug>.spec.md` [, additional specs …]
 **Plan(s):** `<task-slug>.plan.md` (Status: <status>) [, additional plans …]
 **Result(s):** `<task-slug>.result.md` (Status: <status>) — or "not yet started"
 
 ## Status
 
-<one paragraph: N of M steps done across <K> plans; executing / blocked / ready to resume / done>
+<one paragraph: N of M steps done across <K> plans; executing / blocked / ready to resume / done; whether the acceptance gate has run>
+
+## Acceptance criteria
+
+- Criterion 1 — <as written in spec> — _met / unmet / not yet checked / unresolved_
+- Criterion 2 — <as written in spec> — _…_
+
+(Pull the criterion text verbatim from the spec. Outcomes come from the result file's `## Acceptance` section if present; otherwise mark every criterion _not yet checked_. Surface any criterion trailing `_(unresolved: ...)_` from the spec as `unresolved`.)
 
 ## Done
 
@@ -141,40 +154,44 @@ Assemble per the output template below. Print to chat. Do not write any file.
 - [block] `src/legacy/auth.ts` — Step 2 result claims it was modified, but the file no longer exists on disk
 - [info] `src/api/users.ts` — Step 4 (pending) plans to create this file, but it already exists; check whether the step is partially done or the filename collides
 - [info] `src/cache/ttl.ts` — Step 1's shipped change still present, but adjacent code has been refactored; review before resuming Step 5
+- [warn] Criterion 2 — result claims `met` but the named flow no longer behaves as the criterion requires; re-run the acceptance gate before relying on the prior result
 
 (or, when clean: `No drift detected.`)
 
 ## Open questions
 
-- <deduped from CONTEXT.md "Open Questions" + plan "Open Questions"; questions answered in the result file are removed>
+- <deduped from CONTEXT.md "Open Questions" + plan "Open Questions" + any spec criteria marked `_(unresolved: ...)_`; questions answered in the result file are removed>
 
 ## Where to start
 
 <2–3 sentences naming the concrete first action — file to open, command to run (e.g. `/implement-plan <slug>`), or a specific drift item to resolve before resuming>
 ```
 
-If multiple plans live in the directory, render one **Done** / **Up next** / **Blocked** block per plan with a clear sub-heading; the **Drift**, **Open questions**, and **Where to start** sections remain shared.
+If multiple plans live in the directory, render one **Acceptance criteria** / **Done** / **Up next** / **Blocked** block per plan with a clear sub-heading; the **Drift**, **Open questions**, and **Where to start** sections remain shared.
 
 ## Don't Rationalize
 
 - "I'll run the next step while I'm here" — This skill is read-only. Hand off to `implement-plan` if the user wants execution.
 - "The plan and result already explain everything; no need to read the code" — Result files describe what _was_ done, not what's in the code _now_. Code can be reverted, refactored, or removed after the fact. The drift check is the load-bearing value over `cat`.
 - "The result file is recent, skip the drift check" — Recent ≠ unchanged. The implementation can shift after a step lands.
-- "I'll write a `BRIEF.md` so the user has it later" — Briefings stale within hours; a fourth artifact contradicts the three-file contract. Print to chat only.
+- "I'll write a `BRIEF.md` so the user has it later" — Briefings stale within hours; a fifth artifact contradicts the four-file contract. Print to chat only.
 - "User said 'resume', so I'll just start coding" — In this skill, _resume_ means brief, then decide. The brief is the deliverable; the user picks the next move.
 
 ## Verification
 
 - [ ] Task directory `.agents/tasks/<slug>/` resolved (asked the user when ambiguous, never guessed)
-- [ ] `CONTEXT.md`, every `*.plan.md`, and every `*.result.md` in the directory read in full
+- [ ] `CONTEXT.md`, every `*.spec.md`, every `*.plan.md`, and every `*.result.md` in the directory read in full
 - [ ] No file in the task directory was written, edited, renamed, or deleted
 - [ ] No git state was mutated (no add, commit, checkout, stash)
 - [ ] Step state reconstructed from checkbox markers, not inferred from prose
+- [ ] Acceptance Criteria section in the brief lists every spec criterion verbatim, with outcome from the result file's `## Acceptance` section (or `not yet checked` / `unresolved` when applicable)
+- [ ] Plan with no sibling `*.spec.md` flagged
 - [ ] All `**Blocked:**` sections in the result file surfaced verbatim
 - [ ] Drift check compared plan/result claims against the current implementation on disk; findings listed (or `No drift detected.` stated explicitly)
 - [ ] Plan-referenced paths partitioned into shipped vs. pending before existence-check; missing **shipped** paths flagged as `block`/`warn`, missing **pending** paths not flagged
 - [ ] At least one `**Shipped:**` file from the latest result entry spot-checked against current source
+- [ ] Spec sanity check ran: a `met` criterion spot-checked against live behavior; missing `## Acceptance` section on a `done` plan flagged `block`
 - [ ] Brief uses the documented template sections in order
 - [ ] "Where to start" names a concrete first action (file + command), not a generic suggestion
-- [ ] Open questions deduplicated across `CONTEXT.md` and plan; already-answered ones removed
+- [ ] Open questions deduplicated across `CONTEXT.md`, plan, and any unresolved spec criteria; already-answered ones removed
 - [ ] No `BRIEF.md` (or any other file) was created

@@ -3,17 +3,14 @@ set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# Agent configurations: name|home_dir|legacy_rules_filename|extras
+# Agent configurations: name|home_dir|legacy_rules_filename
 # `legacy_rules_filename` is only used to migrate old installs (delete the
 # previously-copied global rules file). The kit no longer installs a global
 # rules file — rules are loaded per-skill via the sibling AGENTS.md inside
 # each skill directory.
-# `extras` is a comma-separated list of optional install steps for agents
-# that support more than skills+references. Today: `agents` installs the
-# `agents/` subagent directory (Claude only — Codex has no equivalent).
 AGENTS=(
-  "Claude|${HOME}/.claude|CLAUDE.md|agents"
-  "Codex|${HOME}/.codex|AGENTS.md|"
+  "Claude|${HOME}/.claude|CLAUDE.md"
+  "Codex|${HOME}/.codex|AGENTS.md"
 )
 
 copy() {
@@ -85,92 +82,6 @@ cleanup_stale() {
   done
 }
 
-# Per-file install with kit-manifest awareness. Used for agents/*.md, where
-# the install destination (~/.claude/agents/) is shared with user-installed
-# agents — we can't wipe the directory. Instead, a sidecar manifest lists
-# the files this kit owns; collisions outside the manifest prompt the user
-# the same way copy_managed_dir does for non-kit-managed directories.
-#
-# Note: kit-managed files (those already in the manifest) are overwritten
-# without prompt on every run. Manual edits to a previously-installed
-# persona will be lost on the next setup.sh — fork the file under a
-# different name to keep changes.
-#
-# Return code semantics for callers (matches copy_managed_dir):
-#   0 = installed, 1 = user declined overwrite, >=2 = real failure.
-copy_managed_file() {
-  local source="$1"
-  local target="$2"
-  local manifest="$3"
-  local name
-  name="$(basename "$target")"
-
-  if [ -e "$target" ] && ! { [ -f "$manifest" ] && grep -Fxq "$name" "$manifest"; }; then
-    # Target exists and is not kit-managed.
-    if [ ! -t 0 ]; then
-      echo "  $name exists in $(dirname "$target") and is not kit-managed — skipped (no TTY to confirm overwrite)"
-      return 1
-    fi
-    local answer=""
-    read -rp "  $name already exists in $(dirname "$target") and is not kit-managed. Overwrite with the kit's version? Type 'yes' to confirm, anything else to skip: " answer || true
-    [[ "$answer" == "yes" ]] || return 1
-  fi
-
-  cp -f "$source" "$target" || return 2
-  echo "  $name"
-}
-
-install_agents() {
-  local agents_dir="$1"
-  local manifest="$agents_dir/.agents-kit-agents"
-  local current_manifest
-  current_manifest="$(mktemp)"
-  # Catch SIGINT/SIGTERM during install_agents so the tempfile doesn't leak.
-  # The explicit cleanups in the error and success branches below remain as
-  # belt-and-suspenders; this trap covers signal interrupts only. Use EXIT,
-  # not RETURN — RETURN fires after locals go out of scope and produces an
-  # unbound-variable error under `set -u`.
-  # shellcheck disable=SC2064  # We want $current_manifest expanded NOW.
-  trap "rm -f '$current_manifest' 2>/dev/null" EXIT
-
-  # Stale cleanup: filenames in the old manifest that are not in the source set.
-  if [ -f "$manifest" ]; then
-    while IFS= read -r entry; do
-      [ -n "$entry" ] || continue
-      if [ ! -f "$REPO_DIR/agents/$entry" ]; then
-        rm -f "$agents_dir/$entry"
-        REMOVED_COUNT=$((REMOVED_COUNT + 1))
-        echo "  removed stale agent: $entry"
-      fi
-    done < "$manifest"
-  fi
-
-  for agent in "$REPO_DIR"/agents/*.md; do
-    [ -e "$agent" ] || continue
-    local name target rc=0
-    name="$(basename "$agent")"
-    target="$agents_dir/$name"
-    copy_managed_file "$agent" "$target" "$manifest" || rc=$?
-    case $rc in
-      0)
-        echo "$name" >> "$current_manifest"
-        INSTALLED_COUNT=$((INSTALLED_COUNT + 1))
-        ;;
-      1) ;; # user declined overwrite — skip silently; do not record in manifest
-      *) rm -f "$current_manifest"; echo "ERROR: failed to install agent $name (exit $rc)" >&2; exit $rc ;;
-    esac
-  done
-
-  # Rewrite manifest with files we successfully own this run.
-  if [ -s "$current_manifest" ]; then
-    sort -u "$current_manifest" > "$manifest"
-  else
-    rm -f "$manifest"
-  fi
-  rm -f "$current_manifest"
-  trap - EXIT
-}
-
 install_skills() {
   local skills_dir="$1"
 
@@ -220,12 +131,8 @@ install_agent() {
   local name="$1"
   local home_dir="$2"
   local legacy_rules_filename="$3"
-  local extras="$4"
   local skills_dir="$home_dir/skills"
   local refs_status="installed"
-  local agents_summary=""
-  local agents_installed=0
-  local agents_removed=0
 
   INSTALLED_COUNT=0
   REMOVED_COUNT=0
@@ -246,27 +153,14 @@ install_agent() {
     *) echo "ERROR: failed to install references for $name (exit $refs_rc)" >&2; exit $refs_rc ;;
   esac
 
-  if [[ ",$extras," == *,agents,* ]]; then
-    local agents_dir="$home_dir/agents"
-    local installed_before=$INSTALLED_COUNT
-    local removed_before=$REMOVED_COUNT
-    [ -L "$agents_dir" ] && rm "$agents_dir"
-    mkdir -p "$agents_dir"
-    install_agents "$agents_dir"
-    agents_installed=$((INSTALLED_COUNT - installed_before))
-    agents_removed=$((REMOVED_COUNT - removed_before))
-    [ $agents_installed -gt 0 ] && agents_summary=", $agents_installed agent(s) installed"
-    [ $agents_removed -gt 0 ] && agents_summary="$agents_summary ($agents_removed stale agent(s) removed)"
-  fi
-
   prompt_remove_legacy_rules "$home_dir" "$legacy_rules_filename"
 
-  echo "  $name: $skills_installed skill(s) installed, $skills_removed stale removed, references $refs_status$agents_summary"
+  echo "  $name: $skills_installed skill(s) installed, $skills_removed stale removed, references $refs_status"
 }
 
 echo "Installing shared agents kit assets:"
 for entry in "${AGENTS[@]}"; do
-  IFS='|' read -r name home_dir legacy_rules_filename extras <<< "$entry"
-  install_agent "$name" "$home_dir" "$legacy_rules_filename" "${extras:-}"
+  IFS='|' read -r name home_dir legacy_rules_filename <<< "$entry"
+  install_agent "$name" "$home_dir" "$legacy_rules_filename"
 done
 echo "Done."

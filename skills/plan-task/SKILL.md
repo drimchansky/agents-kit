@@ -1,5 +1,5 @@
 ---
-name: design-plan
+name: plan-task
 description: Use when asked to plan, design, architect, scope, or break down a feature or change before implementation.
 argument-hint: '[task or feature description]'
 disable-model-invocation: true
@@ -17,11 +17,11 @@ Before doing anything else in this skill:
 
 The rules cover scope discipline, push-back behavior, communication style, and pre-presentation checks — they take precedence over default behavior unless the project's own conventions say otherwise.
 
-This skill produces an implementation plan as a file inside `.agents/tasks/<slug>/`. The plan is the contract that `implement-plan` later executes against. Each task directory groups one or more related plans plus a shared `CONTEXT.md`.
+This skill produces an implementation plan as a file inside `.agents/tasks/<slug>/`, paired with a sibling **spec file** that captures the testable acceptance criteria. The plan is the contract that `implement-plan` later executes against; the spec is the contract for what "done" means. Each task directory groups one or more related plans (each with its own spec) plus a shared `CONTEXT.md`.
 
 The user provides a task or feature request. They may include context about constraints, preferences, or prior discussion.
 
-**CRITICAL**: The output of this skill is a written plan file on disk, not a conversation message. After writing it, summarize the plan briefly in the chat and point at the file.
+**CRITICAL**: The output of this skill is two written files on disk — `<task-slug>.spec.md` and `<task-slug>.plan.md` — not a conversation message. After writing them, summarize briefly in the chat and point at the files.
 
 ## References
 
@@ -47,17 +47,19 @@ Before working, read any applicable checklists from `references/engineering/`. S
 
 If the task doesn't warrant a full plan, say so and suggest proceeding directly with implementation.
 
-## Plan File Output
+## Output Files
 
-**Location:** `.agents/tasks/<slug>/<task-slug>.plan.md` at the project root.
+This skill writes **two paired files** per plan: a spec and a plan. Both live in `.agents/tasks/<slug>/` at the project root.
 
-- `<slug>` — names the **task directory** that holds `CONTEXT.md` plus every plan and result for the effort. Derived from the task: 2–5 lowercase kebab-case words capturing the gist (e.g. `add-csv-export`, `migrate-auth-middleware`, `fix-stale-cache-invalidation`). Don't ask the user — derive it. **If the user passed a slug that resolves to an existing `.agents/tasks/<slug>/` directory (typically from `refine-idea`), reuse it — don't create a new one.**
-- `<task-slug>` — names the plan file within the directory. For a single-plan task, mirror the directory name: `.agents/tasks/add-csv-export/add-csv-export.plan.md`. For a directory that holds multiple related plans, use a distinct task slug per plan (e.g. `schema.plan.md`, `api.plan.md`, `ui.plan.md`).
-- **Numbering:** prefix `<task-slug>` with `NN-` (e.g. `01-schema.plan.md`, `02-api.plan.md`) **only when** plans must be implemented in a specific blocking order. Omit numbering when plans are independent or can land in any order.
+- `<slug>` — names the **task directory** that holds `CONTEXT.md` plus every plan, spec, and result for the effort. Derived from the task: 2–5 lowercase kebab-case words capturing the gist (e.g. `add-csv-export`, `migrate-auth-middleware`, `fix-stale-cache-invalidation`). Don't ask the user — derive it. **If the user passed a slug that resolves to an existing `.agents/tasks/<slug>/` directory (typically from `refine-idea`), reuse it — don't create a new one.**
+- `<task-slug>` — names the file pair within the directory. For a single-plan task, mirror the directory name: `.agents/tasks/add-csv-export/add-csv-export.{spec,plan}.md`. For a directory that holds multiple related plans, use a distinct task slug per pair (e.g. `schema.{spec,plan}.md`, `api.{spec,plan}.md`, `ui.{spec,plan}.md`).
+- **Numbering:** prefix `<task-slug>` with `NN-` (e.g. `01-schema.plan.md`, `02-api.plan.md`) **only when** plans must be implemented in a specific blocking order. Omit numbering when plans are independent or can land in any order. The spec file uses the same prefix.
 
-If `.agents/tasks/<slug>/` doesn't exist, create it. If a plan file with the same `<task-slug>` already exists, append a short suffix (`-2`, `-3`).
+If `.agents/tasks/<slug>/` doesn't exist, create it. If a spec or plan file with the same `<task-slug>` already exists, append a short suffix (`-2`, `-3`) — keep the spec/plan stems matched.
 
-The plan file is the **contract**. Once written, `implement-plan` consumes it and updates step checkboxes as work completes. Avoid rewriting the plan in place during planning iteration unless the user asks for revisions — refine through conversation, then write the final version.
+**Spec file (`<task-slug>.spec.md`)** — the contract for what "done" means. Carries a short task description and a free-form bullet list of acceptance criteria. **No `**Status:**` field.** The user may hand-author it; if they do, this skill reads and respects it instead of regenerating.
+
+**Plan file (`<task-slug>.plan.md`)** — the contract for how the work is executed. Once written, `implement-plan` consumes it and updates step checkboxes as work completes. Avoid rewriting the plan in place during planning iteration unless the user asks for revisions — refine through conversation, then write the final version.
 
 ## Planning Process
 
@@ -81,21 +83,20 @@ If multiple `.agents/tasks/*/` directories look like plausible matches for the u
 
 #### CONTEXT.md skeleton (created when missing)
 
-The skeleton below is the canonical CONTEXT.md schema, shared with `refine-idea` (which produces it via Phases 1–3) so downstream consumers (`review-plan`, `implement-plan`, and the design-plan reuse step) read the same section names regardless of how the task started. When `design-plan` skips the idea step, populate `Problem Statement` and `Key Assumptions to Validate` from the user's task description; leave the other sections as placeholders for the user to fill in.
+The skeleton below is the canonical CONTEXT.md schema, shared with `refine-idea` (which produces it via Phases 1–3) so downstream consumers (`review-plan`, `implement-plan`, and the plan-task reuse step) read the same section names regardless of how the task started. When `plan-task` skips the idea step, populate `Problem Statement` and `Key Assumptions to Validate` from the user's task description; leave the other sections as placeholders for the user to fill in.
 
 ```markdown
 # <task name>
 
-**Status:** drafted-by-design-plan
+**Status:** drafted-by-plan-task
 
 ## Problem Statement
 
 <one-sentence framing of what this task is solving>
 
-## Target User & Success
+## Acceptance Criteria
 
-- **Who:** <specific user / role — placeholder; ask or fill in when known>
-- **Success looks like:** <observable outcome — placeholder; ask or fill in when known>
+_(Per-plan acceptance criteria live in each plan's `<task-slug>.spec.md`. This skill drafts that spec before the plan and asks for clarification when requirements are unclear.)_
 
 ## Recommended Direction
 
@@ -127,20 +128,64 @@ _(External links, pasted specs, ticket numbers, screenshots, cross-cutting notes
 
 The user is expected to enrich `CONTEXT.md` over time (links, specs, decisions). Don't dump per-step notes, approach rationale, or verify criteria into it — those belong in the plan or its result file. Placeholder sections are intentional: leave them in place even if empty so downstream skills can find the same section names.
 
-### 3. Explore the Codebase
+### 3. Draft the Spec
+
+Before designing the plan, write `.agents/tasks/<slug>/<task-slug>.spec.md` — the contract for what "done" means. This pins requirements before approach selection so steps and verification can be derived from concrete acceptance criteria, not from a moving target.
+
+**Resolve in this order:**
+
+- **Spec already exists for this `<task-slug>`** (hand-authored or from a prior session) — read it, apply `references/engineering/acceptance-criteria.md` to each criterion, restate the criteria back to the user (calling out any that fail the checklist), and ask whether to proceed as-is or revise. Do not silently overwrite.
+- **No spec exists** — draft one from the user's task description and any signal in `CONTEXT.md` (problem statement, recommended direction, key assumptions). Run each draft criterion through `references/engineering/acceptance-criteria.md` before writing the file; ask clarifying questions for any criterion that fails the checklist (testable, specific, outcome-oriented, singular, bounded, stated as behavior).
+
+**Clarifying questions** — ask only when needed, batched into a single round. Each question must:
+
+- Reference the specific criterion (or missing criterion) it addresses.
+- Explain why the answer matters (which criterion it sharpens, which step it would change).
+- Suggest options when possible — "should bulk export include archived rows? A: yes, with a flag; B: no, archived stays excluded; A matches the existing single-row export, B matches the UI filter default" — not open-ended "what should we do?"
+
+If the user answers in chat, update the spec to reflect the answers before moving on. If the user defers a question, leave the affected criterion marked with a trailing `_(unresolved: <short note>)_` so `review-plan` and `implement-plan` see it.
+
+**Spec file content:**
+
+- A short task description (2–3 sentences — what this plan delivers and for whom)
+- A free-form bullet list of acceptance criteria — short, observable, externally-verifiable statements
+
+Keep criteria **outcome-oriented**, not implementation-oriented. "User can export the current filter as CSV with a custom delimiter" is good. "Add a `formatCsv()` helper" is not — that belongs in the plan's steps.
+
+**Spec file template:**
+
+```markdown
+# Spec: <task title>
+
+**Plan:** [./<task-slug>.plan.md](./<task-slug>.plan.md)
+
+## Description
+
+<2–3 sentence summary of what this plan delivers and for whom>
+
+## Acceptance Criteria
+
+- <Criterion 1 — short, observable, externally-verifiable>
+- <Criterion 2>
+- <Criterion 3>
+```
+
+The spec carries no `**Status:**` field by design — it is a static input, not a lifecycle artifact. The user mutates it freely between sessions; downstream skills (`review-plan`, `implement-plan`, `resume-task`) read it but never write to it.
+
+### 4. Explore the Codebase
 
 **CRITICAL**: Always ground the plan in what already exists. Read before designing — this is the forward exploration pass; `review-plan` will independently verify assumptions later if invoked.
 
 - Search for related implementations to use as models; map affected files and shared code in the blast radius
 - Note existing constraints (tech debt, API contracts, performance budgets)
 
-### 4. Evaluate Approaches
+### 5. Evaluate Approaches
 
 Compare viable approaches — and actively look for ones the user may not have considered.
 
 Even when the user suggests a specific approach, consider whether a different solution would be more optimal. The goal is to arrive at the best implementation, not just validate the first idea. If an alternative is clearly better, recommend it with a clear explanation of why.
 
-**However**, don't fabricate alternatives to fill a comparison table when one approach is clearly right. State it and explain why alternatives don't apply.
+**However**, don't fabricate alternatives to fill a comparison list when one approach is clearly right. State it and explain why alternatives don't apply.
 
 For each approach, assess:
 
@@ -149,7 +194,7 @@ For each approach, assess:
 - **Risk** — What could go wrong? How reversible is it?
 - **Effort** — Relative size (S/M/L)
 
-### 5. Define Scope
+### 6. Define Scope
 
 Explicitly state:
 
@@ -159,7 +204,7 @@ Explicitly state:
 
 **IMPORTANT**: Scope definition prevents creep during implementation. Be precise. A vague scope produces vague work.
 
-### 6. Break Down Steps
+### 7. Break Down Steps
 
 Create an ordered list of implementation steps. Each step must be a **verifiable piece of work** — after completing it, there's a concrete way to confirm it worked before moving on.
 
@@ -198,7 +243,7 @@ Break a step down further when any of these are true:
 
 The leading `- [ ]` checkbox is the marker `implement-plan` flips to `- [x]` when the step is done, with a link to the result file section appended.
 
-### 7. Add Checkpoints
+### 8. Add Checkpoints
 
 Per-step `Verify` confirms one unit of work. It does **not** catch the case where step 3 silently broke step 1's behavior. For plans with more than ~5 steps, insert a **Checkpoint** every 2–3 steps that re-verifies the integrated system, not just the latest change.
 
@@ -220,7 +265,7 @@ Checkpoints are not steps — they don't get a `- [ ]` checkbox that `implement-
 - End-to-end: <name the concrete flow — e.g. "user can log in and see dashboard">
 ```
 
-### 8. Identify Risks
+### 9. Identify Risks
 
 Only flag risks that are **specific to this task** — not generic checklists.
 
@@ -230,15 +275,15 @@ For each real risk:
 - How likely it is given what you found in exploration
 - How to mitigate or investigate before it becomes a problem
 
-### 9. Flag Open Questions
+### 10. Flag Open Questions
 
 If the plan has assumptions that could invalidate the approach, surface them explicitly. A plan with known unknowns is more useful than one that hides them.
 
 ## Scaling Plan Depth
 
-Match the plan's detail to the task's complexity:
+Match the plan's detail to the task's complexity. The spec step (Step 3) is required at every depth — even small tasks benefit from a few explicit acceptance criteria.
 
-- **Medium** (2-5 files, clear pattern) — Steps 1, 5, 6 — skip approach comparison, light on risks
+- **Medium** (2-5 files, clear pattern) — Steps 1–3, 6, 7 — skip approach comparison, light on risks
 - **Large** (5-15 files, some ambiguity) — All steps, moderate detail
 - **Complex** (architectural, cross-cutting) — All steps, deep exploration, multiple approaches compared
 
@@ -249,16 +294,26 @@ Match the plan's detail to the task's complexity:
 - "The risks are obvious, no need to list them" — Generic risk awareness is not risk identification. Be specific or admit there are none.
 - "This is too simple to plan" — If the user asked for a plan, the task warranted one.
 - "I'll figure out the scope during implementation" — Undefined scope produces undefined work. Bound it now.
-- "I'll just output the plan in chat" — The plan must be a file. `implement-plan` reads it from disk.
+- "I'll skip the spec, the plan steps make it obvious" — Steps describe how to get there; criteria describe what done means. Without criteria, `implement-plan` has no acceptance gate and `review-plan` has nothing to check coverage against.
+- "The acceptance criteria are obvious" — If they're obvious, they cost nothing to write down. If they're not, that's exactly when you needed them.
+- "The criterion is roughly the right shape, that's good enough" — Run it through `references/engineering/acceptance-criteria.md`. Vague criteria survive coverage analysis and pass the acceptance gate by reinterpretation; that's the failure mode the checklist catches.
+- "The user gave a vague task, I'll just guess what they want" — Ask. Clarifying questions during the spec step are cheaper than reworking the plan after implementation.
+- "I'll just output the plan and spec in chat" — Both must be files on disk. `implement-plan` and `review-plan` read them from there.
 
 ## Verification
 
 - [ ] Task directory `.agents/tasks/<slug>/` exists (reused if it already existed, created otherwise)
 - [ ] `CONTEXT.md` present in the task directory; skeleton written if it didn't exist
-- [ ] Plan written to `.agents/tasks/<slug>/<task-slug>.plan.md` — mirroring the directory name for single-plan tasks, distinct task slug per plan otherwise
-- [ ] Numbering prefix (`NN-`) used **only** when plans have a blocking order
+- [ ] Spec written to `.agents/tasks/<slug>/<task-slug>.spec.md` — short description + free-form bullet criteria, no `**Status:**` field
+- [ ] Hand-authored spec read and respected if present; not silently overwritten
+- [ ] Each acceptance criterion in the spec passes the checks in `references/engineering/acceptance-criteria.md`, or is marked `_(unresolved: ...)_` with a deferred clarifying question
+- [ ] Clarifying questions asked when criteria failed the checklist (testable, specific, outcome-oriented, singular, bounded, stated as behavior); user answers folded into the spec before drafting the plan
+- [ ] Plan written to `.agents/tasks/<slug>/<task-slug>.plan.md` — stem matches its sibling spec
+- [ ] Plan's `**Spec:**` line links to `./<task-slug>.spec.md`
+- [ ] Numbering prefix (`NN-`) used **only** when plans have a blocking order; spec and plan share the same prefix
 - [ ] Slug derived from task, kebab-case, 2–5 words
 - [ ] Each step has `- [ ]` checkbox marker, **What**, **Verify**, **Depends on**
+- [ ] Plan steps collectively cover every criterion in the spec (no orphan criteria)
 - [ ] Plan is grounded in actual code exploration, not assumptions
 - [ ] Each step is independently verifiable
 - [ ] Steps are ordered as vertical slices unless a foundational layer requires otherwise
@@ -277,6 +332,7 @@ Write the file with this top-level layout. Adapt sections to task size — not e
 
 **Status:** to-do
 **Context:** [./CONTEXT.md](./CONTEXT.md)
+**Spec:** [./<task-slug>.spec.md](./<task-slug>.spec.md)
 **Result:** _(populated by `implement-plan`: link to `./<task-slug>.result.md`)_
 
 ## Task Understanding
@@ -289,7 +345,7 @@ Write the file with this top-level layout. Adapt sections to task size — not e
 
 ## Approach
 
-<recommended approach with rationale; comparison table only if multiple viable options>
+<recommended approach with rationale; side-by-side bullet list of alternatives only if multiple viable options>
 
 ## Scope
 

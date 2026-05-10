@@ -1,6 +1,6 @@
 # Agents Kit
 
-A personal agents kit for Claude Code, Codex, and other coding agents.
+A personal kit for working with Claude Code, Codex, and other coding agents.
 
 ## Getting started
 
@@ -11,24 +11,13 @@ Install via the plugin marketplace from inside Claude Code:
 /plugin install agents-kit@drimchansky-agents-kit
 ```
 
-The repo doubles as both a plugin (`.claude-plugin/plugin.json`) and a single-entry marketplace (`.claude-plugin/marketplace.json`), so a single `marketplace add` is enough — no separate marketplace repo to set up.
-
-**Plugin name:** `agents-kit` · **Marketplace:** `drimchansky-agents-kit`. Run `/plugin info agents-kit` for the installed version and source.
-
-You'll know it's working when an engineering-workflow skill (e.g. `/explore`) prints `✅ Core agents-kit@<version> rules applied` as its first line — the version is read from `CORE_RULES.md` at runtime, so it matches your installed release. Standalone utilities (`/proofread`, `/translate`, `/fact-check`) don't load shared rules and won't print this line; if it's missing on an engineering skill, see [docs/how-it-works.md](docs/how-it-works.md).
-
-For local development against an unreleased clone:
-
-```bash
-git clone git@github.com:drimchansky/agents-kit.git ~/agents-kit
-claude --plugin-dir ~/agents-kit
-```
+For local development against an unreleased clone: `claude --plugin-dir /path/to/agents-kit`.
 
 For Codex or non-plugin install of Claude Code, see [docs/manual-install.md](docs/manual-install.md).
 
 ## Skills
 
-Skills are organized into two groups: an **engineering workflow** (10 skills) that shapes the development loop, and a set of **utilities** (3 skills) for ad-hoc tasks.
+Skills are organized into two groups: an **engineering workflow** (9 skills) that shapes the development loop, and a set of **utilities** (3 skills) for ad-hoc tasks.
 
 ### Engineering workflow
 
@@ -37,17 +26,16 @@ The workflow runs roughly in order, but you don't need every step — pick which
 - [`explore`](skills/explore/SKILL.md) — Understand existing code or context before changing it. _Example: `/explore how does the retry queue work?`_
 - [`refine-idea`](skills/refine-idea/SKILL.md) — Sharpen a rough idea before planning — assumptions, MVP scope, "Not Doing" list. _Example: `/refine-idea add a draft mode to the editor`_
 - [`resume-task`](skills/resume-task/SKILL.md) — Brief on, resume, or hand off a task — read `.agents/tasks/<slug>/` and report in chat. _Example: `/resume-task auth-jwt-migration`_
-- [`design-plan`](skills/design-plan/SKILL.md) — A change is non-trivial and needs a contract. Writes `.agents/tasks/<slug>/<task-slug>.plan.md`. _Example: `/design-plan migrate auth to JWT`_
-- [`review-plan`](skills/review-plan/SKILL.md) — A plan exists but hasn't been validated against the code. _Example: `/review-plan auth-jwt-migration`_
-- [`implement-plan`](skills/implement-plan/SKILL.md) — A validated plan is ready to ship. Marks steps `[x]` and writes a `*.result.md`. _Example: `/implement-plan auth-jwt-migration`_
+- [`plan-task`](skills/plan-task/SKILL.md) — A change is non-trivial and needs a contract. Writes paired `.agents/tasks/<slug>/<task-slug>.spec.md` (acceptance criteria) and `<task-slug>.plan.md` (steps). _Example: `/plan-task migrate auth to JWT`_
+- [`review-plan`](skills/review-plan/SKILL.md) — Confirm the implementation direction is right and still in sync with `CONTEXT.md`, the spec, and the current codebase; surface any drift between plan assumptions and code reality. _Example: `/review-plan auth-jwt-migration`_
+- [`implement-plan`](skills/implement-plan/SKILL.md) — A validated plan is ready to ship. Marks steps `[x]`, writes a `*.result.md`, and runs an acceptance gate against the spec before flipping the plan to `done`. _Example: `/implement-plan auth-jwt-migration`_
 - [`review-code`](skills/review-code/SKILL.md) — Code is written and needs an audit before merge — bugs, blast radius, pattern fit. _Example: `/review-code`_
 - [`verify-issue`](skills/verify-issue/SKILL.md) — A reported bug needs to be confirmed and root-caused before a fix. _Example: `/verify-issue users see 500 on signup`_
-- [`update-doc`](skills/update-doc/SKILL.md) — Shipped code has drifted from its docs (README, AGENTS.md, runbooks). _Example: `/update-doc README`_
-- [`validate-docs`](skills/validate-docs/SKILL.md) — Docs haven't been touched in a while or you suspect drift. Pairs with `update-doc`. _Example: `/validate-docs`_
+- [`review-docs`](skills/review-docs/SKILL.md) — Audit a doc against the codebase and surface stale references, gaps, and drift. Applies fixes only when you ask after seeing the review. _Example: `/review-docs README`_
 
 ### Task directories
 
-`refine-idea`, `design-plan`, `review-plan`, and `implement-plan` share a directory-based contract that lets them hand off cleanly; `resume-task` reads from the same directory but never mutates it. Each effort lives in `.agents/tasks/<slug>/` with a shared `CONTEXT.md`, one or more `*.plan.md` files, and append-only `*.result.md` records.
+`refine-idea`, `plan-task`, `review-plan`, and `implement-plan` share a directory-based contract that lets them hand off cleanly; `resume-task` reads from the same directory but never mutates it. Each effort lives in `.agents/tasks/<slug>/` with a shared `CONTEXT.md`, paired `*.spec.md` + `*.plan.md` files, and append-only `*.result.md` records. The spec carries the acceptance criteria; `implement-plan` runs an acceptance gate against it before flipping the plan to `done`.
 
 See [docs/task-directories.md](docs/task-directories.md) for the full contract.
 

@@ -1,6 +1,6 @@
 # Rules
 
-**Version:** 1.2.0 — kept in sync with `.claude-plugin/plugin.json`. Agents reading this file substitute the value above wherever they are asked to render `<version>` (e.g. the Core Rules confirmation line each skill prints on entry).
+**Version:** 2.0.0 — kept in sync with `.claude-plugin/plugin.json`. Agents reading this file substitute the value above wherever they are asked to render `<version>` (e.g. the Core Rules confirmation line each skill prints on entry).
 
 > **Priority**: Project codebase consistency takes precedence. If the codebase follows different patterns, match those first. These rules apply when no established pattern exists.
 
@@ -37,6 +37,7 @@ Place at the end of your response. Scope discipline with nothing lost.
 ## Communication
 
 - Be concise; no trailing summaries, no restating what was asked
+- Never use markdown tables; use lists instead (tables wrap badly in narrow terminals and resist clean line-by-line diffs and edits)
 
 ## Workflow
 

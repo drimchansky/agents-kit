@@ -17,7 +17,7 @@ Before doing anything else in this skill:
 
 The rules cover scope discipline, push-back behavior, communication style, and pre-presentation checks — they take precedence over default behavior unless the project's own conventions say otherwise.
 
-This skill turns a raw idea into a sharp, actionable concept worth building. It runs three phases — divergent exploration, convergent evaluation, and a written one-pager — and produces an artifact at `.agents/tasks/<slug>/CONTEXT.md` that `design-plan` and `implement-plan` later consume as the shared context for every plan in the task directory.
+This skill turns a raw idea into a sharp, actionable concept worth building. It runs three phases — divergent exploration, convergent evaluation, and a written one-pager — and produces an artifact at `.agents/tasks/<slug>/CONTEXT.md` that `plan-task` and `implement-plan` later consume as the shared context for every plan in the task directory.
 
 The user provides a rough concept, problem, or "what if" question. They may include partial context, constraints, or prior thinking. The idea may be vague on purpose — that's the input.
 
@@ -38,11 +38,11 @@ Before working, read any applicable checklists from `references/engineering/`. S
 
 **Skip refinement when:**
 
-- The user already knows what they want to build and just needs a plan → use `design-plan`
-- The change is well-scoped and the problem is concrete → use `design-plan`
+- The user already knows what they want to build and just needs a plan → use `plan-task`
+- The change is well-scoped and the problem is concrete → use `plan-task`
 - The user is asking how something works, not deciding what to build → use `explore`
 
-If the idea is already concrete enough to plan, say so and recommend `design-plan` directly.
+If the idea is already concrete enough to plan, say so and recommend `plan-task` directly.
 
 ## Output File
 
@@ -56,12 +56,13 @@ If `.agents/tasks/<slug>/` doesn't exist, create it. If a `CONTEXT.md` already e
 
 ### What belongs in CONTEXT.md (and what doesn't)
 
-- ✅ The one-pager content this skill produces (problem, target user, MVP scope, "Not Doing", assumptions)
+- ✅ The one-pager content this skill produces (problem framing, MVP scope, "Not Doing", assumptions)
 - ✅ External references — tickets, Slack threads, PR links, Figma, design docs
 - ✅ Pasted specs, schemas, API responses
 - ✅ Cross-cutting decisions that apply to **every** plan in the directory
 - ❌ Per-step implementation notes — those go in the plan's result file
 - ❌ Approach rationale or step breakdowns — those go in the plan
+- ❌ Acceptance criteria — those go in the plan's sibling `<task-slug>.spec.md`
 - ❌ Verify criteria — those go in the plan's *Steps*
 - ❌ Conversation summaries or TODO scratchpads
 
@@ -81,7 +82,7 @@ The three phases below are sequential. Don't skip Phases 1–2 to jump straight 
     - What's been tried before?
     - Why now?
 
-    Don't proceed until the target user and success criteria are concrete.
+    Don't proceed until the target user and rough success picture are concrete enough to inform the recommended direction. The testable, plan-specific acceptance criteria are formalized later in `plan-task`'s spec step.
 
 3. **Generate 5–8 variations** using lenses (pick the ones that fit; don't run all mechanically):
     - **Inversion** — What if we did the opposite?
@@ -123,10 +124,10 @@ Write the one-pager to `.agents/tasks/<slug>/CONTEXT.md`. Then post a short summ
 Context: .agents/tasks/<slug>/CONTEXT.md
 Slug: <slug>
 
-Next: /design-plan <slug>
+Next: /plan-task <slug>
 ```
 
-`design-plan` discovers `CONTEXT.md` by reading the task directory at `.agents/tasks/<slug>/`. The slug is the directory name and is the only handoff token needed. The pre-formatted next-command is what makes the handoff frictionless; don't drop it or paraphrase it.
+`plan-task` discovers `CONTEXT.md` by reading the task directory at `.agents/tasks/<slug>/`. The slug is the directory name and is the only handoff token needed. The pre-formatted next-command is what makes the handoff frictionless; don't drop it or paraphrase it.
 
 The "Not Doing" list is the most valuable part — focus is about saying no to good ideas. Make trade-offs explicit.
 
@@ -137,16 +138,15 @@ The "Not Doing" list is the most valuable part — focus is about saying no to g
 - "I'll surface assumptions later" — Untested assumptions kill ideas. Surface them before committing to a direction.
 - "More variations is better" — 5–8 considered variations beat 20 shallow ones.
 - "The user liked the first idea, ship that" — Liking the first idea doesn't validate it. Run the convergent stress-test anyway.
-- "I'll output the one-pager in chat" — The artifact must be a file. `design-plan` reads it from disk.
+- "I'll output the one-pager in chat" — The artifact must be a file. `plan-task` reads it from disk.
 
 ## Verification
 
 - [ ] One-pager written to `.agents/tasks/<slug>/CONTEXT.md`
 - [ ] Task directory created if it didn't exist; existing `CONTEXT.md` not silently overwritten
-- [ ] Chat summary surfaces file path, slug, **and** the literal `Next: /design-plan <slug>` line in the exact handoff shape
+- [ ] Chat summary surfaces file path, slug, **and** the literal `Next: /plan-task <slug>` line in the exact handoff shape
 - [ ] Slug derived from the idea, kebab-case, 2–5 words
 - [ ] "How Might We" problem statement is one sentence and concrete
-- [ ] Target user and success criteria are explicit
 - [ ] Multiple directions were explored, not just the user's first framing
 - [ ] Hidden assumptions are listed with how each could be validated
 - [ ] "Not Doing" list makes trade-offs explicit, with reasons
@@ -167,10 +167,9 @@ The `**Status:**` field is a one-shot origin marker — `refined` here, never mu
 
 <one-sentence "How Might We" framing>
 
-## Target User & Success
+## Acceptance Criteria
 
-- **Who:** <specific user / role>
-- **Success looks like:** <observable outcome>
+_(Per-plan acceptance criteria live in each plan's `<task-slug>.spec.md`. `plan-task` drafts the spec before the plan and asks for clarification when requirements are unclear.)_
 
 ## Recommended Direction
 
@@ -193,7 +192,7 @@ The `**Status:**` field is a one-shot origin marker — `refined` here, never mu
 
 ## Open Questions
 
-- <question that needs answering before `design-plan`>
+- <question that needs answering before `plan-task`>
 
 ## References
 

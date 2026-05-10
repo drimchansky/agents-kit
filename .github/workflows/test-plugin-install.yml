@@ -12,19 +12,8 @@ jobs:
         steps:
             - uses: actions/checkout@v6
 
-            - name: Verify version sync between CORE_RULES.md and plugin.json
-              run: |
-                  rules_version=$(grep -oE '^\*\*Version:\*\* [0-9]+\.[0-9]+\.[0-9]+' CORE_RULES.md | awk '{print $2}' || true)
-                  if [ -z "$rules_version" ]; then
-                      echo "ERROR: CORE_RULES.md is missing or has a malformed '**Version:** X.Y.Z' line" >&2
-                      exit 1
-                  fi
-                  plugin_version=$(jq -r '.version' .claude-plugin/plugin.json)
-                  if [ "$rules_version" != "$plugin_version" ]; then
-                      echo "ERROR: version mismatch — CORE_RULES.md says $rules_version, plugin.json says $plugin_version" >&2
-                      exit 1
-                  fi
-                  echo "Version sync OK: $rules_version"
+            - name: Verify contracts (versions, descriptions, symlinks, directive)
+              run: ./scripts/verify.sh
 
             - uses: actions/setup-node@v4
               with:

@@ -1,5 +1,5 @@
 {
     "name": "agents-kit",
-    "description": "A personal agents kit for Claude Code, Codex, and other coding agents.",
-    "version": "1.2.0"
+    "description": "A personal kit for working with Claude Code, Codex, and other coding agents.",
+    "version": "2.0.0"
 }

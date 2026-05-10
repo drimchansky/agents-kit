@@ -1,6 +1,6 @@
 ---
-name: validate-docs
-description: Use when asked to validate, audit, or check existing documentation against the codebase — README, AGENTS.md/CLAUDE.md, architecture notes, ADRs, API docs, specs, or any other written documentation.
+name: review-docs
+description: Use when asked to review, audit, or check existing documentation against the codebase — README, AGENTS.md/CLAUDE.md, architecture notes, ADRs, API docs, specs, runbooks, or any other written documentation. Produces an audit; applies fixes only when the user explicitly asks after seeing the review.
 argument-hint: '[doc file path]'
 disable-model-invocation: true
 ---
@@ -17,19 +17,19 @@ Before doing anything else in this skill:
 
 The rules cover scope discipline, push-back behavior, communication style, and pre-presentation checks — they take precedence over default behavior unless the project's own conventions say otherwise.
 
-This skill validates existing documentation against the codebase. It catches stale references, drifted descriptions, missing context, and silent assumptions — producing a clear assessment of what's accurate, what's wrong, and what's missing.
+This skill audits existing documentation against the codebase. It catches stale references, drifted descriptions, missing context, and silent assumptions — producing a clear assessment of what's accurate, what's wrong, and what's missing.
 
-The user provides a documentation file (or points at a documentation area). This can be a README, project rules file (AGENTS.md / CLAUDE.md), architecture note, ADR, API doc, runbook, or feature spec. Your job is to verify whether the document still matches reality and surface what needs to be updated.
+The user provides a documentation file (or points at a documentation area). This can be a README, project rules file (AGENTS.md / CLAUDE.md), architecture note, ADR, API doc, runbook, or feature spec. Your job is to verify whether the document still matches reality and surface what needs to change.
 
-For new documentation written from current implementation, use `update-doc`. For reviewing an implementation plan against the codebase, use `review-plan`.
+For reviewing an implementation plan against the codebase (not a doc), use `review-plan`.
 
-**CRITICAL**: Do not edit the document. Validate it. The output is an accuracy assessment with specific findings, not a rewritten doc.
+**CRITICAL**: This skill does not modify the doc on its own. The default output is an assessment in chat — nothing is written to the file. Only after the user has seen the review and explicitly asks for changes ("apply the fixes", "update the version section", "rewrite the commands block") do you edit the file, and only the changes the user authorized. Silent rewrites — even when the drift is obvious — are not allowed.
 
 ## References
 
 Before working, read any applicable checklists from `references/engineering/`. Skip ones that don't apply.
 
-## When to Validate
+## When to Use
 
 **Use when:**
 
@@ -37,14 +37,15 @@ Before working, read any applicable checklists from `references/engineering/`. S
 - The doc references code, APIs, commands, or files that may have changed
 - The codebase has shifted significantly since the doc was last updated
 - Multiple readers are about to consume the doc and accuracy matters
+- The user wants to know what would need to change to bring a doc back in sync (the rewrite itself happens after, on explicit follow-up)
 
 **Skip when:**
 
-- The doc is a draft that hasn't been reviewed yet — review the draft instead, not validate
+- The doc is a draft that hasn't been reviewed yet — review the draft on its own terms, not against shipped code
 - The doc is purely aspirational (vision, roadmap) and not meant to describe current state
-- The user asks for a rewrite — direct them to `update-doc`
+- The user wants a brand-new doc written from scratch with no prior file — this skill audits what exists; for greenfield doc creation, draft the doc directly
 
-## Validation Process
+## Process
 
 ### 1. Locate and Read the Doc
 
@@ -110,7 +111,9 @@ Different doc types have different validation focuses:
 - **Runbooks** — Referenced systems, dashboards, and commands still exist
 - **Feature specs** — Acceptance criteria match shipped behavior; deviations are documented somewhere
 
-## Output Structure
+## Findings Output
+
+The audit is the deliverable. Print it to chat and stop — do **not** edit the doc as part of this step, even when the fix is obvious. The user reads the findings and decides what (if anything) to change next.
 
 ### Doc Summary
 
@@ -131,7 +134,7 @@ Things the codebase has that the doc should mention but doesn't, grouped by cate
 
 ### Questions
 
-Numbered list of points where the doc is ambiguous and the validator cannot determine intent. Each question should:
+Numbered list of points where the doc is ambiguous and the audit cannot determine intent. Each question should:
 
 - Reference the specific part of the doc it relates to
 - Explain why the answer matters
@@ -141,13 +144,46 @@ Numbered list of points where the doc is ambiguous and the validator cannot dete
 
 Sections of the doc that are verified accurate and require no changes.
 
+## Applying Fixes (only on explicit request)
+
+This section runs **only** when the user, after seeing the findings, explicitly asks for changes — phrasing like "apply the fixes", "update the doc", "fix the stale parts", or "rewrite section X". An ambiguous reaction ("looks good", "interesting") is not a request to edit; ask before touching the file.
+
+When the user does authorize edits:
+
+- **Edit only what the user approved.** If they said "fix the version drift", do not also rewrite the architecture section because you noticed gaps there. Honor the scope of the request.
+- **Each change still maps back to a finding from the audit.** A change without a finding behind it is invented detail — drop it.
+- **Rewrite in place, don't append.** The doc is current truth, not a changelog. Replace stale prose; do not leave both versions side by side.
+- **Preserve what was confirmed.** Sections marked `Confirmed` in the audit do not get touched.
+- **Match the doc's existing voice and structure.** Don't reformat sibling sections to match a personal preference.
+- **Pull examples from real call sites** when updating code snippets. Synthesized examples drift faster than the prose around them.
+- **Update versions, paths, and command strings exactly.** Copy from `package.json`, lockfiles, or the source — don't paraphrase.
+
+### Open Questions during a rewrite
+
+- If the codebase or this session answered a previously documented open question, fold the answer into the relevant section and remove the question.
+- If new gaps surfaced during the audit and they affect the doc's accuracy, leave them as open questions in the doc (or in the chat summary if the doc has no such section).
+- Do not keep a "resolved questions" log inline — the doc is a snapshot of current understanding.
+
+### Verify after editing
+
+Before reporting done:
+
+- Re-grep every file path, function name, and command you wrote into the doc. If it doesn't resolve, fix it.
+- Cross-check versions against `package.json` / lockfiles / equivalent.
+- Trace every code example through the current types and APIs.
+- Diff the doc against the prior version mentally: each change should map back to a finding the user authorized.
+
 ## Don't Rationalize
 
 - "The doc reads well" — Reading well isn't accuracy. Verify each claim against code.
 - "This file is probably still there" — Grep for it. Probably isn't verified.
 - "The example obviously still works" — Trace it through current types. Examples rot.
 - "Minor drift, not worth flagging" — Flag it with low severity. Drift compounds.
-- "I'll just rewrite the bad parts" — Don't. This skill validates; `update-doc` rewrites.
+- "The drift is obvious, I'll just fix it now and save a turn" — No. The audit is the deliverable; the user decides whether to act on it. Silent edits violate the contract of the skill.
+- "The user said 'thanks' / 'ok' — that's authorization to apply fixes" — It isn't. Ask explicitly before editing.
+- "While I'm rewriting Section A, I might as well clean up Section B" — Edit only what the user authorized. Scope drift in a doc rewrite is the same failure mode as scope drift in code.
+- "I'll add some extra detail while I'm in here" — Only include what the code or user supports. Invented detail erodes trust.
+- "I'll keep the old phrasing and add the new context below it" — Rewrite the section. The doc is current truth, not a conversation thread.
 
 ## Verification
 
@@ -155,6 +191,9 @@ Sections of the doc that are verified accurate and require no changes.
 - [ ] Each claim has a clear verdict with evidence
 - [ ] Stale/misleading findings include the current reality, not just "it's wrong"
 - [ ] Gaps grouped by category with specific details
-- [ ] Code examples in the doc traced through current APIs
+- [ ] Code examples traced through current APIs
 - [ ] Commands and versions cross-checked against config files
-- [ ] No rewriting performed — assessment only
+- [ ] Findings printed to chat; the doc file was **not** edited as part of the audit pass
+- [ ] If the user requested edits afterward: each rewritten section maps back to a finding the user authorized; no unrequested sections were touched
+- [ ] Confirmed sections left untouched
+- [ ] Post-rewrite re-grep (when edits were made) confirms paths, symbols, and commands resolve

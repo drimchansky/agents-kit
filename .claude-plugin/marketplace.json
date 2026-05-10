@@ -4,12 +4,12 @@
         "name": "Nikita Chernov"
     },
     "metadata": {
-        "description": "A personal agents kit for Claude Code, Codex, and other coding agents."
+        "description": "A personal kit for working with Claude Code, Codex, and other coding agents."
     },
     "plugins": [
         {
             "name": "agents-kit",
-            "description": "A personal agents kit for Claude Code, Codex, and other coding agents.",
+            "description": "A personal kit for working with Claude Code, Codex, and other coding agents.",
             "source": "./"
         }
     ]

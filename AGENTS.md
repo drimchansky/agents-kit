@@ -16,7 +16,7 @@ A kit of skills and shared rules distributed to coding agents (Claude Code, Code
 
 The kit ships two categories of skill, and the Core Rules contract applies to only one of them:
 
-- **Engineering-workflow skills** — operate on code and participate in the understand → plan → implement → review → verify → document loop. They carry the shared rules contract (symlink + directive, see below). Today, in workflow order: `explore`, `refine-idea`, `resume-task`, `design-plan`, `review-plan`, `implement-plan`, `review-code`, `verify-issue`, `update-doc`, `validate-docs`. Preserve the workflow ordering when listing them in docs and when inserting new ones (e.g. a new review-stage skill goes near `review-code`, not at the alphabetical end).
+- **Engineering-workflow skills** — operate on code and participate in the understand → plan → implement → review → verify → document loop. They carry the shared rules contract (symlink + directive, see below). Today, in workflow order: `explore`, `refine-idea`, `resume-task`, `plan-task`, `review-plan`, `implement-plan`, `review-code`, `verify-issue`, `review-docs`. Preserve the workflow ordering when listing them in docs and when inserting new ones (e.g. a new review-stage skill goes near `review-code`, not at the alphabetical end).
 - **Standalone skills** — prose tools and single-purpose utilities that don't touch code and don't follow the engineering loop. They are deliberately self-contained: their `skills/<name>/` holds **only `SKILL.md`**, with **no `AGENTS.md` symlink** and **no Core Rules directive**. All guidance lives inline in `SKILL.md`. Today: `proofread`, `translate`, `fact-check`.
 
 When in doubt, default to the engineering shape — adding the symlink + directive is cheap; retrofitting later is annoying.
@@ -36,7 +36,7 @@ The kit's shared rules live in **`CORE_RULES.md`** at the repo root. They're dis
 - The directive block must be present and unmodified at the top of `SKILL.md`, between the closing `---` of the frontmatter and the existing body.
 - The sibling `skills/<name>/AGENTS.md` must exist and point at `../../CORE_RULES.md`.
 - The check-mark confirmation line is the user's only signal that rules were loaded; if it changes wording, every engineering skill must be updated together. The `<version>` placeholder in the source line stays literal — agents substitute the actual version from CORE_RULES.md at output time.
-- **Bumping the kit version:** update `.claude-plugin/plugin.json` and the **Version** line near the top of `CORE_RULES.md` together. They are the two sources of truth; drift between them means the confirmation line shows a stale version. Nothing else needs to change on a version bump — the `<version>` placeholders in skills are stable across releases.
+- **Bumping the kit version:** update `.claude-plugin/plugin.json` and the **Version** line near the top of `CORE_RULES.md` together. They are the two sources of truth; drift between them means the confirmation line shows a stale version, and CI fails the version-sync check (see "Verifying changes" below) so the bump can't merge until they match. Nothing else needs to change on a version bump — the `<version>` placeholders in skills are stable across releases.
 
 If you want to change the rules themselves, edit `CORE_RULES.md`. The change propagates to all engineering skills automatically — symlinks resolve at read time. There is no build step.
 
@@ -74,7 +74,7 @@ Git stores symlinks as mode `120000` blobs whose content is the literal target p
 
 ## Editing the standard directive
 
-The directive block is hand-edited in every engineering skill's `skills/<name>/SKILL.md`. There's no template engine. If you change its shape (heading text, instruction count, confirmation wording), update every engineering skill in the same change. After editing, **always run the sweep snippet below** — with `scripts/verify.sh` removed, this is the only drift detector for the directive contract, and running it manually after a directive edit is part of the editor's spot-check responsibility (see `## Verifying changes`). Use the presence of the `AGENTS.md` symlink as the engineering-skill criterion so standalone skills are skipped:
+The directive block is hand-edited in every engineering skill's `skills/<name>/SKILL.md`. There's no template engine. If you change its shape (heading text, instruction count, confirmation wording), update every engineering skill in the same change. After editing, run `./scripts/verify.sh` to catch any skill where the change didn't propagate — its directive sweep enforces this contract in CI. The one-liner below is reproduced as a fast local check while iterating on the directive text; use the presence of the `AGENTS.md` symlink as the engineering-skill criterion so standalone skills are skipped:
 
 ```
 sweep() { for d in skills/*/; do [ -L "$d/AGENTS.md" ] || continue; grep -L "$1" "$d/SKILL.md"; done; }
@@ -84,13 +84,22 @@ sweep "✅ Core agents-kit@<version> rules applied"   # should be empty (literal
 
 ## Verifying changes
 
-Plugin install/validate is automated in CI via `.github/workflows/test-plugin-install.yml` — it runs `claude plugin validate .` against the manifests and `claude plugin install agents-kit@drimchansky-agents-kit --scope user` against the local marketplace. Catches manifest schema errors and any install-time symlink-handling regression, which is where most loader breakage surfaces. Doesn't talk to the model, so no `ANTHROPIC_API_KEY` is required. Runtime invocation of skills (the agent actually emitting `✅ Core agents-kit@<version> rules applied` mid-session, with the version interpolated) is **not** covered — for that, run `claude --plugin-dir /path/to/agents-kit` locally and invoke any skill.
+CI runs on every push via `.github/workflows/test-plugin-install.yml`: (1) `./scripts/verify.sh` for static contract checks, (2) `claude plugin validate .` against the manifests for upstream-schema validation, (3) `claude plugin install agents-kit@drimchansky-agents-kit --scope user` against the local marketplace as an end-to-end install smoke test. Doesn't talk to the model, so no `ANTHROPIC_API_KEY` is required. Runtime invocation of skills (the agent actually emitting `✅ Core agents-kit@<version> rules applied` mid-session, with the version interpolated) is **not** covered — for that, run `claude --plugin-dir /path/to/agents-kit` locally and invoke any skill.
 
-Beyond CI, contract-critical things the editor of a change is responsible for spot-checking before opening a PR (run the relevant snippet whenever the listed surface is touched):
+The contracts the kit depends on, in two groups.
 
-- **Symlink contract** — every engineering skill's `skills/<name>/AGENTS.md` is a real symlink to `../../CORE_RULES.md`. Verify with `ls -la skills/*/AGENTS.md`. Catches the Windows-without-`core.symlinks` regression and accidental file-instead-of-symlink commits.
-- **Directive contract** — every engineering skill's `SKILL.md` carries the `## Core Rules` heading and the `✅ Core agents-kit@<version> rules applied` confirmation line (literal `<version>` placeholder; substituted at runtime). Use the `sweep` snippet under "Editing the standard directive" above.
-- **Plugin manifests** — `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` parse as JSON and contain the keys the kit relies on (`name`/`description`/`version` for the plugin; `name`/`owner`/`plugins` for the marketplace).
+Local runs of `./scripts/verify.sh` require `jq` on `PATH` (`brew install jq` / `apt-get install jq`). CI's Ubuntu runner has it preinstalled.
+
+**Enforced by `./scripts/verify.sh` (CI fails on drift; documented here for reference):**
+
+- **Version sync** — the `**Version:** X.Y.Z` line at the top of `CORE_RULES.md` matches `.claude-plugin/plugin.json`'s `version`.
+- **Plugin & marketplace manifests** — both files parse as JSON and contain the kit's required keys (`name`/`description`/`version` for the plugin; `name`/`owner`/`plugins` for the marketplace, with each entry carrying `name`/`description`/`source`); the `name` and `description` of the self-entry (the marketplace plugin whose `source` is `"./"`) match `.claude-plugin/plugin.json`.
+- **Symlink contract** — every engineering skill's `skills/<name>/AGENTS.md` is a real symlink whose target is `../../CORE_RULES.md`. Catches the Windows-without-`core.symlinks` regression and accidental file-instead-of-symlink commits.
+- **Directive contract** — every engineering skill's `SKILL.md` carries the `## Core Rules` heading and the `✅ Core agents-kit@<version> rules applied` confirmation line (literal `<version>` placeholder; substituted at runtime).
+- **Standalone exemption** — standalone skills (`proofread`, `translate`, `fact-check`) deliberately have no `AGENTS.md` symlink and no `## Core Rules` heading in `SKILL.md`.
+
+**Manual spot-check before opening a PR (not covered by verify.sh — needs a throwaway `$HOME`):**
+
 - **Fresh install layout** — `setup.sh` against a throwaway `$HOME` should produce no global `~/.claude/CLAUDE.md` or `~/.codex/AGENTS.md`, and real-file `AGENTS.md` copies under `~/.<agent>/skills/<name>/`.
 - **Migration prompt** — pre-create `$HOME/.claude/CLAUDE.md` in a fake `$HOME`, run `setup.sh`. Decline → file stays; accept → file removed. One-shot per agent home (sentinel `.agents-kit-migration-acked`).
 
@@ -98,7 +107,7 @@ Beyond CI, contract-critical things the editor of a change is responsible for sp
 
 - The kit is dev-tools-on-unix targeted; symlinks are non-negotiable.
 - New top-level files: describe them in `docs/how-it-works.md` (prose, one bullet per file in the same shape as the existing entries for `CORE_RULES.md`, `skills/<name>/AGENTS.md`, etc.). The README has no separate file-tree block and no longer carries a `## How It Works` section — `docs/how-it-works.md` is the canonical spot.
-- `references/` is partitioned by domain. Today only `references/engineering/` exists (TypeScript, React, CSS, review, security, performance, testing, accessibility, code-style, tanstack-query, task-lifecycle); future domains (e.g. prose, design) can live as sibling subdirectories. Every engineering skill carries the same `## References` block that says "read any applicable checklists from `references/engineering/`", so adding a new engineering checklist requires no per-skill change — it picks up automatically. Standalone skills (`proofread`, `translate`, `fact-check`) intentionally omit the References block: code-domain checklists don't apply to their work, and there's no prose-domain references subdirectory yet. When you add one, mirror the engineering convention: a per-domain subdirectory and a matching `## References` block in the skills that need it.
+- `references/` is partitioned by domain. Today only `references/engineering/` exists (TypeScript, React, CSS, review, security, performance, testing, accessibility, code-style, tanstack-query, task-lifecycle, acceptance-criteria); future domains (e.g. prose, design) can live as sibling subdirectories. Every engineering skill carries the same `## References` block that says "read any applicable checklists from `references/engineering/`", so adding a new engineering checklist requires no per-skill change — it picks up automatically. Standalone skills (`proofread`, `translate`, `fact-check`) intentionally omit the References block: code-domain checklists don't apply to their work, and there's no prose-domain references subdirectory yet. When you add one, mirror the engineering convention: a per-domain subdirectory and a matching `## References` block in the skills that need it.
 
 ## Not in scope (here)
 
