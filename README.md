@@ -4,16 +4,12 @@ A personal kit for working with Claude Code, Codex, and other coding agents.
 
 ## Getting started
 
-Install via the plugin marketplace from inside Claude Code:
+Install the kit into Claude Code and Codex with the setup script:
 
+```bash
+git clone git@github.com:drimchansky/agents-kit.git ~/agents-kit
+~/agents-kit/setup.sh
 ```
-/plugin marketplace add drimchansky/agents-kit
-/plugin install agents-kit@drimchansky-agents-kit
-```
-
-For local development against an unreleased clone: `claude --plugin-dir /path/to/agents-kit`.
-
-For Codex or non-plugin install of Claude Code, see [docs/manual-install.md](docs/manual-install.md).
 
 ## Skills
 
@@ -37,13 +33,9 @@ The workflow runs roughly in order, but you don't need every step — pick which
 
 `refine-idea`, `plan-task`, `review-plan`, and `implement-plan` share a directory-based contract that lets them hand off cleanly; `resume-task` reads from the same directory but never mutates it. Each effort lives in `.agents/tasks/<slug>/` with a shared `CONTEXT.md`, paired `*.spec.md` + `*.plan.md` files, and append-only `*.result.md` records. The spec carries the acceptance criteria; `implement-plan` runs an acceptance gate against it before flipping the plan to `done`.
 
-See [docs/task-directories.md](docs/task-directories.md) for the full contract.
-
 ### Reference checklists
 
 The kit ships domain checklists in `references/engineering/` that engineering skills (especially `implement-plan` and `review-code`) consult when relevant.
-
-See [docs/reference-checklists.md](docs/reference-checklists.md) for the list and conventions.
 
 ### Utilities
 
@@ -52,7 +44,3 @@ Standalone skills that aren't tied to the engineering loop:
 - [`proofread`](skills/proofread/SKILL.md) — Polishing a message, email, or piece of writing for grammar, clarity, and factual accuracy. _Example: `/proofread` (paste text)_
 - [`translate`](skills/translate/SKILL.md) — Moving content between languages while preserving tone and context. _Example: `/translate to Spanish`_
 - [`fact-check`](skills/fact-check/SKILL.md) — Verifying factual claims against trustworthy live sources on the internet — not against pretraining. _Example: `/fact-check` (paste claim)_
-
----
-
-For details on how skills load shared rules and how `setup.sh` orchestrates the install, see [docs/how-it-works.md](docs/how-it-works.md).

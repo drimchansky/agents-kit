@@ -11,9 +11,9 @@ Before doing anything else in this skill:
 
 1. Read the sibling file `./AGENTS.md` (relative to this `SKILL.md`).
 2. Apply the rules it defines for the rest of this skill's execution.
-3. Output the following line as a visible confirmation, **before** any other text or tool calls in this skill, on its own line — substitute `<version>` with the value on the **Version** line at the top of `./AGENTS.md`:
+3. Output the following line as a visible confirmation, **before** any other text or tool calls in this skill, on its own line:
 
-    ✅ Core agents-kit@<version> rules applied
+    ✅ Core agents-kit rules applied
 
 The rules cover scope discipline, push-back behavior, communication style, and pre-presentation checks — they take precedence over default behavior unless the project's own conventions say otherwise.
 
