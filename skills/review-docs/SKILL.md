@@ -25,10 +25,6 @@ For reviewing an implementation plan against the codebase (not a doc), use `revi
 
 **CRITICAL**: This skill does not modify the doc on its own. The default output is an assessment in chat — nothing is written to the file. Only after the user has seen the review and explicitly asks for changes ("apply the fixes", "update the version section", "rewrite the commands block") do you edit the file, and only the changes the user authorized. Silent rewrites — even when the drift is obvious — are not allowed.
 
-## References
-
-Before working, read any applicable checklists from `references/engineering/`. Skip ones that don't apply.
-
 ## When to Use
 
 **Use when:**

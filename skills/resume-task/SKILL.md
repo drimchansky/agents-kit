@@ -19,11 +19,7 @@ The rules cover scope discipline, push-back behavior, communication style, and p
 
 This skill loads an existing task in `.agents/tasks/<slug>/` and produces a chat-only briefing — used to resume work after time away, hand off, review what was done, or answer questions about a task — whether in progress, blocked, or already shipped. It reads the four task artifacts (`CONTEXT.md`, every `*.spec.md`, every `*.plan.md`, every `*.result.md`), reconstructs state from `- [ ]` / `- [x]` checkboxes, checks for drift between the plan's claims and current code/git, and prints a structured brief.
 
-**CRITICAL**: This skill is **read-only across the repo** — task files (`CONTEXT.md`, `*.spec.md`, `*.plan.md`, `*.result.md`) and source code are observed but never modified (no write, edit, rename, delete). The skill also never mutates git state (no add, commit, checkout, stash). Reading implementation code is **expected and required** — the drift check in Step 4 greps shipped paths and opens cited files to verify the plan still matches reality. Output is **chat only** — do not write a `BRIEF.md` artifact. Briefings stale within hours and a fifth file would contradict the four-file contract that `plan-task` and `implement-plan` rely on.
-
-## References
-
-Read `references/engineering/` checklists only if you decide to dig into a pending step's code during the spot-check pass. This skill mostly observes — the references are for callers that go on to execute via `implement-plan`.
+**CRITICAL**: This skill is **read-only across the repo** — task files (`CONTEXT.md`, `*.spec.md`, `*.plan.md`, `*.result.md`) and source code are observed but never modified (no write, edit, rename, delete). The skill also never mutates git state (no add, commit, checkout, stash). Reading implementation code is **expected and required** — the drift check in Step 4 greps shipped paths and opens cited files to verify the plan still matches reality. Output is **chat only** — do not write a `BRIEF.md` artifact. Briefings stale within hours and a fifth file would contradict the four-file contract that `plan-task` and `implement-plan` rely on. Engineering checklists in `references/engineering/` are not preloaded — this skill mostly observes; consult them only if you dig into a pending step's code during the drift spot-check.
 
 ## When to Use
 

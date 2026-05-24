@@ -21,7 +21,7 @@ Audit existing code for structural quality, pattern consistency, and health. Sta
 
 ## References
 
-Before working, read `references/workflow/review.md` — it carries the lenses (What to Look For, What NOT to Flag, Calibrate Severity, Approval Bar, Prioritize Review Effort, Don't Rationalize) that apply to every audit. Then consult the domain-specific checklists in `references/engineering/` that match the code under audit (typescript, react, css, security, performance, testing, accessibility, code-style, tanstack-query). Skip ones that don't apply.
+Before working, read `references/workflow/review.md` — it carries the lenses (What to Look For, What NOT to Flag, Calibrate Severity, Approval Bar, Prioritize Review Effort, Don't Rationalize) that apply to every audit.
 
 ## Determine Audit Scope
 

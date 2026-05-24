@@ -116,7 +116,7 @@ For each step (or for the whole plan, if running end-to-end):
 
 1. **Implement** — Make the changes the step describes. Stay inside the plan's defined scope.
     - **If the step is fixing a bug** (rather than adding new behavior), apply the **Prove-It pattern**: write a failing test that reproduces the bug _first_, watch it fail (confirming the bug exists), then implement the fix and watch the test pass. The reproduction test becomes the step's verify criterion and a permanent regression guard.
-    - Before writing framework-specific code, confirm you've consulted the docs identified in Step 0. If the step touches a domain covered by `references/engineering/` (React, TypeScript, CSS, security, testing, performance, accessibility, tanstack-query), read the relevant checklist now.
+    - Before writing framework-specific code, confirm you've consulted the docs identified in Step 0. If the step touches a domain covered by `references/engineering/`, read the relevant checklist now.
 2. **Verify** — Two gates, both required:
     - **Step verify** — run the step's plan-defined `Verify` criterion. Proves the new behavior works.
     - **Health verify** — run typecheck, linter, and the existing test suite on the changed area. Proves nothing else regressed. Do not collapse this into the step verify; they answer different questions.

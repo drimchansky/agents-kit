@@ -23,10 +23,6 @@ The user provides a task or feature request. They may include context about cons
 
 **CRITICAL**: The output of this skill is two written files on disk — `<task-slug>.spec.md` and `<task-slug>.plan.md` — not a conversation message. After writing them, summarize briefly in the chat and point at the files.
 
-## References
-
-Before working, read any applicable checklists from `references/engineering/`. Skip ones that don't apply.
-
 ## When to Plan (and When Not To)
 
 **Plan when:**

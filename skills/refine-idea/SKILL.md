@@ -23,10 +23,6 @@ The user provides a rough concept, problem, or "what if" question. They may incl
 
 **CRITICAL**: The output of this skill is a written one-pager on disk, not a conversation message. After writing it, summarize briefly in chat and point at the file.
 
-## References
-
-Before working, read any applicable checklists from `references/engineering/`. Skip ones that don't apply.
-
 ## When to Refine (and When Not To)
 
 **Refine when:**

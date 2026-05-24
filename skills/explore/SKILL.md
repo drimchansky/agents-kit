@@ -23,10 +23,6 @@ The user asks about something they want to understand. This can be code in the c
 
 **CRITICAL**: Use web search liberally. Don't rely solely on training data for anything that could be outdated — library APIs, framework behavior, version-specific details, ecosystem conventions. Make as many web requests as needed to give an accurate, current answer.
 
-## References
-
-Before working, read any applicable checklists from `references/engineering/`. Skip ones that don't apply.
-
 ## Determine Scope
 
 Match the explanation level to the question:

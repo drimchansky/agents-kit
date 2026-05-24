@@ -23,10 +23,6 @@ The user describes an issue — a bug report, error message, unexpected behavior
 
 **CRITICAL**: Do not fix the issue. Verify it first. The goal is a clear verdict with evidence, then — if confirmed — discovery of fix options. The user decides which fix to pursue.
 
-## References
-
-Before working, read any applicable checklists from `references/engineering/`. Skip ones that don't apply.
-
 ## Multiple Findings
 
 When the input is a list of findings (e.g. from a code review), treat each as a separate verification target. Without explicit selection, verify all findings in severity order (critical → major → minor); when the user specifies a subset, verify only those. Present results as one verdict per finding.

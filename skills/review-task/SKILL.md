@@ -23,10 +23,6 @@ The user provides a plan — typically the output of `plan-task`, written to `.a
 
 **CRITICAL**: Do not implement. Do not redesign the solution. Validate the plan. The output is a feasibility assessment with questions, not a revised plan or code.
 
-## References
-
-Before working, read any applicable checklists from `references/engineering/`. Skip ones that don't apply.
-
 ## Locate the Plan
 
 If the user gives an explicit path, use it. Otherwise resolve in two levels:

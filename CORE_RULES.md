@@ -56,6 +56,22 @@ Reference checklists live under `references/`, partitioned by domain (today: `re
 
 Most skills in `skills/` direct the agent to load applicable references as part of their workflow. For ad-hoc work outside a skill, still consult them on your own — the same rule applies.
 
+### Engineering (`references/engineering/`)
+
+- `accessibility.md` — Semantic markup, ARIA, keyboard nav, focus management, contrast, forms
+- `code-style.md` — Function shape, parameter limits, comment discipline (why-not-what)
+- `css.md` — Layout, responsive design, Tailwind conventions, specificity, common pitfalls
+- `performance.md` — Rendering, data fetching, bundle size, memory cleanup
+- `react.md` — Version-aware (<18 / 18 / 19+) components, hooks, context, effects, derived state
+- `security.md` — Input validation/injection, authn/authz, data exposure, CSRF/headers, secrets
+- `tanstack-query.md` — Version-aware (v4 / v5) custom hooks, `queryOptions`, query keys, mutation side effects
+- `testing.md` — Behavior over implementation, mocking discipline, Arrange-Act-Assert, error-path coverage
+- `typescript.md` — Strict types (no `any`), discriminated unions, narrowing, `satisfies`, `as const`, naming
+
+### Workflow (`references/workflow/`)
+
+Cited directly by the skills that need them — no catalog here. Today: `acceptance-criteria.md` (used by `plan-task` / `review-task`), `review.md` (used by `review-commit` / `review-pr` / `audit`), `task-lifecycle.md` (used by lifecycle-bearing skills).
+
 ## Dependencies
 
 - Evaluate before adding: is it maintained? What's the bundle cost? Could you write it in <50 lines?
