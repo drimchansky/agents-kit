@@ -1,7 +1,7 @@
 ---
 name: review-code
-description: Use when asked to review, audit, or give feedback on a PR, diff, module, or whole project.
-argument-hint: '[scope or file path] [--no-checks]'
+description: Use when asked to review or give feedback on a PR, diff, or staged changes before commit.
+argument-hint: '[--no-checks]'
 disable-model-invocation: true
 ---
 
@@ -21,24 +21,22 @@ Review code for correctness, unintended impact, and adherence to project pattern
 
 ## Flags
 
-- `--no-checks` — Skip automated checks (lint, typecheck, tests, build, or any other tooling-driven verification). Focus exclusively on code analysis: read the code, reason about it, and produce findings. Do not invoke project scripts or run commands that execute code. Applies only to the Pre-PR and Pre-commit workflows, which have a "Run automated checks" step; Module and Project reviews don't run checks regardless.
+- `--no-checks` — Skip automated checks (lint, typecheck, tests, build, or any other tooling-driven verification). Focus exclusively on code analysis: read the code, reason about it, and produce findings. Do not invoke project scripts or run commands that execute code.
 
 ## References
 
 Before working, read `references/engineering/review.md` — it carries the lenses (What to Look For, What NOT to Flag, Calibrate Severity, Approval Bar, Prioritize Review Effort, Don't Rationalize) that apply to every review mode. Then consult the domain-specific checklists in `references/engineering/` that match the diff (typescript, react, css, security, performance, testing, accessibility, code-style, tanstack-query). Skip ones that don't apply.
 
-## 1. Determine Review Type
+## Determine Review Type
 
 Ask the user which type of review they want:
 
-- **Pre-PR** — Current branch vs. base branch → `git diff <base>...HEAD`
+- **PR** — Current branch vs. base branch → `git diff <base>...HEAD`
 - **Pre-commit** — Staged changes only → `git diff --cached`
-- **Module** — All code in a specific module or directory → full file reads, no diff
-- **Project** — Overall project structure and patterns → full codebase exploration
 
-If the user doesn't specify, ask before proceeding — the review process differs significantly by type.
+If the user doesn't specify, ask before proceeding — the review process differs by type.
 
-## Pre-PR Review
+## PR Review
 
 Review all changes in the current branch against the destination branch.
 
@@ -75,7 +73,7 @@ Review all changes in the current branch against the destination branch.
 
 **Examine tests first.** Test diffs reveal intent and expected behavior. Read them before the implementation so you evaluate the code against what it's supposed to do, not what it appears to do.
 
-Apply the full review process from `references/engineering/review.md` — its "What to Look For", "What NOT to Flag", "Calibrate Severity", "Approval Bar", "Prioritize Review Effort", and "Don't Rationalize" sections all apply to Pre-PR diffs.
+Apply the full review process from `references/engineering/review.md` — its "What to Look For", "What NOT to Flag", "Calibrate Severity", "Approval Bar", "Prioritize Review Effort", and "Don't Rationalize" sections all apply to PR diffs.
 
 ### Output
 
@@ -112,11 +110,11 @@ Prioritize:
 - **Accidental inclusions** — Debug logs, commented-out code, unrelated formatting changes, sensitive data
 - **Consistency** — Do changes follow existing patterns in the touched files?
 
-Apply the full review process from `references/engineering/review.md` — same lenses as Pre-PR, scoped to staged changes.
+Apply the full review process from `references/engineering/review.md` — same lenses as PR, scoped to staged changes.
 
 ### Output
 
-**Review findings** (if any) — Same format as Pre-PR.
+**Review findings** (if any) — Same format as PR.
 
 **Commit message** — Generate a commit message for the staged changes:
 
@@ -132,66 +130,6 @@ fix: prevent stale closure in usePolling callback
 The interval callback captured the initial state value. Use a ref
 to always read the latest value inside the interval.
 ```
-
----
-
-## Module Review
-
-Review all code in a specific module, directory, or feature area — not just recent changes.
-
-### Setup
-
-- Ask the user which module or directory to review (if not specified)
-- Read all source files in the module
-- Identify the module's public API (exports, interfaces, props)
-- Map dependencies: what does this module depend on, and what depends on it?
-
-### Review Focus
-
-- **Structure** — Is the module well-organized? Clear responsibilities? Appropriate file boundaries?
-- **Public API** — Is the interface clean, consistent, and minimal? Are types precise?
-- **Internal quality** — Dead code, unnecessary complexity, duplicated logic within the module
-- **Patterns** — Does the module follow the same patterns as similar modules in the project?
-- **Test coverage** — Are critical paths tested? Are tests testing behavior or implementation details?
-- **Dependencies** — Are there circular dependencies, over-coupling, or unnecessary imports?
-
-Skip line-by-line nitpicks. Focus on structural findings that affect maintainability.
-
-### Output
-
-- **Module overview** — Purpose, public API surface, dependency map
-- **Findings** — Structural issues with severity and recommendations
-- **Health assessment** — Overall module quality: well-structured / needs attention / needs refactoring
-
----
-
-## Project Review
-
-High-level review of overall project structure, patterns, and health. No diff — this is a holistic assessment.
-
-### Setup
-
-- Read project configuration (package.json, tsconfig, etc.)
-- Explore the directory structure
-- Sample 3-5 representative modules to assess pattern consistency
-- Check test setup and coverage patterns
-- Review dependency list for outdated, heavy, or redundant packages
-
-### Review Focus
-
-- **Architecture** — Is the project organized logically? Are responsibilities clear between layers/directories?
-- **Pattern consistency** — Do similar features follow similar patterns, or has the codebase diverged over time?
-- **Dependency health** — Outdated packages, heavy bundles, redundant libraries doing the same thing
-- **Test strategy** — Is there a coherent testing approach? Unit vs integration vs e2e balance?
-- **Developer experience** — Are there sharp edges? Missing types, confusing naming, undocumented conventions?
-- **Scaling concerns** — What will hurt as the project grows? Tight coupling, monolithic files, missing abstractions?
-
-### Output
-
-- **Project overview** — Tech stack, structure, key patterns
-- **Strengths** — What's working well
-- **Concerns** — Issues ranked by impact, with actionable recommendations
-- **Recommendations** — Prioritized list of improvements (quick wins vs. larger efforts)
 
 ---
 
