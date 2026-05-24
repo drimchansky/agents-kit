@@ -37,7 +37,7 @@ The workflow runs roughly in order, but you don't need every step — pick which
 
 ### Reference checklists
 
-The kit ships domain checklists in `references/engineering/` that engineering skills (especially `implement-plan`, `review-commit`, `review-pr`, and `audit`) consult when relevant.
+The kit ships domain checklists under `references/`, partitioned by subdirectory: `references/engineering/` holds technical/code-domain checklists (typescript, react, css, tanstack-query, security, performance, accessibility, testing, code-style) consulted by engineering skills (especially `implement-plan`, `review-commit`, `review-pr`, and `audit`). `references/workflow/` holds methodology checklists (acceptance-criteria, task-lifecycle, review) consulted by orchestration skills (`plan-task`, `review-task`, `implement-plan`, `review-commit`, `review-pr`, `audit`, `resume-task`, `refine-idea`).
 
 ### Utilities
 

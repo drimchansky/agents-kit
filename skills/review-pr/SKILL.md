@@ -25,7 +25,7 @@ Review all changes in the current branch against its base branch for correctness
 
 ## References
 
-Before working, read `references/engineering/review.md` — it carries the lenses (What to Look For, What NOT to Flag, Calibrate Severity, Approval Bar, Prioritize Review Effort, Don't Rationalize) that apply to every review. Then consult the domain-specific checklists in `references/engineering/` that match the diff (typescript, react, css, security, performance, testing, accessibility, code-style, tanstack-query). Skip ones that don't apply.
+Before working, read `references/workflow/review.md` — it carries the lenses (What to Look For, What NOT to Flag, Calibrate Severity, Approval Bar, Prioritize Review Effort, Don't Rationalize) that apply to every review. Then consult the domain-specific checklists in `references/engineering/` that match the diff (typescript, react, css, security, performance, testing, accessibility, code-style, tanstack-query). Skip ones that don't apply.
 
 ## Setup
 
@@ -60,7 +60,7 @@ Before working, read `references/engineering/review.md` — it carries the lense
 
 **Examine tests first.** Test diffs reveal intent and expected behavior. Read them before the implementation so you evaluate the code against what it's supposed to do, not what it appears to do.
 
-Apply the full review process from `references/engineering/review.md` — its "What to Look For", "What NOT to Flag", "Calibrate Severity", "Approval Bar", "Prioritize Review Effort", and "Don't Rationalize" sections all apply to PR diffs.
+Apply the full review process from `references/workflow/review.md` — its "What to Look For", "What NOT to Flag", "Calibrate Severity", "Approval Bar", "Prioritize Review Effort", and "Don't Rationalize" sections all apply to PR diffs.
 
 ## Output
 

@@ -66,7 +66,7 @@ Read in full, not skim:
 - Every `*.plan.md` in the directory — note each plan's `**Status:**` header and its `**Spec:**` link.
 - Every `*.result.md` — note `**Status:**`, find the latest per-step or full-run section, capture every `**Blocked:**` block verbatim, and capture any `## Acceptance` section verbatim.
 
-Status values across the lifecycle-bearing files are defined in `references/engineering/task-lifecycle.md` — consult it if you encounter an unfamiliar value, and use the **pairing rule** there to flag inconsistencies (e.g. plan `executing` with no result file, plan `done` with result `executing`). The spec file has no status — it's a static input.
+Status values across the lifecycle-bearing files are defined in `references/workflow/task-lifecycle.md` — consult it if you encounter an unfamiliar value, and use the **pairing rule** there to flag inconsistencies (e.g. plan `executing` with no result file, plan `done` with result `executing`). The spec file has no status — it's a static input.
 
 Flag in the brief:
 

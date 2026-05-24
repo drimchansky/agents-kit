@@ -25,7 +25,7 @@ Review staged changes before committing — correctness, completeness, accidenta
 
 ## References
 
-Before working, read `references/engineering/review.md` — it carries the lenses (What to Look For, What NOT to Flag, Calibrate Severity, Approval Bar, Prioritize Review Effort, Don't Rationalize) that apply to every review. Then consult the domain-specific checklists in `references/engineering/` that match the diff (typescript, react, css, security, performance, testing, accessibility, code-style, tanstack-query). Skip ones that don't apply.
+Before working, read `references/workflow/review.md` — it carries the lenses (What to Look For, What NOT to Flag, Calibrate Severity, Approval Bar, Prioritize Review Effort, Don't Rationalize) that apply to every review. Then consult the domain-specific checklists in `references/engineering/` that match the diff (typescript, react, css, security, performance, testing, accessibility, code-style, tanstack-query). Skip ones that don't apply.
 
 ## Setup
 
@@ -49,7 +49,7 @@ Prioritize:
 - **Accidental inclusions** — Debug logs, commented-out code, unrelated formatting changes, sensitive data
 - **Consistency** — Do changes follow existing patterns in the touched files?
 
-Apply the full review process from `references/engineering/review.md` — the same lenses apply, scoped to the staged diff.
+Apply the full review process from `references/workflow/review.md` — the same lenses apply, scoped to the staged diff.
 
 ## Output
 

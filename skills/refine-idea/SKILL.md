@@ -156,7 +156,7 @@ The "Not Doing" list is the most valuable part — focus is about saying no to g
 
 Write the file with this layout. Adapt section depth to the idea's size — keep the one-pager portion to one page where possible. The trailing `## References` section is a placeholder for the user (or later sessions) to drop external links, pasted specs, and cross-cutting notes.
 
-The `**Status:**` field is a one-shot origin marker — `refined` here, never mutated after creation. Full vocabulary across all task files is registered in `references/engineering/task-lifecycle.md`.
+The `**Status:**` field is a one-shot origin marker — `refined` here, never mutated after creation. Full vocabulary across all task files is registered in `references/workflow/task-lifecycle.md`.
 
 ```markdown
 # <idea name>

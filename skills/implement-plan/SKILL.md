@@ -92,7 +92,7 @@ Respect step `Depends on:` ordering regardless of mode.
 
 ### 3. Initialize the Result File (if it doesn't exist)
 
-Status values used in this skill (`to-do`, `executing`, `done`) and their transitions are registered in `references/engineering/task-lifecycle.md`. That file is the single source of truth — if a value below disagrees with the registry, the registry wins.
+Status values used in this skill (`to-do`, `executing`, `done`) and their transitions are registered in `references/workflow/task-lifecycle.md`. That file is the single source of truth — if a value below disagrees with the registry, the registry wins.
 
 Create `.agents/tasks/<slug>/<task-slug>.result.md` with this header:
 

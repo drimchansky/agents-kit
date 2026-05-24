@@ -52,7 +52,7 @@ Place at the end of your response. Scope discipline with nothing lost.
 
 ## References
 
-Reference checklists live under `references/`, partitioned by domain (today: `references/engineering/`). Consult any that apply when writing or reviewing code in that domain.
+Reference checklists live under `references/`, partitioned by domain (today: `references/engineering/` for technical/code-domain checklists and `references/workflow/` for methodology checklists). Consult any that apply when writing or reviewing code in that domain.
 
 Most skills in `skills/` direct the agent to load applicable references as part of their workflow. For ad-hoc work outside a skill, still consult them on your own — the same rule applies.
 
