@@ -57,7 +57,14 @@ Review all changes in the current branch against the destination branch.
 
 **Gather context:**
 
-- Read commit messages and PR description if available
+- Read commit messages for the branch
+- Check for an open PR on GitHub for this branch with `gh pr view --json number,title,body,state,url,comments,reviews` (requires `gh` CLI). If the command fails because `gh` is missing or the repo has no GitHub remote, note that and skip the PR lookup.
+- If a PR exists:
+  - Read the PR title, description, and any review comments / discussion threads — these often contain the _why_ behind the change and prior reviewer concerns
+  - Extract every URL from the PR body and comments (issue trackers, design docs, Slack threads, RFCs, related PRs, dashboards)
+  - For each link, attempt to fetch its content (WebFetch for public URLs, `gh issue view` / `gh pr view` for GitHub references). Use the retrieved context to inform the review
+  - If a link can't be accessed (auth-walled, private workspace, 404, tool unavailable), record it in the output under **Inaccessible context** with the URL and reason. Do not fabricate what's behind it — flag the gap so the user can decide whether to paste the content in or proceed without it
+- If no PR exists, proceed with just the branch commits and any context the user provided
 
 **Run automated checks** (skip if `--no-checks`):
 
@@ -75,6 +82,7 @@ Apply the full review process from `references/engineering/review.md` — its "W
 - **Summary** — What changed, intent, overall assessment (approve / request changes / needs discussion)
 - **Findings** — Issues with severity, file location, recommendation, and impact
 - **Improvements** (optional) — Non-blocking suggestions
+- **Inaccessible context** (only if any) — Links from the PR that couldn't be fetched, with URL and reason (auth required, private, 404, tool unavailable). Note which findings might shift if that context were available.
 
 ---
 
