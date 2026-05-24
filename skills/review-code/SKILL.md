@@ -17,8 +17,6 @@ Before doing anything else in this skill:
 
 The rules cover scope discipline, push-back behavior, communication style, and pre-presentation checks — they take precedence over default behavior unless the project's own conventions say otherwise.
 
-# Review Code
-
 Review code for correctness, unintended impact, and adherence to project patterns. Start by determining the review scope.
 
 ## Flags
