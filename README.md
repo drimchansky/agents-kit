@@ -13,7 +13,7 @@ git clone git@github.com:drimchansky/agents-kit.git ~/agents-kit
 
 ## Skills
 
-Skills are organized into two groups: an **engineering workflow** (11 skills) that shapes the development loop, and a set of **utilities** (3 skills) for ad-hoc tasks.
+Skills are organized into two groups: an **engineering workflow** (11 skills) that shapes the development loop, and a set of **utilities** (4 skills) for ad-hoc tasks.
 
 ### Engineering workflow
 
@@ -37,7 +37,7 @@ The workflow runs roughly in order, but you don't need every step — pick which
 
 ### Reference checklists
 
-The kit ships domain checklists under `references/`, partitioned by subdirectory: `references/engineering/` holds technical/code-domain checklists (typescript, react, css, tanstack-query, security, performance, accessibility, testing, code-style) preloaded by `implement-plan` (the skill that writes production code) and consulted ad-hoc by other engineering skills as needed. `references/workflow/` holds methodology checklists (acceptance-criteria, task-lifecycle, review) consulted by orchestration skills (`plan-task`, `review-task`, `implement-plan`, `review-commit`, `review-pr`, `audit`, `resume-task`, `refine-idea`).
+The kit ships domain checklists under `references/`, partitioned by subdirectory: `references/engineering/` holds technical/code-domain checklists (typescript, react, css, tanstack-query, security, performance, accessibility, testing, code-style) preloaded by `implement-plan` (the skill that writes production code) and consulted ad-hoc by other engineering skills as needed. `references/workflow/` holds methodology checklists (acceptance-criteria, task-lifecycle, review, refine-idea) consulted by orchestration skills (`plan-task`, `review-task`, `implement-plan`, `review-commit`, `review-pr`, `audit`, `resume-task`, `refine-idea`).
 
 ### Utilities
 
@@ -46,3 +46,4 @@ Standalone skills that aren't tied to the engineering loop:
 - [`proofread`](skills/proofread/SKILL.md) — Polishing a message, email, or piece of writing for grammar, clarity, and factual accuracy. _Example: `/proofread` (paste text)_
 - [`translate`](skills/translate/SKILL.md) — Moving content between languages while preserving tone and context. _Example: `/translate to Spanish`_
 - [`fact-check`](skills/fact-check/SKILL.md) — Verifying factual claims against trustworthy live sources on the internet — not against pretraining. _Example: `/fact-check` (paste claim)_
+- [`refine-idea-chat`](skills/refine-idea-chat/SKILL.md) — Chat-only sibling of `refine-idea`: sharpen a rough idea through diverge/converge/sharpen phases without writing anything to disk. _Example: `/refine-idea-chat add a draft mode to the editor`_

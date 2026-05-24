@@ -10,25 +10,21 @@ disable-model-invocation: true
 1. Read `./AGENTS.md` and apply its rules.
 2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
 
-This skill turns a raw idea into a sharp, actionable concept worth building. It runs three phases — divergent exploration, convergent evaluation, and a written one-pager — and produces an artifact at `.agents/tasks/<slug>/CONTEXT.md` that `plan-task` and `implement-plan` later consume as the shared context for every plan in the task directory.
+This skill turns a raw idea into a sharp, actionable concept worth building. It runs the diverge / converge / sharpen process from `references/workflow/refine-idea.md` and produces an artifact at `.agents/tasks/<slug>/CONTEXT.md` that `plan-task` and `implement-plan` later consume as the shared context for every plan in the task directory.
 
 The user provides a rough concept, problem, or "what if" question. They may include partial context, constraints, or prior thinking. The idea may be vague on purpose — that's the input.
 
 **CRITICAL**: The output of this skill is a written one-pager on disk, not a conversation message. After writing it, summarize briefly in chat and point at the file.
 
-## When to Refine (and When Not To)
+## References
 
-**Refine when:**
+Before working, read `references/workflow/refine-idea.md` — it carries the When-to-Refine criteria, Phase 1 (Diverge), Phase 2 (Converge), the shared Don't Rationalize entries, and the Standard Verification Checklist that apply to every refinement.
 
-- The idea is vague enough that planning would just guess at scope
-- Multiple framings are plausible and none has been chosen
-- Hidden assumptions could kill the idea before any code is written
-- The user wants to stress-test thinking, not just get a plan
-
-**Skip refinement when:**
+## Skip refinement when
 
 - The user already knows what they want to build and just needs a plan → use `plan-task`
 - The change is well-scoped and the problem is concrete → use `plan-task`
+- The user wants to sharpen an idea without writing anything to disk → use `refine-idea-chat` (chat-only sibling)
 - The user is asking how something works, not deciding what to build → use `explore`
 
 If the idea is already concrete enough to plan, say so and recommend `plan-task` directly.
@@ -55,59 +51,9 @@ If `.agents/tasks/<slug>/` doesn't exist, create it. If a `CONTEXT.md` already e
 - ❌ Verify criteria — those go in the plan's *Steps*
 - ❌ Conversation summaries or TODO scratchpads
 
-## Process
+## Phase 3 — Sharpen (output)
 
-The three phases below are sequential. Don't skip Phases 1–2 to jump straight to the artifact.
-
-### Phase 1 — Diverge
-
-**Goal:** Open the idea up before narrowing it down.
-
-1. **Restate as "How Might We"** — Reframe the user's input as a one-sentence "How might we…" problem. This forces clarity on what's actually being solved versus what's being assumed.
-2. **Ask 3–5 sharpening questions** — No more. Focus on:
-    - Who is this for, specifically?
-    - What does success look like?
-    - What are the real constraints (time, tech, resources)?
-    - What's been tried before?
-    - Why now?
-
-    Don't proceed until the target user and rough success picture are concrete enough to inform the recommended direction. The testable, plan-specific acceptance criteria are formalized later in `plan-task`'s spec step.
-
-3. **Generate 5–8 variations** using lenses (pick the ones that fit; don't run all mechanically):
-    - **Inversion** — What if we did the opposite?
-    - **Constraint removal** — What if budget / time / tech weren't factors?
-    - **Audience shift** — What if this were for a different user?
-    - **Combination** — What if we merged this with an adjacent idea?
-    - **Simplification** — What's the version that's 10× simpler?
-    - **10× version** — What would this look like at massive scale?
-    - **Expert lens** — What would domain experts find obvious that outsiders miss?
-
-    Push beyond what the user initially asked for. Each variation should have a reason it exists, not just be a bullet point.
-
-**If running inside a codebase:** Use grep, file reads, and codebase search to ground variations in existing architecture, patterns, and prior art. Cite specific files when relevant.
-
-### Phase 2 — Converge
-
-After the user reacts to Phase 1 (signals which variations resonate, pushes back, adds context), shift to evaluation.
-
-1. **Cluster** the resonant ideas into 2–3 distinct directions. Each direction should feel meaningfully different, not just variations on the same theme.
-2. **Stress-test** each direction on three axes:
-    - **User value** — Who benefits and how much? Painkiller or vitamin?
-    - **Feasibility** — Technical and resource cost? What's the hardest part?
-    - **Differentiation** — What makes this genuinely different? Would someone switch?
-
-3. **Surface hidden assumptions.** For each direction, name explicitly:
-    - What you're betting is true but haven't validated
-    - What could kill the idea
-    - What you're choosing to ignore (and why that's okay for now)
-
-    This is where most ideation fails. Don't skip it.
-
-**Be honest, not supportive.** A good ideation partner is not a yes-machine. If a direction is weak, say so with kindness and specificity.
-
-### Phase 3 — Sharpen
-
-Write the one-pager to `.agents/tasks/<slug>/CONTEXT.md`. Then post a short summary in this exact shape, so the user can copy-paste the next command:
+Run Phases 1 and 2 from `references/workflow/refine-idea.md`. Then write the one-pager to `.agents/tasks/<slug>/CONTEXT.md` using the *CONTEXT.md Structure* layout below, and post a short summary in this exact shape so the user can copy-paste the next command:
 
 ```
 Context: .agents/tasks/<slug>/CONTEXT.md
@@ -118,27 +64,20 @@ Next: /plan-task <slug>
 
 `plan-task` discovers `CONTEXT.md` by reading the task directory at `.agents/tasks/<slug>/`. The slug is the directory name and is the only handoff token needed. The pre-formatted next-command is what makes the handoff frictionless; don't drop it or paraphrase it.
 
-The "Not Doing" list is the most valuable part — focus is about saying no to good ideas. Make trade-offs explicit.
+## Don't Rationalize (skill-specific)
 
-## Don't Rationalize
+Beyond the shared rationalizations in `references/workflow/refine-idea.md`:
 
-- "This idea is clear enough already" — If the user invoked `refine-idea`, it wasn't.
-- "Three phases is overkill" — The phases each do one thing. Skipping them collapses the artifact into a plan that hasn't earned its assumptions.
-- "I'll surface assumptions later" — Untested assumptions kill ideas. Surface them before committing to a direction.
-- "More variations is better" — 5–8 considered variations beat 20 shallow ones.
-- "The user liked the first idea, ship that" — Liking the first idea doesn't validate it. Run the convergent stress-test anyway.
-- "I'll output the one-pager in chat" — The artifact must be a file. `plan-task` reads it from disk.
+- "I'll output the one-pager in chat" — The artifact must be a file. `plan-task` reads it from disk. If the user wants chat-only output, that's `refine-idea-chat`, not this skill.
 
 ## Verification
+
+Apply the Standard Verification Checklist in `references/workflow/refine-idea.md`, plus:
 
 - [ ] One-pager written to `.agents/tasks/<slug>/CONTEXT.md`
 - [ ] Task directory created if it didn't exist; existing `CONTEXT.md` not silently overwritten
 - [ ] Chat summary surfaces file path, slug, **and** the literal `Next: /plan-task <slug>` line in the exact handoff shape
 - [ ] Slug derived from the idea, kebab-case, 2–5 words
-- [ ] "How Might We" problem statement is one sentence and concrete
-- [ ] Multiple directions were explored, not just the user's first framing
-- [ ] Hidden assumptions are listed with how each could be validated
-- [ ] "Not Doing" list makes trade-offs explicit, with reasons
 - [ ] Output is a file on disk, not a conversation message
 
 ## CONTEXT.md Structure
