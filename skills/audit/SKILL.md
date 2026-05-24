@@ -87,7 +87,4 @@ High-level audit of overall project structure, patterns, and health.
 
 ## Verification
 
-- [ ] Severity ratings reflect user/production impact, not aesthetics
-- [ ] No findings on style preferences alone
-- [ ] Dead code identified and listed explicitly
-- [ ] Assumptions in non-trivial decisions identified
+Apply the Standard Verification Checklist in `references/workflow/review.md`; the diff-scoped items (modified shared code, unchanged code, regression tests for bug fixes) don't apply to module/project audits — the others do, including the "no findings on style preferences alone" rule.

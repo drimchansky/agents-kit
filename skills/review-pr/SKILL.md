@@ -14,7 +14,7 @@ Review all changes in the current branch against its base branch for correctness
 
 ## Flags
 
-- `--no-checks` — Skip automated checks (lint, typecheck, tests, build, or any other tooling-driven verification). Focus exclusively on code analysis: read the code, reason about it, and produce findings. Do not invoke project scripts or run commands that execute code.
+- `--no-checks` — Skip automated checks. See "Automated Checks" in `references/workflow/review.md`.
 
 ## References
 
@@ -44,10 +44,7 @@ Before working, read `references/workflow/review.md` — it carries the lenses (
     - If a link can't be accessed (auth-walled, private workspace, 404, tool unavailable), record it in the output under **Inaccessible context** with the URL and reason. Do not fabricate what's behind it — flag the gap so the user can decide whether to paste the content in or proceed without it
 - If no PR exists, proceed with just the branch commits and any context the user provided
 
-**Run automated checks** (skip if `--no-checks`):
-
-- Run project lint, typecheck, and tests on changed files where they exist
-- Treat failures and warnings as findings; record them with file location and severity
+**Run automated checks** per "Automated Checks" in `references/workflow/review.md` (skip if `--no-checks`).
 
 ## Review Focus
 
@@ -64,9 +61,4 @@ Apply the full review process from `references/workflow/review.md` — its "What
 
 ## Verification
 
-- [ ] All usage sites of modified shared code checked
-- [ ] Severity ratings reflect user/production impact, not aesthetics
-- [ ] No findings on unchanged code or style preferences
-- [ ] Bug fixes have regression tests (or the gap is flagged)
-- [ ] Dead code identified and listed explicitly
-- [ ] Assumptions in non-trivial decisions identified
+Apply the Standard Verification Checklist in `references/workflow/review.md`.

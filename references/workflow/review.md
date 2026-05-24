@@ -134,3 +134,26 @@ For large diffs (20+ files): review types and interfaces first to understand the
 - "Fix it in a follow-up PR" — Deferred fixes don't get fixed. Block on it now or accept it forever; don't pretend a Critical finding is a follow-up.
 - "It's mostly good, just approve" — Rubber-stamping is not review. If you didn't trace the shared-code consumers, you didn't review them.
 - "This code is obviously dead/redundant" — Chesterton's Fence: check `git blame` and callers before recommending removal or simplification. Accumulated complexity often has a real reason; if you can't explain why it's there, ask, don't remove.
+
+## Automated Checks
+
+When invoking a review without the `--no-checks` opt-out:
+
+- Run project lint, typecheck, and tests on the changed/staged files where they exist
+- Treat failures and warnings as findings; record them with file location and severity
+
+When `--no-checks` is passed: skip this section entirely. Focus exclusively on code analysis — read the code, reason about it, produce findings. Do not invoke project scripts or run commands that execute code.
+
+## Standard Verification Checklist
+
+Before finalizing any review or audit output, confirm:
+
+- [ ] All usage sites of modified shared code checked
+- [ ] Severity ratings reflect user/production impact, not aesthetics
+- [ ] No findings on style preferences alone
+- [ ] No findings on unchanged code (diff reviews only)
+- [ ] Bug fixes have regression tests (or the gap is flagged)
+- [ ] Dead code identified and listed explicitly
+- [ ] Assumptions in non-trivial decisions identified
+
+For module / project audits (no diff): items 1, 4, and 5 are diff-scoped and don't apply; items 2, 3, 6, and 7 still do.
