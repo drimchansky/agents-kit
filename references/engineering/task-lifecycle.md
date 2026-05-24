@@ -51,7 +51,7 @@ The plan and its companion result file track in lockstep once execution begins:
 - Plan `executing` → result file `executing`.
 - Plan `done` → result file `done`.
 
-A plan in `executing` with no companion result file (or a mismatched pair) signals an incomplete `implement-plan` initialization. `resume-task` and `review-plan` should flag this as drift.
+A plan in `executing` with no companion result file (or a mismatched pair) signals an incomplete `implement-plan` initialization. `resume-task` and `review-task` should flag this as drift.
 
 The spec file is not part of the pairing rule — it has no lifecycle state to compare. `resume-task` should still flag if a plan exists without a sibling spec, since `plan-task` is expected to produce one.
 

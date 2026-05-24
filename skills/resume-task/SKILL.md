@@ -40,7 +40,7 @@ Read `references/engineering/` checklists only if you decide to dig into a pendi
 - No task directory exists yet → suggest `refine-idea` or `plan-task`
 - Ready to actually execute the next step → use `implement-plan` directly (it reads the same artifacts as a prelude to writing code)
 - The task is fresh with no result file yet → just read the plan; there is no state to reconstruct
-- The user wants feasibility validation, not status → use `review-plan`
+- The user wants feasibility validation, not status → use `review-task`
 
 ## Process
 

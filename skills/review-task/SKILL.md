@@ -1,7 +1,7 @@
 ---
-name: review-plan
-description: Use when asked to review, validate, or sanity-check a plan — confirms the implementation direction is right and still in sync with CONTEXT.md, the spec, and the current codebase, and surfaces any drift between what the plan assumes and what the code actually shows.
-argument-hint: '[plan file path]'
+name: review-task
+description: Use when asked to review, validate, or sanity-check a task's plan — confirms the implementation direction is right and still in sync with CONTEXT.md, the spec, and the current codebase, and surfaces any drift between task artifacts (CONTEXT, spec, plan, result) and the code.
+argument-hint: '[task slug or plan path]'
 disable-model-invocation: true
 ---
 
@@ -130,7 +130,21 @@ Also flag the inverse — **plan steps with no matching criterion**. Steps that 
 
 Note any criterion marked `_(unresolved: ...)_` from the spec — these are deferred clarifying questions and should be lifted into the Questions section of this review's output.
 
-### 6. Identify Gaps
+### 6. Check Cross-File Drift
+
+Per-step feasibility and acceptance coverage both assume the four task artifacts agree with each other. They often don't. A criterion can be added to the spec after the plan was written; CONTEXT's "Not Doing" list can quietly exclude a behavior the plan now ships; a result file can record work that no longer matches the plan's status. Surface these mismatches as their own class of finding — they are not the same as a missing or vague step.
+
+Compare the artifacts pairwise. For each pair, name the kind of drift the comparison is looking for; only flag actual contradictions, not stylistic differences.
+
+- **CONTEXT.md ↔ `<task-slug>.spec.md`** — Does any acceptance criterion describe behavior CONTEXT's "Not Doing" list excludes, or behavior outside CONTEXT's MVP scope? Does the spec contradict CONTEXT's Recommended Direction or Key Assumptions?
+- **CONTEXT.md ↔ `<task-slug>.plan.md`** — Does the plan's Scope (in / out / boundaries) contradict CONTEXT's MVP scope or "Not Doing"? Does the plan reference assumptions CONTEXT marked still-to-validate as if they were settled?
+- **`<task-slug>.spec.md` ↔ `<task-slug>.plan.md`** — Is a criterion excluded by the plan's `Out of scope` (already surfaced in Acceptance Coverage as `out of scope` — repeat it here to make the inconsistency explicit)? Does the plan's `In scope` extend beyond what any criterion requires?
+- **`<task-slug>.plan.md` ↔ `<task-slug>.result.md`** (only if `result.md` exists) — Does the result claim a step done while the plan's checkbox is still `- [ ]`? Does the result reference a step number the plan doesn't have (a sign of a stale rename)? Does the **pairing rule** in `references/engineering/task-lifecycle.md` hold — plan `executing` requires result `executing`, plan `done` requires result `done`?
+- **Status field consistency** — Does CONTEXT carry a valid origin marker, the plan a valid lifecycle state, the result (if present) the matching state? Reject anything outside the vocabulary registered in `references/engineering/task-lifecycle.md`.
+
+If `<task-slug>.result.md` is absent, skip the last two pair checks — that absence is expected for plans in `to-do`.
+
+### 7. Identify Gaps
 
 Look for what the plan doesn't say but the implementation will need:
 
@@ -144,7 +158,7 @@ Look for what the plan doesn't say but the implementation will need:
 - **Checkpoint placement** — For plans with more than ~5 steps, are checkpoints present every 2–3 steps? Does each checkpoint name a concrete end-to-end flow (e.g. "user can log in and see dashboard"), not a vague "core flow works"? Flag missing, misplaced, or vague checkpoints.
 - **Platform constraints** — Domain rules, protocol limitations, timing constraints that affect the work
 
-### 7. Check Pattern Consistency
+### 8. Check Pattern Consistency
 
 Compare the plan's implied implementation against the project's established patterns:
 
@@ -200,6 +214,20 @@ Example:
 
 If `<task-slug>.spec.md` is missing entirely, state that here and skip the per-criterion mapping; treat the missing spec as the highest-priority gap.
 
+### Cross-File Drift
+
+A short list of contradictions between artifacts, grouped by the file pair the contradiction lives in. Render the section header even when no drift is found — state "no drift detected" explicitly so the absence is informative rather than ambiguous. Skip pairs that include `<task-slug>.result.md` if no result file exists yet.
+
+Example:
+
+```
+- CONTEXT ↔ spec — drift: spec criterion 4 ("user can export archived rows") describes behavior CONTEXT's "Not Doing" excludes. Resolve by either lifting the exclusion or dropping the criterion.
+- CONTEXT ↔ plan — no drift detected.
+- spec ↔ plan — drift: plan's `In scope` includes "audit-log integration" but no criterion requires it (already flagged in Acceptance Coverage as a step with no matching criterion; surfacing here too because the scope wording itself is wrong).
+- plan ↔ result — drift: result file records Step 3 as shipped but the plan still shows `- [ ]`. Likely an interrupted `implement-plan` run.
+- Status fields — plan is `executing` but no `result.md` exists (pairing rule violated, per `references/engineering/task-lifecycle.md`).
+```
+
 ### Gaps
 
 Missing details that the plan needs to address before implementation, grouped by category.
@@ -233,6 +261,7 @@ Aspects of the plan that are verified and ready to execute — so the user knows
 - [ ] Each step's verify criterion assessed for concreteness
 - [ ] Each criterion in the spec assessed against `references/engineering/acceptance-criteria.md`; `weak` / `vague-or-untestable` / `unresolved` findings appear in Questions with the specific failing dimension (and a suggested rewrite where possible)
 - [ ] acceptance coverage section maps every spec criterion to a step (or marks it `uncovered` / `out of scope`); plan steps with no matching criterion also flagged
+- [ ] Cross-file drift assessed across CONTEXT ↔ spec, CONTEXT ↔ plan, spec ↔ plan, plan ↔ result (when result exists), and status-field consistency against `references/engineering/task-lifecycle.md`; section rendered even when no drift is found
 - [ ] Deferred criterion clarifications (`_(unresolved: ...)_` in the spec) lifted into Questions
 - [ ] Checkpoints (if plan >5 steps) assessed for placement and concrete end-to-end assertion
 - [ ] Questions are targeted and explain why the answer matters

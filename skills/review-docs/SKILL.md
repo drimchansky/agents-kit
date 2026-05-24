@@ -21,7 +21,7 @@ This skill audits existing documentation against the codebase. It catches stale 
 
 The user provides a documentation file (or points at a documentation area). This can be a README, project rules file (AGENTS.md / CLAUDE.md), architecture note, ADR, API doc, runbook, or feature spec. Your job is to verify whether the document still matches reality and surface what needs to change.
 
-For reviewing an implementation plan against the codebase (not a doc), use `review-plan`.
+For reviewing an implementation plan against the codebase (not a doc), use `review-task`.
 
 **CRITICAL**: This skill does not modify the doc on its own. The default output is an assessment in chat — nothing is written to the file. Only after the user has seen the review and explicitly asks for changes ("apply the fixes", "update the version section", "rewrite the commands block") do you edit the file, and only the changes the user authorized. Silent rewrites — even when the drift is obvious — are not allowed.
 

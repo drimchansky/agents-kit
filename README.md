@@ -23,7 +23,7 @@ The workflow runs roughly in order, but you don't need every step — pick which
 - [`refine-idea`](skills/refine-idea/SKILL.md) — Sharpen a rough idea before planning — assumptions, MVP scope, "Not Doing" list. _Example: `/refine-idea add a draft mode to the editor`_
 - [`resume-task`](skills/resume-task/SKILL.md) — Brief on, resume, or hand off a task — read `.agents/tasks/<slug>/` and report in chat. _Example: `/resume-task auth-jwt-migration`_
 - [`plan-task`](skills/plan-task/SKILL.md) — A change is non-trivial and needs a contract. Writes paired `.agents/tasks/<slug>/<task-slug>.spec.md` (acceptance criteria) and `<task-slug>.plan.md` (steps). _Example: `/plan-task migrate auth to JWT`_
-- [`review-plan`](skills/review-plan/SKILL.md) — Confirm the implementation direction is right and still in sync with `CONTEXT.md`, the spec, and the current codebase; surface any drift between plan assumptions and code reality. _Example: `/review-plan auth-jwt-migration`_
+- [`review-task`](skills/review-task/SKILL.md) — Confirm the implementation direction is right and still in sync with `CONTEXT.md`, the spec, and the current codebase; surface any drift between plan assumptions and code reality. _Example: `/review-task auth-jwt-migration`_
 - [`implement-plan`](skills/implement-plan/SKILL.md) — A validated plan is ready to ship. Marks steps `[x]`, writes a `*.result.md`, and runs an acceptance gate against the spec before flipping the plan to `done`. _Example: `/implement-plan auth-jwt-migration`_
 - [`review-commit`](skills/review-commit/SKILL.md) — Staged changes need a sanity check before commit — correctness, completeness, accidental inclusions, pattern fit; also drafts the commit message. _Example: `/review-commit`_
 - [`review-pr`](skills/review-pr/SKILL.md) — A branch needs review against its base — bugs, blast radius, pattern fit, with PR context pulled from GitHub when available. _Example: `/review-pr`_
@@ -33,7 +33,7 @@ The workflow runs roughly in order, but you don't need every step — pick which
 
 ### Task directories
 
-`refine-idea`, `plan-task`, `review-plan`, and `implement-plan` share a directory-based contract that lets them hand off cleanly; `resume-task` reads from the same directory but never mutates it. Each effort lives in `.agents/tasks/<slug>/` with a shared `CONTEXT.md`, paired `*.spec.md` + `*.plan.md` files, and append-only `*.result.md` records. The spec carries the acceptance criteria; `implement-plan` runs an acceptance gate against it before flipping the plan to `done`.
+`refine-idea`, `plan-task`, `review-task`, and `implement-plan` share a directory-based contract that lets them hand off cleanly; `resume-task` reads from the same directory but never mutates it. Each effort lives in `.agents/tasks/<slug>/` with a shared `CONTEXT.md`, paired `*.spec.md` + `*.plan.md` files, and append-only `*.result.md` records. The spec carries the acceptance criteria; `implement-plan` runs an acceptance gate against it before flipping the plan to `done`.
 
 ### Reference checklists
 

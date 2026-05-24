@@ -1,6 +1,6 @@
 # Acceptance Criteria
 
-Quality bar for the bullets in `<task-slug>.spec.md`. A criterion that fails any check below is not ready for `review-plan` or `implement-plan` — fix it (or mark `_(unresolved: <note>)_`) before downstream skills run.
+Quality bar for the bullets in `<task-slug>.spec.md`. A criterion that fails any check below is not ready for `review-task` or `implement-plan` — fix it (or mark `_(unresolved: <note>)_`) before downstream skills run.
 
 ## Each criterion is
 

@@ -83,7 +83,7 @@ If multiple `.agents/tasks/*/` directories look like plausible matches for the u
 
 #### CONTEXT.md skeleton (created when missing)
 
-The skeleton below is the canonical CONTEXT.md schema, shared with `refine-idea` (which produces it via Phases 1–3) so downstream consumers (`review-plan`, `implement-plan`, and the plan-task reuse step) read the same section names regardless of how the task started. When `plan-task` skips the idea step, populate `Problem Statement` and `Key Assumptions to Validate` from the user's task description; leave the other sections as placeholders for the user to fill in.
+The skeleton below is the canonical CONTEXT.md schema, shared with `refine-idea` (which produces it via Phases 1–3) so downstream consumers (`review-task`, `implement-plan`, and the plan-task reuse step) read the same section names regardless of how the task started. When `plan-task` skips the idea step, populate `Problem Statement` and `Key Assumptions to Validate` from the user's task description; leave the other sections as placeholders for the user to fill in.
 
 ```markdown
 # <task name>
@@ -143,7 +143,7 @@ Before designing the plan, write `.agents/tasks/<slug>/<task-slug>.spec.md` — 
 - Explain why the answer matters (which criterion it sharpens, which step it would change).
 - Suggest options when possible — "should bulk export include archived rows? A: yes, with a flag; B: no, archived stays excluded; A matches the existing single-row export, B matches the UI filter default" — not open-ended "what should we do?"
 
-If the user answers in chat, update the spec to reflect the answers before moving on. If the user defers a question, leave the affected criterion marked with a trailing `_(unresolved: <short note>)_` so `review-plan` and `implement-plan` see it.
+If the user answers in chat, update the spec to reflect the answers before moving on. If the user defers a question, leave the affected criterion marked with a trailing `_(unresolved: <short note>)_` so `review-task` and `implement-plan` see it.
 
 **Spec file content:**
 
@@ -170,11 +170,11 @@ Keep criteria **outcome-oriented**, not implementation-oriented. "User can expor
 - <Criterion 3>
 ```
 
-The spec carries no `**Status:**` field by design — it is a static input, not a lifecycle artifact. The user mutates it freely between sessions; downstream skills (`review-plan`, `implement-plan`, `resume-task`) read it but never write to it.
+The spec carries no `**Status:**` field by design — it is a static input, not a lifecycle artifact. The user mutates it freely between sessions; downstream skills (`review-task`, `implement-plan`, `resume-task`) read it but never write to it.
 
 ### 4. Explore the Codebase
 
-**CRITICAL**: Always ground the plan in what already exists. Read before designing — this is the forward exploration pass; `review-plan` will independently verify assumptions later if invoked.
+**CRITICAL**: Always ground the plan in what already exists. Read before designing — this is the forward exploration pass; `review-task` will independently verify assumptions later if invoked.
 
 - Search for related implementations to use as models; map affected files and shared code in the blast radius
 - Note existing constraints (tech debt, API contracts, performance budgets)
@@ -294,11 +294,11 @@ Match the plan's detail to the task's complexity. The spec step (Step 3) is requ
 - "The risks are obvious, no need to list them" — Generic risk awareness is not risk identification. Be specific or admit there are none.
 - "This is too simple to plan" — If the user asked for a plan, the task warranted one.
 - "I'll figure out the scope during implementation" — Undefined scope produces undefined work. Bound it now.
-- "I'll skip the spec, the plan steps make it obvious" — Steps describe how to get there; criteria describe what done means. Without criteria, `implement-plan` has no acceptance gate and `review-plan` has nothing to check coverage against.
+- "I'll skip the spec, the plan steps make it obvious" — Steps describe how to get there; criteria describe what done means. Without criteria, `implement-plan` has no acceptance gate and `review-task` has nothing to check coverage against.
 - "The acceptance criteria are obvious" — If they're obvious, they cost nothing to write down. If they're not, that's exactly when you needed them.
 - "The criterion is roughly the right shape, that's good enough" — Run it through `references/engineering/acceptance-criteria.md`. Vague criteria survive coverage analysis and pass the acceptance gate by reinterpretation; that's the failure mode the checklist catches.
 - "The user gave a vague task, I'll just guess what they want" — Ask. Clarifying questions during the spec step are cheaper than reworking the plan after implementation.
-- "I'll just output the plan and spec in chat" — Both must be files on disk. `implement-plan` and `review-plan` read them from there.
+- "I'll just output the plan and spec in chat" — Both must be files on disk. `implement-plan` and `review-task` read them from there.
 
 ## Verification
 
