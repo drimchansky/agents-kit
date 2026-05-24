@@ -13,7 +13,7 @@ git clone git@github.com:drimchansky/agents-kit.git ~/agents-kit
 
 ## Skills
 
-Skills are organized into two groups: an **engineering workflow** (10 skills) that shapes the development loop, and a set of **utilities** (3 skills) for ad-hoc tasks.
+Skills are organized into two groups: an **engineering workflow** (11 skills) that shapes the development loop, and a set of **utilities** (3 skills) for ad-hoc tasks.
 
 ### Engineering workflow
 
@@ -25,7 +25,8 @@ The workflow runs roughly in order, but you don't need every step — pick which
 - [`plan-task`](skills/plan-task/SKILL.md) — A change is non-trivial and needs a contract. Writes paired `.agents/tasks/<slug>/<task-slug>.spec.md` (acceptance criteria) and `<task-slug>.plan.md` (steps). _Example: `/plan-task migrate auth to JWT`_
 - [`review-plan`](skills/review-plan/SKILL.md) — Confirm the implementation direction is right and still in sync with `CONTEXT.md`, the spec, and the current codebase; surface any drift between plan assumptions and code reality. _Example: `/review-plan auth-jwt-migration`_
 - [`implement-plan`](skills/implement-plan/SKILL.md) — A validated plan is ready to ship. Marks steps `[x]`, writes a `*.result.md`, and runs an acceptance gate against the spec before flipping the plan to `done`. _Example: `/implement-plan auth-jwt-migration`_
-- [`review-code`](skills/review-code/SKILL.md) — Code is written and needs a review before merge — PR or pre-commit diff, bugs, blast radius, pattern fit. _Example: `/review-code`_
+- [`review-commit`](skills/review-commit/SKILL.md) — Staged changes need a sanity check before commit — correctness, completeness, accidental inclusions, pattern fit; also drafts the commit message. _Example: `/review-commit`_
+- [`review-pr`](skills/review-pr/SKILL.md) — A branch needs review against its base — bugs, blast radius, pattern fit, with PR context pulled from GitHub when available. _Example: `/review-pr`_
 - [`audit`](skills/audit/SKILL.md) — Audit an existing module or whole project for structure, patterns, and health — no diff, no recent-change focus. _Example: `/audit src/auth` or `/audit` (whole project)_
 - [`verify-issue`](skills/verify-issue/SKILL.md) — A reported bug needs to be confirmed and root-caused before a fix. _Example: `/verify-issue users see 500 on signup`_
 - [`review-docs`](skills/review-docs/SKILL.md) — Audit a doc against the codebase and surface stale references, gaps, and drift. Applies fixes only when you ask after seeing the review. _Example: `/review-docs README`_
@@ -36,7 +37,7 @@ The workflow runs roughly in order, but you don't need every step — pick which
 
 ### Reference checklists
 
-The kit ships domain checklists in `references/engineering/` that engineering skills (especially `implement-plan`, `review-code`, and `audit`) consult when relevant.
+The kit ships domain checklists in `references/engineering/` that engineering skills (especially `implement-plan`, `review-commit`, `review-pr`, and `audit`) consult when relevant.
 
 ### Utilities
 
