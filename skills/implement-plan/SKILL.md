@@ -7,15 +7,8 @@ disable-model-invocation: true
 
 ## Core Rules
 
-Before doing anything else in this skill:
-
-1. Read the sibling file `./AGENTS.md` (relative to this `SKILL.md`).
-2. Apply the rules it defines for the rest of this skill's execution.
-3. Output the following line as a visible confirmation, **before** any other text or tool calls in this skill, on its own line:
-
-    ✅ Core agents-kit rules applied
-
-The rules cover scope discipline, push-back behavior, communication style, and pre-presentation checks — they take precedence over default behavior unless the project's own conventions say otherwise.
+1. Read `./AGENTS.md` and apply its rules.
+2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
 
 This skill executes a plan written by `plan-task` (or any plan in `.agents/tasks/<slug>/` that follows the same format). It implements the work, updates a companion **result file** as it goes, marks each step `DONE` in the plan with a link back to the result section, and runs a final **acceptance gate** against the spec before flipping the plan to `done`.
 

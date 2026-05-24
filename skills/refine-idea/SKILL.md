@@ -7,15 +7,8 @@ disable-model-invocation: true
 
 ## Core Rules
 
-Before doing anything else in this skill:
-
-1. Read the sibling file `./AGENTS.md` (relative to this `SKILL.md`).
-2. Apply the rules it defines for the rest of this skill's execution.
-3. Output the following line as a visible confirmation, **before** any other text or tool calls in this skill, on its own line:
-
-    ✅ Core agents-kit rules applied
-
-The rules cover scope discipline, push-back behavior, communication style, and pre-presentation checks — they take precedence over default behavior unless the project's own conventions say otherwise.
+1. Read `./AGENTS.md` and apply its rules.
+2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
 
 This skill turns a raw idea into a sharp, actionable concept worth building. It runs three phases — divergent exploration, convergent evaluation, and a written one-pager — and produces an artifact at `.agents/tasks/<slug>/CONTEXT.md` that `plan-task` and `implement-plan` later consume as the shared context for every plan in the task directory.
 

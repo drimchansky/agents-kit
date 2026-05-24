@@ -7,15 +7,8 @@ disable-model-invocation: true
 
 ## Core Rules
 
-Before doing anything else in this skill:
-
-1. Read the sibling file `./AGENTS.md` (relative to this `SKILL.md`).
-2. Apply the rules it defines for the rest of this skill's execution.
-3. Output the following line as a visible confirmation, **before** any other text or tool calls in this skill, on its own line:
-
-    ✅ Core agents-kit rules applied
-
-The rules cover scope discipline, push-back behavior, communication style, and pre-presentation checks — they take precedence over default behavior unless the project's own conventions say otherwise.
+1. Read `./AGENTS.md` and apply its rules.
+2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
 
 This skill loads an existing task in `.agents/tasks/<slug>/` and produces a chat-only briefing — used to resume work after time away, hand off, review what was done, or answer questions about a task — whether in progress, blocked, or already shipped. It reads the four task artifacts (`CONTEXT.md`, every `*.spec.md`, every `*.plan.md`, every `*.result.md`), reconstructs state from `- [ ]` / `- [x]` checkboxes, checks for drift between the plan's claims and current code/git, and prints a structured brief.
 
