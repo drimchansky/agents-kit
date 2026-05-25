@@ -12,7 +12,7 @@ disable-model-invocation: true
 
 This skill loads an existing task in `.agents/tasks/<slug>/` and produces a chat-only briefing — used to resume work after time away, hand off, review what was done, or answer questions about a task — whether in progress, blocked, or already shipped. It reads the four task artifacts (`CONTEXT.md`, every `*.spec.md`, every `*.plan.md`, every `*.result.md`), reconstructs state from `- [ ]` / `- [x]` checkboxes, checks for drift between the plan's claims and current code/git, and prints a structured brief.
 
-**CRITICAL**: This skill is **read-only across the repo** — task files (`CONTEXT.md`, `*.spec.md`, `*.plan.md`, `*.result.md`) and source code are observed but never modified (no write, edit, rename, delete). The skill also never mutates git state (no add, commit, checkout, stash). Reading implementation code is **expected and required** — the drift check in Step 4 greps shipped paths and opens cited files to verify the plan still matches reality. Output is **chat only** — do not write a `BRIEF.md` artifact. Briefings stale within hours and a fifth file would contradict the four-file contract that `plan-task` and `implement-plan` rely on. Engineering checklists in `./references/engineering/` are not preloaded — this skill mostly observes; consult them only if you dig into a pending step's code during the drift spot-check.
+**CRITICAL**: This skill is **read-only across the repo** — task files (`CONTEXT.md`, `*.spec.md`, `*.plan.md`, `*.result.md`) and source code are observed but never modified (no write, edit, rename, delete). The skill also never mutates git state (no add, commit, checkout, stash). External systems cited in `CONTEXT.md`, specs, plans, or results (Jira, Notion, Slack, Google Docs, PRs, dashboards, etc.) are fetched **read-only** in Step 5 — never commented on, updated, or otherwise mutated. Reading implementation code is **expected and required** — the drift check in Step 4 greps shipped paths and opens cited files to verify the plan still matches reality. Output is **chat only** — do not write a `BRIEF.md` artifact. Briefings stale within hours and a fifth file would contradict the four-file contract that `plan-task` and `implement-plan` rely on. Engineering checklists in `./references/engineering/` are not preloaded — this skill mostly observes; consult them only if you dig into a pending step's code during the drift spot-check.
 
 ## When to Use
 
@@ -96,7 +96,46 @@ Tag each finding `info` (FYI), `warn` (review before resuming), or `block` (plan
 
 **Always render the "Drift since plan" heading** — print `No drift detected.` when clean. Absence of drift is a verification statement, not silence.
 
-### 5. Produce the Brief
+### 5. Refresh External References
+
+External systems cited in `CONTEXT.md`, specs, plans, or results (Jira tickets, Slack threads, Notion pages, Google Docs, PRs, dashboards) have their own state that drifts independent of code. A ticket may have closed since the plan was written, a thread may resolve an open question, a doc may have been rewritten. The brief should reflect current external state, not stale text from `CONTEXT.md`.
+
+This is the external counterpart to Step 4 — Step 4 catches drift on disk; Step 5 catches drift in the systems `CONTEXT.md` points at.
+
+1. **Extract reference URLs.** Walk `CONTEXT.md`, every `*.spec.md`, every `*.plan.md`, and every `*.result.md` and collect every URL from:
+    - The `## References` section (or equivalently named section) in `CONTEXT.md`
+    - Markdown link bodies (`[label](url)`) anywhere in the files
+    - Plain `https://` strings in prose
+      Deduplicate. Skip `mailto:`, `file://`, `localhost`, anchors-only (`#section`), and relative paths (`./…`, `../…`, or any link without a scheme).
+
+2. **Pick a fetcher per URL by domain.** Prefer a structured integration over HTML scraping when one is available in the current agent environment. The selection is capability-based, not tool-name-based — use whatever the host agent exposes:
+    - `docs.google.com`, `drive.google.com` → a Google Drive integration (metadata + content) if present
+    - `mail.google.com` → a Gmail integration if present
+    - `calendar.google.com` → a Google Calendar integration if present
+    - `github.com` PRs / issues / commits → the `gh` CLI via Bash (`gh pr view <url> --json state,title,updatedAt,comments`, `gh issue view`) when available
+    - `*.atlassian.net` (Jira), `*.notion.so`, `*.slack.com`, and everything else → a domain-specific integration if one is available, otherwise a generic HTTP fetcher
+    - When no integration matches, fall back to whatever generic HTTP-fetch capability the agent offers
+    - Slack threads and private Notion/Drive links are often auth-walled — see step 4 below
+
+3. **Fetch minimally.** Don't pull full content unless needed. For each URL, capture:
+    - Current title / subject
+    - Status if applicable (open/closed/merged/done/in-progress/archived)
+    - Last-updated timestamp if visible
+    - Whether new comments, edits, or messages appear since the citation was added (compare against `git log -1 --format=%aI -- <citing-file>` if useful; otherwise just surface a count or a "since" date)
+
+4. **Compare against the citing file's description.** For each reference, tag:
+    - `info` — fetched cleanly, no material change since cited
+    - `warn` — material change (status flipped, new comments resolving an open question, doc edited substantively, PR merged or closed)
+    - `block` — broken (404, moved, deleted) — the plan/CONTEXT is pointing at something that no longer exists
+    - When a Slack/Jira/Notion link is auth-walled and you can't read it, tag `info` with `auth required — re-check manually` rather than blocking. Don't pretend it was fetched.
+
+5. **Failures are non-blocking.** A single unfetchable URL must not halt the brief. Capture the error verbatim, tag the entry, continue to the next URL.
+
+6. **Feed answered questions back to Step 6.** If a fetched reference materially answers an item in `CONTEXT.md`'s or a plan's "Open Questions" (or a spec criterion marked `_(unresolved: ...)_`), note it — the "Open questions" section in the brief should drop those items and surface the new answer instead.
+
+**Always render the "References update" heading** — print `No external references cited.` when no URLs were found. Absence is a verification statement.
+
+### 6. Produce the Brief
 
 Assemble per the output template below. Print to chat. Do not write any file.
 
@@ -147,16 +186,26 @@ Assemble per the output template below. Print to chat. Do not write any file.
 
 (or, when clean: `No drift detected.`)
 
+## References update
+
+- [info] [Jira CRM-123](https://example.atlassian.net/browse/CRM-123) — "Add CSV export" — Status: In Progress (unchanged since cited)
+- [warn] [Notion: API contract](https://www.notion.so/...) — last edited 2026-05-23 by alice; the open question about pagination is now answered (cursor-based)
+- [warn] [PR #482](https://github.com/org/repo/pull/482) — merged 2026-05-20; Step 3's blocker no longer applies
+- [block] [Original spec doc](https://docs.google.com/document/d/...) — 404 (moved or deleted); CONTEXT.md cites a now-broken link
+- [info] [Slack #project-x](https://acme.slack.com/archives/...) — auth required, re-check manually
+
+(or, when no references cited: `No external references cited.`)
+
 ## Open questions
 
-- <deduped from CONTEXT.md "Open Questions" + plan "Open Questions" + any spec criteria marked `_(unresolved: ...)_`; questions answered in the result file are removed>
+- <deduped from CONTEXT.md "Open Questions" + plan "Open Questions" + any spec criteria marked `_(unresolved: ...)_`; questions answered in the result file _or in fetched references (Step 5)_ are removed, and any new answers surfaced in their place>
 
 ## Where to start
 
 <2–3 sentences naming the concrete first action — file to open, command to run (e.g. `/implement-plan <slug>`), or a specific drift item to resolve before resuming>
 ```
 
-If multiple plans live in the directory, render one **Acceptance criteria** / **Done** / **Up next** / **Blocked** block per plan with a clear sub-heading; the **Drift**, **Open questions**, and **Where to start** sections remain shared.
+If multiple plans live in the directory, render one **Acceptance criteria** / **Done** / **Up next** / **Blocked** block per plan with a clear sub-heading; the **Drift**, **References update**, **Open questions**, and **Where to start** sections remain shared.
 
 ## Don't Rationalize
 
@@ -165,6 +214,9 @@ If multiple plans live in the directory, render one **Acceptance criteria** / **
 - "The result file is recent, skip the drift check" — Recent ≠ unchanged. The implementation can shift after a step lands.
 - "I'll write a `BRIEF.md` so the user has it later" — Briefings stale within hours; a fifth artifact contradicts the four-file contract. Print to chat only.
 - "User said 'resume', so I'll just start coding" — In this skill, _resume_ means brief, then decide. The brief is the deliverable; the user picks the next move.
+- "The Jira/Notion/PR link probably hasn't changed; skip the fetch" — External state drifts silently, and stale links are exactly what Step 5 is for. If a URL is cited and a tool can reach it, fetch it.
+- "The fetch failed, I'll just omit that reference" — A failed fetch is a finding, not silence. Tag it `block` (broken) or `info` (auth required) and keep going. Omitting the reference hides drift.
+- "I'll leave a comment on the Jira ticket to confirm status" — Step 5 is read-only. Never comment, update, transition, or otherwise write to an external system. Observe only.
 
 ## Verification
 
@@ -180,6 +232,10 @@ If multiple plans live in the directory, render one **Acceptance criteria** / **
 - [ ] Plan-referenced paths partitioned into shipped vs. pending before existence-check; missing **shipped** paths flagged as `block`/`warn`, missing **pending** paths not flagged
 - [ ] At least one `**Shipped:**` file from the latest result entry spot-checked against current source
 - [ ] Spec sanity check ran: a `met` criterion spot-checked against live behavior; missing `## Acceptance` section on a `done` plan flagged `block`
+- [ ] Every URL in `CONTEXT.md` / spec / plan / result extracted, deduped, and fetched read-only with the appropriate tool (or `No external references cited.` stated explicitly)
+- [ ] No external system was written to (no Jira comment, no Slack message, no Drive edit, no PR comment)
+- [ ] Material changes since citation flagged `warn`; broken links flagged `block`; auth-walled links flagged `info` with `auth required — re-check manually`; failures captured, not omitted
+- [ ] Open questions resolved by a fetched reference removed from "Open questions" and the new answer surfaced in "References update"
 - [ ] Brief uses the documented template sections in order
 - [ ] "Where to start" names a concrete first action (file + command), not a generic suggestion
 - [ ] Open questions deduplicated across `CONTEXT.md`, plan, and any unresolved spec criteria; already-answered ones removed
