@@ -14,7 +14,7 @@ Audit existing code for structural quality, pattern consistency, and health. Sta
 
 ## References
 
-Before working, read `references/workflow/review.md` — it carries the lenses (What to Look For, What NOT to Flag, Calibrate Severity, Approval Bar, Prioritize Review Effort, Don't Rationalize) that apply to every audit.
+Before working, read `./references/workflow/review.md` — it carries the lenses (What to Look For, What NOT to Flag, Calibrate Severity, Approval Bar, Prioritize Review Effort, Don't Rationalize) that apply to every audit.
 
 ## Determine Audit Scope
 
@@ -87,4 +87,4 @@ High-level audit of overall project structure, patterns, and health.
 
 ## Verification
 
-Apply the Standard Verification Checklist in `references/workflow/review.md`; the diff-scoped items (modified shared code, unchanged code, regression tests for bug fixes) don't apply to module/project audits — the others do, including the "no findings on style preferences alone" rule.
+Apply the Standard Verification Checklist in `./references/workflow/review.md`; the diff-scoped items (modified shared code, unchanged code, regression tests for bug fixes) don't apply to module/project audits — the others do, including the "no findings on style preferences alone" rule.

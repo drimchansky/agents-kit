@@ -14,11 +14,11 @@ Review staged changes before committing — correctness, completeness, accidenta
 
 ## Flags
 
-- `--no-checks` — Skip automated checks. See "Automated Checks" in `references/workflow/review.md`.
+- `--no-checks` — Skip automated checks. See "Automated Checks" in `./references/workflow/review.md`.
 
 ## References
 
-Before working, read `references/workflow/review.md` — it carries the lenses (What to Look For, What NOT to Flag, Calibrate Severity, Approval Bar, Prioritize Review Effort, Don't Rationalize) that apply to every review.
+Before working, read `./references/workflow/review.md` — it carries the lenses (What to Look For, What NOT to Flag, Calibrate Severity, Approval Bar, Prioritize Review Effort, Don't Rationalize) that apply to every review.
 
 ## Setup
 
@@ -26,7 +26,7 @@ Before working, read `references/workflow/review.md` — it carries the lenses (
 - If nothing is staged, inform the user and stop
 - Group changes by file and intent
 
-**Run automated checks** per "Automated Checks" in `references/workflow/review.md` (skip if `--no-checks`).
+**Run automated checks** per "Automated Checks" in `./references/workflow/review.md` (skip if `--no-checks`).
 
 ## Review Focus
 
@@ -39,7 +39,7 @@ Prioritize:
 - **Accidental inclusions** — Debug logs, commented-out code, unrelated formatting changes, sensitive data
 - **Consistency** — Do changes follow existing patterns in the touched files?
 
-Apply the full review process from `references/workflow/review.md` — the same lenses apply, scoped to the staged diff.
+Apply the full review process from `./references/workflow/review.md` — the same lenses apply, scoped to the staged diff.
 
 ## Output
 
@@ -62,4 +62,4 @@ to always read the latest value inside the interval.
 
 ## Verification
 
-Apply the Standard Verification Checklist in `references/workflow/review.md`.
+Apply the Standard Verification Checklist in `./references/workflow/review.md`.

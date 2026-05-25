@@ -93,7 +93,7 @@ Also assess each step's **Verify** criterion: is it concrete enough to actually 
 
 Before mapping criteria to steps, assess the criteria themselves. Coverage is meaningless if the criteria are vague — a perfectly-covered plan can still ship the wrong thing because "the export works well" maps cleanly to a step that builds the wrong export.
 
-Apply `references/workflow/acceptance-criteria.md` to every bullet in `<task-slug>.spec.md`. Tag each criterion with one of:
+Apply `./references/workflow/acceptance-criteria.md` to every bullet in `<task-slug>.spec.md`. Tag each criterion with one of:
 
 - **good** — passes every check (testable, specific, outcome-oriented, singular, bounded, stated as behavior)
 - **weak** — passes overall but loses points on one dimension; note which (treated as feedback, not a blocker)
@@ -128,8 +128,8 @@ Compare the artifacts pairwise. For each pair, name the kind of drift the compar
 - **CONTEXT.md ↔ `<task-slug>.spec.md`** — Does any acceptance criterion describe behavior CONTEXT's "Not Doing" list excludes, or behavior outside CONTEXT's MVP scope? Does the spec contradict CONTEXT's Recommended Direction or Key Assumptions?
 - **CONTEXT.md ↔ `<task-slug>.plan.md`** — Does the plan's Scope (in / out / boundaries) contradict CONTEXT's MVP scope or "Not Doing"? Does the plan reference assumptions CONTEXT marked still-to-validate as if they were settled?
 - **`<task-slug>.spec.md` ↔ `<task-slug>.plan.md`** — Is a criterion excluded by the plan's `Out of scope` (already surfaced in Acceptance Coverage as `out of scope` — repeat it here to make the inconsistency explicit)? Does the plan's `In scope` extend beyond what any criterion requires?
-- **`<task-slug>.plan.md` ↔ `<task-slug>.result.md`** (only if `result.md` exists) — Does the result claim a step done while the plan's checkbox is still `- [ ]`? Does the result reference a step number the plan doesn't have (a sign of a stale rename)? Does the **pairing rule** in `references/workflow/task-lifecycle.md` hold — plan `executing` requires result `executing`, plan `done` requires result `done`?
-- **Status field consistency** — Does CONTEXT carry a valid origin marker, the plan a valid lifecycle state, the result (if present) the matching state? Reject anything outside the vocabulary registered in `references/workflow/task-lifecycle.md`.
+- **`<task-slug>.plan.md` ↔ `<task-slug>.result.md`** (only if `result.md` exists) — Does the result claim a step done while the plan's checkbox is still `- [ ]`? Does the result reference a step number the plan doesn't have (a sign of a stale rename)? Does the **pairing rule** in `./references/workflow/task-lifecycle.md` hold — plan `executing` requires result `executing`, plan `done` requires result `done`?
+- **Status field consistency** — Does CONTEXT carry a valid origin marker, the plan a valid lifecycle state, the result (if present) the matching state? Reject anything outside the vocabulary registered in `./references/workflow/task-lifecycle.md`.
 
 If `<task-slug>.result.md` is absent, skip the last two pair checks — that absence is expected for plans in `to-do`.
 
@@ -214,7 +214,7 @@ Example:
 - CONTEXT ↔ plan — no drift detected.
 - spec ↔ plan — drift: plan's `In scope` includes "audit-log integration" but no criterion requires it (already flagged in Acceptance Coverage as a step with no matching criterion; surfacing here too because the scope wording itself is wrong).
 - plan ↔ result — drift: result file records Step 3 as shipped but the plan still shows `- [ ]`. Likely an interrupted `implement-plan` run.
-- Status fields — plan is `executing` but no `result.md` exists (pairing rule violated, per `references/workflow/task-lifecycle.md`).
+- Status fields — plan is `executing` but no `result.md` exists (pairing rule violated, per `./references/workflow/task-lifecycle.md`).
 ```
 
 ### Gaps
@@ -240,7 +240,7 @@ Aspects of the plan that are verified and ready to execute — so the user knows
 - "I'll note the gaps during implementation" — Surface them now. That's the entire point of review.
 - "Everything looks good" — Rubber-stamping isn't review. Every integration point needs code-level verification.
 - "That's a theoretical concern" — Only flag real issues, but don't dismiss concerns without checking the code.
-- "The criteria look fine to me" — Run them through `references/workflow/acceptance-criteria.md`. Without an explicit pass, this skill rubber-stamps vague criteria, the structural coverage check gives false confidence, and the failure surfaces inside the acceptance gate where it's most expensive.
+- "The criteria look fine to me" — Run them through `./references/workflow/acceptance-criteria.md`. Without an explicit pass, this skill rubber-stamps vague criteria, the structural coverage check gives false confidence, and the failure surfaces inside the acceptance gate where it's most expensive.
 
 ## Verification
 
@@ -248,9 +248,9 @@ Aspects of the plan that are verified and ready to execute — so the user knows
 - [ ] Every integration point verified against actual source code
 - [ ] Each step has a clear verdict with evidence
 - [ ] Each step's verify criterion assessed for concreteness
-- [ ] Each criterion in the spec assessed against `references/workflow/acceptance-criteria.md`; `weak` / `vague-or-untestable` / `unresolved` findings appear in Questions with the specific failing dimension (and a suggested rewrite where possible)
+- [ ] Each criterion in the spec assessed against `./references/workflow/acceptance-criteria.md`; `weak` / `vague-or-untestable` / `unresolved` findings appear in Questions with the specific failing dimension (and a suggested rewrite where possible)
 - [ ] acceptance coverage section maps every spec criterion to a step (or marks it `uncovered` / `out of scope`); plan steps with no matching criterion also flagged
-- [ ] Cross-file drift assessed across CONTEXT ↔ spec, CONTEXT ↔ plan, spec ↔ plan, plan ↔ result (when result exists), and status-field consistency against `references/workflow/task-lifecycle.md`; section rendered even when no drift is found
+- [ ] Cross-file drift assessed across CONTEXT ↔ spec, CONTEXT ↔ plan, spec ↔ plan, plan ↔ result (when result exists), and status-field consistency against `./references/workflow/task-lifecycle.md`; section rendered even when no drift is found
 - [ ] Deferred criterion clarifications (`_(unresolved: ...)_` in the spec) lifted into Questions
 - [ ] Checkpoints (if plan >5 steps) assessed for placement and concrete end-to-end assertion
 - [ ] Questions are targeted and explain why the answer matters

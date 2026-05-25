@@ -113,7 +113,7 @@ _(Per-plan acceptance criteria live in each plan's `<task-slug>.spec.md`. This s
 _(External links, pasted specs, ticket numbers, screenshots, cross-cutting notes. Read by every plan in this task directory.)_
 ```
 
-`CONTEXT.md`'s `**Status:**` is a one-shot origin marker; the plan file owns the working lifecycle. Full status vocabulary across all task files is registered in `references/workflow/task-lifecycle.md` — read it once if you're unsure which value to write.
+`CONTEXT.md`'s `**Status:**` is a one-shot origin marker; the plan file owns the working lifecycle. Full status vocabulary across all task files is registered in `./references/workflow/task-lifecycle.md` — read it once if you're unsure which value to write.
 
 The user is expected to enrich `CONTEXT.md` over time (links, specs, decisions). Don't dump per-step notes, approach rationale, or verify criteria into it — those belong in the plan or its result file. Placeholder sections are intentional: leave them in place even if empty so downstream skills can find the same section names.
 
@@ -123,8 +123,8 @@ Before designing the plan, write `.agents/tasks/<slug>/<task-slug>.spec.md` — 
 
 **Resolve in this order:**
 
-- **Spec already exists for this `<task-slug>`** (hand-authored or from a prior session) — read it, apply `references/workflow/acceptance-criteria.md` to each criterion, restate the criteria back to the user (calling out any that fail the checklist), and ask whether to proceed as-is or revise. Do not silently overwrite.
-- **No spec exists** — draft one from the user's task description and any signal in `CONTEXT.md` (problem statement, recommended direction, key assumptions). Run each draft criterion through `references/workflow/acceptance-criteria.md` before writing the file; ask clarifying questions for any criterion that fails the checklist (testable, specific, outcome-oriented, singular, bounded, stated as behavior).
+- **Spec already exists for this `<task-slug>`** (hand-authored or from a prior session) — read it, apply `./references/workflow/acceptance-criteria.md` to each criterion, restate the criteria back to the user (calling out any that fail the checklist), and ask whether to proceed as-is or revise. Do not silently overwrite.
+- **No spec exists** — draft one from the user's task description and any signal in `CONTEXT.md` (problem statement, recommended direction, key assumptions). Run each draft criterion through `./references/workflow/acceptance-criteria.md` before writing the file; ask clarifying questions for any criterion that fails the checklist (testable, specific, outcome-oriented, singular, bounded, stated as behavior).
 
 **Clarifying questions** — ask only when needed, batched into a single round. Each question must:
 
@@ -285,7 +285,7 @@ Match the plan's detail to the task's complexity. The spec step (Step 3) is requ
 - "I'll figure out the scope during implementation" — Undefined scope produces undefined work. Bound it now.
 - "I'll skip the spec, the plan steps make it obvious" — Steps describe how to get there; criteria describe what done means. Without criteria, `implement-plan` has no acceptance gate and `review-task` has nothing to check coverage against.
 - "The acceptance criteria are obvious" — If they're obvious, they cost nothing to write down. If they're not, that's exactly when you needed them.
-- "The criterion is roughly the right shape, that's good enough" — Run it through `references/workflow/acceptance-criteria.md`. Vague criteria survive coverage analysis and pass the acceptance gate by reinterpretation; that's the failure mode the checklist catches.
+- "The criterion is roughly the right shape, that's good enough" — Run it through `./references/workflow/acceptance-criteria.md`. Vague criteria survive coverage analysis and pass the acceptance gate by reinterpretation; that's the failure mode the checklist catches.
 - "The user gave a vague task, I'll just guess what they want" — Ask. Clarifying questions during the spec step are cheaper than reworking the plan after implementation.
 - "I'll just output the plan and spec in chat" — Both must be files on disk. `implement-plan` and `review-task` read them from there.
 
@@ -295,7 +295,7 @@ Match the plan's detail to the task's complexity. The spec step (Step 3) is requ
 - [ ] `CONTEXT.md` present in the task directory; skeleton written if it didn't exist
 - [ ] Spec written to `.agents/tasks/<slug>/<task-slug>.spec.md` — short description + free-form bullet criteria, no `**Status:**` field
 - [ ] Hand-authored spec read and respected if present; not silently overwritten
-- [ ] Each acceptance criterion in the spec passes the checks in `references/workflow/acceptance-criteria.md`, or is marked `_(unresolved: ...)_` with a deferred clarifying question
+- [ ] Each acceptance criterion in the spec passes the checks in `./references/workflow/acceptance-criteria.md`, or is marked `_(unresolved: ...)_` with a deferred clarifying question
 - [ ] Clarifying questions asked when criteria failed the checklist (testable, specific, outcome-oriented, singular, bounded, stated as behavior); user answers folded into the spec before drafting the plan
 - [ ] Plan written to `.agents/tasks/<slug>/<task-slug>.plan.md` — stem matches its sibling spec
 - [ ] Plan's `**Spec:**` line links to `./<task-slug>.spec.md`
@@ -371,4 +371,4 @@ Write the file with this top-level layout. Adapt sections to task size — not e
 - ...
 ```
 
-The plan file's `**Status:**` value (`to-do` here) is part of the lifecycle owned by `implement-plan`. Full vocabulary and transitions for plan and result files are registered in `references/workflow/task-lifecycle.md` — that's the single source of truth across all task artifacts.
+The plan file's `**Status:**` value (`to-do` here) is part of the lifecycle owned by `implement-plan`. Full vocabulary and transitions for plan and result files are registered in `./references/workflow/task-lifecycle.md` — that's the single source of truth across all task artifacts.
