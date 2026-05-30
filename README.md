@@ -13,7 +13,7 @@ git clone git@github.com:drimchansky/agents-kit.git ~/agents-kit
 
 ## Skills
 
-Skills are organized into two groups: an **engineering workflow** (11 skills) that shapes the development loop, and a set of **utilities** (4 skills) for ad-hoc tasks.
+Skills are organized into two groups: an **engineering workflow** (11 skills) that shapes the development loop, and a set of **utilities** (5 skills) for ad-hoc tasks.
 
 ### Engineering workflow
 
@@ -47,3 +47,4 @@ Standalone skills that aren't tied to the engineering loop:
 - [`translate`](skills/translate/SKILL.md) — Moving content between languages while preserving tone and context. _Example: `/translate to Spanish`_
 - [`fact-check`](skills/fact-check/SKILL.md) — Verifying factual claims against trustworthy live sources on the internet — not against pretraining. _Example: `/fact-check` (paste claim)_
 - [`refine-idea-chat`](skills/refine-idea-chat/SKILL.md) — Chat-only sibling of `refine-idea`: sharpen a rough idea through diverge/converge/sharpen phases without writing anything to disk. _Example: `/refine-idea-chat add a draft mode to the editor`_
+- [`review-note`](skills/review-note/SKILL.md) — Reviewing a personal knowledge base note on any subject — surfaces inaccuracies, gaps, and clarifications that deepen understanding. Proposes fixes; doesn't edit. _Example: `/review-note notes/stoicism.md`_
