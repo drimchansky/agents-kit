@@ -2,7 +2,7 @@
 
 Lenses, calibration, and discipline that apply to **any** code review or audit. Mode-specific orchestration lives in `skills/review-pr/SKILL.md` (branch diff against base), `skills/review-commit/SKILL.md` (staged pre-commit diff), and `skills/audit/SKILL.md` (module / project); this file is mode-agnostic.
 
-Other reference checklists cover specific surfaces: `accessibility.md`, `code-style.md`, `css.md`, `performance.md`, `react.md`, `security.md`, `tanstack-query.md`, `testing.md`, `typescript.md`. Consult those when the diff touches those domains. This file covers what those checklists don't.
+Other reference checklists cover specific surfaces: `accessibility.md`, `code-style.md`, `css.md`, `forms.md`, `html.md`, `interactions.md`, `performance.md`, `privacy.md`, `react.md`, `security.md`, `tanstack-query.md`, `testing.md`, `typescript.md`. Consult those when the diff touches those domains. This file covers what those checklists don't.
 
 ## What to Look For
 

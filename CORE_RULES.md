@@ -58,12 +58,16 @@ Most skills in `skills/` direct the agent to load applicable references as part 
 
 ### Engineering (`references/engineering/`)
 
-- `accessibility.md` — Semantic markup, ARIA, keyboard nav, focus management, contrast, forms
+- `accessibility.md` — Landmarks, ARIA, keyboard/focus, contrast, live regions, native dialogs, motion preferences, forms a11y
 - `code-style.md` — Function shape, parameter limits, comment discipline (why-not-what)
-- `css.md` — Layout, responsive design, Tailwind conventions, specificity, common pitfalls
-- `performance.md` — Rendering, data fetching, bundle size, memory cleanup
+- `css.md` — Layout, responsive, container queries, modern selectors (`:has()`, `@scope`), theming, modern color, cascade layers
+- `forms.md` — Semantics, autocomplete tokens, validation timing (`:user-invalid`), tap sizing, AJAX, multi-page forms
+- `html.md` — Document semantics, landmarks, native overlays (`<dialog>`, `[popover]`, `<details>`), resource prioritization, media
+- `interactions.md` — Motion mechanics, enter/exit, icon transitions, tactile feedback, surfaces, typography polish
+- `performance.md` — Core Web Vitals (LCP/INP/CLS), rendering, data fetching, containment, resource hints, bundle, memory
+- `privacy.md` — Data minimization, transparency, storage choices (CHIPS), privacy headers, third-party embeds, fingerprinting
 - `react.md` — Version-aware (<18 / 18 / 19+) components, hooks, context, effects, derived state
-- `security.md` — Input validation/injection, authn/authz, data exposure, CSRF/headers, secrets
+- `security.md` — Input/injection, authn/authz, data exposure, CSRF/cookies, browser security headers (CSP, Trusted Types, COOP/COEP), cross-origin comms
 - `tanstack-query.md` — Version-aware (v4 / v5) custom hooks, `queryOptions`, query keys, mutation side effects
 - `testing.md` — Behavior over implementation, mocking discipline, Arrange-Act-Assert, error-path coverage
 - `typescript.md` — Strict types (no `any`), discriminated unions, narrowing, `satisfies`, `as const`, naming
