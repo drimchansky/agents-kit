@@ -1,6 +1,6 @@
 # Task Lifecycle: Status Registry
 
-Tasks live in `.agents/tasks/<slug>/` and consist of four artifacts that share a slug but track distinct lifecycles. Three carry a `**Status:**` header drawn from a closed vocabulary; the spec file deliberately has no status. **This file is the single source of truth.** When a status name or transition changes, update it here first and propagate to the four skills that read or write these fields: `refine-idea`, `plan-task`, `implement-plan`, `resume-task`.
+Task directories consist of four artifacts that share a slug but track distinct lifecycles. Three carry a `**Status:**` header drawn from a closed vocabulary; the spec file deliberately has no status. **This file is the single source of truth for lifecycle states.** When a status name or transition changes, update it here first and propagate to the skills that read or write these fields: `refine-idea`, `plan-task`, `implement-plan`, `resume-task`, and `review-task`. Directory layout (standalone vs. project-grouped tasks, `PROJECT.md`, `archive/`) is documented separately in the sibling `task-layout.md`.
 
 ## Files
 
@@ -30,11 +30,12 @@ The field name `Status:` is shared across the three status-bearing files even th
 
 The spec is a static input authored before (or alongside) the plan. It carries no `**Status:**` header and no lifecycle. It can be drafted by `plan-task` (which asks clarifying questions when requirements are unclear) or hand-authored by the user. Other skills read it; only the user mutates it.
 
-### `<task-slug>.plan.md` — lifecycle: `to-do` → `executing` → `done`
+### `<task-slug>.plan.md` — lifecycle: `to-do` → `executing` → `done` (or `skipped`)
 
 - **`to-do`** — written by `plan-task`; not yet executed.
 - **`executing`** — set by `implement-plan` when it begins execution. Implies a companion `<task-slug>.result.md` exists.
 - **`done`** — set by `implement-plan` when the last step completes.
+- **`skipped`** — the plan was deliberately abandoned without being carried to completion: a triage or scoping decision, not a failure. Terminal. Reachable from `to-do` (never started) or `executing` (started, then dropped). Set by the user, or by `plan-task` / `implement-plan` when the user decides not to proceed — `implement-plan` never sets it on its own and will not execute a plan already marked `skipped` without explicit confirmation. A companion result file is **optional**: write one only to record why the work was dropped.
 
 ### `<task-slug>.result.md` — lifecycle: `executing` → `done`
 
@@ -50,6 +51,7 @@ The plan and its companion result file track in lockstep once execution begins:
 - Plan `to-do` → no result file yet.
 - Plan `executing` → result file `executing`.
 - Plan `done` → result file `done`.
+- Plan `skipped` → result file optional; its absence is **not** drift. When one exists it documents why the plan was abandoned, and may stay `executing` (work started then stopped) with no closing `**Completed:**` line.
 
 A plan in `executing` with no companion result file (or a mismatched pair) signals an incomplete `implement-plan` initialization. `resume-task` and `review-task` should flag this as drift.
 
@@ -60,5 +62,5 @@ The spec file is not part of the pairing rule — it has no lifecycle state to c
 When changing the vocabulary:
 
 1. Update **this file** first (the registry).
-2. Update the four skills that read or write the field: `refine-idea`, `plan-task`, `implement-plan`, `resume-task`.
+2. Update the skills that read or write the field: `refine-idea`, `plan-task`, `implement-plan`, `resume-task`, and `review-task`.
 3. `grep -rn "<old-status>" skills/ references/` to catch stragglers (template literals, prose mentions).

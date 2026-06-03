@@ -1,6 +1,6 @@
 ---
 name: resume-task
-description: Use when asked to resume, catch up on, brief, hand off, status of, or check progress on a task in `.agents/tasks/<slug>/` — produces a chat-only briefing without mutating files.
+description: Use when asked to resume, catch up on, brief, hand off, status of, or check progress on a task directory under `.agents/tasks/` — produces a chat-only briefing without mutating files.
 argument-hint: '[task slug or plan path]'
 disable-model-invocation: true
 ---
@@ -10,7 +10,7 @@ disable-model-invocation: true
 1. Read `./AGENTS.md` and apply its rules.
 2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
 
-This skill loads an existing task in `.agents/tasks/<slug>/` and produces a chat-only briefing — used to resume work after time away, hand off, review what was done, or answer questions about a task — whether in progress, blocked, or already shipped. It reads the four task artifacts (`CONTEXT.md`, every `*.spec.md`, every `*.plan.md`, every `*.result.md`), reconstructs state from `- [ ]` / `- [x]` checkboxes, checks for drift between the plan's claims and current code/git, and prints a structured brief.
+This skill loads an existing task directory under `.agents/tasks/` and produces a chat-only briefing — used to resume work after time away, hand off, review what was done, or answer questions about a task — whether in progress, blocked, or already shipped. It reads the four task artifacts (`CONTEXT.md`, every `*.spec.md`, every `*.plan.md`, every `*.result.md`), reconstructs state from `- [ ]` / `- [x]` checkboxes, checks for drift between the plan's claims and current code/git, and prints a structured brief.
 
 **CRITICAL**: This skill is **read-only across the repo** — task files (`CONTEXT.md`, `*.spec.md`, `*.plan.md`, `*.result.md`) and source code are observed but never modified (no write, edit, rename, delete). The skill also never mutates git state (no add, commit, checkout, stash). External systems cited in `CONTEXT.md`, specs, plans, or results (Jira, Notion, Slack, Google Docs, PRs, dashboards, etc.) are fetched **read-only** in Step 5 — never commented on, updated, or otherwise mutated. Reading implementation code is **expected and required** — the drift check in Step 4 greps shipped paths and opens cited files to verify the plan still matches reality. Output is **chat only** — do not write a `BRIEF.md` artifact. Briefings stale within hours and a fifth file would contradict the four-file contract that `plan-task` and `implement-plan` rely on. Engineering checklists in `./references/engineering/` are not preloaded — this skill mostly observes; consult them only if you dig into a pending step's code during the drift spot-check.
 
@@ -38,24 +38,27 @@ This skill loads an existing task in `.agents/tasks/<slug>/` and produces a chat
 Discovery is two-level — first the task directory, then the plan(s) inside it. Mirror `implement-plan`'s rules:
 
 - **If the user gave a full plan path**, use it directly. Derive the task directory from its parent.
-- **If the user gave a slug only** (e.g. `add-csv-export`), resolve to `.agents/tasks/<slug>/`. Inside, list `*.plan.md` files (filter out `*.spec.md` and `*.result.md`):
+- **If the user gave a slug only** (e.g. `add-csv-export`), resolve it against active task directories per `./references/workflow/task-layout.md`: standalone `.agents/tasks/<slug>/` first, then project task subdirectories `.agents/tasks/*/<slug>/`, excluding `archive/`. If exactly one matches, use it. If none match, look inside `archive/`. If multiple match, ask. Inside the resolved directory, list `*.plan.md` files (filter out `*.spec.md` and `*.result.md`):
     - Exactly one plan → use it.
     - Multiple plans → brief them all together; surface order if filenames are numbered (`01-`, `02-`).
     - No plans → tell the user the directory exists but has no plan; suggest `plan-task`.
-- **If the user gave nothing**, list `.agents/tasks/*/` directories and ask which task. Then descend per the rule above.
+- **If the user gave nothing**, list active task directories per `./references/workflow/task-layout.md` (standalone tasks plus project task subdirectories, excluding `archive/`) and ask which task. Then descend per the rule above.
 
 Don't guess between ambiguous candidates — ask.
+
+Task directories may be standalone or grouped under a project, and finished tasks may sit in an `archive/` subdirectory — exclude `archive/` when listing, descend into a project group's task subdirectories, and look inside `archive/` when resolving a finished task by slug. See `./references/workflow/task-layout.md`.
 
 ### 2. Load Artifacts
 
 Read in full, not skim:
 
-- `.agents/tasks/<slug>/CONTEXT.md` — the shared static context (problem statement, scope summary, key assumptions, references).
+- `CONTEXT.md` in the resolved task directory — the shared static context (problem statement, scope summary, key assumptions, references).
+- If `CONTEXT.md` carries a `**Project:**` header, the linked `PROJECT.md` too — the shared project-level context (charter, decision log, cross-task references) above `CONTEXT.md`. Read-only, like every artifact here; fold its open questions and references into the brief.
 - Every `*.spec.md` in the directory — capture each spec's description and the full bullet list of acceptance criteria. Note any criterion marked `_(unresolved: ...)_`.
 - Every `*.plan.md` in the directory — note each plan's `**Status:**` header and its `**Spec:**` link.
 - Every `*.result.md` — note `**Status:**`, find the latest per-step or full-run section, capture every `**Blocked:**` block verbatim, and capture any `## Acceptance` section verbatim.
 
-Status values across the lifecycle-bearing files are defined in `./references/workflow/task-lifecycle.md` — consult it if you encounter an unfamiliar value, and use the **pairing rule** there to flag inconsistencies (e.g. plan `executing` with no result file, plan `done` with result `executing`). The spec file has no status — it's a static input.
+Status values across the lifecycle-bearing files are defined in `./references/workflow/task-lifecycle.md` — consult it if you encounter an unfamiliar value, and use the **pairing rule** there to flag inconsistencies (e.g. plan `executing` with no result file, plan `done` with result `executing`). A `skipped` plan is terminal and needs no result file — don't flag a missing result for it as drift; report it as deliberately abandoned. The spec file has no status — it's a static input.
 
 Flag in the brief:
 
@@ -151,7 +154,7 @@ Assemble per the output template below. Print to chat. Do not write any file.
 
 ## Status
 
-<one paragraph: N of M steps done across <K> plans; executing / blocked / ready to resume / done; whether the acceptance gate has run>
+<one paragraph: N of M steps done across <K> plans; executing / blocked / ready to resume / done / skipped; whether the acceptance gate has run>
 
 ## Acceptance criteria
 
@@ -220,8 +223,9 @@ If multiple plans live in the directory, render one **Acceptance criteria** / **
 
 ## Verification
 
-- [ ] Task directory `.agents/tasks/<slug>/` resolved (asked the user when ambiguous, never guessed)
+- [ ] Task directory resolved (asked the user when ambiguous, never guessed)
 - [ ] `CONTEXT.md`, every `*.spec.md`, every `*.plan.md`, and every `*.result.md` in the directory read in full
+- [ ] When `CONTEXT.md` has a `**Project:**` header, the linked `PROJECT.md` read too; a `skipped` plan reported as abandoned, not flagged for a missing result
 - [ ] No file in the task directory was written, edited, renamed, or deleted
 - [ ] No git state was mutated (no add, commit, checkout, stash)
 - [ ] Step state reconstructed from checkbox markers, not inferred from prose

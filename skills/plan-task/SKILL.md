@@ -10,7 +10,7 @@ disable-model-invocation: true
 1. Read `./AGENTS.md` and apply its rules.
 2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
 
-This skill produces an implementation plan as a file inside `.agents/tasks/<slug>/`, paired with a sibling **spec file** that captures the testable acceptance criteria. The plan is the contract that `implement-plan` later executes against; the spec is the contract for what "done" means. Each task directory groups one or more related plans (each with its own spec) plus a shared `CONTEXT.md`.
+This skill produces an implementation plan inside a resolved task directory, paired with a sibling **spec file** that captures the testable acceptance criteria. The plan is the contract that `implement-plan` later executes against; the spec is the contract for what "done" means. Each task directory groups one or more related plans (each with its own spec) plus a shared `CONTEXT.md`.
 
 The user provides a task or feature request. They may include context about constraints, preferences, or prior discussion.
 
@@ -38,13 +38,13 @@ If the task doesn't warrant a full plan, say so and suggest proceeding directly 
 
 ## Output Files
 
-This skill writes **two paired files** per plan: a spec and a plan. Both live in `.agents/tasks/<slug>/` at the project root.
+This skill writes **two paired files** per plan: a spec and a plan. Both live in the resolved task directory — either standalone at `.agents/tasks/<slug>/` or inside a project group at `.agents/tasks/<project>/<slug>/`.
 
-- `<slug>` — names the **task directory** that holds `CONTEXT.md` plus every plan, spec, and result for the effort. Derived from the task: 2–5 lowercase kebab-case words capturing the gist (e.g. `add-csv-export`, `migrate-auth-middleware`, `fix-stale-cache-invalidation`). Don't ask the user — derive it. **If the user passed a slug that resolves to an existing `.agents/tasks/<slug>/` directory (typically from `refine-idea`), reuse it — don't create a new one.**
+- `<slug>` — names the **task directory** that holds `CONTEXT.md` plus every plan, spec, and result for the effort. Derived from the task: 2–5 lowercase kebab-case words capturing the gist (e.g. `add-csv-export`, `migrate-auth-middleware`, `fix-stale-cache-invalidation`). Don't ask the user — derive it. **If the user passed a slug that resolves to an existing active task directory (typically from `refine-idea`), reuse it — don't create a new one.**
 - `<task-slug>` — names the file pair within the directory. For a single-plan task, mirror the directory name: `.agents/tasks/add-csv-export/add-csv-export.{spec,plan}.md`. For a directory that holds multiple related plans, use a distinct task slug per pair (e.g. `schema.{spec,plan}.md`, `api.{spec,plan}.md`, `ui.{spec,plan}.md`).
 - **Numbering:** prefix `<task-slug>` with `NN-` (e.g. `01-schema.plan.md`, `02-api.plan.md`) **only when** plans must be implemented in a specific blocking order. Omit numbering when plans are independent or can land in any order. The spec file uses the same prefix.
 
-If `.agents/tasks/<slug>/` doesn't exist, create it. If a spec or plan file with the same `<task-slug>` already exists, append a short suffix (`-2`, `-3`) — keep the spec/plan stems matched.
+If no matching active task directory exists, create `.agents/tasks/<slug>/` by default. If a spec or plan file with the same `<task-slug>` already exists, append a short suffix (`-2`, `-3`) — keep the spec/plan stems matched.
 
 **Spec file (`<task-slug>.spec.md`)** — the contract for what "done" means. Carries a short task description and a free-form bullet list of acceptance criteria. **No `**Status:**` field.** The user may hand-author it; if they do, this skill reads and respects it instead of regenerating.
 
@@ -60,15 +60,20 @@ If `.agents/tasks/<slug>/` doesn't exist, create it. If a spec or plan file with
 
 ### 2. Resolve the Task Directory and Read CONTEXT.md
 
-The task directory `.agents/tasks/<slug>/` is the authoritative home for this plan and any sibling plans. `CONTEXT.md` inside it is the shared context every plan in the directory builds on.
+The resolved task directory is the authoritative home for this plan and any sibling plans. `CONTEXT.md` inside it is the shared context every plan in the directory builds on.
 
 Resolve the directory in this order:
 
-- **User passed a slug that resolves to an existing `.agents/tasks/<slug>/`** — reuse it. Read `CONTEXT.md` if present; treat its problem statement, target user, MVP scope, "Not Doing" list, key assumptions, and any references as inputs. List existing `*.plan.md` files so you don't duplicate or conflict with prior work.
-- **User passed a slug with no matching directory** — create `.agents/tasks/<slug>/`. If `CONTEXT.md` doesn't exist, write a skeleton (template below) before drafting the plan. Confirm the slug with the user only if it differs meaningfully from what they typed.
+- **User passed a task directory path** — use it if it points at a task directory (standalone or inside a project group). If it points inside `archive/`, confirm before adding new work to an archived task.
+- **User passed a slug** — resolve it against active task directories per `./references/workflow/task-layout.md`: standalone `.agents/tasks/<slug>/` first, then project task subdirectories `.agents/tasks/*/<slug>/`, excluding `archive/`. If exactly one matches, reuse it. If multiple match, list them and ask — don't guess. If none match, look inside `archive/`; if an archived task matches, ask whether to revive it or create a fresh active task.
+- **User passed a slug with no matching active or archived directory** — create `.agents/tasks/<slug>/`. If `CONTEXT.md` doesn't exist, write a skeleton (template below) before drafting the plan. Confirm the slug with the user only if it differs meaningfully from what they typed.
 - **User passed no slug** — derive one from the task description and proceed as above.
 
-If multiple `.agents/tasks/*/` directories look like plausible matches for the user's request, list them and ask — don't guess.
+If multiple active task directories look like plausible matches for the user's request, list them and ask — don't guess.
+
+Task directories may be standalone or grouped under a project with a shared `PROJECT.md`, and finished tasks may live in an `archive/` subdirectory. When listing candidates, exclude `archive/` and descend into a project group's task subdirectories; look inside `archive/` only when a requested slug isn't among the active directories. See `./references/workflow/task-layout.md`.
+
+If the resolved `CONTEXT.md` carries a `**Project:**` header, read the linked `PROJECT.md` too — it is the shared project-level context (charter, decision log, cross-task references) that sits above this task's `CONTEXT.md` and is authoritative for anything spanning more than one task.
 
 #### CONTEXT.md skeleton (created when missing)
 
@@ -115,11 +120,13 @@ _(External links, pasted specs, ticket numbers, screenshots, cross-cutting notes
 
 `CONTEXT.md`'s `**Status:**` is a one-shot origin marker; the plan file owns the working lifecycle. Full status vocabulary across all task files is registered in `./references/workflow/task-lifecycle.md` — read it once if you're unsure which value to write.
 
+When this task is part of a project group — a directory with a shared `PROJECT.md` and sibling task directories — add a `**Project:** [../PROJECT.md](../PROJECT.md)` line directly under `**Status:**` so downstream skills load the shared project context. Omit it for a standalone task. See `./references/workflow/task-layout.md`.
+
 The user is expected to enrich `CONTEXT.md` over time (links, specs, decisions). Don't dump per-step notes, approach rationale, or verify criteria into it — those belong in the plan or its result file. Placeholder sections are intentional: leave them in place even if empty so downstream skills can find the same section names.
 
 ### 3. Draft the Spec
 
-Before designing the plan, write `.agents/tasks/<slug>/<task-slug>.spec.md` — the contract for what "done" means. This pins requirements before approach selection so steps and verification can be derived from concrete acceptance criteria, not from a moving target.
+Before designing the plan, write `<task-dir>/<task-slug>.spec.md` — the contract for what "done" means. This pins requirements before approach selection so steps and verification can be derived from concrete acceptance criteria, not from a moving target.
 
 **Resolve in this order:**
 
@@ -291,13 +298,14 @@ Match the plan's detail to the task's complexity. The spec step (Step 3) is requ
 
 ## Verification
 
-- [ ] Task directory `.agents/tasks/<slug>/` exists (reused if it already existed, created otherwise)
+- [ ] Resolved task directory exists (reused if it already existed, created otherwise)
 - [ ] `CONTEXT.md` present in the task directory; skeleton written if it didn't exist
-- [ ] Spec written to `.agents/tasks/<slug>/<task-slug>.spec.md` — short description + free-form bullet criteria, no `**Status:**` field
+- [ ] For a project-grouped task: `**Project:**` header added to `CONTEXT.md` and the linked `PROJECT.md` read for context
+- [ ] Spec written to `<task-dir>/<task-slug>.spec.md` — short description + free-form bullet criteria, no `**Status:**` field
 - [ ] Hand-authored spec read and respected if present; not silently overwritten
 - [ ] Each acceptance criterion in the spec passes the checks in `./references/workflow/acceptance-criteria.md`, or is marked `_(unresolved: ...)_` with a deferred clarifying question
 - [ ] Clarifying questions asked when criteria failed the checklist (testable, specific, outcome-oriented, singular, bounded, stated as behavior); user answers folded into the spec before drafting the plan
-- [ ] Plan written to `.agents/tasks/<slug>/<task-slug>.plan.md` — stem matches its sibling spec
+- [ ] Plan written to `<task-dir>/<task-slug>.plan.md` — stem matches its sibling spec
 - [ ] Plan's `**Spec:**` line links to `./<task-slug>.spec.md`
 - [ ] Numbering prefix (`NN-`) used **only** when plans have a blocking order; spec and plan share the same prefix
 - [ ] Slug derived from task, kebab-case, 2–5 words
@@ -371,4 +379,4 @@ Write the file with this top-level layout. Adapt sections to task size — not e
 - ...
 ```
 
-The plan file's `**Status:**` value (`to-do` here) is part of the lifecycle owned by `implement-plan`. Full vocabulary and transitions for plan and result files are registered in `./references/workflow/task-lifecycle.md` — that's the single source of truth across all task artifacts.
+The plan file starts at `to-do` (written by this skill); `implement-plan` then drives it through `executing` to `done`. If the user decides not to proceed **before execution begins** — a triage or scoping call, such as dropping a now-obsolete sibling plan — set the plan's `**Status:**` to `skipped` rather than deleting it or leaving a stale `to-do`; add a `<task-slug>.result.md` only if it's worth recording why. Full vocabulary and transitions for plan and result files are registered in `./references/workflow/task-lifecycle.md` — that's the single source of truth across all task artifacts.

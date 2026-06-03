@@ -74,7 +74,7 @@ Most skills in `skills/` direct the agent to load applicable references as part 
 
 ### Workflow (`references/workflow/`)
 
-Cited directly by the skills that need them — no catalog here. Today: `acceptance-criteria.md` (used by `plan-task` / `review-task`), `review.md` (used by `review-commit` / `review-pr` / `audit`), `task-lifecycle.md` (used by lifecycle-bearing skills).
+Cited directly by the skills that need them — no catalog here. Today: `acceptance-criteria.md` (used by `plan-task` / `review-task`), `review.md` (used by `review-commit` / `review-pr` / `audit`), `task-layout.md` (used by task-directory skills), `task-lifecycle.md` (used by lifecycle-bearing skills).
 
 ## Dependencies
 

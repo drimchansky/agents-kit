@@ -21,8 +21,8 @@ The workflow runs roughly in order, but you don't need every step — pick which
 
 - [`explore`](skills/explore/SKILL.md) — Understand existing code or context before changing it. _Example: `/explore how does the retry queue work?`_
 - [`refine-idea`](skills/refine-idea/SKILL.md) — Sharpen a rough idea before planning — assumptions, MVP scope, "Not Doing" list. _Example: `/refine-idea add a draft mode to the editor`_
-- [`resume-task`](skills/resume-task/SKILL.md) — Brief on, resume, or hand off a task — read `.agents/tasks/<slug>/` and report in chat. _Example: `/resume-task auth-jwt-migration`_
-- [`plan-task`](skills/plan-task/SKILL.md) — A change is non-trivial and needs a contract. Writes paired `.agents/tasks/<slug>/<task-slug>.spec.md` (acceptance criteria) and `<task-slug>.plan.md` (steps). _Example: `/plan-task migrate auth to JWT`_
+- [`resume-task`](skills/resume-task/SKILL.md) — Brief on, resume, or hand off a task — read the resolved task directory and report in chat. _Example: `/resume-task auth-jwt-migration`_
+- [`plan-task`](skills/plan-task/SKILL.md) — A change is non-trivial and needs a contract. Writes paired `<task-slug>.spec.md` (acceptance criteria) and `<task-slug>.plan.md` (steps) in the resolved task directory. _Example: `/plan-task migrate auth to JWT`_
 - [`review-task`](skills/review-task/SKILL.md) — Confirm the implementation direction is right and still in sync with `CONTEXT.md`, the spec, and the current codebase; surface any drift between plan assumptions and code reality. _Example: `/review-task auth-jwt-migration`_
 - [`implement-plan`](skills/implement-plan/SKILL.md) — A validated plan is ready to ship. Marks steps `[x]`, writes a `*.result.md`, and runs an acceptance gate against the spec before flipping the plan to `done`. _Example: `/implement-plan auth-jwt-migration`_
 - [`review-commit`](skills/review-commit/SKILL.md) — Staged changes need a sanity check before commit — correctness, completeness, accidental inclusions, pattern fit; also drafts the commit message. _Example: `/review-commit`_
@@ -33,11 +33,11 @@ The workflow runs roughly in order, but you don't need every step — pick which
 
 ### Task directories
 
-`refine-idea`, `plan-task`, `review-task`, and `implement-plan` share a directory-based contract that lets them hand off cleanly; `resume-task` reads from the same directory but never mutates it. Each effort lives in `.agents/tasks/<slug>/` with a shared `CONTEXT.md`, paired `*.spec.md` + `*.plan.md` files, and append-only `*.result.md` records. The spec carries the acceptance criteria; `implement-plan` runs an acceptance gate against it before flipping the plan to `done`.
+`refine-idea`, `plan-task`, `review-task`, and `implement-plan` share a directory-based contract that lets them hand off cleanly; `resume-task` reads from the same directory but never mutates it. A standalone effort lives in `.agents/tasks/<slug>/` with a shared `CONTEXT.md`, paired `*.spec.md` + `*.plan.md` files, and append-only `*.result.md` records. The spec carries the acceptance criteria; `implement-plan` runs an acceptance gate against it before flipping the plan to `done`. Related efforts can be grouped under a project directory with a shared `PROJECT.md` (linked from each task's `CONTEXT.md` via a `**Project:**` header), and completed or `skipped` tasks can be moved into an `archive/` subdirectory; see `references/workflow/task-layout.md` for the layout and discovery rules.
 
 ### Reference checklists
 
-The kit ships domain checklists under `references/`, partitioned by subdirectory: `references/engineering/` holds technical/code-domain checklists (typescript, react, css, html, forms, interactions, tanstack-query, security, privacy, performance, accessibility, testing, code-style) preloaded by `implement-plan` (the skill that writes production code) and consulted ad-hoc by other engineering skills as needed. `references/workflow/` holds methodology checklists (acceptance-criteria, task-lifecycle, review) consulted by orchestration skills (`plan-task`, `review-task`, `implement-plan`, `review-commit`, `review-pr`, `audit`, `resume-task`, `refine-idea`).
+The kit ships domain checklists under `references/`, partitioned by subdirectory: `references/engineering/` holds technical/code-domain checklists (typescript, react, css, html, forms, interactions, tanstack-query, security, privacy, performance, accessibility, testing, code-style) preloaded by `implement-plan` (the skill that writes production code) and consulted ad-hoc by other engineering skills as needed. `references/workflow/` holds methodology checklists (acceptance-criteria, task-lifecycle, task-layout, review) consulted by orchestration skills (`plan-task`, `review-task`, `implement-plan`, `review-commit`, `review-pr`, `audit`, `resume-task`, `refine-idea`).
 
 ### Utilities
 

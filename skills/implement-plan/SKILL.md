@@ -1,6 +1,6 @@
 ---
 name: implement-plan
-description: Use when asked to implement, execute, run, or carry out a plan from `.agents/tasks/<slug>/`.
+description: Use when asked to implement, execute, run, or carry out a plan from a task directory under `.agents/tasks/`.
 argument-hint: '[plan file path]'
 disable-model-invocation: true
 ---
@@ -10,14 +10,14 @@ disable-model-invocation: true
 1. Read `./AGENTS.md` and apply its rules.
 2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
 
-This skill executes a plan written by `plan-task` (or any plan in `.agents/tasks/<slug>/` that follows the same format). It implements the work, updates a companion **result file** as it goes, marks each step `DONE` in the plan with a link back to the result section, and runs a final **acceptance gate** against the spec before flipping the plan to `done`.
+This skill executes a plan written by `plan-task` (or any plan in a task directory under `.agents/tasks/` that follows the same format). It implements the work, updates a companion **result file** as it goes, marks each step `DONE` in the plan with a link back to the result section, and runs a final **acceptance gate** against the spec before flipping the plan to `done`.
 
-The plan is the **contract for how**; the spec is the **contract for what done means**; the result file is the **append-only record**; `CONTEXT.md` is the **shared static context** for every plan in the task directory. All four live side by side:
+The plan is the **contract for how**; the spec is the **contract for what done means**; the result file is the **append-only record**; `CONTEXT.md` is the **shared static context** for every plan in the task directory. All four live side by side in the resolved task directory:
 
-- Context: `.agents/tasks/<slug>/CONTEXT.md` (read-only for this skill)
-- Spec: `.agents/tasks/<slug>/<task-slug>.spec.md` (read-only for this skill)
-- Plan: `.agents/tasks/<slug>/<task-slug>.plan.md`
-- Result: `.agents/tasks/<slug>/<task-slug>.result.md`
+- Context: `CONTEXT.md` (read-only for this skill)
+- Spec: `<task-slug>.spec.md` (read-only for this skill)
+- Plan: `<task-slug>.plan.md`
+- Result: `<task-slug>.result.md`
 
 **CRITICAL**: The plan and result files are mutated by this skill; `CONTEXT.md` and the spec are not. The plan is mutated _only_ to flip step checkboxes (`- [ ]` → `- [x]`), append result links, update the `Status:` header, and (when necessary) revise scope or steps. Everything else about the plan stays as written. The result file is the place for narrative — what shipped, what surprised you, what diverged. The spec is the user's contract; if it needs to change, surface that to the user — never edit it from this skill.
 
@@ -30,7 +30,7 @@ Before working, read any applicable checklists from `./references/engineering/`.
 **Use when:**
 
 - The user asks to implement, execute, run, or carry out a plan
-- A plan exists in `.agents/tasks/<slug>/` and the user wants to start (or resume) work on it
+- A plan exists in a task directory and the user wants to start (or resume) work on it
 - The user references a plan file directly (e.g. "run `.agents/tasks/add-csv-export/add-csv-export.plan.md`")
 
 **Skip when:**
@@ -38,6 +38,7 @@ Before working, read any applicable checklists from `./references/engineering/`.
 - No task directory exists yet — direct the user to `plan-task` first
 - The work is small enough that a plan would be overhead — implement directly
 - The plan is still being iterated on and not yet finalized
+- The plan's `**Status:**` is `skipped` — it was deliberately abandoned. Confirm the user wants to revive it before executing; don't silently run an abandoned plan.
 
 If the user describes a task without a plan and the task is non-trivial, suggest running `plan-task` first.
 
@@ -59,17 +60,20 @@ Before touching any code, identify what you're building against and where author
 Discovery is two-level — first the task directory, then the plan inside it:
 
 - **If the user gave a full plan path**, use it directly. Derive the task directory from its parent.
-- **If the user gave a slug only** (e.g. `add-csv-export`), resolve to `.agents/tasks/<slug>/`. Inside, list `*.plan.md` files (filter out `*.spec.md` and `*.result.md`):
+- **If the user gave a slug only** (e.g. `add-csv-export`), resolve it against active task directories per `./references/workflow/task-layout.md`: standalone `.agents/tasks/<slug>/` first, then project task subdirectories `.agents/tasks/*/<slug>/`, excluding `archive/`. If exactly one matches, use it. If none match, look inside `archive/`. If multiple match, ask. Inside the resolved directory, list `*.plan.md` files (filter out `*.spec.md` and `*.result.md`):
     - Exactly one plan → use it.
     - Multiple plans → show them and ask which one. If filenames are numbered (`01-`, `02-`), surface the order; respect blocking order if the user asks to "run them all".
     - No plans → tell the user the directory exists but has no plan; suggest `plan-task` to create one.
-- **If the user gave nothing**, list `.agents/tasks/*/` directories and ask which task. Then descend per the rule above.
+- **If the user gave nothing**, list active task directories per `./references/workflow/task-layout.md` (standalone tasks plus project task subdirectories, excluding `archive/`) and ask which task. Then descend per the rule above.
+
+Task directories may be standalone or grouped under a project, and finished tasks may sit in an `archive/` subdirectory — exclude `archive/` when listing, descend into a project group's task subdirectories, and look inside `archive/` when a slug isn't among the active directories. See `./references/workflow/task-layout.md`.
 
 Read **all four artifacts** before doing anything:
 
 - The plan in full.
 - The sibling `<task-slug>.spec.md` — the acceptance criteria define the final gate this skill runs before marking the plan `done`. If the spec is missing, stop and tell the user — `plan-task` should produce one. Do not invent criteria to fill the gap.
 - The sibling `CONTEXT.md` — shared problem statement, scope summary, key assumptions, external references. Authoritative for cross-plan context; never modify it from this skill.
+- If `CONTEXT.md` carries a `**Project:**` header, the linked `PROJECT.md` too — the shared project-level context (charter, decision log, cross-task references) that sits above `CONTEXT.md` and is authoritative for anything spanning multiple tasks. Read-only, like `CONTEXT.md`.
 - The companion `<task-slug>.result.md` if it exists — work may have been partially done in a prior session. Pick up where it left off; do not redo completed steps.
 
 Treat the spec and `CONTEXT.md` as read-only. If implementation reveals a criterion is wrong or missing, surface it to the user and let them edit the spec — don't edit it from here.
@@ -85,9 +89,9 @@ Respect step `Depends on:` ordering regardless of mode.
 
 ### 3. Initialize the Result File (if it doesn't exist)
 
-Status values used in this skill (`to-do`, `executing`, `done`) and their transitions are registered in `./references/workflow/task-lifecycle.md`. That file is the single source of truth — if a value below disagrees with the registry, the registry wins.
+Status values used in this skill (`to-do`, `executing`, `done`, `skipped`) and their transitions are registered in `./references/workflow/task-lifecycle.md`. That file is the single source of truth — if a value below disagrees with the registry, the registry wins.
 
-Create `.agents/tasks/<slug>/<task-slug>.result.md` with this header:
+Create `<task-dir>/<task-slug>.result.md` with this header:
 
 ```markdown
 # Result: <plan title>
@@ -211,6 +215,7 @@ Sometimes implementation reveals the plan is wrong — a step is infeasible, sco
 - **Update the plan in place** — revise the affected step or scope; add new steps if needed; remove obsolete steps. Keep step numbers stable when possible (insert as `Step 3a`, `Step 3b` rather than renumbering).
 - **Record the divergence in the result file** under the affected step's `**Deviations from plan:**` field, including _why_ the plan changed.
 - In step-by-step mode, pause and confirm the revision with the user before continuing.
+- **If the right call is to abandon the task** rather than revise it, set the plan's `**Status:**` to `skipped` (record why in the result file) and stop — don't delete the plan or leave it dangling in `executing`. See `./references/workflow/task-lifecycle.md`.
 
 **When a step is too big to land in one slice**, split it into sub-steps using one of these strategies:
 
@@ -290,6 +295,7 @@ Only after the acceptance gate is fully `met` (or every gap is `met with caveats
 - [ ] Framework-specific code is cited to official docs or marked `// UNVERIFIED:`
 - [ ] Applicable `./references/engineering/` checklists read for each step's domain
 - [ ] Plan, spec, CONTEXT.md, and existing result file (if any) all read in full before starting
+- [ ] When `CONTEXT.md` has a `**Project:**` header, the linked `PROJECT.md` read for shared project context
 - [ ] Missing spec surfaced to the user (not silently inferred from the plan)
 - [ ] Result file initialized with header pointing back to the plan **and** the spec
 - [ ] Plan's `**Result:**` line points to the result file
