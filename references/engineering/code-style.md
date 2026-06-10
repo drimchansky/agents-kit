@@ -9,6 +9,7 @@
 
 ## Comments
 
-- [ ] Explain "why", not "what"
-- [ ] Short "why" comment on anything not instantly clear
+- [ ] Prefer self-explanatory code (clear names, small functions); reach for a comment only when intent can't be made clear in the code itself
+- [ ] When you do comment, explain "why", not "what"
+- [ ] Keep the comment self-contained — state the reason inline; don't point to external docs, tickets, or URLs
 - [ ] No commented-out code — version control exists
