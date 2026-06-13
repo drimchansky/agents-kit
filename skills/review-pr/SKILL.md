@@ -1,7 +1,7 @@
 ---
 name: review-pr
 description: Use when asked to review or give feedback on a PR or branch diff against its base.
-argument-hint: '[--no-checks]'
+argument-hint: '[-v (run automatic verifications)]'
 disable-model-invocation: true
 ---
 
@@ -15,7 +15,7 @@ Review all changes in the current branch against its base branch for correctness
 
 ## Flags
 
-- `--no-checks` — Skip automated checks. See "Automated Checks" in `./references/engineering/review.md`.
+- `-v` — Identify and run the project's verification scripts (lint, typecheck, tests). Off by default; reviews are analysis-only. See "Verification Scripts" in `./references/engineering/review.md`.
 
 ## References
 
@@ -45,7 +45,7 @@ Before working, read `./references/engineering/review.md` — it carries the len
     - If a link can't be accessed (auth-walled, private workspace, 404, tool unavailable), record it in the output under **Inaccessible context** with the URL and reason. Do not fabricate what's behind it — flag the gap so the user can decide whether to paste the content in or proceed without it
 - If no PR exists, proceed with just the branch commits and any context the user provided
 
-**Run automated checks** per "Automated Checks" in `./references/engineering/review.md` (skip if `--no-checks`).
+**Run verification scripts** only when `-v` is passed, per "Verification Scripts" in `./references/engineering/review.md`.
 
 ## Review Focus
 

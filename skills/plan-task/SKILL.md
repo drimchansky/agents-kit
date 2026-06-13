@@ -1,7 +1,7 @@
 ---
 name: plan-task
 description: Use when asked to plan, design, architect, scope, or break down a feature or change before implementation.
-argument-hint: '[task or feature description]'
+argument-hint: '[task or feature description, task directory]'
 disable-model-invocation: true
 ---
 
@@ -11,7 +11,7 @@ disable-model-invocation: true
 2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
 3. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for (`exploration.md`, `planning.md`, …). If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
 
-This skill produces an implementation plan inside a resolved task directory, paired with a sibling **spec file** that captures the testable acceptance criteria. The plan is the contract that `implement-plan` later executes against; the spec is the contract for what "done" means. Each task directory groups one or more related plans (each with its own spec) plus a shared `CONTEXT.md`.
+This skill produces an implementation plan inside a resolved task directory, paired with a sibling **spec file** that captures the testable acceptance criteria. The plan is the contract that `implement-task` later executes against; the spec is the contract for what "done" means. Each task directory groups one or more related plans (each with its own spec) plus a shared `CONTEXT.md`.
 
 The user provides a task or feature request. They may include context about constraints, preferences, or prior discussion.
 
@@ -51,7 +51,7 @@ If no matching active task directory exists, create `.agents/tasks/<slug>/` by d
 
 **Spec file (`<task-slug>.spec.md`)** — the contract for what "done" means. Carries a short task description and a free-form bullet list of acceptance criteria. **No `**Status:**` field.** The user may hand-author it; if they do, this skill reads and respects it instead of regenerating.
 
-**Plan file (`<task-slug>.plan.md`)** — the contract for how the work is executed. Once written, `implement-plan` consumes it and updates step checkboxes as work completes. Avoid rewriting the plan in place during planning iteration unless the user asks for revisions — refine through conversation, then write the final version.
+**Plan file (`<task-slug>.plan.md`)** — the contract for how the work is executed. Once written, `implement-task` consumes it and updates step checkboxes as work completes. Avoid rewriting the plan in place during planning iteration unless the user asks for revisions — refine through conversation, then write the final version.
 
 ## Planning Process
 
@@ -80,7 +80,7 @@ If the resolved `CONTEXT.md` carries a `**Project:**` header, read the linked `P
 
 #### CONTEXT.md skeleton (created when missing)
 
-The skeleton below is the canonical CONTEXT.md schema, shared with `refine-idea` (which produces it via Phases 1–3) so downstream consumers (`review-task`, `implement-plan`, and the plan-task reuse step) read the same section names regardless of how the task started. When `plan-task` skips the idea step, infer `**Domain:**` from the task description (see the guidance below the skeleton) and populate `Problem Statement` and `Key Assumptions to Validate` from it; leave the other sections as placeholders for the user to fill in.
+The skeleton below is the canonical CONTEXT.md schema, shared with `refine-idea` (which produces it via Phases 1–3) so downstream consumers (`review-task`, `implement-task`, and the plan-task reuse step) read the same section names regardless of how the task started. When `plan-task` skips the idea step, infer `**Domain:**` from the task description (see the guidance below the skeleton) and populate `Problem Statement` and `Key Assumptions to Validate` from it; leave the other sections as placeholders for the user to fill in.
 
 ```markdown
 # <task name>
@@ -143,7 +143,7 @@ Before designing the plan, write `<task-dir>/<task-slug>.spec.md` — the contra
 - Explain why the answer matters (which criterion it sharpens, which step it would change).
 - Suggest options when possible — "should bulk export include archived rows? A: yes, with a flag; B: no, archived stays excluded; A matches the existing single-row export, B matches the UI filter default" — not open-ended "what should we do?"
 
-If the user answers in chat, update the spec to reflect the answers before moving on. If the user defers a question, leave the affected criterion marked with a trailing `_(unresolved: <short note>)_` so `review-task` and `implement-plan` see it.
+If the user answers in chat, update the spec to reflect the answers before moving on. If the user defers a question, leave the affected criterion marked with a trailing `_(unresolved: <short note>)_` so `review-task` and `implement-task` see it.
 
 **Spec file content:**
 
@@ -170,7 +170,7 @@ Keep criteria **outcome-oriented**, not implementation-oriented. "User can expor
 - <Criterion 3>
 ```
 
-The spec carries no `**Status:**` field by design — it is a static input, not a lifecycle artifact. The user mutates it freely between sessions; downstream skills (`review-task`, `implement-plan`, `resume-task`) read it but never write to it.
+The spec carries no `**Status:**` field by design — it is a static input, not a lifecycle artifact. The user mutates it freely between sessions; downstream skills (`review-task`, `implement-task`, `resume-task`) read it but never write to it.
 
 ### 4. Explore the Domain's Reality
 
@@ -230,7 +230,7 @@ Break a step down further when: its title contains "and" (two steps wearing one 
 - **Lead time:** <how long the step takes once started — e.g. "visa: ~8 weeks", or "none">
 ```
 
-The leading `- [ ]` checkbox is the marker `implement-plan` flips to `- [x]` when the step is done, with a link to the result file section appended.
+The leading `- [ ]` checkbox is the marker `implement-task` flips to `- [x]` when the step is done, with a link to the result file section appended.
 
 `**Due:**` and `**Lead time:**` are **optional**. Omit them (or set `none`) for code work, where steps are ordered by `Depends on:`, not the calendar. They earn their place in time-anchored domains (a relocation, an event) where deadlines and external lead times — not just logical dependencies — drive ordering and surface the long-pole steps that must start early. They are planning information the actor reads; nothing in the kit schedules off them.
 
@@ -240,7 +240,7 @@ Per-step `Verify` confirms one unit of work. It does **not** catch the case wher
 
 A checkpoint re-asserts that everything done so far still holds together — including a concrete end-to-end outcome, named ("user can log in and see dashboard", not "core flow"). When the domain is code, the specific assertions are in `./references/engineering/planning.md` (full test suite passes, build / typecheck succeeds, the named flow runs end to end).
 
-Checkpoints are not steps — they get no `- [ ]` checkbox that `implement-plan` flips. They are gates `implement-plan` must pause at to confirm before proceeding to the next batch of steps. Skip them entirely for short plans (≤5 steps) where the final step's verification doubles as an end-to-end check.
+Checkpoints are not steps — they get no `- [ ]` checkbox that `implement-task` flips. They are gates `implement-task` must pause at to confirm before proceeding to the next batch of steps. Skip them entirely for short plans (≤5 steps) where the final step's verification doubles as an end-to-end check.
 
 **Checkpoint format in the plan file:**
 
@@ -282,11 +282,11 @@ When the domain is code, `./references/engineering/planning.md` gives file-count
 - "The risks are obvious, no need to list them" — Generic risk awareness is not risk identification. Be specific or admit there are none.
 - "This is too simple to plan" — If the user asked for a plan, the task warranted one.
 - "I'll figure out the scope during implementation" — Undefined scope produces undefined work. Bound it now.
-- "I'll skip the spec, the plan steps make it obvious" — Steps describe how to get there; criteria describe what done means. Without criteria, `implement-plan` has no acceptance gate and `review-task` has nothing to check coverage against.
+- "I'll skip the spec, the plan steps make it obvious" — Steps describe how to get there; criteria describe what done means. Without criteria, `implement-task` has no acceptance gate and `review-task` has nothing to check coverage against.
 - "The acceptance criteria are obvious" — If they're obvious, they cost nothing to write down. If they're not, that's exactly when you needed them.
 - "The criterion is roughly the right shape, that's good enough" — Run it through `./references/workflow/acceptance-criteria.md`. Vague criteria survive coverage analysis and pass the acceptance gate by reinterpretation; that's the failure mode the checklist catches.
 - "The user gave a vague task, I'll just guess what they want" — Ask. Clarifying questions during the spec step are cheaper than reworking the plan after implementation.
-- "I'll just output the plan and spec in chat" — Both must be files on disk. `implement-plan` and `review-task` read them from there.
+- "I'll just output the plan and spec in chat" — Both must be files on disk. `implement-task` and `review-task` read them from there.
 
 ## Verification
 
@@ -323,7 +323,7 @@ Write the file with this top-level layout. Adapt sections to task size — not e
 **Status:** to-do
 **Context:** [./CONTEXT.md](./CONTEXT.md)
 **Spec:** [./<task-slug>.spec.md](./<task-slug>.spec.md)
-**Result:** _(populated by `implement-plan`: link to `./<task-slug>.result.md`)_
+**Result:** _(populated by `implement-task`: link to `./<task-slug>.result.md`)_
 
 ## Task Understanding
 
@@ -373,4 +373,4 @@ Write the file with this top-level layout. Adapt sections to task size — not e
 - ...
 ```
 
-The plan file starts at `to-do` (written by this skill); `implement-plan` then drives it through `executing` to `done`. If the user decides not to proceed **before execution begins** — a triage or scoping call, such as dropping a now-obsolete sibling plan — set the plan's `**Status:**` to `skipped` rather than deleting it or leaving a stale `to-do`; add a `<task-slug>.result.md` only if it's worth recording why. Full vocabulary and transitions for plan and result files are registered in `./references/workflow/task-lifecycle.md` — that's the single source of truth across all task artifacts.
+The plan file starts at `to-do` (written by this skill); `implement-task` then drives it through `executing` to `done`. If the user decides not to proceed **before execution begins** — a triage or scoping call, such as dropping a now-obsolete sibling plan — set the plan's `**Status:**` to `skipped` rather than deleting it or leaving a stale `to-do`; add a `<task-slug>.result.md` only if it's worth recording why. Full vocabulary and transitions for plan and result files are registered in `./references/workflow/task-lifecycle.md` — that's the single source of truth across all task artifacts.

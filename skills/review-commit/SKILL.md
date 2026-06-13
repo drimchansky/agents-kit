@@ -1,7 +1,7 @@
 ---
 name: review-commit
 description: Use when asked to review staged changes before committing.
-argument-hint: '[--no-checks]'
+argument-hint: '[-v (run automatic verifications)]'
 disable-model-invocation: true
 ---
 
@@ -15,7 +15,7 @@ Review staged changes before committing — correctness, completeness, accidenta
 
 ## Flags
 
-- `--no-checks` — Skip automated checks. See "Automated Checks" in `./references/engineering/review.md`.
+- `-v` — Identify and run the project's verification scripts (lint, typecheck, tests). Off by default; reviews are analysis-only. See "Verification Scripts" in `./references/engineering/review.md`.
 
 ## References
 
@@ -27,7 +27,7 @@ Before working, read `./references/engineering/review.md` — it carries the len
 - If nothing is staged, inform the user and stop
 - Group changes by file and intent
 
-**Run automated checks** per "Automated Checks" in `./references/engineering/review.md` (skip if `--no-checks`).
+**Run verification scripts** only when `-v` is passed, per "Verification Scripts" in `./references/engineering/review.md`.
 
 ## Review Focus
 

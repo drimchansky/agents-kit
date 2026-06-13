@@ -135,14 +135,14 @@ For large diffs (20+ files): review types and interfaces first to understand the
 - "It's mostly good, just approve" — Rubber-stamping is not review. If you didn't trace the shared-code consumers, you didn't review them.
 - "This code is obviously dead/redundant" — Chesterton's Fence: check `git blame` and callers before recommending removal or simplification. Accumulated complexity often has a real reason; if you can't explain why it's there, ask, don't remove.
 
-## Automated Checks
+## Verification Scripts
 
-When invoking a review without the `--no-checks` opt-out:
+By default a review is **analysis-only**: read the code, reason about it, and produce findings without executing anything. Do not invoke project scripts or run commands that execute code.
 
-- Run project lint, typecheck, and tests on the changed/staged files where they exist
-- Treat failures and warnings as findings; record them with file location and severity
+When `-v` is passed, identify and run the project's verification scripts before producing findings:
 
-When `--no-checks` is passed: skip this section entirely. Focus exclusively on code analysis — read the code, reason about it, produce findings. Do not invoke project scripts or run commands that execute code.
+- Identify what the project exposes — lint, typecheck, and test scripts (check `package.json` scripts, a `Makefile`, or the stack's conventional commands) — and run them on the changed/staged files where they exist.
+- Treat failures and warnings as findings; record them with file location and severity.
 
 ## Standard Verification Checklist
 

@@ -1,7 +1,7 @@
 ---
 name: resume-task
 description: Use when asked to resume, catch up on, brief, hand off, status of, or check progress on a task directory under `.agents/tasks/` — produces a chat-only briefing without mutating files.
-argument-hint: '[task slug or plan path]'
+argument-hint: '[task directory path]'
 disable-model-invocation: true
 ---
 
@@ -13,7 +13,7 @@ disable-model-invocation: true
 
 This skill loads an existing task directory under `.agents/tasks/` and produces a chat-only briefing — used to resume work after time away, hand off, review what was done, or answer questions about a task — whether in progress, blocked, or already shipped. It reads the four task artifacts (`CONTEXT.md`, every `*.spec.md`, every `*.plan.md`, every `*.result.md`), reconstructs state from `- [ ]` / `- [x]` checkboxes, checks for drift between the plan's claims and current code/git, and prints a structured brief.
 
-**CRITICAL**: This skill is **read-only across the repo** — task files (`CONTEXT.md`, `*.spec.md`, `*.plan.md`, `*.result.md`) and source code are observed but never modified (no write, edit, rename, delete). The skill also never mutates git state (no add, commit, checkout, stash). External systems cited in `CONTEXT.md`, specs, plans, or results (Jira, Notion, Slack, Google Docs, PRs, dashboards, etc.) are fetched **read-only** in Step 5 — never commented on, updated, or otherwise mutated. Reading the work product is **expected and required** — the drift check in Step 4 verifies the plan/result claims against current reality (for code, grepping shipped paths and opening cited files). Output is **chat only** — do not write a `BRIEF.md` artifact. Briefings stale within hours and a fifth file would contradict the four-file contract that `plan-task` and `implement-plan` rely on. Domain-pack checklists in `./references/<domain>/` are not preloaded — this skill mostly observes; consult them only if you dig into a pending step's work during the drift spot-check.
+**CRITICAL**: This skill is **read-only across the repo** — task files (`CONTEXT.md`, `*.spec.md`, `*.plan.md`, `*.result.md`) and source code are observed but never modified (no write, edit, rename, delete). The skill also never mutates git state (no add, commit, checkout, stash). External systems cited in `CONTEXT.md`, specs, plans, or results (Jira, Notion, Slack, Google Docs, PRs, dashboards, etc.) are fetched **read-only** in Step 5 — never commented on, updated, or otherwise mutated. Reading the work product is **expected and required** — the drift check in Step 4 verifies the plan/result claims against current reality (for code, grepping shipped paths and opening cited files). Output is **chat only** — do not write a `BRIEF.md` artifact. Briefings stale within hours and a fifth file would contradict the four-file contract that `plan-task` and `implement-task` rely on. Domain-pack checklists in `./references/<domain>/` are not preloaded — this skill mostly observes; consult them only if you dig into a pending step's work during the drift spot-check.
 
 ## When to Use
 
@@ -28,7 +28,7 @@ This skill loads an existing task directory under `.agents/tasks/` and produces 
 **Skip when:**
 
 - No task directory exists yet → suggest `refine-idea` or `plan-task`
-- Ready to actually execute the next step → use `implement-plan` directly (it reads the same artifacts as a prelude to writing code)
+- Ready to actually execute the next step → use `implement-task` directly (it reads the same artifacts as a prelude to writing code)
 - The task is fresh with no result file yet → just read the plan; there is no state to reconstruct
 - The user wants feasibility validation, not status → use `review-task`
 
@@ -36,14 +36,19 @@ This skill loads an existing task directory under `.agents/tasks/` and produces 
 
 ### 1. Resolve the Task Directory and Plan(s)
 
-Discovery is two-level — first the task directory, then the plan(s) inside it. Mirror `implement-plan`'s rules:
+Discovery resolves a task directory first, then the plan(s) inside it. Mirror `implement-task`'s rules:
 
-- **If the user gave a full plan path**, use it directly. Derive the task directory from its parent.
-- **If the user gave a slug only** (e.g. `add-csv-export`), resolve it against active task directories per `./references/workflow/task-layout.md`: standalone `.agents/tasks/<slug>/` first, then project task subdirectories `.agents/tasks/*/<slug>/`, excluding `archive/`. If exactly one matches, use it. If none match, look inside `archive/`. If multiple match, ask. Inside the resolved directory, list `*.plan.md` files (filter out `*.spec.md` and `*.result.md`):
-    - Exactly one plan → use it.
-    - Multiple plans → brief them all together; surface order if filenames are numbered (`01-`, `02-`).
-    - No plans → tell the user the directory exists but has no plan; suggest `plan-task`.
-- **If the user gave nothing**, list active task directories per `./references/workflow/task-layout.md` (standalone tasks plus project task subdirectories, excluding `archive/`) and ask which task. Then descend per the rule above.
+**Resolve the task directory:**
+
+- **If the user gave a task directory path or slug** (e.g. `.agents/tasks/add-csv-export/` or `add-csv-export`), resolve it against active task directories per `./references/workflow/task-layout.md`: standalone `.agents/tasks/<slug>/` first, then project task subdirectories `.agents/tasks/*/<slug>/`, excluding `archive/`. If exactly one matches, use it. If none match, look inside `archive/`. If multiple match, ask.
+- **If the user gave a full plan path**, use it directly and derive the task directory from its parent.
+- **If the user gave nothing**, list active task directories per `./references/workflow/task-layout.md` (standalone tasks plus project task subdirectories, excluding `archive/`) and ask which task.
+
+**Descend to the plan(s)** — once the directory is resolved, list its `*.plan.md` files (filter out `*.spec.md` and `*.result.md`):
+
+- Exactly one plan → use it.
+- Multiple plans → brief them all together; surface order if filenames are numbered (`01-`, `02-`).
+- No plans → tell the user the directory exists but has no plan; suggest `plan-task`.
 
 Don't guess between ambiguous candidates — ask.
 
@@ -202,14 +207,14 @@ Assemble per the output template below. Print to chat. Do not write any file.
 
 ## Where to start
 
-<2–3 sentences naming the concrete first action — file to open, command to run (e.g. `/implement-plan <slug>`), or a specific drift item to resolve before resuming>
+<2–3 sentences naming the concrete first action — file to open, command to run (e.g. `/implement-task <slug>`), or a specific drift item to resolve before resuming>
 ```
 
 If multiple plans live in the directory, render one **Acceptance criteria** / **Done** / **Up next** / **Blocked** block per plan with a clear sub-heading; the **Drift**, **References update**, **Open questions**, and **Where to start** sections remain shared.
 
 ## Don't Rationalize
 
-- "I'll run the next step while I'm here" — This skill is read-only. Hand off to `implement-plan` if the user wants execution.
+- "I'll run the next step while I'm here" — This skill is read-only. Hand off to `implement-task` if the user wants execution.
 - "The plan and result already explain everything; no need to read the code" — Result files describe what _was_ done, not what's in the code _now_. Code can be reverted, refactored, or removed after the fact. The drift check is the load-bearing value over `cat`.
 - "The result file is recent, skip the drift check" — Recent ≠ unchanged. The implementation can shift after a step lands.
 - "I'll write a `BRIEF.md` so the user has it later" — Briefings stale within hours; a fifth artifact contradicts the four-file contract. Print to chat only.

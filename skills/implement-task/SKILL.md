@@ -1,7 +1,7 @@
 ---
-name: implement-plan
-description: Use when asked to implement, execute, run, or carry out a plan from a task directory under `.agents/tasks/`.
-argument-hint: '[plan file path]'
+name: implement-task
+description: Use when asked to implement, execute, run, or carry out a task's plan from a task directory under `.agents/tasks/` — by task directory path, or the current task if one is already in context.
+argument-hint: '[task directory path]'
 disable-model-invocation: true
 ---
 
@@ -30,9 +30,10 @@ Before working, load the resolved domain's pack and read the files this skill le
 
 **Use when:**
 
-- The user asks to implement, execute, run, or carry out a plan
+- The user asks to implement, execute, run, or carry out a task or its plan
+- The user points at a task directory (e.g. `.agents/tasks/add-csv-export/`), or a specific plan file inside one
+- A task is already established in this session and the user wants to start (or resume) executing it
 - A plan exists in a task directory and the user wants to start (or resume) work on it
-- The user references a plan file directly (e.g. "run `.agents/tasks/add-csv-export/add-csv-export.plan.md`")
 
 **Skip when:**
 
@@ -51,16 +52,21 @@ Before doing the work, identify what you're acting on and where the authoritativ
 
 When the domain is code, follow `./references/engineering/execution.md` ("Detect stack and sources"): read the dependency manifest and state versions explicitly, fetch the matching version's official docs before writing framework code, follow the source hierarchy, and mark anything you can't ground `// UNVERIFIED:`. For other domains, confirm the equivalent ground truth before committing to it (current prices, the counterparty's actual position, the venue's real availability). If versions or facts are missing or ambiguous, ask — don't guess.
 
-### 1. Locate and Load the Plan
+### 1. Locate and Load the Task
 
-Discovery is two-level — first the task directory, then the plan inside it:
+Discovery resolves a task directory first, then the plan inside it.
 
-- **If the user gave a full plan path**, use it directly. Derive the task directory from its parent.
-- **If the user gave a slug only** (e.g. `add-csv-export`), resolve it against active task directories per `./references/workflow/task-layout.md`: standalone `.agents/tasks/<slug>/` first, then project task subdirectories `.agents/tasks/*/<slug>/`, excluding `archive/`. If exactly one matches, use it. If none match, look inside `archive/`. If multiple match, ask. Inside the resolved directory, list `*.plan.md` files (filter out `*.spec.md` and `*.result.md`):
-    - Exactly one plan → use it.
-    - Multiple plans → show them and ask which one. If filenames are numbered (`01-`, `02-`), surface the order; respect blocking order if the user asks to "run them all".
-    - No plans → tell the user the directory exists but has no plan; suggest `plan-task` to create one.
-- **If the user gave nothing**, list active task directories per `./references/workflow/task-layout.md` (standalone tasks plus project task subdirectories, excluding `archive/`) and ask which task. Then descend per the rule above.
+**Resolve the task directory:**
+
+- **If the user gave a task directory path or slug** (e.g. `.agents/tasks/add-csv-export/` or `add-csv-export`), resolve it against active task directories per `./references/workflow/task-layout.md`: standalone `.agents/tasks/<slug>/` first, then project task subdirectories `.agents/tasks/*/<slug>/`, excluding `archive/`. If exactly one matches, use it. If none match, look inside `archive/`. If multiple match, ask.
+- **If the user gave a full plan path**, use it directly and derive the task directory from its parent — this targets one specific plan inside a multi-plan directory.
+- **If the user gave nothing**, check whether a task is already established **in this session** — a task directory / `CONTEXT.md` resolved earlier this session (e.g. from a preceding `refine-idea`, `plan-task`, or `review-task`, or one the user named). If so, execute that current task. Otherwise, list active task directories per `./references/workflow/task-layout.md` (standalone tasks plus project task subdirectories, excluding `archive/`) and ask which.
+
+**Descend to the plan** — once the directory is resolved, list its `*.plan.md` files (filter out `*.spec.md` and `*.result.md`):
+
+- Exactly one plan → use it.
+- Multiple plans → show them and ask which one. If filenames are numbered (`01-`, `02-`), surface the order; respect blocking order if the user asks to "run them all".
+- No plans → tell the user the directory exists but has no plan; suggest `plan-task` to create one.
 
 Task directories may be standalone or grouped under a project, and finished tasks may sit in an `archive/` subdirectory — exclude `archive/` when listing, descend into a project group's task subdirectories, and look inside `archive/` when a slug isn't among the active directories. See `./references/workflow/task-layout.md`.
 

@@ -1,6 +1,6 @@
 # Engineering Execution
 
-The engineering recipe `implement-plan` loads when carrying out a step in code. The neutral spine
+The engineering recipe `implement-task` loads when carrying out a step in code. The neutral spine
 owns the execution *loop* (implement → verify → record → mark done → pause/continue, with
 Stop-the-Line on failure); this file owns the code-specific *how*. Verification gates and the
 acceptance-gate recipe live in the sibling `verification.md`. See `../workflow/domain-packs.md`.

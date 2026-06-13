@@ -1,7 +1,7 @@
 ---
 name: explore
 description: Use when asked to explore, explain, walk through, describe, teach, or analyze a topic — code, a library or API, a protocol, a system, a concept, or a domain question.
-argument-hint: '[topic or file path]'
+argument-hint: '[topic, file path, or any other source of information]'
 disable-model-invocation: true
 ---
 

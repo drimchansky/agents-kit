@@ -1,7 +1,7 @@
 ---
 name: review-task
 description: Use when asked to review, validate, or sanity-check a task's plan — confirms the direction is right and still in sync with CONTEXT.md, the spec, and current reality, and surfaces any drift between task artifacts (CONTEXT, spec, plan, result) and the work itself.
-argument-hint: '[task slug or plan path]'
+argument-hint: '[task directory path]'
 disable-model-invocation: true
 ---
 
@@ -19,12 +19,15 @@ The user provides a plan — typically the output of `plan-task`, written to `<t
 
 ## Locate the Plan
 
-If the user gives an explicit path, use it. Otherwise resolve in two levels:
+Resolve a task directory first, then the plan inside it:
 
-- Task directory: if the user gave only a slug, resolve it against active task directories per `./references/workflow/task-layout.md`: standalone `.agents/tasks/<slug>/` first, then project task subdirectories `.agents/tasks/*/<slug>/`, excluding `archive/`. If exactly one matches, use it. If none match, look inside `archive/`. If multiple match, ask.
-- Plan file inside the directory: pick from `*.plan.md` (skip `*.spec.md` and `*.result.md` — those are inputs and execution records).
-- If multiple task directories or multiple plans exist, list candidates and ask which one to review.
-- Task directories may be standalone or grouped under a project with a shared `PROJECT.md`, and finished tasks may sit in an `archive/` subdirectory. Exclude `archive/` when listing; descend into a project group's task subdirectories; look inside `archive/` when resolving a finished task. See `./references/workflow/task-layout.md`.
+- **If the user gave a task directory path or slug** (e.g. `.agents/tasks/add-csv-export/` or `add-csv-export`), resolve it against active task directories per `./references/workflow/task-layout.md`: standalone `.agents/tasks/<slug>/` first, then project task subdirectories `.agents/tasks/*/<slug>/`, excluding `archive/`. If exactly one matches, use it. If none match, look inside `archive/`. If multiple match, ask.
+- **If the user gave a full plan path**, use it directly and derive the task directory from its parent — this targets one specific plan inside a multi-plan directory.
+- **If the user gave nothing**, list active task directories per `./references/workflow/task-layout.md` and ask which.
+
+Once the directory is resolved, pick the plan from its `*.plan.md` files (skip `*.spec.md` and `*.result.md` — those are inputs and execution records). If multiple plans exist, list them and ask which one to review.
+
+Task directories may be standalone or grouped under a project with a shared `PROJECT.md`, and finished tasks may sit in an `archive/` subdirectory. Exclude `archive/` when listing; descend into a project group's task subdirectories; look inside `archive/` when resolving a finished task. See `./references/workflow/task-layout.md`.
 
 Read the plan, the sibling `<task-slug>.spec.md`, **and** the sibling `CONTEXT.md` in full before assessing anything. If `CONTEXT.md` carries a `**Project:**` header, read the linked `PROJECT.md` too.
 
@@ -41,7 +44,7 @@ Both are authoritative input for grounding, not optional. If the spec file is mi
 - A plan was just written by `plan-task` and the user wants a sanity check before implementation
 - The plan references existing code, patterns, or APIs that need to be confirmed
 - The plan touches multiple modules, shared code, or introduces new patterns
-- The user wants a second pass before handing off to `implement-plan`
+- The user wants a second pass before handing off to `implement-task`
 
 **Skip when:**
 
@@ -206,7 +209,7 @@ Example:
 - CONTEXT ↔ spec — drift: spec criterion 4 ("user can export archived rows") describes behavior CONTEXT's "Not Doing" excludes. Resolve by either lifting the exclusion or dropping the criterion.
 - CONTEXT ↔ plan — no drift detected.
 - spec ↔ plan — drift: plan's `In scope` includes "audit-log integration" but no criterion requires it (already flagged in Acceptance Coverage as a step with no matching criterion; surfacing here too because the scope wording itself is wrong).
-- plan ↔ result — drift: result file records Step 3 as shipped but the plan still shows `- [ ]`. Likely an interrupted `implement-plan` run.
+- plan ↔ result — drift: result file records Step 3 as shipped but the plan still shows `- [ ]`. Likely an interrupted `implement-task` run.
 - Status fields — plan is `executing` but no `result.md` exists (pairing rule violated, per `./references/workflow/task-lifecycle.md`).
 ```
 

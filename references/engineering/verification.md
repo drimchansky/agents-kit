@@ -1,7 +1,7 @@
 # Engineering Verification
 
 What "verify" means when the domain is code — the recipe behind the neutral spine's verify gates,
-Stop-the-Line, checkpoints, and acceptance gate (`implement-plan`, `review-task`, `resume-task`).
+Stop-the-Line, checkpoints, and acceptance gate (`implement-task`, `review-task`, `resume-task`).
 The spine owns *that* you verify and gate; this file owns *what to run*. See
 `../workflow/domain-packs.md`.
 
