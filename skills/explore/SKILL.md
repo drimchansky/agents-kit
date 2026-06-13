@@ -1,18 +1,19 @@
 ---
 name: explore
-description: Use when asked to explore, explain, walk through, describe, teach, or analyze any software engineering topic — code, libraries, APIs, protocols, concepts, or architecture.
+description: Use when asked to explore, explain, walk through, describe, teach, or analyze a topic — code, a library or API, a protocol, a system, a concept, or a domain question.
 argument-hint: '[topic or file path]'
 disable-model-invocation: true
 ---
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules.
+1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
+3. Load the domain pack: take the task's `**Domain:**` (default `engineering`; infer from the request when there's no `CONTEXT.md`) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for. If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
 
-This skill guides clear, structured explanations of any software engineering topic — from a single function to an entire architectural pattern, from codebase internals to external libraries and domain concepts.
+This skill guides clear, structured explanations of any topic the user wants to understand — from a single function to an architectural pattern, from a system's internals to an external library or a domain concept. The methodology is domain-neutral; when the topic is code, load the engineering pack's `exploration.md` for the codebase-specific gathering recipe.
 
-The user asks about something they want to understand. This can be code in the current project, an external library or API, a protocol, a design pattern, a domain concept, or how technologies relate to each other.
+The user asks about something they want to understand. This can be code in the current project, an external library or API, a protocol, a design pattern, a domain concept, or how things relate to each other.
 
 **CRITICAL**: Use web search liberally. Don't rely solely on training data for anything that could be outdated — library APIs, framework behavior, version-specific details, ecosystem conventions. Make as many web requests as needed to give an accurate, current answer.
 
@@ -31,21 +32,18 @@ When the question spans levels, start at the highest relevant level and drill do
 
 ## Gather Context
 
-Use specific strategies to build understanding before explaining:
+Build understanding before explaining. Match the strategy to where the answer lives:
 
-### For codebase questions
+### When the answer is in the project / domain artifacts
 
-1. **Read thoroughly** — Read the target code fully, then trace callers, callees, types, and tests
-2. **Check history** — Comments, docs, and commit history for "why" context not in the code
-3. **Map constraints** — Identify load-bearing elements: public API consumers, shared types, test contracts
-4. **Assess blast radius** — What code depends on this area? Grep to trace usages.
+Ground the explanation in what actually exists, not what you remember. Read the primary source fully, trace how it connects to the rest, check history for the "why" the artifact alone doesn't carry, and identify the load-bearing elements an explanation must respect. When the topic is code, follow the engineering pack's `./references/engineering/exploration.md` for the concrete recipe (trace callers / callees / types / tests, map blast radius, verify claims against source).
 
-### For external topics (libraries, APIs, concepts)
+### When the answer is external (a library, standard, concept, or fact)
 
-1. **Search the web** — Look up official documentation, changelogs, and authoritative sources. Don't guess API signatures or behavior from memory.
-2. **Check the project's usage** — Search the codebase for how the library/concept is already used locally
-3. **Read relevant package versions** — Check `package.json`, lockfiles, or equivalent to know what version is in use
-4. **Cross-reference** — If documentation and actual project usage disagree, flag it
+1. **Search the web** — Look up official documentation, changelogs, and authoritative sources. Don't guess signatures, behavior, or facts from memory.
+2. **Check local usage** — See how the thing is already used in the project or in prior work.
+3. **Pin the version / source** — Know which version or edition is in use before describing it.
+4. **Cross-reference** — If the authoritative source and actual local usage disagree, flag it.
 
 ## Explain
 
@@ -57,8 +55,8 @@ Open with _why_ this exists or _why_ it matters, not _what_ it is. "This module 
 
 - Go **top-down**: big picture first, then details on demand
 - Explain the **mental model** — what concepts does a reader need to hold in their head?
-- Use **code references** to anchor claims about codebase internals — point to specific lines, not vague descriptions
-- Narrate **data flow** for features — follow a request or user action from trigger to result
+- **Anchor claims to the primary source** — point to specific lines, sections, or evidence, not vague descriptions
+- Narrate **the flow** — follow a request, a user action, or a process from trigger to result
 - Highlight **non-obvious behavior** — gotchas, implicit assumptions, surprising side effects, common misconceptions
 - Use analogies when they genuinely clarify; skip them when they oversimplify
 
@@ -66,11 +64,11 @@ Open with _why_ this exists or _why_ it matters, not _what_ it is. "This module 
 
 If the user will use this output to make a decision (design, refactor, or implement), go beyond description:
 
-- **Surface constraints** — State explicitly what can't change and why (public API, downstream consumers, architectural invariants)
-- **Identify change points** — Where does the code naturally extend or branch? What's isolated vs. entangled?
-- **Discover alternatives** — Name 2–3 known approaches to achieving the goal (patterns in the codebase, common solutions, library capabilities). Don't fabricate — only surface options you can point to.
-- **Compare alternatives** — For each option, note: complexity to implement, coupling to existing code, reversibility. One sentence per axis is enough.
-- **Recommend** — Given the codebase, which fits best and why? Flag if you're uncertain.
+- **Surface constraints** — State explicitly what can't change and why (public interfaces, downstream consumers, invariants, external commitments)
+- **Identify change points** — Where does the thing naturally extend or branch? What's isolated vs. entangled?
+- **Discover alternatives** — Name 2–3 known approaches to achieving the goal (patterns already in use, common solutions, available capabilities). Don't fabricate — only surface options you can point to.
+- **Compare alternatives** — For each option, note: complexity to implement, coupling to what exists, reversibility. One sentence per axis is enough.
+- **Recommend** — Given what exists, which fits best and why? Flag if you're uncertain.
 
 ## Don't Rationalize
 

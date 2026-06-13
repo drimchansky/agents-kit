@@ -7,8 +7,9 @@ disable-model-invocation: true
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules.
+1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
+3. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core. See `./references/workflow/domain-packs.md`.
 
 This skill audits existing documentation against the codebase. It catches stale references, drifted descriptions, missing context, and silent assumptions — producing a clear assessment of what's accurate, what's wrong, and what's missing.
 

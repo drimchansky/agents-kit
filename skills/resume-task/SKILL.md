@@ -7,12 +7,13 @@ disable-model-invocation: true
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules.
+1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
+3. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core. This skill mostly observes; pull in deeper pack files only if you dig into a step's work. If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
 
 This skill loads an existing task directory under `.agents/tasks/` and produces a chat-only briefing — used to resume work after time away, hand off, review what was done, or answer questions about a task — whether in progress, blocked, or already shipped. It reads the four task artifacts (`CONTEXT.md`, every `*.spec.md`, every `*.plan.md`, every `*.result.md`), reconstructs state from `- [ ]` / `- [x]` checkboxes, checks for drift between the plan's claims and current code/git, and prints a structured brief.
 
-**CRITICAL**: This skill is **read-only across the repo** — task files (`CONTEXT.md`, `*.spec.md`, `*.plan.md`, `*.result.md`) and source code are observed but never modified (no write, edit, rename, delete). The skill also never mutates git state (no add, commit, checkout, stash). External systems cited in `CONTEXT.md`, specs, plans, or results (Jira, Notion, Slack, Google Docs, PRs, dashboards, etc.) are fetched **read-only** in Step 5 — never commented on, updated, or otherwise mutated. Reading implementation code is **expected and required** — the drift check in Step 4 greps shipped paths and opens cited files to verify the plan still matches reality. Output is **chat only** — do not write a `BRIEF.md` artifact. Briefings stale within hours and a fifth file would contradict the four-file contract that `plan-task` and `implement-plan` rely on. Engineering checklists in `./references/engineering/` are not preloaded — this skill mostly observes; consult them only if you dig into a pending step's code during the drift spot-check.
+**CRITICAL**: This skill is **read-only across the repo** — task files (`CONTEXT.md`, `*.spec.md`, `*.plan.md`, `*.result.md`) and source code are observed but never modified (no write, edit, rename, delete). The skill also never mutates git state (no add, commit, checkout, stash). External systems cited in `CONTEXT.md`, specs, plans, or results (Jira, Notion, Slack, Google Docs, PRs, dashboards, etc.) are fetched **read-only** in Step 5 — never commented on, updated, or otherwise mutated. Reading the work product is **expected and required** — the drift check in Step 4 verifies the plan/result claims against current reality (for code, grepping shipped paths and opening cited files). Output is **chat only** — do not write a `BRIEF.md` artifact. Briefings stale within hours and a fifth file would contradict the four-file contract that `plan-task` and `implement-plan` rely on. Domain-pack checklists in `./references/<domain>/` are not preloaded — this skill mostly observes; consult them only if you dig into a pending step's work during the drift spot-check.
 
 ## When to Use
 
@@ -58,7 +59,7 @@ Read in full, not skim:
 - Every `*.plan.md` in the directory — note each plan's `**Status:**` header and its `**Spec:**` link.
 - Every `*.result.md` — note `**Status:**`, find the latest per-step or full-run section, capture every `**Blocked:**` block verbatim, and capture any `## Acceptance` section verbatim.
 
-Status values across the lifecycle-bearing files are defined in `./references/workflow/task-lifecycle.md` — consult it if you encounter an unfamiliar value, and use the **pairing rule** there to flag inconsistencies (e.g. plan `executing` with no result file, plan `done` with result `executing`). A `skipped` plan is terminal and needs no result file — don't flag a missing result for it as drift; report it as deliberately abandoned. The spec file has no status — it's a static input.
+Status values across the lifecycle-bearing files are defined in `./references/workflow/task-lifecycle.md` — consult it if you encounter an unfamiliar value, and use the **pairing rule** there to flag inconsistencies (e.g. plan `executing` with no result file, plan `done` with result `executing`). A `skipped` plan is terminal and needs no result file — don't flag a missing result for it as drift; report it as deliberately abandoned. A `blocked` plan is paused — on an external dependency or an unresolved failure — and a `blocked` plan with a `blocked` result and a `**Blocked:**` section is consistent (report it as paused and name the cause from the section), not drift. The spec file has no status — it's a static input.
 
 Flag in the brief:
 
@@ -70,30 +71,25 @@ Flag in the brief:
 For each plan:
 
 - Count `- [x]` (done) vs `- [ ]` (pending) steps.
-- Identify the next pending step. Pull its **What**, **Verify**, **Depends on**, and the file paths it touches.
+- Identify the next pending step. Pull its **What**, **Verify**, **Depends on**, any **Due** / **Lead time**, and the file paths it touches.
 - For each `- [x]` step, follow the result anchor link to the matching section in the result file.
 - If the plan contains `### Checkpoint after Step N` headers, note which checkpoints have a corresponding `## Checkpoint after Step N` entry in the result file with `**Outcome:** passed`.
 - Surface every `**Blocked:**` section from the result file verbatim — do not paraphrase.
 
 State is reconstructed from the markers, not inferred from prose. If the prose and checkboxes disagree, trust the checkboxes and note the disagreement.
 
-### 4. Drift Check Against Implementation
+### 4. Drift Check Against Current Reality
 
-The drift check is the load-bearing value over `cat plan.md` — without it, the brief is just a re-rendering of files the user could read themselves. Compare the plan and result file's claims against the current state of the code on disk; do not consult git history.
+The drift check is the load-bearing value over `cat plan.md` — without it, the brief is just a re-rendering of files the user could read themselves. Compare what the plan and result files **claim was done** against the current state of the world the task acts on; don't reconstruct it from history — observe what's there now.
 
-1. **Extract paths and symbols, partitioned by state.** Walk the plan + every result file and collect paths into two buckets — the existence check in 4.2 treats them differently:
-    - **Shipped paths** — every path that appears in a `**Shipped:**` block of a result-file step entry, **plus** every path on a `- [x]` (done) plan step's touch list. These are claims that the file already exists on disk.
-    - **Pending paths** — every path on a `- [ ]` (not yet done) plan step's touch list. These may legitimately not exist yet (the step will create them); absence is **not** drift.
-    - Inline markdown code spans (`` `like/this.ext` ``) inside narrative prose: tag as **shipped** if they sit inside a `**Shipped:**` block or a done-step's result section; otherwise tag as **pending**.
-    - Do **not** filter by file extension; a path is anything that looks like one (contains `/` or matches a known top-level file in the repo).
-    - Cited symbols — function, component, type, or export names named inline in plan or result narrative. Always treated as shipped, since they're cited as already-implemented.
-2. **Existence check.** Confirm each path still exists on disk:
-    - **Shipped path missing** → tag `block` (or `warn` if the path was renamed/moved and you can identify the new location). The plan's claim disagrees with reality.
-    - **Pending path missing** → expected; do **not** emit a finding.
-    - **Pending path that already exists** → tag `info`. Worth noting (the step may already be partially done, or the filename collides with unrelated code) but not blocking.
-3. **Symbol-survival check.** For each cited symbol in a result file's `**Shipped:**` block, grep the named file. Flag symbols that are gone, renamed, or moved.
-4. **Implementation-vs-record sanity check.** Open one or two `**Shipped:**` files from the latest result entry and confirm the changes the result describes are visibly present (not reverted, not refactored away). For the next pending step, read the files it will touch and flag if the surrounding code has shifted enough that the step's verify criterion no longer applies cleanly.
-5. **Spec sanity check.** If the result file has an `## Acceptance` section, spot-check one criterion tagged `met` against the live behavior — open the file or run the command it cites and confirm the behavior still holds. If the result file has no `## Acceptance` section but the plan is `done`, that itself is drift (the acceptance gate was skipped); flag it `block`. If a `met` criterion no longer holds, flag it `warn` so the user can re-run the gate before relying on the prior result.
+Partition the claims by state, because they're checked differently:
+
+- **Done / shipped claims** — anything a `**Shipped:**` block or a `- [x]` step asserts already exists or already happened. Checkable against reality now; a claim that no longer holds is drift.
+- **Pending claims** — anything a `- [ ]` (not yet done) step will produce. These may legitimately not exist yet; absence is **not** drift. A pending artifact that *already* exists is worth an `info` (the step may be partly done, or there's a collision).
+
+For each done/shipped claim, confirm it still holds and tag the finding. When the domain is code, follow the drift-verification recipe in `./references/engineering/exploration.md` (partition paths shipped vs pending, existence-check, symbol-survival grep, open a shipped file to confirm the change is present and not reverted). For other domains, verify each claim against the domain's own artifacts (a booking still confirmed, a document still signed, a commitment still standing).
+
+**Spec sanity check (domain-neutral).** If the result file has an `## Acceptance` section, spot-check one criterion tagged `met` against current behavior and confirm it still holds. If the result has no `## Acceptance` section but the plan is `done`, that itself is drift (the acceptance gate was skipped); flag it `block`. If a `met` criterion no longer holds, flag it `warn` so the user can re-run the gate before relying on the prior result.
 
 Tag each finding `info` (FYI), `warn` (review before resuming), or `block` (plan needs update before execution can proceed).
 
@@ -173,6 +169,7 @@ Assemble per the output template below. Print to chat. Do not write any file.
 - Step <N> — <title>
     - **Verify:** <criterion from plan>
     - **Depends on:** <prior steps>
+    - **Due / Lead time:** <from plan, if set — otherwise omit>
     - **Touches:** <files from plan>
 
 ## Blocked

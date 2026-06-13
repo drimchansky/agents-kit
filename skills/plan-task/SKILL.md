@@ -7,8 +7,9 @@ disable-model-invocation: true
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules.
+1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
+3. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for (`exploration.md`, `planning.md`, …). If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
 
 This skill produces an implementation plan inside a resolved task directory, paired with a sibling **spec file** that captures the testable acceptance criteria. The plan is the contract that `implement-plan` later executes against; the spec is the contract for what "done" means. Each task directory groups one or more related plans (each with its own spec) plus a shared `CONTEXT.md`.
 
@@ -20,19 +21,21 @@ The user provides a task or feature request. They may include context about cons
 
 **Plan when:**
 
-- Task spans multiple files or modules
+- The work spans multiple areas or artifacts
 - Multiple viable approaches exist with meaningful trade-offs
-- Changes affect shared code with wide blast radius
+- Changes affect shared or foundational pieces with wide blast radius
 - Requirements are ambiguous and need decomposition
-- High-risk changes to critical paths
+- High-risk or hard-to-reverse changes
 
 **Skip planning when:**
 
-- Single-file change with obvious implementation
-- Bug fix with clear root cause and location
+- Single, obvious change
+- The cause and the fix are already clear and localized
 - User has already specified the exact approach
 - The task is smaller than the plan would be
 - The idea is too vague to scope — run `refine-idea` first, then return here
+
+When the domain is code, `./references/engineering/planning.md` gives the engineering-specific version of these heuristics (file counts, root-cause bug fixes).
 
 If the task doesn't warrant a full plan, say so and suggest proceeding directly with implementation.
 
@@ -77,12 +80,13 @@ If the resolved `CONTEXT.md` carries a `**Project:**` header, read the linked `P
 
 #### CONTEXT.md skeleton (created when missing)
 
-The skeleton below is the canonical CONTEXT.md schema, shared with `refine-idea` (which produces it via Phases 1–3) so downstream consumers (`review-task`, `implement-plan`, and the plan-task reuse step) read the same section names regardless of how the task started. When `plan-task` skips the idea step, populate `Problem Statement` and `Key Assumptions to Validate` from the user's task description; leave the other sections as placeholders for the user to fill in.
+The skeleton below is the canonical CONTEXT.md schema, shared with `refine-idea` (which produces it via Phases 1–3) so downstream consumers (`review-task`, `implement-plan`, and the plan-task reuse step) read the same section names regardless of how the task started. When `plan-task` skips the idea step, infer `**Domain:**` from the task description (see the guidance below the skeleton) and populate `Problem Statement` and `Key Assumptions to Validate` from it; leave the other sections as placeholders for the user to fill in.
 
 ```markdown
 # <task name>
 
 **Status:** drafted-by-plan-task
+**Domain:** <domain>
 
 ## Problem Statement
 
@@ -118,9 +122,9 @@ _(Per-plan acceptance criteria live in each plan's `<task-slug>.spec.md`. This s
 _(External links, pasted specs, ticket numbers, screenshots, cross-cutting notes. Read by every plan in this task directory.)_
 ```
 
-`CONTEXT.md`'s `**Status:**` is a one-shot origin marker; the plan file owns the working lifecycle. Full status vocabulary across all task files is registered in `./references/workflow/task-lifecycle.md` — read it once if you're unsure which value to write.
+`CONTEXT.md`'s `**Status:**` is a one-shot origin marker; the plan file owns the working lifecycle. Full status vocabulary across all task files is registered in `./references/workflow/task-lifecycle.md` — read it once if you're unsure which value to write. The `**Domain:**` line names which domain pack every skill in this directory loads. **Infer it from the task description** (e.g. `engineering` for a code change, `bureaucracy` for a residence application), or carry over the value if `refine-idea` already set one. Default to `engineering` when the work is code or the domain is genuinely ambiguous *within a coding context* — but when the task is clearly non-code and the right domain is unclear, **ask** rather than stamping a label, since a wrong `**Domain:**` silently loads the wrong rules. See `./references/workflow/domain-packs.md`.
 
-When this task is part of a project group — a directory with a shared `PROJECT.md` and sibling task directories — add a `**Project:** [../PROJECT.md](../PROJECT.md)` line directly under `**Status:**` so downstream skills load the shared project context. Omit it for a standalone task. See `./references/workflow/task-layout.md`.
+When this task is part of a project group — a directory with a shared `PROJECT.md` and sibling task directories — add a `**Project:** [../PROJECT.md](../PROJECT.md)` line directly under `**Domain:**` so downstream skills load the shared project context. Omit it for a standalone task. See `./references/workflow/task-layout.md`.
 
 The user is expected to enrich `CONTEXT.md` over time (links, specs, decisions). Don't dump per-step notes, approach rationale, or verify criteria into it — those belong in the plan or its result file. Placeholder sections are intentional: leave them in place even if empty so downstream skills can find the same section names.
 
@@ -168,12 +172,12 @@ Keep criteria **outcome-oriented**, not implementation-oriented. "User can expor
 
 The spec carries no `**Status:**` field by design — it is a static input, not a lifecycle artifact. The user mutates it freely between sessions; downstream skills (`review-task`, `implement-plan`, `resume-task`) read it but never write to it.
 
-### 4. Explore the Codebase
+### 4. Explore the Domain's Reality
 
-**CRITICAL**: Always ground the plan in what already exists. Read before designing — this is the forward exploration pass; `review-task` will independently verify assumptions later if invoked.
+**CRITICAL**: Always ground the plan in what already exists. Explore before designing — this is the forward exploration pass; `review-task` will independently verify assumptions later if invoked. Follow the resolved domain's exploration guide; when the domain is code, that's `./references/engineering/exploration.md`.
 
-- Search for related implementations to use as models; map affected files and shared code in the blast radius
-- Note existing constraints (tech debt, API contracts, performance budgets)
+- Search for related prior work to use as a model; map what the change will affect (its blast radius)
+- Note existing constraints (debt, contracts, budgets, prior commitments)
 
 ### 5. Evaluate Approaches
 
@@ -185,7 +189,7 @@ Even when the user suggests a specific approach, consider whether a different so
 
 For each approach, assess:
 
-- **Alignment** — How well does it match existing codebase patterns?
+- **Alignment** — How well does it match existing patterns and conventions?
 - **Simplicity** — What's the minimum complexity to meet requirements?
 - **Risk** — What could go wrong? How reversible is it?
 - **Effort** — Relative size (S/M/L)
@@ -202,30 +206,17 @@ Explicitly state:
 
 ### 7. Break Down Steps
 
-Create an ordered list of implementation steps. Each step must be a **verifiable piece of work** — after completing it, there's a concrete way to confirm it worked before moving on.
+Create an ordered list of steps. Each step must be a **verifiable piece of work** — after completing it, there's a concrete way to confirm it worked before moving on.
 
-**Order steps as vertical slices, not horizontal layers.** Each step should deliver a complete user-visible (or caller-visible) capability — schema + API + UI for one thing — rather than building all schemas, then all APIs, then all UI. Vertical slicing surfaces integration risk early and keeps the system in a working, demoable state between steps. Use horizontal ordering only when a foundational layer (e.g. shared types, a migration) genuinely has no vertical seam.
+**Order steps as vertical slices, not horizontal layers.** Each step should deliver a complete, observable outcome — one whole thing end to end — rather than building all of one layer, then all of the next. Vertical slicing surfaces integration risk early and keeps the work in a usable, demoable state between steps. Use layered ordering only when a foundational piece genuinely has no vertical seam.
 
 For each step:
 
 - **What** — Brief description of the change (one concern per step)
-- **Verify** — How to confirm it works (run a test, check a behavior, see output, verify types pass)
+- **Verify** — How to confirm it works. The criterion is non-negotiable; if you can't state how to verify a step, it's too vague or too small to be a step.
 - **Depends on** — Prior steps required (if any)
 
-The verification criterion is non-negotiable. If you can't state how to verify a step, it's either too vague or too small to be a step.
-
-Step sizing:
-
-- Too coarse: "Implement the feature" — not actionable, not verifiable as a unit
-- Too fine: "Add import statement" — noise, not independently meaningful
-- Right size: "Add validation hook with error state for the form fields" — one concern, verifiable by rendering the form and checking error states appear
-
-Break a step down further when any of these are true:
-
-- The title contains "and" (it's two steps wearing one hat)
-- It touches two or more independent subsystems (e.g. auth and billing)
-- Its acceptance can't be stated in 3 or fewer bullets
-- It would touch more than ~5 files
+Break a step down further when: its title contains "and" (two steps wearing one hat); it touches two or more independent subsystems; or its acceptance can't be stated in 3 or fewer bullets. When the domain is code, `./references/engineering/planning.md` adds the engineering sizing guidance (a ~5-file cap, the concrete `Verify` recipe, and worked too-coarse / too-fine / right-size examples).
 
 **Step format in the plan file:**
 
@@ -235,30 +226,29 @@ Break a step down further when any of these are true:
 - [ ] **What:** <one-sentence change>
 - **Verify:** <how to confirm>
 - **Depends on:** <prior step numbers, or "none">
+- **Due:** <date the step must finish by, or "none">
+- **Lead time:** <how long the step takes once started — e.g. "visa: ~8 weeks", or "none">
 ```
 
 The leading `- [ ]` checkbox is the marker `implement-plan` flips to `- [x]` when the step is done, with a link to the result file section appended.
 
+`**Due:**` and `**Lead time:**` are **optional**. Omit them (or set `none`) for code work, where steps are ordered by `Depends on:`, not the calendar. They earn their place in time-anchored domains (a relocation, an event) where deadlines and external lead times — not just logical dependencies — drive ordering and surface the long-pole steps that must start early. They are planning information the actor reads; nothing in the kit schedules off them.
+
 ### 8. Add Checkpoints
 
-Per-step `Verify` confirms one unit of work. It does **not** catch the case where step 3 silently broke step 1's behavior. For plans with more than ~5 steps, insert a **Checkpoint** every 2–3 steps that re-verifies the integrated system, not just the latest change.
+Per-step `Verify` confirms one unit of work. It does **not** catch the case where step 3 silently broke step 1's outcome. For plans with more than ~5 steps, insert a **Checkpoint** every 2–3 steps that re-verifies the integrated whole, not just the latest change.
 
-A checkpoint asserts:
+A checkpoint re-asserts that everything done so far still holds together — including a concrete end-to-end outcome, named ("user can log in and see dashboard", not "core flow"). When the domain is code, the specific assertions are in `./references/engineering/planning.md` (full test suite passes, build / typecheck succeeds, the named flow runs end to end).
 
-- Test suite still passes (not just the test for the latest step)
-- Build / typecheck still succeeds
-- A concrete end-to-end flow still works (name the flow — "user can log in and see dashboard", not "core flow")
-
-Checkpoints are not steps — they don't get a `- [ ]` checkbox that `implement-plan` flips. They are gates `implement-plan` must pause at to confirm before proceeding to the next batch of steps. Skip them entirely for short plans (≤5 steps) where the final step's verification doubles as an end-to-end check.
+Checkpoints are not steps — they get no `- [ ]` checkbox that `implement-plan` flips. They are gates `implement-plan` must pause at to confirm before proceeding to the next batch of steps. Skip them entirely for short plans (≤5 steps) where the final step's verification doubles as an end-to-end check.
 
 **Checkpoint format in the plan file:**
 
 ```markdown
 ### Checkpoint after Step N
 
-- Test suite passes
-- Build / typecheck succeeds
-- End-to-end: <name the concrete flow — e.g. "user can log in and see dashboard">
+- <assertion that the integrated whole still holds>
+- End-to-end: <name the concrete outcome — e.g. "user can log in and see dashboard">
 ```
 
 ### 9. Identify Risks
@@ -279,13 +269,15 @@ If the plan has assumptions that could invalidate the approach, surface them exp
 
 Match the plan's detail to the task's complexity. The spec step (Step 3) is required at every depth — even small tasks benefit from a few explicit acceptance criteria.
 
-- **Medium** (2-5 files, clear pattern) — Steps 1–3, 6, 7 — skip approach comparison, light on risks
-- **Large** (5-15 files, some ambiguity) — All steps, moderate detail
-- **Complex** (architectural, cross-cutting) — All steps, deep exploration, multiple approaches compared
+- **Medium** (small, clear pattern) — Steps 1–3, 6, 7 — skip approach comparison, light on risks
+- **Large** (bigger, some ambiguity) — All steps, moderate detail
+- **Complex** (cross-cutting, structural) — All steps, deep exploration, multiple approaches compared
+
+When the domain is code, `./references/engineering/planning.md` gives file-count proxies for these tiers.
 
 ## Don't Rationalize
 
-- "I already know the codebase well enough" — Read the code anyway. Memory drifts; the code is the truth.
+- "I already know what's there well enough" — Check anyway. Memory drifts; the current reality is the truth.
 - "There's only one way to do this" — If you haven't explored alternatives, you don't know that.
 - "The risks are obvious, no need to list them" — Generic risk awareness is not risk identification. Be specific or admit there are none.
 - "This is too simple to plan" — If the user asked for a plan, the task warranted one.
@@ -300,6 +292,7 @@ Match the plan's detail to the task's complexity. The spec step (Step 3) is requ
 
 - [ ] Resolved task directory exists (reused if it already existed, created otherwise)
 - [ ] `CONTEXT.md` present in the task directory; skeleton written if it didn't exist
+- [ ] `**Domain:**` inferred from the task and written (carried over from `refine-idea` if set; asked when the task is clearly non-code and the domain is ambiguous, never silently defaulted to `engineering` for non-code work)
 - [ ] For a project-grouped task: `**Project:**` header added to `CONTEXT.md` and the linked `PROJECT.md` read for context
 - [ ] Spec written to `<task-dir>/<task-slug>.spec.md` — short description + free-form bullet criteria, no `**Status:**` field
 - [ ] Hand-authored spec read and respected if present; not silently overwritten
@@ -357,6 +350,8 @@ Write the file with this top-level layout. Adapt sections to task size — not e
 - [ ] **What:** ...
 - **Verify:** ...
 - **Depends on:** none
+- **Due:** none _(optional; date the step must finish by)_
+- **Lead time:** none _(optional; how long it takes once started)_
 
 ### Step 2 — <title>
 
@@ -366,9 +361,8 @@ Write the file with this top-level layout. Adapt sections to task size — not e
 
 ### Checkpoint after Step 2 _(only for plans >5 steps)_
 
-- Test suite passes
-- Build / typecheck succeeds
-- End-to-end: <name the concrete flow>
+- <assertion that the integrated whole still holds>
+- End-to-end: <name the concrete outcome>
 
 ## Risks
 

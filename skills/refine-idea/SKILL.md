@@ -7,8 +7,9 @@ disable-model-invocation: true
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules.
+1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
+3. Load the domain pack: take the task's `**Domain:**` (default `engineering`; infer from the request when there's no `CONTEXT.md` yet, and record it in the `CONTEXT.md` you write) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for. If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
 
 This skill turns a raw idea into a sharp, actionable concept worth building. It runs three phases — divergent exploration, convergent evaluation, and a written one-pager — and produces an artifact at `.agents/tasks/<slug>/CONTEXT.md` that `plan-task` and `implement-plan` later consume as the shared context for every plan in the task directory.
 
@@ -85,7 +86,7 @@ The three phases below are sequential. Don't skip Phases 1–2 to jump straight 
 
     Push beyond what the user initially asked for. Each variation should have a reason it exists, not just be a bullet point.
 
-**If running inside a codebase:** Use grep, file reads, and codebase search to ground variations in existing architecture, patterns, and prior art. Cite specific files when relevant.
+**Ground in what exists:** Use the domain's reality to ground variations in existing structure, patterns, and prior art — cite specifics rather than speaking in the abstract. When the domain is code, that means grep / file reads / codebase search (see `./references/engineering/exploration.md`).
 
 ### Phase 2 — Converge
 
@@ -94,7 +95,7 @@ After the user reacts to Phase 1 (signals which variations resonate, pushes back
 1. **Cluster** the resonant ideas into 2–3 distinct directions. Each direction should feel meaningfully different, not just variations on the same theme.
 2. **Stress-test** each direction on three axes:
     - **User value** — Who benefits and how much? Painkiller or vitamin?
-    - **Feasibility** — Technical and resource cost? What's the hardest part?
+    - **Feasibility** — Cost and effort to pull off? What's the hardest part?
     - **Differentiation** — What makes this genuinely different? Would someone switch?
 
 3. **Surface hidden assumptions.** For each direction, name explicitly:
@@ -146,12 +147,13 @@ The "Not Doing" list is the most valuable part — focus is about saying no to g
 
 Write the file with this layout. Adapt section depth to the idea's size — keep the one-pager portion to one page where possible. The trailing `## References` section is a placeholder for the user (or later sessions) to drop external links, pasted specs, and cross-cutting notes.
 
-The `**Status:**` field is a one-shot origin marker — `refined` here, never mutated after creation. Full vocabulary across all task files is registered in `./references/workflow/task-lifecycle.md`.
+The `**Status:**` field is a one-shot origin marker — `refined` here, never mutated after creation. Full vocabulary across all task files is registered in `./references/workflow/task-lifecycle.md`. The `**Domain:**` field names which domain pack downstream skills load. **Infer it from the idea** (e.g. `engineering` for a code change, `relocation` or `negotiation` otherwise); default to `engineering` only when the work is code or genuinely ambiguous within a coding context, and when the effort is clearly non-code but the right domain is unclear, **ask** rather than stamping a wrong label. See `./references/workflow/domain-packs.md`.
 
 ```markdown
 # <idea name>
 
 **Status:** refined
+**Domain:** <domain>
 
 ## Problem Statement
 

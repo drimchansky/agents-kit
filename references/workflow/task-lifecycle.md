@@ -30,18 +30,20 @@ The field name `Status:` is shared across the three status-bearing files even th
 
 The spec is a static input authored before (or alongside) the plan. It carries no `**Status:**` header and no lifecycle. It can be drafted by `plan-task` (which asks clarifying questions when requirements are unclear) or hand-authored by the user. Other skills read it; only the user mutates it.
 
-### `<task-slug>.plan.md` — lifecycle: `to-do` → `executing` → `done` (or `skipped`)
+### `<task-slug>.plan.md` — lifecycle: `to-do` → `executing` → `done` (or `skipped`); `executing` ⇄ `blocked`
 
 - **`to-do`** — written by `plan-task`; not yet executed.
 - **`executing`** — set by `implement-plan` when it begins execution. Implies a companion `<task-slug>.result.md` exists.
+- **`blocked`** — execution can't proceed, for one of two reasons: the work is **waiting on something external** (another person, an institution, a vendor, a dependency, a pending decision), **or it's stuck on a failure that can't be resolved this session**. Reachable only from `executing`, and returns to `executing` when the blocker clears or the failure is fixed. Implies a companion result file in `blocked` carrying a `**Blocked:**` section that names the cause — what's awaited, or what failed and what's needed to unblock. A blocked plan is **paused, not abandoned** — use `skipped` to abandon. Set by `implement-plan` or the user; cleared back to `executing` when work resumes.
 - **`done`** — set by `implement-plan` when the last step completes.
 - **`skipped`** — the plan was deliberately abandoned without being carried to completion: a triage or scoping decision, not a failure. Terminal. Reachable from `to-do` (never started) or `executing` (started, then dropped). Set by the user, or by `plan-task` / `implement-plan` when the user decides not to proceed — `implement-plan` never sets it on its own and will not execute a plan already marked `skipped` without explicit confirmation. A companion result file is **optional**: write one only to record why the work was dropped.
 
-### `<task-slug>.result.md` — lifecycle: `executing` → `done`
+### `<task-slug>.result.md` — lifecycle: `executing` → `done`; `executing` ⇄ `blocked`
 
 The result file is created lazily by `implement-plan` directly in `executing`; it has no `to-do` state.
 
 - **`executing`** — created by `implement-plan` at the start of execution.
+- **`blocked`** — set alongside the plan's `blocked` status when work pauses — on an external dependency or on an unresolved failure; carries a `**Blocked:**` section naming the cause (what is awaited, or what failed, what was tried, and what's needed to unblock). Returns to `executing` when the blocker clears; no closing `**Completed:**` line while blocked.
 - **`done`** — set by `implement-plan` at finalization, alongside a closing `**Completed:** YYYY-MM-DD` line.
 
 ## Pairing rule
@@ -50,6 +52,7 @@ The plan and its companion result file track in lockstep once execution begins:
 
 - Plan `to-do` → no result file yet.
 - Plan `executing` → result file `executing`.
+- Plan `blocked` → result file `blocked`, carrying a `**Blocked:**` section that names the cause (external wait or unresolved failure). A deliberately paused pair — **not** drift.
 - Plan `done` → result file `done`.
 - Plan `skipped` → result file optional; its absence is **not** drift. When one exists it documents why the plan was abandoned, and may stay `executing` (work started then stopped) with no closing `**Completed:**` line.
 

@@ -4,12 +4,16 @@ Quality bar for the bullets in `<task-slug>.spec.md`. A criterion that fails any
 
 ## Each criterion is
 
-- [ ] **Testable** — verifiable by running a command, exercising a flow, or inspecting state; not "feels right" or "works well"
+- [ ] **Testable** — verifiable by running a command, exercising a flow, inspecting state, or — for a one-shot or irreversible outcome — by its best available proxy (a confirmation, a receipt, the observed end state); not "feels right" or "works well"
 - [ ] **Specific** — names a concrete artifact, behavior, or measurable yardstick; no hedge words ("works", "good", "robust", "fast enough")
 - [ ] **Outcome-oriented** — describes user-visible or caller-visible behavior, not implementation steps
 - [ ] **Singular** — one observable claim per bullet; split "and"-stuffed compounds into separate bullets
 - [ ] **Bounded** — scope is unambiguous; reader can tell what's in vs out without guessing
 - [ ] **Stated as behavior, not implication** — "user can X" beats "X is implemented"; "GET /foo returns 200 with `{shape}`" beats "the endpoint exists"
+
+## Verifying outcomes that can't be re-run
+
+Some criteria name a one-shot or irreversible result — an event that occurred, a deal closed, a lease signed. They are still testable: verify them against the **best available proxy** (a confirmation, a receipt, the observed end state) or evaluate them **post-hoc** in a retro. "Testable" never requires the check to be *repeatable* — only that there's an observable yardstick. This is the non-code counterpart to running a test; the engineering acceptance-gate recipe (run the command, observe the output) lives in `../engineering/verification.md`.
 
 ## Anti-patterns
 

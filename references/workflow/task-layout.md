@@ -35,8 +35,11 @@ Related tasks that share a charter, a decision log, or cross-cutting references 
   # <task name>
 
   **Status:** drafted-by-plan-task
+  **Domain:** engineering
   **Project:** [../PROJECT.md](../PROJECT.md)
   ```
+
+  (The `**Domain:**` line shown selects which domain pack the task's skills load — default `engineering`; see `domain-packs.md`.)
 
   When a skill loads `CONTEXT.md` and finds a `**Project:**` header, it reads the linked file too, as higher-level context — `PROJECT.md` is authoritative for anything spanning more than one task. The grouping is detected by the presence of that header, **not** by directory shape: skills never need to reason about how deep a task sits or walk the filesystem to find the project doc.
 

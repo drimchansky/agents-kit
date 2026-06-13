@@ -1,18 +1,19 @@
 ---
 name: review-task
-description: Use when asked to review, validate, or sanity-check a task's plan — confirms the implementation direction is right and still in sync with CONTEXT.md, the spec, and the current codebase, and surfaces any drift between task artifacts (CONTEXT, spec, plan, result) and the code.
+description: Use when asked to review, validate, or sanity-check a task's plan — confirms the direction is right and still in sync with CONTEXT.md, the spec, and current reality, and surfaces any drift between task artifacts (CONTEXT, spec, plan, result) and the work itself.
 argument-hint: '[task slug or plan path]'
 disable-model-invocation: true
 ---
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules.
+1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
+3. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for (`exploration.md`, `verification.md`, …). If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
 
-This skill validates an implementation plan against the actual codebase before execution begins. It catches infeasible steps, missing details, pattern conflicts, and implicit assumptions — producing a clear assessment with targeted questions.
+This skill validates a plan against current reality before execution begins. It catches infeasible steps, missing details, pattern conflicts, and implicit assumptions — producing a clear assessment with targeted questions.
 
-The user provides a plan — typically the output of `plan-task`, written to `<task-dir>/<task-slug>.plan.md`. Your job is to determine whether the plan can be executed as written within the current codebase, and surface anything that needs resolution first.
+The user provides a plan — typically the output of `plan-task`, written to `<task-dir>/<task-slug>.plan.md`. Your job is to determine whether the plan can be executed as written given how things actually are, and surface anything that needs resolution first.
 
 **CRITICAL**: Do not implement. Do not redesign the solution. Validate the plan. The output is a feasibility assessment with questions, not a revised plan or code.
 
@@ -55,7 +56,7 @@ Both are authoritative input for grounding, not optional. If the spec file is mi
 Extract the concrete claims and steps:
 
 - **Goal** — What the plan is trying to accomplish
-- **Steps** — Each ordered step's "What", "Verify", and "Depends on"
+- **Steps** — Each ordered step's "What", "Verify", "Depends on", and any "Due" / "Lead time"
 - **Checkpoints** — Any `### Checkpoint after Step N` blocks: where they're placed, what assertions they list (test suite, build, named end-to-end flow)
 - **Scope** — What's in / out of scope and why
 - **Integration points** — What existing code, components, APIs, or patterns the plan references or depends on
@@ -63,21 +64,18 @@ Extract the concrete claims and steps:
 
 Restate the plan's intent in your own words to confirm understanding. If steps are ambiguous, note the ambiguity — don't silently pick an interpretation.
 
-### 2. Ground in the Codebase
+### 2. Ground in the Domain's Reality
 
-**CRITICAL**: Read the code each step touches. Every claim about existing behavior must be verified against the actual source. This is an independent pass — do not assume `plan-task`'s exploration was correct.
+**CRITICAL**: Verify the plan against what actually exists, not against its own claims. Every claim about existing behavior must be checked against the real artifacts. This is an independent pass — do not assume `plan-task`'s exploration was correct.
 
-For each integration point or referenced component:
+For each thing the plan references or integrates with:
 
-- **Verify it exists** — File, function, component, hook, API, type. Grep for it.
-- **Verify it does what the plan assumes** — Read the implementation, not just the name. A component called `ValidatorList` might be tightly coupled to a specific context.
-- **Check reusability** — If the plan says "reuse X," confirm X can actually be reused. Look for hard-coded dependencies, context coupling, or internal-only exports.
-- **Map the blast radius** — What existing code will be affected by the proposed changes?
+- **Verify it exists** — the file, function, service, document, vendor, booking — whatever the plan leans on. Confirm it; don't take the name on faith.
+- **Verify it does what the plan assumes** — inspect the actual thing, not just its name. A component called `ValidatorList`, or a venue described as "available," may not behave as assumed.
+- **Check reusability / availability** — if the plan says "reuse X" or "use the existing Y," confirm it can actually be used as assumed (no hidden coupling, no prior commitment, no blocking constraint).
+- **Map the blast radius** — what existing work will be affected by the proposed changes?
 
-For referenced external APIs or libraries:
-
-- **Verify the API surface** — Check installed package versions and actual exports. Don't assume an API exists based on naming conventions.
-- **Check the message/transaction format** — For protocol-level features, verify the exact message types and fields.
+When the domain is code, follow `./references/engineering/exploration.md` for the concrete recipe (grep for the symbol, read the implementation, verify external API surface against installed versions, check the message/transaction format).
 
 ### 3. Assess Each Step
 
@@ -86,8 +84,8 @@ For every step, assign one of:
 - **Feasible** — Can be executed as planned with existing patterns and infrastructure
 - **Feasible with caveats** — Can be done, but the step is missing details or underspecifies behavior in certain cases
 - **Needs clarification** — Ambiguous or underspecified — multiple interpretations exist and the choice affects implementation
-- **Conflicts with codebase** — Contradicts existing patterns, conventions, or architectural constraints
-- **Infeasible as stated** — Cannot be executed as described — the referenced API doesn't exist, the component can't be reused as assumed, etc.
+- **Conflicts with what exists** — Contradicts established patterns, conventions, or constraints
+- **Infeasible as stated** — Cannot be executed as described — the referenced thing doesn't exist, or can't be used as assumed, etc.
 
 Also assess each step's **Verify** criterion: is it concrete enough to actually confirm the step worked? Flag verify criteria that are vague ("ensure it works") or untestable.
 
@@ -130,34 +128,27 @@ Compare the artifacts pairwise. For each pair, name the kind of drift the compar
 - **CONTEXT.md ↔ `<task-slug>.spec.md`** — Does any acceptance criterion describe behavior CONTEXT's "Not Doing" list excludes, or behavior outside CONTEXT's MVP scope? Does the spec contradict CONTEXT's Recommended Direction or Key Assumptions?
 - **CONTEXT.md ↔ `<task-slug>.plan.md`** — Does the plan's Scope (in / out / boundaries) contradict CONTEXT's MVP scope or "Not Doing"? Does the plan reference assumptions CONTEXT marked still-to-validate as if they were settled?
 - **`<task-slug>.spec.md` ↔ `<task-slug>.plan.md`** — Is a criterion excluded by the plan's `Out of scope` (already surfaced in Acceptance Coverage as `out of scope` — repeat it here to make the inconsistency explicit)? Does the plan's `In scope` extend beyond what any criterion requires?
-- **`<task-slug>.plan.md` ↔ `<task-slug>.result.md`** (only if `result.md` exists) — Does the result claim a step done while the plan's checkbox is still `- [ ]`? Does the result reference a step number the plan doesn't have (a sign of a stale rename)? Does the **pairing rule** in `./references/workflow/task-lifecycle.md` hold — plan `executing` requires result `executing`, plan `done` requires result `done`, while a `skipped` plan may have no result or an explanatory result that remains `executing`?
+- **`<task-slug>.plan.md` ↔ `<task-slug>.result.md`** (only if `result.md` exists) — Does the result claim a step done while the plan's checkbox is still `- [ ]`? Does the result reference a step number the plan doesn't have (a sign of a stale rename)? Does the **pairing rule** in `./references/workflow/task-lifecycle.md` hold — plan `executing` requires result `executing`, plan `blocked` requires result `blocked` with a `**Blocked:**` section, plan `done` requires result `done`, while a `skipped` plan may have no result or an explanatory result that remains `executing`?
 - **Status field consistency** — Does CONTEXT carry a valid origin marker, the plan a valid lifecycle state, and the result (if present) a valid lifecycle state compatible with the pairing rule? Reject anything outside the vocabulary registered in `./references/workflow/task-lifecycle.md`.
 
 If `<task-slug>.result.md` is absent, skip the last two pair checks — that absence is expected for plans in `to-do` or `skipped`.
 
 ### 7. Identify Gaps
 
-Look for what the plan doesn't say but the implementation will need:
+Look for what the plan doesn't say but executing it will need:
 
-- **Missing states** — Loading, error, empty, disabled states not mentioned
-- **Missing validation** — Edge cases the plan doesn't address (zero values, max values, concurrent operations)
-- **Missing navigation** — How the user gets to and from the new flow
-- **Missing data** — Where data comes from, how it's fetched, cached, invalidated
-- **Missing analytics** — If the project tracks events, new user actions likely need tracking
-- **Missing patterns** — If the work needs a new pattern (new route, new context, new hook), the plan should acknowledge it
-- **Step ordering** — Are dependencies between steps correct? Is anything required out of order?
-- **Checkpoint placement** — For plans with more than ~5 steps, are checkpoints present every 2–3 steps? Does each checkpoint name a concrete end-to-end flow (e.g. "user can log in and see dashboard"), not a vague "core flow works"? Flag missing, misplaced, or vague checkpoints.
-- **Platform constraints** — Domain rules, protocol limitations, timing constraints that affect the work
+- **Missing edge cases** — Boundaries and failure modes the plan doesn't address (empty, zero, max, concurrent, the unhappy path)
+- **Missing transitions** — How the actor gets into and out of the new flow
+- **Missing inputs** — Where required information or resources come from, and whether they're actually available
+- **Step ordering & timing** — Are dependencies between steps correct? Is anything required out of order? For steps carrying `Due` / `Lead time`, is the schedule feasible — does each step's lead time fit before its own (or a dependent step's) due date, and do long-lead items start early enough?
+- **Checkpoint placement** — For plans with more than ~5 steps, are checkpoints present every 2–3 steps, each naming a concrete end-to-end outcome (e.g. "user can log in and see dashboard"), not a vague "core flow works"? Flag missing, misplaced, or vague checkpoints.
+- **Domain constraints** — Rules, limits, or timing the work must respect
+
+When the domain is code, also check the engineering-specific gaps in `./references/engineering/planning.md` ("Common gaps to check in a code plan": UI states, navigation, data fetching/caching/invalidation, analytics, new-pattern acknowledgement).
 
 ### 8. Check Pattern Consistency
 
-Compare the plan's implied implementation against the project's established patterns:
-
-- Does the proposed code structure match how similar features are built?
-- Does the data flow follow the same hooks/context/query patterns?
-- Are naming conventions consistent (routes, components, events)?
-- Would the implementation require new dependencies, and are they justified?
-- Does the plan respect module boundaries (if the project enforces them)?
+Compare the plan's implied approach against the established patterns of the project or effort: does it match how similar work is structured, follow the same conventions, and respect the boundaries the effort enforces? Would it require something new (a dependency, a pattern, a one-off exception), and is that justified? When the domain is code, follow `./references/engineering/exploration.md`'s pattern-consistency checks (structure, data-flow patterns, naming, dependencies, module boundaries).
 
 ## Output Structure
 
@@ -171,7 +162,7 @@ For each step:
 
 - The step (number and title)
 - The verdict (feasible / feasible with caveats / needs clarification / conflicts / infeasible)
-- Evidence — point to the specific code, API, or constraint that supports the verdict
+- Evidence — point to the specific artifact, fact, or constraint that supports the verdict
 - If caveats or conflicts: what specifically needs to change in the step
 - Verify-criterion check: is it concrete and testable?
 
@@ -238,7 +229,7 @@ Aspects of the plan that are verified and ready to execute — so the user knows
 ## Don't Rationalize
 
 - "The plan looks reasonable" — Check every integration point in the code. Reasonable isn't verified.
-- "This component can probably be reused" — Read the implementation. Names don't guarantee reusability.
+- "This can probably be reused" — Inspect the actual thing. Names don't guarantee reusability.
 - "I'll note the gaps during implementation" — Surface them now. That's the entire point of review.
 - "Everything looks good" — Rubber-stamping isn't review. Every integration point needs code-level verification.
 - "That's a theoretical concern" — Only flag real issues, but don't dismiss concerns without checking the code.

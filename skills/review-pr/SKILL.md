@@ -7,18 +7,19 @@ disable-model-invocation: true
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules.
+1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
+3. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core. See `./references/workflow/domain-packs.md`.
 
 Review all changes in the current branch against its base branch for correctness, unintended impact, and adherence to project patterns.
 
 ## Flags
 
-- `--no-checks` — Skip automated checks. See "Automated Checks" in `./references/workflow/review.md`.
+- `--no-checks` — Skip automated checks. See "Automated Checks" in `./references/engineering/review.md`.
 
 ## References
 
-Before working, read `./references/workflow/review.md` — it carries the lenses (What to Look For, What NOT to Flag, Calibrate Severity, Approval Bar, Prioritize Review Effort, Don't Rationalize) that apply to every review.
+Before working, read `./references/engineering/review.md` — it carries the lenses (What to Look For, What NOT to Flag, Calibrate Severity, Approval Bar, Prioritize Review Effort, Don't Rationalize) that apply to every review.
 
 ## Setup
 
@@ -44,13 +45,13 @@ Before working, read `./references/workflow/review.md` — it carries the lenses
     - If a link can't be accessed (auth-walled, private workspace, 404, tool unavailable), record it in the output under **Inaccessible context** with the URL and reason. Do not fabricate what's behind it — flag the gap so the user can decide whether to paste the content in or proceed without it
 - If no PR exists, proceed with just the branch commits and any context the user provided
 
-**Run automated checks** per "Automated Checks" in `./references/workflow/review.md` (skip if `--no-checks`).
+**Run automated checks** per "Automated Checks" in `./references/engineering/review.md` (skip if `--no-checks`).
 
 ## Review Focus
 
 **Examine tests first.** Test diffs reveal intent and expected behavior. Read them before the implementation so you evaluate the code against what it's supposed to do, not what it appears to do.
 
-Apply the full review process from `./references/workflow/review.md` — its "What to Look For", "What NOT to Flag", "Calibrate Severity", "Approval Bar", "Prioritize Review Effort", and "Don't Rationalize" sections all apply to PR diffs.
+Apply the full review process from `./references/engineering/review.md` — its "What to Look For", "What NOT to Flag", "Calibrate Severity", "Approval Bar", "Prioritize Review Effort", and "Don't Rationalize" sections all apply to PR diffs.
 
 ## Output
 
@@ -61,4 +62,4 @@ Apply the full review process from `./references/workflow/review.md` — its "Wh
 
 ## Verification
 
-Apply the Standard Verification Checklist in `./references/workflow/review.md`.
+Apply the Standard Verification Checklist in `./references/engineering/review.md`.

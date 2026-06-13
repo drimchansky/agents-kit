@@ -7,14 +7,15 @@ disable-model-invocation: true
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules.
+1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
+3. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core. See `./references/workflow/domain-packs.md`.
 
 Audit existing code for structural quality, pattern consistency, and health. Start by determining the audit scope.
 
 ## References
 
-Before working, read `./references/workflow/review.md` — it carries the lenses (What to Look For, What NOT to Flag, Calibrate Severity, Approval Bar, Prioritize Review Effort, Don't Rationalize) that apply to every audit.
+Before working, read `./references/engineering/review.md` — it carries the lenses (What to Look For, What NOT to Flag, Calibrate Severity, Approval Bar, Prioritize Review Effort, Don't Rationalize) that apply to every audit.
 
 ## Determine Audit Scope
 
@@ -87,4 +88,4 @@ High-level audit of overall project structure, patterns, and health.
 
 ## Verification
 
-Apply the Standard Verification Checklist in `./references/workflow/review.md`; the diff-scoped items (modified shared code, unchanged code, regression tests for bug fixes) don't apply to module/project audits — the others do, including the "no findings on style preferences alone" rule.
+Apply the Standard Verification Checklist in `./references/engineering/review.md`; the diff-scoped items (modified shared code, unchanged code, regression tests for bug fixes) don't apply to module/project audits — the others do, including the "no findings on style preferences alone" rule.
