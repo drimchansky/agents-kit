@@ -1,7 +1,7 @@
 ---
 name: resume-task
-description: Use when asked to resume, catch up on, brief, hand off, status of, or check progress on a task directory under `.agents/tasks/` — produces a chat-only briefing without mutating files.
-argument-hint: '[task directory path]'
+description: Use when asked to resume, catch up on, brief, hand off, status of, or check progress on a task folder under `.agents/tasks/` — produces a chat-only briefing without mutating files.
+argument-hint: '[task folder path]'
 disable-model-invocation: true
 ---
 
@@ -11,9 +11,9 @@ disable-model-invocation: true
 2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
 3. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core. This skill mostly observes; pull in deeper pack files only if you dig into a step's work. If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
 
-This skill loads an existing task directory under `.agents/tasks/` and produces a chat-only briefing — used to resume work after time away, hand off, review what was done, or answer questions about a task — whether in progress, blocked, or already shipped. It reads the four task artifacts (`CONTEXT.md`, every `*.spec.md`, every `*.plan.md`, every `*.result.md`), reconstructs state from `- [ ]` / `- [x]` checkboxes, checks for drift between the plan's claims and current code/git, and prints a structured brief.
+This skill loads an existing task folder under `.agents/tasks/` and produces a chat-only briefing — used to resume work after time away, hand off, review what was done, or answer questions about a task — whether in progress, blocked, or already shipped. It reads the four task artifacts (`CONTEXT.md`, `spec.md`, `plan.md`, `result.md`), reconstructs state from `- [ ]` / `- [x]` checkboxes, checks for drift between the plan's claims and current code/git, and prints a structured brief.
 
-**CRITICAL**: This skill is **read-only across the repo** — task files (`CONTEXT.md`, `*.spec.md`, `*.plan.md`, `*.result.md`) and source code are observed but never modified (no write, edit, rename, delete). The skill also never mutates git state (no add, commit, checkout, stash). External systems cited in `CONTEXT.md`, specs, plans, or results (Jira, Notion, Slack, Google Docs, PRs, dashboards, etc.) are fetched **read-only** in Step 5 — never commented on, updated, or otherwise mutated. Reading the work product is **expected and required** — the drift check in Step 4 verifies the plan/result claims against current reality (for code, grepping shipped paths and opening cited files). Output is **chat only** — do not write a `BRIEF.md` artifact. Briefings stale within hours and a fifth file would contradict the four-file contract that `plan-task` and `implement-task` rely on. Domain-pack checklists in `./references/<domain>/` are not preloaded — this skill mostly observes; consult them only if you dig into a pending step's work during the drift spot-check.
+**CRITICAL**: This skill is **read-only across the repo** — task files (`CONTEXT.md`, `spec.md`, `plan.md`, `result.md`) and source code are observed but never modified (no write, edit, rename, delete). The skill also never mutates git state (no add, commit, checkout, stash). External systems cited in `CONTEXT.md`, specs, plans, or results (Jira, Notion, Slack, Google Docs, PRs, dashboards, etc.) are fetched **read-only** in Step 5 — never commented on, updated, or otherwise mutated. Reading the work product is **expected and required** — the drift check in Step 4 verifies the plan/result claims against current reality (for code, grepping shipped paths and opening cited files). Output is **chat only** — do not write a `BRIEF.md` artifact. Briefings stale within hours and a fifth file would contradict the four-file contract that `plan-task` and `implement-task` rely on. Domain-pack checklists in `./references/<domain>/` are not preloaded — this skill mostly observes; consult them only if you dig into a pending step's work during the drift spot-check.
 
 ## When to Use
 
@@ -27,53 +27,48 @@ This skill loads an existing task directory under `.agents/tasks/` and produces 
 
 **Skip when:**
 
-- No task directory exists yet → suggest `refine-idea` or `plan-task`
+- No task folder exists yet → suggest `refine-idea` or `plan-task`
 - Ready to actually execute the next step → use `implement-task` directly (it reads the same artifacts as a prelude to writing code)
 - The task is fresh with no result file yet → just read the plan; there is no state to reconstruct
 - The user wants feasibility validation, not status → use `review-task`
 
 ## Process
 
-### 1. Resolve the Task Directory and Plan(s)
+### 1. Resolve the Task Folder
 
-Discovery resolves a task directory first, then the plan(s) inside it. Mirror `implement-task`'s rules:
+Discovery resolves a task folder, then reads its `plan.md`. Mirror `implement-task`'s rules:
 
-**Resolve the task directory:**
+**Resolve the task folder:**
 
-- **If the user gave a task directory path or slug** (e.g. `.agents/tasks/add-csv-export/` or `add-csv-export`), resolve it against active task directories per `./references/workflow/task-layout.md`: standalone `.agents/tasks/<slug>/` first, then project task subdirectories `.agents/tasks/*/<slug>/`, excluding `archive/`. If exactly one matches, use it. If none match, look inside `archive/`. If multiple match, ask.
-- **If the user gave a full plan path**, use it directly and derive the task directory from its parent.
-- **If the user gave nothing**, list active task directories per `./references/workflow/task-layout.md` (standalone tasks plus project task subdirectories, excluding `archive/`) and ask which task.
+- **If the user gave a task folder path or slug** (e.g. `.agents/tasks/add-csv-export/` or `add-csv-export`), resolve it to `.agents/tasks/<slug>/` per `./references/workflow/task-layout.md`, excluding `archive/`. If it matches an active folder, use it. If none matches, look inside `.agents/tasks/archive/<slug>/`.
+- **If the user gave a full plan path** (`.../plan.md`), use it directly and derive the task folder from its parent.
+- **If the user gave nothing**, list active task folders under `.agents/tasks/` (excluding `archive/`) and ask which task.
 
-**Descend to the plan(s)** — once the directory is resolved, list its `*.plan.md` files (filter out `*.spec.md` and `*.result.md`):
-
-- Exactly one plan → use it.
-- Multiple plans → brief them all together; surface order if filenames are numbered (`01-`, `02-`).
-- No plans → tell the user the directory exists but has no plan; suggest `plan-task`.
+**Read the plan** — once the folder is resolved, read its `plan.md` (one plan per folder). If the folder has no `plan.md`, tell the user the folder exists but has no plan; suggest `plan-task`.
 
 Don't guess between ambiguous candidates — ask.
 
-Task directories may be standalone or grouped under a project, and finished tasks may sit in an `archive/` subdirectory — exclude `archive/` when listing, descend into a project group's task subdirectories, and look inside `archive/` when resolving a finished task by slug. See `./references/workflow/task-layout.md`.
+Finished tasks may sit in an `archive/` subdirectory — exclude `archive/` when listing, and look inside `.agents/tasks/archive/<slug>/` when resolving a finished task by slug. See `./references/workflow/task-layout.md`.
 
 ### 2. Load Artifacts
 
 Read in full, not skim:
 
-- `CONTEXT.md` in the resolved task directory — the shared static context (problem statement, scope summary, key assumptions, references).
-- If `CONTEXT.md` carries a `**Project:**` header, the linked `PROJECT.md` too — the shared project-level context (charter, decision log, cross-task references) above `CONTEXT.md`. Read-only, like every artifact here; fold its open questions and references into the brief.
-- Every `*.spec.md` in the directory — capture each spec's description and the full bullet list of acceptance criteria. Note any criterion marked `_(unresolved: ...)_`.
-- Every `*.plan.md` in the directory — note each plan's `**Status:**` header and its `**Spec:**` link.
-- Every `*.result.md` — note `**Status:**`, find the latest per-step or full-run section, capture every `**Blocked:**` block verbatim, and capture any `## Acceptance` section verbatim.
+- `CONTEXT.md` in the resolved task folder — the static grounding context (problem statement, scope summary, key assumptions, references).
+- `spec.md` — capture its description and the full bullet list of acceptance criteria. Note any criterion marked `_(unresolved: ...)_`.
+- `plan.md` — note its `**Status:**` header and its `**Spec:**` link.
+- `result.md` — note `**Status:**`, find the latest per-step or full-run section, capture every `**Blocked:**` block verbatim, and capture any `## Acceptance` section verbatim.
 
 Status values across the lifecycle-bearing files are defined in `./references/workflow/task-lifecycle.md` — consult it if you encounter an unfamiliar value, and use the **pairing rule** there to flag inconsistencies (e.g. plan `executing` with no result file, plan `done` with result `executing`). A `skipped` plan is terminal and needs no result file — don't flag a missing result for it as drift; report it as deliberately abandoned. A `blocked` plan is paused — on an external dependency or an unresolved failure — and a `blocked` plan with a `blocked` result and a `**Blocked:**` section is consistent (report it as paused and name the cause from the section), not drift. The spec file has no status — it's a static input.
 
 Flag in the brief:
 
 - `CONTEXT.md` missing → task scaffolded outside the standard flow.
-- A plan with no sibling `*.spec.md` of the same stem → `plan-task` was expected to produce one; without it the acceptance gate cannot run.
+- A plan with no sibling `spec.md` → `plan-task` was expected to produce one; without it the acceptance gate cannot run.
 
 ### 3. Reconstruct State from Checkboxes
 
-For each plan:
+For the plan:
 
 - Count `- [x]` (done) vs `- [ ]` (pending) steps.
 - Identify the next pending step. Pull its **What**, **Verify**, **Depends on**, any **Due** / **Lead time**, and the file paths it touches.
@@ -106,7 +101,7 @@ External systems cited in `CONTEXT.md`, specs, plans, or results (Jira tickets, 
 
 This is the external counterpart to Step 4 — Step 4 catches drift on disk; Step 5 catches drift in the systems `CONTEXT.md` points at.
 
-1. **Extract reference URLs.** Walk `CONTEXT.md`, every `*.spec.md`, every `*.plan.md`, and every `*.result.md` and collect every URL from:
+1. **Extract reference URLs.** Walk `CONTEXT.md`, `spec.md`, `plan.md`, and `result.md` and collect every URL from:
     - The `## References` section (or equivalently named section) in `CONTEXT.md`
     - Markdown link bodies (`[label](url)`) anywhere in the files
     - Plain `https://` strings in prose
@@ -149,13 +144,13 @@ Assemble per the output template below. Print to chat. Do not write any file.
 # Resume: <task title>
 
 **Task dir:** `.agents/tasks/<slug>/`
-**Spec(s):** `<task-slug>.spec.md` [, additional specs …]
-**Plan(s):** `<task-slug>.plan.md` (Status: <status>) [, additional plans …]
-**Result(s):** `<task-slug>.result.md` (Status: <status>) — or "not yet started"
+**Spec:** `spec.md`
+**Plan:** `plan.md` (Status: <status>)
+**Result:** `result.md` (Status: <status>) — or "not yet started"
 
 ## Status
 
-<one paragraph: N of M steps done across <K> plans; executing / blocked / ready to resume / done / skipped; whether the acceptance gate has run>
+<one paragraph: N of M steps done; executing / blocked / ready to resume / done / skipped; whether the acceptance gate has run>
 
 ## Acceptance criteria
 
@@ -166,7 +161,7 @@ Assemble per the output template below. Print to chat. Do not write any file.
 
 ## Done
 
-- Step 1 — <title> ([result](./<task-slug>.result.md#step-1--<slug>))
+- Step 1 — <title> ([result](./result.md#step-1--<slug>))
 - Step 2 — <title> ([result](…))
 
 ## Up next
@@ -210,8 +205,6 @@ Assemble per the output template below. Print to chat. Do not write any file.
 <2–3 sentences naming the concrete first action — file to open, command to run (e.g. `/implement-task <slug>`), or a specific drift item to resolve before resuming>
 ```
 
-If multiple plans live in the directory, render one **Acceptance criteria** / **Done** / **Up next** / **Blocked** block per plan with a clear sub-heading; the **Drift**, **References update**, **Open questions**, and **Where to start** sections remain shared.
-
 ## Don't Rationalize
 
 - "I'll run the next step while I'm here" — This skill is read-only. Hand off to `implement-task` if the user wants execution.
@@ -225,14 +218,14 @@ If multiple plans live in the directory, render one **Acceptance criteria** / **
 
 ## Verification
 
-- [ ] Task directory resolved (asked the user when ambiguous, never guessed)
-- [ ] `CONTEXT.md`, every `*.spec.md`, every `*.plan.md`, and every `*.result.md` in the directory read in full
-- [ ] When `CONTEXT.md` has a `**Project:**` header, the linked `PROJECT.md` read too; a `skipped` plan reported as abandoned, not flagged for a missing result
-- [ ] No file in the task directory was written, edited, renamed, or deleted
+- [ ] Task folder resolved (asked the user when ambiguous, never guessed)
+- [ ] `CONTEXT.md`, `spec.md`, `plan.md`, and `result.md` read in full
+- [ ] A `skipped` plan reported as abandoned, not flagged for a missing result
+- [ ] No file in the task folder was written, edited, renamed, or deleted
 - [ ] No git state was mutated (no add, commit, checkout, stash)
 - [ ] Step state reconstructed from checkbox markers, not inferred from prose
 - [ ] Acceptance Criteria section in the brief lists every spec criterion verbatim, with outcome from the result file's `## Acceptance` section (or `not yet checked` / `unresolved` when applicable)
-- [ ] Plan with no sibling `*.spec.md` flagged
+- [ ] Plan with no sibling `spec.md` flagged
 - [ ] All `**Blocked:**` sections in the result file surfaced verbatim
 - [ ] Drift check compared plan/result claims against the current implementation on disk; findings listed (or `No drift detected.` stated explicitly)
 - [ ] Plan-referenced paths partitioned into shipped vs. pending before existence-check; missing **shipped** paths flagged as `block`/`warn`, missing **pending** paths not flagged

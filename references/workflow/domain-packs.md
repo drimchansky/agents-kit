@@ -54,17 +54,18 @@ just under `**Status:**`:
   `engineering` — this keeps every existing task working unchanged.
 - A skill loads the pack by reading `CONTEXT.md` (which it already does), taking the
   `**Domain:**` value, and reading the relevant files under `references/<domain>/`.
-- Resolution is by **header value, not directory shape** — the same pattern as `**Project:**` in
-  `task-layout.md`. A skill never inspects the filesystem to guess a domain.
+- Resolution is by **header value, not directory shape** — `**Domain:**` is read straight from the
+  `CONTEXT.md` header, the same way `**Status:**` is (see `task-lifecycle.md`), never inferred from
+  where a file sits. A skill never inspects the filesystem to guess a domain.
 
 ## Which skills resolve a domain vs. hardcode engineering
 
 - **Spine skills** — `explore`, `refine-idea`, `plan-task`, `review-task`, `implement-task`,
   `resume-task` — resolve `**Domain:**` and load the matching pack. `explore` resolves a domain
-  only when one is relevant to the question; it has no task directory and often answers
+  only when one is relevant to the question; it has no task folder and often answers
   domain-neutrally.
 - **Engineering-only skills** — `audit`, `review-commit`, `review-pr`, `review-docs`,
-  `verify-issue` — operate on a codebase or diff, not a task directory, and load
+  `verify-issue` — operate on a codebase or diff, not a task folder, and load
   `references/engineering/` unconditionally. They are, in effect, skills contributed by the
   engineering pack; a future domain may contribute its own skills the same way.
 

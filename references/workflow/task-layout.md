@@ -1,64 +1,51 @@
-# Task Layout: Directories and Project Context
+# Task Layout: Directories and Discovery
 
 How task artifacts are arranged on disk, and how skills discover them. **This file is the single source of truth for layout.** Status values and transitions live in the sibling `task-lifecycle.md`; this file covers where files sit and how they're found. Cited by `plan-task`, `implement-task`, `resume-task`, and `review-task`.
 
-## Standalone task (the default)
+## One task, one flat folder
 
-A single effort lives in one directory under `.agents/tasks/`:
+A task lives in a single flat folder under `.agents/tasks/`, named for its slug. The folder name *is* the slug — the single handoff token passed between `refine-idea` → `plan-task` → `implement-task`. Inside sit four role-named files, found by their fixed names (never by a path someone typed):
 
 ```
 .agents/tasks/<slug>/
-├── CONTEXT.md              # shared static context for every plan here
-├── <task-slug>.spec.md     # acceptance criteria
-├── <task-slug>.plan.md     # the contract
-└── <task-slug>.result.md   # append-only execution record
+├── CONTEXT.md     # static grounding context (origin marker + inputs)
+├── spec.md        # acceptance criteria — what "done" means
+├── plan.md        # the contract: scope, steps, verify criteria
+└── result.md      # append-only execution record
 ```
 
-This is the common case. Nothing below is required — a lone task directly under `.agents/tasks/` needs none of it.
+One plan per folder. `CONTEXT.md` is capitalized; `spec.md`, `plan.md`, and `result.md` are lowercase. A skill finds each file by its fixed role name (convention/glob), so moving or archiving a folder never breaks a path. The in-folder `**Context:**` / `**Spec:**` / `**Result:**` link-headers point at `./CONTEXT.md`, `./spec.md`, and `./result.md` — stable `./` links that survive folder moves.
 
-## Project grouping (optional)
+## Multi-part efforts: sibling folders
 
-Related tasks that share a charter, a decision log, or cross-cutting references can be grouped under a project directory that holds a `PROJECT.md` plus one task subdirectory per effort:
+A larger effort that won't fit one plan becomes several independent sibling task folders, not one folder holding many plans. Each sibling is a complete task folder (its own `CONTEXT.md` + `spec.md`/`plan.md`/`result.md`). When the parts have a blocking order, express it with an `NN-` prefix on the folder names — the only place ordering can live, since the folders are otherwise independent:
 
 ```
-.agents/tasks/<project>/
-├── PROJECT.md              # shared context ACROSS the project's tasks
-├── <task-a>/               # a task directory (CONTEXT.md + spec/plan/result)
-├── <task-b>/
-└── archive/                # optional — see below
+.agents/tasks/01-schema/
+.agents/tasks/02-api/
+.agents/tasks/03-ui/
 ```
 
-- **`PROJECT.md`** is project-scoped context that sits *above* each task's `CONTEXT.md`: the problem framing for the whole effort, a decision log, a plan/status registry, cross-task references. It is **not** one of the four per-task lifecycle artifacts — it is one-per-project and carries no working lifecycle (a one-shot origin marker like `CONTEXT.md`'s is fine).
-- A task's `CONTEXT.md` points at it with a **`**Project:**`** header — the same link-header pattern as `**Context:**` / `**Spec:**` / `**Result:**`:
-
-  ```markdown
-  # <task name>
-
-  **Status:** drafted-by-plan-task
-  **Domain:** engineering
-  **Project:** [../PROJECT.md](../PROJECT.md)
-  ```
-
-  (The `**Domain:**` line shown selects which domain pack the task's skills load — default `engineering`; see `domain-packs.md`.)
-
-  When a skill loads `CONTEXT.md` and finds a `**Project:**` header, it reads the linked file too, as higher-level context — `PROJECT.md` is authoritative for anything spanning more than one task. The grouping is detected by the presence of that header, **not** by directory shape: skills never need to reason about how deep a task sits or walk the filesystem to find the project doc.
+There is no shared layer above these folders — no shared context file, no cross-folder links. Anything a sibling needs is duplicated into its own `CONTEXT.md`. This keeps every folder self-sufficient: discoverable, movable, and archivable on its own.
 
 ## Archiving finished tasks (optional)
 
-Completed (`done`) or `skipped` task directories can be moved into an `archive/` subdirectory of the project (or of `.agents/tasks/` itself) to keep the active list short:
+A completed (`done`) or `skipped` task folder can be moved into an `archive/` subdirectory of `.agents/tasks/` to keep the active list short:
 
 ```
-.agents/tasks/<project>/archive/<task-slug>/
+.agents/tasks/archive/<slug>/
 ```
 
-Moving a whole task folder preserves its internal `./` links. A `**Project:**` (or other cross-task) link just gains a `../` level — write it relative so it keeps resolving from one directory deeper (`../../PROJECT.md`).
+Moving a whole task folder preserves its internal `./` links, since every cross-reference inside the folder is relative to the folder itself. Nothing else needs rewriting.
 
 ## Discovery rules for skills
 
 When resolving which task to act on:
 
-- **Explicit path or slug given** → use it. A slug may resolve to `.agents/tasks/<slug>/` (standalone) or to a task subdirectory inside a project; accept a path that points one level deeper.
-- **No slug given** → list candidate task directories, but **exclude `archive/`** — it is a container, not a task. If a directory is a project group (it holds a `PROJECT.md` and task subdirectories rather than `*.plan.md` files directly), list its task subdirectories.
-- **A requested slug isn't among the active directories** → look inside `archive/` before giving up; a finished task may have been archived there.
+- **Explicit path or slug given** → resolve it to `.agents/tasks/<slug>/` and use it.
+- **No slug given** → list candidate task folders directly under `.agents/tasks/`, but **exclude `archive/`** — it is a container, not a task.
+- **A requested slug isn't among the active folders** → look inside `.agents/tasks/archive/<slug>/` before giving up; a finished task may have been archived there.
+
+Once the folder is resolved, the four files are found by their fixed role names — no stem-globbing, no path a user typed.
 
 Archived tasks are intentionally absent from the default active listing — that is the point of archiving, not a discovery bug.

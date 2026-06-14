@@ -1,7 +1,7 @@
 ---
 name: review-task
 description: Use when asked to review, validate, or sanity-check a task's plan — confirms the direction is right and still in sync with CONTEXT.md, the spec, and current reality, and surfaces any drift between task artifacts (CONTEXT, spec, plan, result) and the work itself.
-argument-hint: '[task directory path]'
+argument-hint: '[task folder path]'
 disable-model-invocation: true
 ---
 
@@ -13,27 +13,26 @@ disable-model-invocation: true
 
 This skill validates a plan against current reality before execution begins. It catches infeasible steps, missing details, pattern conflicts, and implicit assumptions — producing a clear assessment with targeted questions.
 
-The user provides a plan — typically the output of `plan-task`, written to `<task-dir>/<task-slug>.plan.md`. Your job is to determine whether the plan can be executed as written given how things actually are, and surface anything that needs resolution first.
+The user provides a plan — typically the output of `plan-task`, written to `<task-dir>/plan.md`. Your job is to determine whether the plan can be executed as written given how things actually are, and surface anything that needs resolution first.
 
 **CRITICAL**: Do not implement. Do not redesign the solution. Validate the plan. The output is a feasibility assessment with questions, not a revised plan or code.
 
 ## Locate the Plan
 
-Resolve a task directory first, then the plan inside it:
+Resolve a task folder, then read its `plan.md`:
 
-- **If the user gave a task directory path or slug** (e.g. `.agents/tasks/add-csv-export/` or `add-csv-export`), resolve it against active task directories per `./references/workflow/task-layout.md`: standalone `.agents/tasks/<slug>/` first, then project task subdirectories `.agents/tasks/*/<slug>/`, excluding `archive/`. If exactly one matches, use it. If none match, look inside `archive/`. If multiple match, ask.
-- **If the user gave a full plan path**, use it directly and derive the task directory from its parent — this targets one specific plan inside a multi-plan directory.
-- **If the user gave nothing**, list active task directories per `./references/workflow/task-layout.md` and ask which.
+- **If the user gave a task folder path or slug** (e.g. `.agents/tasks/add-csv-export/` or `add-csv-export`), resolve it to `.agents/tasks/<slug>/` per `./references/workflow/task-layout.md`, excluding `archive/`. If it matches an active folder, use it. If none matches, look inside `.agents/tasks/archive/<slug>/`.
+- **If the user gave a full plan path** (`.../plan.md`), use it directly and derive the task folder from its parent.
+- **If the user gave nothing**, list active task folders under `.agents/tasks/` (excluding `archive/`) and ask which.
 
-Once the directory is resolved, pick the plan from its `*.plan.md` files (skip `*.spec.md` and `*.result.md` — those are inputs and execution records). If multiple plans exist, list them and ask which one to review.
+Once the folder is resolved, read its `plan.md` (one plan per folder; its sibling `spec.md` and `result.md` are inputs and execution records).
 
-Task directories may be standalone or grouped under a project with a shared `PROJECT.md`, and finished tasks may sit in an `archive/` subdirectory. Exclude `archive/` when listing; descend into a project group's task subdirectories; look inside `archive/` when resolving a finished task. See `./references/workflow/task-layout.md`.
+Finished tasks may sit in an `archive/` subdirectory. Exclude `archive/` when listing; look inside `.agents/tasks/archive/<slug>/` when resolving a finished task. See `./references/workflow/task-layout.md`.
 
-Read the plan, the sibling `<task-slug>.spec.md`, **and** the sibling `CONTEXT.md` in full before assessing anything. If `CONTEXT.md` carries a `**Project:**` header, read the linked `PROJECT.md` too.
+Read the plan, the sibling `spec.md`, **and** the sibling `CONTEXT.md` in full before assessing anything.
 
-- **`CONTEXT.md`** carries the shared problem statement, scope summary, key assumptions, and external references that apply to every plan in the directory.
-- **`PROJECT.md`** (when `CONTEXT.md` has a `**Project:**` header) carries the shared project-level context across sibling tasks — charter, decision log, plan registry, cross-task references. Authoritative for cross-task concerns; read it for grounding and for drift checks that span more than one task.
-- **`<task-slug>.spec.md`** carries the acceptance criteria — the testable contract for what "done" means for this plan. The plan's steps must collectively cover every criterion.
+- **`CONTEXT.md`** carries the problem statement, scope summary, key assumptions, and external references for the task.
+- **`spec.md`** carries the acceptance criteria — the testable contract for what "done" means for this plan. The plan's steps must collectively cover every criterion.
 
 Both are authoritative input for grounding, not optional. If the spec file is missing, flag it as a gap up front — `plan-task` is expected to produce one and the acceptance coverage check below cannot run without it.
 
@@ -96,7 +95,7 @@ Also assess each step's **Verify** criterion: is it concrete enough to actually 
 
 Before mapping criteria to steps, assess the criteria themselves. Coverage is meaningless if the criteria are vague — a perfectly-covered plan can still ship the wrong thing because "the export works well" maps cleanly to a step that builds the wrong export.
 
-Apply `./references/workflow/acceptance-criteria.md` to every bullet in `<task-slug>.spec.md`. Tag each criterion with one of:
+Apply `./references/workflow/acceptance-criteria.md` to every bullet in `spec.md`. Tag each criterion with one of:
 
 - **good** — passes every check (testable, specific, outcome-oriented, singular, bounded, stated as behavior)
 - **weak** — passes overall but loses points on one dimension; note which (treated as feedback, not a blocker)
@@ -109,7 +108,7 @@ If the spec is missing entirely, skip this step and treat the missing spec as th
 
 ### 5. Check Acceptance Coverage
 
-For each acceptance criterion in `<task-slug>.spec.md`, identify which step(s) deliver it. The mapping must be explicit — if you can't point at a step (or set of steps) that produces the criterion's observable outcome, that criterion is **uncovered**.
+For each acceptance criterion in `spec.md`, identify which step(s) deliver it. The mapping must be explicit — if you can't point at a step (or set of steps) that produces the criterion's observable outcome, that criterion is **uncovered**.
 
 Tag each criterion with one of:
 
@@ -128,13 +127,13 @@ Per-step feasibility and acceptance coverage both assume the four task artifacts
 
 Compare the artifacts pairwise. For each pair, name the kind of drift the comparison is looking for; only flag actual contradictions, not stylistic differences.
 
-- **CONTEXT.md ↔ `<task-slug>.spec.md`** — Does any acceptance criterion describe behavior CONTEXT's "Not Doing" list excludes, or behavior outside CONTEXT's MVP scope? Does the spec contradict CONTEXT's Recommended Direction or Key Assumptions?
-- **CONTEXT.md ↔ `<task-slug>.plan.md`** — Does the plan's Scope (in / out / boundaries) contradict CONTEXT's MVP scope or "Not Doing"? Does the plan reference assumptions CONTEXT marked still-to-validate as if they were settled?
-- **`<task-slug>.spec.md` ↔ `<task-slug>.plan.md`** — Is a criterion excluded by the plan's `Out of scope` (already surfaced in Acceptance Coverage as `out of scope` — repeat it here to make the inconsistency explicit)? Does the plan's `In scope` extend beyond what any criterion requires?
-- **`<task-slug>.plan.md` ↔ `<task-slug>.result.md`** (only if `result.md` exists) — Does the result claim a step done while the plan's checkbox is still `- [ ]`? Does the result reference a step number the plan doesn't have (a sign of a stale rename)? Does the **pairing rule** in `./references/workflow/task-lifecycle.md` hold — plan `executing` requires result `executing`, plan `blocked` requires result `blocked` with a `**Blocked:**` section, plan `done` requires result `done`, while a `skipped` plan may have no result or an explanatory result that remains `executing`?
+- **CONTEXT.md ↔ `spec.md`** — Does any acceptance criterion describe behavior CONTEXT's "Not Doing" list excludes, or behavior outside CONTEXT's MVP scope? Does the spec contradict CONTEXT's Recommended Direction or Key Assumptions?
+- **CONTEXT.md ↔ `plan.md`** — Does the plan's Scope (in / out / boundaries) contradict CONTEXT's MVP scope or "Not Doing"? Does the plan reference assumptions CONTEXT marked still-to-validate as if they were settled?
+- **`spec.md` ↔ `plan.md`** — Is a criterion excluded by the plan's `Out of scope` (already surfaced in Acceptance Coverage as `out of scope` — repeat it here to make the inconsistency explicit)? Does the plan's `In scope` extend beyond what any criterion requires?
+- **`plan.md` ↔ `result.md`** (only if `result.md` exists) — Does the result claim a step done while the plan's checkbox is still `- [ ]`? Does the result reference a step number the plan doesn't have (a sign of a stale rename)? Does the **pairing rule** in `./references/workflow/task-lifecycle.md` hold — plan `executing` requires result `executing`, plan `blocked` requires result `blocked` with a `**Blocked:**` section, plan `done` requires result `done`, while a `skipped` plan may have no result or an explanatory result that remains `executing`?
 - **Status field consistency** — Does CONTEXT carry a valid origin marker, the plan a valid lifecycle state, and the result (if present) a valid lifecycle state compatible with the pairing rule? Reject anything outside the vocabulary registered in `./references/workflow/task-lifecycle.md`.
 
-If `<task-slug>.result.md` is absent, skip the last two pair checks — that absence is expected for plans in `to-do` or `skipped`.
+If `result.md` is absent, skip the last two pair checks — that absence is expected for plans in `to-do` or `skipped`.
 
 ### 7. Identify Gaps
 
@@ -182,7 +181,7 @@ Example:
 - Criterion 4 — unresolved (lifted from spec — see Questions)
 ```
 
-If `<task-slug>.spec.md` is missing entirely, state that here and skip; the missing spec is the highest-priority finding overall.
+If `spec.md` is missing entirely, state that here and skip; the missing spec is the highest-priority finding overall.
 
 ### Acceptance Coverage
 
@@ -197,11 +196,11 @@ Example:
 - Step 5 — no matching criterion (likely scope creep or spec gap)
 ```
 
-If `<task-slug>.spec.md` is missing entirely, state that here and skip the per-criterion mapping; treat the missing spec as the highest-priority gap.
+If `spec.md` is missing entirely, state that here and skip the per-criterion mapping; treat the missing spec as the highest-priority gap.
 
 ### Cross-File Drift
 
-A short list of contradictions between artifacts, grouped by the file pair the contradiction lives in. Render the section header even when no drift is found — state "no drift detected" explicitly so the absence is informative rather than ambiguous. Skip pairs that include `<task-slug>.result.md` if no result file exists yet.
+A short list of contradictions between artifacts, grouped by the file pair the contradiction lives in. Render the section header even when no drift is found — state "no drift detected" explicitly so the absence is informative rather than ambiguous. Skip pairs that include `result.md` if no result file exists yet.
 
 Example:
 
@@ -240,8 +239,7 @@ Aspects of the plan that are verified and ready to execute — so the user knows
 
 ## Verification
 
-- [ ] `CONTEXT.md` and `<task-slug>.spec.md` read in full alongside the plan; missing spec flagged as a gap
-- [ ] When `CONTEXT.md` has a `**Project:**` header, the linked `PROJECT.md` read for cross-task grounding
+- [ ] `CONTEXT.md` and `spec.md` read in full alongside the plan; missing spec flagged as a gap
 - [ ] Every integration point verified against actual source code
 - [ ] Each step has a clear verdict with evidence
 - [ ] Each step's verify criterion assessed for concreteness

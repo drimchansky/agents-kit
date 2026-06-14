@@ -11,7 +11,7 @@ disable-model-invocation: true
 2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
 3. Load the domain pack: take the task's `**Domain:**` (default `engineering`; infer from the request when there's no `CONTEXT.md` yet, and record it in the `CONTEXT.md` you write) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for. If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
 
-This skill turns a raw idea into a sharp, actionable concept worth building. It runs three phases — divergent exploration, convergent evaluation, and a written one-pager — and produces an artifact at `.agents/tasks/<slug>/CONTEXT.md` that `plan-task` and `implement-task` later consume as the shared context for every plan in the task directory.
+This skill turns a raw idea into a sharp, actionable concept worth building. It runs three phases — divergent exploration, convergent evaluation, and a written one-pager — and produces an artifact at `.agents/tasks/<slug>/CONTEXT.md` that `plan-task` and `implement-task` later consume as the static grounding context for the task.
 
 The user provides a rough concept, problem, or "what if" question. They may include partial context, constraints, or prior thinking. The idea may be vague on purpose — that's the input.
 
@@ -39,21 +39,21 @@ If the idea is already concrete enough to plan, say so and recommend `plan-task`
 
 **Location:** `.agents/tasks/<slug>/CONTEXT.md` at the project root.
 
-- `<slug>` — derive from the idea: 2–5 lowercase kebab-case words capturing the gist (e.g. `weekly-digest-email`, `replace-cache-invalidation`, `internal-search-rebuild`). Don't ask the user — derive it. The slug names the **task directory** that will hold this `CONTEXT.md` plus every plan and result for the effort.
+- `<slug>` — derive from the idea: 2–5 lowercase kebab-case words capturing the gist (e.g. `weekly-digest-email`, `replace-cache-invalidation`, `internal-search-rebuild`). Don't ask the user — derive it. The slug names the **task folder** that will hold this `CONTEXT.md` plus the spec, plan, and result for the effort.
 
 If `.agents/tasks/<slug>/` doesn't exist, create it. If a `CONTEXT.md` already exists at that path, read it first and ask whether to overwrite or pick a different slug — don't clobber an existing task's context.
 
-`CONTEXT.md` is the **shared context for the task directory**: the chosen direction, the assumptions it depends on, the scope decisions already made, plus any external references (tickets, links, pasted specs) the user adds later. It is read by every plan inside the directory. Don't rewrite it during refinement — refine through conversation, then write the final version.
+`CONTEXT.md` is the **static grounding context for the task**: the chosen direction, the assumptions it depends on, the scope decisions already made, plus any external references (tickets, links, pasted specs) the user adds later. It is read by the plan and its result inside the folder. Don't rewrite it during refinement — refine through conversation, then write the final version.
 
 ### What belongs in CONTEXT.md (and what doesn't)
 
 - ✅ The one-pager content this skill produces (problem framing, MVP scope, "Not Doing", assumptions)
 - ✅ External references — tickets, Slack threads, PR links, Figma, design docs
 - ✅ Pasted specs, schemas, API responses
-- ✅ Cross-cutting decisions that apply to **every** plan in the directory
+- ✅ Standing decisions and constraints the plan must respect
 - ❌ Per-step implementation notes — those go in the plan's result file
 - ❌ Approach rationale or step breakdowns — those go in the plan
-- ❌ Acceptance criteria — those go in the plan's sibling `<task-slug>.spec.md`
+- ❌ Acceptance criteria — those go in the sibling `spec.md`
 - ❌ Verify criteria — those go in the plan's _Steps_
 - ❌ Conversation summaries or TODO scratchpads
 
@@ -118,7 +118,7 @@ Slug: <slug>
 Next: /plan-task <slug>
 ```
 
-`plan-task` discovers `CONTEXT.md` by reading the task directory at `.agents/tasks/<slug>/`. The slug is the directory name and is the only handoff token needed. The pre-formatted next-command is what makes the handoff frictionless; don't drop it or paraphrase it.
+`plan-task` discovers `CONTEXT.md` by reading the task folder at `.agents/tasks/<slug>/`. The slug is the folder name and is the only handoff token needed. The pre-formatted next-command is what makes the handoff frictionless; don't drop it or paraphrase it.
 
 The "Not Doing" list is the most valuable part — focus is about saying no to good ideas. Make trade-offs explicit.
 
@@ -134,7 +134,7 @@ The "Not Doing" list is the most valuable part — focus is about saying no to g
 ## Verification
 
 - [ ] One-pager written to `.agents/tasks/<slug>/CONTEXT.md`
-- [ ] Task directory created if it didn't exist; existing `CONTEXT.md` not silently overwritten
+- [ ] Task folder created if it didn't exist; existing `CONTEXT.md` not silently overwritten
 - [ ] Chat summary surfaces file path, slug, **and** the literal `Next: /plan-task <slug>` line in the exact handoff shape
 - [ ] Slug derived from the idea, kebab-case, 2–5 words
 - [ ] "How Might We" problem statement is one sentence and concrete
@@ -161,7 +161,7 @@ The `**Status:**` field is a one-shot origin marker — `refined` here, never mu
 
 ## Acceptance Criteria
 
-_(Per-plan acceptance criteria live in each plan's `<task-slug>.spec.md`. `plan-task` drafts the spec before the plan and asks for clarification when requirements are unclear.)_
+_(Acceptance criteria live in `spec.md`. `plan-task` drafts the spec before the plan and asks for clarification when requirements are unclear.)_
 
 ## Recommended Direction
 
@@ -188,5 +188,5 @@ _(Per-plan acceptance criteria live in each plan's `<task-slug>.spec.md`. `plan-
 
 ## References
 
-_(Drop external links, pasted specs, screenshots, ticket numbers, or cross-cutting notes here. Read by every plan in this task directory.)_
+_(Drop external links, pasted specs, screenshots, ticket numbers, or cross-cutting notes here. Read by the plan and its result in this task folder.)_
 ```
