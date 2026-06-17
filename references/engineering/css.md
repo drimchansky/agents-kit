@@ -90,7 +90,7 @@ Small projects need fewer tiers. Reuse existing conventions before inventing new
 - [ ] Animate `display`, `<dialog>` open/close, `[popover]` show/hide with `transition-behavior: allow-discrete;` paired with a `@starting-style` block defining the "from" state
 - [ ] For reduced-motion variants, prefer per-animation overrides — global `animation-duration: 0.01ms !important` often makes specific animations more jarring (see `accessibility.md` Motion & User Preferences)
 
-## Common Pitfalls
+## Common Mistakes
 
 - [ ] No `height: 100%` without explicit ancestor heights
 - [ ] No `overflow: hidden` as a band-aid when you want clipping — use `overflow: clip` (no scroll container) and fix the real overflow source

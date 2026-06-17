@@ -68,6 +68,11 @@ just under `**Status:**`:
   `verify-issue` — operate on a codebase or diff, not a task folder, and load
   `references/engineering/` unconditionally. They are, in effect, skills contributed by the
   engineering pack; a future domain may contribute its own skills the same way.
+- **Format skills** — `migrate-task-format` — operate on the task-folder *envelope* (file
+  names, layout, link-headers, status vocabulary), not on any task's domain content. They read
+  the neutral core but resolve **no** `**Domain:**` pack: the on-disk format is identical across
+  every domain, so there is no overlay to load. Their source of truth is `task-layout.md` +
+  `task-lifecycle.md`, read at run time.
 
 ## Load order
 
@@ -80,7 +85,8 @@ For a spine skill acting on a task:
    (`exploration.md` before exploring, `execution.md` / `verification.md` before executing and
    verifying, etc.).
 
-Engineering-only skills skip step 2 and use `engineering` directly.
+Engineering-only skills skip step 2 and use `engineering` directly. Format skills
+(`migrate-task-format`) run only step 1 — they apply the neutral core and resolve no domain pack.
 
 ## Missing-pack fallback
 

@@ -39,7 +39,7 @@ If the idea is already concrete enough to plan, say so and recommend `plan-task`
 
 **Location:** `.agents/tasks/<slug>/CONTEXT.md` at the project root.
 
-- `<slug>` — derive from the idea: 2–5 lowercase kebab-case words capturing the gist (e.g. `weekly-digest-email`, `replace-cache-invalidation`, `internal-search-rebuild`). Don't ask the user — derive it. The slug names the **task folder** that will hold this `CONTEXT.md` plus the spec, plan, and result for the effort.
+- `<slug>` — derive from the idea: 2–5 lowercase kebab-case words capturing the gist (e.g. `weekly-digest-email`, `replace-cache-invalidation`, `internal-search-rebuild`). Don't ask the user — derive it. The slug names the **task folder** that will hold this `CONTEXT.md` plus the spec, plan, and result for the effort — the folder layout and discovery rules are defined in `./references/workflow/task-layout.md`.
 
 If `.agents/tasks/<slug>/` doesn't exist, create it. If a `CONTEXT.md` already exists at that path, read it first and ask whether to overwrite or pick a different slug — don't clobber an existing task's context.
 
