@@ -1,6 +1,6 @@
 # Task Layout: Directories and Discovery
 
-How task artifacts are arranged on disk, and how skills discover them. **This file is the single source of truth for layout.** Status values and transitions live in the sibling `task-lifecycle.md`; this file covers where files sit and how they're found. Cited by `plan-task`, `implement-task`, `resume-task`, and `review-task`.
+How task artifacts are arranged on disk, and how skills discover them. **This file is the single source of truth for layout.** Status values and transitions live in the sibling `task-lifecycle.md`; this file covers where files sit and how they're found. Cited by `plan-task`, `implement-task`, `resume-task`, `review-task`, and `migrate-task-format`.
 
 ## One task, one flat folder
 
