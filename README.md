@@ -13,7 +13,7 @@ git clone git@github.com:drimchansky/agents-kit.git ~/agents-kit
 
 ## Skills
 
-Skills are organized into two groups: a **workflow** (11 skills) that shapes the work loop, and a set of **utilities** (5 skills) for ad-hoc tasks. The workflow is **domain-neutral** — a spine of methodology skills plus a few engineering-specific review skills — and pulls domain knowledge from a *domain pack*. Engineering is the first and reference pack; see [Domain packs](#domain-packs).
+Skills are organized into two groups: a **workflow** (11 skills) that shapes the work loop, and a set of **utilities** (6 skills) for ad-hoc tasks. The workflow is **domain-neutral** — a spine of methodology skills plus a few engineering-specific review skills — and pulls domain knowledge from a *domain pack*. Engineering is the first and reference pack; see [Domain packs](#domain-packs).
 
 ### Workflow
 
@@ -52,3 +52,4 @@ Standalone skills that aren't tied to the engineering loop:
 - [`fact-check`](skills/fact-check/SKILL.md) — Verifying factual claims against trustworthy live sources on the internet — not against pretraining. _Example: `/fact-check` (paste claim)_
 - [`refine-idea-chat`](skills/refine-idea-chat/SKILL.md) — Chat-only sibling of `refine-idea`: sharpen a rough idea through diverge/converge/sharpen phases without writing anything to disk. _Example: `/refine-idea-chat add a draft mode to the editor`_
 - [`review-note`](skills/review-note/SKILL.md) — Reviewing a personal knowledge base note on any subject — surfaces inaccuracies, gaps, and clarifications that deepen understanding. Proposes fixes; doesn't edit. _Example: `/review-note notes/stoicism.md`_
+- [`migrate-task-format`](skills/migrate-task-format/SKILL.md) — Bringing existing `.agents/tasks/` folders up to the current task-workflow format after the conventions change — reconciles against the live spec, previews, then applies lossless structural fixes only (flagging anything that needs judgment). _Example: `/migrate-task-format` (current project) or `/migrate-task-format ../other-repo`_

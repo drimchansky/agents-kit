@@ -14,7 +14,7 @@ A task lives in a single flat folder under `.agents/tasks/`, named for its slug.
 └── result.md      # append-only execution record
 ```
 
-One plan per folder. `CONTEXT.md` is capitalized; `spec.md`, `plan.md`, and `result.md` are lowercase. A skill finds each file by its fixed role name (convention/glob), so moving or archiving a folder never breaks a path. The in-folder `**Context:**` / `**Spec:**` / `**Result:**` link-headers point at `./CONTEXT.md`, `./spec.md`, and `./result.md` — stable `./` links that survive folder moves.
+One plan per folder. `CONTEXT.md` is capitalized; `spec.md`, `plan.md`, and `result.md` are lowercase. A skill finds each file by its fixed role name (convention/glob), so moving or archiving a folder never breaks a path. The in-folder `**Context:**` / `**Spec:**` / `**Plan:**` / `**Result:**` link-headers point at `./CONTEXT.md`, `./spec.md`, `./plan.md`, and `./result.md` — stable `./` links that survive folder moves.
 
 ## Multi-part efforts: sibling folders
 
