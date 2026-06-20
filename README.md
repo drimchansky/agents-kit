@@ -1,6 +1,14 @@
 # Agents Kit
 
-A personal kit for working with Claude Code, Codex, and other coding agents.
+My personal kit for working with Claude Code, Codex, and other coding agents.
+
+It includes:
+
+1. **Core rules for agents** – how to communicate, when to push back, and when it's better to ask than continue blindly.
+2. **References** – important checklists and docs for various cases, for now it's mostly about engineering.
+3. **Utility skills** – self-contained helpers that don't rely on the core rules, so they run anywhere: locally via CLI or in any chat.
+4. **Engineering skills** – code-focused skills that apply the core rules and references ad hoc, against a diff, a file, or a codebase.
+5. **Workflow skills** – the core-rules skills that move a task from idea to done through a task folder under `.agents/tasks/`.
 
 ## Getting started
 
@@ -11,45 +19,36 @@ git clone git@github.com:drimchansky/agents-kit.git ~/agents-kit
 ~/agents-kit/setup.sh
 ```
 
-## Skills
+## Utility skills
 
-Skills are organized into two groups: a **workflow** (11 skills) that shapes the work loop, and a set of **utilities** (6 skills) for ad-hoc tasks. The workflow is **domain-neutral** — a spine of methodology skills plus a few engineering-specific review skills — and pulls domain knowledge from a *domain pack*. Engineering is the first and reference pack; see [Domain packs](#domain-packs).
+- **proofread** – polish a message, email, or piece of writing.
+- **translate** – translate text from one language to another.
+- **fact-check** – verify factual claims against trustworthy sources online.
+- **review-note** – validate and expand a personal knowledge-base note.
+- **refine-idea-chat** – sharpen a vague idea in chat, nothing saved.
 
-### Workflow
+## Engineering skills
 
-The workflow runs roughly in order, but you don't need every step — pick whichever fits the task. The six spine skills (`explore`, `refine-idea`, `resume-task`, `plan-task`, `review-task`, `implement-task`) are domain-neutral; the diff/review skills (`review-commit`, `review-pr`, `audit`, `verify-issue`, `review-docs`) are engineering-specific.
+Code-focused and core-rules-aware: each loads the rules and engineering references, then runs on its own against a diff, a file, or a codebase. No task folder involved.
 
-- [`explore`](skills/explore/SKILL.md) — Understand existing code or context before changing it. _Example: `/explore how does the retry queue work?`_
-- [`refine-idea`](skills/refine-idea/SKILL.md) — Sharpen a rough idea before planning — assumptions, MVP scope, "Not Doing" list. _Example: `/refine-idea add a draft mode to the editor`_
-- [`resume-task`](skills/resume-task/SKILL.md) — Brief on, resume, or hand off a task — read the resolved task folder and report in chat. _Example: `/resume-task auth-jwt-migration`_
-- [`plan-task`](skills/plan-task/SKILL.md) — A change is non-trivial and needs a contract. Writes paired `goals.md` (durably-ID'd goals — the acceptance criteria) and `plan.md` (steps) in the resolved task folder. _Example: `/plan-task migrate auth to JWT`_
-- [`review-task`](skills/review-task/SKILL.md) — Confirm the direction is right and still in sync with `CONTEXT.md`, the goals, and current reality; surface drift between the plan's assumptions and the work itself. _Example: `/review-task auth-jwt-migration`_
-- [`implement-task`](skills/implement-task/SKILL.md) — A validated plan is ready to ship. Marks steps `[x]`, writes a `result.md`, and runs an acceptance gate against the goals before flipping the plan to `done`. _Example: `/implement-task auth-jwt-migration`_
-- [`review-commit`](skills/review-commit/SKILL.md) — Staged changes need a sanity check before commit — correctness, completeness, accidental inclusions, pattern fit; also drafts the commit message. _Example: `/review-commit`_
-- [`review-pr`](skills/review-pr/SKILL.md) — A branch needs review against its base — bugs, blast radius, pattern fit, with PR context pulled from GitHub when available. _Example: `/review-pr`_
-- [`audit`](skills/audit/SKILL.md) — Audit an existing module or whole project for structure, patterns, and health — no diff, no recent-change focus. _Example: `/audit src/auth` or `/audit` (whole project)_
-- [`verify-issue`](skills/verify-issue/SKILL.md) — A reported bug needs to be confirmed and root-caused before a fix. _Example: `/verify-issue users see 500 on signup`_
-- [`review-docs`](skills/review-docs/SKILL.md) — Audit a doc against the codebase and surface stale references, gaps, and drift. Applies fixes only when you ask after seeing the review. _Example: `/review-docs README`_
+- **audit** – assess a module, directory, or whole project: structure, patterns, and health.
+- **explore** – explain code, a library, a concept, or how the pieces fit together.
+- **review-commit** – review staged changes before committing.
+- **review-pr** – review a PR or branch diff against its base.
+- **review-docs** – audit existing documentation against the codebase.
+- **verify-issue** – confirm and investigate a reported bug or issue.
 
-### Task folders
+## Workflow skills
 
-`refine-idea`, `plan-task`, `review-task`, and `implement-task` share a folder-based contract that lets them hand off cleanly; `resume-task` reads from the same folder but never mutates it. A task lives in a flat `.agents/tasks/<slug>/` folder holding role-named files — `CONTEXT.md` (static grounding context), `goals.md` (the **single source of task intent**: durably-ID'd `G<n>` goals — the acceptance criteria), `plan.md` (steps that cite the goal IDs they deliver), and append-only `result.md` records — one plan per folder. The plan's scope and steps *reference* the goals by ID rather than restating intent; `implement-task` runs an acceptance gate against `goals.md` (by ID) before flipping the plan to `done`. A multi-part effort becomes several sibling task folders (optionally `NN-` prefixed to express blocking order), and completed or `skipped` tasks can be moved into an `archive/` subdirectory; see `references/workflow/task-layout.md` for the layout and discovery rules. `CONTEXT.md` also carries a `**Domain:**` marker (default `engineering`) that selects which domain pack the skills load, and a plan that can't proceed — waiting on something external, or stuck on an unresolved failure — takes the `blocked` status; both are registered in `references/workflow/task-lifecycle.md`.
+The set that turns a rough task into finished work. Each works on one task folder under `.agents/tasks/<slug>/`, handing the slug to the next:
 
-### Domain packs
+1. **refine-idea** – sharpen a vague idea into grounded context before planning.
+2. **plan-task** – break the work into a plan with testable goals.
+3. **review-task** – sanity-check the plan against its context, goals, and current reality before building.
+4. **implement-task** – execute the plan, tracking progress in the task folder.
 
-The workflow spine is domain-neutral; domain-specific knowledge lives in a pack under `references/<domain>/` — a `rules.md` overlay plus exploration / planning / execution / verification / review guidance and any checklists. A task's `**Domain:**` marker selects the pack (default `engineering`). Engineering is the reference pack; a new domain (relocation, negotiation, …) is added by dropping in `references/<domain>/` and authoring tasks with that `**Domain:**` — no spine change. When a domain has no pack, the skills run the neutral methodology and say so. See `references/workflow/domain-packs.md`.
+Two more support the workflow:
 
-### Reference checklists
+- **resume-task** – catch up on a task and get a handoff briefing, without changing anything.
+- **migrate-task-format** – upgrade older task folders to the current format.
 
-References under `references/` split into the neutral methodology and the domain packs. `references/workflow/` holds methodology every domain shares — `task-lifecycle` (status registry), `task-layout` (on-disk layout), `domain-packs` (how domains plug in), `acceptance-criteria` (the "done" bar) — consulted by the spine skills. `references/engineering/` is domain pack #1: a `rules` overlay, the `exploration` / `planning` / `execution` / `verification` / `review` bodies the spine loads by phase, and per-surface checklists (typescript, react, css, html, forms, interactions, tanstack-query, security, privacy, performance, accessibility, testing, code-style) — most-used by `implement-task`, the skill that produces the work product.
-
-### Utilities
-
-Standalone skills that aren't tied to the engineering loop:
-
-- [`proofread`](skills/proofread/SKILL.md) — Polishing a message, email, or piece of writing for grammar, clarity, and factual accuracy. _Example: `/proofread` (paste text)_
-- [`translate`](skills/translate/SKILL.md) — Moving content between languages while preserving tone and context. _Example: `/translate to Spanish`_
-- [`fact-check`](skills/fact-check/SKILL.md) — Verifying factual claims against trustworthy live sources on the internet — not against pretraining. _Example: `/fact-check` (paste claim)_
-- [`refine-idea-chat`](skills/refine-idea-chat/SKILL.md) — Chat-only sibling of `refine-idea`: sharpen a rough idea through diverge/converge/sharpen phases without writing anything to disk. _Example: `/refine-idea-chat add a draft mode to the editor`_
-- [`review-note`](skills/review-note/SKILL.md) — Reviewing a personal knowledge base note on any subject — surfaces inaccuracies, gaps, and clarifications that deepen understanding. Proposes fixes; doesn't edit. _Example: `/review-note notes/stoicism.md`_
-- [`migrate-task-format`](skills/migrate-task-format/SKILL.md) — Bringing existing `.agents/tasks/` folders up to the current task-workflow format after the conventions change — reconciles against the live spec, previews, then applies lossless structural fixes only (flagging anything that needs judgment). _Example: `/migrate-task-format` (current project) or `/migrate-task-format ../other-repo`_
