@@ -36,19 +36,9 @@ This skill loads an existing task folder under `.agents/tasks/` and produces a c
 
 ### 1. Resolve the Task Folder
 
-Discovery resolves a task folder, then reads its `plan.md`. Mirror `implement-task`'s rules:
+Discovery resolves a task folder, then reads its `plan.md`. Resolve it per the **resolve-current-or-ask** discovery rules in `./references/workflow/task-layout.md` — the same variant `implement-task` uses: an explicit path/slug (falling back into `archive/` for a finished task), or a full `plan.md` path taken directly, or — when the user named nothing — the task already established **in this session** if there is one (e.g. from a preceding `refine-idea`, `plan-task`, or `review-task`), otherwise list active folders and ask which task.
 
-**Resolve the task folder:**
-
-- **If the user gave a task folder path or slug** (e.g. `.agents/tasks/add-csv-export/` or `add-csv-export`), resolve it to `.agents/tasks/<slug>/` per `./references/workflow/task-layout.md`, excluding `archive/`. If it matches an active folder, use it. If none matches, look inside `.agents/tasks/archive/<slug>/`.
-- **If the user gave a full plan path** (`.../plan.md`), use it directly and derive the task folder from its parent.
-- **If the user gave nothing**, list active task folders under `.agents/tasks/` (excluding `archive/`) and ask which task.
-
-**Read the plan** — once the folder is resolved, read its `plan.md` (one plan per folder). If the folder has no `plan.md`, tell the user the folder exists but has no plan; suggest `plan-task`.
-
-Don't guess between ambiguous candidates — ask.
-
-Finished tasks may sit in an `archive/` subdirectory — exclude `archive/` when listing, and look inside `.agents/tasks/archive/<slug>/` when resolving a finished task by slug. See `./references/workflow/task-layout.md`.
+**Read the plan** — once the folder is resolved, read its `plan.md` (one plan per folder). If the folder has no `plan.md`, tell the user the folder exists but has no plan; suggest `plan-task`. Don't guess between ambiguous candidates — ask.
 
 ### 2. Load Artifacts
 
@@ -72,7 +62,7 @@ For the plan:
 
 - Count `- [x]` (done) vs `- [ ]` (pending) steps.
 - Identify the next pending step. Pull its **What**, **Verify**, **Depends on**, any **Due** / **Lead time**, and the file paths it touches.
-- For each `- [x]` step, follow the result anchor link to the matching section in the result file.
+- For each `- [x]` step, follow the result anchor link to the matching section in the result file. **Match the anchor to the result file's actual shape:** a step-by-step run has `## Step N — <title>` headings (anchor `#step-n--<slug>`), but a full-plan run records a single `## Full Run — <date>` section (anchor `#full-run--<date>`) — in that case every step's `Done` link targets that one combined anchor, not a per-step anchor that doesn't exist.
 - If the plan contains `### Checkpoint after Step N` headers, note which checkpoints have a corresponding `## Checkpoint after Step N` entry in the result file with `**Outcome:** passed`.
 - Surface every `**Blocked:**` section from the result file verbatim — do not paraphrase.
 
@@ -89,7 +79,7 @@ Partition the claims by state, because they're checked differently:
 
 For each done/shipped claim, confirm it still holds and tag the finding. When the domain is code, follow the drift-verification recipe in `./references/engineering/exploration.md` (partition paths shipped vs pending, existence-check, symbol-survival grep, open a shipped file to confirm the change is present and not reverted). For other domains, verify each claim against the domain's own artifacts (a booking still confirmed, a document still signed, a commitment still standing).
 
-**Goal sanity check (domain-neutral).** If the result file has an `## Acceptance` section, spot-check one goal tagged `met` against current behavior and confirm it still holds. If the result has no `## Acceptance` section but the plan is `done`, that itself is drift (the acceptance gate was skipped); flag it `block`. If a `met` goal no longer holds, flag it `warn` so the user can re-run the gate before relying on the prior result.
+**Goal sanity check (domain-neutral).** If the result file has an `## Acceptance` section, re-check the goals tagged `met` against current behavior. On a `done` plan the acceptance gate is the contract, so don't sample — re-check **every** `met` goal; on a still-`executing` plan, spot-check the `met` ones you can reach. If the result has no `## Acceptance` section but the plan is `done`, that itself is drift (the acceptance gate was skipped); flag it `block`. If a `met` goal no longer holds, flag it `warn` so the user can re-run the gate before relying on the prior result.
 
 Tag each finding `info` (FYI), `warn` (review before resuming), or `block` (plan needs update before execution can proceed).
 
@@ -154,10 +144,10 @@ Assemble per the output template below. Print to chat. Do not write any file.
 
 ## Goals
 
-- G1 — <as written in goals.md> — _met / unmet / not yet checked / unresolved_
+- G1 — <as written in goals.md> — _met / met with caveats / unmet / out of scope / not yet checked / unresolved_
 - G2 — <as written in goals.md> — _…_
 
-(Pull each goal verbatim from `goals.md`, with its `G<n>` ID. Outcomes come from the result file's `## Acceptance` section — tagged by ID — if present; otherwise mark every goal _not yet checked_. Surface any goal trailing `_(unresolved: ...)_` as `unresolved`.)
+(Pull each goal verbatim from `goals.md`, with its `G<n>` ID. Outcomes come from the result file's `## Acceptance` section — tagged by ID — if present; carry each tag through verbatim, including `met with caveats` (keep the caveat note) and `out of scope`. If there's no `## Acceptance` section, mark every goal _not yet checked_. Surface any goal trailing `_(unresolved: ...)_` as `unresolved`.)
 
 ## Done
 
@@ -230,7 +220,7 @@ Assemble per the output template below. Print to chat. Do not write any file.
 - [ ] Drift check compared plan/result claims against the current implementation on disk; findings listed (or `No drift detected.` stated explicitly)
 - [ ] Plan-referenced paths partitioned into shipped vs. pending before existence-check; missing **shipped** paths flagged as `block`/`warn`, missing **pending** paths not flagged
 - [ ] At least one `**Shipped:**` file from the latest result entry spot-checked against current source
-- [ ] Goal sanity check ran: a `met` goal spot-checked against live behavior; missing `## Acceptance` section on a `done` plan flagged `block`
+- [ ] Goal sanity check ran: every `met` goal re-checked against live behavior on a `done` plan (spot-checked on an `executing` plan); missing `## Acceptance` section on a `done` plan flagged `block`
 - [ ] Every URL in `CONTEXT.md` / goals / plan / result extracted, deduped, and fetched read-only with the appropriate tool (or `No external references cited.` stated explicitly)
 - [ ] No external system was written to (no Jira comment, no Slack message, no Drive edit, no PR comment)
 - [ ] Material changes since citation flagged `warn`; broken links flagged `block`; auth-walled links flagged `info` with `auth required — re-check manually`; failures captured, not omitted

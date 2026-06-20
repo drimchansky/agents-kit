@@ -19,15 +19,9 @@ The user provides a plan — typically the output of `plan-task`, written to `<t
 
 ## Locate the Plan
 
-Resolve a task folder, then read its `plan.md`:
-
-- **If the user gave a task folder path or slug** (e.g. `.agents/tasks/add-csv-export/` or `add-csv-export`), resolve it to `.agents/tasks/<slug>/` per `./references/workflow/task-layout.md`, excluding `archive/`. If it matches an active folder, use it. If none matches, look inside `.agents/tasks/archive/<slug>/`.
-- **If the user gave a full plan path** (`.../plan.md`), use it directly and derive the task folder from its parent.
-- **If the user gave nothing**, list active task folders under `.agents/tasks/` (excluding `archive/`) and ask which.
+Resolve a task folder per the **resolve-or-ask** discovery rules in `./references/workflow/task-layout.md` — an explicit path/slug (falling back into `archive/` for a finished task), a full `plan.md` path taken directly, or, when the user named nothing, list active folders and ask which.
 
 Once the folder is resolved, read its `plan.md` (one plan per folder; its sibling `goals.md` and `result.md` are inputs and execution records).
-
-Finished tasks may sit in an `archive/` subdirectory. Exclude `archive/` when listing; look inside `.agents/tasks/archive/<slug>/` when resolving a finished task. See `./references/workflow/task-layout.md`.
 
 Read the plan, the sibling `goals.md`, **and** the sibling `CONTEXT.md` in full before assessing anything.
 
@@ -108,12 +102,12 @@ If the goals file is missing entirely, skip this step and treat the missing goal
 
 ### 5. Check Acceptance Coverage
 
-For each goal in `goals.md`, map its `G<n>` ID to the delivering step(s) by reading each plan step's `**Goal:**` citation. The mapping is **mechanical**, not interpretive: collect the goal IDs each step's `**Goal:**` line lists; a goal ID named by no step is **uncovered**. Don't infer coverage from prose — read the citations.
+For each goal in `goals.md`, map its `G<n>` ID to the delivering step(s) by reading each plan step's `**Goal:**` citation. Whether a goal is covered at all is **mechanical**, not interpretive: collect the goal IDs each step's `**Goal:**` line lists; a goal ID named by no step is **uncovered**. Don't infer *coverage* from prose — read the citations. The one place a light read of the step is warranted is separating `covered` from `partially covered` below — a goal whose only citing step visibly delivers just part of it; that single judgment aside, the mapping stays citation-driven.
 
 Tag each goal with one of:
 
 - **Covered** — at least one step's `**Goal:**` line cites this goal ID. Name the step(s).
-- **Partially covered** — a step cites this goal ID but doesn't fully deliver it; name what's missing.
+- **Partially covered** — a step cites this goal ID but visibly delivers only part of it; name what's missing. (This is the one verdict that needs a light read of the step, not just its citation.)
 - **Uncovered** — no step's `**Goal:**` line cites this goal ID. The plan must add a step (or add the citation to an existing one) before execution.
 - **Out of scope (deferred)** — the plan's `Scope` lists this goal ID in its deferred partition; no step needs to cover it (expected, not a gap). A goal neither cited by a step nor in the deferred partition is the real inconsistency — flag it.
 

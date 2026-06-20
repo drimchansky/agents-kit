@@ -26,6 +26,7 @@ Review the provided message and suggest improvements. **Strictly preserve the au
 - Never alter the author's voice — if the message is blunt, keep it blunt; if it's casual, keep it casual
 - Distinguish between errors (must fix) and improvements (could fix)
 - If the message is clean, say so — don't invent suggestions to fill space
+- Never use markdown tables; use lists instead (tables wrap badly in narrow terminals and resist clean line-by-line diffs and edits)
 
 ## Output Format
 

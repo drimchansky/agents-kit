@@ -77,6 +77,6 @@ See [`domain-packs`](references/workflow/domain-packs.md).
 
 References under `references/` split into the neutral methodology and the domain packs.
 
-- **`references/workflow/`** – what every domain shares: [`task-lifecycle`](references/workflow/task-lifecycle.md) (status registry), [`task-layout`](references/workflow/task-layout.md) (on-disk layout), [`domain-packs`](references/workflow/domain-packs.md) (how domains plug in), and [`acceptance-criteria`](references/workflow/acceptance-criteria.md) (the "done" bar).
+- **`references/workflow/`** – what every domain shares: [`task-lifecycle`](references/workflow/task-lifecycle.md) (status registry), [`task-layout`](references/workflow/task-layout.md) (on-disk layout), [`domain-packs`](references/workflow/domain-packs.md) (how domains plug in), [`acceptance-criteria`](references/workflow/acceptance-criteria.md) (the "done" bar), [`context-schema`](references/workflow/context-schema.md) (the `CONTEXT.md` layout), and [`ideation`](references/workflow/ideation.md) (the diverge/converge method).
 - **`references/engineering/`** – domain pack #1: a `rules` overlay, the `exploration` / `planning` / `execution` / `verification` / `review` bodies the spine loads by phase, and per-surface checklists (typescript, react, css, security, …).
 

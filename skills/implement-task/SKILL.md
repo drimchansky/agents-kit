@@ -56,15 +56,9 @@ When the domain is code, follow `./references/engineering/execution.md` ("Detect
 
 Discovery resolves a task folder, then reads its `plan.md`.
 
-**Resolve the task folder:**
-
-- **If the user gave a task folder path or slug** (e.g. `.agents/tasks/add-csv-export/` or `add-csv-export`), resolve it to `.agents/tasks/<slug>/` per `./references/workflow/task-layout.md`, excluding `archive/`. If it matches an active folder, use it. If none matches, look inside `.agents/tasks/archive/<slug>/`.
-- **If the user gave a full plan path** (`.../plan.md`), use it directly and derive the task folder from its parent.
-- **If the user gave nothing**, check whether a task is already established **in this session** — a task folder / `CONTEXT.md` resolved earlier this session (e.g. from a preceding `refine-idea`, `plan-task`, or `review-task`, or one the user named). If so, execute that current task. Otherwise, list active task folders under `.agents/tasks/` (excluding `archive/`) and ask which.
+**Resolve the task folder** per the **resolve-current-or-ask** discovery rules in `./references/workflow/task-layout.md`: use an explicit path/slug (falling back into `archive/` for a finished task); take a full `plan.md` path directly; and when the user named nothing, execute the task already established **in this session** if there is one (e.g. from a preceding `refine-idea`, `plan-task`, or `review-task`), otherwise list active folders and ask.
 
 **Read the plan** — once the folder is resolved, read its `plan.md` (one plan per folder). If the folder has no `plan.md`, tell the user the folder exists but has no plan; suggest `plan-task` to create one.
-
-Finished tasks may sit in an `archive/` subdirectory — exclude `archive/` when listing, and look inside `.agents/tasks/archive/<slug>/` when a slug isn't among the active folders. See `./references/workflow/task-layout.md`.
 
 Read **all four artifacts** before doing anything:
 
@@ -215,7 +209,7 @@ For each goal in `goals.md` (by its `G<n>` ID):
 
 1. **Re-read the goal** as the user wrote it. Don't paraphrase or reinterpret.
 2. **Verify it against the real outcome**, not against the result file (which records intent, not current state). Observe the outcome directly where you can — when the domain is code, run the actual command, exercise the actual flow, observe the actual output (`./references/engineering/verification.md`). When a goal **can't be directly re-run** — a one-shot or irreversible outcome (an event that happened, a negotiation that concluded, a booking that's confirmed) — verify it against its **best available proxy** (a confirmation, a receipt, a recorded result, direct observation of the end state), and evaluate genuinely judgment-based outcomes **post-hoc** in a short retro rather than pretending they re-run. Reading "Step 3 says it works" is never verification.
-3. **Tag the outcome** as `met`, `met with caveats`, `unmet`, or `out of scope` (the goal was explicitly excluded by the plan's scope and the user accepted the exclusion).
+3. **Tag the outcome** as `met`, `met with caveats`, `unmet`, or `out of scope`. Tag `out of scope` **only when the plan's `## Scope` lists this goal ID in its deferred partition** — confirm the ID is actually there. If a goal you'd call out-of-scope isn't in the deferred set, it drifted in after the plan was written; surface it to the user rather than silently dropping it under a label the scope never authorized.
 
 Append a single `## Acceptance` section to the result file:
 
@@ -233,6 +227,8 @@ Append a single `## Acceptance` section to the result file:
 ```
 
 **If any goal is `unmet`, do not finalize.** Apply Stop-the-Line: localize the gap, decide whether it's a missed step (revise the plan, add steps, return to execution) or a goals misunderstanding (surface to the user, let them edit the goals file, then re-run the gate). Do not silently downgrade `unmet` to `met with caveats` to ship.
+
+**If any goal is `met with caveats`, secure explicit user acknowledgement before finalizing.** Surface each caveat — what's caveated and why — and confirm the user accepts shipping with it; this is the same provenance `out of scope` carries at tag time. Record the acknowledgement in the result file's `## Acceptance` entry for that goal. An unacknowledged `met with caveats` is not a pass — treat it like `unmet` and do not finalize.
 
 ### 8. Finalize
 

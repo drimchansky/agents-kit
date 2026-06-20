@@ -65,62 +65,15 @@ If no matching active task folder exists, create `.agents/tasks/<slug>/` by defa
 
 The resolved task folder is the authoritative home for this plan. `CONTEXT.md` inside it is the static context this plan builds on.
 
-Resolve the folder in this order:
-
-- **User passed a task folder path** — use it if it points at a task folder. If it points inside `archive/`, confirm before adding new work to an archived task.
-- **User passed a slug** — resolve it to `.agents/tasks/<slug>/`, excluding `archive/`. If it matches an active folder, reuse it. If none matches, look inside `.agents/tasks/archive/<slug>/`; if an archived task matches, ask whether to revive it or create a fresh active task. See `./references/workflow/task-layout.md`.
-- **User passed a slug with no matching active or archived folder** — create `.agents/tasks/<slug>/`. If `CONTEXT.md` doesn't exist, write a skeleton (template below) before drafting the plan. Confirm the slug with the user only if it differs meaningfully from what they typed.
-- **User passed no slug** — derive one from the task description and proceed as above.
+Resolve the folder per the **resolve-or-create** discovery rules in `./references/workflow/task-layout.md`: reuse a matching active folder; if a slug matches only an archived task, ask whether to revive it or create a fresh active task; if nothing matches (or no slug was given), derive a slug and create `.agents/tasks/<slug>/`. When creating a folder whose `CONTEXT.md` doesn't exist, scaffold one (see the skeleton step below) before drafting the plan, and confirm the slug only if it differs meaningfully from what the user typed.
 
 If multiple active task folders look like plausible matches for the user's request, list them and ask — don't guess.
 
 #### CONTEXT.md skeleton (created when missing)
 
-The skeleton below is the canonical CONTEXT.md schema, shared with `refine-idea` (which produces it via Phases 1–3) so downstream consumers (`review-task`, `implement-task`, and the plan-task reuse step) read the same section names regardless of how the task started. When `plan-task` skips the idea step, infer `**Domain:**` from the task description (see the guidance below the skeleton) and populate `Problem Statement` and `Key Assumptions to Validate` from it; leave the other sections as placeholders for the user to fill in.
+When `plan-task` runs without a prior `refine-idea` pass, scaffold a `CONTEXT.md` using the canonical schema in `./references/workflow/context-schema.md`. Write `**Status:** drafted-by-plan-task`, populate `Problem Statement` and `Key Assumptions to Validate` from the task description, and leave the other sections as placeholders so downstream consumers (`review-task`, `implement-task`, the reuse step) read the same section names regardless of how the task started.
 
-```markdown
-# <task name>
-
-**Status:** drafted-by-plan-task
-**Domain:** <domain>
-
-## Problem Statement
-
-<one-sentence framing of what this task is solving>
-
-## Goals
-
-_(Goals live in `goals.md`. This skill drafts that file before the plan and asks for clarification when requirements are unclear.)_
-
-## Recommended Direction
-
-<the chosen direction and why — leave as a placeholder if the user hasn't run `refine-idea`; revisit before starting work>
-
-## Key Assumptions to Validate
-
-- [ ] <assumption that, if wrong, would invalidate the plan> — <how to test it>
-
-## MVP Scope
-
-- **In:** <minimum to test the core assumption — placeholder; fill in once scope is clear>
-- **Out:** <what's deferred — placeholder>
-
-## Not Doing (and Why)
-
-- <intentional exclusion — placeholder; surface explicit trade-offs as the plan develops>
-
-## Open Questions
-
-- <question the plan can't yet answer — placeholder>
-
-## References
-
-_(External links, pasted specs, ticket numbers, screenshots, cross-cutting notes. Read by the plan and its result in this task folder.)_
-```
-
-`CONTEXT.md`'s `**Status:**` is a one-shot origin marker; the plan file owns the working lifecycle. Full status vocabulary across all task files is registered in `./references/workflow/task-lifecycle.md` — read it once if you're unsure which value to write. The `**Domain:**` line names which domain pack every skill in this directory loads. **Infer it from the task description** (e.g. `engineering` for a code change, `bureaucracy` for a residence application), or carry over the value if `refine-idea` already set one. Default to `engineering` when the work is code or the domain is genuinely ambiguous *within a coding context* — but when the task is clearly non-code and the right domain is unclear, **ask** rather than stamping a label, since a wrong `**Domain:**` silently loads the wrong rules. See `./references/workflow/domain-packs.md`.
-
-The user is expected to enrich `CONTEXT.md` over time (links, specs, decisions). Don't dump per-step notes, approach rationale, or verify criteria into it — those belong in the plan or its result file. Don't dump cross-task narrative into it either: tasks are independent folders with no shared layer above them, so anything a sibling task needs is duplicated into its own `CONTEXT.md`. Placeholder sections are intentional: leave them in place even if empty so downstream skills can find the same section names.
+**Infer `**Domain:**` from the task description** (e.g. `engineering` for a code change, `bureaucracy` for a residence application), or carry over the value if `refine-idea` already set one. Default to `engineering` when the work is code or the domain is genuinely ambiguous *within a coding context* — but when the task is clearly non-code and the right domain is unclear, **ask** rather than stamping a label, since a wrong `**Domain:**` silently loads the wrong rules. See `./references/workflow/domain-packs.md`.
 
 ### 3. Draft the Goals
 
@@ -291,14 +244,14 @@ When the domain is code, `./references/engineering/planning.md` gives file-count
 - [ ] Goals written to `<task-dir>/goals.md` — `## Goals` list of `- G<n> —` bullets with durable IDs, no `## Description`, no `**Status:**` field
 - [ ] Hand-authored goals read and respected if present; not silently overwritten
 - [ ] Each goal in `goals.md` passes the checks in `./references/workflow/acceptance-criteria.md`, or is marked `_(unresolved: ...)_` with a deferred clarifying question
-- [ ] Clarifying questions asked when goals failed the checklist (testable, specific, outcome-oriented, singular, bounded, stated as behavior); user answers folded into the goals before drafting the plan
+- [ ] Clarifying questions asked when goals failed the `./references/workflow/acceptance-criteria.md` checklist; user answers folded into the goals before drafting the plan
 - [ ] Plan written to `<task-dir>/plan.md`
 - [ ] Plan's `**Goals:**` line links to `./goals.md`
 - [ ] Slug derived from task, kebab-case, 2–5 words
 - [ ] Each step has `- [ ]` checkbox marker, **What**, **Verify**, **Goal**, **Depends on**
 - [ ] Plan steps collectively cover every goal — each goal ID cited by ≥1 step, and every non-infra step cites ≥1 goal (no orphan goals, no orphan steps)
 - [ ] `## Scope` states the in/out split as a partition of goal IDs (`delivered: … · deferred: …`)
-- [ ] Every goal in `goals.md` carries a durable `G<n>` ID; the plan template carries no `## Task Understanding` section
+- [ ] Every goal in `goals.md` carries a durable `G<n>` ID
 - [ ] Plan is grounded in actual code exploration, not assumptions
 - [ ] Each step is independently verifiable
 - [ ] Steps are ordered as vertical slices unless a foundational layer requires otherwise

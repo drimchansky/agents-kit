@@ -67,7 +67,7 @@ After the user reacts to Phase 1 (signals which variations resonate, pushes back
 1. **Cluster** the resonant ideas into 2–3 distinct directions. Each direction should feel meaningfully different, not just variations on the same theme.
 2. **Stress-test** each direction on three axes:
     - **User value** — Who benefits and how much? Painkiller or vitamin?
-    - **Feasibility** — Technical and resource cost? What's the hardest part?
+    - **Feasibility** — Cost and effort to pull off? What's the hardest part?
     - **Differentiation** — What makes this genuinely different? Would someone switch?
 
 3. **Surface hidden assumptions.** For each direction, name explicitly:

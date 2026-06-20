@@ -4,6 +4,8 @@
 
 These are the **domain-neutral core rules** — they hold for every task in every domain. Domain-specific rules (engineering today, any future domain later) live in that domain's pack at `./references/<domain>/rules.md` and load **on top of** these. How a skill resolves and loads its domain is defined in `./references/workflow/domain-packs.md`.
 
+A skill that loads these rules confirms it did so by echoing the line `✅ Core agents-kit rules applied` on its own line before any other output or tool calls — the canonical handshake string, defined once here so it has a single owner; skills echo it verbatim.
+
 - Match the scope of changes to the scope of the request; don't expand into adjacent work unless asked
 - When discovering issues outside the current task, use the NOTICED BUT NOT TOUCHING pattern below
 
@@ -63,7 +65,7 @@ Place at the end of your response. Scope discipline with nothing lost.
 
 Reference material lives under `./references/`, partitioned into the neutral methodology and the domain packs:
 
-- `./references/workflow/` — the **domain-neutral methodology**: `task-lifecycle.md` (status registry), `task-layout.md` (on-disk layout), `domain-packs.md` (how domains plug in), `acceptance-criteria.md` (the "done" bar). Consult the ones a task touches.
+- `./references/workflow/` — the **domain-neutral methodology**: `task-lifecycle.md` (status registry), `task-layout.md` (on-disk layout), `domain-packs.md` (how domains plug in), `acceptance-criteria.md` (the "done" bar), `context-schema.md` (the `CONTEXT.md` layout), `ideation.md` (the diverge/converge method). Consult the ones a task touches.
 - `./references/<domain>/` — **domain packs**: the rules, exploration/planning/execution/verification guidance, review lenses, and checklists for one domain. The active domain is resolved from `**Domain:**` in the task's `CONTEXT.md` (default `engineering`). The engineering pack is the worked example. See `./references/workflow/domain-packs.md`.
 
 Most skills load the applicable references as part of their workflow. For ad-hoc work outside a skill, consult them on your own — the same rule applies. If a task's domain has no pack (or a pack omits a file), run the neutral methodology and say so; never fabricate domain rules or silently borrow another domain's.

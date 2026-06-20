@@ -87,6 +87,8 @@ For each claim, one of:
 
 ## Output Format
 
+Use lists, never markdown tables (they wrap badly in narrow terminals and resist clean diffs).
+
 **Summary** — One line: how many claims checked, how many verified vs. issues found.
 
 **Findings** — One entry per claim:

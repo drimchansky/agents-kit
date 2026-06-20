@@ -15,7 +15,7 @@ Audit existing code for structural quality, pattern consistency, and health. Sta
 
 ## References
 
-Before working, read `./references/engineering/review.md` — it carries the lenses (What to Look For, What NOT to Flag, Calibrate Severity, Approval Bar, Prioritize Review Effort, Don't Rationalize) that apply to every audit.
+Before working, read `./references/engineering/review.md` — it carries the lenses (What to Look For, What NOT to Flag, Calibrate Severity, Approval Bar, Prioritize Review Effort, Don't Rationalize) that apply to every audit. Its `-v` "Verification Scripts" flag does **not** apply here — that flag belongs to `review-commit` / `review-pr`; an audit is analysis-only and runs no verification scripts.
 
 ## Determine Audit Scope
 

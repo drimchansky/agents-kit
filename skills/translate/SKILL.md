@@ -12,6 +12,7 @@ disable-model-invocation: true
 1. **Context First**: Don't translate literally; translate the _meaning_.
 2. **Tone Matching**: If the source is casual, the target must be casual.
 3. **Alternative Options**: If a phrase is ambiguous, provide the 2 best variations.
+4. **No Tables**: Never use markdown tables; use lists instead (they wrap badly in narrow terminals and resist clean diffs).
 
 ## Verification
 

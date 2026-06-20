@@ -59,12 +59,19 @@ Moving a whole task folder preserves its internal `./` links, since every cross-
 
 ## Discovery rules for skills
 
-When resolving which task to act on:
+When resolving which task to act on, the **base resolution** is shared; skills differ only in what they do when the user named nothing.
 
-- **Explicit path or slug given** → resolve it to `.agents/tasks/<slug>/` and use it.
-- **No slug given** → list candidate task folders directly under `.agents/tasks/`, but **exclude `archive/`** — it is a container, not a task.
-- **A requested slug isn't among the active folders** → look inside `.agents/tasks/archive/<slug>/` before giving up; a finished task may have been archived there.
+**Base resolution (every skill):**
 
-Once the folder is resolved, the four files are found by their fixed role names — no stem-globbing, no path a user typed.
+- **Explicit task folder path or slug given** → resolve it to `.agents/tasks/<slug>/`, excluding `archive/`. If it matches an active folder, use it; if none matches, look inside `.agents/tasks/archive/<slug>/` before giving up — a finished task may have been archived there.
+- **A full plan path given** (`.../plan.md`) → use it directly and derive the task folder from its parent.
+
+Once the folder is resolved, the four files are found by their fixed role names — no stem-globbing, no path a user typed. Don't guess between ambiguous candidates — ask.
+
+**Fallback when the user named nothing** — this is the only branch that varies, by what the skill does:
+
+- **resolve-or-create** (`refine-idea`, `plan-task`) → derive a slug from the task description and create `.agents/tasks/<slug>/` when no active or archived folder matches. If a slug matches only an archived task, ask whether to revive it or start fresh.
+- **resolve-current-or-ask** (`implement-task`, `resume-task`) → first check whether a task is already established **in this session** — a folder / `CONTEXT.md` resolved earlier this session (e.g. from a preceding `refine-idea`, `plan-task`, or `review-task`, or one the user named). If so, use it. Otherwise list active folders (excluding `archive/`) and ask which.
+- **resolve-or-ask** (`review-task`) → list active folders (excluding `archive/`) and ask which.
 
 Archived tasks are intentionally absent from the default active listing — that is the point of archiving, not a discovery bug.

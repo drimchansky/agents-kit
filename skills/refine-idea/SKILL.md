@@ -59,53 +59,7 @@ If `.agents/tasks/<slug>/` doesn't exist, create it. If a `CONTEXT.md` already e
 
 ## Process
 
-The three phases below are sequential. Don't skip Phases 1–2 to jump straight to the artifact.
-
-### Phase 1 — Diverge
-
-**Goal:** Open the idea up before narrowing it down.
-
-1. **Restate as "How Might We"** — Reframe the user's input as a one-sentence "How might we…" problem. This forces clarity on what's actually being solved versus what's being assumed.
-2. **Ask 3–5 sharpening questions** — No more. Focus on:
-    - Who is this for, specifically?
-    - What does success look like?
-    - What are the real constraints (time, tech, resources)?
-    - What's been tried before?
-    - Why now?
-
-    Don't proceed until the target user and rough success picture are concrete enough to inform the recommended direction. The testable, plan-specific goals are formalized later in `plan-task`'s goals step.
-
-3. **Generate 5–8 variations** using lenses (pick the ones that fit; don't run all mechanically):
-    - **Inversion** — What if we did the opposite?
-    - **Constraint removal** — What if budget / time / tech weren't factors?
-    - **Audience shift** — What if this were for a different user?
-    - **Combination** — What if we merged this with an adjacent idea?
-    - **Simplification** — What's the version that's 10× simpler?
-    - **10× version** — What would this look like at massive scale?
-    - **Expert lens** — What would domain experts find obvious that outsiders miss?
-
-    Push beyond what the user initially asked for. Each variation should have a reason it exists, not just be a bullet point.
-
-**Ground in what exists:** Use the domain's reality to ground variations in existing structure, patterns, and prior art — cite specifics rather than speaking in the abstract. When the domain is code, that means grep / file reads / codebase search (see `./references/engineering/exploration.md`).
-
-### Phase 2 — Converge
-
-After the user reacts to Phase 1 (signals which variations resonate, pushes back, adds context), shift to evaluation.
-
-1. **Cluster** the resonant ideas into 2–3 distinct directions. Each direction should feel meaningfully different, not just variations on the same theme.
-2. **Stress-test** each direction on three axes:
-    - **User value** — Who benefits and how much? Painkiller or vitamin?
-    - **Feasibility** — Cost and effort to pull off? What's the hardest part?
-    - **Differentiation** — What makes this genuinely different? Would someone switch?
-
-3. **Surface hidden assumptions.** For each direction, name explicitly:
-    - What you're betting is true but haven't validated
-    - What could kill the idea
-    - What you're choosing to ignore (and why that's okay for now)
-
-    This is where most ideation fails. Don't skip it.
-
-**Be honest, not supportive.** A good ideation partner is not a yes-machine. If a direction is weak, say so with kindness and specificity.
+This skill runs the shared two-phase ideation method — **Phase 1 (Diverge)** and **Phase 2 (Converge)** — defined in `./references/workflow/ideation.md`. Run both phases from there (the testable, plan-specific goals are deferred to `plan-task`'s goals step, not written here), then complete **Phase 3** below to produce the artifact.
 
 ### Phase 3 — Sharpen
 
@@ -145,48 +99,6 @@ The "Not Doing" list is the most valuable part — focus is about saying no to g
 
 ## CONTEXT.md Structure
 
-Write the file with this layout. Adapt section depth to the idea's size — keep the one-pager portion to one page where possible. The trailing `## References` section is a placeholder for the user (or later sessions) to drop external links, pasted specs, and cross-cutting notes.
+Write the file using the canonical schema in `./references/workflow/context-schema.md`. Adapt section depth to the idea's size — keep the one-pager portion to one page where possible. Fill the sections from the two-phase pass: the "How Might We" problem statement, the recommended direction, the key assumptions, the MVP scope, and the "Not Doing" list.
 
-The `**Status:**` field is a one-shot origin marker — `refined` here, never mutated after creation. Full vocabulary across all task files is registered in `./references/workflow/task-lifecycle.md`. The `**Domain:**` field names which domain pack downstream skills load. **Infer it from the idea** (e.g. `engineering` for a code change, `relocation` or `negotiation` otherwise); default to `engineering` only when the work is code or genuinely ambiguous within a coding context, and when the effort is clearly non-code but the right domain is unclear, **ask** rather than stamping a wrong label. See `./references/workflow/domain-packs.md`.
-
-```markdown
-# <idea name>
-
-**Status:** refined
-**Domain:** <domain>
-
-## Problem Statement
-
-<one-sentence "How Might We" framing>
-
-## Goals
-
-_(Goals live in `goals.md`. `plan-task` drafts the goals before the plan and asks for clarification when requirements are unclear.)_
-
-## Recommended Direction
-
-<the chosen direction and why — 2–3 paragraphs max>
-
-## Key Assumptions to Validate
-
-- [ ] <assumption> — <how to test it>
-- [ ] <assumption> — <how to test it>
-
-## MVP Scope
-
-- **In:** <minimum to test the core assumption>
-- **Out:** <what's deferred>
-
-## Not Doing (and Why)
-
-- <thing> — <reason>
-- <thing> — <reason>
-
-## Open Questions
-
-- <question that needs answering before `plan-task`>
-
-## References
-
-_(Drop external links, pasted specs, screenshots, ticket numbers, or cross-cutting notes here. Read by the plan and its result in this task folder.)_
-```
+Write `**Status:** refined` — the one-shot origin marker for a file this skill produced, never mutated after creation. Infer `**Domain:**` from the idea (e.g. `engineering` for a code change, `relocation` or `negotiation` otherwise); default to `engineering` only when the work is code or genuinely ambiguous within a coding context, and when the effort is clearly non-code but the right domain is unclear, **ask** rather than stamping a wrong label. See `./references/workflow/domain-packs.md`.
