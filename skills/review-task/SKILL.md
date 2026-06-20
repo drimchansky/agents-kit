@@ -1,6 +1,6 @@
 ---
 name: review-task
-description: Use when asked to review, validate, or sanity-check a task's plan — confirms the direction is right and still in sync with CONTEXT.md, the spec, and current reality, and surfaces any drift between task artifacts (CONTEXT, spec, plan, result) and the work itself.
+description: Use when asked to review, validate, or sanity-check a task's plan — confirms the direction is right and still in sync with CONTEXT.md, the goals, and current reality, and surfaces any drift between task artifacts (CONTEXT, goals, plan, result) and the work itself.
 argument-hint: '[task folder path]'
 disable-model-invocation: true
 ---
@@ -25,16 +25,16 @@ Resolve a task folder, then read its `plan.md`:
 - **If the user gave a full plan path** (`.../plan.md`), use it directly and derive the task folder from its parent.
 - **If the user gave nothing**, list active task folders under `.agents/tasks/` (excluding `archive/`) and ask which.
 
-Once the folder is resolved, read its `plan.md` (one plan per folder; its sibling `spec.md` and `result.md` are inputs and execution records).
+Once the folder is resolved, read its `plan.md` (one plan per folder; its sibling `goals.md` and `result.md` are inputs and execution records).
 
 Finished tasks may sit in an `archive/` subdirectory. Exclude `archive/` when listing; look inside `.agents/tasks/archive/<slug>/` when resolving a finished task. See `./references/workflow/task-layout.md`.
 
-Read the plan, the sibling `spec.md`, **and** the sibling `CONTEXT.md` in full before assessing anything.
+Read the plan, the sibling `goals.md`, **and** the sibling `CONTEXT.md` in full before assessing anything.
 
 - **`CONTEXT.md`** carries the problem statement, scope summary, key assumptions, and external references for the task.
-- **`spec.md`** carries the acceptance criteria — the testable contract for what "done" means for this plan. The plan's steps must collectively cover every criterion.
+- **`goals.md`** carries the goals — the testable contract for what "done" means for this plan. The plan's steps must collectively cover every goal (each goal ID cited by a step's `**Goal:**` line).
 
-Both are authoritative input for grounding, not optional. If the spec file is missing, flag it as a gap up front — `plan-task` is expected to produce one and the acceptance coverage check below cannot run without it.
+Both are authoritative input for grounding, not optional. If the goals file is missing, flag it as a gap up front — `plan-task` is expected to produce one and the acceptance coverage check below cannot run without it.
 
 ## When to Review
 
@@ -91,45 +91,45 @@ For every step, assign one of:
 
 Also assess each step's **Verify** criterion: is it concrete enough to actually confirm the step worked? Flag verify criteria that are vague ("ensure it works") or untestable.
 
-### 4. Audit Spec Quality
+### 4. Audit Goal Quality
 
-Before mapping criteria to steps, assess the criteria themselves. Coverage is meaningless if the criteria are vague — a perfectly-covered plan can still ship the wrong thing because "the export works well" maps cleanly to a step that builds the wrong export.
+Before mapping goals to steps, assess the goals themselves. Coverage is meaningless if the goals are vague — a perfectly-covered plan can still ship the wrong thing because "the export works well" maps cleanly to a step that builds the wrong export.
 
-Apply `./references/workflow/acceptance-criteria.md` to every bullet in `spec.md`. Tag each criterion with one of:
+Apply `./references/workflow/acceptance-criteria.md` to every goal in `goals.md`. Tag each goal with one of:
 
 - **good** — passes every check (testable, specific, outcome-oriented, singular, bounded, stated as behavior)
 - **weak** — passes overall but loses points on one dimension; note which (treated as feedback, not a blocker)
-- **vague-or-untestable** — fails one or more checks; the criterion must be revised (or marked `_(unresolved: ...)_`) before execution
-- **unresolved** — already marked `_(unresolved: ...)_` in the spec; record it here and lift it into Questions
+- **vague-or-untestable** — fails one or more checks; the goal must be revised (or marked `_(unresolved: ...)_`) before execution
+- **unresolved** — already marked `_(unresolved: ...)_` in `goals.md`; record it here and lift it into Questions
 
 Surface every `weak`, `vague-or-untestable`, and `unresolved` finding into the Questions section. For each, name the **specific failing dimension** ("not testable — no observable behavior named") and suggest a rewrite where you can ("'export is fast enough' → 'p95 export latency under 2s for the largest staging tenant'"). Don't paraphrase the failing dimension — point at the checklist line that didn't pass.
 
-If the spec is missing entirely, skip this step and treat the missing spec as the highest-priority finding in the coverage section below.
+If the goals file is missing entirely, skip this step and treat the missing goals as the highest-priority finding in the coverage section below.
 
 ### 5. Check Acceptance Coverage
 
-For each acceptance criterion in `spec.md`, identify which step(s) deliver it. The mapping must be explicit — if you can't point at a step (or set of steps) that produces the criterion's observable outcome, that criterion is **uncovered**.
+For each goal in `goals.md`, map its `G<n>` ID to the delivering step(s) by reading each plan step's `**Goal:**` citation. The mapping is **mechanical**, not interpretive: collect the goal IDs each step's `**Goal:**` line lists; a goal ID named by no step is **uncovered**. Don't infer coverage from prose — read the citations.
 
-Tag each criterion with one of:
+Tag each goal with one of:
 
-- **Covered** — A specific step or set of steps clearly delivers the criterion. Name them.
-- **Partially covered** — Some steps contribute but a piece of the criterion is missing. Name what's missing.
-- **Uncovered** — No step delivers this criterion. The plan must add a step (or revise an existing one) before execution.
-- **Out of scope** — The criterion is in the spec but the plan explicitly excludes it in `Scope: Out of scope`. Flag the inconsistency for the user — either the spec or the scope is wrong.
+- **Covered** — at least one step's `**Goal:**` line cites this goal ID. Name the step(s).
+- **Partially covered** — a step cites this goal ID but doesn't fully deliver it; name what's missing.
+- **Uncovered** — no step's `**Goal:**` line cites this goal ID. The plan must add a step (or add the citation to an existing one) before execution.
+- **Out of scope (deferred)** — the plan's `Scope` lists this goal ID in its deferred partition; no step needs to cover it (expected, not a gap). A goal neither cited by a step nor in the deferred partition is the real inconsistency — flag it.
 
-Also flag the inverse — **plan steps with no matching criterion**. Steps that don't contribute to any acceptance criterion are either scope creep, infrastructure not the spec captured, or a sign the spec is incomplete. Surface them; don't silently accept them.
+Also flag the inverse — **orphan steps**. A step whose `**Goal:**` line cites a goal ID, or is marked `none (infra/refactor)`, is fine; a non-infra step that cites no goal — or cites a goal ID absent from `goals.md` — is scope creep, a missing goal, or a stale citation. Surface it; don't silently accept it. A step marked `**Goal:** none (infra/refactor)` is a legitimate infra/setup step, not an orphan.
 
-Note any criterion marked `_(unresolved: ...)_` from the spec — these are deferred clarifying questions and should be lifted into the Questions section of this review's output.
+Note any goal marked `_(unresolved: ...)_` from `goals.md` — these are deferred clarifying questions and should be lifted into the Questions section of this review's output.
 
 ### 6. Check Cross-File Drift
 
-Per-step feasibility and acceptance coverage both assume the four task artifacts agree with each other. They often don't. A criterion can be added to the spec after the plan was written; CONTEXT's "Not Doing" list can quietly exclude a behavior the plan now ships; a result file can record work that no longer matches the plan's status. Surface these mismatches as their own class of finding — they are not the same as a missing or vague step.
+Per-step feasibility and acceptance coverage both assume the four task artifacts agree with each other. They often don't. A goal can be added to `goals.md` after the plan was written; CONTEXT's "Not Doing" list can quietly exclude a behavior the plan now ships; a result file can record work that no longer matches the plan's status. Surface these mismatches as their own class of finding — they are not the same as a missing or vague step.
 
 Compare the artifacts pairwise. For each pair, name the kind of drift the comparison is looking for; only flag actual contradictions, not stylistic differences.
 
-- **CONTEXT.md ↔ `spec.md`** — Does any acceptance criterion describe behavior CONTEXT's "Not Doing" list excludes, or behavior outside CONTEXT's MVP scope? Does the spec contradict CONTEXT's Recommended Direction or Key Assumptions?
+- **CONTEXT.md ↔ `goals.md`** — Does any goal describe behavior CONTEXT's "Not Doing" list excludes, or behavior outside CONTEXT's MVP scope? Do the goals contradict CONTEXT's Recommended Direction or Key Assumptions?
 - **CONTEXT.md ↔ `plan.md`** — Does the plan's Scope (in / out / boundaries) contradict CONTEXT's MVP scope or "Not Doing"? Does the plan reference assumptions CONTEXT marked still-to-validate as if they were settled?
-- **`spec.md` ↔ `plan.md`** — Is a criterion excluded by the plan's `Out of scope` (already surfaced in Acceptance Coverage as `out of scope` — repeat it here to make the inconsistency explicit)? Does the plan's `In scope` extend beyond what any criterion requires?
+- **`goals.md` ↔ `plan.md`** — Confirm the plan's `Scope` partition is **total**: every goal ID in `goals.md` is either delivered or explicitly deferred. A goal the Scope neither delivers nor defers is the drift. (This replaces the old "criterion excluded by scope" hunt — with scope expressed as a goal-ID partition, that contradiction can't be silently authored; coverage already catches uncovered goals and orphan steps.)
 - **`plan.md` ↔ `result.md`** (only if `result.md` exists) — Does the result claim a step done while the plan's checkbox is still `- [ ]`? Does the result reference a step number the plan doesn't have (a sign of a stale rename)? Does the **pairing rule** in `./references/workflow/task-lifecycle.md` hold — plan `executing` requires result `executing`, plan `blocked` requires result `blocked` with a `**Blocked:**` section, plan `done` requires result `done`, while a `skipped` plan may have no result or an explanatory result that remains `executing`?
 - **Status field consistency** — Does CONTEXT carry a valid origin marker, the plan a valid lifecycle state, and the result (if present) a valid lifecycle state compatible with the pairing rule? Reject anything outside the vocabulary registered in `./references/workflow/task-lifecycle.md`.
 
@@ -168,35 +168,35 @@ For each step:
 - If caveats or conflicts: what specifically needs to change in the step
 - Verify-criterion check: is it concrete and testable?
 
-### Spec Quality
+### Goal Quality
 
-A short list giving each criterion a quality verdict (`good` / `weak` / `vague-or-untestable` / `unresolved`) with the failing dimension where one applies. Always render this section — when every criterion is `good`, say so explicitly (absence is a regression, not silence).
+A short list giving each goal a quality verdict (`good` / `weak` / `vague-or-untestable` / `unresolved`) with the failing dimension where one applies. Always render this section — when every goal is `good`, say so explicitly (absence is a regression, not silence).
 
 Example:
 
 ```
-- Criterion 1 — good
-- Criterion 2 — weak (singular: bundles "user can export" with "and the file downloads"; consider splitting)
-- Criterion 3 — vague-or-untestable (specific: "fast enough" has no yardstick; suggest "p95 < 2s in staging")
-- Criterion 4 — unresolved (lifted from spec — see Questions)
+- G1 — good
+- G2 — weak (singular: bundles "user can export" with "and the file downloads"; consider splitting)
+- G3 — vague-or-untestable (specific: "fast enough" has no yardstick; suggest "p95 < 2s in staging")
+- G4 — unresolved (lifted from goals.md — see Questions)
 ```
 
-If `spec.md` is missing entirely, state that here and skip; the missing spec is the highest-priority finding overall.
+If `goals.md` is missing entirely, state that here and skip; the missing goals file is the highest-priority finding overall.
 
 ### Acceptance Coverage
 
-A short list mapping each acceptance criterion in the spec to the step(s) that deliver it. Tag each criterion `covered` / `partially covered` / `uncovered` / `out of scope`. Then list any plan steps that don't map to any criterion.
+A short list mapping each goal ID in `goals.md` to the step(s) whose `**Goal:**` line cites it. Tag each goal `covered` / `partially covered` / `uncovered` / `out of scope (deferred)`. Then list any orphan steps (non-infra steps citing no goal).
 
 Example:
 
 ```
-- Criterion 1 — covered by Step 2, Step 4
-- Criterion 2 — partially covered by Step 3 (missing the empty-state behavior)
-- Criterion 3 — uncovered (no step produces the export endpoint)
-- Step 5 — no matching criterion (likely scope creep or spec gap)
+- G1 — covered by Step 2, Step 4 (both cite `**Goal:** G1`)
+- G2 — partially covered by Step 3 (cites G2 but misses the empty-state behavior)
+- G3 — uncovered (no step's `**Goal:**` line cites G3)
+- Step 5 — orphan (cites no goal, not marked `none (infra/refactor)`) — likely scope creep or a missing goal
 ```
 
-If `spec.md` is missing entirely, state that here and skip the per-criterion mapping; treat the missing spec as the highest-priority gap.
+If `goals.md` is missing entirely, state that here and skip the per-goal mapping; treat the missing goals file as the highest-priority gap.
 
 ### Cross-File Drift
 
@@ -205,9 +205,9 @@ A short list of contradictions between artifacts, grouped by the file pair the c
 Example:
 
 ```
-- CONTEXT ↔ spec — drift: spec criterion 4 ("user can export archived rows") describes behavior CONTEXT's "Not Doing" excludes. Resolve by either lifting the exclusion or dropping the criterion.
+- CONTEXT ↔ goals — drift: goal G4 ("user can export archived rows") describes behavior CONTEXT's "Not Doing" excludes. Resolve by either lifting the exclusion or dropping the goal.
 - CONTEXT ↔ plan — no drift detected.
-- spec ↔ plan — drift: plan's `In scope` includes "audit-log integration" but no criterion requires it (already flagged in Acceptance Coverage as a step with no matching criterion; surfacing here too because the scope wording itself is wrong).
+- goals ↔ plan — drift: `goals.md` lists G5 but the plan's Scope partition names it in neither the delivered nor deferred set — the partition is incomplete. Either deliver G5, defer it, or drop the goal.
 - plan ↔ result — drift: result file records Step 3 as shipped but the plan still shows `- [ ]`. Likely an interrupted `implement-task` run.
 - Status fields — plan is `executing` but no `result.md` exists (pairing rule violated, per `./references/workflow/task-lifecycle.md`).
 ```
@@ -235,18 +235,18 @@ Aspects of the plan that are verified and ready to execute — so the user knows
 - "I'll note the gaps during implementation" — Surface them now. That's the entire point of review.
 - "Everything looks good" — Rubber-stamping isn't review. Every integration point needs code-level verification.
 - "That's a theoretical concern" — Only flag real issues, but don't dismiss concerns without checking the code.
-- "The criteria look fine to me" — Run them through `./references/workflow/acceptance-criteria.md`. Without an explicit pass, this skill rubber-stamps vague criteria, the structural coverage check gives false confidence, and the failure surfaces inside the acceptance gate where it's most expensive.
+- "The goals look fine to me" — Run them through `./references/workflow/acceptance-criteria.md`. Without an explicit pass, this skill rubber-stamps vague goals, the structural coverage check gives false confidence, and the failure surfaces inside the acceptance gate where it's most expensive.
 
 ## Verification
 
-- [ ] `CONTEXT.md` and `spec.md` read in full alongside the plan; missing spec flagged as a gap
+- [ ] `CONTEXT.md` and `goals.md` read in full alongside the plan; missing goals file flagged as a gap
 - [ ] Every integration point verified against actual source code
 - [ ] Each step has a clear verdict with evidence
 - [ ] Each step's verify criterion assessed for concreteness
-- [ ] Each criterion in the spec assessed against `./references/workflow/acceptance-criteria.md`; `weak` / `vague-or-untestable` / `unresolved` findings appear in Questions with the specific failing dimension (and a suggested rewrite where possible)
-- [ ] acceptance coverage section maps every spec criterion to a step (or marks it `uncovered` / `out of scope`); plan steps with no matching criterion also flagged
-- [ ] Cross-file drift assessed across CONTEXT ↔ spec, CONTEXT ↔ plan, spec ↔ plan, plan ↔ result (when result exists), and status-field consistency against `./references/workflow/task-lifecycle.md`; section rendered even when no drift is found
-- [ ] Deferred criterion clarifications (`_(unresolved: ...)_` in the spec) lifted into Questions
+- [ ] Each goal in `goals.md` assessed against `./references/workflow/acceptance-criteria.md`; `weak` / `vague-or-untestable` / `unresolved` findings appear in Questions with the specific failing dimension (and a suggested rewrite where possible)
+- [ ] acceptance coverage section maps every goal ID to the step(s) citing it via `**Goal:**` (or marks it `uncovered` / `out of scope`); non-infra orphan steps also flagged
+- [ ] Cross-file drift assessed across CONTEXT ↔ goals, CONTEXT ↔ plan, goals ↔ plan, plan ↔ result (when result exists), and status-field consistency against `./references/workflow/task-lifecycle.md`; section rendered even when no drift is found
+- [ ] Deferred goal clarifications (`_(unresolved: ...)_` in `goals.md`) lifted into Questions
 - [ ] Checkpoints (if plan >5 steps) assessed for placement and concrete end-to-end assertion
 - [ ] Questions are targeted and explain why the answer matters
 - [ ] Gaps grouped by category with specific details

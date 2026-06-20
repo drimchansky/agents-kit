@@ -43,10 +43,10 @@ because unit tests pass). If any fails, apply Stop-the-Line.
 
 ## Acceptance-gate recipe
 
-When running the spec's acceptance gate, verify each criterion against the **shipped behavior**,
+When running the goals acceptance gate, verify each goal against the **shipped behavior**,
 not the result file: run the actual command, exercise the actual flow, observe the actual output.
 "Step 3 says it works" is not verification — the result file describes intent, not current state.
 
-Spot-checking a prior `met` criterion (drift / resume): open the file or run the command it cites
+Spot-checking a prior `met` goal (drift / resume): open the file or run the command it cites
 and confirm the behavior still holds; if the result file claims `met` but the named flow no longer
 behaves as required, flag it so the gate is re-run before the prior result is trusted.

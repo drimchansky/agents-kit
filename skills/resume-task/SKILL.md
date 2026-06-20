@@ -11,9 +11,9 @@ disable-model-invocation: true
 2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
 3. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core. This skill mostly observes; pull in deeper pack files only if you dig into a step's work. If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
 
-This skill loads an existing task folder under `.agents/tasks/` and produces a chat-only briefing — used to resume work after time away, hand off, review what was done, or answer questions about a task — whether in progress, blocked, or already shipped. It reads the four task artifacts (`CONTEXT.md`, `spec.md`, `plan.md`, `result.md`), reconstructs state from `- [ ]` / `- [x]` checkboxes, checks for drift between the plan's claims and current code/git, and prints a structured brief.
+This skill loads an existing task folder under `.agents/tasks/` and produces a chat-only briefing — used to resume work after time away, hand off, review what was done, or answer questions about a task — whether in progress, blocked, or already shipped. It reads the four task artifacts (`CONTEXT.md`, `goals.md`, `plan.md`, `result.md`), reconstructs state from `- [ ]` / `- [x]` checkboxes, checks for drift between the plan's claims and current code/git, and prints a structured brief.
 
-**CRITICAL**: This skill is **read-only across the repo** — task files (`CONTEXT.md`, `spec.md`, `plan.md`, `result.md`) and source code are observed but never modified (no write, edit, rename, delete). The skill also never mutates git state (no add, commit, checkout, stash). External systems cited in `CONTEXT.md`, specs, plans, or results (Jira, Notion, Slack, Google Docs, PRs, dashboards, etc.) are fetched **read-only** in Step 5 — never commented on, updated, or otherwise mutated. Reading the work product is **expected and required** — the drift check in Step 4 verifies the plan/result claims against current reality (for code, grepping shipped paths and opening cited files). Output is **chat only** — do not write a `BRIEF.md` artifact. Briefings stale within hours and a fifth file would contradict the four-file contract that `plan-task` and `implement-task` rely on. Domain-pack checklists in `./references/<domain>/` are not preloaded — this skill mostly observes; consult them only if you dig into a pending step's work during the drift spot-check.
+**CRITICAL**: This skill is **read-only across the repo** — task files (`CONTEXT.md`, `goals.md`, `plan.md`, `result.md`) and source code are observed but never modified (no write, edit, rename, delete). The skill also never mutates git state (no add, commit, checkout, stash). External systems cited in `CONTEXT.md`, goals, plans, or results (Jira, Notion, Slack, Google Docs, PRs, dashboards, etc.) are fetched **read-only** in Step 5 — never commented on, updated, or otherwise mutated. Reading the work product is **expected and required** — the drift check in Step 4 verifies the plan/result claims against current reality (for code, grepping shipped paths and opening cited files). Output is **chat only** — do not write a `BRIEF.md` artifact. Briefings stale within hours and a fifth file would contradict the four-file contract that `plan-task` and `implement-task` rely on. Domain-pack checklists in `./references/<domain>/` are not preloaded — this skill mostly observes; consult them only if you dig into a pending step's work during the drift spot-check.
 
 ## When to Use
 
@@ -55,16 +55,16 @@ Finished tasks may sit in an `archive/` subdirectory — exclude `archive/` when
 Read in full, not skim:
 
 - `CONTEXT.md` in the resolved task folder — the static grounding context (problem statement, scope summary, key assumptions, references).
-- `spec.md` — capture its description and the full bullet list of acceptance criteria. Note any criterion marked `_(unresolved: ...)_`.
-- `plan.md` — note its `**Status:**` header and its `**Spec:**` link.
+- `goals.md` — capture the full `## Goals` list by `G<n>` ID. Note any goal marked `_(unresolved: ...)_`.
+- `plan.md` — note its `**Status:**` header and its `**Goals:**` link.
 - `result.md` — note `**Status:**`, find the latest per-step or full-run section, capture every `**Blocked:**` block verbatim, and capture any `## Acceptance` section verbatim.
 
-Status values across the lifecycle-bearing files are defined in `./references/workflow/task-lifecycle.md` — consult it if you encounter an unfamiliar value, and use the **pairing rule** there to flag inconsistencies (e.g. plan `executing` with no result file, plan `done` with result `executing`). A `skipped` plan is terminal and needs no result file — don't flag a missing result for it as drift; report it as deliberately abandoned. A `blocked` plan is paused — on an external dependency or an unresolved failure — and a `blocked` plan with a `blocked` result and a `**Blocked:**` section is consistent (report it as paused and name the cause from the section), not drift. The spec file has no status — it's a static input.
+Status values across the lifecycle-bearing files are defined in `./references/workflow/task-lifecycle.md` — consult it if you encounter an unfamiliar value, and use the **pairing rule** there to flag inconsistencies (e.g. plan `executing` with no result file, plan `done` with result `executing`). A `skipped` plan is terminal and needs no result file — don't flag a missing result for it as drift; report it as deliberately abandoned. A `blocked` plan is paused — on an external dependency or an unresolved failure — and a `blocked` plan with a `blocked` result and a `**Blocked:**` section is consistent (report it as paused and name the cause from the section), not drift. The goals file has no status — it's a static input.
 
 Flag in the brief:
 
 - `CONTEXT.md` missing → task scaffolded outside the standard flow.
-- A plan with no sibling `spec.md` → `plan-task` was expected to produce one; without it the acceptance gate cannot run.
+- A plan with no sibling `goals.md` → `plan-task` was expected to produce one; without it the acceptance gate cannot run.
 
 ### 3. Reconstruct State from Checkboxes
 
@@ -89,7 +89,7 @@ Partition the claims by state, because they're checked differently:
 
 For each done/shipped claim, confirm it still holds and tag the finding. When the domain is code, follow the drift-verification recipe in `./references/engineering/exploration.md` (partition paths shipped vs pending, existence-check, symbol-survival grep, open a shipped file to confirm the change is present and not reverted). For other domains, verify each claim against the domain's own artifacts (a booking still confirmed, a document still signed, a commitment still standing).
 
-**Spec sanity check (domain-neutral).** If the result file has an `## Acceptance` section, spot-check one criterion tagged `met` against current behavior and confirm it still holds. If the result has no `## Acceptance` section but the plan is `done`, that itself is drift (the acceptance gate was skipped); flag it `block`. If a `met` criterion no longer holds, flag it `warn` so the user can re-run the gate before relying on the prior result.
+**Goal sanity check (domain-neutral).** If the result file has an `## Acceptance` section, spot-check one goal tagged `met` against current behavior and confirm it still holds. If the result has no `## Acceptance` section but the plan is `done`, that itself is drift (the acceptance gate was skipped); flag it `block`. If a `met` goal no longer holds, flag it `warn` so the user can re-run the gate before relying on the prior result.
 
 Tag each finding `info` (FYI), `warn` (review before resuming), or `block` (plan needs update before execution can proceed).
 
@@ -97,11 +97,11 @@ Tag each finding `info` (FYI), `warn` (review before resuming), or `block` (plan
 
 ### 5. Refresh External References
 
-External systems cited in `CONTEXT.md`, specs, plans, or results (Jira tickets, Slack threads, Notion pages, Google Docs, PRs, dashboards) have their own state that drifts independent of code. A ticket may have closed since the plan was written, a thread may resolve an open question, a doc may have been rewritten. The brief should reflect current external state, not stale text from `CONTEXT.md`.
+External systems cited in `CONTEXT.md`, goals, plans, or results (Jira tickets, Slack threads, Notion pages, Google Docs, PRs, dashboards) have their own state that drifts independent of code. A ticket may have closed since the plan was written, a thread may resolve an open question, a doc may have been rewritten. The brief should reflect current external state, not stale text from `CONTEXT.md`.
 
 This is the external counterpart to Step 4 — Step 4 catches drift on disk; Step 5 catches drift in the systems `CONTEXT.md` points at.
 
-1. **Extract reference URLs.** Walk `CONTEXT.md`, `spec.md`, `plan.md`, and `result.md` and collect every URL from:
+1. **Extract reference URLs.** Walk `CONTEXT.md`, `goals.md`, `plan.md`, and `result.md` and collect every URL from:
     - The `## References` section (or equivalently named section) in `CONTEXT.md`
     - Markdown link bodies (`[label](url)`) anywhere in the files
     - Plain `https://` strings in prose
@@ -130,7 +130,7 @@ This is the external counterpart to Step 4 — Step 4 catches drift on disk; Ste
 
 5. **Failures are non-blocking.** A single unfetchable URL must not halt the brief. Capture the error verbatim, tag the entry, continue to the next URL.
 
-6. **Feed answered questions back to Step 6.** If a fetched reference materially answers an item in `CONTEXT.md`'s or a plan's "Open Questions" (or a spec criterion marked `_(unresolved: ...)_`), note it — the "Open questions" section in the brief should drop those items and surface the new answer instead.
+6. **Feed answered questions back to Step 6.** If a fetched reference materially answers an item in `CONTEXT.md`'s or a plan's "Open Questions" (or a goal marked `_(unresolved: ...)_`), note it — the "Open questions" section in the brief should drop those items and surface the new answer instead.
 
 **Always render the "References update" heading** — print `No external references cited.` when no URLs were found. Absence is a verification statement.
 
@@ -144,7 +144,7 @@ Assemble per the output template below. Print to chat. Do not write any file.
 # Resume: <task title>
 
 **Task dir:** `.agents/tasks/<slug>/`
-**Spec:** `spec.md`
+**Goals:** `goals.md`
 **Plan:** `plan.md` (Status: <status>)
 **Result:** `result.md` (Status: <status>) — or "not yet started"
 
@@ -152,12 +152,12 @@ Assemble per the output template below. Print to chat. Do not write any file.
 
 <one paragraph: N of M steps done; executing / blocked / ready to resume / done / skipped; whether the acceptance gate has run>
 
-## Acceptance criteria
+## Goals
 
-- Criterion 1 — <as written in spec> — _met / unmet / not yet checked / unresolved_
-- Criterion 2 — <as written in spec> — _…_
+- G1 — <as written in goals.md> — _met / unmet / not yet checked / unresolved_
+- G2 — <as written in goals.md> — _…_
 
-(Pull the criterion text verbatim from the spec. Outcomes come from the result file's `## Acceptance` section if present; otherwise mark every criterion _not yet checked_. Surface any criterion trailing `_(unresolved: ...)_` from the spec as `unresolved`.)
+(Pull each goal verbatim from `goals.md`, with its `G<n>` ID. Outcomes come from the result file's `## Acceptance` section — tagged by ID — if present; otherwise mark every goal _not yet checked_. Surface any goal trailing `_(unresolved: ...)_` as `unresolved`.)
 
 ## Done
 
@@ -182,7 +182,7 @@ Assemble per the output template below. Print to chat. Do not write any file.
 - [block] `src/legacy/auth.ts` — Step 2 result claims it was modified, but the file no longer exists on disk
 - [info] `src/api/users.ts` — Step 4 (pending) plans to create this file, but it already exists; check whether the step is partially done or the filename collides
 - [info] `src/cache/ttl.ts` — Step 1's shipped change still present, but adjacent code has been refactored; review before resuming Step 5
-- [warn] Criterion 2 — result claims `met` but the named flow no longer behaves as the criterion requires; re-run the acceptance gate before relying on the prior result
+- [warn] G2 — result claims `met` but the named flow no longer behaves as the goal requires; re-run the acceptance gate before relying on the prior result
 
 (or, when clean: `No drift detected.`)
 
@@ -198,7 +198,7 @@ Assemble per the output template below. Print to chat. Do not write any file.
 
 ## Open questions
 
-- <deduped from CONTEXT.md "Open Questions" + plan "Open Questions" + any spec criteria marked `_(unresolved: ...)_`; questions answered in the result file _or in fetched references (Step 5)_ are removed, and any new answers surfaced in their place>
+- <deduped from CONTEXT.md "Open Questions" + plan "Open Questions" + any goals marked `_(unresolved: ...)_`; questions answered in the result file _or in fetched references (Step 5)_ are removed, and any new answers surfaced in their place>
 
 ## Where to start
 
@@ -219,23 +219,23 @@ Assemble per the output template below. Print to chat. Do not write any file.
 ## Verification
 
 - [ ] Task folder resolved (asked the user when ambiguous, never guessed)
-- [ ] `CONTEXT.md`, `spec.md`, `plan.md`, and `result.md` read in full
+- [ ] `CONTEXT.md`, `goals.md`, `plan.md`, and `result.md` read in full
 - [ ] A `skipped` plan reported as abandoned, not flagged for a missing result
 - [ ] No file in the task folder was written, edited, renamed, or deleted
 - [ ] No git state was mutated (no add, commit, checkout, stash)
 - [ ] Step state reconstructed from checkbox markers, not inferred from prose
-- [ ] Acceptance Criteria section in the brief lists every spec criterion verbatim, with outcome from the result file's `## Acceptance` section (or `not yet checked` / `unresolved` when applicable)
-- [ ] Plan with no sibling `spec.md` flagged
+- [ ] Goals section in the brief lists every goal verbatim by `G<n>` ID, with outcome from the result file's `## Acceptance` section (or `not yet checked` / `unresolved` when applicable)
+- [ ] Plan with no sibling `goals.md` flagged
 - [ ] All `**Blocked:**` sections in the result file surfaced verbatim
 - [ ] Drift check compared plan/result claims against the current implementation on disk; findings listed (or `No drift detected.` stated explicitly)
 - [ ] Plan-referenced paths partitioned into shipped vs. pending before existence-check; missing **shipped** paths flagged as `block`/`warn`, missing **pending** paths not flagged
 - [ ] At least one `**Shipped:**` file from the latest result entry spot-checked against current source
-- [ ] Spec sanity check ran: a `met` criterion spot-checked against live behavior; missing `## Acceptance` section on a `done` plan flagged `block`
-- [ ] Every URL in `CONTEXT.md` / spec / plan / result extracted, deduped, and fetched read-only with the appropriate tool (or `No external references cited.` stated explicitly)
+- [ ] Goal sanity check ran: a `met` goal spot-checked against live behavior; missing `## Acceptance` section on a `done` plan flagged `block`
+- [ ] Every URL in `CONTEXT.md` / goals / plan / result extracted, deduped, and fetched read-only with the appropriate tool (or `No external references cited.` stated explicitly)
 - [ ] No external system was written to (no Jira comment, no Slack message, no Drive edit, no PR comment)
 - [ ] Material changes since citation flagged `warn`; broken links flagged `block`; auth-walled links flagged `info` with `auth required — re-check manually`; failures captured, not omitted
 - [ ] Open questions resolved by a fetched reference removed from "Open questions" and the new answer surfaced in "References update"
 - [ ] Brief uses the documented template sections in order
 - [ ] "Where to start" names a concrete first action (file + command), not a generic suggestion
-- [ ] Open questions deduplicated across `CONTEXT.md`, plan, and any unresolved spec criteria; already-answered ones removed
+- [ ] Open questions deduplicated across `CONTEXT.md`, plan, and any unresolved goals; already-answered ones removed
 - [ ] No `BRIEF.md` (or any other file) was created

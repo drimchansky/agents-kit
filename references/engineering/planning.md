@@ -1,7 +1,7 @@
 # Engineering Planning
 
 Engineering specifics for `plan-task`: how to slice code work into steps, size them, and place
-checkpoints. The neutral spine owns the planning *process* (clarify → spec → explore → approach →
+checkpoints. The neutral spine owns the planning *process* (clarify → goals → explore → approach →
 scope → steps → checkpoints → risks); this file owns the code-shaped *details*. See
 `../workflow/domain-packs.md`.
 

@@ -44,14 +44,14 @@ This skill brings existing task folders under `.agents/tasks/` into conformance 
 Read the two reference docs that define the current format, and treat them as the **only** source of truth:
 
 - `./references/workflow/task-layout.md` — directory layout, file role-names, link-headers, `archive/`, multi-part siblings, discovery rules.
-- `./references/workflow/task-lifecycle.md` — the `**Status:**` vocabulary for `CONTEXT.md` / `plan.md` / `result.md`, and the `spec.md` "no status" rule.
+- `./references/workflow/task-lifecycle.md` — the `**Status:**` vocabulary for `CONTEXT.md` / `plan.md` / `result.md`, and the `goals.md` "no status" rule.
 
 Derive the conformance checklist from the docs at run time — don't migrate against a remembered format. Read each value out of the docs every run; the **dimensions** to check stay fixed even as their values evolve:
 
 - **Folder shape** — is each task a flat folder `.agents/tasks/<slug>/`, the folder name being the slug? (`task-layout.md`)
 - **Role files** — the set of role-named files, their exact spelling and capitalization, and the rule that no stem prefix remains. (`task-layout.md`)
 - **Link-headers** — which `**Header:**` lines exist and that each points at its `./`-relative role-name target. (`task-layout.md`)
-- **Status vocabulary, per file** — read it from `task-lifecycle.md`, which gives each status-bearing file a **distinct** vocabulary: `CONTEXT.md` carries a one-shot *origin marker*, `plan.md` and `result.md` carry *lifecycle states* (a different pool), and `spec.md` carries **no** status. A value valid for one file is not automatically valid on another — check each file against its own column.
+- **Status vocabulary, per file** — read it from `task-lifecycle.md`, which gives each status-bearing file a **distinct** vocabulary: `CONTEXT.md` carries a one-shot *origin marker*, `plan.md` and `result.md` carry *lifecycle states* (a different pool), and `goals.md` carries **no** status. A value valid for one file is not automatically valid on another — check each file against its own column.
 - **Multi-part layout** — sibling folders (optionally `NN-` prefixed), with whatever shared-layer rule the docs currently state. (`task-layout.md`)
 - **Archive** — the single archive path the docs define, and the discovery rule that excludes it. (`task-layout.md`)
 
@@ -62,7 +62,7 @@ Read the current value of each dimension from the docs rather than assuming the 
 - **Target is a project root, not a task.** This skill takes the path to a *project* (the directory that contains `.agents/`), defaulting to the current project. Sanity-check the argument first: if the user passed a task folder or a bare slug (e.g. `legacy-export` or `.agents/tasks/legacy-export`) — recognizable because it *is* a task folder or names one, rather than containing an `.agents/` directory — don't silently append `/.agents/tasks/` to it (that yields a bogus nested path and a false "nothing to migrate"). Stop and ask the user for the project root, or to name an archived folder explicitly if that's what they meant.
 - **Resolve the task root** as `<target>/.agents/tasks/`. If it doesn't exist, report there's nothing to migrate and stop.
 - **List candidate folders** directly under `.agents/tasks/`, **excluding `archive/`** (a container, not a task — follow `task-layout.md`'s discovery rules rather than restating them). Migrate an archived folder only if the user names it explicitly. **If the scan finds zero active candidates** (the root is empty, or holds only `archive/`), report "nothing active to migrate" and stop — don't fall through to an empty preview and a confirm prompt for zero fixes.
-- For each candidate, read whatever task files it contains — any of `CONTEXT.md`, `spec.md` / `*.spec.md`, `plan.md` / `*.plan.md`, `result.md` / `*.result.md`, and, for old shapes, `PROJECT.md` and nested subdirectories.
+- For each candidate, read whatever task files it contains — any of `CONTEXT.md`, `goals.md` (or a legacy `spec.md` / `*.spec.md`), `plan.md` / `*.plan.md`, `result.md` / `*.result.md`, and, for old shapes, `PROJECT.md` and nested subdirectories.
 
 ### 3. Classify each folder
 
@@ -70,15 +70,18 @@ Diff each folder against the §1 checklist and assign exactly one label:
 
 - **conformant** — already matches the current format. Nothing to do.
 - **structurally-fixable** — differs *only* by lossless structural transforms, all of which §5 can apply automatically:
-    - a role file carries a **stem prefix** (`<anything>.spec.md` → `spec.md`, and so on) — match by the `.spec.md` / `.plan.md` / `.result.md` suffix, not by assuming the prefix equals the current folder slug (a folder renamed after its files won't match its own slug);
-    - a role file's **case** is wrong (`context.md` / `Context.md` → `CONTEXT.md`; `Spec.md` / `SPEC.MD` → `spec.md`; a wrong `.MD` extension) and only needs normalizing to the canonical case;
+    - a role file carries a **stem prefix** (`<anything>.plan.md` → `plan.md`, and so on) — match by the `.spec.md` / `.plan.md` / `.result.md` suffix, not by assuming the prefix equals the current folder slug (a folder renamed after its files won't match its own slug);
+    - an already goal-shaped legacy goals file named `spec.md` / `*.spec.md` (has a `## Goals` list whose bullets already carry durable `G<n>` IDs), or a `**Spec:**` link-header inside an otherwise conformant task — the old goals-file name/header; renaming to `goals.md` / `**Goals:**` is a lossless transform (§5);
+    - a role file's **case** is wrong (`context.md` / `Context.md` → `CONTEXT.md`; `Plan.md` / `PLAN.MD` → `plan.md`; a wrong `.MD` extension) and only needs normalizing to the canonical case;
     - an in-folder link-header points at an old target (a prefixed name, or a non-`./` path) **and actually carries a link** — a `**Result:**` (or any header) that is still a prose placeholder, not a link, is conformant for that lifecycle state and is left alone (see §5).
 - **needs-judgment** — differs in a way that **cannot** be resolved losslessly, so it is flagged and left untouched (§6):
     - a `PROJECT.md` grouping (a `PROJECT.md` file, a `**Project:**` header, and/or nested task subdirectories) — collapsing it requires redistributing shared context;
-    - a plan carrying inline acceptance criteria with no sibling `spec.md` — extracting the spec is a judgment call;
+    - a plan carrying inline acceptance criteria with no sibling `goals.md` — extracting goals (and assigning durable `G<n>` IDs) is a judgment call;
+    - a `goals.md` (or legacy `spec.md` / `*.spec.md`) whose goals carry **no durable `G<n>` IDs**, or whose legacy spec still uses the old free-form description/criteria shape — assigning IDs or reshaping criteria into goals is content derivation, never a lossless transform;
+    - a `plan.md` whose steps carry no `**Goal:**` citation line — back-filling citations maps steps to goals by judgment;
     - a `**Status:**` value not in *that file's* current vocabulary (per `task-lifecycle.md`, checked against its own column — origin marker for `CONTEXT.md`, lifecycle state for `plan.md` / `result.md`) — **always** judgment, even when a 1:1 mapping looks obvious, because §5 has no lossless status rewrite so remapping is never auto-applied;
-    - a `spec.md` carrying any `**Status:**` header — the spec must have none, and removing the line deletes content, so flag it rather than stripping it;
-    - a **destination-name collision** — a prefixed or wrong-case file whose target role name is already occupied by a *distinct* file (e.g. both `old.spec.md` and a hand-edited `spec.md`) — since renaming would clobber or half-migrate, flag the whole folder;
+    - a `goals.md` (or legacy `spec.md`) carrying any `**Status:**` header — it must have none, and removing the line deletes content, so flag it rather than stripping it;
+    - a **destination-name collision** — a prefixed, wrong-case, or legacy-named file whose target role name is already occupied by a *distinct* file (e.g. both a legacy `spec.md` and a hand-edited `goals.md`) — since renaming would clobber or half-migrate, flag the whole folder;
     - any shape you can't confidently match to the checklist.
 
 **Precedence:** if a folder has *any* needs-judgment issue, classify it **needs-judgment** even when it also has structural issues — do not split the difference. Resolving the judgment issue by hand and re-running picks up the structural fixes safely. This is the rule that prevents a half-migration from stranding content.
@@ -100,17 +103,17 @@ Only after the user confirms the preview, and only for **structurally-fixable** 
 
 **Rename prefixed and wrong-case files to their role names** — match each file by its role suffix, never by assuming the prefix is the folder slug:
 
-- `*.spec.md` (any stem) → `spec.md`
+- `*.spec.md` (any stem) **or** a legacy `spec.md` → `goals.md` only when the file is already goal-shaped (has a `## Goals` list with durable `G<n>` IDs); old free-form specs are needs-judgment, not an auto-rename
 - `*.plan.md` (any stem) → `plan.md`
 - `*.result.md` (any stem) → `result.md`
-- fix case: `CONTEXT.md` must be capitalized, `spec.md` / `plan.md` / `result.md` lowercase, with a `.md` extension — e.g. `context.md` / `Context.md` → `CONTEXT.md`, `Spec.md` / `SPEC.MD` → `spec.md`.
+- fix case: `CONTEXT.md` must be capitalized, `goals.md` / `plan.md` / `result.md` lowercase, with a `.md` extension — e.g. `context.md` / `Context.md` → `CONTEXT.md`, an already goal-shaped legacy `Spec.md` / `SPEC.MD` → `goals.md`.
 
 Use a plain filesystem rename. **A case-only difference is the rename to perform, not a collision** — on a case-insensitive filesystem (macOS default) `Context.md` and `CONTEXT.md` resolve to the same path, so don't read the destination as "already existing"; rename via a temp name (`Context.md` → `_tmp` → `CONTEXT.md`) if the OS won't do a direct case-only rename. A **genuine** collision — a *distinct* file already holding the destination role name with different content — is caught at classify time (§3), not here: such a folder is **needs-judgment** and left entirely untouched. Never rename some of a folder's files while skipping a collided one; that is the half-migration the skill forbids.
 
 **Rewrite in-folder link-headers** to `./`-relative role-name targets — but only where the header **already carries a link** to an old target. A header that is an intentional prose placeholder, not a link, is left exactly as-is:
 
 - `**Context:**` → `[./CONTEXT.md](./CONTEXT.md)`
-- `**Spec:**` → `[./spec.md](./spec.md)`
+- `**Goals:**`, or a legacy `**Spec:**`, → `[./goals.md](./goals.md)` (the `**Spec:** → **Goals:**` rename is lossless)
 - `**Plan:**` → `[./plan.md](./plan.md)`
 - `**Result:**` → `[./result.md](./result.md)` — **only if it is already a link**. A fresh `to-do` plan legitimately carries `**Result:** _(populated by implement-task: link to ./result.md)_` because no result file exists yet; that placeholder is conformant — never replace it with a link to a `result.md` that isn't there.
 - result-step links pointing at a prefixed result name (`./<stem>.result.md#…`) → the role-named target (`./result.md#…`), **preserving the anchor** (the anchor is heading-derived, not slug-derived, so it carries over verbatim).
@@ -144,17 +147,25 @@ For each **needs-judgment** folder, print the specific issue and a concrete reco
 
 Do **not** flatten the directories yourself — flattening without step 1 strands the shared context.
 
-**Inline acceptance criteria, no `spec.md`** (a plan with an `## Acceptance Criteria` section and no sibling spec file):
+**Inline acceptance criteria, no `goals.md`** (a plan with an `## Acceptance Criteria` / inline criteria section and no sibling goals file):
 
-> This plan carries its acceptance criteria inline. The current format keeps them in a separate `spec.md` (`task-lifecycle.md`: the spec is a distinct artifact with no status). To migrate by hand: create `spec.md` from the criteria block, following the spec shape `task-layout.md` / `task-lifecycle.md` define (link-header, a short description, the criteria as bullets), remove the inline block from the plan, then re-run this skill for any remaining structural fixes.
+> This plan carries its acceptance criteria inline. The current format keeps them in a separate `goals.md` (`task-lifecycle.md`: the goals file is a distinct artifact with no status). To migrate by hand: create `goals.md` from the criteria block as a `## Goals` list of `- G<n> — <outcome>` bullets (no `## Description`), following the goals shape `task-layout.md` / `task-lifecycle.md` define, assign each goal a durable `G<n>` ID, remove the inline block from the plan, then re-run this skill for any remaining structural fixes.
 
 **Out-of-vocabulary `**Status:**` value** (any value not in *that file's* column in `task-lifecycle.md`, even one that looks like an obvious rename):
 
 > `<file>` has `**Status:** <value>`, which isn't in its current vocabulary (`task-lifecycle.md`: <the valid values for that file>). Remapping a status is a judgment call the skill won't auto-apply — set it by hand to the intended state, then re-run.
 
-**`spec.md` carrying a `**Status:**`** (the spec must have none):
+**`goals.md` (or legacy `spec.md`) carrying a `**Status:**`** (the goals file must have none):
 
-> `spec.md` carries `**Status:** <value>`, but the spec is a static input with no lifecycle (`task-lifecycle.md`). Removing the line deletes content, so decide by hand whether to drop it or move the state onto the plan, then re-run.
+> `goals.md` carries `**Status:** <value>`, but the goals file is a static input with no lifecycle (`task-lifecycle.md`). Removing the line deletes content, so decide by hand whether to drop it or move the state onto the plan, then re-run.
+
+**Goals file with no durable `G<n>` IDs** (a `goals.md`, or a renamed legacy `spec.md`, whose goals are plain bullets without IDs):
+
+> The current format gives each goal a durable, never-renumbered `G<n>` ID (`task-layout.md`), cited by the plan's steps. Assigning IDs to existing goals is content derivation, not a lossless rename — the skill won't guess them. To migrate by hand: number the goals `G1`, `G2`, … in `goals.md`, then re-run.
+
+**Plan steps with no `**Goal:**` citation** (a `plan.md` whose steps predate the citation convention):
+
+> The current step format carries a `**Goal:**` line naming the goal ID(s) the step delivers, or `none (infra/refactor)` (`task-layout.md`). Back-filling these maps each step to the goals it delivers — a judgment call the skill won't auto-apply. To migrate by hand: add a `**Goal:**` line to each step, then re-run.
 
 **Anything else you can't confidently classify:** describe what you saw and why it doesn't match the §1 checklist, and recommend the user resolve it by hand. Never guess a transform.
 
@@ -171,11 +182,11 @@ Print the preview as a per-folder list, then a summary and an explicit confirmat
 
 - `add-csv-export/` — **conformant** — no changes
 - `legacy-export/` — **structurally-fixable**
-    - rename `legacy-export.spec.md` → `spec.md`, `legacy-export.plan.md` → `plan.md`, `legacy-export.result.md` → `result.md`
-    - rewrite `**Spec:**` / `**Result:**` headers and the result-step link to `./` role-name targets
+    - rename already goal-shaped `legacy-export.spec.md` → `goals.md`, `legacy-export.plan.md` → `plan.md`, `legacy-export.result.md` → `result.md`
+    - rewrite `**Spec:**`→`**Goals:**` / `**Result:**` headers and the result-step link to `./` role-name targets
 - `checkout-redesign/` — **needs-judgment** — PROJECT.md grouping
     - <recommended manual action (§6)>
-- `inline-criteria-task/` — **needs-judgment** — inline criteria, no spec.md
+- `inline-criteria-task/` — **needs-judgment** — inline criteria, no goals.md
     - <recommended manual action (§6)>
 
 **Summary:** 1 conformant, 1 structurally-fixable, 2 needs-judgment. (`archive/` excluded.)
@@ -201,10 +212,11 @@ Apply the structural fixes? Nothing changes until you confirm.
 - [ ] Scanned `.agents/tasks/` excluding `archive/`; stopped with "nothing active to migrate" when the scan found zero candidates
 - [ ] Every active folder labelled conformant / structurally-fixable / needs-judgment
 - [ ] A folder with any judgment issue — including a latent destination-name collision or an out-of-vocabulary status — classified needs-judgment and left entirely untouched (no half-migration)
-- [ ] Status values checked against *each file's own* vocabulary (origin marker for `CONTEXT.md`, lifecycle state for `plan.md` / `result.md`, none for `spec.md`)
+- [ ] Status values checked against *each file's own* vocabulary (origin marker for `CONTEXT.md`, lifecycle state for `plan.md` / `result.md`, none for `goals.md`)
 - [ ] Preview printed; nothing created, renamed, edited, or moved before the user confirmed
 - [ ] On confirm, each structurally-fixable folder conforms to `task-layout.md` — role-named files (no stem prefix), correct case, `./`-relative link-headers
 - [ ] Prefixed files matched by role suffix (any stem), not by assuming the prefix equals the folder slug; case-only renames performed without a false collision
+- [ ] Already goal-shaped legacy `spec.md` / `*.spec.md` renamed to `goals.md` and `**Spec:**`→`**Goals:**` (lossless); old free-form specs, a goals file lacking durable `G<n>` IDs, or a plan whose steps lack `**Goal:**` citations, classified needs-judgment and never back-filled
 - [ ] A `to-do` plan's prose `**Result:**` placeholder left intact (not turned into a link to a nonexistent result file)
 - [ ] Result-step links rewritten to the role-named target with the anchor preserved
 - [ ] `result.md` execution-record content untouched (only link targets / the filename changed)

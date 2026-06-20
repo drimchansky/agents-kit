@@ -9,16 +9,35 @@ A task lives in a single flat folder under `.agents/tasks/`, named for its slug.
 ```
 .agents/tasks/<slug>/
 ├── CONTEXT.md     # static grounding context (origin marker + inputs)
-├── spec.md        # acceptance criteria — what "done" means
+├── goals.md       # acceptance criteria — what "done" means
 ├── plan.md        # the contract: scope, steps, verify criteria
 └── result.md      # append-only execution record
 ```
 
-One plan per folder. `CONTEXT.md` is capitalized; `spec.md`, `plan.md`, and `result.md` are lowercase. A skill finds each file by its fixed role name (convention/glob), so moving or archiving a folder never breaks a path. The in-folder `**Context:**` / `**Spec:**` / `**Plan:**` / `**Result:**` link-headers point at `./CONTEXT.md`, `./spec.md`, `./plan.md`, and `./result.md` — stable `./` links that survive folder moves.
+One plan per folder. `CONTEXT.md` is capitalized; `goals.md`, `plan.md`, and `result.md` are lowercase. A skill finds each file by its fixed role name (convention/glob), so moving or archiving a folder never breaks a path. The in-folder `**Context:**` / `**Goals:**` / `**Plan:**` / `**Result:**` link-headers point at `./CONTEXT.md`, `./goals.md`, `./plan.md`, and `./result.md` — stable `./` links that survive folder moves.
+
+## The goals file: durable IDs, cited by step
+
+`goals.md` is the single source of task intent — the testable acceptance criteria for what "done" means (the quality bar lives in the sibling `acceptance-criteria.md`). Every other artifact *references* it by ID rather than restating intent. Its shape:
+
+```markdown
+# Goals: <task title>
+**Plan:** [./plan.md](./plan.md)
+
+## Goals
+- G1 — <testable, observable outcome>
+- G2 — <testable, observable outcome>
+```
+
+Like the spec it replaces, `goals.md` is a static input — it carries no `**Status:**` field and no `## Description`; the title and the goals themselves carry the intent.
+
+- **Durable, never-renumbered IDs.** Each goal carries a `G<n>` ID assigned once. Removing a goal **retires** its number (a gap is fine — deleting `G2` leaves `G1, G3`); a new goal takes the next free number, never a retired one. This is what lets a plan step cite `G2` and keep pointing at the same goal across user edits between sessions.
+- **Steps cite the goals they deliver.** Every plan step carries a `**Goal:**` line naming the goal ID(s) it delivers (`**Goal:** G1, G3`) — or the explicit escape `**Goal:** none (infra/refactor)` for a step that delivers no user-visible goal. Coverage is then mechanical: every goal ID maps to at least one delivering step, and every non-escaped step to at least one goal.
+- **Scope is a partition of goal IDs.** A plan's `## Scope` says which goals it delivers and which it defers, by explicit ID list (e.g. `delivered: G1, G3 · deferred: G4`), instead of re-prosing intent. Do not use ranges: retired goal IDs can leave gaps, so `G1-G3` is ambiguous once `G2` has been removed. Each goal is either in this plan or deferred to another — the partition is what makes goals↔scope drift unwritable.
 
 ## Multi-part efforts: sibling folders
 
-A larger effort that won't fit one plan becomes several independent sibling task folders, not one folder holding many plans. Each sibling is a complete task folder (its own `CONTEXT.md` + `spec.md`/`plan.md`/`result.md`). When the parts have a blocking order, express it with an `NN-` prefix on the folder names — the only place ordering can live, since the folders are otherwise independent:
+A larger effort that won't fit one plan becomes several independent sibling task folders, not one folder holding many plans. Each sibling is a complete task folder (its own `CONTEXT.md` + `goals.md`/`plan.md`/`result.md`). When the parts have a blocking order, express it with an `NN-` prefix on the folder names — the only place ordering can live, since the folders are otherwise independent:
 
 ```
 .agents/tasks/01-schema/

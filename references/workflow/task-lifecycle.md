@@ -1,13 +1,13 @@
 # Task Lifecycle: Status Registry
 
-A task folder holds four artifacts that share a slug but track distinct lifecycles. Three carry a `**Status:**` header drawn from a closed vocabulary; the spec file deliberately has no status. **This file is the single source of truth for lifecycle states.** When a status name or transition changes, update it here first and propagate to the skills that read or write these fields: `refine-idea`, `plan-task`, `implement-task`, `resume-task`, and `review-task`. (`migrate-task-format` also reads this vocabulary, but at run time, so it needs no update.) Directory layout (the flat task folder and `archive/`) is documented separately in the sibling `task-layout.md`.
+A task folder holds four artifacts that share a slug but track distinct lifecycles. Three carry a `**Status:**` header drawn from a closed vocabulary; the goals file deliberately has no status. **This file is the single source of truth for lifecycle states.** When a status name or transition changes, update it here first and propagate to the skills that read or write these fields: `refine-idea`, `plan-task`, `implement-task`, `resume-task`, and `review-task`. (`migrate-task-format` also reads this vocabulary, but at run time, so it needs no update.) Directory layout (the flat task folder and `archive/`) is documented separately in the sibling `task-layout.md`.
 
 ## Files
 
 - **`CONTEXT.md`** — the task's static grounding context (capitalized).
   - `**Status:**` is a one-shot **origin marker**.
   - Created by `refine-idea` or `plan-task`; never mutated after creation.
-- **`spec.md`** — the task's acceptance criteria; what "done" looks like.
+- **`goals.md`** — the task's goals: the acceptance criteria for what "done" looks like.
   - No `**Status:**` field.
   - Drafted by `plan-task` before the plan, or hand-authored; freely edited by user.
 - **`plan.md`** — the contract: scope, steps, verify criteria.
@@ -17,7 +17,7 @@ A task folder holds four artifacts that share a slug but track distinct lifecycl
   - `**Status:**` is a **lifecycle state**.
   - Created and transitioned by `implement-task`.
 
-The field name `Status:` is shared across the three status-bearing files even though it carries two different kinds of value (origin marker vs. lifecycle state). The values themselves are disjoint, so there's no collision in practice — but be aware of the dual meaning when scanning across files. The spec file sits outside this scheme entirely; it is a static input that evolves only through user edits.
+The field name `Status:` is shared across the three status-bearing files even though it carries two different kinds of value (origin marker vs. lifecycle state). The values themselves are disjoint, so there's no collision in practice — but be aware of the dual meaning when scanning across files. The goals file sits outside this scheme entirely; it is a static input that evolves only through user edits.
 
 ## Status values
 
@@ -26,9 +26,9 @@ The field name `Status:` is shared across the three status-bearing files even th
 - **`refined`** — produced by `refine-idea` Phase 3. The recommended direction is chosen, MVP scope is sketched, and the file is ready for `plan-task` to consume.
 - **`drafted-by-plan-task`** — produced by `plan-task` as a skeleton when no idea step ran. Placeholder sections are intentional; the user enriches them over time.
 
-### `spec.md` — no status field
+### `goals.md` — no status field
 
-The spec is a static input authored before (or alongside) the plan. It carries no `**Status:**` header and no lifecycle. It can be drafted by `plan-task` (which asks clarifying questions when requirements are unclear) or hand-authored by the user. Other skills read it; only the user mutates it.
+The goals file is a static input authored before (or alongside) the plan. It carries no `**Status:**` header and no lifecycle. It can be drafted by `plan-task` (which asks clarifying questions when requirements are unclear) or hand-authored by the user. Other skills read it; only the user mutates it.
 
 ### `plan.md` — lifecycle: `to-do` → `executing` → `done` (or `skipped`); `executing` ⇄ `blocked`
 
@@ -58,7 +58,7 @@ The plan and its companion result file track in lockstep once execution begins:
 
 A plan in `executing` with no companion result file (or a mismatched pair) signals an incomplete `implement-task` initialization. `resume-task` and `review-task` should flag this as drift.
 
-The spec file is not part of the pairing rule — it has no lifecycle state to compare. `resume-task` should still flag if a plan exists without a sibling spec, since `plan-task` is expected to produce one.
+The goals file is not part of the pairing rule — it has no lifecycle state to compare. `resume-task` should still flag if a plan exists without a sibling goals file, since `plan-task` is expected to produce one.
 
 ## Adding or renaming statuses
 

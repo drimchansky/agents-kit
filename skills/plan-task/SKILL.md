@@ -11,11 +11,11 @@ disable-model-invocation: true
 2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
 3. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for (`exploration.md`, `planning.md`, …). If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
 
-This skill produces an implementation plan inside a resolved task folder, paired with a sibling **spec file** that captures the testable acceptance criteria. The plan is the contract that `implement-task` later executes against; the spec is the contract for what "done" means. Each task folder holds one plan (with its spec) plus a `CONTEXT.md`; a multi-part effort becomes several sibling task folders, not many plans in one folder.
+This skill produces an implementation plan inside a resolved task folder, paired with a sibling **goals file** that captures the testable acceptance criteria. The plan is the contract that `implement-task` later executes against; the goals file is the contract for what "done" means. Each task folder holds one plan (with its goals) plus a `CONTEXT.md`; a multi-part effort becomes several sibling task folders, not many plans in one folder.
 
 The user provides a task or feature request. They may include context about constraints, preferences, or prior discussion.
 
-**CRITICAL**: The output of this skill is two written files on disk — `spec.md` and `plan.md` — not a conversation message. After writing them, summarize briefly in the chat and point at the files.
+**CRITICAL**: The output of this skill is two written files on disk — `goals.md` and `plan.md` — not a conversation message. After writing them, summarize briefly in the chat and point at the files.
 
 ## When to Plan (and When Not To)
 
@@ -41,15 +41,15 @@ If the task doesn't warrant a full plan, say so and suggest proceeding directly 
 
 ## Output Files
 
-This skill writes **two paired files** per plan: a spec and a plan. Both live in the resolved task folder at `.agents/tasks/<slug>/`, alongside its `CONTEXT.md`, under fixed role names.
+This skill writes **two paired files** per plan: a goals file and a plan. Both live in the resolved task folder at `.agents/tasks/<slug>/`, alongside its `CONTEXT.md`, under fixed role names.
 
-- `<slug>` — names the **task folder** that holds `CONTEXT.md` plus the spec, plan, and result for the effort. Derived from the task: 2–5 lowercase kebab-case words capturing the gist (e.g. `add-csv-export`, `migrate-auth-middleware`, `fix-stale-cache-invalidation`). Don't ask the user — derive it. **If the user passed a slug that resolves to an existing active task folder (typically from `refine-idea`), reuse it — don't create a new one.**
-- **Fixed file names.** Inside the folder the spec and plan are always `spec.md` and `plan.md` — role names, no slug prefix, one plan per folder (so `.agents/tasks/add-csv-export/spec.md` and `.../plan.md`). Skills find them by these fixed names, never by a path someone typed.
+- `<slug>` — names the **task folder** that holds `CONTEXT.md` plus the goals, plan, and result for the effort. Derived from the task: 2–5 lowercase kebab-case words capturing the gist (e.g. `add-csv-export`, `migrate-auth-middleware`, `fix-stale-cache-invalidation`). Don't ask the user — derive it. **If the user passed a slug that resolves to an existing active task folder (typically from `refine-idea`), reuse it — don't create a new one.**
+- **Fixed file names.** Inside the folder the goals file and plan are always `goals.md` and `plan.md` — role names, no slug prefix, one plan per folder (so `.agents/tasks/add-csv-export/goals.md` and `.../plan.md`). Skills find them by these fixed names, never by a path someone typed.
 - **Multi-part efforts.** When the work won't fit one plan, split it into several sibling task folders (one plan each), not multiple plans in one folder. Ordering between siblings lives in their folder names — see `./references/workflow/task-layout.md`.
 
 If no matching active task folder exists, create `.agents/tasks/<slug>/` by default. If the slug collides with an existing folder for a different effort, pick a more specific slug.
 
-**Spec file (`spec.md`)** — the contract for what "done" means. Carries a short task description and a free-form bullet list of acceptance criteria. **No `**Status:**` field.** The user may hand-author it; if they do, this skill reads and respects it instead of regenerating.
+**Goals file (`goals.md`)** — the contract for what "done" means. Carries a `## Goals` list of durably-ID'd `G<n>` acceptance criteria, with no description prose. **No `**Status:**` field.** The user may hand-author it; if they do, this skill reads and respects it instead of regenerating.
 
 **Plan file (`plan.md`)** — the contract for how the work is executed. Once written, `implement-task` consumes it and updates step checkboxes as work completes. Avoid rewriting the plan in place during planning iteration unless the user asks for revisions — refine through conversation, then write the final version.
 
@@ -88,9 +88,9 @@ The skeleton below is the canonical CONTEXT.md schema, shared with `refine-idea`
 
 <one-sentence framing of what this task is solving>
 
-## Acceptance Criteria
+## Goals
 
-_(Acceptance criteria live in `spec.md`. This skill drafts that spec before the plan and asks for clarification when requirements are unclear.)_
+_(Goals live in `goals.md`. This skill drafts that file before the plan and asks for clarification when requirements are unclear.)_
 
 ## Recommended Direction
 
@@ -122,49 +122,44 @@ _(External links, pasted specs, ticket numbers, screenshots, cross-cutting notes
 
 The user is expected to enrich `CONTEXT.md` over time (links, specs, decisions). Don't dump per-step notes, approach rationale, or verify criteria into it — those belong in the plan or its result file. Don't dump cross-task narrative into it either: tasks are independent folders with no shared layer above them, so anything a sibling task needs is duplicated into its own `CONTEXT.md`. Placeholder sections are intentional: leave them in place even if empty so downstream skills can find the same section names.
 
-### 3. Draft the Spec
+### 3. Draft the Goals
 
-Before designing the plan, write `<task-dir>/spec.md` — the contract for what "done" means. This pins requirements before approach selection so steps and verification can be derived from concrete acceptance criteria, not from a moving target.
+Before designing the plan, write `<task-dir>/goals.md` — the contract for what "done" means. This pins requirements before approach selection so steps and verification can be derived from concrete, durably-ID'd goals, not from a moving target.
 
 **Resolve in this order:**
 
-- **Spec already exists for this task** (hand-authored or from a prior session) — read it, apply `./references/workflow/acceptance-criteria.md` to each criterion, restate the criteria back to the user (calling out any that fail the checklist), and ask whether to proceed as-is or revise. Do not silently overwrite.
-- **No spec exists** — draft one from the user's task description and any signal in `CONTEXT.md` (problem statement, recommended direction, key assumptions). Run each draft criterion through `./references/workflow/acceptance-criteria.md` before writing the file; ask clarifying questions for any criterion that fails the checklist (testable, specific, outcome-oriented, singular, bounded, stated as behavior).
+- **Goals already exist for this task** (hand-authored or from a prior session) — read them, apply `./references/workflow/acceptance-criteria.md` to each goal, restate the goals back to the user (calling out any that fail the checklist), and ask whether to proceed as-is or revise. Do not silently overwrite.
+- **No goals file exists** — draft one from the user's task description and any signal in `CONTEXT.md` (problem statement, recommended direction, key assumptions). Run each draft goal through `./references/workflow/acceptance-criteria.md` before writing the file; ask clarifying questions for any goal that fails the checklist (testable, specific, outcome-oriented, singular, bounded, stated as behavior).
 
 **Clarifying questions** — ask only when needed, batched into a single round. Each question must:
 
-- Reference the specific criterion (or missing criterion) it addresses.
-- Explain why the answer matters (which criterion it sharpens, which step it would change).
+- Reference the specific goal (or missing goal) it addresses.
+- Explain why the answer matters (which goal it sharpens, which step it would change).
 - Suggest options when possible — "should bulk export include archived rows? A: yes, with a flag; B: no, archived stays excluded; A matches the existing single-row export, B matches the UI filter default" — not open-ended "what should we do?"
 
-If the user answers in chat, update the spec to reflect the answers before moving on. If the user defers a question, leave the affected criterion marked with a trailing `_(unresolved: <short note>)_` so `review-task` and `implement-task` see it.
+If the user answers in chat, update the goals to reflect the answers before moving on. If the user defers a question, leave the affected goal marked with a trailing `_(unresolved: <short note>)_` so `review-task` and `implement-task` see it.
 
-**Spec file content:**
+**Goals file content:**
 
-- A short task description (2–3 sentences — what this plan delivers and for whom)
-- A free-form bullet list of acceptance criteria — short, observable, externally-verifiable statements
+- A `## Goals` list of `- G<n> — <outcome>` bullets — short, observable, externally-verifiable statements, each carrying a durable ID
 
-Keep criteria **outcome-oriented**, not implementation-oriented. "User can export the current filter as CSV with a custom delimiter" is good. "Add a `formatCsv()` helper" is not — that belongs in the plan's steps.
+Keep goals **outcome-oriented**, not implementation-oriented. "User can export the current filter as CSV with a custom delimiter" is good. "Add a `formatCsv()` helper" is not — that belongs in the plan's steps.
 
-**Spec file template:**
+**Goals file template:**
 
 ```markdown
-# Spec: <task title>
+# Goals: <task title>
 
 **Plan:** [./plan.md](./plan.md)
 
-## Description
+## Goals
 
-<2–3 sentence summary of what this plan delivers and for whom>
-
-## Acceptance Criteria
-
-- <Criterion 1 — short, observable, externally-verifiable>
-- <Criterion 2>
-- <Criterion 3>
+- G1 — <short, observable, externally-verifiable outcome>
+- G2 — <outcome>
+- G3 — <outcome>
 ```
 
-The spec carries no `**Status:**` field by design — it is a static input, not a lifecycle artifact. The user mutates it freely between sessions; downstream skills (`review-task`, `implement-task`, `resume-task`) read it but never write to it.
+The goals file carries no `**Status:**` field by design — it is a static input, not a lifecycle artifact. The user mutates it freely between sessions; downstream skills (`review-task`, `implement-task`, `resume-task`) read it but never write to it.
 
 ### 4. Explore the Domain's Reality
 
@@ -192,9 +187,11 @@ For each approach, assess:
 
 Explicitly state:
 
-- **In scope** — What will be changed
-- **Out of scope** — What will NOT be changed, even if related
+- **In scope** — which goals this plan delivers (by ID), and what will be changed to deliver them
+- **Out of scope** — which goals are deferred (by ID), and what will NOT be changed, even if related
 - **Boundaries** — Where this work ends and future work begins
+
+Express the in/out split as a **partition of the goal IDs** with explicit lists (`delivered: G1, G3 · deferred: G4`), not as re-prosed intent — the goals are the single source, so scope names them rather than restating what they cover. Do not use ranges: retired goal IDs can leave gaps, so `G1-G3` is ambiguous once `G2` has been removed.
 
 **IMPORTANT**: Scope definition prevents creep during implementation. Be precise. A vague scope produces vague work.
 
@@ -208,6 +205,7 @@ For each step:
 
 - **What** — Brief description of the change (one concern per step)
 - **Verify** — How to confirm it works. The criterion is non-negotiable; if you can't state how to verify a step, it's too vague or too small to be a step.
+- **Goal** — Which goal ID(s) this step delivers (`G1, G3`), or `none (infra/refactor)` for a setup/refactor step with no user-visible goal
 - **Depends on** — Prior steps required (if any)
 
 Break a step down further when: its title contains "and" (two steps wearing one hat); it touches two or more independent subsystems; or its acceptance can't be stated in 3 or fewer bullets. When the domain is code, `./references/engineering/planning.md` adds the engineering sizing guidance (a ~5-file cap, the concrete `Verify` recipe, and worked too-coarse / too-fine / right-size examples).
@@ -219,12 +217,15 @@ Break a step down further when: its title contains "and" (two steps wearing one 
 
 - [ ] **What:** <one-sentence change>
 - **Verify:** <how to confirm>
+- **Goal:** <goal ID(s) this step delivers — e.g. `G1, G3` — or `none (infra/refactor)`>
 - **Depends on:** <prior step numbers, or "none">
 - **Due:** <date the step must finish by, or "none">
 - **Lead time:** <how long the step takes once started — e.g. "visa: ~8 weeks", or "none">
 ```
 
 The leading `- [ ]` checkbox is the marker `implement-task` flips to `- [x]` when the step is done, with a link to the result file section appended.
+
+The `**Goal:**` line cites the goal ID(s) the step delivers, or `none (infra/refactor)` for a step that delivers no user-visible goal — the first-class escape for setup/refactor work. `review-task` keys coverage off these citations (each goal ID should map to ≥1 step, each non-escaped step to ≥1 goal), so a step that delivers a goal must name it. The schema lives in `./references/workflow/task-layout.md`.
 
 `**Due:**` and `**Lead time:**` are **optional**. Omit them (or set `none`) for code work, where steps are ordered by `Depends on:`, not the calendar. They earn their place in time-anchored domains (a relocation, an event) where deadlines and external lead times — not just logical dependencies — drive ordering and surface the long-pole steps that must start early. They are planning information the actor reads; nothing in the kit schedules off them.
 
@@ -261,7 +262,7 @@ If the plan has assumptions that could invalidate the approach, surface them exp
 
 ## Scaling Plan Depth
 
-Match the plan's detail to the task's complexity. The spec step (Step 3) is required at every depth — even small tasks benefit from a few explicit acceptance criteria.
+Match the plan's detail to the task's complexity. The goals step (Step 3) is required at every depth — even small tasks benefit from a few explicit goals.
 
 - **Medium** (small, clear pattern) — Steps 1–3, 6, 7 — skip approach comparison, light on risks
 - **Large** (bigger, some ambiguity) — All steps, moderate detail
@@ -276,26 +277,28 @@ When the domain is code, `./references/engineering/planning.md` gives file-count
 - "The risks are obvious, no need to list them" — Generic risk awareness is not risk identification. Be specific or admit there are none.
 - "This is too simple to plan" — If the user asked for a plan, the task warranted one.
 - "I'll figure out the scope during implementation" — Undefined scope produces undefined work. Bound it now.
-- "I'll skip the spec, the plan steps make it obvious" — Steps describe how to get there; criteria describe what done means. Without criteria, `implement-task` has no acceptance gate and `review-task` has nothing to check coverage against.
-- "The acceptance criteria are obvious" — If they're obvious, they cost nothing to write down. If they're not, that's exactly when you needed them.
-- "The criterion is roughly the right shape, that's good enough" — Run it through `./references/workflow/acceptance-criteria.md`. Vague criteria survive coverage analysis and pass the acceptance gate by reinterpretation; that's the failure mode the checklist catches.
-- "The user gave a vague task, I'll just guess what they want" — Ask. Clarifying questions during the spec step are cheaper than reworking the plan after implementation.
-- "I'll just output the plan and spec in chat" — Both must be files on disk. `implement-task` and `review-task` read them from there.
+- "I'll skip the goals, the plan steps make it obvious" — Steps describe how to get there; goals describe what done means. Without goals, `implement-task` has no acceptance gate and `review-task` has nothing to check coverage against.
+- "The goals are obvious" — If they're obvious, they cost nothing to write down. If they're not, that's exactly when you needed them.
+- "The goal is roughly the right shape, that's good enough" — Run it through `./references/workflow/acceptance-criteria.md`. Vague goals survive coverage analysis and pass the acceptance gate by reinterpretation; that's the failure mode the checklist catches.
+- "The user gave a vague task, I'll just guess what they want" — Ask. Clarifying questions during the goals step are cheaper than reworking the plan after implementation.
+- "I'll just output the plan and goals in chat" — Both must be files on disk. `implement-task` and `review-task` read them from there.
 
 ## Verification
 
 - [ ] Resolved task folder exists (reused if it already existed, created otherwise)
 - [ ] `CONTEXT.md` present in the task folder; skeleton written if it didn't exist
 - [ ] `**Domain:**` inferred from the task and written (carried over from `refine-idea` if set; asked when the task is clearly non-code and the domain is ambiguous, never silently defaulted to `engineering` for non-code work)
-- [ ] Spec written to `<task-dir>/spec.md` — short description + free-form bullet criteria, no `**Status:**` field
-- [ ] Hand-authored spec read and respected if present; not silently overwritten
-- [ ] Each acceptance criterion in the spec passes the checks in `./references/workflow/acceptance-criteria.md`, or is marked `_(unresolved: ...)_` with a deferred clarifying question
-- [ ] Clarifying questions asked when criteria failed the checklist (testable, specific, outcome-oriented, singular, bounded, stated as behavior); user answers folded into the spec before drafting the plan
+- [ ] Goals written to `<task-dir>/goals.md` — `## Goals` list of `- G<n> —` bullets with durable IDs, no `## Description`, no `**Status:**` field
+- [ ] Hand-authored goals read and respected if present; not silently overwritten
+- [ ] Each goal in `goals.md` passes the checks in `./references/workflow/acceptance-criteria.md`, or is marked `_(unresolved: ...)_` with a deferred clarifying question
+- [ ] Clarifying questions asked when goals failed the checklist (testable, specific, outcome-oriented, singular, bounded, stated as behavior); user answers folded into the goals before drafting the plan
 - [ ] Plan written to `<task-dir>/plan.md`
-- [ ] Plan's `**Spec:**` line links to `./spec.md`
+- [ ] Plan's `**Goals:**` line links to `./goals.md`
 - [ ] Slug derived from task, kebab-case, 2–5 words
-- [ ] Each step has `- [ ]` checkbox marker, **What**, **Verify**, **Depends on**
-- [ ] Plan steps collectively cover every criterion in the spec (no orphan criteria)
+- [ ] Each step has `- [ ]` checkbox marker, **What**, **Verify**, **Goal**, **Depends on**
+- [ ] Plan steps collectively cover every goal — each goal ID cited by ≥1 step, and every non-infra step cites ≥1 goal (no orphan goals, no orphan steps)
+- [ ] `## Scope` states the in/out split as a partition of goal IDs (`delivered: … · deferred: …`)
+- [ ] Every goal in `goals.md` carries a durable `G<n>` ID; the plan template carries no `## Task Understanding` section
 - [ ] Plan is grounded in actual code exploration, not assumptions
 - [ ] Each step is independently verifiable
 - [ ] Steps are ordered as vertical slices unless a foundational layer requires otherwise
@@ -314,12 +317,8 @@ Write the file with this top-level layout. Adapt sections to task size — not e
 
 **Status:** to-do
 **Context:** [./CONTEXT.md](./CONTEXT.md)
-**Spec:** [./spec.md](./spec.md)
+**Goals:** [./goals.md](./goals.md)
 **Result:** _(populated by `implement-task`: link to `./result.md`)_
-
-## Task Understanding
-
-<restatement and any clarifying notes>
 
 ## Exploration Findings
 
@@ -331,8 +330,8 @@ Write the file with this top-level layout. Adapt sections to task size — not e
 
 ## Scope
 
-- **In scope:** ...
-- **Out of scope:** ...
+- **In scope:** <delivered goal IDs · what changes>
+- **Out of scope:** <deferred goal IDs · what won't change>
 - **Boundaries:** ...
 
 ## Steps
@@ -341,6 +340,7 @@ Write the file with this top-level layout. Adapt sections to task size — not e
 
 - [ ] **What:** ...
 - **Verify:** ...
+- **Goal:** <IDs, or none (infra/refactor)>
 - **Depends on:** none
 - **Due:** none _(optional; date the step must finish by)_
 - **Lead time:** none _(optional; how long it takes once started)_
@@ -349,6 +349,7 @@ Write the file with this top-level layout. Adapt sections to task size — not e
 
 - [ ] **What:** ...
 - **Verify:** ...
+- **Goal:** <IDs, or none (infra/refactor)>
 - **Depends on:** Step 1
 
 ### Checkpoint after Step 2 _(only for plans >5 steps)_

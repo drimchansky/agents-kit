@@ -39,7 +39,7 @@ If the idea is already concrete enough to plan, say so and recommend `plan-task`
 
 **Location:** `.agents/tasks/<slug>/CONTEXT.md` at the project root.
 
-- `<slug>` — derive from the idea: 2–5 lowercase kebab-case words capturing the gist (e.g. `weekly-digest-email`, `replace-cache-invalidation`, `internal-search-rebuild`). Don't ask the user — derive it. The slug names the **task folder** that will hold this `CONTEXT.md` plus the spec, plan, and result for the effort — the folder layout and discovery rules are defined in `./references/workflow/task-layout.md`.
+- `<slug>` — derive from the idea: 2–5 lowercase kebab-case words capturing the gist (e.g. `weekly-digest-email`, `replace-cache-invalidation`, `internal-search-rebuild`). Don't ask the user — derive it. The slug names the **task folder** that will hold this `CONTEXT.md` plus the goals, plan, and result for the effort — the folder layout and discovery rules are defined in `./references/workflow/task-layout.md`.
 
 If `.agents/tasks/<slug>/` doesn't exist, create it. If a `CONTEXT.md` already exists at that path, read it first and ask whether to overwrite or pick a different slug — don't clobber an existing task's context.
 
@@ -53,7 +53,7 @@ If `.agents/tasks/<slug>/` doesn't exist, create it. If a `CONTEXT.md` already e
 - ✅ Standing decisions and constraints the plan must respect
 - ❌ Per-step implementation notes — those go in the plan's result file
 - ❌ Approach rationale or step breakdowns — those go in the plan
-- ❌ Acceptance criteria — those go in the sibling `spec.md`
+- ❌ Goals / acceptance criteria — those go in the sibling `goals.md`
 - ❌ Verify criteria — those go in the plan's _Steps_
 - ❌ Conversation summaries or TODO scratchpads
 
@@ -73,7 +73,7 @@ The three phases below are sequential. Don't skip Phases 1–2 to jump straight 
     - What's been tried before?
     - Why now?
 
-    Don't proceed until the target user and rough success picture are concrete enough to inform the recommended direction. The testable, plan-specific acceptance criteria are formalized later in `plan-task`'s spec step.
+    Don't proceed until the target user and rough success picture are concrete enough to inform the recommended direction. The testable, plan-specific goals are formalized later in `plan-task`'s goals step.
 
 3. **Generate 5–8 variations** using lenses (pick the ones that fit; don't run all mechanically):
     - **Inversion** — What if we did the opposite?
@@ -159,9 +159,9 @@ The `**Status:**` field is a one-shot origin marker — `refined` here, never mu
 
 <one-sentence "How Might We" framing>
 
-## Acceptance Criteria
+## Goals
 
-_(Acceptance criteria live in `spec.md`. `plan-task` drafts the spec before the plan and asks for clarification when requirements are unclear.)_
+_(Goals live in `goals.md`. `plan-task` drafts the goals before the plan and asks for clarification when requirements are unclear.)_
 
 ## Recommended Direction
 
