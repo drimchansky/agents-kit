@@ -23,7 +23,7 @@ The highest-value part of a review. For every change to shared code:
 
 ### Abstraction Justification
 
-- **Premature extraction** — Under ~20 lines rarely needs its own module. Inline until a second or third consumer proves the abstraction.
+- **Premature extraction** — Under ~20 lines rarely needs its own module. Inline until a second or third consumer proves the abstraction — unless the unit owns a meaningful boundary, such as state, hooks, lifecycle, or a distinct concern, which justifies extraction at a single use site (for components, see `react.md` → Components).
 - **Wrapper types** — Custom type aliases that re-wrap a library's types without adding information obscure the original API.
 - **One-use helpers** — Functions extracted for "reusability" but called from exactly one place fragment logic without reducing complexity.
 
