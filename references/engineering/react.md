@@ -18,6 +18,11 @@ When uncertain about version-specific API availability, verify against the offic
 - [ ] Lift state only as high as needed
 - [ ] Don't extract components for a single use site
 
+## Render body
+
+- [ ] No inline event handlers in JSX — define each handler in the component body with a descriptive name (e.g. `handleSubmit`) and pass it by reference (`onClick={handleSubmit}`)
+- [ ] No inline conditions in JSX — hoist the test into a named boolean in the component body (e.g. `const canSubmit = …`) and render against the name; returned markup should read as structure, not logic
+
 ## Hooks
 
 - [ ] Extract custom hooks when logic is reused or complex
