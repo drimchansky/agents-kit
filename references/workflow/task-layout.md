@@ -1,6 +1,6 @@
 # Task Layout: Directories and Discovery
 
-How task artifacts are arranged on disk, and how skills discover them. **This file is the single source of truth for layout.** Status values and transitions live in the sibling `task-lifecycle.md`; this file covers where files sit and how they're found. Cited by `refine-idea`, `plan-task`, `implement-task`, `resume-task`, `review-task`, and `migrate-task-format`.
+How task artifacts are arranged on disk, and how skills discover them. **This file is the single source of truth for layout.** Status values and transitions live in the sibling `task-lifecycle.md`; this file covers where files sit and how they're found. Cited by `refine-idea`, `plan-task`, `implement-task`, `resume-task`, `review-task`, `migrate-task-format`, and `archive-task`.
 
 ## One task, one flat folder
 
@@ -55,6 +55,8 @@ A completed (`done`) or `skipped` task folder can be moved into an `archive/` su
 .agents/tasks/archive/<slug>/
 ```
 
+The `archive-task` skill performs this move — it confirms the plan is `done` or `skipped`, then relocates the whole folder — or you can `mv` it by hand; the result is identical.
+
 Moving a whole task folder preserves its internal `./` links, since every cross-reference inside the folder is relative to the folder itself. Nothing else needs rewriting.
 
 ## Discovery rules for skills
@@ -72,6 +74,6 @@ Once the folder is resolved, the four files are found by their fixed role names 
 
 - **resolve-or-create** (`refine-idea`, `plan-task`) → derive a slug from the task description and create `.agents/tasks/<slug>/` when no active or archived folder matches. If a slug matches only an archived task, ask whether to revive it or start fresh.
 - **resolve-current-or-ask** (`implement-task`, `resume-task`) → first check whether a task is already established **in this session** — a folder / `CONTEXT.md` resolved earlier this session (e.g. from a preceding `refine-idea`, `plan-task`, or `review-task`, or one the user named). If so, use it. Otherwise list active folders (excluding `archive/`) and ask which.
-- **resolve-or-ask** (`review-task`) → list active folders (excluding `archive/`) and ask which.
+- **resolve-or-ask** (`review-task`, `archive-task`) → list active folders (excluding `archive/`) and ask which.
 
 Archived tasks are intentionally absent from the default active listing — that is the point of archiving, not a discovery bug.
