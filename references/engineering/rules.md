@@ -45,7 +45,7 @@ loads by phase:
 Per-surface checklists — consult the ones a change touches:
 
 - `accessibility.md` — Landmarks, ARIA, keyboard/focus, contrast, live regions, native dialogs, motion preferences, forms a11y
-- `code-style.md` — Function shape, parameter limits, comment discipline (minimal, why-not-what, self-contained)
+- `code-style.md` — Function shape, parameter limits, comment discipline (minimal, why-not-what, self-contained; behavioral narrative to tests, public-API JSDoc at the code)
 - `css.md` — Layout, responsive, container queries, modern selectors (`:has()`, `@scope`), theming, modern color, cascade layers
 - `forms.md` — Semantics, autocomplete tokens, validation timing (`:user-invalid`), tap sizing, AJAX, multi-page forms
 - `html.md` — Document semantics, landmarks, native overlays (`<dialog>`, `[popover]`, `<details>`), resource prioritization, media

@@ -14,9 +14,10 @@ When uncertain about version-specific API availability, verify against the offic
 - [ ] Focused components — split if handling multiple concerns
 - [ ] Colocate related code (styles, types, helpers) with the component
 - [ ] Named exports; filename matches component name
+- [ ] One public component per file — a small single-use sub-component may be defined privately in the same file when it owns a meaningful boundary (its own state, hooks, lifecycle, or a distinct concern); helpers, types, and styles colocate too
 - [ ] Derive state from props/other state instead of syncing with effects
 - [ ] Lift state only as high as needed
-- [ ] Don't extract components for a single use site
+- [ ] Don't extract a component just to name a one-off chunk of presentational markup — inline that as JSX; extract only when the unit owns a meaningful boundary (its own state, hooks, lifecycle, or a distinct concern)
 
 ## Render body
 

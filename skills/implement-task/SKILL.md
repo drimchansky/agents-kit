@@ -50,7 +50,7 @@ If the user describes a task without a plan and the task is non-trivial, suggest
 
 Before doing the work, identify what you're acting on and where the authoritative information lives — don't work from memory on anything that could be wrong or out of date. This is the skill that produces the actual work product, so working from stale or invented facts is the biggest failure mode.
 
-When the domain is code, follow `./references/engineering/execution.md` ("Detect stack and sources"): read the dependency manifest and state versions explicitly, fetch the matching version's official docs before writing framework code, follow the source hierarchy, and mark anything you can't ground `// UNVERIFIED:`. For other domains, confirm the equivalent ground truth before committing to it (current prices, the counterparty's actual position, the venue's real availability). If versions or facts are missing or ambiguous, ask — don't guess.
+When the domain is code, follow `./references/engineering/execution.md` ("Detect stack and sources"): read the dependency manifest and state versions explicitly, fetch the matching version's official docs before writing framework code, follow the source hierarchy, record the official-doc sources you ground framework code on in the result file (its `**Sources:**` field, per §5) rather than in code comments, and mark anything you can't ground `// UNVERIFIED:`. For other domains, confirm the equivalent ground truth before committing to it (current prices, the counterparty's actual position, the venue's real availability). If versions or facts are missing or ambiguous, ask — don't guess.
 
 ### 1. Locate and Load the Task
 
@@ -148,6 +148,8 @@ When you reach a checkpoint:
 - <file:line or path> — <what changed>
 - <file:line or path> — <what changed>
 
+**Sources:** <official-doc URLs / deep links grounding any framework-specific code in this step; otherwise omit>
+
 **Deviations from plan:** <if any — what differed and why; otherwise omit>
 
 **Notes:** <surprises, gotchas, follow-ups, anything important; otherwise omit>
@@ -165,6 +167,8 @@ For full-plan mode, write **one combined section** instead — no per-step block
 **Shipped:**
 
 - <bulleted list of every notable change across all steps>
+
+**Sources:** <official-doc URLs / deep links grounding any framework-specific code; otherwise omit>
 
 **Deviations from plan:** <if any>
 
@@ -268,7 +272,7 @@ When the domain is code, also watch the engineering red flags in `./references/e
 ## Verification
 
 - [ ] Ground truth and sources identified before the work began (for code: stack and dependency versions)
-- [ ] (Code) Framework-specific code is cited to official docs or marked `// UNVERIFIED:`
+- [ ] (Code) Framework-specific code is cited to official docs in the result file's `**Sources:**` field, or marked `// UNVERIFIED:` in the code
 - [ ] Applicable domain-pack files read for each step (for code: the relevant `./references/engineering/` checklists)
 - [ ] Plan, goals, CONTEXT.md, and existing result file (if any) all read in full before starting
 - [ ] Missing goals file surfaced to the user (not silently inferred from the plan)

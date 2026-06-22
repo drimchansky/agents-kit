@@ -19,8 +19,9 @@ Writing code is the one place hallucinated APIs do real damage. Before touching 
   web.dev) → runtime/browser compatibility (caniuse, node.green). **Never** Stack Overflow, blog
   posts, or training data as primary sources.
 - If versions are missing or ambiguous, ask the user — don't guess.
-- Cite sources in code comments for non-obvious framework decisions, with full URLs and deep links
-  to anchors where possible.
+- Record sources for non-obvious framework decisions in the result file, with full URLs and deep
+  links to anchors where possible — keep provenance in the execution record, not in code comments
+  (comments stay self-contained; see `code-style.md` → Comments).
 - If you cannot find an authoritative source for a pattern you're about to use, mark it
   `// UNVERIFIED:` in the code and call it out in the result file. Honesty beats false confidence.
 
