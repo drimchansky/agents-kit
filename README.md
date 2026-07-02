@@ -19,6 +19,10 @@ git clone git@github.com:drimchansky/agents-kit.git ~/agents-kit
 ~/agents-kit/setup.sh
 ```
 
+## Injecting the rules
+
+- [**inject-rules**](skills/inject-rules/SKILL.md) – prime the current session with the [core rules](CORE_RULES.md) so ad-hoc work outside a skill still follows them. Every engineering and workflow skill loads these as its first step; this one does it standalone, and resolves no domain pack. _Example: `/inject-rules`, then work as normal — or `/inject-rules review this diff`_
+
 ## Utility skills
 
 - [**proofread**](skills/proofread/SKILL.md) – polish a message, email, or piece of writing for grammar, clarity, and factual accuracy. _Example: `/proofread` (paste text)_
