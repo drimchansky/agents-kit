@@ -1,7 +1,7 @@
 ---
 name: review-task
-description: Use when asked to review, validate, or sanity-check a task's plan — confirms the direction is right and still in sync with CONTEXT.md, the goals, and current reality, and surfaces any drift between task artifacts (CONTEXT, goals, plan, result) and the work itself.
-argument-hint: '[task folder path]'
+description: Use when asked to review, validate, or sanity-check a task's plan — confirms the direction is right and still in sync with CONTEXT.md, the goals, and current reality, and surfaces any drift between task artifacts (CONTEXT, goals, plan, result) and the work itself; pass `-r` to also reconcile obvious findings into the task docs and fold engineer answers into the plan.
+argument-hint: '[task folder path] [-r (reconcile findings into task docs)]'
 disable-model-invocation: true
 ---
 
@@ -15,7 +15,11 @@ This skill validates a plan against current reality before execution begins. It 
 
 The user provides a plan — typically the output of `plan-task`, written to `<task-dir>/plan.md`. Your job is to determine whether the plan can be executed as written given how things actually are, and surface anything that needs resolution first.
 
-**CRITICAL**: Do not implement. Do not redesign the solution. Validate the plan. The output is a feasibility assessment with questions, not a revised plan or code.
+**CRITICAL**: Do not implement. Do not redesign the solution. Validate the plan. In default mode (no `-r`) the output is a feasibility assessment with questions, not a revised plan or code — no file is touched. With `-r`, after the assessment is printed, obvious findings are reconciled into the task docs and the review's Questions are put to the engineer, whose answers are folded into the plan (Step 9) — still no implementation and no redesign; a step that needs rethinking goes back to `plan-task`.
+
+## Flags
+
+- `-r` — Reconcile: after printing the assessment, auto-apply its obvious findings to the task docs, put the review's Questions to the engineer as one batched round, and fold their answers into the plan — per the shared contract in `./references/workflow/reconciliation.md`. Off by default; without `-r` the review is strictly read-only. Step 9 carries this skill's finding-type mapping.
 
 ## Locate the Plan
 
@@ -146,6 +150,25 @@ When the domain is code, also check the engineering-specific gaps in `./referenc
 
 Compare the plan's implied approach against the established patterns of the project or effort: does it match how similar work is structured, follow the same conventions, and respect the boundaries the effort enforces? Would it require something new (a dependency, a pattern, a one-off exception), and is that justified? When the domain is code, follow `./references/engineering/exploration.md`'s pattern-consistency checks (structure, data-flow patterns, naming, dependencies, module boundaries).
 
+### 9. Reconcile the Docs (only with `-r`)
+
+Skip this step entirely without the flag; it runs **after** the output below is printed — the assessment must be a faithful pre-reconcile snapshot, never regenerated after edits. Apply the review's findings to the task docs per the shared contract in `./references/workflow/reconciliation.md` — read it before editing. It defines the consent model (obvious fixes auto-applied; judgment items asked as one batched round of engineer questions, with only answered items applied), the write surface (`plan.md`, `result.md`, `CONTEXT.md` annotations — never `goals.md`), the weaken-never-strengthen rule, the `skipped`-plan exemption, the append-only `## Reconciliation` record, and the sequence ending in the printed change list.
+
+Most of this review's findings need the engineer — that is what the Questions section is for. With `-r`, don't leave the Questions rhetorical: put them to the engineer (one batched round, the concrete options already attached) and write the answers into the plan — exactly the answer given, no redesign around it.
+
+Finding-type → edit mapping (**auto** = obvious, applied unprompted; **ask** = engineer input first):
+
+- **Status-pairing / lifecycle violations** (from the cross-file drift check) — **auto**, the downward repairs the contract defines: plan `done` + result `executing` → plan to `executing`; plan `executing` + result `blocked` with a `**Blocked:**` section → plan to `blocked`; plan `executing` with no `result.md` → skeleton result when work is evidenced, revert to `to-do` when it is not — **ask** when the evidence is ambiguous. A status outside the registered vocabulary → **ask** (the intended state can't be inferred).
+- **Plan claims a step done that the result file doesn't back** (`- [x]` with no matching result section) — **auto**: uncheck it and drop the dangling link.
+- **Result records work the plan doesn't show** (result section exists, plan still `- [ ]`) — flag only: checking the box would strengthen a claim this review can't verify; name `implement-task` (or the user) to confirm and flip.
+- **Scope partition not total** (a goal ID neither delivered nor deferred) — **ask**: deliver it, defer it, or drop the goal (dropping means the user edits `goals.md`); apply the chosen partition to the plan's `## Scope`.
+- **Stale or orphan goal citations** (a step cites a goal ID absent from `goals.md`; a non-infra step cites nothing) — **ask**: point the citation at the right goal, mark the step `none (infra/refactor)`, or remove the step; apply the answer.
+- **Vague or untestable Verify criterion** — **ask**, offering the concrete rewrite suggested in the assessment; apply the accepted wording to the step's `**Verify:**` line.
+- **Gaps and needs-clarification steps** — **ask** the targeted question from the Questions section; fold the answer into the step's **What**/**Verify** (or the plan's Scope).
+- **Goal quality findings** (`weak` / `vague-or-untestable` / `unresolved`) — never edited: `goals.md` is the user's contract. Print the suggested rewrite for the user to apply; an engineer answer here still goes to the user as text, not into the file.
+- **CONTEXT ↔ goals / CONTEXT ↔ plan contradictions** — **ask** which side is right, but apply the resolution only where the write surface allows: the plan's Scope/steps, or an annotation in CONTEXT's `## Open Questions` recording the ruling. CONTEXT prose (MVP scope, "Not Doing", Recommended Direction) is never rewritten — if the ruling changes direction, that's re-planning; name `plan-task`.
+- **Infeasible or conflicts-with-existing steps** — flag only: fixing them is redesign, out of scope even with `-r`; name `plan-task`.
+
 ## Output Structure
 
 ### Plan Summary
@@ -222,6 +245,8 @@ Numbered list of targeted questions. Each question should:
 
 Aspects of the plan that are verified and ready to execute — so the user knows what doesn't need further discussion.
 
+With `-r`, after the assessment is printed and reconciliation has run (Step 9), additionally print the `## Reconciliation applied` change list defined in `./references/workflow/reconciliation.md` — every edit with the finding or engineer answer behind it, plus the "Not reconciled" list (or `Nothing to reconcile.` when nothing was actionable).
+
 ## Don't Rationalize
 
 - "The plan looks reasonable" — Check every integration point in the code. Reasonable isn't verified.
@@ -230,6 +255,10 @@ Aspects of the plan that are verified and ready to execute — so the user knows
 - "Everything looks good" — Rubber-stamping isn't review. Every integration point needs code-level verification.
 - "That's a theoretical concern" — Only flag real issues, but don't dismiss concerns without checking the code.
 - "The goals look fine to me" — Run them through `./references/workflow/acceptance-criteria.md`. Without an explicit pass, this skill rubber-stamps vague goals, the structural coverage check gives false confidence, and the failure surfaces inside the acceptance gate where it's most expensive.
+- "The engineer answered, so I'll improve the plan properly while I'm at it" — Fold in exactly the answer given. Anything more is redesign — out of scope even with `-r`.
+- "The result says Step 3 shipped, I'll check the plan's box" — Reconciliation weakens stale claims; it never marks work done. Only `implement-task` checks boxes.
+- "The goal is badly worded, I'll just fix goals.md" — The goals file is the user's contract. Print the suggested rewrite; never edit the file.
+- "It's probably what they meant" — If a fix needs a choice, wording judgment, or intent, it isn't obvious. Ask the engineer; apply only what they answer.
 
 ## Verification
 
@@ -244,4 +273,9 @@ Aspects of the plan that are verified and ready to execute — so the user knows
 - [ ] Checkpoints (if plan >5 steps) assessed for placement and concrete end-to-end assertion
 - [ ] Questions are targeted and explain why the answer matters
 - [ ] Gaps grouped by category with specific details
-- [ ] No redesign or implementation proposed — review only
+- [ ] No redesign or implementation proposed — review only (with `-r`: doc reconciliation and folded-in answers only; steps needing rethinking routed to `plan-task`)
+- [ ] (`-r`) Assessment printed from pre-reconcile state before any edit; not regenerated after
+- [ ] (`-r`) Only obvious, evidence-dictated fixes auto-applied; judgment items asked in one batched round with concrete options; unanswered items listed under "Not reconciled"
+- [ ] (`-r`) Every edit maps to a printed finding or an engineer answer; `goals.md` untouched; no checkbox flipped to `- [x]`; no status set to `done` or `skipped`
+- [ ] (`-r`) `## Reconciliation` record appended per the shared contract when `result.md` was touched; prior result sections unedited (including `## Acceptance`)
+- [ ] (`-r`) "Reconciliation applied" change list printed (or `Nothing to reconcile.` — and no file written)
