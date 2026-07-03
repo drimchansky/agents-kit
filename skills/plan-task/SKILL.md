@@ -1,7 +1,7 @@
 ---
 name: plan-task
 description: Use when asked to plan, design, architect, scope, or break down a feature or change before implementation.
-argument-hint: '[task or feature description, task folder]'
+argument-hint: '[task or feature description, task folder or destination path]'
 disable-model-invocation: true
 ---
 
@@ -41,13 +41,13 @@ If the task doesn't warrant a full plan, say so and suggest proceeding directly 
 
 ## Output Files
 
-This skill writes **two paired files** per plan: a goals file and a plan. Both live in the resolved task folder at `.agents/tasks/<slug>/`, alongside its `CONTEXT.md`, under fixed role names.
+This skill writes **two paired files** per plan: a goals file and a plan. Both live in the resolved task folder — canonically `.agents/tasks/<slug>/` — alongside its `CONTEXT.md`, under fixed role names.
 
-- `<slug>` — names the **task folder** that holds `CONTEXT.md` plus the goals, plan, and result for the effort. Derived from the task: 2–5 lowercase kebab-case words capturing the gist (e.g. `add-csv-export`, `migrate-auth-middleware`, `fix-stale-cache-invalidation`). Don't ask the user — derive it. **If the user passed a slug that resolves to an existing active task folder (typically from `refine-idea`), reuse it — don't create a new one.**
-- **Fixed file names.** Inside the folder the goals file and plan are always `goals.md` and `plan.md` — role names, no slug prefix, one plan per folder (so `.agents/tasks/add-csv-export/goals.md` and `.../plan.md`). Skills find them by these fixed names, never by a path someone typed.
+- `<slug>` — names the **task folder** that holds `CONTEXT.md` plus the goals, plan, and result for the effort. Derived from the task: 2–5 lowercase kebab-case words capturing the gist (e.g. `add-csv-export`, `migrate-auth-middleware`, `fix-stale-cache-invalidation`). Don't ask the user — derive it. **If the user passed a slug that resolves to an existing active task folder, or a path to one (typically from `refine-idea`), reuse it — don't create a new one.** A path is used verbatim, anywhere on disk; its folder name is the slug.
+- **Fixed file names.** Inside the folder the goals file and plan are always `goals.md` and `plan.md` — role names, no slug prefix, one plan per folder (so `.agents/tasks/add-csv-export/goals.md` and `.../plan.md`). Skills find them by these fixed names — the folder itself may be given by a path someone typed, but the files inside it never are.
 - **Multi-part efforts.** When the work won't fit one plan, split it into several sibling task folders (one plan each), not multiple plans in one folder. Ordering between siblings lives in their folder names — see `./references/workflow/task-layout.md`.
 
-If no matching active task folder exists, create `.agents/tasks/<slug>/` by default. If the slug collides with an existing folder for a different effort, pick a more specific slug.
+If no matching active task folder exists, create one — `.agents/tasks/<slug>/` by default, or per the user's destination path (interpreted by the *Destination paths* rule in `./references/workflow/task-layout.md`). If the slug collides with an existing folder for a different effort, pick a more specific slug.
 
 **Goals file (`goals.md`)** — the contract for what "done" means. Carries a `## Goals` list of durably-ID'd `G<n>` acceptance criteria, with no description prose. **No `**Status:**` field.** The user may hand-author it; if they do, this skill reads and respects it instead of regenerating.
 
@@ -65,7 +65,7 @@ If no matching active task folder exists, create `.agents/tasks/<slug>/` by defa
 
 The resolved task folder is the authoritative home for this plan. `CONTEXT.md` inside it is the static context this plan builds on.
 
-Resolve the folder per the **resolve-or-create** discovery rules in `./references/workflow/task-layout.md`: reuse a matching active folder; if a slug matches only an archived task, ask whether to revive it or create a fresh active task; if nothing matches (or no slug was given), derive a slug and create `.agents/tasks/<slug>/`. When creating a folder whose `CONTEXT.md` doesn't exist, scaffold one (see the skeleton step below) before drafting the plan, and confirm the slug only if it differs meaningfully from what the user typed.
+Resolve the folder per the **resolve-or-create** discovery rules in `./references/workflow/task-layout.md`: reuse a matching active folder (an explicit path to an existing task folder is used verbatim, wherever it lives); if a slug matches only an archived task, ask whether to revive it or create a fresh active task; if nothing matches (or no slug was given), derive a slug and create the folder in the canonical root — or at the user's destination path per `task-layout.md`'s *Destination paths* rule. When creating a folder whose `CONTEXT.md` doesn't exist, scaffold one (see the skeleton step below) before drafting the plan, and confirm the slug only if it differs meaningfully from what the user typed.
 
 If multiple active task folders look like plausible matches for the user's request, list them and ask — don't guess.
 
@@ -238,7 +238,7 @@ When the domain is code, `./references/engineering/planning.md` gives file-count
 
 ## Verification
 
-- [ ] Resolved task folder exists (reused if it already existed, created otherwise)
+- [ ] Resolved task folder exists (reused if it already existed, created otherwise — at the destination path when one was given)
 - [ ] `CONTEXT.md` present in the task folder; skeleton written if it didn't exist
 - [ ] `**Domain:**` inferred from the task and written (carried over from `refine-idea` if set; asked when the task is clearly non-code and the domain is ambiguous, never silently defaulted to `engineering` for non-code work)
 - [ ] Goals written to `<task-dir>/goals.md` — `## Goals` list of `- G<n> —` bullets with durable IDs, no `## Description`, no `**Status:**` field

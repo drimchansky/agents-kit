@@ -1,6 +1,6 @@
 ---
 name: implement-task
-description: Use when asked to implement, execute, run, or carry out a task's plan from a task folder under `.agents/tasks/` — by task folder path, or the current task if one is already in context.
+description: Use when asked to implement, execute, run, or carry out a task's plan from a task folder (canonically under `.agents/tasks/`) — by task folder path, or the current task if one is already in context.
 argument-hint: '[task folder path]'
 disable-model-invocation: true
 ---
@@ -11,7 +11,7 @@ disable-model-invocation: true
 2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
 3. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for (`execution.md`, `verification.md`, …). If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
 
-This skill executes a plan written by `plan-task` (or any `plan.md` in a task folder under `.agents/tasks/` that follows the same format). It implements the work, updates a companion **result file** as it goes, marks each step `DONE` in the plan with a link back to the result section, and runs a final **acceptance gate** against the goals before flipping the plan to `done`.
+This skill executes a plan written by `plan-task` (or any `plan.md` in a task folder — canonically under `.agents/tasks/`, though a task folder anywhere on disk works the same — that follows the same format). It implements the work, updates a companion **result file** as it goes, marks each step `DONE` in the plan with a link back to the result section, and runs a final **acceptance gate** against the goals before flipping the plan to `done`.
 
 The plan is the **contract for how**; the goals are the **contract for what done means**; the result file is the **append-only record**; `CONTEXT.md` is the **static grounding context** for the task. All four live side by side in the resolved task folder:
 
@@ -56,7 +56,7 @@ When the domain is code, follow `./references/engineering/execution.md` ("Detect
 
 Discovery resolves a task folder, then reads its `plan.md`.
 
-**Resolve the task folder** per the **resolve-current-or-ask** discovery rules in `./references/workflow/task-layout.md`: use an explicit path/slug (falling back into `archive/` for a finished task); take a full `plan.md` path directly; and when the user named nothing, execute the task already established **in this session** if there is one (e.g. from a preceding `refine-idea`, `plan-task`, or `review-task`), otherwise list active folders and ask.
+**Resolve the task folder** per the **resolve-current-or-ask** discovery rules in `./references/workflow/task-layout.md`: use a bare slug (resolved in the canonical root, falling back into `archive/` for a finished task) or an explicit path taken verbatim anywhere on disk; take a full `plan.md` path directly; and when the user named nothing, execute the task already established **in this session** if there is one (e.g. from a preceding `refine-idea`, `plan-task`, or `review-task`), otherwise list active folders and ask.
 
 **Read the plan** — once the folder is resolved, read its `plan.md` (one plan per folder). If the folder has no `plan.md`, tell the user the folder exists but has no plan; suggest `plan-task` to create one.
 

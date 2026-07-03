@@ -1,6 +1,6 @@
 ---
 name: resume-task
-description: Use when asked to resume, catch up on, brief, hand off, status of, or check progress on a task folder under `.agents/tasks/` — produces a chat-only briefing; pass `-r` to also reconcile the task docs to the brief's findings.
+description: Use when asked to resume, catch up on, brief, hand off, status of, or check progress on a task folder (canonically under `.agents/tasks/`) — produces a chat-only briefing; pass `-r` to also reconcile the task docs to the brief's findings.
 argument-hint: '[task folder path] [-r (reconcile task docs to reality)]'
 disable-model-invocation: true
 ---
@@ -11,7 +11,7 @@ disable-model-invocation: true
 2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
 3. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core. This skill mostly observes; pull in deeper pack files only if you dig into a step's work. If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
 
-This skill loads an existing task folder under `.agents/tasks/` and produces a chat-only briefing — used to resume work after time away, hand off, review what was done, or answer questions about a task — whether in progress, blocked, or already shipped. It reads the four task artifacts (`CONTEXT.md`, `goals.md`, `plan.md`, `result.md`), reconstructs state from `- [ ]` / `- [x]` checkboxes, checks for drift between the plan's claims and current code/git, and prints a structured brief. With `-r`, after printing the brief it also reconciles the task docs to the findings (Step 7).
+This skill loads an existing task folder (canonically under `.agents/tasks/`, though a task folder anywhere on disk works the same) and produces a chat-only briefing — used to resume work after time away, hand off, review what was done, or answer questions about a task — whether in progress, blocked, or already shipped. It reads the four task artifacts (`CONTEXT.md`, `goals.md`, `plan.md`, `result.md`), reconstructs state from `- [ ]` / `- [x]` checkboxes, checks for drift between the plan's claims and current code/git, and prints a structured brief. With `-r`, after printing the brief it also reconciles the task docs to the findings (Step 7).
 
 **CRITICAL**: In default mode (no `-r`) this skill is **read-only across the repo** — task files (`CONTEXT.md`, `goals.md`, `plan.md`, `result.md`) and source code are observed but never modified (no write, edit, rename, delete). The skill also never mutates git state (no add, commit, checkout, stash). External systems cited in `CONTEXT.md`, goals, plans, or results (Jira, Notion, Slack, Google Docs, PRs, dashboards, etc.) are fetched **read-only** in Step 5 — never commented on, updated, or otherwise mutated. Reading the work product is **expected and required** — the drift check in Step 4 verifies the plan/result claims against current reality (for code, grepping shipped paths and opening cited files). Output is **chat only** — do not write a `BRIEF.md` artifact. Briefings stale within hours and a fifth file would contradict the four-file contract that `plan-task` and `implement-task` rely on. Domain-pack checklists in `./references/<domain>/` are not preloaded — this skill mostly observes; consult them only if you dig into a pending step's work during the drift spot-check.
 
@@ -44,7 +44,7 @@ With `-r`, the write surface expands to exactly three task files — `plan.md`, 
 
 ### 1. Resolve the Task Folder
 
-Discovery resolves a task folder, then reads its `plan.md`. Resolve it per the **resolve-current-or-ask** discovery rules in `./references/workflow/task-layout.md` — the same variant `implement-task` uses: an explicit path/slug (falling back into `archive/` for a finished task), or a full `plan.md` path taken directly, or — when the user named nothing — the task already established **in this session** if there is one (e.g. from a preceding `refine-idea`, `plan-task`, or `review-task`), otherwise list active folders and ask which task.
+Discovery resolves a task folder, then reads its `plan.md`. Resolve it per the **resolve-current-or-ask** discovery rules in `./references/workflow/task-layout.md` — the same variant `implement-task` uses: a bare slug (resolved in the canonical root, falling back into `archive/` for a finished task), an explicit path used verbatim anywhere on disk, or a full `plan.md` path taken directly, or — when the user named nothing — the task already established **in this session** if there is one (e.g. from a preceding `refine-idea`, `plan-task`, or `review-task`), otherwise list active folders and ask which task.
 
 **Read the plan** — once the folder is resolved, read its `plan.md` (one plan per folder). If the folder has no `plan.md`, tell the user the folder exists but has no plan; suggest `plan-task`. Don't guess between ambiguous candidates — ask.
 
@@ -161,7 +161,7 @@ Finding-type → edit mapping (**auto** = obvious, applied unprompted; **ask** =
 ```markdown
 # Resume: <task title>
 
-**Task dir:** `.agents/tasks/<slug>/`
+**Task dir:** `<resolved task folder path>`
 **Goals:** `goals.md`
 **Plan:** `plan.md` (Status: <status>)
 **Result:** `result.md` (Status: <status>) — or "not yet started"

@@ -1,7 +1,7 @@
 ---
 name: refine-idea
 description: Use when asked to refine, ideate, sharpen, or stress-test a vague idea or rough concept before planning.
-argument-hint: '[idea or concept]'
+argument-hint: '[idea or concept] [destination path]'
 disable-model-invocation: true
 ---
 
@@ -11,7 +11,7 @@ disable-model-invocation: true
 2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
 3. Load the domain pack: take the task's `**Domain:**` (default `engineering`; infer from the request when there's no `CONTEXT.md` yet, and record it in the `CONTEXT.md` you write) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for. If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
 
-This skill turns a raw idea into a sharp, actionable concept worth building. It runs three phases — divergent exploration, convergent evaluation, and a written one-pager — and produces an artifact at `.agents/tasks/<slug>/CONTEXT.md` that `plan-task` and `implement-task` later consume as the static grounding context for the task.
+This skill turns a raw idea into a sharp, actionable concept worth building. It runs three phases — divergent exploration, convergent evaluation, and a written one-pager — and produces an artifact at `<task-folder>/CONTEXT.md` (canonically `.agents/tasks/<slug>/CONTEXT.md`) that `plan-task` and `implement-task` later consume as the static grounding context for the task.
 
 The user provides a rough concept, problem, or "what if" question. They may include partial context, constraints, or prior thinking. The idea may be vague on purpose — that's the input.
 
@@ -37,11 +37,11 @@ If the idea is already concrete enough to plan, say so and recommend `plan-task`
 
 ## Output File
 
-**Location:** `.agents/tasks/<slug>/CONTEXT.md` at the project root.
+**Location:** `<task-folder>/CONTEXT.md` — canonically `.agents/tasks/<slug>/CONTEXT.md` at the project root; a user-supplied destination path overrides the location, interpreted per the *Destination paths* rule in `./references/workflow/task-layout.md` (cite it, don't restate it).
 
 - `<slug>` — derive from the idea: 2–5 lowercase kebab-case words capturing the gist (e.g. `weekly-digest-email`, `replace-cache-invalidation`, `internal-search-rebuild`). Don't ask the user — derive it. The slug names the **task folder** that will hold this `CONTEXT.md` plus the goals, plan, and result for the effort — the folder layout and discovery rules are defined in `./references/workflow/task-layout.md`.
 
-If `.agents/tasks/<slug>/` doesn't exist, create it. If a `CONTEXT.md` already exists at that path, read it first and ask whether to overwrite or pick a different slug — don't clobber an existing task's context.
+If the resolved task folder doesn't exist, create it — `.agents/tasks/<slug>/` when no destination was given. If a `CONTEXT.md` already exists at that path, read it first and ask whether to overwrite or pick a different slug — don't clobber an existing task's context.
 
 `CONTEXT.md` is the **static grounding context for the task**: the chosen direction, the assumptions it depends on, the scope decisions already made, plus any external references (tickets, links, pasted specs) the user adds later. It is read by the plan and its result inside the folder. Don't rewrite it during refinement — refine through conversation, then write the final version.
 
@@ -63,7 +63,7 @@ This skill runs the shared two-phase ideation method — **Phase 1 (Diverge)** a
 
 ### Phase 3 — Sharpen
 
-Write the one-pager to `.agents/tasks/<slug>/CONTEXT.md`. Then post a short summary in this exact shape, so the user can copy-paste the next command:
+Write the one-pager to the resolved task folder's `CONTEXT.md`. Then post a short summary in this exact shape, so the user can copy-paste the next command. For a task in the canonical root:
 
 ```
 Context: .agents/tasks/<slug>/CONTEXT.md
@@ -72,7 +72,16 @@ Slug: <slug>
 Next: /plan-task <slug>
 ```
 
-`plan-task` discovers `CONTEXT.md` by reading the task folder at `.agents/tasks/<slug>/`. The slug is the folder name and is the only handoff token needed. The pre-formatted next-command is what makes the handoff frictionless; don't drop it or paraphrase it.
+For a task anywhere else, the handoff token is the folder's absolute path (a bare slug only resolves canonically):
+
+```
+Context: <abs-path>/CONTEXT.md
+Slug: <slug>
+
+Next: /plan-task <abs-path>/
+```
+
+`plan-task` discovers `CONTEXT.md` by resolving the task folder. The handoff token is the **slug** when the folder is in the canonical root and the folder's **absolute path** otherwise — so for an anywhere-task the `Next:` line must carry the path. The pre-formatted next-command is what makes the handoff frictionless; don't drop it or paraphrase it.
 
 The "Not Doing" list is the most valuable part — focus is about saying no to good ideas. Make trade-offs explicit.
 
@@ -87,9 +96,9 @@ The "Not Doing" list is the most valuable part — focus is about saying no to g
 
 ## Verification
 
-- [ ] One-pager written to `.agents/tasks/<slug>/CONTEXT.md`
+- [ ] One-pager written to the resolved task folder's `CONTEXT.md` (canonically `.agents/tasks/<slug>/CONTEXT.md`; at the user's destination path when one was given, per `task-layout.md`'s destination rule)
 - [ ] Task folder created if it didn't exist; existing `CONTEXT.md` not silently overwritten
-- [ ] Chat summary surfaces file path, slug, **and** the literal `Next: /plan-task <slug>` line in the exact handoff shape
+- [ ] Chat summary surfaces file path, slug, **and** the literal `Next: /plan-task <token>` line in the exact handoff shape — token = slug for a canonical task, absolute folder path otherwise
 - [ ] Slug derived from the idea, kebab-case, 2–5 words
 - [ ] "How Might We" problem statement is one sentence and concrete
 - [ ] Multiple directions were explored, not just the user's first framing

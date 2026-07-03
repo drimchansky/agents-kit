@@ -8,7 +8,7 @@ It includes:
 2. **References** – important checklists and docs for various cases, for now it's mostly about engineering.
 3. **Utility skills** – self-contained helpers that don't rely on the core rules, so they run anywhere: locally via CLI or in any chat.
 4. **Engineering skills** – code-focused skills that apply the core rules and references ad hoc, against a diff, a file, or a codebase.
-5. **Workflow skills** – the core-rules skills that move a task from idea to done through a task folder under `.agents/tasks/`.
+5. **Workflow skills** – the core-rules skills that move a task from idea to done through a task folder (by default under `.agents/tasks/`).
 
 ## Getting started
 
@@ -44,7 +44,7 @@ Core-rules-aware skills that run ad hoc — against a diff, a file, or a codebas
 
 ## Workflow skills
 
-The set that turns a rough task into finished work. Each works on one task folder under `.agents/tasks/<slug>/`, handing the slug to the next:
+The set that turns a rough task into finished work. Each works on one task folder — `.agents/tasks/<slug>/` by default, or anywhere on disk when named by path — handing the slug (or path) to the next:
 
 1. [**refine-idea**](skills/refine-idea/SKILL.md) – sharpen a vague idea into grounded context before planning. _Example: `/refine-idea add a draft mode to the editor`_
 2. [**plan-task**](skills/plan-task/SKILL.md) – break the work into a plan with testable goals. _Example: `/plan-task migrate auth to JWT`_
@@ -59,7 +59,7 @@ Three more support the workflow:
 
 ## Task folders
 
-The workflow skills share a folder-based contract: one task lives in `.agents/tasks/<slug>/` and holds role-named files.
+The workflow skills share a folder-based contract: one task lives in one folder holding role-named files — that's what makes a folder a task folder, wherever it sits. The default (and only auto-discovered) location is `.agents/tasks/<slug>/` at the project root; an explicit path reaches a task anywhere else.
 
 - `CONTEXT.md` – static grounding context, including the `**Domain:**` marker.
 - `goals.md` – the single source of task intent: durably-ID'd `G<n>` goals that double as the acceptance criteria.
