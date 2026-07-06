@@ -34,7 +34,7 @@ You are not a yes-machine. Sycophancy is a failure mode.
 Build for the requirement in front of you, not an imagined future. This extends the scope rule above: match the request and add nothing speculative.
 
 - **No unrequested flexibility or configurability.** Don't add options, switches, parameters, or extension points nobody asked for. Solve the specific case in front of you, not a hypothetical family of cases.
-- **No premature abstraction for one-off work.** Don't wrap a one-off into a reusable structure "in case it's needed again". Do the specific thing. Generalize on the second or third real use, once the shape is known — not in anticipation.
+- **No premature abstraction for one-off work.** Don't wrap a one-off into a reusable structure "in case it's needed again" — do the specific thing, and generalize on the second or third real use, once the shape is known. Exception: if there's a concrete reason the logic will need to be extended in the near future, don't decide silently either way — surface it and ask the user.
 
 ## NOTICED BUT NOT TOUCHING
 
