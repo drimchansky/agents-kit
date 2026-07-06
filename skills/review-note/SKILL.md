@@ -33,6 +33,7 @@ Before analyzing, identify what kind of note this is — cheatsheet, deep-dive s
 - Use web search to verify when uncertain — do not guess or hallucinate corrections.
 - If you cannot verify, say so explicitly rather than assuming the note is outdated.
 - When citing a correction from web search, include the source URL or note it as unverified.
+- For severity-critical corrections (security vulnerabilities, safety issues, breaking changes), cite the primary source — vendor advisory, CVE record, official release notes — not a secondary aggregator that happens to mention it.
 
 ### 4. Completeness & Missing Parts
 
@@ -84,6 +85,7 @@ Turn the note into an active learning tool. Skip this section if the note type m
 - Use **lists** for all structured content — never tables (they wrap badly in narrow terminals and resist clean line-by-line diffs).
 - Nested lists are allowed for sub-points.
 - Quote the note's exact wording when flagging a specific claim, so the author can locate it.
+- Quote the proposed text too — whether it replaces something wrong or adds something missing, give the literal words to use, not a description of them.
 
 ---
 
@@ -92,14 +94,34 @@ Turn the note into an active learning tool. Skip this section if the note type m
 Start each note's findings with:
 
 > **Note:** [inferred purpose in one sentence]
+> **Priority:** [the 2–3 findings worth fixing first, named briefly — a triage pointer, distinct from the overall assessment at the end]
 
-Then for each finding, produce a bullet:
+Skip the Priority line when there are only a couple of findings total — everything's already in view.
 
-- Summary of the issue → Suggested fix or clarification
+Then for each finding, produce a bullet in one of two shapes:
+
+- Something in the note is wrong → quote the exact wrong text, then **Replace with:** [the corrected sentence or passage, verbatim]
+- Something the note lacks entirely → name the location or gap, then **Add:** [the exact sentence or passage to insert, verbatim]
+
+Both sides of the arrow are literal, quoted, copy-pasteable wording — never a description of the fix ("clarify the wording," "add a caveat about X") standing in for the words themselves. Match the note's own formatting (e.g. italics on a title) in the proposed text.
+
+When the proposed text is more than one line — a new subsection, a multi-item list — drop the inline quotes and set it as a blockquote on the lines beneath the bullet, so line breaks stay real line breaks instead of being escaped into one string:
+
+- Gap description → **Add:**
+  > ### Heading
+  > First sentence of the new content.
+  > - a sub-point
+  > - another sub-point
+
+Never write `\n` inside a quoted string to fake a line break, and never let a quote mark span across list items from the outside — once content needs its own lines, give it its own lines.
+
+Append a trailing why — a dash after the closing quote — only when it carries something the pasted text itself can't hold, such as a source URL backing a web-verified correction (Information Actualization). Skip it otherwise; a self-explanatory sentence doesn't need to be re-explained next to itself. The why always trails the proposed text, never precedes it: the left side of the arrow holds only the quote (for a correction) or the gap name (for an addition), nothing more — if the wrongness needs explaining, that explanation goes after the replacement, not stacked in front of the quote.
+
+A bullet that finds a dimension already sound states so in plain prose, with no **Replace with:** / **Add:** — the two shapes above apply only to actual findings.
 
 Group bullets by category in the order above. Omit categories with no findings — except **Completeness & Missing Parts** and **Clarifications for Deeper Understanding**, which always appear (they exist to push the note further, not to catch errors).
 
-End with a one-line overall assessment.
+End with a one-line overall assessment, then invite the user to reply with a category name (or "all") to apply those fixes to the note.
 
 ---
 
@@ -110,6 +132,7 @@ End with a one-line overall assessment.
 - "No issues found, all good" — Always check Completeness and Clarifications. There's always room to deepen understanding.
 - "The fix is obvious, I'll just rewrite the section" — No. This skill proposes; the user authorizes edits.
 - "Adding more detail is always better" — No. Calibrate to note purpose. A cheatsheet bloated with prose stops being a cheatsheet.
+- "The idea is clear enough without spelling out the exact wording" — No. Write the literal sentence or passage. A description of a fix ("clarify the wording," "add a caveat about X") isn't a fix — it hands the writing back to the author, the opposite of proposing one.
 
 ---
 
@@ -120,24 +143,27 @@ End with a one-line overall assessment.
 ---
 
 **Note:** Quick reference cheatsheet for React's useEffect hook.
+**Priority:** the missing cleanup-function guidance, the dependency-array reference-equality gotcha, and the Strict Mode double-invoke caveat.
 
 **Completeness & Missing Parts**
 
-- No mention of cleanup function → Add: return a cleanup function to avoid memory leaks (clearing timers, cancelling subscriptions)
-- Missing: dependency array gotchas (stale closures, object identity) → Add a brief warning with an example
+- No mention of a cleanup function → **Add:** "If the effect creates a subscription, timer, or listener, return a cleanup function that tears it down — otherwise it leaks on unmount or re-fires before the previous one was cleaned up."
+- No warning about dependency array gotchas → **Add:** "Every value the effect reads from component scope (props, state, functions) belongs in the dependency array, or the effect closes over a stale value. Objects and arrays are compared by reference, so `useEffect(() => {...}, [options])` re-runs every render if `options` is a fresh object literal each time, even when its contents haven't changed."
 
 **Clarifications for Deeper Understanding**
 
-- Missing "why": useEffect exists because React's render must be pure — side effects belong outside render. Adding this reframes the hook as "the escape hatch for side effects" rather than "a thing that runs after render."
-- Distinction the note conflates: "runs on mount" with empty array vs. "runs once per component instance" — they differ under Strict Mode (double-invoke in dev). Worth flagging.
-- Adjacent idea: contrast with `useLayoutEffect` (synchronous, before paint) — naming the contrast clarifies when to reach for which.
+- No explanation of why effects exist → **Add:** "Effects exist because React's render function must stay pure — no side effects during render. useEffect is the escape hatch for anything that touches the outside world (network calls, subscriptions, manually changing the DOM), run safely after React has committed the result to the screen."
+- No caveat that "run only on mount" means once per mount, not once ever → **Add:** "In React 18 Strict Mode (development only), components mount, unmount, and remount immediately, so an empty-array effect actually runs twice on mount, not once — don't rely on mount-count assumptions without accounting for this."
+- No mention of useLayoutEffect → **Add:** "For effects that must run before the browser paints — measuring layout to avoid a visible flicker, for example — use `useLayoutEffect` instead, the synchronous sibling of `useEffect`."
 
 **Learning Curve**
 
-- Key takeaway buried → Surface: "Omitting the dependency array = runs every render (usually a bug)"
-- Quiz prompts → "Why does React require effects outside render?" / "When do you need a cleanup function, and what happens without one?"
+- Key takeaway buried in prose → **Add:** "Omitting the dependency array means the effect re-runs after every render — usually a bug, not an intentional choice."
+- No self-test questions → **Add:** "Why does React require effects to run outside of render?" and "When do you need a cleanup function, and what happens if you omit one?"
 
 _Overall: Accurate but minimal — adding the cleanup, dependency gotchas, and the "why effects exist" framing would turn this from a fact-recall card into a working mental model._
+
+Reply with a category name or "all" to apply those fixes to the note.
 
 ---
 
@@ -148,46 +174,52 @@ _Overall: Accurate but minimal — adding the cleanup, dependency gotchas, and t
 ---
 
 **Note:** Quick-reference summary of core Stoic ideas and the origin of *Meditations*.
+**Priority:** the two factual corrections (the editorial title of *Meditations*, the dichotomy-of-control attribution to Epictetus) and the missing "why" behind the dichotomy.
 
 **Factual Accuracy**
 
-- "Marcus Aurelius wrote *Meditations*" → Accurate that he wrote it, but the title is editorial; the original (in Greek) was *Ta eis heauton* ("To Himself"). Worth a parenthetical note for accuracy.
-- "Stoics taught… we can't control external events, only our reactions" → The clearest formulation of this is Epictetus's *dichotomy of control* (Enchiridion, Ch. 1), not Marcus or the early Stoics broadly. Attribute it.
+- "Marcus Aurelius wrote *Meditations* as a personal journal" → **Replace with:** "Marcus Aurelius wrote what we now call *Meditations* as a personal journal — the title is editorial; the original Greek was *Ta eis heauton* ('To Himself')."
+- "The Stoics taught that we can't control external events, only our reactions" → **Replace with:** "Epictetus articulated this most clearly as the 'dichotomy of control' (*Enchiridion*, Ch. 1): some things are up to us — judgment, desire, will — and others aren't — external events, other people, our own bodies."
 
 **Completeness & Missing Parts**
 
-- No mention of the three core Stoic disciplines (judgment, desire, action) — these are how the dichotomy gets operationalized → Add a sentence linking the principle to practice
-- Missing the major figures beyond Marcus (Epictetus, Seneca, Chrysippus) → Add a one-line who's-who so future-you doesn't conflate them
+- No mention of the three Stoic disciplines → **Add:** "The Stoics operationalized this through three disciplines: judgment (assent only to true impressions), desire (want only what's up to you), and action (act with reservation, aiming only at what's in your control)."
+- No mention of Stoic figures beyond Marcus Aurelius → **Add:** "Other major Stoics worth knowing: Epictetus (a former slave who taught the dichotomy of control), Seneca (statesman and essayist, *Letters to Lucilius*), and Chrysippus (the school's early systematizer, 3rd century BCE)."
 
 **Clarifications for Deeper Understanding**
 
-- Missing "why": the dichotomy isn't a self-help slogan — it follows from the Stoic view that virtue is the *only* good. If only virtue is good, and virtue lives in our judgments, then externals are "indifferents." Flagging this reframes the principle as a *consequence* of a metaphysical claim, not a free-standing tip.
-- Distinction the note risks conflating: Stoic *apatheia* (freedom from destructive passions) is not modern "apathy" (indifference, lack of caring). Stoics still valued *eupatheia* — healthy emotions like joy and reasoned wishing. Worth a sentence.
-- Strongest objection worth naming: critics (ancient and modern) argue the dichotomy understates the social/political dimension — what we can influence collectively. Marcus himself, as emperor, clearly didn't think externals were purely irrelevant. Acknowledging this prevents a flat reading.
-- Adjacent idea: contrast with Epicureanism (also seeks tranquility, but via avoidance of pain rather than virtue) — names the comparison Stoicism is most often muddled with.
+- No explanation of why the dichotomy holds → **Add:** "This follows from a deeper claim: virtue is the only good. If only virtue — a matter of judgment — is good, then everything else (health, wealth, reputation, other people's actions) is an 'indifferent.' The dichotomy of control is a consequence of that metaphysical claim, not a free-standing productivity tip."
+- No distinction between Stoic apatheia and modern "apathy" → **Add:** "*Apatheia* isn't apathy. The Stoics still endorsed *eupatheia* — healthy emotions like joy and reasoned wishing. *Apatheia* specifically means freedom from destructive, irrational passions (fear, hatred, excessive craving), not an absence of feeling."
+- No acknowledgment of the strongest objection → **Add:** "Critics, ancient and modern, argue the dichotomy understates what we can influence collectively — Marcus himself, ruling as emperor, clearly didn't treat externals as wholly irrelevant. A fuller reading holds the dichotomy alongside a duty to act on what's shared, not instead of it."
+- No contrast with Epicureanism → **Add:** "Contrast with Epicureanism: both schools pursue tranquility, but Epicureans get there by minimizing pain and desire, while Stoics get there through virtue — the two are Stoicism's most commonly confused neighbor."
 
 **Maintenance Health**
 
-- Note is durable (philosophy doesn't version), but consider a link to a canonical translation (Hays for *Meditations*, Hard for Epictetus) so future-you can chase down passages.
+- No canonical translation linked (the note itself is durable — philosophy doesn't version) → **Add:** "See Gregory Hays's translation for *Meditations* and Robin Hard's for Epictetus's *Enchiridion* and *Discourses*."
 
 **Learning Curve**
 
-- Prerequisites are fine (none assumed) — appropriate for an intro note
-- Key takeaway buried → Surface: "Virtue is the only good; externals are indifferents — the dichotomy of control follows from that."
-- Practice hook → Pick one frustration from this week and run it through the dichotomy: which part was up to you, which wasn't?
-- Quiz prompts → "Why, in Stoic terms, would the dichotomy of control follow from the claim that virtue is the only good?" / "How does Stoic *apatheia* differ from modern apathy?"
+- Prerequisites are fine (none assumed) — appropriate for an intro note; no fix needed.
+- Key takeaway buried in prose → **Add:** "Virtue is the only good; everything else is an indifferent — the dichotomy of control follows directly from that."
+- No practice hook → **Add:** "Pick one frustration from this week and run it through the dichotomy — which part was up to you (your judgment, effort, reaction), and which wasn't (the outcome, other people, the event itself)?"
+- No self-test questions → **Add:** "Why, in Stoic terms, does the dichotomy of control follow from the claim that virtue is the only good?" and "How does Stoic apatheia differ from modern apathy?"
 
 _Overall: Correct in spirit but loses precision on attribution and the underlying metaphysics — small additions would turn a slogan-level note into a real working model of the position._
+
+Reply with a category name or "all" to apply those fixes to the note.
 
 ---
 
 ## Verification
 
-- [ ] Note purpose inferred and stated
-- [ ] Factual claims verified (web search for uncertain or time-sensitive ones); citations included
+- [ ] Note purpose inferred and stated; Priority line present unless the review has only a couple of findings
+- [ ] Factual claims verified (web search for uncertain or time-sensitive ones); citations included; severity-critical corrections cite a primary source, not a secondary aggregator
 - [ ] Completeness section always present
 - [ ] Clarifications for Deeper Understanding section always present
-- [ ] Findings are actionable — each has a suggested fix or clarification
+- [ ] Findings propose literal text — the exact replacement sentence, or the exact passage to add — never a description of the fix
+- [ ] Multi-line proposals use a blockquote block, not an escaped `\n` or a quote mark bookending a list
+- [ ] Any why trails the proposed text (after the closing quote), never stacked in front of the quote or gap name
+- [ ] Overall assessment is followed by an invitation to reply with a category name (or "all") to apply fixes
 - [ ] Learning Curve included (unless clearly inapplicable to note type)
 - [ ] Assessment calibrated to note type (cheatsheet vs. deep-dive vs. summary vs. glossary)
 - [ ] Note file was **not** edited; fixes were proposed, not applied
