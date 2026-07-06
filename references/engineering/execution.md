@@ -21,7 +21,8 @@ Writing code is the one place hallucinated APIs do real damage. Before touching 
 - If versions are missing or ambiguous, ask the user — don't guess.
 - Record sources for non-obvious framework decisions in the result file, with full URLs and deep
   links to anchors where possible — keep provenance in the execution record, not in code comments
-  (comments stay self-contained; see `code-style.md` → Comments).
+  (a code comment links a source only when a future reader of that line needs it; see
+  `code-style.md` → Comments).
 - If you cannot find an authoritative source for a pattern you're about to use, mark it
   `// UNVERIFIED:` in the code and call it out in the result file. Honesty beats false confidence.
 
