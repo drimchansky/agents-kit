@@ -61,6 +61,8 @@ The interval callback captured the initial state value. Use a ref
 to always read the latest value inside the interval.
 ```
 
+**Next:** once any findings above are addressed, run `/commit` to create the commit with this message.
+
 ## Verification
 
 Apply the Standard Verification Checklist in `./references/engineering/review.md`.

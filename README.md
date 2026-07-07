@@ -38,6 +38,7 @@ Core-rules-aware skills that run ad hoc — against a diff, a file, or a codebas
 - [**audit**](skills/audit/SKILL.md) – assess a module, directory, or whole project: structure, patterns, and health — no diff, no recent-change focus. _Example: `/audit src/auth` or `/audit` (whole project)_
 - [**explore**](skills/explore/SKILL.md) – explain code, a library, a concept, or how the pieces fit together. _Example: `/explore how does the retry queue work?`_
 - [**review-commit**](skills/review-commit/SKILL.md) – review staged changes before committing. _Example: `/review-commit`_
+- [**commit**](skills/commit/SKILL.md) – create the commit from review-commit's drafted message (its follow-up). _Example: `/review-commit`, then `/commit`_
 - [**review-pr**](skills/review-pr/SKILL.md) – review a PR or branch diff against its base. _Example: `/review-pr`_
 - [**review-docs**](skills/review-docs/SKILL.md) – audit existing documentation against the codebase. _Example: `/review-docs README`_
 - [**verify-issue**](skills/verify-issue/SKILL.md) – confirm and investigate a reported bug or issue. _Example: `/verify-issue users see 500 on signup`_
