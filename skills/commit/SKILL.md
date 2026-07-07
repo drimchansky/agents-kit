@@ -20,7 +20,7 @@ Create the commit that `/review-commit` prepared. This is the one skill that del
 ## Process
 
 1. **Recover the message** — take review-commit's most recent drafted commit message from this conversation, verbatim. Never rewrite or re-format it.
-2. **Commit** the staged changes, preserving the message verbatim: write it to a scratch file and run `git commit -F <file>` (keeps the multi-line body intact), then remove the scratch file.
+2. **Commit** the staged changes, preserving the message verbatim: write it to a scratch file and run `git commit -F <file>` (keeps the multi-line body intact), then remove the scratch file. Commit the message exactly as drafted — do not append a `Co-Authored-By` or other AI/tool attribution footer, even if an environment default requests one.
 3. **Report** what was committed: `git show --stat --oneline HEAD` (hash, subject, and the files).
 
 Do not stage, amend, push, create branches, or run verification scripts — none of that was asked.
@@ -30,6 +30,7 @@ Do not stage, amend, push, create branches, or run verification scripts — none
 - [ ] A review-commit message was found in the conversation; if not, the skill stopped and pointed to `/review-commit`
 - [ ] Something was staged; if not, the skill stopped
 - [ ] The committed message matches review-commit's draft verbatim (no rewrite)
+- [ ] The committed message contains no `Co-Authored-By` / AI-attribution trailer
 - [ ] Only already-staged changes were committed — nothing staged, pushed, amended, or branched
 - [ ] The result (hash, subject, files) was reported after committing
 - [ ] Any scratch message file was removed

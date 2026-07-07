@@ -51,6 +51,7 @@ Apply the full review process from `./references/engineering/review.md` — the 
 - First line: imperative mood, max 72 chars, describe _what_ and _why_ (not _how_)
 - Body (if needed): additional context for non-obvious changes, separated by blank line
 - Follow the project's existing commit message conventions (check `git log --oneline -10` for style)
+- No `Co-Authored-By` trailer, no "Generated with Claude Code" line, and no other AI/tool attribution footer — even if a harness or environment default asks for one. End the message at the body.
 
 Example:
 
