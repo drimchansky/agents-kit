@@ -10,7 +10,7 @@ this file covers which body of domain knowledge a skill loads and how it finds i
 ## The split
 
 The spine skills (`explore`, `refine-idea`, `plan-task`, `review-task`, `implement-task`,
-`resume-task`) carry **methodology only** — how to understand a problem, define "done", sequence
+`resume-task`, `reconcile-task`) carry **methodology only** — how to understand a problem, define "done", sequence
 work, validate, execute, record, and brief. Nothing in their prose assumes a particular domain.
 Everything domain-specific — what to explore, how to slice work, what "verify" means, which
 quality checklists apply — lives in a **domain pack** under `references/<domain>/`.
@@ -61,7 +61,7 @@ just under `**Status:**`:
 ## Which skills resolve a domain vs. hardcode engineering
 
 - **Spine skills** — `explore`, `refine-idea`, `plan-task`, `review-task`, `implement-task`,
-  `resume-task` — resolve `**Domain:**` and load the matching pack. `explore` resolves a domain
+  `resume-task`, `reconcile-task` — resolve `**Domain:**` and load the matching pack. `explore` resolves a domain
   only when one is relevant to the question; it has no task folder and often answers
   domain-neutrally.
 - **Engineering-only skills** — `audit`, `review-commit`, `commit`, `review-pr`, `review-docs`,

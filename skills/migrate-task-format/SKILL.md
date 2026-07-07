@@ -35,7 +35,7 @@ This skill brings existing task folders under `.agents/tasks/` into conformance 
 
 - The project has no `.agents/tasks/` folder yet — there's nothing to migrate
 - A single folder needs a content change that requires judgment (extracting a spec, redistributing project context) — do that by hand; this skill only flags it
-- You want to *read* (or, with `-r`, reconcile) a task's state, not change its shape → use `resume-task`
+- You want to *read* a task's state (`resume-task`), or reconcile its docs — to reality with `-r` (`resume-task` / `review-task`) or from the current session (`reconcile-task`) — not change the folder's shape → use those skills, not this one
 
 ## Process
 

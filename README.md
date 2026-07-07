@@ -52,9 +52,10 @@ The set that turns a rough task into finished work. Each works on one task folde
 3. [**review-task**](skills/review-task/SKILL.md) – sanity-check the plan against its context, goals, and current reality before building; add `-r` to reconcile obvious findings and fold your answers into the plan. _Example: `/review-task auth-jwt-migration` or `/review-task auth-jwt-migration -r`_
 4. [**implement-task**](skills/implement-task/SKILL.md) – execute the plan, tracking progress in the task folder. _Example: `/implement-task auth-jwt-migration`_
 
-Three more support the workflow:
+Four more support the workflow:
 
 - [**resume-task**](skills/resume-task/SKILL.md) – catch up on a task and get a handoff briefing; add `-r` to also reconcile the task docs to reality — obvious fixes applied, you're asked about the rest. _Example: `/resume-task auth-jwt-migration` or `/resume-task auth-jwt-migration -r`_
+- [**reconcile-task**](skills/reconcile-task/SKILL.md) – capture important information from the current session into the task docs — decisions, references, answered questions, and verified progress that never got written down. The enriching counterpart to `resume-task -r`. _Example: `/reconcile-task auth-jwt-migration`_
 - [**archive-task**](skills/archive-task/SKILL.md) – move a finished (`done`/`skipped`) task folder into `archive/` to keep the active list short. _Example: `/archive-task auth-jwt-migration`_
 - [**migrate-task-format**](skills/migrate-task-format/SKILL.md) – upgrade older task folders to the current format. _Example: `/migrate-task-format` or `/migrate-task-format ../other-repo`_
 

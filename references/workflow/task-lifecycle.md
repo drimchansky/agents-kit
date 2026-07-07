@@ -1,23 +1,23 @@
 # Task Lifecycle: Status Registry
 
-A task folder holds four artifacts that share a slug but track distinct lifecycles. Three carry a `**Status:**` header drawn from a closed vocabulary; the goals file deliberately has no status. **This file is the single source of truth for lifecycle states.** When a status name or transition changes, update it here first and propagate to the skills that read or write these fields: `refine-idea`, `plan-task`, `implement-task`, `resume-task`, and `review-task`. (`migrate-task-format` and `archive-task` also read this vocabulary, but at run time, so they need no update.) Directory layout (the flat task folder and `archive/`) is documented separately in the sibling `task-layout.md`.
+A task folder holds four artifacts that share a slug but track distinct lifecycles. Three carry a `**Status:**` header drawn from a closed vocabulary; the goals file deliberately has no status. **This file is the single source of truth for lifecycle states.** When a status name or transition changes, update it here first and propagate to the skills that read or write these fields: `refine-idea`, `plan-task`, `implement-task`, `resume-task`, `review-task`, and `reconcile-task`. (`migrate-task-format` and `archive-task` also read this vocabulary, but at run time, so they need no update.) Directory layout (the flat task folder and `archive/`) is documented separately in the sibling `task-layout.md`.
 
 ## Files
 
 - **`CONTEXT.md`** — the task's static grounding context (capitalized).
   - `**Status:**` is a one-shot **origin marker**.
-  - Created by `refine-idea` or `plan-task`; never mutated after creation, except the reconcile-mode (`-r`) annotation carve-out below (minimal annotations in `## References` / `## Open Questions` only; the `**Status:**` marker and all existing prose stay immutable).
+  - Created by `refine-idea` or `plan-task`; never mutated after creation, except the reconcile-mode carve-outs below: the `-r` annotation carve-out (minimal annotations in `## References` / `## Open Questions` only), and `reconcile-task`'s session → docs carve-out (prose sections rewritten only through a confirmed judgment item). Both leave the `**Status:**` marker immutable; see `./reconciliation.md`.
 - **`goals.md`** — the task's goals: the acceptance criteria for what "done" looks like.
   - No `**Status:**` field.
-  - Drafted by `plan-task` before the plan, or hand-authored; freely edited by user.
+  - Drafted by `plan-task` before the plan, or hand-authored; freely edited by user. `reconcile-task` (session → docs) may also add or reword a goal, but only through a confirmed judgment item and obeying the durable-`G<n>` scheme (see `./reconciliation.md`).
 - **`plan.md`** — the contract: scope, steps, verify criteria.
   - `**Status:**` is a **lifecycle state**.
-  - Created by `plan-task` (`to-do`); transitioned by `implement-task`; reconciled downward by the `-r` reconcile mode of `resume-task` / `review-task` (shared contract in the sibling `reconciliation.md`).
+  - Created by `plan-task` (`to-do`); transitioned by `implement-task`; reconciled downward by the `-r` reconcile mode of `resume-task` / `review-task`, and reconciled by `reconcile-task` — which, in the session → docs direction, may also advance state *upward* on in-session verified evidence (shared contract in the sibling `reconciliation.md`).
 - **`result.md`** — append-only execution record.
   - `**Status:**` is a **lifecycle state**.
-  - Created and transitioned by `implement-task`. The `-r` reconcile mode appends `## Reconciliation` sections, may flip `done → executing`, and may create a skeleton result file to repair a broken pairing.
+  - Created and transitioned by `implement-task`. The `-r` reconcile mode appends `## Reconciliation` sections, may flip `done → executing`, and may create a skeleton result file to repair a broken pairing. `reconcile-task` also appends `## Reconciliation` sections and may advance state on in-session verified evidence.
 
-The field name `Status:` is shared across the three status-bearing files even though it carries two different kinds of value (origin marker vs. lifecycle state). The values themselves are disjoint, so there's no collision in practice — but be aware of the dual meaning when scanning across files. The goals file sits outside this scheme entirely; it is a static input that evolves only through user edits.
+The field name `Status:` is shared across the three status-bearing files even though it carries two different kinds of value (origin marker vs. lifecycle state). The values themselves are disjoint, so there's no collision in practice — but be aware of the dual meaning when scanning across files. The goals file sits outside this scheme entirely; it is a static input that evolves through user edits (and, only by a confirmed judgment item, `reconcile-task` — see the goals bullet above).
 
 ## Status values
 
@@ -26,7 +26,7 @@ The field name `Status:` is shared across the three status-bearing files even th
 - **`refined`** — produced by `refine-idea` Phase 3. The recommended direction is chosen, MVP scope is sketched, and the file is ready for `plan-task` to consume.
 - **`drafted-by-plan-task`** — produced by `plan-task` as a skeleton when no idea step ran. Placeholder sections are intentional; the user enriches them over time.
 
-**Reconcile-mode (`-r`) annotation carve-out.** The one exception to "never mutated": the `-r` reconcile mode of `resume-task` / `review-task` (shared contract in the sibling `reconciliation.md`) may append minimal annotations inside the `## References` and `## Open Questions` sections only — marking a dead link broken (with date and error), updating a moved URL, noting an answered question with its answer and source, recording an engineer's ruling on a flagged contradiction (in `## Open Questions`). It never touches the `**Status:**` marker, never rewrites or deletes existing prose, and never adds content outside those two sections.
+**Reconcile-mode (`-r`) annotation carve-out.** The one exception to "never mutated": the `-r` reconcile mode of `resume-task` / `review-task` (shared contract in the sibling `reconciliation.md`) may append minimal annotations inside the `## References` and `## Open Questions` sections only — marking a dead link broken (with date and error), updating a moved URL, noting an answered question with its answer and source, recording an engineer's ruling on a flagged contradiction (in `## Open Questions`). It never touches the `**Status:**` marker, never rewrites or deletes existing prose, and never adds content outside those two sections. `reconcile-task` (session → docs) has a broader carve-out — it may also rewrite prose sections, but only through a confirmed judgment item, and it too never touches the `**Status:**` marker (see `./reconciliation.md`).
 
 ### `goals.md` — no status field
 
@@ -40,7 +40,7 @@ The goals file is a static input authored before (or alongside) the plan. It car
 - **`done`** — set by `implement-task` when the last step completes.
 - **`skipped`** — the plan was deliberately abandoned without being carried to completion: a triage or scoping decision, not a failure. Terminal. Reachable from `to-do` (never started) or `executing` (started, then dropped). Set by the user, or by `plan-task` / `implement-task` when the user decides not to proceed — `implement-task` never sets it on its own and will not execute a plan already marked `skipped` without explicit confirmation. A companion result file is **optional**: write one only to record why the work was dropped.
 
-**Downward reconciliation by the `-r` reconcile mode** (`resume-task` / `review-task`; shared contract in the sibling `reconciliation.md`). Two additional plan transitions repair docs that overstate reality: `done → executing` when a done plan's claims no longer hold (shipped work vanished, a `met` goal regressed, or the `## Acceptance` section is missing — the gate never ran), recorded in a matching `## Reconciliation` entry in the result file; and `executing → to-do` when a plan sits in `executing` with no result file and no evidence work happened — here no result file exists or is created, so the printed change list is the record. Reconciliation never sets `done` or `skipped`, and introduces `blocked` only by copying an already-evidenced sibling value (see the pairing rule).
+**Downward reconciliation by the `-r` reconcile mode** (`resume-task` / `review-task`; shared contract in the sibling `reconciliation.md`). Two additional plan transitions repair docs that overstate reality: `done → executing` when a done plan's claims no longer hold (shipped work vanished, a `met` goal regressed, or the `## Acceptance` section is missing — the gate never ran), recorded in a matching `## Reconciliation` entry in the result file; and `executing → to-do` when a plan sits in `executing` with no result file and no evidence work happened — here no result file exists or is created, so the printed change list is the record. Reconciliation never sets `done` or `skipped`, and introduces `blocked` only by copying an already-evidenced sibling value (see the pairing rule). `reconcile-task` reconciles in the opposite (session → docs) direction and *may* advance state upward — check a step, mark a goal `met`, flip `to-do → executing → done` — but only after re-verifying the claim in-session the way the acceptance gate would, never on a chat claim (shared contract in `./reconciliation.md`).
 
 **Terminal vs. live states.** `done` and `skipped` are the two **terminal** plan states — a plan in either is finished and advances no further (`done` = completed, `skipped` = abandoned). `to-do`, `executing`, and `blocked` are **non-terminal** (live). A skill that acts only on finished tasks — e.g. `archive-task` — reads this terminal set from here at run time rather than baking the names into itself, which is why a change to this vocabulary needs no edit in those skills.
 
@@ -73,5 +73,5 @@ The goals file is not part of the pairing rule — it has no lifecycle state to 
 When changing the vocabulary:
 
 1. Update **this file** first (the registry).
-2. Update the skills that read or write the field: `refine-idea`, `plan-task`, `implement-task`, `resume-task`, and `review-task`.
+2. Update the skills that read or write the field: `refine-idea`, `plan-task`, `implement-task`, `resume-task`, `review-task`, and `reconcile-task`.
 3. `grep -rn "<old-status>" skills/ references/` to catch stragglers (template literals, prose mentions).

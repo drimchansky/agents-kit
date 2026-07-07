@@ -1,6 +1,6 @@
 # Task Layout: Directories and Discovery
 
-How task artifacts are arranged on disk, and how skills discover them. **This file is the single source of truth for layout.** Status values and transitions live in the sibling `task-lifecycle.md`; this file covers where files sit and how they're found. Cited by `refine-idea`, `plan-task`, `implement-task`, `resume-task`, `review-task`, `migrate-task-format`, and `archive-task`.
+How task artifacts are arranged on disk, and how skills discover them. **This file is the single source of truth for layout.** Status values and transitions live in the sibling `task-lifecycle.md`; this file covers where files sit and how they're found. Cited by `refine-idea`, `plan-task`, `implement-task`, `resume-task`, `review-task`, `reconcile-task`, `migrate-task-format`, and `archive-task`.
 
 ## One task, one flat folder
 
@@ -87,7 +87,7 @@ No destination path → the canonical root, `.agents/tasks/<slug>/`. Resolve the
 **Fallback when the user named nothing** — this is the only branch that varies, by what the skill does:
 
 - **resolve-or-create** (`refine-idea`, `plan-task`) → derive a slug from the task description and create the task folder when no active or archived folder matches — in the canonical root (`.agents/tasks/<slug>/`) by default, or per a user-supplied destination path (see *Destination paths* above). If a slug matches only an archived task, ask whether to revive it or start fresh.
-- **resolve-current-or-ask** (`implement-task`, `resume-task`) → first check whether a task is already established **in this session** — a folder / `CONTEXT.md` resolved earlier this session (e.g. from a preceding `refine-idea`, `plan-task`, or `review-task`, or one the user named). If so, use it. Otherwise list the canonical root's active folders (excluding `archive/`) and ask which.
+- **resolve-current-or-ask** (`implement-task`, `resume-task`, `reconcile-task`) → first check whether a task is already established **in this session** — a folder / `CONTEXT.md` resolved earlier this session (e.g. from a preceding `refine-idea`, `plan-task`, or `review-task`, or one the user named). If so, use it. Otherwise list the canonical root's active folders (excluding `archive/`) and ask which.
 - **resolve-or-ask** (`review-task`, `archive-task`) → list the canonical root's active folders (excluding `archive/`) and ask which.
 
 Archived tasks are intentionally absent from the default active listing — that is the point of archiving, not a discovery bug. Likewise, tasks outside the canonical root are absent from *every* listing — unlistable by design; reach them by path.
