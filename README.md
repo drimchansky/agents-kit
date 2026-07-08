@@ -65,11 +65,11 @@ Four more support the workflow:
 The workflow skills share a folder-based contract: one task lives in one folder holding role-named files — that's what makes a folder a task folder, wherever it sits. The default (and only auto-discovered) location is `.agents/tasks/<slug>/` at the project root; an explicit path reaches a task anywhere else.
 
 - `CONTEXT.md` – static grounding context, including the `**Domain:**` marker.
-- `goals.md` – the single source of task intent: durably-ID'd `G<n>` goals that double as the acceptance criteria.
+- `goals.md` – the single source of task intent: durably-ID'd `G<n>` goals that double as the acceptance criteria; a goal verified outside the session (deploy-and-check-live, client sign-off) is flagged `(external)`.
 - `plan.md` – the steps, each citing the goals it delivers.
 - `result.md` – append-only record of what happened.
 
-`implement-task` runs an acceptance gate against `goals.md` before flipping the plan to `done`. Completed (`done`) or `skipped` tasks can be moved to an `archive/` subdirectory with [`archive-task`](skills/archive-task/SKILL.md); a plan waiting on something external takes the `blocked` status. See [`task-layout`](references/workflow/task-layout.md) for the on-disk layout and [`task-lifecycle`](references/workflow/task-lifecycle.md) for the status registry.
+`implement-task` runs an acceptance gate against `goals.md` before flipping the plan to `done` — and parks it at `in-review` when the only goals left unsatisfied are `(external)` ones still awaiting verification, reaching `done` on a later re-run once they're confirmed. Completed (`done`) or `skipped` tasks can be moved to an `archive/` subdirectory with [`archive-task`](skills/archive-task/SKILL.md); a plan stuck or waiting on a prerequisite before it can proceed takes the `blocked` status. See [`task-layout`](references/workflow/task-layout.md) for the on-disk layout and [`task-lifecycle`](references/workflow/task-lifecycle.md) for the status registry.
 
 ## Domain packs
 

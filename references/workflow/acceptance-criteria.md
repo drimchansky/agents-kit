@@ -15,6 +15,19 @@ Quality bar for the goals in `goals.md`, each a durably-ID'd `G<n>` bullet (`- G
 
 Some goals name a one-shot or irreversible result — an event that occurred, a deal closed, a lease signed. They are still testable: verify them against the **best available proxy** (a confirmation, a receipt, the observed end state) or evaluate them **post-hoc** in a retro. "Testable" never requires the check to be *repeatable* — only that there's an observable yardstick. This is the non-code counterpart to running a test; the engineering acceptance-gate recipe (run the command, observe the output) lives in `../engineering/verification.md`.
 
+## Externally-verified goals — the `(external)` marker
+
+Some goals can only be confirmed **outside the agent's working session**, and only **after** implementation — a human or client signs off, or the outcome is observed in a live/production environment the agent can't drive in-session ("changes deployed and verified live", "verified by the client"). Mark such a goal with an `(external)` token right after its ID:
+
+```markdown
+- G5 (external) — Changes are deployed and verified live in production
+- G6 (external) — Client confirms the new checkout flow works
+```
+
+- **Still testable.** An `(external)` goal is not a licence to be vague — it must name a concrete outcome and an observable yardstick, verified against its **best available proxy** (the confirmation/receipt/observed live state the user reports) when the proxy arrives. `(external)` marks *who verifies and when*, not *whether* it's testable. Don't use `(external)` to smuggle in a hedge-word goal.
+- **It gates the task at `in-review`, not `done`.** At the acceptance gate the agent verifies every unmarked (agent-verifiable) goal as usual; an `(external)` goal it can't confirm in-session is tagged **`pending external`** (not `met`, not `unmet`), and the task parks in the `in-review` state until the external check is confirmed on a later re-run. This is the mechanism that stops a task reaching `done` on code-complete alone. See `./task-lifecycle.md` for the `in-review` state and `pending external` verdict.
+- **Absent marker = agent-verifiable (default).** Existing goals need no change; only add `(external)` where verification genuinely leaves the session.
+
 ## Anti-patterns
 
 - "The CSV export works" → "User can export the current filter as CSV; the file's row count matches the on-screen count"

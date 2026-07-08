@@ -82,7 +82,7 @@ Exactly three task files, and nothing else:
 
 ### Weaken, never strengthen
 
-Reconciliation in this direction may uncheck `- [x]` → `- [ ]`, flip `done → executing`, or revert `executing → to-do`. It never checks a box, never sets `done` or `skipped`, and introduces `blocked` only by copying an already-evidenced sibling value. This holds **even with an engineer's answer** — "yes, that step was done" is a claim for `implement-task`'s verify gates to back, not for reconciliation to record. Engineer answers refine plan *content*; they never advance *state*.
+Reconciliation in this direction may uncheck `- [x]` → `- [ ]`, flip `done → executing` or `in-review → executing`, or revert `executing → to-do`. It never checks a box, never sets `done` or `skipped`, and introduces `blocked` or `in-review` only by copying an already-evidenced sibling value. This holds **even with an engineer's answer** — "yes, that step was done" is a claim for `implement-task`'s verify gates to back, not for reconciliation to record. Engineer answers refine plan *content*; they never advance *state*.
 
 ## Direction: session → docs (`reconcile-task`)
 
@@ -94,7 +94,7 @@ All four task files. `plan.md` and `result.md` as above, plus — only through a
 
 ### Strengthen only on verified evidence
 
-This direction may **advance** state — check a `- [ ]` step `→ - [x]`, mark a goal `met`, flip `to-do → executing` or `executing → done` — but only after **re-verifying** it in-session the way `implement-task`'s acceptance gate would (`../engineering/verification.md`), recording the evidence in `result.md`. A step or goal it cannot verify this session stays unrecorded and is surfaced instead. It never advances state on a bare conversational assertion — witnessed-and-verified, or not at all.
+This direction may **advance** state — check a `- [ ]` step `→ - [x]`, mark a goal `met`, flip `to-do → executing`, `executing → done` (or `executing → in-review` when the only unsatisfied goals are `(external)` ones still awaiting their proxy), or `in-review → done` — but only after **re-verifying** it in-session the way `implement-task`'s acceptance gate would (`../engineering/verification.md`), recording the evidence in `result.md`. A step or goal it cannot verify this session stays unrecorded and is surfaced instead. It never advances state on a bare conversational assertion — witnessed-and-verified, or not at all. The one sanctioned exception: for a goal marked `(external)`, whose verification lives outside the session by design, its best-available proxy — the confirmation, receipt, or observed live state the user reports — *is* witnessed-and-verified evidence (per `./acceptance-criteria.md`), so `in-review → done` may advance on that proxy.
 
 ### Grounding docs change by confirmation, never silently
 

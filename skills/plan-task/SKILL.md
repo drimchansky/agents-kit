@@ -84,6 +84,8 @@ Before designing the plan, write `<task-dir>/goals.md` — the contract for what
 - **Goals already exist for this task** (hand-authored or from a prior session) — read them, apply `./references/workflow/acceptance-criteria.md` to each goal, restate the goals back to the user (calling out any that fail the checklist), and ask whether to proceed as-is or revise. Do not silently overwrite.
 - **No goals file exists** — draft one from the user's task description and any signal in `CONTEXT.md` (problem statement, recommended direction, key assumptions). Run each draft goal through `./references/workflow/acceptance-criteria.md` before writing the file; ask clarifying questions for any goal that fails the checklist (testable, specific, outcome-oriented, singular, bounded, stated as behavior).
 
+**Flag externally-verified goals.** A goal that can only be confirmed *outside* your working session — a human/client sign-off, or a live/production state you can't drive in-session (e.g. "deployed and verified live", "verified by the client") — carries an `(external)` token right after its ID: `- G5 (external) — <outcome>`. Marking it right is load-bearing: an `(external)` goal parks the task at `in-review` instead of letting it reach `done` on code-complete alone, and un-marking one that really is external lets the task finalize without the sign-off. When it's unclear whether a goal is agent-verifiable or external, ask (batch it with the clarifying questions below). See `./references/workflow/acceptance-criteria.md`.
+
 **Clarifying questions** — ask only when needed, batched into a single round. Each question must:
 
 - Reference the specific goal (or missing goal) it addresses.
@@ -94,7 +96,7 @@ If the user answers in chat, update the goals to reflect the answers before movi
 
 **Goals file content:**
 
-- A `## Goals` list of `- G<n> — <outcome>` bullets — short, observable, externally-verifiable statements, each carrying a durable ID
+- A `## Goals` list of `- G<n> — <outcome>` bullets — short, observable, externally-verifiable statements, each carrying a durable ID; a goal verified outside your session carries an optional `(external)` token after its ID
 
 Keep goals **outcome-oriented**, not implementation-oriented. "User can export the current filter as CSV with a custom delimiter" is good. "Add a `formatCsv()` helper" is not — that belongs in the plan's steps.
 
@@ -109,7 +111,7 @@ Keep goals **outcome-oriented**, not implementation-oriented. "User can export t
 
 - G1 — <short, observable, externally-verifiable outcome>
 - G2 — <outcome>
-- G3 — <outcome>
+- G3 (external) — <outcome verified outside the session: human/client sign-off or live check>
 ```
 
 The goals file carries no `**Status:**` field by design — it is a static input, not a lifecycle artifact. The user mutates it freely between sessions; downstream skills (`review-task`, `implement-task`, `resume-task`) read it but never write to it.
@@ -319,4 +321,4 @@ Write the file with this top-level layout. Adapt sections to task size — not e
 - ...
 ```
 
-The plan file starts at `to-do` (written by this skill); `implement-task` then drives it through `executing` to `done`. If the user decides not to proceed **before execution begins** — a triage or scoping call, such as dropping a now-obsolete sibling plan — set the plan's `**Status:**` to `skipped` rather than deleting it or leaving a stale `to-do`; add a `result.md` only if it's worth recording why. Full vocabulary and transitions for plan and result files are registered in `./references/workflow/task-lifecycle.md` — that's the single source of truth across all task artifacts.
+The plan file starts at `to-do` (written by this skill); `implement-task` then drives it through `executing` to `done` — or parks it at `in-review` when the goals include an `(external)` item still awaiting verification, reaching `done` only once that's confirmed. If the user decides not to proceed **before execution begins** — a triage or scoping call, such as dropping a now-obsolete sibling plan — set the plan's `**Status:**` to `skipped` rather than deleting it or leaving a stale `to-do`; add a `result.md` only if it's worth recording why. Full vocabulary and transitions for plan and result files are registered in `./references/workflow/task-lifecycle.md` — that's the single source of truth across all task artifacts.

@@ -52,7 +52,7 @@ Read in full, not skim — the docs are the baseline you diff the session agains
 - `CONTEXT.md` — the static grounding context (problem statement, recommended direction, key assumptions, MVP scope, not-doing, open questions, references). Note the exact wording of prose sections; you compare, you don't paraphrase.
 - `goals.md` — capture the full `## Goals` list by `G<n>` ID, and the highest ID in use (a new goal takes the next free number).
 - `plan.md` — its `**Status:**`, its steps and their `- [ ]` / `- [x]` markers, each step's **What** / **Verify** / **Goal** / **Depends on**, and the `## Scope` partition.
-- `result.md` — its `**Status:**`, the latest per-step / full-run section, any `**Blocked:**` block, any `## Acceptance` section. If none exists, note it: work recorded this session may create it (per the pairing rule in `./references/workflow/task-lifecycle.md`).
+- `result.md` — its `**Status:**`, the latest per-step / full-run section, any `**Blocked:**` block, any `**In review:**` block, any `## Acceptance` section. If none exists, note it: work recorded this session may create it (per the pairing rule in `./references/workflow/task-lifecycle.md`).
 
 A `skipped` plan is terminal — report it as abandoned and stop; write nothing. A plan with no sibling `goals.md` is a gap — surface it (`plan-task` is expected to produce one) rather than fabricating goals.
 
@@ -76,7 +76,9 @@ Any finding that would **advance state** — check a step, mark a goal `met`, fl
 - Verifies cleanly → it's recordable: check the box / mark the goal `met`, and write the evidence (`**Shipped:**` paths, what was run, what was observed) into `result.md`.
 - Cannot be verified this session (no evidence, or the check fails) → **surface it, do not record it.** It goes to "Not reconciled" naming `implement-task`. A chat claim of "that's done" is not evidence.
 
-Starting work this session on a `to-do` plan is evidenced state (checked steps or shipped artifacts exist) and flips `to-do → executing` with a skeleton `result.md`; finalizing `executing → done` requires the full acceptance gate to pass against `goals.md`.
+**The one sanctioned exception is a goal marked `(external)`.** Its verification lives outside the session by design, so its **best-available proxy** — the confirmation, receipt, or observed live state the user reports — *is* legitimate evidence (per `./references/workflow/acceptance-criteria.md`), not a bare chat claim. On that proxy you may record the goal as `met` and advance `in-review → done`. Absent the proxy, the goal stays `pending external` and the task stays `in-review`.
+
+Starting work this session on a `to-do` plan is evidenced state (checked steps or shipped artifacts exist) and flips `to-do → executing` with a skeleton `result.md`; finalizing `executing → done` requires the full acceptance gate to pass against `goals.md`. When the only goals left unsatisfied are `(external)` ones still awaiting their proxy, the task finalizes to `in-review` instead of `done`, and reaches `done` on a later confirmation.
 
 ### 5. Reconcile the Docs
 
@@ -94,7 +96,8 @@ Finding-type → edit mapping (**auto** = obvious, applied unprompted; **verify*
 - **New open question raised in session** → **auto**: append it to `## Open Questions`.
 - **Session narrative** — what was explored, tried, or decided that isn't itself a state change or a grounding rewrite → **auto**: append a `## Reconciliation — YYYY-MM-DD` section to `result.md` (creating the file and flipping `to-do → executing` when work is evidenced, per the pairing rule).
 - **Step completed this session** → **verify**: re-check its `**Verify:**` criterion (Step 4). Passes → check `- [x]` in `plan.md` and record the evidence in `result.md`. Fails or unverifiable → surface, leave `- [ ]`.
-- **Goal met this session** → **verify**: re-check the goal's acceptance behavior. Passes → record it `met` (in the `## Acceptance` section when finalizing, or noted in the Reconciliation entry otherwise). Advance `executing → done` only when the full gate passes against every goal. Fails → surface, no flip.
+- **Goal met this session** → **verify**: re-check the goal's acceptance behavior. Passes → record it `met` (in the `## Acceptance` section when finalizing, or noted in the Reconciliation entry otherwise). Advance `executing → done` only when the full gate passes against every goal; when unmet goals are all `(external)` ones still awaiting their proxy, finalize to `in-review` instead. Fails → surface, no flip.
+- **`(external)` goal confirmed this session** (the user reports the deploy check, the client sign-off, the receipt) → **verify**: re-check it against that best-available proxy per Step 4. Passes → record the new `met` verdict (with the proxy) in the `## Reconciliation` entry, which supersedes the prior `## Acceptance` line (don't edit that line in place — the append-only rule holds); if it was the last one outstanding, advance `in-review → done` and add the closing `**Completed:**` line. Fails or no proxy → leave `pending external`, task stays `in-review`.
 - **New goal, or a reworded goal, decided in session** → **ask**: confirm the exact wording, then write `goals.md` — a new goal takes the next free `G<n>`, existing IDs are never renumbered, retired IDs never reused, and the file keeps its no-`**Status:**` / no-`## Description` shape.
 - **Changed direction / MVP scope / Not Doing / Key Assumptions** → **ask**: confirm the exact prose, then write the matching `CONTEXT.md` section. Leave the `**Status:**` origin marker untouched.
 - **Changed step scope / new step / changed Verify criterion** → **ask**: confirm, then write `plan.md` within the confirmed finding's scope (update `## Scope`'s goal-ID partition to stay total).

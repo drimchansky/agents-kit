@@ -55,9 +55,9 @@ Read in full, not skim:
 - `CONTEXT.md` in the resolved task folder — the static grounding context (problem statement, scope summary, key assumptions, references).
 - `goals.md` — capture the full `## Goals` list by `G<n>` ID. Note any goal marked `_(unresolved: ...)_`.
 - `plan.md` — note its `**Status:**` header and its `**Goals:**` link.
-- `result.md` — note `**Status:**`, find the latest per-step or full-run section, capture every `**Blocked:**` block verbatim, and capture any `## Acceptance` section verbatim.
+- `result.md` — note `**Status:**`, find the latest per-step or full-run section, capture every `**Blocked:**` and `**In review:**` block verbatim, and capture any `## Acceptance` section verbatim.
 
-Status values across the lifecycle-bearing files are defined in `./references/workflow/task-lifecycle.md` — consult it if you encounter an unfamiliar value, and use the **pairing rule** there to flag inconsistencies (e.g. plan `executing` with no result file, plan `done` with result `executing`). A `skipped` plan is terminal and needs no result file — don't flag a missing result for it as drift; report it as deliberately abandoned. A `blocked` plan is paused — on an external dependency or an unresolved failure — and a `blocked` plan with a `blocked` result and a `**Blocked:**` section is consistent (report it as paused and name the cause from the section), not drift. The goals file has no status — it's a static input.
+Status values across the lifecycle-bearing files are defined in `./references/workflow/task-lifecycle.md` — consult it if you encounter an unfamiliar value, and use the **pairing rule** there to flag inconsistencies (e.g. plan `executing` with no result file, plan `done` with result `executing`). A `skipped` plan is terminal and needs no result file — don't flag a missing result for it as drift; report it as deliberately abandoned. A `blocked` plan is paused — on an external dependency or an unresolved failure — and a `blocked` plan with a `blocked` result and a `**Blocked:**` section is consistent (report it as paused and name the cause from the section), not drift. An `in-review` plan is parked awaiting external verification; an `in-review` plan with an `in-review` result and an `**In review:**` section is consistent (report it as parked and name the pending `(external)` goals), not drift — it reaches `done` only when those are confirmed. The goals file has no status — it's a static input.
 
 Flag in the brief:
 
@@ -72,7 +72,7 @@ For the plan:
 - Identify the next pending step. Pull its **What**, **Verify**, **Depends on**, any **Due** / **Lead time**, and the file paths it touches.
 - For each `- [x]` step, follow the result anchor link to the matching section in the result file. **Match the anchor to the result file's actual shape:** a step-by-step run has `## Step N — <title>` headings (anchor `#step-n--<slug>`), but a full-plan run records a single `## Full Run — <date>` section (anchor `#full-run--<date>`) — in that case every step's `Done` link targets that one combined anchor, not a per-step anchor that doesn't exist.
 - If the plan contains `### Checkpoint after Step N` headers, note which checkpoints have a corresponding `## Checkpoint after Step N` entry in the result file with `**Outcome:** passed`.
-- Surface every `**Blocked:**` section from the result file verbatim — do not paraphrase.
+- Surface every `**Blocked:**` and `**In review:**` section from the result file verbatim — do not paraphrase.
 
 State is reconstructed from the markers, not inferred from prose. If the prose and checkboxes disagree, trust the checkboxes and note the disagreement.
 
@@ -87,7 +87,7 @@ Partition the claims by state, because they're checked differently:
 
 For each done/shipped claim, confirm it still holds and tag the finding. When the domain is code, follow the drift-verification recipe in `./references/engineering/exploration.md` (partition paths shipped vs pending, existence-check, symbol-survival grep, open a shipped file to confirm the change is present and not reverted). For other domains, verify each claim against the domain's own artifacts (a booking still confirmed, a document still signed, a commitment still standing).
 
-**Goal sanity check (domain-neutral).** If the result file has an `## Acceptance` section, re-check the goals tagged `met` against current behavior. On a `done` plan the acceptance gate is the contract, so don't sample — re-check **every** `met` goal; on a still-`executing` plan, spot-check the `met` ones you can reach. If the result has no `## Acceptance` section but the plan is `done`, that itself is drift (the acceptance gate was skipped); flag it `block`. If a `met` goal no longer holds, flag it `warn` so the user can re-run the gate before relying on the prior result.
+**Goal sanity check (domain-neutral).** If the result file has an `## Acceptance` section, re-check the goals tagged `met` against current behavior. On a `done` plan the acceptance gate is the contract, so don't sample — re-check **every** `met` goal; on a still-`executing` plan, spot-check the `met` ones you can reach. If the result has no `## Acceptance` section but the plan is `done`, that itself is drift (the acceptance gate was skipped); flag it `block`. If a `met` goal no longer holds, flag it `warn` so the user can re-run the gate before relying on the prior result. A goal tagged `pending external` is neither drift nor `unmet` — it's an `(external)` goal awaiting verification outside the session; surface it as outstanding (with what's awaited) rather than re-checking it against in-session behavior.
 
 Tag each finding `info` (FYI), `warn` (review before resuming), or `block` (plan needs update before execution can proceed).
 
@@ -146,9 +146,9 @@ Skip this step entirely without the flag. With `-r`, apply the brief's findings 
 Finding-type → edit mapping (**auto** = obvious, applied unprompted; **ask** = engineer input first):
 
 - **Shipped claim on a `- [x]` step vanished** (file gone, symbol removed, change reverted) — **auto**: flip the step to `- [ ]` in `plan.md` and drop its trailing `([result](…))` link — pending steps carry no link; the historic record stays in `result.md`, and the Reconciliation entry cites the dropped anchor so it stays traceable. Never rewrite the step's **What**/**Verify** prose; never renumber.
-- **A `met` goal no longer holds** — **auto**: no checkbox change by itself; flip plan and result `done → executing` (the gate must re-run); the Reconciliation entry names the regressed `G<n>` and supersedes the prior `## Acceptance`; "Not reconciled" names `implement-task`.
+- **A `met` goal no longer holds** — **auto**: no checkbox change by itself; flip plan and result `done → executing` (or `in-review → executing` when the regressed goal backs an in-review task); the Reconciliation entry names the regressed `G<n>` and supersedes the prior `## Acceptance`; "Not reconciled" names `implement-task`.
 - **Plan `done` with no `## Acceptance` in the result** — **auto**: flip plan and result `done → executing` and remove the result's closing `**Completed:**` line (header metadata, not narrative; `implement-task` re-adds it on re-finalize). Never fabricate an Acceptance section — that requires running the gate.
-- **Status-pairing mismatch** — **auto**: reconcile downward to the weaker claim: plan `done` + result `executing` → plan to `executing`; plan `executing` + result `blocked` with a `**Blocked:**` section → plan to `blocked` (copying evidenced state). A repair that would need an invented cause or an upward flip → flag only.
+- **Status-pairing mismatch** — **auto**: reconcile downward to the weaker claim: plan `done` + result `executing` → plan to `executing`; plan `executing` + result `blocked` with a `**Blocked:**` section → plan to `blocked`, or + result `in-review` with an `**In review:**` section → plan to `in-review` (copying evidenced state). A repair that would need an invented cause or an upward flip → flag only.
 - **Plan `executing` with no `result.md`** — **auto** when the evidence is clear either way: checked steps or drift-verified shipped work exist → create a skeleton `result.md` (`implement-task`'s init header, `**Status:** executing`) holding the Reconciliation section, and point the plan's `**Result:**` line at it; zero evidence → flip the plan `executing → to-do` (reverting its `**Result:**` line to the pre-execution placeholder) and create nothing. **Ask** when the evidence is ambiguous (e.g. partial artifacts that may or may not be this task's work).
 - **`[info]` findings** (pending artifact already exists, adjacent refactor, auth-walled link) → no edit; info stays info — checking a box or noting completion would strengthen a claim `-r` cannot attest.
 - **Broken external link** — **auto**: annotate in place: in `CONTEXT.md`'s References (or a `plan.md` step), append `— _broken as of YYYY-MM-DD (404)_` to the line, or swap in the new URL when a redirect target is known. Links inside prior `result.md` sections and in `goals.md` are never touched — note them in the Reconciliation entry (when one is being written) only, never in those files.
@@ -168,14 +168,14 @@ Finding-type → edit mapping (**auto** = obvious, applied unprompted; **ask** =
 
 ## Status
 
-<one paragraph: N of M steps done; executing / blocked / ready to resume / done / skipped; whether the acceptance gate has run>
+<one paragraph: N of M steps done; executing / blocked / in-review / ready to resume / done / skipped; whether the acceptance gate has run and whether any `(external)` goal is still pending>
 
 ## Goals
 
-- G1 — <as written in goals.md> — _met / met with caveats / unmet / out of scope / not yet checked / unresolved_
+- G1 — <as written in goals.md> — _met / met with caveats / unmet / out of scope / pending external / not yet checked / unresolved_
 - G2 — <as written in goals.md> — _…_
 
-(Pull each goal verbatim from `goals.md`, with its `G<n>` ID. Outcomes come from the result file's `## Acceptance` section — tagged by ID — if present; carry each tag through verbatim, including `met with caveats` (keep the caveat note) and `out of scope`. If there's no `## Acceptance` section, mark every goal _not yet checked_. Surface any goal trailing `_(unresolved: ...)_` as `unresolved`.)
+(Pull each goal verbatim from `goals.md`, with its `G<n>` ID — keep any `(external)` marker. Outcomes come from the result file's `## Acceptance` section — tagged by ID — if present; carry each tag through verbatim, including `met with caveats` (keep the caveat note), `out of scope`, and `pending external` (keep what's awaited). If there's no `## Acceptance` section, mark every goal _not yet checked_. Surface any goal trailing `_(unresolved: ...)_` as `unresolved`.)
 
 ## Done
 
@@ -193,6 +193,10 @@ Finding-type → edit mapping (**auto** = obvious, applied unprompted; **ask** =
 ## Blocked
 
 - <verbatim **Blocked:** sections from result file, one per block — or "none">
+
+## In review
+
+- <verbatim **In review:** section from result file — the pending `(external)` goals and what each awaits — or "none">
 
 ## Drift since plan
 
@@ -268,7 +272,7 @@ With `-r`, after the edits are applied (and the batched engineer questions answe
 - [ ] Step state reconstructed from checkbox markers, not inferred from prose
 - [ ] Goals section in the brief lists every goal verbatim by `G<n>` ID, with outcome from the result file's `## Acceptance` section (or `not yet checked` / `unresolved` when applicable)
 - [ ] Plan with no sibling `goals.md` flagged
-- [ ] All `**Blocked:**` sections in the result file surfaced verbatim
+- [ ] All `**Blocked:**` and `**In review:**` sections in the result file surfaced verbatim
 - [ ] Drift check compared plan/result claims against the current implementation on disk; findings listed (or `No drift detected.` stated explicitly)
 - [ ] Plan-referenced paths partitioned into shipped vs. pending before existence-check; missing **shipped** paths flagged as `block`/`warn`, missing **pending** paths not flagged
 - [ ] At least one `**Shipped:**` file from the latest result entry spot-checked against current source
