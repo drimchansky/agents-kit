@@ -122,6 +122,7 @@ The goals file carries no `**Status:**` field by design — it is a static input
 
 - Search for related prior work to use as a model; map what the change will affect (its blast radius)
 - Note existing constraints (debt, contracts, budgets, prior commitments)
+- `CONTEXT.md` already records part of this grounding (References, Recommended Direction, Key Assumptions). Verify what it settles still holds, but don't restate it — the plan's `## Exploration Findings` carries only the **deltas** this pass discovered beyond `CONTEXT.md`, citing its sections for the rest. See `./references/workflow/task-layout.md` § *One home per fact*.
 
 ### 5. Evaluate Approaches
 
@@ -130,6 +131,8 @@ Compare viable approaches — and actively look for ones the user may not have c
 Even when the user suggests a specific approach, consider whether a different solution would be more optimal. The goal is to arrive at the best implementation, not just validate the first idea. If an alternative is clearly better, recommend it with a clear explanation of why.
 
 **However**, don't fabricate alternatives to fill a comparison list when one approach is clearly right. State it and explain why alternatives don't apply.
+
+When `CONTEXT.md` carries a `## Recommended Direction`, treat it as the starting point: the plan's `## Approach` **cites** it and records only the refinements and decisions made at plan time — not a restatement of the direction itself.
 
 For each approach, assess:
 
@@ -146,7 +149,7 @@ Explicitly state:
 - **Out of scope** — which goals are deferred (by ID), and what will NOT be changed, even if related
 - **Boundaries** — Where this work ends and future work begins
 
-Express the in/out split as a **partition of the goal IDs** with explicit lists (`delivered: G1, G3 · deferred: G4`), not as re-prosed intent — the goals are the single source, so scope names them rather than restating what they cover. Do not use ranges: retired goal IDs can leave gaps, so `G1-G3` is ambiguous once `G2` has been removed.
+Express the in/out split as a **partition of the goal IDs** with explicit lists (`delivered: G1, G3 · deferred: G4`), not as re-prosed intent — the goals are the single source, so scope names them rather than restating what they cover. Do not use ranges: retired goal IDs can leave gaps, so `G1-G3` is ambiguous once `G2` has been removed. The same citation rule covers exclusion rationale: the *why* behind an exclusion lives in CONTEXT's "Not Doing" — the plan's out-of-scope entry names the deferred goal IDs and what won't change, and cites CONTEXT for the reasons rather than re-prosing them.
 
 **IMPORTANT**: Scope definition prevents creep during implementation. Be precise. A vague scope produces vague work.
 
@@ -215,6 +218,8 @@ For each real risk:
 
 If the plan has assumptions that could invalidate the approach, surface them explicitly. A plan with known unknowns is more useful than one that hides them.
 
+The plan's `## Open Questions` holds only questions that **arose during planning** and aren't already tracked in CONTEXT's `## Open Questions` — cite those instead of copying them. An answer is later recorded where its question lives (`./references/workflow/task-layout.md` § *One home per fact*). If this pass answers a question CONTEXT tracks, surface the answer in chat — this skill never annotates an existing `CONTEXT.md`; the annotation lands there later via a reconciler (`./references/workflow/reconciliation.md`).
+
 ## Scaling Plan Depth
 
 Match the plan's detail to the task's complexity. The goals step (Step 3) is required at every depth — even small tasks benefit from a few explicit goals.
@@ -236,6 +241,7 @@ When the domain is code, `./references/engineering/planning.md` gives file-count
 - "The goals are obvious" — If they're obvious, they cost nothing to write down. If they're not, that's exactly when you needed them.
 - "The goal is roughly the right shape, that's good enough" — Run it through `./references/workflow/acceptance-criteria.md`. Vague goals survive coverage analysis and pass the acceptance gate by reinterpretation; that's the failure mode the checklist catches.
 - "The user gave a vague task, I'll just guess what they want" — Ask. Clarifying questions during the goals step are cheaper than reworking the plan after implementation.
+- "A self-contained plan is easier to read" — The folder is the self-contained unit, not the file. Restating `CONTEXT.md` in the plan creates two copies of one fact that drift apart as soon as either is edited; cite the sibling section instead.
 - "I'll just output the plan and goals in chat" — Both must be files on disk. `implement-task` and `review-task` read them from there.
 
 ## Verification
@@ -255,6 +261,7 @@ When the domain is code, `./references/engineering/planning.md` gives file-count
 - [ ] `## Scope` states the in/out split as a partition of goal IDs (`delivered: … · deferred: …`)
 - [ ] Every goal in `goals.md` carries a durable `G<n>` ID
 - [ ] Plan is grounded in actual code exploration, not assumptions
+- [ ] No `CONTEXT.md` content restated — sibling sections cited; `## Exploration Findings` / `## Approach` / `## Open Questions` carry only plan-time deltas (`./references/workflow/task-layout.md` § *One home per fact*)
 - [ ] Each step is independently verifiable
 - [ ] Steps are ordered as vertical slices unless a foundational layer requires otherwise
 - [ ] No step violates the size cap (no "and" in title, ≤1 subsystem, ≤5 files, ≤3-bullet acceptance)
@@ -277,11 +284,11 @@ Write the file with this top-level layout. Adapt sections to task size — not e
 
 ## Exploration Findings
 
-<key patterns, affected files, constraints discovered>
+<plan-time deltas only: key patterns, affected files, constraints discovered beyond ./CONTEXT.md — cite its sections rather than restating them>
 
 ## Approach
 
-<recommended approach with rationale; side-by-side bullet list of alternatives only if multiple viable options>
+<recommended approach with rationale; when CONTEXT § Recommended Direction exists, cite it and record only plan-time refinements; side-by-side bullet list of alternatives only if multiple viable options>
 
 ## Scope
 
@@ -318,7 +325,7 @@ Write the file with this top-level layout. Adapt sections to task size — not e
 
 ## Open Questions
 
-- ...
+- <questions that arose during planning; CONTEXT's open questions are cited, not copied>
 ```
 
 The plan file starts at `to-do` (written by this skill); `implement-task` then drives it through `executing` to `done` — or parks it at `in-review` when the goals include an `(external)` item still awaiting verification, reaching `done` only once that's confirmed. If the user decides not to proceed **before execution begins** — a triage or scoping call, such as dropping a now-obsolete sibling plan — set the plan's `**Status:**` to `skipped` rather than deleting it or leaving a stale `to-do`; add a `result.md` only if it's worth recording why. Full vocabulary and transitions for plan and result files are registered in `./references/workflow/task-lifecycle.md` — that's the single source of truth across all task artifacts.

@@ -21,6 +21,10 @@ Everything else needs the engineer:
 
 Reconciliation fixes the **docs, not the world**: no code changes, no git mutation, no writes to external systems. Every edit maps to a finding printed in the report (or to an engineer's answer about one) — a change without a finding behind it is invented detail; drop it. (The session direction may *run* verification to back a state change — see below — but running a check is read-only; it still changes no code and mutates nothing outside the task docs.)
 
+### One home per fact
+
+Every task-folder fact has one home file, and reconciliation respects it (`./task-layout.md` § *One home per fact*): an edit records a finding **once**, in its home — grounding in `CONTEXT.md`, acceptance in `goals.md`, execution content in `plan.md`, history in `result.md`, an answer where its question lives. A sibling file that needs the fact gets a `./` citation, never a copy. Mirroring one finding into two files authors the next round of drift — the exact thing reconciliation exists to remove. (The `## Reconciliation` record is not a mirror: it logs the *edit*, not a second copy of the fact.)
+
 ### Skipped plans are exempt
 
 A `skipped` plan is exempt from reconciliation entirely — it's terminal; report it as abandoned and write nothing, even if drift or missing information exists.
@@ -81,7 +85,7 @@ Findings come from a printed report comparing the docs against reality on disk, 
 
 Exactly three task files, and nothing else:
 
-- `plan.md` — checkboxes, the `**Status:**` header, and (with an engineer answer) step content within the review's scope: Verify criteria, gap details, the Scope partition, goal citations.
+- `plan.md` — checkboxes, the `**Status:**` header, and (with an engineer answer) step content within the review's scope: Verify criteria, gap details, the Scope partition, goal citations, and collapsing restated grounding to a citation of its home section (per *One home per fact* above).
 - `result.md` — append-only; see the record format above.
 - `CONTEXT.md` — minimal annotations inside `## References` and `## Open Questions` only, per the carve-out in `./task-lifecycle.md`. Never the `**Status:**` origin marker, never prose rewrites.
 
@@ -118,6 +122,7 @@ Most of this review's findings need the engineer — that is what the assessment
 - **Gaps and needs-clarification steps** — **ask** the targeted question from the Questions section; fold the answer into the step's **What**/**Verify** (or the plan's Scope).
 - **Goal quality findings** (`weak` / `vague-or-untestable` / `unresolved`) — never edited: `goals.md` is the user's contract. Print the suggested rewrite for the user to apply; an engineer answer here still goes to the user as text, not into the file.
 - **CONTEXT ↔ goals / CONTEXT ↔ plan contradictions** — **ask** which side is right, but apply the resolution only where the write surface allows: the plan's Scope/steps, or an annotation in CONTEXT's `## Open Questions` recording the ruling. CONTEXT prose (MVP scope, "Not Doing", Recommended Direction) is never rewritten — if the ruling changes direction, that's re-planning; name `plan-task`.
+- **Restated grounding** (the same decision, finding, or question maintained in both `CONTEXT.md` and `plan.md`) — **ask**: confirm the fact's home (per `./task-layout.md` § *One home per fact* — grounding's home is `CONTEXT.md`) and whether the copies still agree, then collapse the restated content on the **plan side** to a citation of the home section, preserving any plan-time deltas interleaved with it. Never auto-applied — separating restatement from delta and choosing the surviving copy is interpretive, and diverged copies are a contradiction to rule on first (the row above). The CONTEXT side is never rewritten under `-r`; if the plan copy carries newer content that should become the grounding, that's a `reconcile-task` (session → docs) or `plan-task` job.
 - **Infeasible or conflicts-with-existing steps** — flag only: fixing them is redesign, out of scope even with `-r`; name `plan-task`.
 
 ## Direction: session → docs (`reconcile-task`)
@@ -126,7 +131,7 @@ Findings come from reviewing the current session against the docs, so this direc
 
 ### Write surface
 
-All four task files. `plan.md` and `result.md` as above, plus — only through a **confirmed** judgment item — `CONTEXT.md` prose sections (not annotation-only) and `goals.md`. Pure enrichment auto-applies: a new external reference into `## References`, an answered open question annotated in `## Open Questions`, session narrative appended to `result.md`.
+All four task files. `plan.md` and `result.md` as above, plus — only through a **confirmed** judgment item — `CONTEXT.md` prose sections (not annotation-only) and `goals.md`. Pure enrichment auto-applies: a new external reference into `## References`, an answered open question annotated in `## Open Questions`, session narrative appended to `result.md`. Each enrichment lands in the fact's **home file only** (per *One home per fact* above): a session decision goes to `CONTEXT.md` *or* the affected plan step — whichever the homes rule names — and an answer is annotated where its question lives, never mirrored into both files.
 
 ### Strengthen only on verified evidence
 

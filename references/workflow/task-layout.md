@@ -36,6 +36,20 @@ Like the spec it replaces, `goals.md` is a static input — it carries no `**Sta
 - **Steps cite the goals they deliver.** Every plan step carries a `**Goal:**` line naming the goal ID(s) it delivers (`**Goal:** G1, G3`) — or the explicit escape `**Goal:** none (infra/refactor)` for a step that delivers no user-visible goal. Coverage is then mechanical: every goal ID maps to at least one delivering step, and every non-escaped step to at least one goal.
 - **Scope is a partition of goal IDs.** A plan's `## Scope` says which goals it delivers and which it defers, by explicit ID list (e.g. `delivered: G1, G3 · deferred: G4`), instead of re-prosing intent. Do not use ranges: retired goal IDs can leave gaps, so `G1-G3` is ambiguous once `G2` has been removed. Each goal is either in this plan or deferred to another — the partition is what makes goals↔scope drift unwritable.
 
+## One home per fact
+
+Within a task folder, each piece of information lives in exactly **one** file — its home — and the sibling files **cite** it rather than restate it. The goals file above is the worked example (goal intent lives in `goals.md`; every other artifact cites `G<n>` IDs). The same rule holds across all four artifacts:
+
+- **Grounding** — problem statement, chosen direction and its rationale, key assumptions, scope rationale and "Not Doing" reasons, external references, and open questions raised before planning — lives in `CONTEXT.md`.
+- **Acceptance** — what "done" means — lives in `goals.md`, cited by `G<n>` ID.
+- **Execution contract** — steps, verify criteria, checkpoints, risks to execution, and the **plan-time deltas**: findings, decisions, and questions that surfaced during planning and aren't already in `CONTEXT.md` — lives in `plan.md`.
+- **History** — what happened — lives in `result.md`.
+- **An answer is recorded where its question lives** — a resolved `CONTEXT.md` open question is annotated there; a resolved plan-time question, in the plan. Never both.
+
+Cite a sibling with a `./` link naming the section — `see [CONTEXT § Recommended Direction](./CONTEXT.md)` — the same stable within-folder links the file headers use. Copying a sibling's content authors future drift: two copies of one fact disagree as soon as either is edited. `review-task` flags restated grounding as cross-file drift; the fix is to keep the copy in the fact's home and collapse the other to a citation.
+
+The rule is **within one folder** only. Across sibling task folders the opposite holds: there is no shared layer above the folders, so anything a sibling needs is duplicated into its own `CONTEXT.md` (see *Multi-part efforts* below). Self-sufficiency is the folder's property, not the file's.
+
 ## Multi-part efforts: sibling folders
 
 A larger effort that won't fit one plan becomes several independent sibling task folders, not one folder holding many plans. Each sibling is a complete task folder (its own `CONTEXT.md` + `goals.md`/`plan.md`/`result.md`). When the parts have a blocking order, express it with an `NN-` prefix on the folder names — the only place ordering can live, since the folders are otherwise independent:

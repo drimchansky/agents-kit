@@ -70,6 +70,8 @@ The workflow skills share a folder-based contract: one task lives in one folder 
 - `plan.md` – the steps, each citing the goals it delivers.
 - `result.md` – append-only record of what happened.
 
+Each fact lives in exactly one of these files and the siblings cite it — plan steps cite goals by `G<n>` ID, plan sections cite `CONTEXT.md` rather than restating it. See [`task-layout`](references/workflow/task-layout.md) § *One home per fact*.
+
 `implement-task` runs an acceptance gate against `goals.md` before flipping the plan to `done` — and parks it at `in-review` when the only goals left unsatisfied are `(external)` ones still awaiting verification, reaching `done` on a later re-run once they're confirmed. Completed (`done`) or `skipped` tasks can be moved to an `Archive/` subdirectory with [`archive-task`](skills/archive-task/SKILL.md); a plan stuck or waiting on a prerequisite before it can proceed takes the `blocked` status. See [`task-layout`](references/workflow/task-layout.md) for the on-disk layout and [`task-lifecycle`](references/workflow/task-lifecycle.md) for the status registry.
 
 ## Domain packs
