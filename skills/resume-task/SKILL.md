@@ -44,7 +44,7 @@ With `-r`, the write surface expands to exactly three task files — `plan.md`, 
 
 ### 1. Resolve the Task Folder
 
-Discovery resolves a task folder, then reads its `plan.md`. Resolve it per the **resolve-current-or-ask** discovery rules in `./references/workflow/task-layout.md` — the same variant `implement-task` uses: a bare slug (resolved in the canonical root, falling back into `archive/` for a finished task), an explicit path used verbatim anywhere on disk, or a full `plan.md` path taken directly, or — when the user named nothing — the task already established **in this session** if there is one (e.g. from a preceding `refine-idea`, `plan-task`, or `review-task`), otherwise list active folders and ask which task.
+Discovery resolves a task folder, then reads its `plan.md`. Resolve it per the **resolve-current-or-ask** discovery rules in `./references/workflow/task-layout.md` — the same variant `implement-task` uses: a bare slug (resolved in the canonical root, falling back into `Archive/` for a finished task), an explicit path used verbatim anywhere on disk, or a full `plan.md` path taken directly, or — when the user named nothing — the task already established **in this session** if there is one (e.g. from a preceding `refine-idea`, `plan-task`, or `review-task`), otherwise list active folders and ask which task.
 
 **Read the plan** — once the folder is resolved, read its `plan.md` (one plan per folder). If the folder has no `plan.md`, tell the user the folder exists but has no plan; suggest `plan-task`. Don't guess between ambiguous candidates — ask.
 

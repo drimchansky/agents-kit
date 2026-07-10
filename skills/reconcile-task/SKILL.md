@@ -41,7 +41,7 @@ This skill closes the gap a working or design session opens: things get decided,
 
 ### 1. Resolve the Task Folder
 
-Resolve a task folder per the **resolve-current-or-ask** discovery rules in `./references/workflow/task-layout.md` — the same variant `implement-task` and `resume-task` use: a bare slug (resolved in the canonical root, falling back into `archive/` for a finished task), an explicit path used verbatim anywhere on disk, or a full `plan.md` path taken directly, or — when the user named nothing — the task already established **in this session** if there is one (e.g. from a preceding `refine-idea`, `plan-task`, `review-task`, or `implement-task`), otherwise list active folders and ask which task.
+Resolve a task folder per the **resolve-current-or-ask** discovery rules in `./references/workflow/task-layout.md` — the same variant `implement-task` and `resume-task` use: a bare slug (resolved in the canonical root, falling back into `Archive/` for a finished task), an explicit path used verbatim anywhere on disk, or a full `plan.md` path taken directly, or — when the user named nothing — the task already established **in this session** if there is one (e.g. from a preceding `refine-idea`, `plan-task`, `review-task`, or `implement-task`), otherwise list active folders and ask which task.
 
 The in-session task is the common case: reconcile is usually run at the end of a session that was already about a specific task. If nothing is established and nothing is named, ask — never guess between candidates.
 

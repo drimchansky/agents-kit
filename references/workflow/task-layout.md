@@ -48,17 +48,19 @@ A larger effort that won't fit one plan becomes several independent sibling task
 
 There is no shared layer above these folders — no shared context file, no cross-folder links. Anything a sibling needs is duplicated into its own `CONTEXT.md`. This keeps every folder self-sufficient: discoverable, movable, and archivable on its own.
 
-A multi-part effort's siblings belong in **one parent directory** — the `NN-` ordering is only visible where the folders sort together, and location-relative archiving keeps finished parts (`<parent>/archive/01-schema/`) beside the live ones.
+A multi-part effort's siblings belong in **one parent directory** — the `NN-` ordering is only visible where the folders sort together, and location-relative archiving keeps finished parts (`<parent>/Archive/01-schema/`) beside the live ones.
 
 ## Archiving finished tasks (optional)
 
-Archiving is **location-relative**: a finished task folder moves into an `archive/` subdirectory of whatever directory contains it — the same rule at every location:
+Archiving is **location-relative**: a finished task folder moves into an `Archive/` subdirectory of whatever directory contains it — the same rule at every location:
 
 ```
-<parent>/<slug>/  →  <parent>/archive/<slug>/      # canonically: .agents/tasks/archive/<slug>/
+<parent>/<slug>/  →  <parent>/Archive/<slug>/      # canonically: .agents/tasks/Archive/<slug>/
 ```
 
-A completed (`done`) or `skipped` task is moved there to keep its parent's active list short. At a non-canonical location `<parent>/archive/` may already exist with the user's own unrelated content; that's fine — archiving adds `<slug>/` beside it, and the only collision that matters is `<parent>/archive/<slug>/` itself.
+A completed (`done`) or `skipped` task is moved there to keep its parent's active list short. At a non-canonical location `<parent>/Archive/` may already exist with the user's own unrelated content; that's fine — archiving adds `<slug>/` beside it, and the only collision that matters is `<parent>/Archive/<slug>/` itself.
+
+**Recognizing the directory is case-insensitive.** New archives are always *created* as `Archive/`, but wherever a skill *recognizes* an existing one — excluding it from an active scan, falling back into it for a bare slug, guarding a creation destination, or refusing to re-archive an already-archived folder — the name is matched **case-insensitively**. A lowercase `archive/` from a pre-rename layout, or the same folder on a case-insensitive filesystem (macOS's APFS), still counts as the archive. `migrate-task-format` normalizes a stray lowercase `archive/` container back to `Archive/`.
 
 The `archive-task` skill performs this move — it confirms the plan is `done` or `skipped`, then relocates the whole folder — or you can `mv` it by hand; the result is identical.
 
@@ -70,7 +72,7 @@ When resolving which task to act on, the **base resolution** is shared; skills d
 
 **Base resolution (every skill):**
 
-- **Bare slug given** → resolve in the canonical root only: `.agents/tasks/<slug>/` among the active folders (excluding `archive/`); if none matches, look inside `.agents/tasks/archive/<slug>/` before giving up — a finished task may have been archived there. A bare slug never searches beyond the canonical root; a task living elsewhere must be named by path. (Anything containing a path separator is a path; a bare kebab-case token is a slug.)
+- **Bare slug given** → resolve in the canonical root only: `.agents/tasks/<slug>/` among the active folders (excluding `Archive/`, matched case-insensitively — see *Archiving finished tasks*); if none matches, look inside `.agents/tasks/Archive/<slug>/` before giving up — a finished task may have been archived there. A bare slug never searches beyond the canonical root; a task living elsewhere must be named by path. (Anything containing a path separator is a path; a bare kebab-case token is a slug.)
 - **Explicit task folder path given** → use it verbatim, anywhere on disk; the folder's own name is the slug. Confirm it's a task folder by contents — a top-level `CONTEXT.md` or `plan.md` (a young task may have only `CONTEXT.md`). A path to a folder with neither is not a task folder; say so rather than guessing. There is no archive fallback for a path — verbatim is verbatim.
 - **A full plan path given** (`.../plan.md`) → use it directly and derive the task folder from its parent — the parent folder is the task folder, wherever it sits.
 
@@ -83,12 +85,12 @@ Once the folder is resolved, the four files are found by their fixed role names 
 - **Doesn't exist** → if its basename equals the derived slug, the user named the folder itself: create it verbatim. Otherwise ask whether to create `<path>/<slug>/` inside it (the usual intent) or use `<path>` as the folder itself.
 - **Exists, but is a file** → refuse; a destination must be a directory.
 
-No destination path → the canonical root, `.agents/tasks/<slug>/`. Resolve the destination to an absolute path before using it. Avoid creating a live task directly under a directory named `archive/` — location-relative archiving reads that as already archived; warn and confirm first.
+No destination path → the canonical root, `.agents/tasks/<slug>/`. Resolve the destination to an absolute path before using it. Avoid creating a live task directly under a directory named `Archive/` — location-relative archiving reads that as already archived; warn and confirm first.
 
 **Fallback when the user named nothing** — this is the only branch that varies, by what the skill does:
 
 - **resolve-or-create** (`refine-idea`, `plan-task`) → derive a slug from the task description and create the task folder when no active or archived folder matches — in the canonical root (`.agents/tasks/<slug>/`) by default, or per a user-supplied destination path (see *Destination paths* above). If a slug matches only an archived task, ask whether to revive it or start fresh.
-- **resolve-current-or-ask** (`implement-task`, `resume-task`, `reconcile-task`) → first check whether a task is already established **in this session** — a folder / `CONTEXT.md` resolved earlier this session (e.g. from a preceding `refine-idea`, `plan-task`, or `review-task`, or one the user named). If so, use it. Otherwise list the canonical root's active folders (excluding `archive/`) and ask which.
-- **resolve-or-ask** (`review-task`, `archive-task`) → list the canonical root's active folders (excluding `archive/`) and ask which.
+- **resolve-current-or-ask** (`implement-task`, `resume-task`, `reconcile-task`) → first check whether a task is already established **in this session** — a folder / `CONTEXT.md` resolved earlier this session (e.g. from a preceding `refine-idea`, `plan-task`, or `review-task`, or one the user named). If so, use it. Otherwise list the canonical root's active folders (excluding `Archive/`) and ask which.
+- **resolve-or-ask** (`review-task`, `archive-task`) → list the canonical root's active folders (excluding `Archive/`) and ask which.
 
 Archived tasks are intentionally absent from the default active listing — that is the point of archiving, not a discovery bug. Likewise, tasks outside the canonical root are absent from *every* listing — unlistable by design; reach them by path.

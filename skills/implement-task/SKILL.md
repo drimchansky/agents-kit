@@ -56,7 +56,7 @@ When the domain is code, follow `./references/engineering/execution.md` ("Detect
 
 Discovery resolves a task folder, then reads its `plan.md`.
 
-**Resolve the task folder** per the **resolve-current-or-ask** discovery rules in `./references/workflow/task-layout.md`: use a bare slug (resolved in the canonical root, falling back into `archive/` for a finished task) or an explicit path taken verbatim anywhere on disk; take a full `plan.md` path directly; and when the user named nothing, execute the task already established **in this session** if there is one (e.g. from a preceding `refine-idea`, `plan-task`, or `review-task`), otherwise list active folders and ask.
+**Resolve the task folder** per the **resolve-current-or-ask** discovery rules in `./references/workflow/task-layout.md`: use a bare slug (resolved in the canonical root, falling back into `Archive/` for a finished task) or an explicit path taken verbatim anywhere on disk; take a full `plan.md` path directly; and when the user named nothing, execute the task already established **in this session** if there is one (e.g. from a preceding `refine-idea`, `plan-task`, or `review-task`), otherwise list active folders and ask.
 
 **Read the plan** — once the folder is resolved, read its `plan.md` (one plan per folder). If the folder has no `plan.md`, tell the user the folder exists but has no plan; suggest `plan-task` to create one.
 

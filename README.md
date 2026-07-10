@@ -57,7 +57,7 @@ Four more support the workflow:
 
 - [**resume-task**](skills/resume-task/SKILL.md) – catch up on a task and get a handoff briefing; add `-r` to also reconcile the task docs to reality — obvious fixes applied, you're asked about the rest. _Example: `/resume-task auth-jwt-migration` or `/resume-task auth-jwt-migration -r`_
 - [**reconcile-task**](skills/reconcile-task/SKILL.md) – capture important information from the current session into the task docs — decisions, references, answered questions, and verified progress that never got written down. The enriching counterpart to `resume-task -r`. _Example: `/reconcile-task auth-jwt-migration`_
-- [**archive-task**](skills/archive-task/SKILL.md) – move a finished (`done`/`skipped`) task folder into `archive/` to keep the active list short. _Example: `/archive-task auth-jwt-migration`_
+- [**archive-task**](skills/archive-task/SKILL.md) – move a finished (`done`/`skipped`) task folder into `Archive/` to keep the active list short. _Example: `/archive-task auth-jwt-migration`_
 - [**migrate-task-format**](skills/migrate-task-format/SKILL.md) – upgrade older task folders to the current format. _Example: `/migrate-task-format` or `/migrate-task-format ../other-repo`_
 
 ## Task folders
@@ -69,7 +69,7 @@ The workflow skills share a folder-based contract: one task lives in one folder 
 - `plan.md` – the steps, each citing the goals it delivers.
 - `result.md` – append-only record of what happened.
 
-`implement-task` runs an acceptance gate against `goals.md` before flipping the plan to `done` — and parks it at `in-review` when the only goals left unsatisfied are `(external)` ones still awaiting verification, reaching `done` on a later re-run once they're confirmed. Completed (`done`) or `skipped` tasks can be moved to an `archive/` subdirectory with [`archive-task`](skills/archive-task/SKILL.md); a plan stuck or waiting on a prerequisite before it can proceed takes the `blocked` status. See [`task-layout`](references/workflow/task-layout.md) for the on-disk layout and [`task-lifecycle`](references/workflow/task-lifecycle.md) for the status registry.
+`implement-task` runs an acceptance gate against `goals.md` before flipping the plan to `done` — and parks it at `in-review` when the only goals left unsatisfied are `(external)` ones still awaiting verification, reaching `done` on a later re-run once they're confirmed. Completed (`done`) or `skipped` tasks can be moved to an `Archive/` subdirectory with [`archive-task`](skills/archive-task/SKILL.md); a plan stuck or waiting on a prerequisite before it can proceed takes the `blocked` status. See [`task-layout`](references/workflow/task-layout.md) for the on-disk layout and [`task-lifecycle`](references/workflow/task-lifecycle.md) for the status registry.
 
 ## Domain packs
 

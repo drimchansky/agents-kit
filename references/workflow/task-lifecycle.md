@@ -1,6 +1,6 @@
 # Task Lifecycle: Status Registry
 
-A task folder holds four artifacts that share a slug but track distinct lifecycles. Three carry a `**Status:**` header drawn from a closed vocabulary; the goals file deliberately has no status. **This file is the single source of truth for lifecycle states.** When a status name or transition changes, update it here first and propagate to the skills that read or write these fields: `refine-idea`, `plan-task`, `implement-task`, `resume-task`, `review-task`, and `reconcile-task`. (`migrate-task-format` and `archive-task` also read this vocabulary, but at run time, so they need no update.) Directory layout (the flat task folder and `archive/`) is documented separately in the sibling `task-layout.md`.
+A task folder holds four artifacts that share a slug but track distinct lifecycles. Three carry a `**Status:**` header drawn from a closed vocabulary; the goals file deliberately has no status. **This file is the single source of truth for lifecycle states.** When a status name or transition changes, update it here first and propagate to the skills that read or write these fields: `refine-idea`, `plan-task`, `implement-task`, `resume-task`, `review-task`, and `reconcile-task`. (`migrate-task-format` and `archive-task` also read this vocabulary, but at run time, so they need no update.) Directory layout (the flat task folder and `Archive/`) is documented separately in the sibling `task-layout.md`.
 
 ## Files
 

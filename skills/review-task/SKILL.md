@@ -23,7 +23,7 @@ The user provides a plan — typically the output of `plan-task`, written to `<t
 
 ## Locate the Plan
 
-Resolve a task folder per the **resolve-or-ask** discovery rules in `./references/workflow/task-layout.md` — a bare slug (resolved in the canonical root, falling back into `archive/` for a finished task), an explicit path used verbatim anywhere on disk, a full `plan.md` path taken directly, or, when the user named nothing, list active folders and ask which.
+Resolve a task folder per the **resolve-or-ask** discovery rules in `./references/workflow/task-layout.md` — a bare slug (resolved in the canonical root, falling back into `Archive/` for a finished task), an explicit path used verbatim anywhere on disk, a full `plan.md` path taken directly, or, when the user named nothing, list active folders and ask which.
 
 Once the folder is resolved, read its `plan.md` (one plan per folder; its sibling `goals.md` and `result.md` are inputs and execution records).
 

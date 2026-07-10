@@ -21,7 +21,7 @@ This skill brings existing task folders under `.agents/tasks/` into conformance 
 - **Structural-only.** Apply only lossless transforms (renames, capitalization, link-header rewrites). Never auto-derive content — flag judgment cases and stop.
 - **Never half-migrate.** A folder with any judgment issue is left entirely untouched until the issue is resolved; don't apply its structural fixes in isolation, since a partial migration can strand content.
 - **Never touch git.** No add, commit, checkout, stash, or `git mv`. Edits are working-tree only; the user reviews via `git diff` and commits.
-- **`archive/` is a container, not a task.** Exclude it from the active scan; migrate an archived folder only when the user names it explicitly.
+- **`Archive/` is a container, not a task.** Exclude it from the active scan; migrate an archived folder only when the user names it explicitly. The container is recognized case-insensitively (`task-layout.md`) — a lone lowercase `archive/` at the task root is normalized to `Archive/` as a structural fix, but two archive containers (`archive/` *and* `Archive/`) are never merged.
 
 ## When to Use
 
@@ -43,7 +43,7 @@ This skill brings existing task folders under `.agents/tasks/` into conformance 
 
 Read the two reference docs that define the current format, and treat them as the **only** source of truth:
 
-- `./references/workflow/task-layout.md` — directory layout, file role-names, link-headers, `archive/`, multi-part siblings, discovery rules.
+- `./references/workflow/task-layout.md` — directory layout, file role-names, link-headers, `Archive/`, multi-part siblings, discovery rules.
 - `./references/workflow/task-lifecycle.md` — the `**Status:**` vocabulary for `CONTEXT.md` / `plan.md` / `result.md`, and the `goals.md` "no status" rule.
 
 Derive the conformance checklist from the docs at run time — don't migrate against a remembered format. Read each value out of the docs every run; the **dimensions** to check stay fixed even as their values evolve:
@@ -53,7 +53,7 @@ Derive the conformance checklist from the docs at run time — don't migrate aga
 - **Link-headers** — which `**Header:**` lines exist and that each points at its `./`-relative role-name target. (`task-layout.md`)
 - **Status vocabulary, per file** — read it from `task-lifecycle.md`, which gives each status-bearing file a **distinct** vocabulary: `CONTEXT.md` carries a one-shot *origin marker*, `plan.md` and `result.md` carry *lifecycle states* (a different pool), and `goals.md` carries **no** status. A value valid for one file is not automatically valid on another — check each file against its own column.
 - **Multi-part layout** — sibling folders (optionally `NN-` prefixed), with whatever shared-layer rule the docs currently state. (`task-layout.md`)
-- **Archive** — the single archive path the docs define, and the discovery rule that excludes it. (`task-layout.md`)
+- **Archive** — the single archive directory the docs define (`Archive/`, recognized case-insensitively), the discovery rule that excludes it, and the case-normalization of a stray lowercase `archive/` container to `Archive/`. (`task-layout.md`)
 
 Read the current value of each dimension from the docs rather than assuming the shape it had last time — they are authoritative and may have moved on. **If you find a format rule you believe should hold but it has no home in either doc** (it lives only in a spine skill's prose), say so in the preview and do not enforce it; reconcile only what the docs define. You can only *auto-apply* the lossless transforms §5 enumerates: if a folder deviates in a way none of them covers — even a lossless deviation the docs newly introduced — classify it needs-judgment and note that the skill needs a new transform; never improvise one.
 
@@ -61,7 +61,9 @@ Read the current value of each dimension from the docs rather than assuming the 
 
 - **Target is a project root, not a task.** This skill takes the path to a *project* (the directory that contains `.agents/`), defaulting to the current project. Sanity-check the argument first: if the user passed a task folder or a bare slug (e.g. `legacy-export` or `.agents/tasks/legacy-export`) — recognizable because it *is* a task folder or names one, rather than containing an `.agents/` directory — don't silently append `/.agents/tasks/` to it (that yields a bogus nested path and a false "nothing to migrate"). Stop and ask the user for the project root, or to name an archived folder explicitly if that's what they meant.
 - **Resolve the task root** as `<target>/.agents/tasks/`. If it doesn't exist, report there's nothing to migrate and stop. This skill is deliberately **canonical-root-scoped**: it takes a project root and scans its `.agents/tasks/`, unlike the spine skills, which also accept an explicit path to a task folder anywhere on disk. A task living outside a canonical root is out of scope — bring it up to shape by hand, or move it into a canonical root first and re-run.
-- **List candidate folders** directly under `.agents/tasks/`, **excluding `archive/`** (a container, not a task — follow `task-layout.md`'s discovery rules rather than restating them). Migrate an archived folder only if the user names it explicitly. **If the scan finds zero active candidates** (the root is empty, or holds only `archive/`), report "nothing active to migrate" and stop — don't fall through to an empty preview and a confirm prompt for zero fixes.
+- **List candidate folders** directly under `.agents/tasks/`, **excluding the archive container** (`Archive/`, matched case-insensitively per `task-layout.md` — so a stray lowercase `archive/` is never mistaken for a task candidate; it's a container, handled by the next bullet). Migrate an archived folder only if the user names it explicitly.
+- **Check the archive container's case.** Separately from the task candidates, look at the archive container itself at the task root. If it exists under a non-canonical case — a lowercase `archive/` with no canonical `Archive/` beside it — normalizing it to `Archive/` is a lossless structural fix (§5). If **both** an `archive/` and an `Archive/` exist at the root (possible only on a case-sensitive filesystem), that's a collision the skill won't resolve: flag it needs-judgment and leave both untouched — merging two archive containers is a judgment call, not a rename.
+- **If the scan finds zero active candidates and no archive-container rename is pending** (the root is empty, or holds only a correctly-cased `Archive/`), report "nothing active to migrate" and stop — don't fall through to an empty preview and a confirm prompt for zero fixes. A lone lowercase `archive/` that needs normalizing is itself a fix — preview and apply it even when no task folder needs migrating.
 - For each candidate, read whatever task files it contains — any of `CONTEXT.md`, `goals.md` (or a legacy `spec.md` / `*.spec.md`), `plan.md` / `*.plan.md`, `result.md` / `*.result.md`, and, for old shapes, `PROJECT.md` and nested subdirectories.
 
 ### 3. Classify each folder
@@ -93,7 +95,8 @@ Before changing anything, print a per-folder preview:
 - the folder name and its label;
 - for **structurally-fixable** — the exact operations §5 will perform: each `old path → new path` rename and each header rewrite, as a concrete list;
 - for **needs-judgment** — the specific issue found and the recommended manual action (§6);
-- for **conformant** — a one-line "no changes".
+- for **conformant** — a one-line "no changes";
+- for a **root-level archive-container rename** (§2) — the single `archive/ → Archive/` operation, listed once above the per-folder entries since it is not itself a task.
 
 End with a summary count (`N conformant, M structurally-fixable, K needs-judgment`) and an explicit confirmation prompt. **Nothing is written, renamed, or moved until the user confirms.** If the user declines, stop with no changes.
 
@@ -120,7 +123,9 @@ Use a plain filesystem rename. **A case-only difference is the rename to perform
 
 Rewrite only the link **target** — never the surrounding prose, a placeholder, or the status value.
 
-**Archived folders.** When the user names an archived folder explicitly, apply the same in-place renames and header rewrites to it as to any other folder; it stays where it is. Do **not** invent or "normalize" an archive path: `task-layout.md` defines a single archive location and no predecessor, so there is no old-path relocation to perform (enforcing one would violate the CRITICAL rule against format that has no home in the docs).
+**Archived folders.** When the user names an archived folder explicitly, apply the same in-place renames and header rewrites to it as to any other folder; it stays where it is. Do **not** relocate it to a different archive path: `task-layout.md` defines a single archive *location*, so there is no folder-level relocation to perform (enforcing one would violate the CRITICAL rule against format that has no home in the docs). Normalizing the archive *container's* name-case (next) is a separate, documented fix — not a relocation of any task folder.
+
+**Normalize the archive container's case.** When §2 found the archive container under a non-canonical case (a lowercase `archive/`) with no canonical `Archive/` beside it, rename the container itself to `Archive/`. Use a plain filesystem rename — via a temp name (`archive` → `_tmp` → `Archive`) if the OS won't do a case-only rename directly, the same technique the role-file case fixes use above. The move relocates nothing inside it: the archived task folders keep their `./`-relative links, exactly as when a whole task folder moves. Skip this when both cases already exist at the root — that collision is needs-judgment (§2), never a merge.
 
 **Idempotency & safety invariants:**
 
@@ -167,6 +172,10 @@ Do **not** flatten the directories yourself — flattening without step 1 strand
 
 > The current step format carries a `**Goal:**` line naming the goal ID(s) the step delivers, or `none (infra/refactor)` (`task-layout.md`). Back-filling these maps each step to the goals it delivers — a judgment call the skill won't auto-apply. To migrate by hand: add a `**Goal:**` line to each step, then re-run.
 
+**Two archive containers** (`archive/` *and* `Archive/` both present at the task root — only possible on a case-sensitive filesystem):
+
+> The task root has both `archive/` and `Archive/`. The current format has a single archive container, `Archive/` (`task-layout.md`), but merging two is a judgment call — their contents may overlap or collide. To resolve by hand: consolidate the archived folders into `Archive/`, remove the empty `archive/`, then re-run. The skill won't merge or delete either.
+
 **Anything else you can't confidently classify:** describe what you saw and why it doesn't match the §1 checklist, and recommend the user resolve it by hand. Never guess a transform.
 
 After listing the judgment cases, remind the user that re-running the skill once they're resolved will pick up any structural fixes in the same folders.
@@ -180,6 +189,7 @@ Print the preview as a per-folder list, then a summary and an explicit confirmat
 
 ## Preview
 
+- `archive/ → Archive/` — **archive container** — normalize case (root-level, not a task)
 - `add-csv-export/` — **conformant** — no changes
 - `legacy-export/` — **structurally-fixable**
     - rename already goal-shaped `legacy-export.spec.md` → `goals.md`, `legacy-export.plan.md` → `plan.md`, `legacy-export.result.md` → `result.md`
@@ -189,7 +199,7 @@ Print the preview as a per-folder list, then a summary and an explicit confirmat
 - `inline-criteria-task/` — **needs-judgment** — inline criteria, no goals.md
     - <recommended manual action (§6)>
 
-**Summary:** 1 conformant, 1 structurally-fixable, 2 needs-judgment. (`archive/` excluded.)
+**Summary:** 1 conformant, 1 structurally-fixable, 2 needs-judgment. (`Archive/` excluded.)
 
 Apply the structural fixes? Nothing changes until you confirm.
 ```
@@ -201,7 +211,8 @@ Apply the structural fixes? Nothing changes until you confirm.
 - "I'll apply the renames, then show the user" — Preview first; apply only on confirmation. This skill mutates real work products.
 - "I'll enumerate the old formats I know and match those" — Reconcile against the live docs, not a memorized catalogue. The docs are the only source of truth that stays current.
 - "I'll commit the migration so it's saved" — Never touch git. Edit the working tree; the user reviews with `git diff` and commits.
-- "This rule isn't in the docs but I know it's the format — I'll enforce it" — If a rule has no home in `task-layout.md` / `task-lifecycle.md`, surface the gap; don't invent format from memory (this includes any "old archive path" — the docs define one archive location and no predecessor).
+- "This rule isn't in the docs but I know it's the format — I'll enforce it" — If a rule has no home in `task-layout.md` / `task-lifecycle.md`, surface the gap; don't invent format from memory. There is no folder-level *relocation* to a different archive path — the docs define one archive location; the only archive normalization they sanction is the container's name-case (`archive/` → `Archive/`).
+- "Both `archive/` and `Archive/` exist — I'll merge them into one" — Merging two archive containers is a judgment call, not a lossless rename; flag it needs-judgment and leave both untouched. Only a lone non-canonical `archive/` (no `Archive/` beside it) is the auto-rename.
 - "The destination file already exists, I'll overwrite it with the prefixed one" — A genuine collision (a distinct file already holding the role name) makes the **whole folder** needs-judgment; leave it entirely untouched and report — don't clobber, and don't rename the folder's other files around it (that half-migrates). A case-only difference is not a collision; it's the rename to perform.
 - "The `**Result:**` header isn't a link yet, I'll make it one" — A `to-do` plan's `**Result:** _(populated by implement-task…)_` placeholder is conformant; linking it to a `result.md` that doesn't exist fabricates a dead link. Only rewrite headers that already carry a link.
 
@@ -209,7 +220,8 @@ Apply the structural fixes? Nothing changes until you confirm.
 
 - [ ] Loaded the target format from `references/workflow/task-layout.md` + `task-lifecycle.md` at run time; checked each dimension's current value against the docs, not a remembered catalogue
 - [ ] Confirmed the target is a project root (not a task folder or slug); stopped with guidance if not
-- [ ] Scanned `.agents/tasks/` excluding `archive/`; stopped with "nothing active to migrate" when the scan found zero candidates
+- [ ] Scanned `.agents/tasks/` excluding the archive container (`Archive/`, any case); stopped with "nothing active to migrate" only when zero task candidates *and* no archive-container rename were pending
+- [ ] Archive container's case normalized — a lone lowercase `archive/` at the task root renamed to `Archive/` (case-only rename via temp name where needed); both-cases-present flagged needs-judgment and never merged
 - [ ] Every active folder labelled conformant / structurally-fixable / needs-judgment
 - [ ] A folder with any judgment issue — including a latent destination-name collision or an out-of-vocabulary status — classified needs-judgment and left entirely untouched (no half-migration)
 - [ ] Status values checked against *each file's own* vocabulary (origin marker for `CONTEXT.md`, lifecycle state for `plan.md` / `result.md`, none for `goals.md`)
