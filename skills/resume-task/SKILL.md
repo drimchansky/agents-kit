@@ -19,7 +19,7 @@ With `-r`, the write surface expands to exactly three task files — `plan.md`, 
 
 ## Flags
 
-- `-r` — Reconcile: after printing the brief, auto-apply its obvious findings to the task docs and ask the engineer about the rest, per the shared contract in `./references/workflow/reconciliation.md`. Off by default; without `-r` the skill is strictly read-only. Passing `-r` is consent for the obvious, evidence-dictated fixes only — anything needing judgment is asked as one batched round of questions, and only answered items are applied. Step 7 carries this skill's finding-type mapping.
+- `-r` — Reconcile: after printing the brief, auto-apply its obvious findings to the task docs and ask the engineer about the rest, per the shared contract in `./references/workflow/reconciliation.md`. Off by default; without `-r` the skill is strictly read-only. Passing `-r` is consent for the obvious, evidence-dictated fixes only — anything needing judgment is asked as one batched round of questions, and only answered items are applied. This skill's finding-type → edit mapping lives in the contract's `resume-task -r` section.
 
 ## When to Use
 
@@ -138,23 +138,7 @@ Assemble per the output template below. Print to chat. In default mode this is t
 
 ### 7. Reconcile the Docs (only with `-r`)
 
-Skip this step entirely without the flag. With `-r`, apply the brief's findings to the task docs per the shared contract in `./references/workflow/reconciliation.md` — read it before editing. It defines the consent model (obvious fixes auto-applied; judgment items asked as one batched round of engineer questions, with only answered items applied), the write surface (`plan.md`, `result.md`, `CONTEXT.md` annotations — never `goals.md`), the weaken-never-strengthen rule, the `skipped`-plan exemption, the append-only `## Reconciliation` record, and the sequence ending in the printed change list. Two rules restated because they anchor this skill's mapping:
-
-- **Every edit maps to a finding printed in the brief** (or to an engineer's answer about one). A change without a finding behind it is invented detail — drop it. No tidying, no reformatting, no drive-by fixes.
-- **Docs, not work.** Findings that need real work (code changes, re-running the acceptance gate, clearing a blocker) stay unfixed — list them under "Not reconciled" with the next skill named (`implement-task`, `plan-task`).
-
-Finding-type → edit mapping (**auto** = obvious, applied unprompted; **ask** = engineer input first):
-
-- **Shipped claim on a `- [x]` step vanished** (file gone, symbol removed, change reverted) — **auto**: flip the step to `- [ ]` in `plan.md` and drop its trailing `([result](…))` link — pending steps carry no link; the historic record stays in `result.md`, and the Reconciliation entry cites the dropped anchor so it stays traceable. Never rewrite the step's **What**/**Verify** prose; never renumber.
-- **A `met` goal no longer holds** — **auto**: no checkbox change by itself; flip plan and result `done → executing` (or `in-review → executing` when the regressed goal backs an in-review task); the Reconciliation entry names the regressed `G<n>` and supersedes the prior `## Acceptance`; "Not reconciled" names `implement-task`.
-- **Plan `done` with no `## Acceptance` in the result** — **auto**: flip plan and result `done → executing` and remove the result's closing `**Completed:**` line (header metadata, not narrative; `implement-task` re-adds it on re-finalize). Never fabricate an Acceptance section — that requires running the gate.
-- **Status-pairing mismatch** — **auto**: reconcile downward to the weaker claim: plan `done` + result `executing` → plan to `executing`; plan `executing` + result `blocked` with a `**Blocked:**` section → plan to `blocked`, or + result `in-review` with an `**In review:**` section → plan to `in-review` (copying evidenced state). A repair that would need an invented cause or an upward flip → flag only.
-- **Plan `executing` with no `result.md`** — **auto** when the evidence is clear either way: checked steps or drift-verified shipped work exist → create a skeleton `result.md` (`implement-task`'s init header, `**Status:** executing`) holding the Reconciliation section, and point the plan's `**Result:**` line at it; zero evidence → flip the plan `executing → to-do` (reverting its `**Result:**` line to the pre-execution placeholder) and create nothing. **Ask** when the evidence is ambiguous (e.g. partial artifacts that may or may not be this task's work).
-- **`[info]` findings** (pending artifact already exists, adjacent refactor, auth-walled link) → no edit; info stays info — checking a box or noting completion would strengthen a claim `-r` cannot attest.
-- **Broken external link** — **auto**: annotate in place: in `CONTEXT.md`'s References (or a `plan.md` step), append `— _broken as of YYYY-MM-DD (404)_` to the line, or swap in the new URL when a redirect target is known. Links inside prior `result.md` sections and in `goals.md` are never touched — note them in the Reconciliation entry (when one is being written) only, never in those files.
-- **Fetched reference answers an open question** — **auto** only when the reference answers it unambiguously (quote or tightly paraphrase the source): append `— _answered YYYY-MM-DD: <answer> ([source](url))_` to the question line in `CONTEXT.md`'s or `plan.md`'s Open Questions. **Ask** when the answer needs interpretation. Goals marked `_(unresolved: …)_` are surfaced in chat only — `goals.md` stays untouched.
-- **External blocker cleared** (PR merged, ticket closed) → no status flip — `blocked` clears when work resumes, and `-r` doesn't resume work. Record the observation in the Reconciliation entry when other edits already warrant one (never append an entry just for it); either way "Not reconciled" names `implement-task`.
-- **Missing `goals.md` / missing `CONTEXT.md`** → cannot be fabricated; stays flagged, next skill `plan-task`.
+Skip this step entirely without the flag. With `-r`, apply the brief's findings to the task docs per the shared contract in `./references/workflow/reconciliation.md` — read it before editing. It defines the shared mechanics (consent model, annotation formats, the append-only `## Reconciliation` record, the sequence ending in the printed change list), the docs → reality direction rules (write surface, weaken-never-strengthen), the shared `-r` repairs, and — in its `resume-task -r` section — this skill's finding-type → edit mapping. Findings that need real work (code changes, re-running the acceptance gate, clearing a blocker) stay unfixed — list them under "Not reconciled" with the next skill named (`implement-task`, `plan-task`).
 
 ## Output Template
 
@@ -253,14 +237,7 @@ With `-r`, after the edits are applied (and the batched engineer questions answe
 - "The Jira/Notion/PR link probably hasn't changed; skip the fetch" — External state drifts silently, and stale links are exactly what Step 5 is for. If a URL is cited and a tool can reach it, fetch it.
 - "The fetch failed, I'll just omit that reference" — A failed fetch is a finding, not silence. Tag it `block` (broken) or `info` (auth required) and keep going. Omitting the reference hides drift.
 - "I'll leave a comment on the Jira ticket to confirm status" — Step 5 is read-only. Never comment, update, transition, or otherwise write to an external system. Observe only.
-- "I'll also tidy this section while I'm in the file" — Every `-r` edit maps to a finding printed in the brief. No finding, no edit.
-- "It's probably what they'd want — I'll pick an interpretation and fix it" — If a fix needs a choice, wording judgment, or intent, it isn't obvious. Ask the engineer; apply only what they answer.
-- "The code clearly does this, I'll check the box" — `-r` weakens stale claims; it never marks work done. Only `implement-task` checks boxes or sets `done`.
-- "The old `## Acceptance` is wrong, I'll rewrite it" — Prior result sections are immutable. Supersede via the Reconciliation entry and the status flip.
-- "goals.md contradicts reality, I'll fix it while reconciling" — The goals file is the user's contract. Surface it; never edit it.
-- "The blocker cleared, I'll flip `blocked` back to `executing`" — Blocked clears when work resumes, and `-r` doesn't resume work. Record the observation and name `implement-task`.
-- "Nothing changed, but I'll append a Reconciliation entry for the record" — A no-op entry is noise in an append-only file. Print `Nothing to reconcile.` and write nothing.
-- "The brief looks different after my edits, I'll re-print it" — The brief is the pre-reconcile snapshot; the change list is the post-state record. Don't regenerate.
+- "Reconciling is close enough to editing — I'll use my judgment" — Every `-r` temptation (tidy an untouched section, interpret intent, check a box, rewrite a prior record, touch `goals.md`, flip a status upward, re-print the brief) is already answered by the shared contract and this skill's mapping in `./references/workflow/reconciliation.md`. Follow them, not your judgment.
 
 ## Verification
 
@@ -284,14 +261,6 @@ With `-r`, after the edits are applied (and the batched engineer questions answe
 - [ ] Brief uses the documented template sections in order
 - [ ] "Where to start" names a concrete first action (file + command), not a generic suggestion
 - [ ] Open questions deduplicated across `CONTEXT.md`, plan, and any unresolved goals; already-answered ones removed
-- [ ] No `BRIEF.md` or any other fifth artifact was created; with `-r`, writes touched only `plan.md`, `result.md`, and `CONTEXT.md` annotations
-- [ ] (`-r`) Brief printed from pre-reconcile state before any edit; not regenerated after
-- [ ] (`-r`) Only obvious, evidence-dictated fixes auto-applied; judgment items asked in one batched round with concrete options; unanswered items listed under "Not reconciled"
-- [ ] (`-r`) Every edit maps to a finding printed in the brief (or an engineer's answer about one); no unflagged edits
-- [ ] (`-r`) `goals.md` untouched
-- [ ] (`-r`) No checkbox flipped to `- [x]`; no status set to `done` or `skipped`; no step added, removed, or renumbered
-- [ ] (`-r`) Exactly one `## Reconciliation — YYYY-MM-DD` section appended per run when `result.md` was touched (per the shared contract) — or nothing written when clean; no prior result section edited (including `## Acceptance`)
-- [ ] (`-r`) `CONTEXT.md` edits limited to References / Open Questions annotations; `**Status:**` origin marker and existing prose untouched
-- [ ] (`-r`) No code written, no git mutation, no external write, acceptance gate not re-run; real-work findings listed under "Not reconciled" with the next skill named
-- [ ] (`-r`) A `skipped` plan left untouched
-- [ ] (`-r`) "Reconciliation applied" change list printed after the edits
+- [ ] No `BRIEF.md` or any other fifth artifact was created
+- [ ] (`-r`) Reconciliation followed the shared contract end-to-end — consent model, write surface, weaken-never-strengthen, `skipped`-plan exemption, append-only record, brief printed from pre-reconcile state and never regenerated, closing change list (`./references/workflow/reconciliation.md`)
+- [ ] (`-r`) Every edit maps to a brief finding through this skill's mapping in the contract (or an engineer's answer); real-work findings listed under "Not reconciled" with the next skill named

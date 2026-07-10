@@ -1,6 +1,6 @@
 # Reconciliation: Shared Contract
 
-Some skills write a task folder's docs back into agreement with reality after the fact. There are two reconciliation **directions**, and **this file is the single source of truth for both** — the consent model, the write surface, the edit rules, and the record format. The **Shared mechanics** below hold for every reconciler; the **Direction rules** that follow apply only to the direction named. Each skill's SKILL.md carries its own finding-type → edit mapping.
+Some skills write a task folder's docs back into agreement with reality after the fact. There are two reconciliation **directions**, and **this file is the single source of truth for both** — the consent model, the write surface, the edit rules, the record format, and the finding-type → edit mappings. The **Shared mechanics** below hold for every reconciler; the **Direction rules** that follow apply only to the direction named, and each direction closes with the mappings of the skills that write in it — the skills cite these rather than restating them. When a mapping changes, update it here first, then the skill whose report prints the corresponding finding.
 
 - **Docs → reality (`-r` mode).** A skill that reports on a task folder accepts a `-r` flag that, after the report is printed, writes the report's findings back so the docs stop *overstating* what's been built. Two skills carry the flag today: `resume-task` (reconciles its brief's drift findings) and `review-task` (reconciles its review findings and folds engineer answers into the plan).
 - **Session → docs.** `reconcile-task` reviews the current session against the task docs and writes back the information that surfaced in conversation but never reached the folder — the *enriching* direction. It has no flag; reconciling is its whole purpose, so it always writes — still printing the report first and asking about judgment items.
@@ -47,6 +47,13 @@ A `skipped` plan is exempt from reconciliation entirely — it's terminal; repor
 ---
 ```
 
+### Annotation formats
+
+Two in-place annotations recur across skills; the formats are fixed so reconcilers don't invent wording. Where they may be written is governed by the direction's write surface.
+
+- **Broken external link** — **auto**: append `— _broken as of YYYY-MM-DD (404)_` to the citing line (in `CONTEXT.md`'s References or a `plan.md` step), or swap in the new URL when a redirect target is known. Links inside prior `result.md` sections and in `goals.md` are never touched — note them in the Reconciliation entry (when one is being written) only, never in those files.
+- **Answered open question** — **auto** only when the source answers it unambiguously (quote or tightly paraphrase it): append `— _answered YYYY-MM-DD: <answer> ([source](url) when there is one)_` to the question line in `CONTEXT.md`'s or `plan.md`'s Open Questions. **Ask** when the answer needs interpretation. A goal marked `_(unresolved: …)_` is never annotated in `goals.md` — it's surfaced in chat (docs → reality), or handled through the new-goal confirmation row (session → docs).
+
 ### Sequence and output
 
 1. Print the skill's full report first — a faithful snapshot of **pre-reconcile** state, never regenerated after edits.
@@ -84,6 +91,35 @@ Exactly three task files, and nothing else:
 
 Reconciliation in this direction may uncheck `- [x]` → `- [ ]`, flip `done → executing` or `in-review → executing`, or revert `executing → to-do`. It never checks a box, never sets `done` or `skipped`, and introduces `blocked` or `in-review` only by copying an already-evidenced sibling value. This holds **even with an engineer's answer** — "yes, that step was done" is a claim for `implement-task`'s verify gates to back, not for reconciliation to record. Engineer answers refine plan *content*; they never advance *state*.
 
+### Shared repairs (both `-r` skills)
+
+Both `-r` skills apply these; only the evidence source differs (`resume-task`'s drift check against disk, `review-task`'s cross-file consistency check). **auto** = obvious, applied unprompted; **ask** = engineer input first.
+
+- **Unbacked `- [x]` step** — the shipped claim vanished from reality (file gone, symbol removed, change reverted), or no matching result section backs the checkbox — **auto**: flip the step to `- [ ]` and drop its trailing `([result](…))` link — pending steps carry no link; the historic record stays in `result.md`, and the Reconciliation entry cites the dropped anchor so it stays traceable. Never rewrite the step's **What**/**Verify** prose; never renumber.
+- **Status-pairing / lifecycle repairs** — **auto**, always downward to the weaker claim: plan `done` + result `executing` → plan to `executing`; plan `executing` + result `blocked` with a `**Blocked:**` section → plan to `blocked`, or + result `in-review` with an `**In review:**` section → plan to `in-review` (copying evidenced state). Plan `done` with no `## Acceptance` in the result → flip plan and result `done → executing` and remove the result's closing `**Completed:**` line (header metadata, not narrative; `implement-task` re-adds it on re-finalize) — never fabricate an Acceptance section; that requires running the gate. Plan `executing` with no `result.md`: checked steps or drift-verified shipped work exist → create a skeleton `result.md` (`implement-task`'s init header, `**Status:** executing`) holding the Reconciliation section, and point the plan's `**Result:**` line at it; zero evidence → flip the plan `executing → to-do` (reverting its `**Result:**` line to the pre-execution placeholder) and create nothing; **ask** when the evidence is ambiguous (e.g. partial artifacts that may or may not be this task's work). A status outside the vocabulary registered in `./task-lifecycle.md` → **ask** (the intended state can't be inferred). A repair that would need an invented cause or an upward flip → flag only.
+- **Result records work the plan doesn't show** (result section exists, plan still `- [ ]`) — flag only: checking the box would strengthen a claim `-r` cannot attest; name `implement-task` (or the user) to confirm and flip.
+
+### `resume-task -r` — brief findings
+
+Findings come from the brief's sections (Drift since plan, References update, Open questions). Broken links and reference-answered questions use the shared annotation formats above; unbacked steps and status pairings use the shared repairs. The rest:
+
+- **A `met` goal no longer holds** — **auto**: no checkbox change by itself; flip plan and result `done → executing` (or `in-review → executing` when the regressed goal backs an in-review task); the Reconciliation entry names the regressed `G<n>` and supersedes the prior `## Acceptance`; "Not reconciled" names `implement-task`.
+- **`[info]` findings** (pending artifact already exists, adjacent refactor, auth-walled link) — no edit; info stays info — checking a box or noting completion would strengthen a claim `-r` cannot attest.
+- **External blocker cleared** (PR merged, ticket closed) — no status flip — `blocked` clears when work resumes, and `-r` doesn't resume work. Record the observation in the Reconciliation entry when other edits already warrant one (never append an entry just for it); either way "Not reconciled" names `implement-task`.
+- **Missing `goals.md` / missing `CONTEXT.md`** — cannot be fabricated; stays flagged, next skill `plan-task`.
+
+### `review-task -r` — assessment findings
+
+Most of this review's findings need the engineer — that is what the assessment's Questions section is for. With `-r`, the Questions are not left rhetorical: put them to the engineer as one batched round (the concrete options already attached) and write the answers into the plan — exactly the answer given, no redesign around it. Cross-file drift findings use the shared repairs above; the rest:
+
+- **Scope partition not total** (a goal ID neither delivered nor deferred) — **ask**: deliver it, defer it, or drop the goal (dropping means the user edits `goals.md`); apply the chosen partition to the plan's `## Scope`.
+- **Stale or orphan goal citations** (a step cites a goal ID absent from `goals.md`; a non-infra step cites nothing) — **ask**: point the citation at the right goal, mark the step `none (infra/refactor)`, or remove the step; apply the answer.
+- **Vague or untestable Verify criterion** — **ask**, offering the concrete rewrite suggested in the assessment; apply the accepted wording to the step's `**Verify:**` line.
+- **Gaps and needs-clarification steps** — **ask** the targeted question from the Questions section; fold the answer into the step's **What**/**Verify** (or the plan's Scope).
+- **Goal quality findings** (`weak` / `vague-or-untestable` / `unresolved`) — never edited: `goals.md` is the user's contract. Print the suggested rewrite for the user to apply; an engineer answer here still goes to the user as text, not into the file.
+- **CONTEXT ↔ goals / CONTEXT ↔ plan contradictions** — **ask** which side is right, but apply the resolution only where the write surface allows: the plan's Scope/steps, or an annotation in CONTEXT's `## Open Questions` recording the ruling. CONTEXT prose (MVP scope, "Not Doing", Recommended Direction) is never rewritten — if the ruling changes direction, that's re-planning; name `plan-task`.
+- **Infeasible or conflicts-with-existing steps** — flag only: fixing them is redesign, out of scope even with `-r`; name `plan-task`.
+
 ## Direction: session → docs (`reconcile-task`)
 
 Findings come from reviewing the current session against the docs, so this direction *enriches* — it writes information the docs are missing. It may write all four task files, under two guardrails that keep it from silently redefining what's built or what "done" means.
@@ -99,3 +135,19 @@ This direction may **advance** state — check a `- [ ]` step `→ - [x]`, mark 
 ### Grounding docs change by confirmation, never silently
 
 Writing `goals.md`, `CONTEXT.md` prose (`Recommended Direction`, `MVP Scope`, `Not Doing`, `Key Assumptions`), or a step's scope — anything that redefines scope or acceptance — is a **judgment item**: it goes through the batched confirmation round, never an unprompted auto-apply. `goals.md` edits obey the durable-ID scheme in `./task-layout.md`: a new goal takes the next free `G<n>`, IDs are never renumbered and a retired ID is never reused, and the file keeps its no-`**Status:**` / no-`## Description` shape.
+
+### `reconcile-task` — session findings
+
+Findings come from diffing the session against the docs. Legend: **auto** = obvious, applied unprompted; **verify** = only after re-verifying in-session per the strengthen rule above; **ask** = the batched confirmation round first.
+
+- **New reference / spec / ticket surfaced in session**, absent from `## References` → **auto**: append it to `CONTEXT.md`'s `## References` (label + URL, plus a short note of what it is).
+- **Open question answered in session** → the shared answered-question annotation format above (**auto** when unambiguous, **ask** when interpretation is needed). A goal marked `_(unresolved: …)_` changes only via the new-goal row below.
+- **New open question raised in session** → **auto**: append it to `## Open Questions`.
+- **Session narrative** — what was explored, tried, or decided that isn't itself a state change or a grounding rewrite → **auto**: append a `## Reconciliation — YYYY-MM-DD` section to `result.md` (creating the file and flipping `to-do → executing` when work is evidenced, per the pairing rule).
+- **Step completed this session** → **verify**: re-check its `**Verify:**` criterion. Passes → check `- [x]` in `plan.md` and record the evidence in `result.md`. Fails or unverifiable → surface, leave `- [ ]`.
+- **Goal met this session** → **verify**: re-check the goal's acceptance behavior. Passes → record it `met` (in the `## Acceptance` section when finalizing, or noted in the Reconciliation entry otherwise). Advance `executing → done` only when the full gate passes against every goal; when unmet goals are all `(external)` ones still awaiting their proxy, finalize to `in-review` instead. Fails → surface, no flip.
+- **`(external)` goal confirmed this session** (the user reports the deploy check, the client sign-off, the receipt) → **verify**: re-check it against that best-available proxy per `./acceptance-criteria.md`. Passes → record the new `met` verdict (with the proxy) in the `## Reconciliation` entry, which supersedes the prior `## Acceptance` line (don't edit that line in place — the append-only rule holds); if it was the last one outstanding, advance `in-review → done` and add the closing `**Completed:**` line. Fails or no proxy → leave `pending external`, task stays `in-review`.
+- **New goal, or a reworded goal, decided in session** → **ask**: confirm the exact wording, then write `goals.md` per the durable-ID scheme above.
+- **Changed direction / MVP scope / Not Doing / Key Assumptions** → **ask**: confirm the exact prose, then write the matching `CONTEXT.md` section. Leave the `**Status:**` origin marker untouched.
+- **Changed step scope / new step / changed Verify criterion** → **ask**: confirm, then write `plan.md` within the confirmed finding's scope (update `## Scope`'s goal-ID partition to stay total).
+- **Work discussed but not done** → flag only: it isn't verified, so it isn't recorded; "Not reconciled" names `implement-task`.

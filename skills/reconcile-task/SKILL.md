@@ -82,26 +82,7 @@ Starting work this session on a `to-do` plan is evidenced state (checked steps o
 
 ### 5. Reconcile the Docs
 
-Apply the findings per the shared contract in `./references/workflow/reconciliation.md` — read it before editing. It defines the consent model (obvious fixes auto-applied; judgment items asked as one batched round, only answered items applied), the record format (the append-only `## Reconciliation` section), the `skipped`-plan exemption, and the sequence ending in the printed change list. This skill writes in the **session → docs** direction defined there: it may enrich all four files, strengthen state only on verified evidence, and touch grounding docs only by confirmation.
-
-Two rules anchor the mapping:
-
-- **Every edit maps to a finding from Step 3** (or an engineer answer about one). A change without a finding behind it is invented detail — drop it. No tidying, no drive-by rewrites.
-- **Verified, or confirmed, or not written.** State advances only through Step 4's gate; grounding docs change only through the confirmation round. Nothing high-stakes is auto-applied.
-
-Finding-type → edit mapping (**auto** = obvious, applied unprompted; **verify** = only after Step 4; **ask** = one batched confirmation round first):
-
-- **New reference / spec / ticket surfaced in session**, absent from `## References` → **auto**: append it to `CONTEXT.md`'s `## References` (label + URL, plus a short note of what it is).
-- **Open question answered in session** (unambiguously) → **auto**: append `— _answered YYYY-MM-DD: <answer> ([source](url) if any)_` to the question line in `CONTEXT.md`'s or the plan's `## Open Questions`. **Ask** if the answer needs interpretation. A goal marked `_(unresolved: …)_` is surfaced — `goals.md` changes only via the confirmation round below.
-- **New open question raised in session** → **auto**: append it to `## Open Questions`.
-- **Session narrative** — what was explored, tried, or decided that isn't itself a state change or a grounding rewrite → **auto**: append a `## Reconciliation — YYYY-MM-DD` section to `result.md` (creating the file and flipping `to-do → executing` when work is evidenced, per the pairing rule).
-- **Step completed this session** → **verify**: re-check its `**Verify:**` criterion (Step 4). Passes → check `- [x]` in `plan.md` and record the evidence in `result.md`. Fails or unverifiable → surface, leave `- [ ]`.
-- **Goal met this session** → **verify**: re-check the goal's acceptance behavior. Passes → record it `met` (in the `## Acceptance` section when finalizing, or noted in the Reconciliation entry otherwise). Advance `executing → done` only when the full gate passes against every goal; when unmet goals are all `(external)` ones still awaiting their proxy, finalize to `in-review` instead. Fails → surface, no flip.
-- **`(external)` goal confirmed this session** (the user reports the deploy check, the client sign-off, the receipt) → **verify**: re-check it against that best-available proxy per Step 4. Passes → record the new `met` verdict (with the proxy) in the `## Reconciliation` entry, which supersedes the prior `## Acceptance` line (don't edit that line in place — the append-only rule holds); if it was the last one outstanding, advance `in-review → done` and add the closing `**Completed:**` line. Fails or no proxy → leave `pending external`, task stays `in-review`.
-- **New goal, or a reworded goal, decided in session** → **ask**: confirm the exact wording, then write `goals.md` — a new goal takes the next free `G<n>`, existing IDs are never renumbered, retired IDs never reused, and the file keeps its no-`**Status:**` / no-`## Description` shape.
-- **Changed direction / MVP scope / Not Doing / Key Assumptions** → **ask**: confirm the exact prose, then write the matching `CONTEXT.md` section. Leave the `**Status:**` origin marker untouched.
-- **Changed step scope / new step / changed Verify criterion** → **ask**: confirm, then write `plan.md` within the confirmed finding's scope (update `## Scope`'s goal-ID partition to stay total).
-- **Work discussed but not done** → flag only: it isn't verified, so it isn't recorded; "Not reconciled" names `implement-task`.
+Apply the findings per the shared contract in `./references/workflow/reconciliation.md` — read it before editing. It defines the shared mechanics (consent model, annotation formats, the append-only `## Reconciliation` record, the `skipped`-plan exemption, the sequence ending in the printed change list), the session → docs direction rules (write surface, strengthen-only-on-verified-evidence, grounding-docs-by-confirmation), and — in its `reconcile-task` section — this skill's finding-type → edit mapping with its three-way legend (**auto** / **verify** = only after Step 4's gate / **ask** = the batched confirmation round). Every edit maps to a finding from Step 3; anything the mapping routes to **verify** or **ask** is never auto-applied.
 
 ## Output Template
 
@@ -156,13 +137,8 @@ Then run Step 4 (verify) and Step 5 (auto-apply enrichments, then the batched co
 
 ## Don't Rationalize
 
-- "The user said it's done, so I'll check the box" — A chat claim is not evidence. Re-verify it this session (Step 4) or surface it; only verified work is recorded.
-- "This new goal is obviously right, I'll just add it" — Goals are the acceptance contract. Confirm the wording in the batched round before writing `goals.md`; never auto-add.
-- "The direction clearly changed, I'll rewrite Recommended Direction" — Grounding prose changes only by confirmation. Ask, then write exactly what was confirmed.
-- "I'll renumber the goals so they're tidy" — IDs are durable. A new goal takes the next free `G<n>`; never renumber, never reuse a retired ID.
-- "I'll fix this unrelated thing while I'm in the file" — Every edit maps to a session finding. No finding, no edit.
+- "It surfaced in the session, so I can just write it" — Every temptation to record unverified progress, auto-add a goal, rewrite grounding prose, renumber IDs, or tidy beyond a finding is already answered by the shared contract and this skill's mapping in `./references/workflow/reconciliation.md`. Follow them, not your judgment.
 - "I'll run the next step while I'm here" — This skill records work; it doesn't execute the plan. Hand off to `implement-task`.
-- "I'll append a Reconciliation entry even though nothing changed" — A no-op entry is noise in an append-only file. Print `Nothing to reconcile.` and write nothing.
 - "The session is long; I'll summarize what I remember" — Diff the session against the actual docs, don't summarize from memory. Capture what's genuinely missing, and quote/point to the source.
 - "I'll write a SESSION.md so it's all captured" — No fifth artifact. The four task files plus the chat change list are the record.
 
@@ -171,14 +147,7 @@ Then run Step 4 (verify) and Step 5 (auto-apply enrichments, then the batched co
 - [ ] Task folder resolved (used the in-session task, or asked when ambiguous — never guessed)
 - [ ] `CONTEXT.md`, `goals.md`, `plan.md`, and `result.md` read in full before diffing the session against them
 - [ ] A `skipped` plan reported as abandoned, with nothing written
-- [ ] Findings report printed from pre-reconcile state before any edit; not regenerated after
-- [ ] Every edit maps to a session finding (or a confirmed answer); no drive-by edits
-- [ ] State advanced only after in-session verification per `./references/engineering/verification.md`; unverifiable progress surfaced under "Not reconciled", not recorded
-- [ ] No checkbox flipped to `- [x]` and no status advanced without recorded evidence in `result.md`
-- [ ] `goals.md` written only after confirmation; new goals took the next free `G<n>`; no ID renumbered or reused; no `**Status:**` / `## Description` added
-- [ ] `CONTEXT.md` prose written only after confirmation; `**Status:**` origin marker untouched
-- [ ] Enrichment (references, answered questions, session narrative) auto-applied to the right sections
-- [ ] `## Scope` goal-ID partition kept total when a plan step or goal changed
-- [ ] At most one `## Reconciliation — YYYY-MM-DD` section appended per run when `result.md` was touched; prior result sections (including `## Acceptance`) unedited
-- [ ] No source code written, no git state mutated, no external system updated; verification ran read-only
-- [ ] No fifth artifact created; "Reconciliation applied" change list printed (or `Nothing to reconcile.` — and no file written)
+- [ ] Reconciliation followed the shared contract end-to-end — consent model, session → docs write surface (docs, not the world), append-only record, findings report printed from pre-reconcile state and never regenerated, closing change list (`./references/workflow/reconciliation.md`)
+- [ ] Every edit maps to a Step 3 finding through this skill's mapping in the contract; state advanced only after Step 4's in-session verification, with the evidence recorded in `result.md`
+- [ ] Grounding docs (`goals.md`, `CONTEXT.md` prose, a step's scope) changed only through the batched confirmation round
+- [ ] No fifth artifact created
