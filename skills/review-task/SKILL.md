@@ -1,7 +1,7 @@
 ---
 name: review-task
 description: Use when asked to review, validate, or sanity-check a task's plan — confirms the direction is right and still in sync with CONTEXT.md, the goals, and current reality, and surfaces any drift between task artifacts (CONTEXT, goals, plan, result) and the work itself; pass `-r` to also reconcile obvious findings into the task docs and fold engineer answers into the plan.
-argument-hint: '[task folder path] [-r (reconcile findings into task docs)]'
+argument-hint: '[task folder path] [-r (reconcile findings into task docs)] [-x (cross-vendor grounding probe)]'
 disable-model-invocation: true
 ---
 
@@ -20,6 +20,7 @@ The user provides a plan — typically the output of `plan-task`, written to `<t
 ## Flags
 
 - `-r` — Reconcile: after printing the assessment, auto-apply its obvious findings to the task docs, put the review's Questions to the engineer as one batched round, and fold their answers into the plan — per the shared contract in `./references/workflow/reconciliation.md`. Off by default; without `-r` the review is strictly read-only. This skill's finding-type → edit mapping lives in the contract's `review-task -r` section.
+- `-x` — Cross-check: launch one independent grounding probe on the cross-vendor engine and merge it into the grounding pass (Step 2), per the shared contract in `./references/workflow/agent-fanout.md`. Off by default. The probe is read-only; its outcome is recorded on the Plan Summary's `Cross-check:` line.
 
 ## Locate the Plan
 
@@ -67,6 +68,8 @@ Restate the plan's intent in your own words to confirm understanding. If steps a
 ### 2. Ground in the Domain's Reality
 
 **CRITICAL**: Verify the plan against what actually exists, not against its own claims. Every claim about existing behavior must be checked against the real artifacts. This is an independent pass — do not assume `plan-task`'s exploration was correct.
+
+**With `-x`, launch the grounding probe first.** Before grounding inline, start one background probe on the **cross-vendor engine** per `./references/workflow/agent-fanout.md`: a self-contained prompt carrying the plan's reality claims — integration points, "reuse X" assumptions, referenced files/symbols/APIs — with the project root as working root, demanding per-claim `CONFIRMED` / `CONTRADICTED` / `NOT FOUND` verdicts with `file:line` evidence. Then ground inline yourself as below while it runs; the probe supplements your pass, never replaces it. Collect it before Step 3 and merge per the contract: where it contradicts your grounding or the plan, re-check that spot before assigning the verdict. Record the outcome on the Plan Summary's `Cross-check:` line — including `skipped (<reason>)` when the engine is unavailable, in which case proceed on your own pass.
 
 For each thing the plan references or integrates with:
 
@@ -158,7 +161,7 @@ Skip this step entirely without the flag; it runs **after** the output below is 
 
 ### Plan Summary
 
-Restate the plan's goal and step list in your own words. This confirms mutual understanding and surfaces any misreadings early.
+Restate the plan's goal and step list in your own words. This confirms mutual understanding and surfaces any misreadings early. With `-x`, end this section with the probe's `Cross-check:` outcome line per `./references/workflow/agent-fanout.md`; without the flag, no such line appears.
 
 ### Feasibility Assessment
 
@@ -246,6 +249,7 @@ With `-r`, after the assessment is printed and reconciliation has run (Step 9), 
 
 - [ ] `CONTEXT.md` and `goals.md` read in full alongside the plan; missing goals file flagged as a gap
 - [ ] Every integration point verified against actual source code
+- [ ] (`-x`) Grounding probe launched on the cross-vendor engine and merged before verdicts were assigned — contradictions re-checked — and the Plan Summary ends with its `Cross-check:` line (`./references/workflow/agent-fanout.md`)
 - [ ] Each step has a clear verdict with evidence
 - [ ] Each step's verify criterion assessed for concreteness
 - [ ] Each goal in `goals.md` assessed against `./references/workflow/acceptance-criteria.md`; `weak` / `vague-or-untestable` / `unresolved` findings appear in Questions with the specific failing dimension (and a suggested rewrite where possible)

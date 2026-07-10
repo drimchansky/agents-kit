@@ -1,7 +1,7 @@
 ---
 name: review-pr
 description: Use when asked to review or give feedback on a PR or branch diff against its base.
-argument-hint: '[-v (run automatic verifications)]'
+argument-hint: '[-v (run automatic verifications)] [-x (cross-vendor second review)]'
 disable-model-invocation: true
 ---
 
@@ -16,6 +16,7 @@ Review all changes in the current branch against its base branch for correctness
 ## Flags
 
 - `-v` — Identify and run the project's verification scripts (lint, typecheck, tests). Off by default; reviews are analysis-only. See "Verification Scripts" in `./references/engineering/review.md`.
+- `-x` — Cross-check: launch one independent cold review of the same diff on the cross-vendor engine and merge it before findings are finalized, per the shared contract in `./references/workflow/agent-fanout.md`. Off by default. The probe is read-only; its outcome is recorded on the output's `Cross-check:` line.
 
 ## References
 
@@ -33,6 +34,8 @@ Before working, read `./references/engineering/review.md` — it carries the len
 - For each modified export or shared component — search all usages to understand blast radius
 - If the diff exceeds ~1000 non-generated lines and isn't a single logically cohesive change, the first finding is "split this PR" — large diffs hide bugs and exceed reviewer working memory
 - If the diff bundles refactoring with feature work or bug fixes, flag "separate the refactor" — mixed-purpose PRs are harder to review, harder to revert, and dilute commit history. Exception: refactors required _to enable_ the feature, which should be called out in the PR description.
+
+**Launch the cross-vendor probe** (only with `-x`): as soon as the base branch is determined, start one background probe per `./references/workflow/agent-fanout.md` — a cold second review of the `<base>..HEAD` diff at the repo root, demanding findings with severity and `file:line` evidence. Continue the setup and review inline while it runs; collect and merge per the contract before finalizing Findings.
 
 **Gather context:**
 
@@ -57,9 +60,10 @@ Apply the full review process from `./references/engineering/review.md` — its 
 
 - **Summary** — What changed, intent, overall assessment (approve / request changes / needs discussion)
 - **Findings** — Issues with severity, file location, recommendation, and impact
+- **Cross-check** (only with `-x`) — the probe's `Cross-check:` outcome line per `./references/workflow/agent-fanout.md`
 - **Improvements** (optional) — Non-blocking suggestions
 - **Inaccessible context** (only if any) — Links from the PR that couldn't be fetched, with URL and reason (auth required, private, 404, tool unavailable). Note which findings might shift if that context were available.
 
 ## Verification
 
-Apply the Standard Verification Checklist in `./references/engineering/review.md`.
+Apply the Standard Verification Checklist in `./references/engineering/review.md`. With `-x`: the probe was merged per `./references/workflow/agent-fanout.md` and the output carries its `Cross-check:` line.

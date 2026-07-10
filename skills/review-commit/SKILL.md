@@ -1,7 +1,7 @@
 ---
 name: review-commit
 description: Use when asked to review staged changes before committing.
-argument-hint: '[-v (run automatic verifications)]'
+argument-hint: '[-v (run automatic verifications)] [-x (cross-vendor second review)]'
 disable-model-invocation: true
 ---
 
@@ -16,6 +16,7 @@ Review staged changes before committing — correctness, completeness, accidenta
 ## Flags
 
 - `-v` — Identify and run the project's verification scripts (lint, typecheck, tests). Off by default; reviews are analysis-only. See "Verification Scripts" in `./references/engineering/review.md`.
+- `-x` — Cross-check: launch one independent cold review of the staged diff on the cross-vendor engine and merge it before findings are finalized, per the shared contract in `./references/workflow/agent-fanout.md`. Off by default. The probe is read-only; its outcome is recorded on the output's `Cross-check:` line.
 
 ## References
 
@@ -26,6 +27,8 @@ Before working, read `./references/engineering/review.md` — it carries the len
 - Get staged diff: `git diff --cached`
 - If nothing is staged, inform the user and stop
 - Group changes by file and intent
+
+**Launch the cross-vendor probe** (only with `-x`): once the staged diff is confirmed non-empty, start one background probe per `./references/workflow/agent-fanout.md` — a cold second review of the staged diff (the probe reads `git diff --cached` itself at the repo root), demanding findings with severity and `file:line` evidence. Review inline while it runs; collect and merge per the contract before finalizing findings.
 
 **Run verification scripts** only when `-v` is passed, per "Verification Scripts" in `./references/engineering/review.md`.
 
@@ -45,6 +48,8 @@ Apply the full review process from `./references/engineering/review.md` — the 
 ## Output
 
 **Review findings** (if any) — Issues with severity, file location, recommendation, and impact.
+
+**Cross-check** (only with `-x`) — the probe's `Cross-check:` outcome line per `./references/workflow/agent-fanout.md`, after the findings.
 
 **Commit message** — Generate a commit message for the staged changes:
 
@@ -66,4 +71,4 @@ to always read the latest value inside the interval.
 
 ## Verification
 
-Apply the Standard Verification Checklist in `./references/engineering/review.md`.
+Apply the Standard Verification Checklist in `./references/engineering/review.md`. With `-x`: the probe was merged per `./references/workflow/agent-fanout.md` and the output carries its `Cross-check:` line.

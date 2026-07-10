@@ -1,7 +1,7 @@
 ---
 name: review-docs
 description: Use when asked to review, audit, or check existing documentation against the codebase — README, AGENTS.md/CLAUDE.md, architecture notes, ADRs, API docs, specs, runbooks, or any other written documentation. Produces an audit; applies fixes only when the user explicitly asks after seeing the review.
-argument-hint: '[doc file path]'
+argument-hint: '[doc file path] [-x (cross-vendor grounding probe)]'
 disable-model-invocation: true
 ---
 
@@ -18,6 +18,10 @@ The user provides a documentation file (or points at a documentation area). This
 For reviewing an implementation plan against the codebase (not a doc), use `review-task`.
 
 **CRITICAL**: This skill does not modify the doc on its own. The default output is an assessment in chat — nothing is written to the file. Only after the user has seen the review and explicitly asks for changes ("apply the fixes", "update the version section", "rewrite the commands block") do you edit the file, and only the changes the user authorized. Silent rewrites — even when the drift is obvious — are not allowed.
+
+## Flags
+
+- `-x` — Cross-check: launch one independent grounding probe on the cross-vendor engine over the doc's verifiable claims and merge it before verdicts are assigned, per the shared contract in `./references/workflow/agent-fanout.md`. Off by default. The probe is read-only; its outcome is recorded on the Doc Summary's `Cross-check:` line.
 
 ## When to Use
 
@@ -65,6 +69,8 @@ Skip soft claims (philosophy, intent, motivation) — those don't have a ground 
 
 **CRITICAL**: Every claim about the codebase must be verified against the actual source.
 
+**With `-x`, launch the grounding probe first.** Once the claims are extracted (Step 2), start one background probe on the **cross-vendor engine** per `./references/workflow/agent-fanout.md`: a self-contained prompt carrying the extracted claims and the doc's path, with the repo root as working root, demanding per-claim `CONFIRMED` / `CONTRADICTED` / `NOT FOUND` verdicts with `file:line` evidence. Ground inline yourself as below while it runs; collect and merge per the contract before assigning verdicts — where the probe contradicts your grounding, re-check that spot first. Record the outcome on the Doc Summary's `Cross-check:` line — including `skipped (<reason>)` when the engine is unavailable, in which case proceed on your own pass.
+
 For each claim:
 
 - **Verify it still exists** — Grep for the symbol, file, or command. If gone, the claim is stale.
@@ -107,7 +113,7 @@ The audit is the deliverable. Print it to chat and stop — do **not** edit the 
 
 ### Doc Summary
 
-Brief statement of what the doc covers and the date / commit it appears to reflect (if discoverable from git history).
+Brief statement of what the doc covers and the date / commit it appears to reflect (if discoverable from git history). With `-x`, end this section with the probe's `Cross-check:` outcome line per `./references/workflow/agent-fanout.md`; without the flag, no such line appears.
 
 ### Accuracy Assessment
 
@@ -178,6 +184,7 @@ Before reporting done:
 ## Verification
 
 - [ ] Every verifiable claim grounded in actual source code
+- [ ] (`-x`) Grounding probe launched on the cross-vendor engine and merged before verdicts were assigned — contradictions re-checked — and the Doc Summary ends with its `Cross-check:` line (`./references/workflow/agent-fanout.md`)
 - [ ] Each claim has a clear verdict with evidence
 - [ ] Stale/misleading findings include the current reality, not just "it's wrong"
 - [ ] Gaps grouped by category with specific details
