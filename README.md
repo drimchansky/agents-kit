@@ -28,6 +28,7 @@ git clone git@github.com:drimchansky/agents-kit.git ~/agents-kit
 - [**proofread**](skills/proofread/SKILL.md) – polish a message, email, or piece of writing for grammar, clarity, and factual accuracy. _Example: `/proofread` (paste text)_
 - [**translate**](skills/translate/SKILL.md) – translate text from one language to another. _Example: `/translate to Spanish`_
 - [**fact-check**](skills/fact-check/SKILL.md) – verify factual claims against trustworthy sources online. _Example: `/fact-check` (paste claim)_
+- [**create-note**](skills/create-note/SKILL.md) – research a topic and distill it into a compact, self-contained learning note with verified sources. _Example: `/create-note spaced repetition`_
 - [**review-note**](skills/review-note/SKILL.md) – validate and expand a personal knowledge-base note. _Example: `/review-note notes/stoicism.md`_
 - [**refine-idea-chat**](skills/refine-idea-chat/SKILL.md) – sharpen a vague idea in chat, nothing saved. _Example: `/refine-idea-chat add a draft mode`_
 
