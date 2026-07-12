@@ -8,7 +8,7 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
+2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
 3. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core. See `./references/workflow/domain-packs.md`.
 
 This skill guides verification of reported issues. Before fixing anything, confirm the problem actually exists, understand its root cause, and assess whether it's a real bug or a misunderstanding.
@@ -96,9 +96,8 @@ Do not implement any fix. Present the options and let the user choose.
 
 ## Verification
 
-- [ ] Verdict supported by evidence (code paths, test results), not intuition
-- [ ] Root cause points to specific file and line (if confirmed)
-- [ ] Scope assessed — checked if the same pattern exists elsewhere
-- [ ] Fix options presented with tradeoffs (if confirmed), ordered from targeted to thorough
-- [ ] No fix was attempted — verification and discovery only
-- [ ] Missing information stated explicitly (if inconclusive)
+Confirm before finishing:
+
+- [ ] Verdict supported by evidence, with root cause at a specific file and line when confirmed, and scope assessed for the same pattern elsewhere
+- [ ] Fix options presented with tradeoffs, ordered targeted → thorough (confirmed); missing information stated explicitly (inconclusive)
+- [ ] No fix attempted — verification and discovery only

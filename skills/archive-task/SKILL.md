@@ -8,7 +8,7 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
+2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
 
 This skill operates on the **task-folder envelope** — it relocates a whole task folder on disk — not on a task's domain content. Like `migrate-task-format`, it deliberately does **not** resolve a `**Domain:**` pack: archiving is identical for every task regardless of its domain, so there is no domain-specific overlay to load. Its source of truth is `./references/workflow/task-layout.md` (the archive location and discovery rules) and `./references/workflow/task-lifecycle.md` (the **terminal-state set** that says which tasks are finished), read **at run time** — never a hardcoded status list.
 
@@ -112,27 +112,18 @@ Carry it to `done`, or mark the plan `skipped`, then re-run.
 
 ## Don't Rationalize
 
-- "The task is basically finished, I'll archive it even though the plan says `executing`" — Only terminal tasks archive. A non-terminal (live) status means live work; refuse and report.
 - "This `plan.md` path has a `done` plan, good enough to move" — Check *what* it is first: a real task folder (top-level `plan.md`, no `Archive/` subdirectory inside it, its own parent not named `Archive/`). A tasks-parent directory would drag its whole archive along; an already-archived folder would nest `Archive/Archive/`. Refuse the former; no-op the latter.
-- "I'll just mark the plan `skipped` so I can archive it" — This skill never edits `**Status:**`. Abandoning a task is the user's lifecycle call; they mark it, then re-run.
-- "An archived folder with this slug exists — I'll merge into it" — A destination collision is a refusal, not a merge. Don't clobber another task's record.
-- "I'll `git mv` so the move is staged" — Never touch git. Plain working-tree `mv`; the user commits.
-- "I'll move the files one at a time" — Move the whole folder in one operation so the `./` links survive; never relocate files individually.
-- "There's no `plan.md` but the folder looks done" — No confirmable terminal status means no archive. Refuse and report.
 - "I'll just `mv .agents/tasks/<slug> …` from here" — That rebuilds the path from the current directory plus the slug, which can differ from the folder you resolved and validated. Move the exact resolved `SRC` into its own `PARENT/Archive/`; never assume the current directory is the resolved folder's project.
 - "`Archive/` is probably a normal directory" — Check. If `PARENT/Archive` is a symlink, `mv` follows it and relocates the task somewhere else entirely. Refuse a symlinked (or file) `PARENT/Archive`.
 - "`<parent>/Archive/` has the user's own files in it — I'll refuse or pick another spot" — No: an existing `Archive/` directory is fine at any location; archiving adds `<slug>/` beside whatever is there. The only refusals are a `DEST` collision or a symlink/non-directory at `PARENT/Archive`.
 
 ## Verification
 
-- [ ] Determined terminal vs. live by reading `task-lifecycle.md`'s terminal set at run time — not a status list baked into this skill; archive location + discovery rules likewise read from `task-layout.md`
-- [ ] Resolved the target per base resolution — bare slug among the canonical root's active folders (excluding `Archive/`), explicit path used verbatim; an already-archived slug reported as a no-op
-- [ ] Validated `SRC` by contents and position (a real non-symlink directory with a top-level `plan.md`, no `Archive/` subdirectory inside it, immediate parent not named `Archive/`); task-parent directories refused, already-archived folders no-op'd, never re-archived into `Archive/Archive/`
-- [ ] Archived only when `plan.md` `**Status:**` is a terminal state per `task-lifecycle.md`; a non-terminal or unknown status refused with its status and the path to proceed
-- [ ] `**Status:**`, goals, plan steps, and result content left unedited (the skill moves the folder, nothing else)
-- [ ] Destination collision (`Archive/<slug>/` already exists) refused, not overwritten
-- [ ] Whole folder moved in one operation; internal `./` links still resolve after the move
-- [ ] The folder moved is the exact one resolved in Step 1 (`SRC`), not a path rebuilt from slug + cwd; the destination is `SRC`'s own `PARENT/Archive/`
-- [ ] Refused when `PARENT/Archive` is a symlink or a non-directory, instead of moving through or into it (ancestor symlinks are fine)
-- [ ] No git state mutated (no add, commit, checkout, stash, `git mv`); change is working-tree-only
-- [ ] Nothing outside `PARENT` touched — the move stays inside the resolved task's own parent directory
+Confirm the protocol invariants before finishing:
+
+- [ ] Terminal vs. live decided by reading `task-lifecycle.md`'s terminal set at run time; archive location and discovery read from `task-layout.md` — nothing baked in
+- [ ] `SRC` validated by contents and position (real non-symlink directory with a top-level `plan.md`; not a tasks-parent; immediate parent not named `Archive/` in any case); already-archived folders no-op'd, never nested into `Archive/Archive/`
+- [ ] Non-terminal, unknown-status, or missing-`plan.md` folders refused with the path to proceed; status and content never edited
+- [ ] Destination guarded — `DEST` collision refused, symlink or non-directory at `PARENT/Archive` refused
+- [ ] The exact resolved `SRC` moved into its own `PARENT/Archive/` in one operation (never a path rebuilt from slug + cwd); internal `./` links intact
+- [ ] No git state mutated; nothing outside `PARENT` touched

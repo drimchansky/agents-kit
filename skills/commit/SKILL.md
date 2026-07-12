@@ -7,7 +7,7 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
+2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
 3. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core. See `./references/workflow/domain-packs.md`.
 
 Create the commit that `/review-commit` prepared. This is the one skill that deliberately mutates Git state — invoking it *is* the explicit permission `references/engineering/rules.md` requires. It stages nothing, pushes nothing, and creates no branches: it commits exactly what is already staged, using the message review-commit drafted.
@@ -27,10 +27,9 @@ Do not stage, amend, push, create branches, or run verification scripts — none
 
 ## Verification
 
-- [ ] A review-commit message was found in the conversation; if not, the skill stopped and pointed to `/review-commit`
-- [ ] Something was staged; if not, the skill stopped
-- [ ] The committed message matches review-commit's draft verbatim (no rewrite)
-- [ ] The committed message contains no `Co-Authored-By` / AI-attribution trailer
-- [ ] Only already-staged changes were committed — nothing staged, pushed, amended, or branched
-- [ ] The result (hash, subject, files) was reported after committing
-- [ ] Any scratch message file was removed
+Confirm the protocol invariants before finishing:
+
+- [ ] Review-commit's drafted message found in this conversation and something was staged — otherwise stopped
+- [ ] Committed the already-staged changes with the draft verbatim — no rewrite, no `Co-Authored-By` / AI-attribution trailer
+- [ ] Nothing staged, pushed, amended, or branched; scratch message file removed
+- [ ] Result (hash, subject, files) reported

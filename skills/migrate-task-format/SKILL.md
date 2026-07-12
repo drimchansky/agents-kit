@@ -8,7 +8,7 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
+2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
 
 This skill operates on the **task-folder envelope** — file names, directory layout, link-headers, and status vocabulary — not on a task's domain content. It deliberately does **not** resolve a `**Domain:**` pack: the on-disk format is the same for every task regardless of its domain, so there is no domain-specific overlay to load. Its source of truth is `./references/workflow/task-layout.md` (layout and discovery) and `./references/workflow/task-lifecycle.md` (status vocabulary), read **at run time** — never a hardcoded list of past formats.
 
@@ -206,33 +206,21 @@ Apply the structural fixes? Nothing changes until you confirm.
 
 ## Don't Rationalize
 
-- "I'll just flatten the PROJECT.md dirs — the content move is obvious" — Distributing shared context is lossy judgment. Flag the whole grouping and leave it untouched; don't half-migrate.
-- "The folder is mostly conformant, I'll apply the structural fixes and flag the rest" — A folder with any judgment issue is needs-judgment, period. Partial migration can strand content. Resolve the judgment issue, then re-run for the structural pass.
-- "I'll apply the renames, then show the user" — Preview first; apply only on confirmation. This skill mutates real work products.
 - "I'll enumerate the old formats I know and match those" — Reconcile against the live docs, not a memorized catalogue. The docs are the only source of truth that stays current.
-- "I'll commit the migration so it's saved" — Never touch git. Edit the working tree; the user reviews with `git diff` and commits.
-- "This rule isn't in the docs but I know it's the format — I'll enforce it" — If a rule has no home in `task-layout.md` / `task-lifecycle.md`, surface the gap; don't invent format from memory. There is no folder-level *relocation* to a different archive path — the docs define one archive location; the only archive normalization they sanction is the container's name-case (`archive/` → `Archive/`).
-- "Both `archive/` and `Archive/` exist — I'll merge them into one" — Merging two archive containers is a judgment call, not a lossless rename; flag it needs-judgment and leave both untouched. Only a lone non-canonical `archive/` (no `Archive/` beside it) is the auto-rename.
-- "The destination file already exists, I'll overwrite it with the prefixed one" — A genuine collision (a distinct file already holding the role name) makes the **whole folder** needs-judgment; leave it entirely untouched and report — don't clobber, and don't rename the folder's other files around it (that half-migrates). A case-only difference is not a collision; it's the rename to perform.
-- "The `**Result:**` header isn't a link yet, I'll make it one" — A `to-do` plan's `**Result:** _(populated by implement-task…)_` placeholder is conformant; linking it to a `result.md` that doesn't exist fabricates a dead link. Only rewrite headers that already carry a link.
+- "This rule isn't in the docs but I know it's the format — I'll enforce it" — If a rule has no home in `task-layout.md` / `task-lifecycle.md`, surface the gap; don't invent format from memory (including an invented "old archive path" — the only archive normalization the docs sanction is the container's name-case).
+- "Both `archive/` and `Archive/` exist — I'll merge them into one" — Merging two archive containers is a judgment call, not a lossless rename; flag it needs-judgment and leave both untouched.
+- "The destination file already exists, I'll overwrite it with the prefixed one" — A genuine collision (a distinct file already holding the role name) makes the **whole folder** needs-judgment; leave it entirely untouched. A case-only difference is not a collision; it's the rename to perform.
+- "The `**Result:**` header isn't a link yet, I'll make it one" — A `to-do` plan's placeholder is conformant; linking it to a `result.md` that doesn't exist fabricates a dead link. Only rewrite headers that already carry a link.
 
 ## Verification
 
-- [ ] Loaded the target format from `references/workflow/task-layout.md` + `task-lifecycle.md` at run time; checked each dimension's current value against the docs, not a remembered catalogue
-- [ ] Confirmed the target is a project root (not a task folder or slug); stopped with guidance if not
-- [ ] Scanned `.agents/tasks/` excluding the archive container (`Archive/`, any case); stopped with "nothing active to migrate" only when zero task candidates *and* no archive-container rename were pending
-- [ ] Archive container's case normalized — a lone lowercase `archive/` at the task root renamed to `Archive/` (case-only rename via temp name where needed); both-cases-present flagged needs-judgment and never merged
-- [ ] Every active folder labelled conformant / structurally-fixable / needs-judgment
-- [ ] A folder with any judgment issue — including a latent destination-name collision or an out-of-vocabulary status — classified needs-judgment and left entirely untouched (no half-migration)
-- [ ] Status values checked against *each file's own* vocabulary (origin marker for `CONTEXT.md`, lifecycle state for `plan.md` / `result.md`, none for `goals.md`)
-- [ ] Preview printed; nothing created, renamed, edited, or moved before the user confirmed
-- [ ] On confirm, each structurally-fixable folder conforms to `task-layout.md` — role-named files (no stem prefix), correct case, `./`-relative link-headers
-- [ ] Prefixed files matched by role suffix (any stem), not by assuming the prefix equals the folder slug; case-only renames performed without a false collision
-- [ ] Already goal-shaped legacy `spec.md` / `*.spec.md` renamed to `goals.md` and `**Spec:**`→`**Goals:**` (lossless); old free-form specs, a goals file lacking durable `G<n>` IDs, or a plan whose steps lack `**Goal:**` citations, classified needs-judgment and never back-filled
-- [ ] A `to-do` plan's prose `**Result:**` placeholder left intact (not turned into a link to a nonexistent result file)
-- [ ] Result-step links rewritten to the role-named target with the anchor preserved
-- [ ] `result.md` execution-record content untouched (only link targets / the filename changed)
-- [ ] needs-judgment folders reported with a concrete recommended action and left untouched
-- [ ] Re-running on a conformant folder changed nothing (idempotent)
-- [ ] No git state mutated (no add, commit, checkout, stash, git mv); no file outside `.agents/tasks/` touched
-- [ ] Any format rule with no home in the ref docs surfaced, not invented (incl. no invented "old archive path")
+Confirm the protocol invariants before finishing:
+
+- [ ] Format loaded from `task-layout.md` + `task-lifecycle.md` at run time; rules with no home in the docs surfaced, never enforced or invented
+- [ ] Target confirmed to be a project root (not a task folder or slug); scan excluded the archive container (any case), with a lone lowercase `archive/` handled as the documented case-normalization and both-cases-present flagged, never merged
+- [ ] Every folder labelled; any judgment issue — including a destination-name collision or a status outside *that file's own* vocabulary — made the whole folder needs-judgment and left it entirely untouched (no half-migration)
+- [ ] Preview printed and explicitly confirmed before any mutation; declined = no changes
+- [ ] Applied fixes were exactly the previewed lossless transforms — role-suffix matching (never assuming the prefix equals the slug), case renames via temp name, link-target-only rewrites with anchors preserved, placeholders left intact
+- [ ] `result.md` execution-record content untouched beyond link targets / the filename; nothing outside `.agents/tasks/` touched; no git mutation
+- [ ] needs-judgment folders reported with a concrete recommended manual action
+- [ ] Idempotent — re-running on a conformant folder changes nothing

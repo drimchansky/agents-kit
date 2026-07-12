@@ -8,14 +8,14 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
+2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
 3. Load the domain pack: take the task's `**Domain:**` (default `engineering`; infer from the request when there's no `CONTEXT.md`) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for. If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
 
 This skill guides clear, structured explanations of any topic the user wants to understand — from a single function to an architectural pattern, from a system's internals to an external library or a domain concept. The methodology is domain-neutral; when the topic is code, load the engineering pack's `exploration.md` for the codebase-specific gathering recipe.
 
 The user asks about something they want to understand. This can be code in the current project, an external library or API, a protocol, a design pattern, a domain concept, or how things relate to each other.
 
-**CRITICAL**: Use web search liberally. Don't rely solely on training data for anything that could be outdated — library APIs, framework behavior, version-specific details, ecosystem conventions. Make as many web requests as needed to give an accurate, current answer.
+Use web search liberally — don't rely on training data for anything that could be outdated: library APIs, framework behavior, version-specific details, ecosystem conventions. Make as many web requests as needed to give an accurate, current answer.
 
 ## Determine Scope
 
@@ -80,14 +80,12 @@ If the user will use this output to make a decision (design, refactor, or implem
 
 ## Verification
 
+Confirm before finishing:
+
 - [ ] Answers the actual question asked, not an adjacent one
-- [ ] Depth matches the audience and question scope
-- [ ] Claims anchored to code or authoritative sources
-- [ ] Non-obvious behavior and gotchas called out
+- [ ] Claims anchored to the primary source; version-sensitive information verified via web search
 - [ ] Uncertainty flagged where context is missing
-- [ ] Version-sensitive information verified via web search
-- [ ] If pre-plan: constraints and load-bearing elements identified
-- [ ] If alternatives exist: at least 2 surfaced with trade-off notes
+- [ ] If pre-plan: constraints and load-bearing elements identified, alternatives surfaced with trade-offs
 
 ## Output Structure
 

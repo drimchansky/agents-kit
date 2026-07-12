@@ -8,7 +8,7 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
+2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
 
 Unlike the engineering and workflow skills, this skill resolves **no** `**Domain:**` pack — its whole job is to load the neutral core into the session, nothing domain-specific. It reads the rules **by reference** through the `AGENTS.md` symlink (which points at the kit's `CORE_RULES.md`); it carries no copy of the rules to drift out of sync.
 

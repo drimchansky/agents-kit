@@ -13,10 +13,3 @@ disable-model-invocation: true
 2. **Tone Matching**: If the source is casual, the target must be casual.
 3. **Alternative Options**: If a phrase is ambiguous, provide the 2 best variations.
 4. **No Tables**: Never use markdown tables; use lists instead (they wrap badly in narrow terminals and resist clean diffs).
-
-## Verification
-
-- [ ] Meaning translated, not literal words
-- [ ] Tone matches the source
-- [ ] Ambiguous phrases have alternative options provided
-- [ ] Domain-specific terms translated correctly for the context

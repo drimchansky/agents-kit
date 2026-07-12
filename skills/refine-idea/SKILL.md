@@ -8,7 +8,7 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
+2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
 3. Load the domain pack: take the task's `**Domain:**` (default `engineering`; infer from the request when there's no `CONTEXT.md` yet, and record it in the `CONTEXT.md` you write) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for. If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
 
 This skill turns a raw idea into a sharp, actionable concept worth building. It runs three phases — divergent exploration, convergent evaluation, and a written one-pager — and produces an artifact at `<task-folder>/CONTEXT.md` (canonically `.agents/tasks/<slug>/CONTEXT.md`) that `plan-task` and `implement-task` later consume as the static grounding context for the task.
@@ -92,19 +92,15 @@ The "Not Doing" list is the most valuable part — focus is about saying no to g
 - "I'll surface assumptions later" — Untested assumptions kill ideas. Surface them before committing to a direction.
 - "More variations is better" — 5–8 considered variations beat 20 shallow ones.
 - "The user liked the first idea, ship that" — Liking the first idea doesn't validate it. Run the convergent stress-test anyway.
-- "I'll output the one-pager in chat" — The artifact must be a file. `plan-task` reads it from disk. If the user wants chat-only output, that's `refine-idea-chat`, not this skill.
 
 ## Verification
 
-- [ ] One-pager written to the resolved task folder's `CONTEXT.md` (canonically `.agents/tasks/<slug>/CONTEXT.md`; at the user's destination path when one was given, per `task-layout.md`'s destination rule)
-- [ ] Task folder created if it didn't exist; existing `CONTEXT.md` not silently overwritten
-- [ ] Chat summary surfaces file path, slug, **and** the literal `Next: /plan-task <token>` line in the exact handoff shape — token = slug for a canonical task, absolute folder path otherwise
-- [ ] Slug derived from the idea, kebab-case, 2–5 words
-- [ ] "How Might We" problem statement is one sentence and concrete
-- [ ] Multiple directions were explored, not just the user's first framing
-- [ ] Hidden assumptions are listed with how each could be validated
+Confirm the protocol invariants before finishing:
+
+- [ ] One-pager written to the resolved task folder's `CONTEXT.md` per `./references/workflow/context-schema.md` — `**Status:** refined`, `**Domain:**` inferred (or asked when clearly non-code and unclear); an existing `CONTEXT.md` not silently overwritten
+- [ ] Chat summary carries the literal `Next: /plan-task <token>` handoff line — token = slug for a canonical task, absolute folder path otherwise
+- [ ] Multiple directions explored, not just the user's first framing; hidden assumptions listed with how each could be validated
 - [ ] "Not Doing" list makes trade-offs explicit, with reasons
-- [ ] Output is a file on disk, not a conversation message
 
 ## CONTEXT.md Structure
 

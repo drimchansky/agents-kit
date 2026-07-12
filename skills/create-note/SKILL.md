@@ -108,8 +108,6 @@ A handful of lines; the note is the deliverable. Mention that `/review-note <pat
 
 ## Don't rationalize
 
-- "I know this topic; no need to search" — Search anyway. The links must be fetched regardless, and the best-sources sweep corrects inherited emphasis.
-- "This URL is definitely correct" — From memory it's neither verifiable nor guaranteed to exist. Fetch it or drop it.
 - "Wikipedia is a fine link" — It's a lead. Follow its citations and link the primary source or the best explainer; link the wiki article itself only when it's genuinely the best overview available, labeled as one.
 - "More detail makes a better note" — The size cap is the feature; every extra paragraph taxes future rereads. Link instead.
 - "The why is obvious" — Then it costs one sentence. Unstated whys are how notes decay into incantations.
@@ -179,14 +177,12 @@ Chat report:
 
 ## Verification
 
-- [ ] Topic scoped (questions asked if broad); note type inferred and structure calibrated to it
-- [ ] Destination confirmed before writing; existing note on the topic checked for when the folder is known; nothing silently overwritten
-- [ ] Every link in the note was fetched and read during this run — zero from-memory URLs
-- [ ] Load-bearing and time-sensitive claims verified against fetched sources; training-knowledge claims are stable fundamentals only
-- [ ] Every rule and fact in Core model carries its why
-- [ ] Distinctions, strongest objection, and connections present — or consciously N/A for the note type
-- [ ] Source hedges preserved; disagreements between sources surfaced in the note, attributed
-- [ ] Volatile claims date-anchored; footer has creation and sources-fetched dates, plus a revisit trigger when the topic is volatile
-- [ ] Size within target (study note ~400–800 words; cheatsheet or glossary entry tighter)
-- [ ] No tables anywhere; note written in the language of the request
+Confirm the hard rules held before finishing:
+
+- [ ] Destination confirmed before writing; nothing silently overwritten
+- [ ] Every link in the note fetched and read during this run — zero from-memory URLs
+- [ ] Load-bearing and time-sensitive claims verified against fetched sources; hedges preserved; disagreements surfaced and attributed
+- [ ] Every rule and fact carries its why; distinctions, strongest objection, and connections present or consciously N/A
+- [ ] Volatile claims date-anchored, footer dated (revisit trigger when volatile); size within target
+- [ ] Note written in the language of the request; no tables
 - [ ] Chat report lists verified vs. training-knowledge claims and flags; note not pasted into chat

@@ -8,7 +8,7 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
+2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
 3. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core. See `./references/workflow/domain-packs.md`.
 
 This skill audits existing documentation against the codebase. It catches stale references, drifted descriptions, missing context, and silent assumptions — producing a clear assessment of what's accurate, what's wrong, and what's missing.
@@ -67,7 +67,7 @@ Skip soft claims (philosophy, intent, motivation) — those don't have a ground 
 
 ### 3. Ground Each Claim
 
-**CRITICAL**: Every claim about the codebase must be verified against the actual source.
+Every claim about the codebase must be verified against the actual source — that's the whole job of this pass.
 
 **With `-x`, launch the grounding probe first.** Once the claims are extracted (Step 2), start one background probe on the **cross-vendor engine** per `./references/workflow/agent-fanout.md`: a self-contained prompt carrying the extracted claims and the doc's path, with the repo root as working root, demanding per-claim `CONFIRMED` / `CONTRADICTED` / `NOT FOUND` verdicts with `file:line` evidence. Ground inline yourself as below while it runs; collect and merge per the contract before assigning verdicts — where the probe contradicts your grounding, re-check that spot first. Record the outcome on the Doc Summary's `Cross-check:` line — including `skipped (<reason>)` when the engine is unavailable, in which case proceed on your own pass.
 
@@ -175,22 +175,16 @@ Before reporting done:
 - "This file is probably still there" — Grep for it. Probably isn't verified.
 - "The example obviously still works" — Trace it through current types. Examples rot.
 - "Minor drift, not worth flagging" — Flag it with low severity. Drift compounds.
-- "The drift is obvious, I'll just fix it now and save a turn" — No. The audit is the deliverable; the user decides whether to act on it. Silent edits violate the contract of the skill.
 - "The user said 'thanks' / 'ok' — that's authorization to apply fixes" — It isn't. Ask explicitly before editing.
-- "While I'm rewriting Section A, I might as well clean up Section B" — Edit only what the user authorized. Scope drift in a doc rewrite is the same failure mode as scope drift in code.
 - "I'll add some extra detail while I'm in here" — Only include what the code or user supports. Invented detail erodes trust.
 - "I'll keep the old phrasing and add the new context below it" — Rewrite the section. The doc is current truth, not a conversation thread.
 
 ## Verification
 
-- [ ] Every verifiable claim grounded in actual source code
-- [ ] (`-x`) Grounding probe launched on the cross-vendor engine and merged before verdicts were assigned — contradictions re-checked — and the Doc Summary ends with its `Cross-check:` line (`./references/workflow/agent-fanout.md`)
-- [ ] Each claim has a clear verdict with evidence
-- [ ] Stale/misleading findings include the current reality, not just "it's wrong"
-- [ ] Gaps grouped by category with specific details
-- [ ] Code examples traced through current APIs
-- [ ] Commands and versions cross-checked against config files
-- [ ] Findings printed to chat; the doc file was **not** edited as part of the audit pass
-- [ ] If the user requested edits afterward: each rewritten section maps back to a finding the user authorized; no unrequested sections were touched
-- [ ] Confirmed sections left untouched
-- [ ] Post-rewrite re-grep (when edits were made) confirms paths, symbols, and commands resolve
+Confirm the protocol invariants before finishing:
+
+- [ ] Every verifiable claim grounded in the actual source, with a verdict and evidence; stale/misleading findings include the current reality
+- [ ] Code examples traced through current APIs; commands and versions cross-checked against config files
+- [ ] Findings printed to chat; the doc was **not** edited as part of the audit pass
+- [ ] (on explicit request only) Each edit maps to an authorized finding; Confirmed sections and unrequested sections untouched; post-rewrite re-grep confirms paths, symbols, and commands resolve
+- [ ] (`-x`) Probe merged before verdicts and the Doc Summary carries its `Cross-check:` line

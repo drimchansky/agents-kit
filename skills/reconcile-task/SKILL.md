@@ -8,7 +8,7 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
+2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
 3. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core, plus `verification.md` — this skill re-verifies before it records any progress. If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
 
 This skill closes the gap a working or design session opens: things get decided, discovered, answered, or actually built in the conversation, but the task folder still reflects the state from before the session. `reconcile-task` reviews **this session against the task docs** and writes the missing information back — the *enriching* direction of reconciliation. It is the counterpart to the `-r` reconcile mode of `resume-task` / `review-task`, which reconciles the other way (docs that overstate reality, weakened down to match). The shared contract for both directions lives in `./references/workflow/reconciliation.md`.
@@ -41,13 +41,13 @@ This skill closes the gap a working or design session opens: things get decided,
 
 ### 1. Resolve the Task Folder
 
-Resolve a task folder per the **resolve-current-or-ask** discovery rules in `./references/workflow/task-layout.md` — the same variant `implement-task` and `resume-task` use: a bare slug (resolved in the canonical root, falling back into `Archive/` for a finished task), an explicit path used verbatim anywhere on disk, or a full `plan.md` path taken directly, or — when the user named nothing — the task already established **in this session** if there is one (e.g. from a preceding `refine-idea`, `plan-task`, `review-task`, or `implement-task`), otherwise list active folders and ask which task.
+Resolve a task folder per the **resolve-current-or-ask** discovery rules in `./references/workflow/task-layout.md` — cite it, don't restate it; a full `plan.md` path is taken directly.
 
 The in-session task is the common case: reconcile is usually run at the end of a session that was already about a specific task. If nothing is established and nothing is named, ask — never guess between candidates.
 
 ### 2. Load Artifacts
 
-Read in full, not skim — the docs are the baseline you diff the session against:
+Read all four — the docs are the baseline you diff the session against, so don't diff against a skim:
 
 - `CONTEXT.md` — the static grounding context (problem statement, recommended direction, key assumptions, MVP scope, not-doing, open questions, references). Note the exact wording of prose sections; you compare, you don't paraphrase.
 - `goals.md` — capture the full `## Goals` list by `G<n>` ID, and the highest ID in use (a new goal takes the next free number).
@@ -140,14 +140,13 @@ Then run Step 4 (verify) and Step 5 (auto-apply enrichments, then the batched co
 - "It surfaced in the session, so I can just write it" — Every temptation to record unverified progress, auto-add a goal, rewrite grounding prose, renumber IDs, or tidy beyond a finding is already answered by the shared contract and this skill's mapping in `./references/workflow/reconciliation.md`. Follow them, not your judgment.
 - "I'll run the next step while I'm here" — This skill records work; it doesn't execute the plan. Hand off to `implement-task`.
 - "The session is long; I'll summarize what I remember" — Diff the session against the actual docs, don't summarize from memory. Capture what's genuinely missing, and quote/point to the source.
-- "I'll write a SESSION.md so it's all captured" — No fifth artifact. The four task files plus the chat change list are the record.
 
 ## Verification
 
-- [ ] Task folder resolved (used the in-session task, or asked when ambiguous — never guessed)
-- [ ] `CONTEXT.md`, `goals.md`, `plan.md`, and `result.md` read in full before diffing the session against them
+Confirm the protocol invariants before finishing:
+
+- [ ] Task folder resolved (in-session task, or asked — never guessed); all four artifacts read before diffing the session against them
 - [ ] A `skipped` plan reported as abandoned, with nothing written
-- [ ] Reconciliation followed the shared contract end-to-end — consent model, session → docs write surface (docs, not the world), append-only record, findings report printed from pre-reconcile state and never regenerated, closing change list (`./references/workflow/reconciliation.md`)
-- [ ] Every edit maps to a Step 3 finding through this skill's mapping in the contract; state advanced only after Step 4's in-session verification, with the evidence recorded in `result.md`
-- [ ] Grounding docs (`goals.md`, `CONTEXT.md` prose, a step's scope) changed only through the batched confirmation round
-- [ ] No fifth artifact created
+- [ ] Reconciliation followed the shared contract end-to-end; findings report printed from pre-reconcile state; closing change list printed
+- [ ] State advanced only after Step 4's in-session re-verification, with evidence recorded in `result.md`; grounding docs (`goals.md`, `CONTEXT.md` prose, a step's scope) changed only through the batched confirmation round
+- [ ] Docs only — no source code, git, or external-system mutation; no fifth artifact

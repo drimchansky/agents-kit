@@ -8,7 +8,7 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
+2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
 3. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for (`exploration.md`, `verification.md`, …). If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
 
 This skill validates a plan against current reality before execution begins. It catches infeasible steps, missing details, pattern conflicts, and implicit assumptions — producing a clear assessment with targeted questions.
@@ -24,7 +24,7 @@ The user provides a plan — typically the output of `plan-task`, written to `<t
 
 ## Locate the Plan
 
-Resolve a task folder per the **resolve-or-ask** discovery rules in `./references/workflow/task-layout.md` — a bare slug (resolved in the canonical root, falling back into `Archive/` for a finished task), an explicit path used verbatim anywhere on disk, a full `plan.md` path taken directly, or, when the user named nothing, list active folders and ask which.
+Resolve a task folder per the **resolve-or-ask** discovery rules in `./references/workflow/task-layout.md` — cite it, don't restate it; a full `plan.md` path is taken directly.
 
 Once the folder is resolved, read its `plan.md` (one plan per folder; its sibling `goals.md` and `result.md` are inputs and execution records).
 
@@ -67,7 +67,7 @@ Restate the plan's intent in your own words to confirm understanding. If steps a
 
 ### 2. Ground in the Domain's Reality
 
-**CRITICAL**: Verify the plan against what actually exists, not against its own claims. Every claim about existing behavior must be checked against the real artifacts. This is an independent pass — do not assume `plan-task`'s exploration was correct.
+Verify the plan against what actually exists, not against its own claims — an independent pass; do not assume `plan-task`'s exploration was correct.
 
 **With `-x`, launch the grounding probe first.** Before grounding inline, start one background probe on the **cross-vendor engine** per `./references/workflow/agent-fanout.md`: a self-contained prompt carrying the plan's reality claims — integration points, "reuse X" assumptions, referenced files/symbols/APIs — with the project root as working root, demanding per-claim `CONFIRMED` / `CONTRADICTED` / `NOT FOUND` verdicts with `file:line` evidence. Then ground inline yourself as below while it runs; the probe supplements your pass, never replaces it. Collect it before Step 3 and merge per the contract: where it contradicts your grounding or the plan, re-check that spot before assigning the verdict. Record the outcome on the Plan Summary's `Cross-check:` line — including `skipped (<reason>)` when the engine is unavailable, in which case proceed on your own pass.
 
@@ -242,23 +242,14 @@ With `-r`, after the assessment is printed and reconciliation has run (Step 9), 
 - "I'll note the gaps during implementation" — Surface them now. That's the entire point of review.
 - "Everything looks good" — Rubber-stamping isn't review. Every integration point needs code-level verification.
 - "That's a theoretical concern" — Only flag real issues, but don't dismiss concerns without checking the code.
-- "The goals look fine to me" — Run them through `./references/workflow/acceptance-criteria.md`. Without an explicit pass, this skill rubber-stamps vague goals, the structural coverage check gives false confidence, and the failure surfaces inside the acceptance gate where it's most expensive.
-- "Reconciling is close enough to editing — I'll use my judgment" — Every `-r` temptation (redesign around an answer, check a box, edit `goals.md`, guess intent) is already answered by the shared contract and this skill's mapping in `./references/workflow/reconciliation.md`. Follow them, not your judgment.
 
 ## Verification
 
-- [ ] `CONTEXT.md` and `goals.md` read in full alongside the plan; missing goals file flagged as a gap
-- [ ] Every integration point verified against actual source code
-- [ ] (`-x`) Grounding probe launched on the cross-vendor engine and merged before verdicts were assigned — contradictions re-checked — and the Plan Summary ends with its `Cross-check:` line (`./references/workflow/agent-fanout.md`)
-- [ ] Each step has a clear verdict with evidence
-- [ ] Each step's verify criterion assessed for concreteness
-- [ ] Each goal in `goals.md` assessed against `./references/workflow/acceptance-criteria.md`; `weak` / `vague-or-untestable` / `unresolved` findings appear in Questions with the specific failing dimension (and a suggested rewrite where possible)
-- [ ] acceptance coverage section maps every goal ID to the step(s) citing it via `**Goal:**` (or marks it `uncovered` / `out of scope`); non-infra orphan steps also flagged
-- [ ] Cross-file drift assessed across CONTEXT ↔ goals, CONTEXT ↔ plan, goals ↔ plan, plan ↔ result (when result exists), and status-field consistency against `./references/workflow/task-lifecycle.md`; restated grounding between CONTEXT and plan flagged; section rendered even when no drift is found
-- [ ] Deferred goal clarifications (`_(unresolved: ...)_` in `goals.md`) lifted into Questions
-- [ ] Checkpoints (if plan >5 steps) assessed for placement and concrete end-to-end assertion
-- [ ] Questions are targeted and explain why the answer matters
-- [ ] Gaps grouped by category with specific details
-- [ ] No redesign or implementation proposed — review only (with `-r`: doc reconciliation and folded-in answers only; steps needing rethinking routed to `plan-task`)
-- [ ] (`-r`) Reconciliation followed the shared contract end-to-end — consent model, write surface, weaken-never-strengthen, `skipped`-plan exemption, append-only record, assessment printed from pre-reconcile state and never regenerated, closing change list (`./references/workflow/reconciliation.md`)
-- [ ] (`-r`) Every edit maps to an assessment finding through this skill's mapping in the contract (or an engineer's answer); unanswered items listed under "Not reconciled"
+Confirm the protocol invariants before finishing:
+
+- [ ] Plan, `goals.md`, and `CONTEXT.md` read in full (plus `result.md` when present); a missing goals file reported as the highest-priority finding
+- [ ] Every integration point verified against the actual artifacts; every step given a verdict with evidence and a concreteness check on its `Verify` criterion
+- [ ] Goals audited per `./references/workflow/acceptance-criteria.md`, and coverage mapped mechanically from `**Goal:**` citations — uncovered goals, orphan steps, an incomplete `## Scope` partition, and `_(unresolved: ...)_` goals lifted into Questions
+- [ ] Cross-file drift checked pairwise, including status pairing per `./references/workflow/task-lifecycle.md`; Goal Quality, Acceptance Coverage, and Cross-File Drift sections rendered even when clean
+- [ ] Review only — no implementation, no redesign; steps needing rethinking routed to `plan-task`
+- [ ] (`-r`) Reconciliation followed the shared contract, assessment printed from pre-reconcile state, every edit mapped to a finding or an engineer answer; (`-x`) probe merged before verdicts and the Plan Summary carries its `Cross-check:` line

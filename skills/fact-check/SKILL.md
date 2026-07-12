@@ -37,19 +37,9 @@ Pull out concrete, checkable assertions. A single sentence may contain several. 
 
 Skip subjective claims (taste, opinion, prediction). Note them as out-of-scope rather than rating them.
 
-### 2. Plan the lookup
+### 2. Fetch and read
 
-For each claim, decide:
-
-- What source type would be authoritative (official site, standards doc, regulator, vendor doc at version X, peer-reviewed study)
-- What query phrasing is most likely to surface that source
-- Whether the claim is time-sensitive — if yes, you'll filter or weight by date
-
-Don't outsource this judgment to a single search. Plan before searching.
-
-### 3. Fetch and read
-
-Use web search to find candidate sources, then **fetch the actual page** for any source you intend to cite. Read enough of the page to confirm it actually says what the search snippet implied — snippets lie or get truncated.
+For each claim, target the source type that would be authoritative (official site, standards body, regulator, vendor doc at the right version, peer-reviewed study) rather than citing the first hit, and weight by date when the claim is time-sensitive. Use web search to find candidate sources, then **fetch the actual page** for any source you intend to cite. Read enough of the page to confirm it actually says what the search snippet implied — snippets lie or get truncated.
 
 For each source you cite, record:
 
@@ -60,7 +50,7 @@ For each source you cite, record:
 
 If a source paywalls, redirects, or returns a thin stub, note that and find another. Don't cite a page you couldn't actually read.
 
-### 4. Assign a verdict
+### 3. Assign a verdict
 
 For each claim, one of:
 
@@ -71,7 +61,7 @@ For each claim, one of:
 - **Disputed** — Trustworthy sources disagree. Report the disagreement and the strongest source on each side.
 - **Outdated** — The claim was true at some point but is no longer current. Cite both the older and current state.
 
-### 5. Be honest about coverage
+### 4. Be honest about coverage
 
 - If you ran out of time, sources, or access, say so. Don't fill the gap with a hedge that reads like a verdict.
 - If the input has many claims and you only checked some, list which you checked and which you didn't.
@@ -104,11 +94,9 @@ Use lists, never markdown tables (they wrap badly in narrow terminals and resist
 
 ## Verification
 
-- [ ] Every "verified" / "contradicted" verdict cites at least one URL fetched in this run
-- [ ] Load-bearing claims have ≥2 independent sources or one undisputed primary
-- [ ] Source dates noted for time-sensitive claims
-- [ ] No verdict relies solely on the model's pretraining
-- [ ] Hedges in the source preserved in the report
-- [ ] Disagreements between sources reported, not papered over
-- [ ] Unverifiable claims explicitly labeled, not silently dropped
-- [ ] Report written in the same language as the input; foreign-language quotes accompanied by a translation
+Confirm the hard rules held before finishing:
+
+- [ ] Every "verified" / "contradicted" verdict cites at least one URL fetched in this run; load-bearing claims have ≥2 independent sources or one undisputed primary
+- [ ] Source dates noted for time-sensitive claims; hedges preserved; disagreements reported, not papered over
+- [ ] Unverifiable claims explicitly labeled; coverage gaps stated
+- [ ] Report written in the language of the input, foreign-language quotes translated

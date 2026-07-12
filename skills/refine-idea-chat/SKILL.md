@@ -92,16 +92,14 @@ The "Not Doing" list is the most valuable part — focus is about saying no to g
 - "I'll surface assumptions later" — Untested assumptions kill ideas. Surface them before committing to a direction.
 - "More variations is better" — 5–8 considered variations beat 20 shallow ones.
 - "The user liked the first idea, ship that" — Liking the first idea doesn't validate it. Run the convergent stress-test anyway.
-- "I'll save this to disk just in case" — This skill is chat-only. If the user wants a saved artifact, that's `refine-idea`, not this one.
 
 ## Verification
 
-- [ ] "How Might We" problem statement is one sentence and concrete
-- [ ] Multiple directions were explored, not just the user's first framing
-- [ ] Hidden assumptions are listed with how each could be validated
+Confirm before finishing:
+
+- [ ] Multiple directions explored, not just the user's first framing; hidden assumptions listed with how each could be validated
 - [ ] "Not Doing" list makes trade-offs explicit, with reasons
-- [ ] One-pager posted as a structured chat message
-- [ ] No files written, no slug derived, no follow-up command suggested
+- [ ] One-pager posted in chat — no files written, no slug derived, no follow-up command suggested
 
 ## One-pager structure
 

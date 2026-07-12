@@ -8,7 +8,7 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. Echo `✅ Core agents-kit rules applied` on its own line before any other output or tool calls.
+2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
 3. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core. See `./references/workflow/domain-packs.md`.
 
 Fetch every review comment on a PR, filter to the ones still unaddressed, cluster them by concern, and display the batches so the author can see the shape of the remaining work.
@@ -77,9 +77,8 @@ Lists, never tables.
 
 ## Verification
 
-- [ ] Echoed `✅ Core agents-kit rules applied` before any other output.
-- [ ] Read `./references/engineering/rules.md`.
-- [ ] Fetched all three comment sources (review threads, review bodies, general comments).
-- [ ] Every fetched comment is classified into exactly one bucket — none dropped.
-- [ ] No code was edited and nothing was written to the PR.
-- [ ] Output uses lists, not tables.
+Confirm the protocol invariants before finishing:
+
+- [ ] All three comment sources fetched (review threads via GraphQL with pagination, review bodies, general comments)
+- [ ] Every fetched comment classified into exactly one bucket (open / verify / addressed) — none dropped
+- [ ] No code edited and nothing written to the PR
