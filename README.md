@@ -31,6 +31,7 @@ git clone git@github.com:drimchansky/agents-kit.git ~/agents-kit
 - [**create-note**](skills/create-note/SKILL.md) – research a topic and distill it into a compact, self-contained learning note with verified sources. _Example: `/create-note spaced repetition`_
 - [**review-note**](skills/review-note/SKILL.md) – validate and expand a personal knowledge-base note. _Example: `/review-note notes/stoicism.md`_
 - [**refine-idea-chat**](skills/refine-idea-chat/SKILL.md) – sharpen a vague idea in chat, nothing saved. _Example: `/refine-idea-chat add a draft mode`_
+- [**prepare-ticket**](skills/prepare-ticket/SKILL.md) – draft a self-contained ticket — title, minimal context, description, and Given/When/Then acceptance criteria — from a described task, saved to a file. _Example: `/prepare-ticket add CSV export to the accounts table`_
 
 ## Engineering skills
 
