@@ -31,7 +31,7 @@ git clone git@github.com:drimchansky/agents-kit.git ~/agents-kit
 - [**create-note**](skills/create-note/SKILL.md) – research a topic and distill it into a compact, self-contained learning note with verified sources. _Example: `/create-note spaced repetition`_
 - [**review-note**](skills/review-note/SKILL.md) – validate and expand a personal knowledge-base note. _Example: `/review-note notes/stoicism.md`_
 - [**refine-idea-chat**](skills/refine-idea-chat/SKILL.md) – sharpen a vague idea in chat, nothing saved. _Example: `/refine-idea-chat add a draft mode`_
-- [**prepare-ticket**](skills/prepare-ticket/SKILL.md) – draft a self-contained ticket — title, minimal context, description, and Given/When/Then acceptance criteria — from a described task, saved to a file. _Example: `/prepare-ticket add CSV export to the accounts table`_
+- [**prepare-ticket**](skills/prepare-ticket/SKILL.md) – draft a self-contained ticket describing the real functional output required — title, minimal context, description, and Given/When/Then acceptance criteria — from a described task. Writes to a file, or seeds a task folder's `ticket.md` as the workflow's product-facing origin. _Example: `/prepare-ticket add CSV export to the accounts table`_
 
 ## Engineering skills
 
@@ -48,7 +48,7 @@ Core-rules-aware skills that run ad hoc — against a diff, a file, or a codebas
 
 ## Workflow skills
 
-The set that turns a rough task into finished work. Each works on one task folder — `.agents/tasks/<slug>/` by default, or anywhere on disk when named by path — handing the slug (or path) to the next:
+The set that turns a rough task into finished work. Each works on one task folder — `.agents/tasks/<slug>/` by default, or anywhere on disk when named by path — handing the slug (or path) to the next. A task may begin with a product-facing ticket ([`prepare-ticket`](skills/prepare-ticket/SKILL.md) writes `ticket.md`), which the steps below derive from:
 
 1. [**refine-idea**](skills/refine-idea/SKILL.md) – sharpen a vague idea into grounded context before planning. _Example: `/refine-idea add a draft mode to the editor`_
 2. [**plan-task**](skills/plan-task/SKILL.md) – break the work into a plan with testable goals. _Example: `/plan-task migrate auth to JWT`_
@@ -66,12 +66,13 @@ Four more support the workflow:
 
 The workflow skills share a folder-based contract: one task lives in one folder holding role-named files — that's what makes a folder a task folder, wherever it sits. The default (and only auto-discovered) location is `.agents/tasks/<slug>/` at the project root; an explicit path reaches a task anywhere else.
 
+- `ticket.md` – optional product-facing origin: the ask and its Given/When/Then acceptance criteria in product terms (see [`ticket-format`](references/workflow/ticket-format.md)). `CONTEXT.md` and `goals.md` derive from it.
 - `CONTEXT.md` – static grounding context, including the `**Domain:**` marker.
 - `goals.md` – the single source of task intent: durably-ID'd `G<n>` goals that double as the acceptance criteria; a goal verified outside the session (deploy-and-check-live, client sign-off) is flagged `(external)`.
 - `plan.md` – the steps, each citing the goals it delivers.
 - `result.md` – append-only record of what happened.
 
-Each fact lives in exactly one of these files and the siblings cite it — plan steps cite goals by `G<n>` ID, plan sections cite `CONTEXT.md` rather than restating it. See [`task-layout`](references/workflow/task-layout.md) § *One home per fact*.
+Each fact lives in exactly one of these files and the siblings cite it — plan steps cite goals by `G<n>` ID, plan sections cite `CONTEXT.md` rather than restating it, and when a ticket exists `CONTEXT.md`'s problem statement cites `ticket.md` while `goals.md` sharpens its criteria. See [`task-layout`](references/workflow/task-layout.md) § *One home per fact*.
 
 `implement-task` runs an acceptance gate against `goals.md` before flipping the plan to `done` — and parks it at `in-review` when the only goals left unsatisfied are `(external)` ones still awaiting verification, reaching `done` on a later re-run once they're confirmed. Completed (`done`) or `skipped` tasks can be moved to an `Archive/` subdirectory with [`archive-task`](skills/archive-task/SKILL.md); a plan stuck or waiting on a prerequisite before it can proceed takes the `blocked` status. See [`task-layout`](references/workflow/task-layout.md) for the on-disk layout and [`task-lifecycle`](references/workflow/task-lifecycle.md) for the status registry.
 

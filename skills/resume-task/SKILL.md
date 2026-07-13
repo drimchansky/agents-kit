@@ -11,11 +11,11 @@ disable-model-invocation: true
 2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
 3. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core. This skill mostly observes; pull in deeper pack files only if you dig into a step's work. If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
 
-This skill loads an existing task folder (canonically under `.agents/tasks/`, though a task folder anywhere on disk works the same) and produces a chat-only briefing — used to resume work after time away, hand off, review what was done, or answer questions about a task — whether in progress, blocked, or already shipped. It reads the four task artifacts (`CONTEXT.md`, `goals.md`, `plan.md`, `result.md`), reconstructs state from `- [ ]` / `- [x]` checkboxes, checks for drift between the plan's claims and current code/git, and prints a structured brief. With `-r`, after printing the brief it also reconciles the task docs to the findings (Step 7).
+This skill loads an existing task folder (canonically under `.agents/tasks/`, though a task folder anywhere on disk works the same) and produces a chat-only briefing — used to resume work after time away, hand off, review what was done, or answer questions about a task — whether in progress, blocked, or already shipped. It reads the four core task artifacts (`CONTEXT.md`, `goals.md`, `plan.md`, `result.md`) — plus the optional upstream `ticket.md` when present — reconstructs state from `- [ ]` / `- [x]` checkboxes, checks for drift between the plan's claims and current code/git, and prints a structured brief. With `-r`, after printing the brief it also reconciles the task docs to the findings (Step 7).
 
-**CRITICAL**: In default mode (no `-r`) this skill is **read-only** — task files, source code, and git state are never modified, and external systems cited in the docs (Jira, Notion, Slack, Google Docs, PRs, dashboards, …) are fetched read-only, never commented on or updated. Reading the work product is expected and required — the drift check verifies the plan/result claims against current reality. Output is **chat only**: no `BRIEF.md` or fifth artifact — briefings stale within hours, and the four-file contract is what the other skills rely on.
+**CRITICAL**: In default mode (no `-r`) this skill is **read-only** — task files, source code, and git state are never modified, and external systems cited in the docs (Jira, Notion, Slack, Google Docs, PRs, dashboards, …) are fetched read-only, never commented on or updated. Reading the work product is expected and required — the drift check verifies the plan/result claims against current reality. Output is **chat only**: no `BRIEF.md` or scratch briefing file — briefings stale within hours, and the task folder's role files are what the other skills rely on.
 
-With `-r`, the write surface expands to exactly three task files — `plan.md`, `result.md`, and minimal annotations in `CONTEXT.md`'s References / Open Questions sections — and nothing else. In **both** modes: `goals.md` is never edited, source code is never written, git state is never mutated, external systems are fetched read-only, and no `BRIEF.md` or fifth artifact is created. `-r` fixes the **docs**, not the world — it never re-runs the acceptance gate or executes plan work. Only obvious, evidence-dictated fixes are applied unprompted; anything needing engineer judgment is asked first — the shared contract lives in `./references/workflow/reconciliation.md`. The brief always prints from pre-reconcile state before any edit.
+With `-r`, the write surface expands to exactly three task files — `plan.md`, `result.md`, and minimal annotations in `CONTEXT.md`'s References / Open Questions sections — and nothing else. In **both** modes: `goals.md` and `ticket.md` are never edited (the ticket is user-owned; even `reconcile-task` treats it as read-only), source code is never written, git state is never mutated, external systems are fetched read-only, and no `BRIEF.md` or scratch briefing file is created. `-r` fixes the **docs**, not the world — it never re-runs the acceptance gate or executes plan work. Only obvious, evidence-dictated fixes are applied unprompted; anything needing engineer judgment is asked first — the shared contract lives in `./references/workflow/reconciliation.md`. The brief always prints from pre-reconcile state before any edit.
 
 ## Flags
 
@@ -50,8 +50,9 @@ Resolve a task folder per the **resolve-current-or-ask** discovery rules in `./r
 
 ### 2. Load Artifacts
 
-Read all four — don't answer from headers or the latest section alone:
+Read all four core artifacts — plus `ticket.md` when present — don't answer from headers or the latest section alone:
 
+- `ticket.md` (when present) — the product-facing ask and its Given/When/Then acceptance criteria; the upstream origin `goals.md` derives from.
 - `CONTEXT.md` in the resolved task folder — the static grounding context (problem statement, scope summary, key assumptions, references).
 - `goals.md` — capture the full `## Goals` list by `G<n>` ID. Note any goal marked `_(unresolved: ...)_`.
 - `plan.md` — note its `**Status:**` header and its `**Goals:**` link.
@@ -97,7 +98,7 @@ Tag each finding `info` (FYI), `warn` (review before resuming), or `block` (plan
 
 External systems cited in the task docs drift independently of the code — a ticket closes, a thread answers an open question, a doc gets rewritten. This is the external counterpart to Step 4: Step 4 catches drift on disk; this step catches drift in the systems the docs point at.
 
-Collect every external URL cited across the four files (skip `mailto:`, `file://`, `localhost`, anchors-only, and relative links), deduplicate, and fetch each one **read-only** with the best capability the host agent offers — a structured integration over raw HTML scraping when one exists. Capture just enough to compare against the citing file's description: current title, status, last-updated. Tag each reference:
+Collect every external URL cited across the task files — including `ticket.md`'s References when present — (skip `mailto:`, `file://`, `localhost`, anchors-only, and relative links), deduplicate, and fetch each one **read-only** with the best capability the host agent offers — a structured integration over raw HTML scraping when one exists. Capture just enough to compare against the citing file's description: current title, status, last-updated. Tag each reference:
 
 - `info` — fetched cleanly, no material change since cited. Auth-walled links are also `info`, marked `auth required — re-check manually` — don't pretend they were fetched.
 - `warn` — material change: status flipped, new comments resolving an open question, doc substantively edited, PR merged or closed.
@@ -217,8 +218,8 @@ With `-r`, after the edits are applied (and the batched engineer questions answe
 
 Confirm the protocol invariants before finishing:
 
-- [ ] Task folder resolved per `task-layout.md` (asked when ambiguous); all four artifacts read; a missing `goals.md` flagged
-- [ ] (no `-r`) Nothing written, edited, renamed, or deleted anywhere; in both modes: no git mutation, external systems fetched read-only, no `BRIEF.md` or fifth artifact
+- [ ] Task folder resolved per `task-layout.md` (asked when ambiguous); all four core artifacts read (plus `ticket.md` when present); a missing `goals.md` flagged
+- [ ] (no `-r`) Nothing written, edited, renamed, or deleted anywhere; in both modes: no git mutation, external systems fetched read-only, no `BRIEF.md` or scratch briefing file
 - [ ] State reconstructed from checkbox markers, not prose; `**Blocked:**` / `**In review:**` sections surfaced verbatim; a `skipped` plan reported as abandoned, not drift
 - [ ] Drift check compared done/shipped claims against current reality — paths partitioned shipped vs. pending, every `met` goal re-checked on a `done` plan, a missing `## Acceptance` on a `done` plan flagged `block` — with "Drift since plan" rendered even when clean
 - [ ] Every cited URL fetched read-only and tagged (`warn` on material change, `block` on broken, `info` on auth-walled); "References update" rendered even when none

@@ -13,14 +13,15 @@ disable-model-invocation: true
 
 This skill executes a plan written by `plan-task` (or any `plan.md` in a task folder — canonically under `.agents/tasks/`, though a task folder anywhere on disk works the same — that follows the same format). It implements the work, updates a companion **result file** as it goes, marks each step `DONE` in the plan with a link back to the result section, and runs a final **acceptance gate** against the goals before flipping the plan to `done`.
 
-The plan is the **contract for how**; the goals are the **contract for what done means**; the result file is the **append-only record**; `CONTEXT.md` is the **static grounding context** for the task. All four live side by side in the resolved task folder:
+The plan is the **contract for how**; the goals are the **contract for what done means**; the result file is the **append-only record**; `CONTEXT.md` is the **static grounding context** for the task; the optional `ticket.md` is the **product-facing ask** the goals derive from. They live side by side in the resolved task folder:
 
+- Ticket: `ticket.md` (optional; read-only for this skill)
 - Context: `CONTEXT.md` (read-only for this skill)
 - Goals: `goals.md` (read-only for this skill)
 - Plan: `plan.md`
 - Result: `result.md`
 
-**CRITICAL**: The plan and result files are mutated by this skill; `CONTEXT.md` and the goals are not. The plan is mutated _only_ to flip step checkboxes (`- [ ]` → `- [x]`), append result links, update the `Status:` header, and (when necessary) revise scope or steps. Everything else about the plan stays as written. The result file is the place for narrative — what shipped, what surprised you, what diverged. The goals file is the user's contract; if it needs to change, surface that to the user — never edit it from this skill.
+**CRITICAL**: The plan and result files are mutated by this skill; `CONTEXT.md`, the goals, and the ticket are not. The plan is mutated _only_ to flip step checkboxes (`- [ ]` → `- [x]`), append result links, update the `Status:` header, and (when necessary) revise scope or steps. Everything else about the plan stays as written. The result file is the place for narrative — what shipped, what surprised you, what diverged. The goals file is the user's contract; if it needs to change, surface that to the user — never edit it from this skill.
 
 ## References
 
@@ -60,14 +61,15 @@ Discovery resolves a task folder, then reads its `plan.md`.
 
 **Read the plan** — once the folder is resolved, read its `plan.md` (one plan per folder). If the folder has no `plan.md`, tell the user the folder exists but has no plan; suggest `plan-task` to create one.
 
-Read **all four artifacts** before doing anything:
+Read **all four core artifacts** — plus the optional `ticket.md` when present — before doing anything:
 
 - The plan in full.
 - The sibling `goals.md` — the goals define the final gate this skill runs before marking the plan `done`. If the goals file is missing, stop and tell the user — `plan-task` should produce one. Do not invent goals to fill the gap.
 - The sibling `CONTEXT.md` — problem statement, scope summary, key assumptions, external references. Authoritative for the task's static context; never modify it from this skill.
+- The sibling `ticket.md` when present — the product-facing ask the goals derive from; read-only context (the acceptance gate runs against `goals.md`, not the ticket).
 - The companion `result.md` if it exists — work may have been partially done in a prior session. Pick up where it left off; do not redo completed steps. If the plan is `blocked`, read the result file's `**Blocked:**` section and resume only once the blocker has cleared — then flip both plan and result back to `executing` before continuing. If the plan is `in-review`, read the result file's `**In review:**` section — it lists the pending `(external)` goals; don't re-run the whole plan, jump to the acceptance gate (§7) for just those goals against the external confirmation the user now provides, then finalize per §8 (to `done` if confirmed, or back to `executing` if review sent work back). See `./references/workflow/task-lifecycle.md`.
 
-Treat the goals and `CONTEXT.md` as read-only. If implementation reveals a goal is wrong or missing, surface it to the user and let them edit the goals file — don't edit it from here.
+Treat the goals, `CONTEXT.md`, and `ticket.md` as read-only. If implementation reveals a goal is wrong or missing, surface it to the user and let them edit the goals file — don't edit it from here; likewise a changed product ask is the user's to update in the ticket.
 
 ### 2. Decide Execution Mode
 
@@ -281,7 +283,7 @@ When the domain is code, also watch the engineering red flags in `./references/e
 
 Confirm the protocol invariants before finishing:
 
-- [ ] All four artifacts read before starting; a missing `goals.md` surfaced to the user, never invented
+- [ ] All four core artifacts read before starting (plus `ticket.md` when present); a missing `goals.md` surfaced to the user, never invented
 - [ ] Result file initialized and kept paired with the plan per `./references/workflow/task-lifecycle.md` — statuses flip together, `**Completed:**` line only at `done`
 - [ ] Every completed step: its plan-defined `Verify` criterion actually run and passed, health verify green, checkbox flipped with a link to its result section
 - [ ] Every checkpoint run and recorded; no step started over a failing gate

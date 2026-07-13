@@ -17,7 +17,7 @@ This skill closes the gap a working or design session opens: things get decided,
 
 - **Strengthen only on verified evidence.** It may record progress (check a step, mark a goal `met`, advance status) **only after re-verifying it this session** the way the acceptance gate would (`./references/engineering/verification.md`). A claim it cannot verify is surfaced, never recorded. "Done" means verified, not asserted in chat.
 - **Grounding docs change by confirmation.** Writing `goals.md`, `CONTEXT.md` prose, or a step's scope — anything that redefines scope or acceptance — goes through **one batched confirmation round** first; it is never auto-applied. Pure enrichment (references, answered questions, session narrative) auto-applies.
-- **Docs, not the world.** No source code is written, no git state is mutated (no add, commit, checkout, stash), and no external system is updated. Verification in this skill *runs* checks read-only to back a state change — it changes nothing outside the four task files. Output is those files plus a chat change list — no fifth artifact.
+- **Docs, not the world.** No source code is written, no git state is mutated (no add, commit, checkout, stash), and no external system is updated. Verification in this skill *runs* checks read-only to back a state change — it changes nothing outside the four core task files. The upstream `ticket.md`, when present, is **read-only input**: a changed *ask* is surfaced for the user to update, never rewritten here. Output is those files plus a chat change list — no scratch artifact.
 
 ## When to Use
 
@@ -47,8 +47,9 @@ The in-session task is the common case: reconcile is usually run at the end of a
 
 ### 2. Load Artifacts
 
-Read all four — the docs are the baseline you diff the session against, so don't diff against a skim:
+Read all four core artifacts — plus `ticket.md` when present — the docs are the baseline you diff the session against, so don't diff against a skim:
 
+- `ticket.md` (when present) — the product-facing ask and its acceptance criteria; a read-only baseline (the ask is user-owned) and the upstream origin `goals.md` derives from.
 - `CONTEXT.md` — the static grounding context (problem statement, recommended direction, key assumptions, MVP scope, not-doing, open questions, references). Note the exact wording of prose sections; you compare, you don't paraphrase.
 - `goals.md` — capture the full `## Goals` list by `G<n>` ID, and the highest ID in use (a new goal takes the next free number).
 - `plan.md` — its `**Status:**`, its steps and their `- [ ]` / `- [x]` markers, each step's **What** / **Verify** / **Goal** / **Depends on**, and the `## Scope` partition.
@@ -66,8 +67,9 @@ This is the load-bearing step. Walk the current session and collect everything m
 - **Answered / new open questions** — a question in `CONTEXT.md` or the plan that the session resolved, or a new one it raised.
 - **Verified progress** — a step or goal the session actually completed *and* whose result you can confirm now (Step 4), plus work merely discussed but not done (surface only).
 - **Plan changes** — a step whose scope, verify criterion, or ordering the session changed.
+- **A changed ask** — the session revealed the product requirement itself shifted from what `ticket.md` states. Surface it so the user can update the ticket (then re-derive goals via `plan-task`); reconcile never rewrites the ask.
 
-Group findings by target file (`CONTEXT.md` / `goals.md` / `plan.md` / `result.md`). If the session adds nothing beyond what the docs already hold, there is nothing to reconcile — say so in Step 6 and write nothing.
+Group findings by target file (`CONTEXT.md` / `goals.md` / `plan.md` / `result.md`) — the ticket is read-only, so a changed ask lands under "Not reconciled" for the user. If the session adds nothing beyond what the docs already hold, there is nothing to reconcile — say so in Step 6 and write nothing.
 
 ### 4. Verify Before Recording State
 
@@ -145,8 +147,8 @@ Then run Step 4 (verify) and Step 5 (auto-apply enrichments, then the batched co
 
 Confirm the protocol invariants before finishing:
 
-- [ ] Task folder resolved (in-session task, or asked — never guessed); all four artifacts read before diffing the session against them
+- [ ] Task folder resolved (in-session task, or asked — never guessed); all four core artifacts read (plus `ticket.md` when present) before diffing the session against them
 - [ ] A `skipped` plan reported as abandoned, with nothing written
 - [ ] Reconciliation followed the shared contract end-to-end; findings report printed from pre-reconcile state; closing change list printed
 - [ ] State advanced only after Step 4's in-session re-verification, with evidence recorded in `result.md`; grounding docs (`goals.md`, `CONTEXT.md` prose, a step's scope) changed only through the batched confirmation round
-- [ ] Docs only — no source code, git, or external-system mutation; no fifth artifact
+- [ ] Docs only — no source code, git, or external-system mutation; no scratch artifact; the upstream `ticket.md` is read-only (a changed ask is surfaced, not rewritten)

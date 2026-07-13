@@ -63,7 +63,7 @@ If no matching active task folder exists, create one — `.agents/tasks/<slug>/`
 
 ### 2. Resolve the Task Folder and Read CONTEXT.md
 
-The resolved task folder is the authoritative home for this plan. `CONTEXT.md` inside it is the static context this plan builds on.
+The resolved task folder is the authoritative home for this plan. `CONTEXT.md` inside it is the static context this plan builds on. When the folder also holds a `ticket.md`, read it — it is the authoritative product-facing ask, and this plan's `goals.md` is derived by sharpening its acceptance criteria (Step 3).
 
 Resolve the folder per the **resolve-or-create** discovery rules in `./references/workflow/task-layout.md`, including its *Destination paths* rule — cite it, don't restate it. When creating a folder whose `CONTEXT.md` doesn't exist, scaffold one (see the skeleton step below) before drafting the plan, and confirm the slug only if it differs meaningfully from what the user typed.
 
@@ -71,7 +71,7 @@ If multiple active task folders look like plausible matches for the user's reque
 
 #### CONTEXT.md skeleton (created when missing)
 
-When `plan-task` runs without a prior `refine-idea` pass, scaffold a `CONTEXT.md` using the canonical schema in `./references/workflow/context-schema.md`. Write `**Status:** drafted-by-plan-task`, populate `Problem Statement` and `Key Assumptions to Validate` from the task description, and leave the other sections as placeholders so downstream consumers (`review-task`, `implement-task`, the reuse step) read the same section names regardless of how the task started.
+When `plan-task` runs without a prior `refine-idea` pass, scaffold a `CONTEXT.md` using the canonical schema in `./references/workflow/context-schema.md`. Write `**Status:** drafted-by-plan-task`, populate `Problem Statement` and `Key Assumptions to Validate` from the task description — or, when a `ticket.md` is present, have `Problem Statement` cite `./ticket.md` and derive the assumptions from it — and leave the other sections as placeholders so downstream consumers (`review-task`, `implement-task`, the reuse step) read the same section names regardless of how the task started.
 
 **Infer `**Domain:**` from the task description** (e.g. `engineering` for a code change, `bureaucracy` for a residence application), or carry over the value if `refine-idea` already set one. Default to `engineering` when the work is code or the domain is genuinely ambiguous *within a coding context* — but when the task is clearly non-code and the right domain is unclear, **ask** rather than stamping a label, since a wrong `**Domain:**` silently loads the wrong rules. See `./references/workflow/domain-packs.md`.
 
@@ -82,7 +82,7 @@ Before designing the plan, write `<task-dir>/goals.md` — the contract for what
 **Resolve in this order:**
 
 - **Goals already exist for this task** (hand-authored or from a prior session) — read them, apply `./references/workflow/acceptance-criteria.md` to each goal, restate the goals back to the user (calling out any that fail the checklist), and ask whether to proceed as-is or revise. Do not silently overwrite.
-- **No goals file exists** — draft one from the user's task description and any signal in `CONTEXT.md` (problem statement, recommended direction, key assumptions). Run each draft goal through `./references/workflow/acceptance-criteria.md` before writing the file; ask clarifying questions for any goal that fails the checklist (testable, specific, outcome-oriented, singular, bounded, stated as behavior).
+- **No goals file exists** — draft one. When the folder holds a `ticket.md`, derive the goals from it first: **sharpen each of the ticket's Given/When/Then acceptance criteria into one or more durably-ID'd `G<n>` goals** (see [`./references/workflow/ticket-format.md`](./references/workflow/ticket-format.md) § *Ticket → goals*), making the product-level language precise and testable rather than mirroring it. Otherwise draft from the user's task description and any signal in `CONTEXT.md` (problem statement, recommended direction, key assumptions). Either way, run each draft goal through `./references/workflow/acceptance-criteria.md` before writing the file; ask clarifying questions for any goal that fails the checklist (testable, specific, outcome-oriented, singular, bounded, stated as behavior).
 
 **Flag externally-verified goals.** A goal that can only be confirmed *outside* your working session — a human/client sign-off, or a live/production state you can't drive in-session (e.g. "deployed and verified live", "verified by the client") — carries an `(external)` token right after its ID: `- G5 (external) — <outcome>`. Marking it right is load-bearing: an `(external)` goal parks the task at `in-review` instead of letting it reach `done` on code-complete alone, and un-marking one that really is external lets the task finalize without the sign-off. When it's unclear whether a goal is agent-verifiable or external, ask (batch it with the clarifying questions below). See `./references/workflow/acceptance-criteria.md`.
 
@@ -144,7 +144,7 @@ Explicitly state:
 - **Out of scope** — which goals are deferred (by ID), and what will NOT be changed, even if related
 - **Boundaries** — Where this work ends and future work begins
 
-Express the in/out split as a **partition of the goal IDs** with explicit lists (`delivered: G1, G3 · deferred: G4`), not as re-prosed intent — the goals are the single source, so scope names them rather than restating what they cover. Do not use ranges: retired goal IDs can leave gaps, so `G1-G3` is ambiguous once `G2` has been removed. The same citation rule covers exclusion rationale: the *why* behind an exclusion lives in CONTEXT's "Not Doing" — the plan's out-of-scope entry names the deferred goal IDs and what won't change, and cites CONTEXT for the reasons rather than re-prosing them.
+Express the in/out split as a **partition of the goal IDs** with explicit lists (`delivered: G1, G3 · deferred: G4`), not as re-prosed intent — the goals are the single source, so scope names them rather than restating what they cover. Do not use ranges: retired goal IDs can leave gaps, so `G1-G3` is ambiguous once `G2` has been removed. The same citation rule covers exclusion rationale: the *why* behind an exclusion lives in CONTEXT's "Not Doing" — the plan's out-of-scope entry names the deferred goal IDs and what won't change, and cites CONTEXT for the reasons rather than re-prosing them. When a `ticket.md` states In/Out scope, the goal-ID partition must reflect its product-level boundary; cite the ticket rather than re-prosing it.
 
 Scope definition prevents creep during implementation. Be precise — a vague scope produces vague work.
 
@@ -240,7 +240,8 @@ Confirm the protocol invariants before finishing:
 
 - [ ] Task folder resolved or created per `task-layout.md`; `CONTEXT.md` present (skeleton with `**Status:** drafted-by-plan-task` and an inferred — or asked-for — `**Domain:**` when it was missing)
 - [ ] `goals.md` written with durable `G<n>` IDs and `(external)` markers where verification happens outside the session; no `**Status:**` field; hand-authored goals respected; each goal passes `./references/workflow/acceptance-criteria.md` or is marked `_(unresolved: ...)_`
-- [ ] `plan.md` written at `to-do` with link-headers to `./CONTEXT.md` and `./goals.md`; every step carries the `- [ ]` checkbox, **What**, **Verify**, **Goal**, **Depends on**
+- [ ] When a `ticket.md` is present, every one of its acceptance criteria is sharpened into ≥1 `G<n>` goal, and no goal contradicts the ticket's stated scope
+- [ ] `plan.md` written at `to-do` with link-headers to `./CONTEXT.md` and `./goals.md` (and `./ticket.md` when the task has one); every step carries the `- [ ]` checkbox, **What**, **Verify**, **Goal**, **Depends on**
 - [ ] Coverage is a closed mapping: every goal ID cited by ≥1 step, every non-infra step cites ≥1 goal, and `## Scope` partitions all goal IDs into delivered / deferred (explicit lists, no ranges)
 - [ ] No `CONTEXT.md` content restated — sibling sections cited; the plan carries only plan-time deltas (*One home per fact*)
 - [ ] Plan grounded in the domain's actual reality; checkpoints every 2–3 steps for plans >5 steps
@@ -254,6 +255,7 @@ Write the file with this top-level layout. Adapt sections to task size — not e
 # <task title>
 
 **Status:** to-do
+**Ticket:** [./ticket.md](./ticket.md) _(only when the task has one)_
 **Context:** [./CONTEXT.md](./CONTEXT.md)
 **Goals:** [./goals.md](./goals.md)
 **Result:** _(populated by `implement-task`: link to `./result.md`)_

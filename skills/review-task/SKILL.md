@@ -1,6 +1,6 @@
 ---
 name: review-task
-description: Use when asked to review, validate, or sanity-check a task's plan — confirms the direction is right and still in sync with CONTEXT.md, the goals, and current reality, and surfaces any drift between task artifacts (CONTEXT, goals, plan, result) and the work itself; pass `-r` to also reconcile obvious findings into the task docs and fold engineer answers into the plan.
+description: Use when asked to review, validate, or sanity-check a task's plan — confirms the direction is right and still in sync with CONTEXT.md, the goals, and current reality, and surfaces any drift between task artifacts (ticket, CONTEXT, goals, plan, result) and the work itself; pass `-r` to also reconcile obvious findings into the task docs and fold engineer answers into the plan.
 argument-hint: '[task folder path] [-r (reconcile findings into task docs)] [-x (cross-vendor grounding probe)]'
 disable-model-invocation: true
 ---
@@ -28,8 +28,9 @@ Resolve a task folder per the **resolve-or-ask** discovery rules in `./reference
 
 Once the folder is resolved, read its `plan.md` (one plan per folder; its sibling `goals.md` and `result.md` are inputs and execution records).
 
-Read the plan, the sibling `goals.md`, **and** the sibling `CONTEXT.md` in full before assessing anything.
+Read the plan, the sibling `goals.md`, the sibling `CONTEXT.md`, **and** the `ticket.md` when one is present, in full before assessing anything.
 
+- **`ticket.md`** (when present) carries the product-facing ask and its Given/When/Then acceptance criteria — the upstream origin `goals.md` is sharpened from (`./references/workflow/ticket-format.md`).
 - **`CONTEXT.md`** carries the problem statement, scope summary, key assumptions, and external references for the task.
 - **`goals.md`** carries the goals — the testable contract for what "done" means for this plan. The plan's steps must collectively cover every goal (each goal ID cited by a step's `**Goal:**` line).
 
@@ -124,10 +125,12 @@ Note any goal marked `_(unresolved: ...)_` from `goals.md` — these are deferre
 
 ### 6. Check Cross-File Drift
 
-Per-step feasibility and acceptance coverage both assume the four task artifacts agree with each other. They often don't. A goal can be added to `goals.md` after the plan was written; CONTEXT's "Not Doing" list can quietly exclude a behavior the plan now ships; a result file can record work that no longer matches the plan's status. Surface these mismatches as their own class of finding — they are not the same as a missing or vague step.
+Per-step feasibility and acceptance coverage both assume the task artifacts agree with each other. They often don't. A goal can be added to `goals.md` after the plan was written; CONTEXT's "Not Doing" list can quietly exclude a behavior the plan now ships; a result file can record work that no longer matches the plan's status. Surface these mismatches as their own class of finding — they are not the same as a missing or vague step.
 
 Compare the artifacts pairwise. For each pair, name the kind of drift the comparison is looking for; only flag actual contradictions, not stylistic differences.
 
+- **`ticket.md` ↔ `goals.md`** (when a ticket exists) — Does every ticket acceptance criterion map to ≥1 goal (`G<n>`), and does any goal contradict the ticket's stated In/Out scope? The ticket is the product-facing ask; `goals.md` is its sharpened, testable form (`./references/workflow/ticket-format.md` § *Ticket → goals*). Flag a ticket criterion no goal covers, or a goal the ticket's scope excludes.
+- **`ticket.md` ↔ CONTEXT.md** (when a ticket exists) — Is CONTEXT's Problem Statement a citation to `./ticket.md` rather than a restated, now-divergent copy of the ask? Flag a Problem Statement that re-proses the ticket and has drifted; the fix is to collapse it to a citation (`./references/workflow/task-layout.md` § *One home per fact*).
 - **CONTEXT.md ↔ `goals.md`** — Does any goal describe behavior CONTEXT's "Not Doing" list excludes, or behavior outside CONTEXT's MVP scope? Do the goals contradict CONTEXT's Recommended Direction or Key Assumptions?
 - **CONTEXT.md ↔ `plan.md`** — Does the plan's Scope (in / out / boundaries) contradict CONTEXT's MVP scope or "Not Doing"? Does the plan reference assumptions CONTEXT marked still-to-validate as if they were settled? Also flag **restated grounding**: the same decision, finding, or question maintained in both files — an Approach re-prosing Recommended Direction, Exploration Findings repeating References anchors, a copied Open Questions list. The bar is duplicated *content*, verbatim or re-prosed — a section that cites the home and adds only its own refinements, mechanism, or re-verification notes is the correct form, not restatement. Two copies of one fact drift apart as soon as either is edited (`./references/workflow/task-layout.md` § *One home per fact*); the suggested edit is to keep the copy in the fact's home file and collapse the restated content to a citation — preserving any plan-time deltas interleaved with it, which stay in the plan. With `-r`, the fix follows this skill's mapping in the shared contract — a judgment item, never auto-applied.
 - **`goals.md` ↔ `plan.md`** — Confirm the plan's `Scope` partition is **total**: every goal ID in `goals.md` is either delivered or explicitly deferred. A goal the Scope neither delivers nor defers is the drift. (This replaces the old "criterion excluded by scope" hunt — with scope expressed as a goal-ID partition, that contradiction can't be silently authored; coverage already catches uncovered goals and orphan steps.)
@@ -210,6 +213,7 @@ A short list of contradictions between artifacts, grouped by the file pair the c
 Example:
 
 ```
+- ticket ↔ goals — drift: ticket criterion "user can cancel a pending export" maps to no goal; add a delivering goal or drop the criterion.
 - CONTEXT ↔ goals — drift: goal G4 ("user can export archived rows") describes behavior CONTEXT's "Not Doing" excludes. Resolve by either lifting the exclusion or dropping the goal.
 - CONTEXT ↔ plan — no contradictions detected; restated grounding: the plan's Open Questions copies CONTEXT's resolved-questions list near-verbatim. Keep CONTEXT as the home; collapse the plan section to a citation plus its own plan-time questions.
 - goals ↔ plan — drift: `goals.md` lists G5 but the plan's Scope partition names it in neither the delivered nor deferred set — the partition is incomplete. Either deliver G5, defer it, or drop the goal.
@@ -247,9 +251,9 @@ With `-r`, after the assessment is printed and reconciliation has run (Step 9), 
 
 Confirm the protocol invariants before finishing:
 
-- [ ] Plan, `goals.md`, and `CONTEXT.md` read in full (plus `result.md` when present); a missing goals file reported as the highest-priority finding
+- [ ] Plan, `goals.md`, and `CONTEXT.md` read in full (plus `ticket.md` and `result.md` when present); a missing goals file reported as the highest-priority finding
 - [ ] Every integration point verified against the actual artifacts; every step given a verdict with evidence and a concreteness check on its `Verify` criterion
 - [ ] Goals audited per `./references/workflow/acceptance-criteria.md`, and coverage mapped mechanically from `**Goal:**` citations — uncovered goals, orphan steps, an incomplete `## Scope` partition, and `_(unresolved: ...)_` goals lifted into Questions
-- [ ] Cross-file drift checked pairwise, including status pairing per `./references/workflow/task-lifecycle.md`; Goal Quality, Acceptance Coverage, and Cross-File Drift sections rendered even when clean
+- [ ] Cross-file drift checked pairwise, including the `ticket.md` pairs when a ticket exists and status pairing per `./references/workflow/task-lifecycle.md`; Goal Quality, Acceptance Coverage, and Cross-File Drift sections rendered even when clean
 - [ ] Review only — no implementation, no redesign; steps needing rethinking routed to `plan-task`
 - [ ] (`-r`) Reconciliation followed the shared contract, assessment printed from pre-reconcile state, every edit mapped to a finding or an engineer answer; (`-x`) probe merged before verdicts and the Plan Summary carries its `Cross-check:` line

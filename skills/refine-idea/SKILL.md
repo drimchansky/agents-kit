@@ -45,6 +45,8 @@ If the resolved task folder doesn't exist, create it — `.agents/tasks/<slug>/`
 
 `CONTEXT.md` is the **static grounding context for the task**: the chosen direction, the assumptions it depends on, the scope decisions already made, plus any external references (tickets, links, pasted specs) the user adds later. It is read by the plan and its result inside the folder. Don't rewrite it during refinement — refine through conversation, then write the final version.
 
+**When the task folder holds a `ticket.md`**, it is the authoritative product-facing ask — read it first as the primary input to refine. Let `CONTEXT.md`'s `## Problem Statement` **cite** `./ticket.md` rather than restating it: the ticket carries the requester's framing, required functional output, and references; `CONTEXT.md` adds the grounding this refinement produces (recommended direction, assumptions, MVP scope, "Not Doing"). See [`./references/workflow/task-layout.md`](./references/workflow/task-layout.md) § *One home per fact*.
+
 ### What belongs in CONTEXT.md (and what doesn't)
 
 - ✅ The one-pager content this skill produces (problem framing, MVP scope, "Not Doing", assumptions)
@@ -98,6 +100,7 @@ The "Not Doing" list is the most valuable part — focus is about saying no to g
 Confirm the protocol invariants before finishing:
 
 - [ ] One-pager written to the resolved task folder's `CONTEXT.md` per `./references/workflow/context-schema.md` — `**Status:** refined`, `**Domain:**` inferred (or asked when clearly non-code and unclear); an existing `CONTEXT.md` not silently overwritten
+- [ ] When a `ticket.md` is present, it was read as the primary input and `## Problem Statement` cites it rather than restating the ask
 - [ ] Chat summary carries the literal `Next: /plan-task <token>` handoff line — token = slug for a canonical task, absolute folder path otherwise
 - [ ] Multiple directions explored, not just the user's first framing; hidden assumptions listed with how each could be validated
 - [ ] "Not Doing" list makes trade-offs explicit, with reasons

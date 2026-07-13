@@ -23,7 +23,7 @@ Reconciliation fixes the **docs, not the world**: no code changes, no git mutati
 
 ### One home per fact
 
-Every task-folder fact has one home file, and reconciliation respects it (`./task-layout.md` § *One home per fact*): an edit records a finding **once**, in its home — grounding in `CONTEXT.md`, acceptance in `goals.md`, execution content in `plan.md`, history in `result.md`, an answer where its question lives. A sibling file that needs the fact gets a `./` citation, never a copy. Mirroring one finding into two files authors the next round of drift — the exact thing reconciliation exists to remove. (The `## Reconciliation` record is not a mirror: it logs the *edit*, not a second copy of the fact.)
+Every task-folder fact has one home file, and reconciliation respects it (`./task-layout.md` § *One home per fact*): an edit records a finding **once**, in its home — grounding in `CONTEXT.md`, acceptance in `goals.md`, execution content in `plan.md`, history in `result.md`, an answer where its question lives. The upstream *ask* lives in `ticket.md`, which reconciliation treats as **read-only** — a changed ask is surfaced for the user, never written here. A sibling file that needs the fact gets a `./` citation, never a copy. Mirroring one finding into two files authors the next round of drift — the exact thing reconciliation exists to remove. (The `## Reconciliation` record is not a mirror: it logs the *edit*, not a second copy of the fact.)
 
 ### Skipped plans are exempt
 
@@ -89,7 +89,7 @@ Exactly three task files, and nothing else:
 - `result.md` — append-only; see the record format above.
 - `CONTEXT.md` — minimal annotations inside `## References` and `## Open Questions` only, per the carve-out in `./task-lifecycle.md`. Never the `**Status:**` origin marker, never prose rewrites.
 
-`goals.md` is **never** edited — it is the user's contract. When a goal needs rewriting, print the suggested text for the user to apply; an engineer answer still goes to the user as text, not into the file. `-r` never re-runs the acceptance gate and never executes plan work.
+`goals.md` and the upstream `ticket.md` are **never** edited — they are the user's contract. When a goal needs rewriting, print the suggested text for the user to apply; when the *ask* itself has changed, surface it for the user to update the ticket. An engineer answer still goes to the user as text, not into the file. `-r` never re-runs the acceptance gate and never executes plan work.
 
 ### Weaken, never strengthen
 
@@ -127,11 +127,11 @@ Most of this review's findings need the engineer — that is what the assessment
 
 ## Direction: session → docs (`reconcile-task`)
 
-Findings come from reviewing the current session against the docs, so this direction *enriches* — it writes information the docs are missing. It may write all four task files, under two guardrails that keep it from silently redefining what's built or what "done" means.
+Findings come from reviewing the current session against the docs, so this direction *enriches* — it writes information the docs are missing. It may write all four core task files (the upstream `ticket.md` is read-only — a changed ask is surfaced, not written), under two guardrails that keep it from silently redefining what's built or what "done" means.
 
 ### Write surface
 
-All four task files. `plan.md` and `result.md` as above, plus — only through a **confirmed** judgment item — `CONTEXT.md` prose sections (not annotation-only) and `goals.md`. Pure enrichment auto-applies: a new external reference into `## References`, an answered open question annotated in `## Open Questions`, session narrative appended to `result.md`. Each enrichment lands in the fact's **home file only** (per *One home per fact* above): a session decision goes to `CONTEXT.md` *or* the affected plan step — whichever the homes rule names — and an answer is annotated where its question lives, never mirrored into both files.
+All four core task files (never the upstream `ticket.md`, which is read-only — a changed ask is surfaced for the user). `plan.md` and `result.md` as above, plus — only through a **confirmed** judgment item — `CONTEXT.md` prose sections (not annotation-only) and `goals.md`. Pure enrichment auto-applies: a new external reference into `## References`, an answered open question annotated in `## Open Questions`, session narrative appended to `result.md`. Each enrichment lands in the fact's **home file only** (per *One home per fact* above): a session decision goes to `CONTEXT.md` *or* the affected plan step — whichever the homes rule names — and an answer is annotated where its question lives, never mirrored into both files.
 
 ### Strengthen only on verified evidence
 
@@ -155,4 +155,5 @@ Findings come from diffing the session against the docs. Legend: **auto** = obvi
 - **New goal, or a reworded goal, decided in session** → **ask**: confirm the exact wording, then write `goals.md` per the durable-ID scheme above.
 - **Changed direction / MVP scope / Not Doing / Key Assumptions** → **ask**: confirm the exact prose, then write the matching `CONTEXT.md` section. Leave the `**Status:**` origin marker untouched.
 - **Changed step scope / new step / changed Verify criterion** → **ask**: confirm, then write `plan.md` within the confirmed finding's scope (update `## Scope`'s goal-ID partition to stay total).
+- **Changed ask** → flag only: the session shows the product requirement itself differs from what `ticket.md` states. The ticket is user-owned; surface it for the user to update (then re-derive goals via `plan-task`). Reconciliation never rewrites the ask.
 - **Work discussed but not done** → flag only: it isn't verified, so it isn't recorded; "Not reconciled" names `implement-task`.

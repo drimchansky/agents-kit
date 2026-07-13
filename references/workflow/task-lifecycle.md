@@ -1,9 +1,12 @@
 # Task Lifecycle: Status Registry
 
-A task folder holds four artifacts that share a slug but track distinct lifecycles. Three carry a `**Status:**` header drawn from a closed vocabulary; the goals file deliberately has no status. **This file is the single source of truth for lifecycle states.** When a status name or transition changes, update it here first and propagate to the skills that read or write these fields: `refine-idea`, `plan-task`, `implement-task`, `resume-task`, `review-task`, and `reconcile-task`. (`migrate-task-format` and `archive-task` also read this vocabulary, but at run time, so they need no update.) Directory layout (the flat task folder and `Archive/`) is documented separately in the sibling `task-layout.md`.
+A task folder holds four core artifacts that share a slug but track distinct lifecycles, plus an optional upstream `ticket.md`. Three of the artifacts carry a `**Status:**` header drawn from a closed vocabulary; the goals file and the ticket deliberately have none. **This file is the single source of truth for lifecycle states.** When a status name or transition changes, update it here first and propagate to the skills that read or write these fields: `refine-idea`, `plan-task`, `implement-task`, `resume-task`, `review-task`, and `reconcile-task`. (`migrate-task-format` and `archive-task` also read this vocabulary, but at run time, so they need no update.) Directory layout (the flat task folder, the optional `ticket.md`, and `Archive/`) is documented separately in the sibling `task-layout.md`.
 
 ## Files
 
+- **`ticket.md`** (optional) — the product-facing ask, upstream of the four core artifacts (see `./ticket-format.md`).
+  - No `**Status:**` field.
+  - Authored by the user or `prepare-ticket`, and freely edited by the user. `refine-idea` and `plan-task` read it and derive `CONTEXT.md` / `goals.md` from it; the lifecycle never mutates it. `reconcile-task` treats it as read-only too — a changed ask is surfaced for the user, never written (see `./reconciliation.md`).
 - **`CONTEXT.md`** — the task's static grounding context (capitalized).
   - `**Status:**` is a one-shot **origin marker**.
   - Created by `refine-idea` or `plan-task`; never mutated after creation, except the reconcile-mode carve-outs below: the `-r` annotation carve-out (minimal annotations in `## References` / `## Open Questions` only), and `reconcile-task`'s session → docs carve-out (prose sections rewritten only through a confirmed judgment item). Both leave the `**Status:**` marker immutable; see `./reconciliation.md`.

@@ -49,7 +49,7 @@ Read the two reference docs that define the current format, and treat them as th
 Derive the conformance checklist from the docs at run time — don't migrate against a remembered format. Read each value out of the docs every run; the **dimensions** to check stay fixed even as their values evolve:
 
 - **Folder shape** — is each task a flat folder `.agents/tasks/<slug>/`, the folder name being the slug? (`task-layout.md`)
-- **Role files** — the set of role-named files, their exact spelling and capitalization, and the rule that no stem prefix remains. (`task-layout.md`)
+- **Role files** — the set of role-named files, their exact spelling and capitalization, and the rule that no stem prefix remains; some (the upstream `ticket.md`) are optional, so their absence is conformant, not a deviation. (`task-layout.md`)
 - **Link-headers** — which `**Header:**` lines exist and that each points at its `./`-relative role-name target. (`task-layout.md`)
 - **Status vocabulary, per file** — read it from `task-lifecycle.md`, which gives each status-bearing file a **distinct** vocabulary: `CONTEXT.md` carries a one-shot *origin marker*, `plan.md` and `result.md` carry *lifecycle states* (a different pool), and `goals.md` carries **no** status. A value valid for one file is not automatically valid on another — check each file against its own column.
 - **Multi-part layout** — sibling folders (optionally `NN-` prefixed), with whatever shared-layer rule the docs currently state. (`task-layout.md`)
@@ -64,7 +64,7 @@ Read the current value of each dimension from the docs rather than assuming the 
 - **List candidate folders** directly under `.agents/tasks/`, **excluding the archive container** (`Archive/`, matched case-insensitively per `task-layout.md` — so a stray lowercase `archive/` is never mistaken for a task candidate; it's a container, handled by the next bullet). Migrate an archived folder only if the user names it explicitly.
 - **Check the archive container's case.** Separately from the task candidates, look at the archive container itself at the task root. If it exists under a non-canonical case — a lowercase `archive/` with no canonical `Archive/` beside it — normalizing it to `Archive/` is a lossless structural fix (§5). If **both** an `archive/` and an `Archive/` exist at the root (possible only on a case-sensitive filesystem), that's a collision the skill won't resolve: flag it needs-judgment and leave both untouched — merging two archive containers is a judgment call, not a rename.
 - **If the scan finds zero active candidates and no archive-container rename is pending** (the root is empty, or holds only a correctly-cased `Archive/`), report "nothing active to migrate" and stop — don't fall through to an empty preview and a confirm prompt for zero fixes. A lone lowercase `archive/` that needs normalizing is itself a fix — preview and apply it even when no task folder needs migrating.
-- For each candidate, read whatever task files it contains — any of `CONTEXT.md`, `goals.md` (or a legacy `spec.md` / `*.spec.md`), `plan.md` / `*.plan.md`, `result.md` / `*.result.md`, and, for old shapes, `PROJECT.md` and nested subdirectories.
+- For each candidate, read whatever task files it contains — any of `ticket.md` / `*.ticket.md`, `CONTEXT.md`, `goals.md` (or a legacy `spec.md` / `*.spec.md`), `plan.md` / `*.plan.md`, `result.md` / `*.result.md`, and, for old shapes, `PROJECT.md` and nested subdirectories.
 
 ### 3. Classify each folder
 
@@ -109,12 +109,14 @@ Only after the user confirms the preview, and only for **structurally-fixable** 
 - `*.spec.md` (any stem) **or** a legacy `spec.md` → `goals.md` only when the file is already goal-shaped (has a `## Goals` list with durable `G<n>` IDs); old free-form specs are needs-judgment, not an auto-rename
 - `*.plan.md` (any stem) → `plan.md`
 - `*.result.md` (any stem) → `result.md`
-- fix case: `CONTEXT.md` must be capitalized, `goals.md` / `plan.md` / `result.md` lowercase, with a `.md` extension — e.g. `context.md` / `Context.md` → `CONTEXT.md`, an already goal-shaped legacy `Spec.md` / `SPEC.MD` → `goals.md`.
+- `*.ticket.md` (any stem) → `ticket.md`
+- fix case: `CONTEXT.md` must be capitalized, `ticket.md` / `goals.md` / `plan.md` / `result.md` lowercase, with a `.md` extension — e.g. `context.md` / `Context.md` → `CONTEXT.md`, `Ticket.md` → `ticket.md`, an already goal-shaped legacy `Spec.md` / `SPEC.MD` → `goals.md`.
 
 Use a plain filesystem rename. **A case-only difference is the rename to perform, not a collision** — on a case-insensitive filesystem (macOS default) `Context.md` and `CONTEXT.md` resolve to the same path, so don't read the destination as "already existing"; rename via a temp name (`Context.md` → `_tmp` → `CONTEXT.md`) if the OS won't do a direct case-only rename. A **genuine** collision — a *distinct* file already holding the destination role name with different content — is caught at classify time (§3), not here: such a folder is **needs-judgment** and left entirely untouched. Never rename some of a folder's files while skipping a collided one; that is the half-migration the skill forbids.
 
 **Rewrite in-folder link-headers** to `./`-relative role-name targets — but only where the header **already carries a link** to an old target. A header that is an intentional prose placeholder, not a link, is left exactly as-is:
 
+- `**Ticket:**` → `[./ticket.md](./ticket.md)`
 - `**Context:**` → `[./CONTEXT.md](./CONTEXT.md)`
 - `**Goals:**`, or a legacy `**Spec:**`, → `[./goals.md](./goals.md)` (the `**Spec:** → **Goals:**` rename is lossless)
 - `**Plan:**` → `[./plan.md](./plan.md)`
