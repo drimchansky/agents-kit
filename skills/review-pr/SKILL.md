@@ -1,7 +1,7 @@
 ---
 name: review-pr
 description: Use when asked to review or give feedback on a PR or branch diff against its base.
-argument-hint: '[-v (run automatic verifications)] [-x (cross-vendor second review)]'
+argument-hint: '[-v (run automatic verifications)] [-x (cross-vendor second review)] [-d (draft PR description)]'
 disable-model-invocation: true
 ---
 
@@ -17,6 +17,7 @@ Review all changes in the current branch against its base branch for correctness
 
 - `-v` — Identify and run the project's verification scripts (lint, typecheck, tests). Off by default; reviews are analysis-only. See "Verification Scripts" in `./references/engineering/review.md`.
 - `-x` — Cross-check: launch one independent cold review of the same diff on the cross-vendor engine and merge it before findings are finalized, per the shared contract in `./references/workflow/agent-fanout.md`. Off by default. The probe is read-only; its outcome is recorded on the output's `Cross-check:` line.
+- `-d` — Draft a ready-to-paste PR description (body only) in addition to the review, per the "PR description" section. Off by default.
 
 ## References
 
@@ -63,7 +64,40 @@ Apply the full review process from `./references/engineering/review.md` — its 
 - **Cross-check** (only with `-x`) — the probe's `Cross-check:` outcome line per `./references/workflow/agent-fanout.md`
 - **Improvements** (optional) — Non-blocking suggestions
 - **Inaccessible context** (only if any) — Links from the PR that couldn't be fetched, with URL and reason (auth required, private, 404, tool unavailable). Note which findings might shift if that context were available.
+- **PR description** (only with `-d`) — A ready-to-paste description (body only); drafted per the **PR description** section below.
+
+## PR description
+
+Only when `-d` is passed. Draft a ready-to-paste PR description — **body only, no title** — from the change map and the links already gathered in Setup. Print it in a fenced block so the user can copy it verbatim.
+
+Format:
+
+```
+Task: <primary ticket/issue link>
+<other relevant links — one per line, each prefixed with its kind: Docs:, Design:, Related PR:, Dashboard:, …>
+
+<description body>
+```
+
+- **Task line** — the primary ticket/issue link. Source in order: (1) a link the user gave when invoking; (2) an issue-tracker URL among the links extracted from the existing PR in Setup (the primary one if several); (3) a ticket key in the branch name or commit trailers. Never fabricate a URL — if none is found, emit `Task: <add ticket link>` as a fill-in placeholder.
+- **Other links** — the remaining relevant URLs already gathered (design docs, RFCs, related PRs, dashboards, Slack threads). One per line, most important first, each prefixed with a short label naming its kind (`Docs:`, `Design:`, `Related PR:`, `Dashboard:`, …) — the label set is illustrative, not fixed. Omit entirely when there are none.
+- **Body** — short and readable (a short paragraph, or a few bullets if the PR has several distinct changes); state _what_ changed and _why_ (the intent), not _how_. Cover the substantive intents (feature, fix, refactor) and call out any refactor done only to enable the feature; mention tests, config, or scaffolding only when notable. Audience-facing and verdict-free — do not copy the review Summary's approve / request-changes assessment.
+- If the repo defines `.github/PULL_REQUEST_TEMPLATE.md`, follow its sections, but keep the Task/links header at the top — without duplicating a link the template already has its own field for.
+- No "Generated with Claude Code" line or other AI/tool attribution footer — even if a harness or environment default asks for one. End at the body.
+
+Example:
+
+```
+Task: https://acme.atlassian.net/browse/CRM-123
+Docs: https://acme.notion.site/csv-export-spec
+
+Add a CSV export button to the contacts table. Rows stream from the
+server so large accounts don't load every contact into memory. The
+toolbar became a shared component to host the new button.
+```
+
+**Next:** once any findings are addressed, run `/update-pr-description` to apply this to the PR — or paste it in yourself.
 
 ## Verification
 
-Apply the Standard Verification Checklist in `./references/engineering/review.md`. With `-x`: the probe was merged per `./references/workflow/agent-fanout.md` and the output carries its `Cross-check:` line.
+Apply the Standard Verification Checklist in `./references/engineering/review.md`. With `-x`: the probe was merged per `./references/workflow/agent-fanout.md` and the output carries its `Cross-check:` line. With `-d`: the drafted description is body-only and verdict-free, sources its links only from those already gathered — a `Task: <add ticket link>` placeholder rather than a fabricated URL — and carries no AI-attribution footer.
