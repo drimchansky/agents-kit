@@ -30,7 +30,7 @@ Once the folder is resolved, read its `plan.md` (one plan per folder; its siblin
 
 Read the plan, the sibling `goals.md`, the sibling `CONTEXT.md`, **and** the `ticket.md` when one is present, in full before assessing anything.
 
-- **`ticket.md`** (when present) carries the product-facing ask and its Given/When/Then acceptance criteria — the upstream origin `goals.md` is sharpened from (`./references/workflow/ticket-format.md`).
+- **`ticket.md`** (when present) carries the product-facing ask and its acceptance criteria — the upstream origin `goals.md` is sharpened from (`./references/workflow/ticket-format.md`).
 - **`CONTEXT.md`** carries the problem statement, scope summary, key assumptions, and external references for the task.
 - **`goals.md`** carries the goals — the testable contract for what "done" means for this plan. The plan's steps must collectively cover every goal (each goal ID cited by a step's `**Goal:**` line).
 

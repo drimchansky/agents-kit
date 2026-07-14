@@ -31,7 +31,7 @@ git clone git@github.com:drimchansky/agents-kit.git ~/agents-kit
 - [**create-note**](skills/create-note/SKILL.md) – research a topic and distill it into a compact, self-contained learning note with verified sources. _Example: `/create-note spaced repetition`_
 - [**review-note**](skills/review-note/SKILL.md) – validate and expand a personal knowledge-base note. _Example: `/review-note notes/stoicism.md`_
 - [**refine-idea-chat**](skills/refine-idea-chat/SKILL.md) – sharpen a vague idea in chat, nothing saved. _Example: `/refine-idea-chat add a draft mode`_
-- [**prepare-ticket**](skills/prepare-ticket/SKILL.md) – draft a self-contained ticket describing the real functional output required — title, minimal context, description, and Given/When/Then acceptance criteria — from a described task. Writes to a file, or seeds a task folder's `ticket.md` as the workflow's product-facing origin. _Example: `/prepare-ticket add CSV export to the accounts table`_
+- [**prepare-ticket**](skills/prepare-ticket/SKILL.md) – draft a self-contained ticket describing the real functional output required — title, minimal context, description, and testable acceptance criteria — from a described task. Writes to a file, or seeds a task folder's `ticket.md` as the workflow's product-facing origin. _Example: `/prepare-ticket add CSV export to the accounts table`_
 
 ## Engineering skills
 
@@ -67,7 +67,7 @@ Four more support the workflow:
 
 The workflow skills share a folder-based contract: one task lives in one folder holding role-named files — that's what makes a folder a task folder, wherever it sits. The default (and only auto-discovered) location is `.agents/tasks/<slug>/` at the project root; an explicit path reaches a task anywhere else.
 
-- `ticket.md` – optional product-facing origin: the ask and its Given/When/Then acceptance criteria in product terms (see [`ticket-format`](references/workflow/ticket-format.md)). `CONTEXT.md` and `goals.md` derive from it.
+- `ticket.md` – optional product-facing origin: the ask and its acceptance criteria in product terms (see [`ticket-format`](references/workflow/ticket-format.md)). `CONTEXT.md` and `goals.md` derive from it.
 - `CONTEXT.md` – static grounding context, including the `**Domain:**` marker.
 - `goals.md` – the single source of task intent: durably-ID'd `G<n>` goals that double as the acceptance criteria; a goal verified outside the session (deploy-and-check-live, client sign-off) is flagged `(external)`.
 - `plan.md` – the steps, each citing the goals it delivers.

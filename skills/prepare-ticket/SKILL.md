@@ -1,13 +1,13 @@
 ---
 name: prepare-ticket
-description: Use when asked to prepare, draft, or write up a ticket or issue from a described task — turns it into a self-contained ticket file describing the real functional output required, with a title, minimal context, a description, and testable Given/When/Then acceptance criteria. Can seed a task folder's ticket.md as the workflow's starting point. Captures the scope as described; does not invent requirements.
+description: Use when asked to prepare, draft, or write up a ticket or issue from a described task — turns it into a self-contained ticket file describing the real functional output required, with a title, minimal context, a description, and testable acceptance criteria. Can seed a task folder's ticket.md as the workflow's starting point. Captures the scope as described; does not invent requirements.
 argument-hint: '[task description] [optional task folder, slug, or target file path]'
 disable-model-invocation: true
 ---
 
 # Prepare Ticket
 
-Turn a task the user describes into a **self-contained ticket** — a file someone can pick up cold, with no access to this session, and act on. The ticket names the **real functional output required** — what the product should do for its user — in product terms, not implementation. Its four parts (a title, minimal **Context**, a **Description** of the work, and testable Given/When/Then **Acceptance Criteria**) and the quality bar they must meet are defined once in [`./references/workflow/ticket-format.md`](./references/workflow/ticket-format.md). Read it before drafting. The file is the deliverable.
+Turn a task the user describes into a **self-contained ticket** — a file someone can pick up cold, with no access to this session, and act on. The ticket names the **real functional output required** — what the product should do for its user — in product terms, not implementation. Its four parts (a title, minimal **Context**, a **Description** of the work, and testable **Acceptance Criteria**) and the quality bar they must meet are defined once in [`./references/workflow/ticket-format.md`](./references/workflow/ticket-format.md). Read it before drafting. The file is the deliverable.
 
 Inside the task workflow this ticket is the **product-facing origin** of a task folder — the role-named `ticket.md` that `refine-idea` and `plan-task` later derive `CONTEXT.md` and `goals.md` from (see [`./references/workflow/task-layout.md`](./references/workflow/task-layout.md)). Run standalone, it just writes a ticket to a file you name.
 
@@ -31,11 +31,11 @@ The ticket is always written to a file. Decide where:
 
 ### 4. Draft the ticket
 
-Fill the four sections defined in [`./references/workflow/ticket-format.md`](./references/workflow/ticket-format.md) — Title, Context, Description (with **In scope** / **Out of scope** bullets when the boundary isn't obvious), and Given/When/Then Acceptance Criteria, plus the optional References. Keep every part in product terms — the functional output required, the observable behavior — and leave the *how* to the plan. Drop References unless the user gave you links, specs, or ticket IDs to carry.
+Fill the four sections defined in [`./references/workflow/ticket-format.md`](./references/workflow/ticket-format.md) — Title, Context, Description (with **In scope** / **Out of scope** bullets when the boundary isn't obvious), and Acceptance Criteria, plus the optional References. Keep every part in product terms — the functional output required, the observable behavior — and leave the *how* to the plan. Drop References unless the user gave you links, specs, or ticket IDs to carry.
 
 ### 5. Hold criteria to the bar
 
-Every acceptance criterion must pass the quality bar in [`./references/workflow/ticket-format.md`](./references/workflow/ticket-format.md), which holds each to the same checks as a goal (`./references/workflow/acceptance-criteria.md`): testable, specific, outcome-oriented, singular, bounded, stated as observable behavior. Rewrite the vague ones: "the export works" → "Given a filtered view, when the user clicks Export, then the downloaded CSV's row count matches the on-screen count"; "performance is acceptable" → "…then the file downloads in under 2s for the largest tenant in staging".
+Every acceptance criterion must pass the quality bar in [`./references/workflow/ticket-format.md`](./references/workflow/ticket-format.md), which holds each to the same checks as a goal (`./references/workflow/acceptance-criteria.md`): testable, specific, outcome-oriented, singular, bounded, stated as observable behavior. Rewrite the vague ones: "the export works" → "The user can export the current filter as CSV; the downloaded file's row count matches the on-screen count"; "performance is acceptable" → "the file downloads in under 2s for the largest tenant in staging".
 
 ### 6. Write and report
 
@@ -52,7 +52,7 @@ A few lines; the file is the deliverable.
 - "Whoever picks this up will have the conversation" — They won't. The ticket travels alone; if it's not in the file, it doesn't exist.
 - "More context is safer than too little" — Not here. Every extra paragraph buries the ask. Minimal-but-sufficient is the bar; link the spec, don't paste it.
 - "I'll spell out how it should be built" — The ticket names the functional output, not the implementation. The *how* is the plan's job; prescribing it here pre-empts planning and dates the ticket.
-- "'It works' is a fine criterion" — It isn't testable. Name the observable behavior as Given/When/Then, or it can't gate anything.
+- "'It works' is a fine criterion" — It isn't testable. Name the observable behavior in a plain sentence, or it can't gate anything.
 - "I'll add a couple of obvious requirements while I'm here" — Capture only what's asked. An unrequested requirement is a question for the user, not a line in the ticket.
 - "The description is clear enough to skip clarifying" — If you can't write testable criteria from it, it isn't. Ask the tight batch first.
 
@@ -64,7 +64,7 @@ Confirm before finishing:
 - [ ] Title, Context, Description, and Acceptance Criteria follow [`./references/workflow/ticket-format.md`](./references/workflow/ticket-format.md)
 - [ ] Ticket describes the real functional output required, in product terms — no prescribed implementation the user didn't ask for
 - [ ] Context is self-contained (a reader with no access to this session can act; no "as discussed") and minimal (background and why only, no design dump or pasted spec)
-- [ ] Every acceptance criterion is a single, testable Given/When/Then outcome — no hedge words, behavior not implementation
+- [ ] Every acceptance criterion is a single, testable outcome stated as a plain sentence — no hedge words, behavior not implementation
 - [ ] Scope matches what was asked; no invented requirements; genuine gaps raised as questions, not guessed
 - [ ] Lists, not tables; ticket written in the language of the request
 - [ ] Chat report gives path, title, assumptions, open questions (and the handoff line when a task folder was seeded) — the ticket itself not pasted

@@ -52,7 +52,7 @@ Resolve a task folder per the **resolve-current-or-ask** discovery rules in `./r
 
 Read all four core artifacts — plus `ticket.md` when present — don't answer from headers or the latest section alone:
 
-- `ticket.md` (when present) — the product-facing ask and its Given/When/Then acceptance criteria; the upstream origin `goals.md` derives from.
+- `ticket.md` (when present) — the product-facing ask and its acceptance criteria; the upstream origin `goals.md` derives from.
 - `CONTEXT.md` in the resolved task folder — the static grounding context (problem statement, scope summary, key assumptions, references).
 - `goals.md` — capture the full `## Goals` list by `G<n>` ID. Note any goal marked `_(unresolved: ...)_`.
 - `plan.md` — note its `**Status:**` header and its `**Goals:**` link.

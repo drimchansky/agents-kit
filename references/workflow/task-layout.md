@@ -41,7 +41,7 @@ Like the spec it replaces, `goals.md` is a static input — it carries no `**Sta
 
 Within a task folder, each piece of information lives in exactly **one** file — its home — and the sibling files **cite** it rather than restate it. The goals file above is the worked example (goal intent lives in `goals.md`; every other artifact cites `G<n>` IDs). The same rule holds across the artifacts:
 
-- **The ask** — the product-facing statement of what's required (the requester's framing, and the acceptance criteria in plain Given/When/Then) — lives in `ticket.md` when the task has one (see `./ticket-format.md`). It is the upstream origin: `CONTEXT.md`'s Problem Statement cites it, and `goals.md` is derived by sharpening its criteria into `G<n>` IDs.
+- **The ask** — the product-facing statement of what's required (the requester's framing, and the acceptance criteria as plain sentences) — lives in `ticket.md` when the task has one (see `./ticket-format.md`). It is the upstream origin: `CONTEXT.md`'s Problem Statement cites it, and `goals.md` is derived by sharpening its criteria into `G<n>` IDs.
 - **Grounding** — problem statement, chosen direction and its rationale, key assumptions, scope rationale and "Not Doing" reasons, external references, and open questions raised before planning — lives in `CONTEXT.md` (when a `ticket.md` is present, the problem statement is the ticket's, and `CONTEXT.md` cites it and carries the rest).
 - **Acceptance** — what "done" means — lives in `goals.md`, cited by `G<n>` ID.
 - **Execution contract** — steps, verify criteria, checkpoints, risks to execution, and the **plan-time deltas**: findings, decisions, and questions that surfaced during planning and aren't already in `CONTEXT.md` — lives in `plan.md`.
