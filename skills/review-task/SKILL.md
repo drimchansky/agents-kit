@@ -34,7 +34,7 @@ Read the plan, the sibling `goals.md`, the sibling `CONTEXT.md`, **and** the `ti
 - **`CONTEXT.md`** carries the problem statement, scope summary, key assumptions, and external references for the task.
 - **`goals.md`** carries the goals — the testable contract for what "done" means for this plan. The plan's steps must collectively cover every goal (each goal ID cited by a step's `**Goal:**` line).
 
-Both are authoritative input for grounding, not optional. If the goals file is missing, flag it as a gap up front — `plan-task` is expected to produce one and the acceptance coverage check below cannot run without it.
+`CONTEXT.md` and `goals.md` are authoritative input for grounding, not optional — a task is expected to have both. `ticket.md` is authoritative when it exists; its absence is not a gap, since a task may legitimately have none. If the goals file is missing, flag it as a gap up front — `plan-task` is expected to produce one and the acceptance coverage check below cannot run without it.
 
 ## When to Review
 
@@ -135,9 +135,9 @@ Compare the artifacts pairwise. For each pair, name the kind of drift the compar
 - **CONTEXT.md ↔ `plan.md`** — Does the plan's Scope (in / out / boundaries) contradict CONTEXT's MVP scope or "Not Doing"? Does the plan reference assumptions CONTEXT marked still-to-validate as if they were settled? Also flag **restated grounding**: the same decision, finding, or question maintained in both files — an Approach re-prosing Recommended Direction, Exploration Findings repeating References anchors, a copied Open Questions list. The bar is duplicated *content*, verbatim or re-prosed — a section that cites the home and adds only its own refinements, mechanism, or re-verification notes is the correct form, not restatement. Two copies of one fact drift apart as soon as either is edited (`./references/workflow/task-layout.md` § *One home per fact*); the suggested edit is to keep the copy in the fact's home file and collapse the restated content to a citation — preserving any plan-time deltas interleaved with it, which stay in the plan. With `-r`, the fix follows this skill's mapping in the shared contract — a judgment item, never auto-applied.
 - **`goals.md` ↔ `plan.md`** — Confirm the plan's `Scope` partition is **total**: every goal ID in `goals.md` is either delivered or explicitly deferred. A goal the Scope neither delivers nor defers is the drift. (This replaces the old "criterion excluded by scope" hunt — with scope expressed as a goal-ID partition, that contradiction can't be silently authored; coverage already catches uncovered goals and orphan steps.)
 - **`plan.md` ↔ `result.md`** (only if `result.md` exists) — Does the result claim a step done while the plan's checkbox is still `- [ ]`? Does the result reference a step number the plan doesn't have (a sign of a stale rename)? Does the **pairing rule** in `./references/workflow/task-lifecycle.md` hold — plan `executing` requires result `executing`, plan `blocked` requires result `blocked` with a `**Blocked:**` section, plan `in-review` requires result `in-review` with an `**In review:**` section, plan `done` requires result `done`, while a `skipped` plan may have no result or an explanatory result that remains `executing`?
-- **Status field consistency** — Does CONTEXT carry a valid origin marker, the plan a valid lifecycle state, and the result (if present) a valid lifecycle state compatible with the pairing rule? Reject anything outside the vocabulary registered in `./references/workflow/task-lifecycle.md`.
+- **Status field consistency** — Does CONTEXT carry a valid origin marker, the plan a valid lifecycle state, and the result a valid lifecycle state compatible with the pairing rule? An **absent** result file is part of this check, not an exemption from it: absence pairs only with a plan in `to-do` or `skipped`. Reject anything outside the vocabulary registered in `./references/workflow/task-lifecycle.md`.
 
-If `result.md` is absent, skip the last two pair checks — that absence is expected for plans in `to-do` or `skipped`.
+If `result.md` is absent, the `plan.md` ↔ `result.md` comparisons have nothing to compare — skip that pair. The Status-field check above still runs: absence is expected only for a plan in `to-do` or `skipped`, so a plan in `executing`, `blocked`, `in-review`, or `done` with no result file is drift — an interrupted `implement-task` initialization (`./references/workflow/task-lifecycle.md`).
 
 ### 7. Identify Gaps
 
@@ -208,7 +208,7 @@ If `goals.md` is missing entirely, state that here and skip the per-goal mapping
 
 ### Cross-File Drift
 
-A short list of contradictions between artifacts, grouped by the file pair the contradiction lives in. Render the section header even when no drift is found — state "no drift detected" explicitly so the absence is informative rather than ambiguous. Skip pairs that include `result.md` if no result file exists yet.
+A short list of contradictions between artifacts, grouped by the file pair the contradiction lives in. Render the section header even when no drift is found — state "no drift detected" explicitly so the absence is informative rather than ambiguous. Skip the `plan ↔ result` pair if no result file exists yet; the Status-fields entry still renders (an absent result is itself checked against the plan's state).
 
 Example:
 

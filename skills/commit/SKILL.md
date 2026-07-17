@@ -16,6 +16,8 @@ Create the commit that `/review-commit` prepared. This is the one skill that del
 
 - **A review-commit message must exist in this conversation.** Find the commit message `/review-commit` drafted earlier in this session. If there is none, stop and tell the user to run `/review-commit` first, then `/commit`. Do not draft a message yourself.
 - **Something must be staged.** Run `git diff --cached --quiet`; if it reports no staged changes, inform the user and stop.
+- **The staged set must still be the set review-commit reviewed.** Recompute `git diff --cached | git hash-object --stdin` and compare it to the digest on review-commit's **Reviewed** line. Identical → the set is provably unchanged; proceed. If review-commit's run predates the **Reviewed** line, so no digest was recorded, stop and tell the user to re-run `/review-commit` — there is nothing to compare against.
+- **A moved set must be accounted for, or it stops.** A differing digest means the staged set moved since the review. Fixes addressing review-commit's own findings are expected and pass — including a path a finding called for, such as a test or type file it flagged as missing. Account for every difference: name the added and removed paths against the **Reviewed** line's list (`git diff --cached --name-only`), and check the content changes against the findings. Anything no finding accounts for — an unrelated edit, a path that appeared on its own — means the drafted message describes a different change than the one you'd commit. If you cannot account for the delta with confidence — the reviewed diff has scrolled out of context, or a change doesn't map to a finding — **stop**: say what moved and tell the user to re-run `/review-commit`. An unaccountable delta is never assumed benign.
 
 ## Process
 
@@ -29,7 +31,7 @@ Do not stage, amend, push, create branches, or run verification scripts — none
 
 Confirm the protocol invariants before finishing:
 
-- [ ] Review-commit's drafted message found in this conversation and something was staged — otherwise stopped
+- [ ] Review-commit's drafted message and **Reviewed** digest found in this conversation, something was staged, and the recomputed digest matched — or every difference was accounted for by a finding; otherwise stopped
 - [ ] Committed the already-staged changes with the draft verbatim — no rewrite, no `Co-Authored-By` / AI-attribution trailer
 - [ ] Nothing staged, pushed, amended, or branched; scratch message file removed
 - [ ] Result (hash, subject, files) reported

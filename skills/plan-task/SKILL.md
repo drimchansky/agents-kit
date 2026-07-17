@@ -225,9 +225,9 @@ The plan's `## Open Questions` holds only questions that **arose during planning
 
 ## Scaling Plan Depth
 
-Match the plan's detail to the task's complexity. The goals step (Step 3) is required at every depth — even small tasks benefit from a few explicit goals.
+Match the plan's detail to the task's complexity — depth scales, but every tier still has to satisfy the Verification checklist below. The goals step (Step 3) is required at every depth — even small tasks benefit from a few explicit goals.
 
-- **Medium** (small, clear pattern) — Steps 1–3, 6, 7 — skip approach comparison, light on risks
+- **Medium** (small, clear pattern) — Steps 1–4, 6–10 — skip approach comparison (Step 5); keep exploration, risks, and open questions light but real
 - **Large** (bigger, some ambiguity) — All steps, moderate detail
 - **Complex** (cross-cutting, structural) — All steps, deep exploration, multiple approaches compared
 

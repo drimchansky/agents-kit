@@ -15,7 +15,7 @@ This skill closes the gap a working or design session opens: things get decided,
 
 **CRITICAL**: This skill writes to the task docs by design — that is its purpose, so there is no opt-in flag; invoking it *is* the consent (see the shared contract's consent model). But it stays inside two guardrails and one boundary:
 
-- **Strengthen only on verified evidence.** It may record progress (check a step, mark a goal `met`, advance status) **only after re-verifying it this session** the way the acceptance gate would (`./references/engineering/verification.md`). A claim it cannot verify is surfaced, never recorded. "Done" means verified, not asserted in chat.
+- **Strengthen only on verified evidence.** It may record progress (check a step, mark a goal `met`, advance status) **only after re-verifying it this session** the way the acceptance gate would (the resolved domain's `verification.md`). A claim it cannot verify is surfaced, never recorded. "Done" means verified, not asserted in chat.
 - **Grounding docs change by confirmation.** Writing `goals.md`, `CONTEXT.md` prose, or a step's scope — anything that redefines scope or acceptance — goes through **one batched confirmation round** first; it is never auto-applied. Pure enrichment (references, answered questions, session narrative) auto-applies.
 - **Docs, not the world.** No source code is written, no git state is mutated (no add, commit, checkout, stash), and no external system is updated. Verification in this skill *runs* checks read-only to back a state change — it changes nothing outside the four core task files. The upstream `ticket.md`, when present, is **read-only input**: a changed *ask* is surfaced for the user to update, never rewritten here. Output is those files plus a chat change list — no scratch artifact.
 
@@ -73,7 +73,7 @@ Group findings by target file (`CONTEXT.md` / `goals.md` / `plan.md` / `result.m
 
 ### 4. Verify Before Recording State
 
-Any finding that would **advance state** — check a step, mark a goal `met`, flip a status upward — passes through the acceptance gate first, per `./references/engineering/verification.md`. Re-verify the step's `**Verify:**` criterion or the goal's acceptance behavior *now*, in this session, the way `implement-task` would:
+Any finding that would **advance state** — check a step, mark a goal `met`, flip a status upward — passes through the acceptance gate first, per the resolved domain's `verification.md` — when the domain is code, that's `./references/engineering/verification.md`. Re-verify the step's `**Verify:**` criterion or the goal's acceptance behavior *now*, in this session, the way `implement-task` would:
 
 - Verifies cleanly → it's recordable: check the box / mark the goal `met`, and write the evidence (`**Shipped:**` paths, what was run, what was observed) into `result.md`.
 - Cannot be verified this session (no evidence, or the check fails) → **surface it, do not record it.** It goes to "Not reconciled" naming `implement-task`. A chat claim of "that's done" is not evidence.

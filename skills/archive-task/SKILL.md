@@ -33,7 +33,7 @@ This skill moves a finished task folder into its own parent's `Archive/` — can
 **Skip when:**
 
 - The task is still live (any non-terminal state) — finish or abandon it first; this skill won't archive in-flight work.
-- You want to *un-archive* (revive) a task — that's a manual `mv` back out of `Archive/`; this skill is one-way (see `task-layout.md`'s revive note).
+- You want to *un-archive* a task — that's a manual `mv` back out of `Archive/`; this skill is one-way (see `task-layout.md`'s un-archive note).
 - There's no `.agents/tasks/` folder yet and no task was named by path — nothing to archive.
 
 ## Process
@@ -87,7 +87,7 @@ A plain filesystem move — no git. The source is the exact folder resolved and 
 
 ### 5. Report
 
-Confirm what moved (`<slug>` → the actual `DEST`), note that the folder's internal links are intact, and remind the user that the task is now excluded from active listings; to revive it, move it back out of `Archive/` — naming its slug only lets discovery find it there, it does not revive it. When the folder is inside a git repo, the change is working-tree-only — review with `git status` and commit; a task outside any repo has nothing to commit.
+Confirm what moved (`<slug>` → the actual `DEST`), note that the folder's internal links are intact, and remind the user that the task is now excluded from active listings; to un-archive it, move it back out of `Archive/` — naming its slug only lets discovery find it there, it does not un-archive it. When the folder is inside a git repo, the change is working-tree-only — review with `git status` and commit; a task outside any repo has nothing to commit.
 
 ## Output Template
 

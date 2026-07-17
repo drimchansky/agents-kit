@@ -72,7 +72,7 @@ Diff each folder against the §1 checklist and assign exactly one label:
 
 - **conformant** — already matches the current format. Nothing to do.
 - **structurally-fixable** — differs *only* by lossless structural transforms, all of which §5 can apply automatically:
-    - a role file carries a **stem prefix** (`<anything>.plan.md` → `plan.md`, and so on) — match by the `.spec.md` / `.plan.md` / `.result.md` suffix, not by assuming the prefix equals the current folder slug (a folder renamed after its files won't match its own slug);
+    - a role file carries a **stem prefix** (`<anything>.plan.md` → `plan.md`, and so on) — match by the `.spec.md` / `.plan.md` / `.result.md` / `.ticket.md` suffix, not by assuming the prefix equals the current folder slug (a folder renamed after its files won't match its own slug);
     - an already goal-shaped legacy goals file named `spec.md` / `*.spec.md` (has a `## Goals` list whose bullets already carry durable `G<n>` IDs), or a `**Spec:**` link-header inside an otherwise conformant task — the old goals-file name/header; renaming to `goals.md` / `**Goals:**` is a lossless transform (§5);
     - a role file's **case** is wrong (`context.md` / `Context.md` → `CONTEXT.md`; `Plan.md` / `PLAN.MD` → `plan.md`; a wrong `.MD` extension) and only needs normalizing to the canonical case;
     - an in-folder link-header points at an old target (a prefixed name, or a non-`./` path) **and actually carries a link** — a `**Result:**` (or any header) that is still a prose placeholder, not a link, is conformant for that lifecycle state and is left alone (see §5).

@@ -105,7 +105,7 @@ No destination path → the canonical root, `.agents/tasks/<slug>/`. Resolve the
 
 **Fallback when the user named nothing** — this is the only branch that varies, by what the skill does:
 
-- **resolve-or-create** (`refine-idea`, `plan-task`) → derive a slug from the task description and create the task folder when no active or archived folder matches — in the canonical root (`.agents/tasks/<slug>/`) by default, or per a user-supplied destination path (see *Destination paths* above). If a slug matches only an archived task, ask whether to revive it or start fresh.
+- **resolve-or-create** (`refine-idea`, `plan-task`) → derive a slug from the task description and create the task folder when no active or archived folder matches — in the canonical root (`.agents/tasks/<slug>/`) by default, or per a user-supplied destination path (see *Destination paths* above). If a slug matches only an archived task, ask whether to un-archive it or start fresh.
 - **resolve-current-or-ask** (`implement-task`, `resume-task`, `reconcile-task`) → first check whether a task is already established **in this session** — a folder / `CONTEXT.md` resolved earlier this session (e.g. from a preceding `refine-idea`, `plan-task`, or `review-task`, or one the user named). If so, use it. Otherwise list the canonical root's active folders (excluding `Archive/`) and ask which.
 - **resolve-or-ask** (`review-task`, `archive-task`) → list the canonical root's active folders (excluding `Archive/`) and ask which.
 

@@ -41,7 +41,7 @@ Before working, load the resolved domain's pack and read the files this skill le
 - No task folder exists yet — direct the user to `plan-task` first
 - The work is small enough that a plan would be overhead — implement directly
 - The plan is still being iterated on and not yet finalized
-- The plan's `**Status:**` is `skipped` — it was deliberately abandoned. Confirm the user wants to revive it before executing; don't silently run an abandoned plan.
+- The plan's `**Status:**` is `skipped` — it was deliberately abandoned. Confirm the user wants to revive it before executing; don't silently run an abandoned plan. On confirmation, §3 takes the registered `skipped → executing` revive (`./references/workflow/task-lifecycle.md`).
 
 If the user describes a task without a plan and the task is non-trivial, suggest running `plan-task` first.
 
@@ -80,11 +80,11 @@ Ask the user (or infer from the request):
 
 Respect step `Depends on:` ordering regardless of mode.
 
-### 3. Initialize the Result File (if it doesn't exist)
+### 3. Initialize Execution State
 
 Status values used in this skill and their transitions are registered in `./references/workflow/task-lifecycle.md` — the single source of truth. If anything here disagrees with the registry, the registry wins.
 
-Create `<task-dir>/result.md` with this header:
+Create `<task-dir>/result.md` (when it doesn't already exist) with this header:
 
 ```markdown
 # Result: <plan title>
@@ -99,6 +99,12 @@ Create `<task-dir>/result.md` with this header:
 ```
 
 Update the plan's `**Result:**` line to link to this file (`./result.md`), and flip the plan's `**Status:**` from `to-do` to `executing` to mark that work has begun.
+
+**Reviving a `skipped` plan** — only after the explicit confirmation the *Skip when* gate requires.
+
+First check **where the folder sits**. A bare slug falls back to `.agents/tasks/Archive/<slug>/` when no active folder matches (`./references/workflow/task-layout.md`), and skipped tasks are exactly the ones that get archived — so a revive can land inside `Archive/`. A live task must never sit there: archived folders are absent from every active listing, so the revived task would be stranded outside the lists `resume-task` and `review-task` build, and `archive-task` would refuse it as non-terminal though it already sits in the archive. If the resolved folder is under `Archive/`, **stop**: tell the user to move it back out first (a manual `mv` — `archive-task` is one-way), then re-run.
+
+Otherwise flip the plan's `**Status:**` from `skipped` to `executing` (the registered revive edge) and continue as a normal run. If the plan's optional result file already exists — the record of why the work was dropped — ensure its `**Status:**` is `executing`, the pairing rule's value for a live plan (the result has no `to-do` state); a result left in any other state would pair with the revived plan as drift. The append-only rule holds, so that record stays and this run's sections append after it (§5).
 
 ### 4. Execute Steps
 
