@@ -53,10 +53,22 @@ A `skipped` plan is exempt from reconciliation entirely — it's terminal; repor
 
 ### Annotation formats
 
-Two in-place annotations recur across skills; the formats are fixed so reconcilers don't invent wording. Where they may be written is governed by the direction's write surface.
+Two in-place annotations recur across skills; the formats below fix both the wording and the line each one anchors to, so reconcilers don't invent either. Which files they may be written in is governed by the direction's write surface.
 
 - **Broken external link** — **auto**: append `— _broken as of YYYY-MM-DD (404)_` to the citing line (in `CONTEXT.md`'s References or a `plan.md` step), or swap in the new URL when a redirect target is known. Links inside prior `result.md` sections and in `goals.md` are never touched — note them in the Reconciliation entry (when one is being written) only, never in those files.
 - **Answered open question** — **auto** only when the source answers it unambiguously (quote or tightly paraphrase it): append `— _answered YYYY-MM-DD: <answer> ([source](url) when there is one)_` to the question line in `CONTEXT.md`'s or `plan.md`'s Open Questions. **Ask** when the answer needs interpretation. A goal marked `_(unresolved: …)_` is never annotated in `goals.md` — it's surfaced in chat (docs → reality), or handled through the new-goal confirmation row (session → docs).
+
+### The `plan.md` write surface
+
+Every reconciler writes `plan.md` through the same five shared openings; the session direction adds two more of its own (see its write surface). Nothing else in `plan.md` is written in either direction. Which of the five a direction may use, and which way each may move, is the direction rule's business.
+
+- step **checkboxes**, plus the trailing `([result](…))` link the box's new state requires — dropped when a box is cleared (shared repairs below); added, pointing at the section that records the evidence, when one is checked (session direction only — `-r` never checks a box, and a `- [x]` step always carries its link);
+- the `**Status:**` header (*Weaken, never strengthen* below; *Strengthen only on verified evidence* in the session direction);
+- the `**Result:**` link-header — repointed at a skeleton `result.md`, or reverted to the pre-execution placeholder (shared repairs below);
+- the two annotations whose formats are fixed above — a broken-link annotation on a step's citing line, an answered-question annotation on a line in `## Open Questions` — under the auto/ask condition those formats set;
+- step content within the finding's scope, on the engineer's word only — an answer to the review's batched Questions under `-r`, a confirmed judgment item in the session direction: Verify criteria, gap details, the Scope partition, goal citations, and collapsing restated grounding to a citation of its home section (per *One home per fact* above).
+
+**Step numbers are stable across both directions.** No reconciler renumbers: existing step numbers are the `#step-<n>--<slug>` anchors that `result.md`'s immutable prior sections already carry and that checked steps link to, so a renumber strands a record that can't be rewritten to match. Where a direction may insert a step, it inserts as `Step 3a` / `Step 3b` rather than shifting its siblings.
 
 ### Sequence and output
 
@@ -85,7 +97,7 @@ Findings come from a printed report comparing the docs against reality on disk, 
 
 Exactly three task files, and nothing else:
 
-- `plan.md` — checkboxes, the `**Status:**` header, and (with an engineer answer) step content within the review's scope: Verify criteria, gap details, the Scope partition, goal citations, and collapsing restated grounding to a citation of its home section (per *One home per fact* above).
+- `plan.md` — the five writes above, under this direction's constraints: it only ever clears a checkbox, never checks one, and the `**Status:**` header moves only downward (*Weaken, never strengthen* below).
 - `result.md` — append-only; see the record format above.
 - `CONTEXT.md` — minimal annotations inside `## References` and `## Open Questions` only, per the carve-out in `./task-lifecycle.md`. Never the `**Status:**` origin marker, never prose rewrites.
 
@@ -131,7 +143,7 @@ Findings come from reviewing the current session against the docs, so this direc
 
 ### Write surface
 
-All four core task files (never the upstream `ticket.md`, which is read-only — a changed ask is surfaced for the user). `plan.md` and `result.md` as above, plus — only through a **confirmed** judgment item — `CONTEXT.md` prose sections (not annotation-only) and `goals.md`. Pure enrichment auto-applies: a new external reference into `## References`, an answered open question annotated in `## Open Questions`, session narrative appended to `result.md`. Each enrichment lands in the fact's **home file only** (per *One home per fact* above): a session decision goes to `CONTEXT.md` *or* the affected plan step — whichever the homes rule names — and an answer is annotated where its question lives, never mirrored into both files.
+All four core task files (never the upstream `ticket.md`, which is read-only — a changed ask is surfaced for the user). `result.md` as above; `plan.md` — the five writes above, plus **two additions**: a **new step**, only through a confirmed judgment item (`-r` closes against this because redesign is out of scope there; here, enriching the plan is the point) and inserted without renumbering, per the step-stability rule above; and a **new open-question line** appended to `## Open Questions` (auto — pure enrichment, distinct from the answered-question *annotation* the five already cover). Plus — only through a **confirmed** judgment item — `CONTEXT.md` prose sections (not annotation-only) and `goals.md`. Pure enrichment auto-applies: a new external reference into `## References`, an answered open question annotated in `## Open Questions`, a new open question appended there, session narrative appended to `result.md`. Each enrichment lands in the fact's **home file only** (per *One home per fact* above): a session decision goes to `CONTEXT.md` *or* the affected plan step — whichever the homes rule names — and an answer is annotated where its question lives, never mirrored into both files.
 
 ### Strengthen only on verified evidence
 
@@ -147,7 +159,7 @@ Findings come from diffing the session against the docs. Legend: **auto** = obvi
 
 - **New reference / spec / ticket surfaced in session**, absent from `## References` → **auto**: append it to `CONTEXT.md`'s `## References` (label + URL, plus a short note of what it is).
 - **Open question answered in session** → the shared answered-question annotation format above (**auto** when unambiguous, **ask** when interpretation is needed). A goal marked `_(unresolved: …)_` changes only via the new-goal row below.
-- **New open question raised in session** → **auto**: append it to `## Open Questions`.
+- **New open question raised in session** → **auto**: append it to `## Open Questions` in the file the question belongs to (per *One home per fact* above) — `CONTEXT.md` when it questions the grounding, `plan.md` when it questions the plan's own execution.
 - **Session narrative** — what was explored, tried, or decided that isn't itself a state change or a grounding rewrite → **auto**: append a `## Reconciliation — YYYY-MM-DD` section to `result.md` (creating the file and flipping `to-do → executing` when work is evidenced, per the pairing rule).
 - **Step completed this session** → **verify**: re-check its `**Verify:**` criterion. Passes → check `- [x]` in `plan.md` and record the evidence in `result.md`. Fails or unverifiable → surface, leave `- [ ]`.
 - **Goal met this session** → **verify**: re-check the goal's acceptance behavior. Passes → record it `met` (in the `## Acceptance` section when finalizing, or noted in the Reconciliation entry otherwise). Advance `executing → done` only when the full gate passes against every goal; when unmet goals are all `(external)` ones still awaiting their proxy, finalize to `in-review` instead. Fails → surface, no flip.

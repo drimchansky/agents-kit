@@ -122,7 +122,7 @@ Keep goals **outcome-oriented**, not implementation-oriented. "User can export t
 - G3 (external) — <outcome verified outside the session: human/client sign-off or live check>
 ```
 
-The goals file carries no `**Status:**` field by design — it is a static input, not a lifecycle artifact. The user mutates it freely between sessions; downstream skills (`review-task`, `implement-task`, `resume-task`) read it but never write to it.
+The goals file carries no `**Status:**` field by design — it is a static input, not a lifecycle artifact. The user mutates it freely between sessions; downstream skills (`review-task`, `implement-task`, `resume-task`) read it but never write to it. `reconcile-task` alone may add or reword a goal, and only through a confirmed judgment item (`./references/workflow/task-lifecycle.md`).
 
 ### 4. Explore the Domain's Reality
 

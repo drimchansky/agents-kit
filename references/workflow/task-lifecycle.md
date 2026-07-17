@@ -12,7 +12,7 @@ A task folder holds four core artifacts that share a slug but track distinct lif
   - Created by `refine-idea` or `plan-task`; never mutated after creation, except the reconcile-mode carve-outs below: the `-r` annotation carve-out (minimal annotations in `## References` / `## Open Questions` only), and `reconcile-task`'s session → docs carve-out (prose sections rewritten only through a confirmed judgment item). Both leave the `**Status:**` marker immutable; see `./reconciliation.md`.
 - **`goals.md`** — the task's goals: the acceptance criteria for what "done" looks like.
   - No `**Status:**` field.
-  - Drafted by `plan-task` before the plan, or hand-authored; freely edited by user. `reconcile-task` (session → docs) may also add or reword a goal, but only through a confirmed judgment item and obeying the durable-`G<n>` scheme (see `./reconciliation.md`).
+  - Drafted by `plan-task` before the plan, or hand-authored; freely edited by user. `reconcile-task` (session → docs) may also add or reword a goal, but only through a confirmed judgment item and obeying the durable-`G<n>` scheme (see `./reconciliation.md`); no other skill authors its content — `migrate-task-format` may rename a goal-shaped legacy `spec.md` onto the role name, but never edits what's inside.
 - **`plan.md`** — the contract: scope, steps, verify criteria.
   - `**Status:**` is a **lifecycle state**.
   - Created by `plan-task` (`to-do`); transitioned by `implement-task`; reconciled downward by the `-r` reconcile mode of `resume-task` / `review-task`, and reconciled by `reconcile-task` — which, in the session → docs direction, may also advance state *upward* on in-session verified evidence (shared contract in the sibling `reconciliation.md`).
@@ -33,7 +33,7 @@ The field name `Status:` is shared across the three status-bearing files even th
 
 ### `goals.md` — no status field
 
-The goals file is a static input authored before (or alongside) the plan. It carries no `**Status:**` header and no lifecycle. It can be drafted by `plan-task` (which asks clarifying questions when requirements are unclear) or hand-authored by the user. Other skills read it; only the user mutates it.
+The goals file is a static input authored before (or alongside) the plan. It carries no `**Status:**` header and no lifecycle, so it registers no vocabulary here. Authorship and the write surface are in the Files bullet above.
 
 ### `plan.md` — lifecycle: `to-do` → `executing` → `done` (or `skipped`); `executing` ⇄ `blocked`; `executing` → `in-review` → `done`; `in-review` → `executing`
 
