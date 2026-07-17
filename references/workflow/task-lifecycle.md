@@ -6,7 +6,7 @@ A task folder holds four core artifacts that share a slug but track distinct lif
 
 - **`ticket.md`** (optional) — the product-facing ask, upstream of the four core artifacts (see `./ticket-format.md`).
   - No `**Status:**` field.
-  - Authored by the user or `prepare-ticket`, and freely edited by the user. `refine-idea` and `plan-task` read it and derive `CONTEXT.md` / `goals.md` from it; the lifecycle never mutates it. `reconcile-task` treats it as read-only too — a changed ask is surfaced for the user, never written (see `./reconciliation.md`).
+  - Authored by the user, `prepare-ticket`, or `plan-task` run with `-t`, and freely edited by the user. `refine-idea` and `plan-task` read it and derive `CONTEXT.md` / `goals.md` from it (with `-t`, `plan-task` drafts the ticket first, then derives from it); the lifecycle never mutates it. `reconcile-task` treats it as read-only too — a changed ask is surfaced for the user, never written (see `./reconciliation.md`).
 - **`CONTEXT.md`** — the task's static grounding context (capitalized).
   - `**Status:**` is a one-shot **origin marker**.
   - Created by `refine-idea` or `plan-task`; never mutated after creation, except the reconcile-mode carve-outs below: the `-r` annotation carve-out (minimal annotations in `## References` / `## Open Questions` only), and `reconcile-task`'s session → docs carve-out (prose sections rewritten only through a confirmed judgment item). Both leave the `**Status:**` marker immutable; see `./reconciliation.md`.

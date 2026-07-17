@@ -49,10 +49,10 @@ Core-rules-aware skills that run ad hoc — against a diff, a file, or a codebas
 
 ## Workflow skills
 
-The set that turns a rough task into finished work. Each works on one task folder — `.agents/tasks/<slug>/` by default, or anywhere on disk when named by path — handing the slug (or path) to the next. A task may begin with a product-facing ticket ([`prepare-ticket`](skills/prepare-ticket/SKILL.md) writes `ticket.md`), which the steps below derive from:
+The set that turns a rough task into finished work. Each works on one task folder — `.agents/tasks/<slug>/` by default, or anywhere on disk when named by path — handing the slug (or path) to the next. A task may begin with a product-facing ticket ([`prepare-ticket`](skills/prepare-ticket/SKILL.md) writes `ticket.md`, or `plan-task -t` drafts one as it plans), which the steps below derive from:
 
 1. [**refine-idea**](skills/refine-idea/SKILL.md) – sharpen a vague idea into grounded context before planning. _Example: `/refine-idea add a draft mode to the editor`_
-2. [**plan-task**](skills/plan-task/SKILL.md) – break the work into a plan with testable goals. _Example: `/plan-task migrate auth to JWT`_
+2. [**plan-task**](skills/plan-task/SKILL.md) – break the work into a plan with testable goals; add `-t` to first draft a self-contained `ticket.md` (via the `prepare-ticket` process) for the plan to derive from. _Example: `/plan-task migrate auth to JWT` or `/plan-task -t add CSV export`_
 3. [**review-task**](skills/review-task/SKILL.md) – sanity-check the plan against its context, goals, and current reality before building; add `-r` to reconcile obvious findings and fold your answers into the plan. _Example: `/review-task auth-jwt-migration` or `/review-task auth-jwt-migration -r`_
 4. [**implement-task**](skills/implement-task/SKILL.md) – execute the plan, tracking progress in the task folder. _Example: `/implement-task auth-jwt-migration`_
 
