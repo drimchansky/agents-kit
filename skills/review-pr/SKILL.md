@@ -29,7 +29,7 @@ Before working, read `./references/engineering/review.md` — it carries the len
 
 **Build change map:**
 
-- Get the full diff against the base branch
+- Get the full diff against the base branch, and record both the reviewed head commit (`git rev-parse HEAD`) and its merge-base with the base (`git merge-base <base> HEAD`) — the `publish-pr-review` follow-up anchors its posted review to the head and re-checks the merge-base so it never publishes against a retargeted or moved diff
 - Exclude generated files (lockfiles, build artifacts, snapshots) unless manually edited
 - Group changes by intent: new feature, bug fix, refactor, configuration, tests
 - For each modified export or shared component — search all usages to understand blast radius
@@ -61,10 +61,13 @@ Apply the full review process from `./references/engineering/review.md` — its 
 
 - **Summary** — What changed, intent, overall assessment (approve / request changes / needs discussion)
 - **Findings** — Issues with severity, file location, recommendation, and impact
+- **Reviewed** — a provenance line recording the reviewed head commit and its merge-base (the `git rev-parse HEAD` and `git merge-base` from Setup) and the model that produced this review, e.g. `Reviewed at <head-sha> (merge-base <base-sha>) by <model>`. `/publish-pr-review` reads it to anchor the posted review to the head commit, re-check the diff hasn't moved, and attribute it — so attribution survives the model changing between review and publish.
 - **Cross-check** (only with `-x`) — the probe's `Cross-check:` outcome line per `./references/workflow/agent-fanout.md`
 - **Improvements** (optional) — Non-blocking suggestions
 - **Inaccessible context** (only if any) — Links from the PR that couldn't be fetched, with URL and reason (auth required, private, 404, tool unavailable). Note which findings might shift if that context were available.
 - **PR description** (only with `-d`) — A ready-to-paste description (body only); drafted per the **PR description** section below.
+
+**Next:** to post this review to the PR, run `/publish-pr-review` — it publishes Major/Critical findings as inline comments, or a short approval if there are none.
 
 ## PR description
 
@@ -100,4 +103,4 @@ toolbar became a shared component to host the new button.
 
 ## Verification
 
-Apply the Standard Verification Checklist in `./references/engineering/review.md`. With `-x`: the probe was merged per `./references/workflow/agent-fanout.md` and the output carries its `Cross-check:` line. With `-d`: the drafted description is body-only and verdict-free, sources its links only from those already gathered — a `Task: <add ticket link>` placeholder rather than a fabricated URL — and carries no AI-attribution footer.
+Apply the Standard Verification Checklist in `./references/engineering/review.md`. The output carries the **Reviewed** provenance line (reviewed head SHA + merge-base SHA + reviewing model). With `-x`: the probe was merged per `./references/workflow/agent-fanout.md` and the output carries its `Cross-check:` line. With `-d`: the drafted description is body-only and verdict-free, sources its links only from those already gathered — a `Task: <add ticket link>` placeholder rather than a fabricated URL — and carries no AI-attribution footer.
