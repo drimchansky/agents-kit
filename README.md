@@ -9,6 +9,7 @@ It includes:
 3. **Utility skills** – self-contained helpers that don't rely on the core rules, so they run anywhere: locally via CLI or in any chat.
 4. **Engineering skills** – code-focused skills that apply the core rules and references ad hoc, against a diff, a file, or a codebase.
 5. **Workflow skills** – the core-rules skills that move a task from idea to done through a task folder (by default under `.agents/tasks/`).
+6. **Agent definitions** – Claude Code subagent definitions the skills lean on: today the parallel-lane `executor`, pinned to Opus at `xhigh` — below the top session tiers — because `implement-task -p`'s merge gates re-verify its work.
 
 ## Getting started
 
@@ -55,7 +56,7 @@ The set that turns a rough task into finished work. Each works on one task folde
 1. [**refine-idea**](skills/refine-idea/SKILL.md) – sharpen a vague idea into grounded context before planning. _Example: `/refine-idea add a draft mode to the editor`_
 2. [**plan-task**](skills/plan-task/SKILL.md) – break the work into a plan with testable goals; add `-t` to first draft a self-contained `ticket.md` (via the `prepare-ticket` process) for the plan to derive from. _Example: `/plan-task migrate auth to JWT` or `/plan-task -t add CSV export`_
 3. [**review-task**](skills/review-task/SKILL.md) – sanity-check the plan against its context, goals, and current reality before building; add `-r` to reconcile obvious findings and fold your answers into the plan. _Example: `/review-task auth-jwt-migration` or `/review-task auth-jwt-migration -r`_
-4. [**implement-task**](skills/implement-task/SKILL.md) – execute the plan, tracking progress in the task folder; add `-p` to run independent steps in parallel worktrees, merged at checkpoints. _Example: `/implement-task auth-jwt-migration` or `/implement-task auth-jwt-migration -p`_
+4. [**implement-task**](skills/implement-task/SKILL.md) – execute the plan, tracking progress in the task folder; add `-p` to run independent steps in parallel worktrees on the pinned executor model, merged at checkpoints. _Example: `/implement-task auth-jwt-migration` or `/implement-task auth-jwt-migration -p`_
 
 Four more support the workflow:
 

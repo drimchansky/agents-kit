@@ -163,7 +163,7 @@ With `-p` in full-plan mode, execute independent steps concurrently as **executo
 
 A step with no `**Touches:**` line (or with `**Touches:** none`) runs serially — an absent declaration is a serial default, not an invitation to infer one. When in doubt about disjointness, run the doubtful step serially: a wrongly-serial step costs minutes, a wrongly-parallel one costs the merge.
 
-**Run.** In a mixed batch, serial steps that depend on a lane step — directly or transitively — run after the merge, on the integrated tree; every other serial step in the batch runs before the lane launches; both in plan order. Launch one executor per eligible step, each with a self-contained prompt per the contract. While a lane is in flight the shared tree is frozen: the coordinator monitors and runs no step of its own.
+**Run.** In a mixed batch, serial steps that depend on a lane step — directly or transitively — run after the merge, on the integrated tree; every other serial step in the batch runs before the lane launches; both in plan order. Launch one executor per eligible step, each with a self-contained prompt per the contract, on the contract's executor-model default — a pinned tier where the host supports one (`./references/workflow/agent-fanout.md` § *Write-mode engines*). While a lane is in flight the shared tree is frozen: the coordinator monitors and runs no step of its own.
 
 **Merge — at the batch's bounding checkpoint, in plan order.** For each lane step, in plan order:
 

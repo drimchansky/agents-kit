@@ -51,6 +51,29 @@ install_agent() {
     touch "$home_dir/.agents-kit-core-rules"
     echo "  CORE_RULES.md"
   fi
+
+  # 3. Agent definitions — Claude Code only: the kit ships Claude-format .md definitions.
+  #    Codex's agents surface (~/.codex/agents/*.toml) would need its own TOML definition.
+  if [ "$(basename "$home_dir")" = ".claude" ]; then
+    local agents_dir="$home_dir/agents"
+    mkdir -p "$agents_dir"
+    for marker in "$agents_dir"/.agents-kit-*; do
+      [ -f "$marker" ] || continue
+      rm -f "$agents_dir/${marker##*.agents-kit-}.md" "$marker"
+    done
+    for source in "$REPO_DIR"/agents/*.md; do
+      local name target
+      name="$(basename "$source" .md)"
+      target="$agents_dir/$name.md"
+      if [ -e "$target" ]; then
+        echo "  skipped (not kit-managed): agents/$name"
+        continue
+      fi
+      cp "$source" "$target"
+      touch "$agents_dir/.agents-kit-$name"
+      echo "  agents/$name"
+    done
+  fi
 }
 
 for home in "${HOMES[@]}"; do
