@@ -182,6 +182,7 @@ Break a step down further when: its title contains "and" (two steps wearing one 
 - **Depends on:** <prior step numbers, or "none">
 - **Due:** <date the step must finish by, or "none">
 - **Lead time:** <how long the step takes once started — e.g. "visa: ~8 weeks", or "none">
+- **Touches:** <the artifacts/directories this step edits — its declared edit surface — or "none">
 ```
 
 The leading `- [ ]` checkbox is the marker `implement-task` flips to `- [x]` when the step is done, with a link to the result file section appended.
@@ -190,11 +191,13 @@ The `**Goal:**` line cites the goal ID(s) the step delivers, or `none (infra/ref
 
 `**Due:**` and `**Lead time:**` are **optional**. Omit them (or set `none`) for code work, where steps are ordered by `Depends on:`, not the calendar. They earn their place in time-anchored domains (a relocation, an event) where deadlines and external lead times — not just logical dependencies — drive ordering and surface the long-pole steps that must start early. They are planning information the actor reads; nothing in the kit schedules off them.
 
+`**Touches:**` is likewise **optional**: the artifacts or directories the step is expected to edit — its declared edit surface. It has one consumer: `implement-task`'s `-p` parallel lane, which runs steps concurrently only when no `Depends on:` path connects them *and* their declared surfaces are pairwise disjoint. A step without the line (or with `none`) simply runs serially, so declare surfaces only where parallel execution is plausible and the surfaces are genuinely separate. When the domain is code, `./references/engineering/planning.md` lists the shared-artifact traps to check before calling two surfaces disjoint.
+
 ### 8. Add Checkpoints
 
-Per-step `Verify` confirms one unit of work. It does **not** catch the case where step 3 silently broke step 1's outcome. For plans with more than ~5 steps, insert a **Checkpoint** every 2–3 steps that re-verifies the integrated whole, not just the latest change.
+Per-step `Verify` confirms one unit of work. It does **not** catch the case where step 3 silently broke step 1's outcome. For plans with more than ~5 steps, insert a **Checkpoint** every 2–3 steps that re-verifies the integrated whole, not just the latest change. This section is the single home for checkpoint cadence and shape — the domain pack's planning file owns what a checkpoint asserts, and other skills cite this section rather than restating it.
 
-A checkpoint re-asserts that everything done so far still holds together — including a concrete end-to-end outcome, named ("user can log in and see dashboard", not "core flow"). When the domain is code, the specific assertions are in `./references/engineering/planning.md` (full test suite passes, build / typecheck succeeds, the named flow runs end to end).
+A checkpoint re-asserts that everything done so far still holds together — including a concrete end-to-end outcome, named ("user can log in and see dashboard", not "core flow"). When the domain is code, the specific assertions are in `./references/engineering/planning.md`.
 
 Checkpoints are not steps — they get no `- [ ]` checkbox that `implement-task` flips. They are gates `implement-task` must pause at to confirm before proceeding to the next batch of steps. Skip them entirely for short plans (≤5 steps) where the final step's verification doubles as an end-to-end check.
 
@@ -293,6 +296,7 @@ Write the file with this top-level layout. Adapt sections to task size — not e
 - **Depends on:** none
 - **Due:** none _(optional; date the step must finish by)_
 - **Lead time:** none _(optional; how long it takes once started)_
+- **Touches:** none _(optional; the step's edit surface — pairwise-disjoint surfaces enable `implement-task -p`)_
 
 ### Step 2 — <title>
 

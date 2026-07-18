@@ -47,18 +47,30 @@ Break a step down further when any of these hold:
 - Its acceptance can't be stated in 3 or fewer bullets.
 - It would touch more than ~5 files.
 
+## Declaring edit surfaces (`Touches:`)
+
+A step's optional `**Touches:**` line declares the files or directories it edits, so
+`implement-task`'s parallel lane can test disjointness mechanically. In code, "different files"
+often still means a shared artifact — check for these before declaring two steps disjoint:
+
+- A shared barrel/index or re-export file both steps must edit to register their work.
+- Generated artifacts a change rewrites as a side effect: lockfiles, snapshots, generated types,
+  migration sequence numbers.
+- Global registries new modules hook into: routing tables, DI containers, feature-flag or
+  translation catalogs.
+
+When unsure, leave `Touches:` off — an undeclared step runs serially, which is the safe default.
+
 ## Checkpoints
 
-For plans with more than ~5 steps, insert a checkpoint every 2–3 steps that re-verifies the
-**integrated** system, not just the latest change. A checkpoint asserts:
+Cadence and shape — when a checkpoint is due, that it's a gate and not a step, when short plans
+skip them — are owned by the planning spine (`plan-task` § *Add Checkpoints*); this file owns only
+what a code checkpoint asserts:
 
 - The test suite still passes (not just the test for the latest step).
 - Build / typecheck still succeeds.
 - A concrete end-to-end flow still works — name it ("user can log in and see dashboard", not "core
   flow").
-
-Checkpoints are gates, not steps: they carry no `- [ ]` marker. Skip them for short plans (≤5
-steps) where the final step's verification doubles as an end-to-end check.
 
 ## Scaling plan depth
 

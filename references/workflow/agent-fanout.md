@@ -1,6 +1,6 @@
-# Agent Fan-Out: Probes and Engines
+# Agent Fan-Out: Probes, Executors, and Engines
 
-How a skill delegates read-only questions to other agents — the probe contract, the engine registry, and the opt-in `-x` cross-check. **This file is the single source of truth for cross-agent fan-out.** The review skills (`review-task`, `review-pr`, `review-commit`, `review-docs`) cite it from their `-x` flag; `CORE_RULES.md`'s parallel-agents rule points here for mechanics. When an engine recipe or the `-x` contract changes, update it here first and propagate to the skills that cite it.
+How a skill delegates work to other agents, in two modes: **probes** — self-contained read-only questions whose answers come back as text evidence — and **executors** — write-mode subagents that each carry out one plan step in an isolated working copy, for `implement-task`'s parallel lane only. **This file is the single source of truth for cross-agent fan-out.** The review skills (`review-task`, `review-pr`, `review-commit`, `review-docs`) cite it from their `-x` flag; `implement-task` cites it from its `-p` flag; `CORE_RULES.md`'s parallel-agents rule points here for mechanics. When an engine recipe, the `-x` contract, or the write-mode contract changes, update it here first and propagate to the skills that cite it.
 
 ## What a probe is
 
@@ -80,3 +80,24 @@ The invoking skill compares the probe's answer against its own pass:
 - **Contradiction is never silently dropped.** Where the probe contradicts the session's grounding or the artifact's own claims, re-check that spot before assigning the verdict; a confirmed contradiction becomes a finding (in `review-task`, a `CONTRADICTED` claim is evidence toward `conflicts with what exists` / `infeasible as stated`; a `NOT FOUND` on a load-bearing reference is a gap).
 - **Novel probe findings are candidates, not findings.** Verify each against the artifact before adopting it into the output — under the session's own severity calibration; never paste a probe finding unverified.
 - **The outcome line closes the loop.** The `Cross-check:` line states `clean`, `merged: …`, or `skipped (<reason>)` — the record makes a skipped or empty probe visible instead of leaving absence ambiguous.
+
+## Write-mode fan-out: executors (`implement-task -p` only)
+
+An **executor** is one subagent carrying out exactly one plan step in an isolated working copy — the write-mode counterpart of a probe. Executors exist for a single consumer: `implement-task`'s opt-in parallel lane (its `-p` flag), which runs independent plan steps concurrently and merges them at a checkpoint. The merge procedure lives in that skill; this file owns the delegation contract. No other skill launches executors — everything else that fans out stays a read-only probe.
+
+### Executor contract
+
+- **The coordinator owns the record.** The session agent is the **coordinator**: it owns the shared working tree, every task-folder write (`plan.md` checkboxes and statuses, `result.md` sections), and every verdict about step completion. An executor never writes a status, never touches the task folder, and never touches the shared tree.
+- **One step per executor.** Batching steps into one executor recreates serial execution with less visibility; splitting one step across executors leaves its `Verify` with no owner.
+- **Self-contained prompt.** Like a probe: paste in everything the step needs — the step's What/Verify text, the text of the goals it cites, the declared edit surface (`**Touches:**`), the relevant `CONTEXT.md` excerpts, absolute paths. An executor sees no session context.
+- **Isolated working copy, never the shared tree.** Each executor works in its own git worktree (or the harness's worktree-isolated subagent). The shared tree stays frozen while a lane is in flight.
+- **Stay inside the declared surface.** An executor edits only within its step's declared `**Touches:**` surface. Needing an edit outside it is a stop-and-report, not an edit — the coordinator sends that step to the serial path. The promise is enforced twice: in the prompt, and mechanically at merge time, when the coordinator checks the worktree diff against the declared surface before merging.
+- **Evidence back; verdicts stay home.** The executor runs the step's `Verify` in its copy and reports what it ran, the `file:line` changes it made, the verify output, and any doc sources consulted. Executor success is provisional — the coordinator's merge gates on the integrated tree decide, and the coordinator records the sources in the result file.
+- **Degrade gracefully.** A failed, hung, or surface-escaping executor sends its step to the serial path — the lane never blocks the skill. Report the fallback; don't hide it.
+- **Scratch, not record.** Worktrees and executor transcripts are scratch — removed after merge. `result.md` records the merged outcome, never executor transcripts.
+
+### Write-mode engines
+
+- **`native`** — the host harness's worktree-isolated subagents, or its plain subagents confined to a coordinator-created `git worktree`. **The only registered write-mode engine.** Richer integration, harness-tracked completion. A host offering neither form of isolation has no write-mode engine: the lane doesn't launch, every step runs serially, and the fallback is reported — the write-mode mirror of a probe engine's `skipped (<reason>)`.
+
+Cross-vendor engines are deliberately not registered for write mode: their sandbox flags enforce the *probe* promise (`--sandbox read-only`), and shipping write access cross-vendor needs its own consent and cleanup story. A future `codex` executor engine (workspace-write confined to a coordinator-managed worktree via `-C`) can be added here without touching the contract above — the merge-time surface check and the integrated re-verify are engine-independent. Until then, cross-vendor stays what it is today: the read-only `-x` cross-check.

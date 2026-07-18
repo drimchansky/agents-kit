@@ -148,7 +148,7 @@ Skip this step entirely without the flag. With `-r`, apply the brief's findings 
     - **Verify:** <criterion from plan>
     - **Depends on:** <prior steps>
     - **Due / Lead time:** <from plan, if set — otherwise omit>
-    - **Touches:** <files from plan>
+    - **Touches:** <from plan, if set — otherwise omit>
 
 ## Blocked
 

@@ -56,7 +56,7 @@ Place at the end of your response. Scope discipline with nothing lost.
 ## Workflow
 
 - Read the project's and task's context (its `CONTEXT.md`, project docs, `AGENTS.md` / `CLAUDE.md`) before starting work
-- Use parallel agents for independent subtasks: exploring multiple areas, searching for a pattern across the project, gathering one source while reading another — probe contract and engines in `./references/workflow/agent-fanout.md`
+- Use parallel agents for independent subtasks: exploring multiple areas, searching for a pattern across the project, gathering one source while reading another — fan-out contracts (read-only probes and `implement-task`'s write-mode executors) and engines in `./references/workflow/agent-fanout.md`
 - Do not parallelize sequential edits to the same artifact, or changes that depend on each other's output
 - When spawning parallel tasks, define what each agent investigates and how results will be merged
 - Before presenting results from any changes, run the domain's verification (see the domain pack) and remove scratch artifacts left over from the work
@@ -66,7 +66,7 @@ Place at the end of your response. Scope discipline with nothing lost.
 
 Reference material lives under `./references/`, partitioned into the neutral methodology and the domain packs:
 
-- `./references/workflow/` — the **domain-neutral methodology**: `task-lifecycle.md` (status registry), `task-layout.md` (on-disk layout), `domain-packs.md` (how domains plug in), `acceptance-criteria.md` (the "done" bar), `ticket-format.md` (the product-facing ticket), `context-schema.md` (the `CONTEXT.md` layout), `ideation.md` (the diverge/converge method), `reconciliation.md` (the `-r` reconcile-mode contract), `agent-fanout.md` (the cross-agent probe contract and engines). Consult the ones a task touches.
+- `./references/workflow/` — the **domain-neutral methodology**: `task-lifecycle.md` (status registry), `task-layout.md` (on-disk layout), `domain-packs.md` (how domains plug in), `acceptance-criteria.md` (the "done" bar), `ticket-format.md` (the product-facing ticket), `context-schema.md` (the `CONTEXT.md` layout), `ideation.md` (the diverge/converge method), `reconciliation.md` (the `-r` reconcile-mode contract), `agent-fanout.md` (the cross-agent fan-out contracts — probes and executors — and engines). Consult the ones a task touches.
 - `./references/<domain>/` — **domain packs**: the rules, exploration/planning/execution/verification guidance, review lenses, and checklists for one domain. The active domain is resolved from `**Domain:**` in the task's `CONTEXT.md` (default `engineering`). The engineering pack is the worked example. See `./references/workflow/domain-packs.md`.
 
 Most skills load the applicable references as part of their workflow. For ad-hoc work outside a skill, consult them on your own — the same rule applies. If a task's domain has no pack (or a pack omits a file), run the neutral methodology and say so; never fabricate domain rules or silently borrow another domain's.
