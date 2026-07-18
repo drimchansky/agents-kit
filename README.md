@@ -45,7 +45,7 @@ Core-rules-aware skills that run ad hoc — against a diff, a file, or a codebas
 - [**review-pr**](skills/review-pr/SKILL.md) – review a PR or branch diff against its base. _Example: `/review-pr`_
 - [**update-pr-description**](skills/update-pr-description/SKILL.md) – apply review-pr's drafted description (`-d`) to the PR on GitHub (its follow-up). _Example: `/review-pr -d`, then `/update-pr-description`_
 - [**publish-pr-review**](skills/publish-pr-review/SKILL.md) – publish review-pr's findings to the PR on GitHub: Major/Critical as inline comments, or a short approval if none (its follow-up). _Example: `/review-pr`, then `/publish-pr-review`_
-- [**triage-pr**](skills/triage-pr/SKILL.md) – fetch a PR's review comments, filter to the unaddressed ones, and batch them by concern so you can see the remaining work. Read-only. _Example: `/triage-pr 1234`_
+- [**triage-findings**](skills/triage-findings/SKILL.md) – gather findings from a review in this session, a PR's review comments, or a pasted/saved list; filter to the unaddressed ones and batch them by concern so you can see the remaining work. Read-only. _Example: `/triage-findings` (after a review) or `/triage-findings 1234`_
 - [**review-docs**](skills/review-docs/SKILL.md) – audit existing documentation against the codebase. _Example: `/review-docs README`_
 - [**verify-issue**](skills/verify-issue/SKILL.md) – confirm and investigate a reported bug or issue. _Example: `/verify-issue users see 500 on signup`_
 

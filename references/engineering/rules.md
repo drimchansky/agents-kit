@@ -1,6 +1,6 @@
 # Engineering Rules
 
-The **engineering domain pack's rules overlay** — loaded on top of the neutral `../../CORE_RULES.md` for any task with `**Domain:** engineering` (the default), and unconditionally by the engineering-only skills (`audit`, `review-commit`, `commit`, `review-pr`, `update-pr-description`, `publish-pr-review`, `triage-pr`, `review-docs`, `verify-issue`). See `../workflow/domain-packs.md` for how skills resolve and load a domain.
+The **engineering domain pack's rules overlay** — loaded on top of the neutral `../../CORE_RULES.md` for any task with `**Domain:** engineering` (the default), and unconditionally by the engineering-only skills (`audit`, `review-commit`, `commit`, `review-pr`, `update-pr-description`, `publish-pr-review`, `triage-findings`, `review-docs`, `verify-issue`). See `../workflow/domain-packs.md` for how skills resolve and load a domain.
 
 ## Code & Git discipline
 
