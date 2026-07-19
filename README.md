@@ -36,10 +36,11 @@ git clone git@github.com:drimchansky/agents-kit.git ~/agents-kit
 
 ## Engineering skills
 
-Core-rules-aware skills that run ad hoc — against a diff, a file, or a codebase, with no task folder. Most are code-bound and load the engineering references; `explore` is the exception: a domain-neutral spine skill that pulls the engineering pack only when the topic is code.
+Core-rules-aware skills that run ad hoc — against a diff, a file, or a codebase, with no task folder. Most are code-bound and load the engineering references; `explore` and `implement` are the exceptions: domain-neutral spine skills that resolve a domain from the request rather than from a `CONTEXT.md`, pulling the engineering pack when the work is code.
 
 - [**audit**](skills/audit/SKILL.md) – assess a module, directory, or whole project: structure, patterns, and health — no diff, no recent-change focus. _Example: `/audit src/auth` or `/audit` (whole project)_
 - [**explore**](skills/explore/SKILL.md) – explain code, a library, a concept, or how the pieces fit together. _Example: `/explore how does the retry queue work?`_
+- [**implement**](skills/implement/SKILL.md) – carry out a change directly, with no task folder: frame what's being built, run it through the same verify gates and Stop-the-Line discipline as `implement-task`, and report in chat. _Example: `/implement add a --dry-run flag to the sync command`_
 - [**review-commit**](skills/review-commit/SKILL.md) – review staged changes before committing. _Example: `/review-commit`_
 - [**commit**](skills/commit/SKILL.md) – create the commit from review-commit's drafted message (its follow-up). _Example: `/review-commit`, then `/commit`_
 - [**review-pr**](skills/review-pr/SKILL.md) – review a PR or branch diff against its base. _Example: `/review-pr`_
@@ -95,6 +96,6 @@ See [`domain-packs`](references/workflow/domain-packs.md).
 
 References under `references/` split into the neutral methodology and the domain packs.
 
-- **`references/workflow/`** – what every domain shares: [`task-lifecycle`](references/workflow/task-lifecycle.md) (status registry), [`task-layout`](references/workflow/task-layout.md) (on-disk layout), [`domain-packs`](references/workflow/domain-packs.md) (how domains plug in), [`acceptance-criteria`](references/workflow/acceptance-criteria.md) (the "done" bar), [`ticket-format`](references/workflow/ticket-format.md) (the product-facing ticket), [`context-schema`](references/workflow/context-schema.md) (the `CONTEXT.md` layout), [`ideation`](references/workflow/ideation.md) (the diverge/converge method), [`reconciliation`](references/workflow/reconciliation.md) (the `-r` reconcile-mode contract), and [`agent-fanout`](references/workflow/agent-fanout.md) (the cross-agent fan-out contracts — read-only probes and write-mode executors — and engines).
+- **`references/workflow/`** – what every domain shares: [`task-lifecycle`](references/workflow/task-lifecycle.md) (status registry), [`task-layout`](references/workflow/task-layout.md) (on-disk layout), [`domain-packs`](references/workflow/domain-packs.md) (how domains plug in), [`acceptance-criteria`](references/workflow/acceptance-criteria.md) (the "done" bar), [`ticket-format`](references/workflow/ticket-format.md) (the product-facing ticket), [`context-schema`](references/workflow/context-schema.md) (the `CONTEXT.md` layout), [`ideation`](references/workflow/ideation.md) (the diverge/converge method), [`execution-loop`](references/workflow/execution-loop.md) (the implement → verify loop and its gates, shared by `implement-task` and `implement`), [`reconciliation`](references/workflow/reconciliation.md) (the `-r` reconcile-mode contract), and [`agent-fanout`](references/workflow/agent-fanout.md) (the cross-agent fan-out contracts — read-only probes and write-mode executors — and engines).
 - **`references/engineering/`** – domain pack #1: a `rules` overlay, the `exploration` / `planning` / `execution` / `verification` / `review` bodies the spine loads by phase, and per-surface checklists (typescript, react, css, security, …).
 

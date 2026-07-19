@@ -1,16 +1,17 @@
 # Engineering Verification
 
-What "verify" means when the domain is code — the recipe behind the neutral spine's verify gates,
-Stop-the-Line, checkpoints, and acceptance gate (`implement-task`, `review-task`, `resume-task`,
-`reconcile-task`).
-The spine owns *that* you verify and gate; this file owns *what to run*. See
+What "verify" means when the domain is code — the recipe behind the neutral verify gates,
+Stop-the-Line, checkpoints, and acceptance gate (`implement-task`, `implement`, `review-task`,
+`resume-task`, `reconcile-task`).
+`../workflow/execution-loop.md` owns *that* you verify and gate; this file owns *what to run*. See
 `../workflow/domain-packs.md`.
 
 ## Two verify gates per step
 
 Both are required after implementing a step — they answer different questions:
 
-- **Step verify** — run the step's plan-defined `Verify` criterion. Proves the new behavior works.
+- **Step verify** — run the unit's stated verify criterion (see the consumer's **Source** binding in
+  `../workflow/execution-loop.md`). Proves the new behavior works.
 - **Health verify** — run typecheck, the linter, and the existing test suite on the changed area.
   Proves nothing else regressed. Do not collapse this into the step verify.
 
@@ -32,21 +33,24 @@ the triage in order:
    it.
 6. **Re-verify both gates.** Only then mark the step done.
 
-If it can't be resolved this session, stop — don't skip ahead — and record the pause as a
-`blocked` status with a `**Blocked:**` section (what failed, what was tried, what's needed), per
-`../workflow/task-lifecycle.md`.
+If it can't be resolved this session, stop — don't skip ahead — and record the pause per the
+consumer's **Blocked** binding in `../workflow/execution-loop.md` (for `implement-task`, a `blocked`
+status with a `**Blocked:**` section naming what failed, what was tried, and what's needed, per
+`../workflow/task-lifecycle.md`).
 
 ## Checkpoint assertions
 
-At each `### Checkpoint after Step N`, run every assertion it lists — the full test suite, the
-build / typecheck, and the named end-to-end flow exercised **end to end** (not assumed to work
-because unit tests pass). If any fails, apply Stop-the-Line.
+At each integration gate — `implement-task`'s `### Checkpoint after Step N`, or the end of an
+`implement` run — run every assertion it lists: the full test suite, the build / typecheck, and the
+named end-to-end flow exercised **end to end** (not assumed to work because unit tests pass). If any
+fails, apply Stop-the-Line.
 
 ## Acceptance-gate recipe
 
-When running the goals acceptance gate, verify each goal against the **shipped behavior**,
-not the result file: run the actual command, exercise the actual flow, observe the actual output.
-"Step 3 says it works" is not verification — the result file describes intent, not current state.
+When running the acceptance gate, verify each criterion against the **shipped behavior**, not
+against your record of the work: run the actual command, exercise the actual flow, observe the
+actual output. "Step 3 says it works" is not verification — a record describes intent, not current
+state.
 
 Spot-checking a prior `met` goal (drift / resume): open the file or run the command it cites
 and confirm the behavior still holds; if the result file claims `met` but the named flow no longer

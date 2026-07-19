@@ -1,9 +1,10 @@
 # Engineering Execution
 
-The engineering recipe `implement-task` loads when carrying out a step in code. The neutral spine
-owns the execution *loop* (implement → verify → record → mark done → pause/continue, with
-Stop-the-Line on failure); this file owns the code-specific *how*. Verification gates and the
-acceptance-gate recipe live in the sibling `verification.md`. See `../workflow/domain-packs.md`.
+The engineering recipe `implement-task` and `implement` load when carrying out a unit of work in
+code. `../workflow/execution-loop.md` owns the neutral *loop* (implement → verify → record → mark
+done → pause/continue, with Stop-the-Line on failure); this file owns the code-specific *how*.
+Verification gates and the acceptance-gate recipe live in the sibling `verification.md`. See
+`../workflow/domain-packs.md`.
 
 ## Detect stack and sources (before writing any code)
 
@@ -19,12 +20,13 @@ Writing code is the one place hallucinated APIs do real damage. Before touching 
   web.dev) → runtime/browser compatibility (caniuse, node.green). **Never** Stack Overflow, blog
   posts, or training data as primary sources.
 - If versions are missing or ambiguous, ask the user — don't guess.
-- Record sources for non-obvious framework decisions in the result file, with full URLs and deep
-  links to anchors where possible — keep provenance in the execution record, not in code comments
-  (a code comment stays self-sufficient and may link only official docs or a long-lived public
-  resource, never an internal reference; see `code-style.md` → Comments).
+- Record sources for non-obvious framework decisions per the consumer's **Record** binding
+  (`../workflow/execution-loop.md`), with full URLs and deep links to anchors where possible — keep
+  provenance in the execution record, not in code comments (a code comment stays self-sufficient and
+  may link only official docs or a long-lived public resource, never an internal reference; see
+  `code-style.md` → Comments).
 - If you cannot find an authoritative source for a pattern you're about to use, mark it
-  `// UNVERIFIED:` in the code and call it out in the result file. Honesty beats false confidence.
+  `// UNVERIFIED:` in the code and call it out in that record. Honesty beats false confidence.
 
 Before writing framework-specific code for a step, confirm you've consulted these docs. If the
 step touches a domain covered by a per-surface checklist (`react.md`, `security.md`, …), read it
