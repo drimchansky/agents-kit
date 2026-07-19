@@ -36,7 +36,7 @@ Before working, read `./references/engineering/review.md` — it carries the len
 - If the diff exceeds ~1000 non-generated lines and isn't a single logically cohesive change, the first finding is "split this PR" — large diffs hide bugs and exceed reviewer working memory
 - If the diff bundles refactoring with feature work or bug fixes, flag "separate the refactor" — mixed-purpose PRs are harder to review, harder to revert, and dilute commit history. Exception: refactors required _to enable_ the feature, which should be called out in the PR description.
 
-**Launch the cross-vendor probe** (only with `-x`): as soon as the base branch is determined, start one background probe per `./references/workflow/agent-fanout.md` — a cold second review of the `<base>..HEAD` diff at the repo root, demanding findings with severity and `file:line` evidence. Continue the setup and review inline while it runs; collect and merge per the contract before finalizing Findings.
+**Launch the cross-vendor probe** (only with `-x`): as soon as the base branch is determined, start one background probe per `./references/workflow/agent-fanout.md` — a cold second review of the `<base>...HEAD` diff at the repo root, demanding findings with severity and `file:line` evidence. Continue the setup and review inline while it runs; collect and merge per the contract before finalizing Findings.
 
 **Gather context:**
 

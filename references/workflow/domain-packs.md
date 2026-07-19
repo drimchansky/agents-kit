@@ -65,9 +65,10 @@ just under `**Status:**`:
   only when one is relevant to the question; it has no task folder and often answers
   domain-neutrally.
 - **Engineering-only skills** — `audit`, `review-commit`, `commit`, `review-pr`, `update-pr-description`, `publish-pr-review`, `triage-findings`, `review-docs`,
-  `verify-issue` — operate on a codebase or diff, not a task folder, and load
-  `references/engineering/` unconditionally. They are, in effect, skills contributed by the
-  engineering pack; a future domain may contribute its own skills the same way.
+  `verify-issue`, `review-commit-triage-verify`, `review-pr-triage-verify` — operate on a codebase
+  or diff, not a task folder, and load `references/engineering/` unconditionally. They are, in
+  effect, skills contributed by the engineering pack; a future domain may contribute its own skills
+  the same way.
 - **Format skills** — `migrate-task-format`, `archive-task` — operate on the task-folder
   *envelope* (file names, layout, link-headers, status vocabulary, archive location), not on any
   task's domain content. They read the neutral core but resolve **no** `**Domain:**` pack: the

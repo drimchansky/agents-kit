@@ -1,6 +1,6 @@
 # Agent Fan-Out: Probes, Executors, and Engines
 
-How a skill delegates work to other agents, in two modes: **probes** — self-contained read-only questions whose answers come back as text evidence — and **executors** — write-mode subagents that each carry out one plan step in an isolated working copy, for `implement-task`'s parallel lane only. **This file is the single source of truth for cross-agent fan-out.** The review skills (`review-task`, `review-pr`, `review-commit`, `review-docs`) cite it from their `-x` flag; `implement-task` cites it from its `-p` flag; `CORE_RULES.md`'s parallel-agents rule points here for mechanics. When an engine recipe, the `-x` contract, or the write-mode contract changes, update it here first and propagate to the skills that cite it.
+How a skill delegates work to other agents, in two modes: **probes** — self-contained read-only questions whose answers come back as text evidence — and **executors** — write-mode subagents that each carry out one plan step in an isolated working copy, for `implement-task`'s parallel lane only. **This file is the single source of truth for cross-agent fan-out.** The review skills (`review-task`, `review-pr`, `review-commit`, `review-docs`) cite it from their `-x` flag; `implement-task` cites it from its `-p` flag; the `review-pr-triage-verify` and `review-commit-triage-verify` composites cite it for their per-batch verify probes; `CORE_RULES.md`'s parallel-agents rule points here for mechanics. When an engine recipe, the `-x` contract, or the write-mode contract changes, update it here first and propagate to the skills that cite it.
 
 ## What a probe is
 
@@ -10,7 +10,7 @@ A **probe** is one self-contained, read-only question posed to a separate agent,
 
 - **Self-contained prompt.** Paste in everything the probe must judge — the claims under check, the diff scope or doc paths, absolute paths to the artifacts. Never assume the probe can see the session.
 - **One concern per probe.** A claim *list* for one check is one probe (one prompt, one merged answer) — don't fan a per-claim probe swarm when a batched prompt does the job.
-- **Read-only, enforced and promised.** Probes verify by reading — files, diffs, docs — never by mutating, and never by running the project's build or suite (reviews are analysis-only; the probe inherits that). Never pass an engine's sandbox-bypass flags.
+- **Read-only, promised always, enforced where the engine can.** Probes verify by reading — files, diffs, docs — never by mutating, and never by running the project's build or suite (reviews are analysis-only; the probe inherits that). Never pass an engine's sandbox-bypass flags. Enforcement varies by engine — see the registry; the promise does not.
 - **Demand cited verdicts.** The prompt must require verdicts or findings with `file:line` evidence. An uncited probe answer is an opinion, not evidence.
 - **Evidence, not authority.** A probe's answer is weighed, spot-checked where surprising, and can force re-verification — but it never assigns a verdict or overrides the session's own pass. The invoking skill owns its verdicts.
 - **Degrade gracefully.** A missing engine, a failed login, or a hung probe is reported (`Cross-check: skipped (<reason>)`) and the skill proceeds on its own pass. A probe never blocks a skill.
@@ -19,7 +19,7 @@ A **probe** is one self-contained, read-only question posed to a separate agent,
 
 ## Engine registry
 
-- **`native`** — the host harness's own subagents (Claude Code's agent tool; Codex's multi-agent). **Default for all fan-out** except the opt-in `-x` cross-check below: bulk exploration, parallel searches, reference refresh. Richer integration, no process overhead.
+- **`native`** — the host harness's own subagents (Claude Code's agent tool; Codex's multi-agent). **Default for all fan-out** except the opt-in `-x` cross-check below: bulk exploration, parallel searches, reference refresh. Richer integration, no process overhead. **No engine-side read-only enforcement**: the cross-vendor engines seal the promise with a sandbox flag, but a native subagent inherits the session's tools, so here it is prompt-borne — always state it, and launch on the most restricted agent type whose reading discipline still fits the probe's shape (on Claude Code, `Explore` and `Plan` drop `Edit`/`Write`/`NotebookEdit`, though both keep Bash; `Explore` reads excerpts rather than whole files, which suits a search probe and starves a verify-shape one). A native probe is trusted, not confined.
 - **`codex`** — OpenAI Codex CLI, headless. The cross-vendor engine when the host is Claude Code. Requires `codex` on PATH and an active login — `command -v codex` checks presence; a failed login surfaces at run time and degrades to `skipped`.
 
   ```bash
@@ -70,7 +70,37 @@ Items:
 2. …
 ```
 
-For the cold-review shape (`review-pr`, `review-commit`), replace the numbered items with the review object — "review the diff `<base>..HEAD`" / "review the staged diff (`git diff --cached`)" — and demand findings, each with a severity, `file:line`, and the concrete failure it causes.
+For the cold-review shape (`review-pr`, `review-commit`), replace the numbered items with the review object — "review the diff `<base>...HEAD`" / "review the staged diff (`git diff --cached`)" — and demand findings, each with a severity, `file:line`, and the concrete failure it causes.
+
+For the verify shape (the `review-pr-triage-verify` / `review-commit-triage-verify` composites' per-batch probes):
+
+```
+You are an independent verifier with no prior context. Working root: <absolute repo path>.
+Read <absolute path to the installed verify-issue/SKILL.md> and apply its protocol
+from "## Multiple Findings" onward — skip the Core Rules and intro above it. You verify
+and report only: never edit anything, and never run the project's build, typecheck,
+or tests — verify by reading (analysis-only); where the protocol suggests running a
+command, reason statically instead.
+
+The findings came from a review of <the staged diff (git diff --cached) | the diff
+<base>...HEAD>. Read that diff first — it is what changed. A finding about the change
+itself (something added, dropped, or missing from it) cannot be judged from current
+file contents alone, and a staged change is absent from git log entirely, so the
+protocol's recent-changes step will not surface it.
+
+Treat each finding below as a separate verification target (its Multiple Findings
+rule). For each: a verdict — Confirmed / Not an issue / Inconclusive — with
+file:line evidence, root cause when confirmed, and fix options ordered
+targeted → thorough.
+
+Findings (verbatim, with severity and location when present):
+1. <finding text — severity, file:line, recommendation, exactly as reviewed>
+2. …
+```
+
+The findings go in verbatim — a summarized finding verifies a different claim. So does
+the diff line: it is this shape's review object, the counterpart of the cold-review
+shape's, and a probe that isn't handed it verifies a snapshot rather than a change.
 
 ## Merge contract
 
@@ -79,7 +109,7 @@ The invoking skill compares the probe's answer against its own pass:
 - **Agreement** strengthens the evidence — cite it and move on.
 - **Contradiction is never silently dropped.** Where the probe contradicts the session's grounding or the artifact's own claims, re-check that spot before assigning the verdict; a confirmed contradiction becomes a finding (in `review-task`, a `CONTRADICTED` claim is evidence toward `conflicts with what exists` / `infeasible as stated`; a `NOT FOUND` on a load-bearing reference is a gap).
 - **Novel probe findings are candidates, not findings.** Verify each against the artifact before adopting it into the output — under the session's own severity calibration; never paste a probe finding unverified.
-- **The outcome line closes the loop.** The `Cross-check:` line states `clean`, `merged: …`, or `skipped (<reason>)` — the record makes a skipped or empty probe visible instead of leaving absence ambiguous.
+- **The outcome line closes the loop.** For the `-x` shapes, the `Cross-check:` line states `clean`, `merged: …`, or `skipped (<reason>)` — the record makes a skipped or empty probe visible instead of leaving absence ambiguous. The verify shape closes on its consuming skill's mandatory **Verified** line instead, which carries the same guarantee for the same reason; `Cross-check:` stays reserved for the `-x` pass, so a composite running both keeps two distinct records.
 
 ## Write-mode fan-out: executors (`implement-task -p` only)
 
