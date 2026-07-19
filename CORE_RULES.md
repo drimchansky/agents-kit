@@ -62,6 +62,17 @@ Place at the end of your response. Scope discipline with nothing lost.
 - Before presenting results from any changes, run the domain's verification (see the domain pack) and remove scratch artifacts left over from the work
 - When a task touches multiple places, batch related changes; don't make one edit per message
 
+## Shell Commands
+
+Prefer the purpose-built tools over shell equivalents, and keep the shell commands you do run simple enough to read at a glance. Shell text that a permission layer cannot decompose stalls on an approval prompt even when the tool is allowed, and it is usually the harder version to read anyway. The first bullet chooses between tool and shell; the rest shape the commands that do need the shell.
+
+- **Default to `Read` / `Grep` / `Glob` over `cat`, `grep`, `find`.** They are purpose-built, permitted by default, and return structured results. Reach for the shell when no tool covers the job.
+- **Inline literal values instead of capturing them into variables.** `sqlite3 path/to.db "SELECT …"` over `DB=path/to.db; sqlite3 "$DB" "…"`. One less indirection to follow, and it stays analyzable.
+- **Run a discovery command, then act on what it returned** — don't pipe it through a variable in the same command. `find …` followed by `Read` on the hit beats `F=$(find …); sed -n '1,40p' "$F"`.
+- **Collapse repeated commands into one pattern rather than looping.** `grep -rnE "a|b|c"` over `for x in a b c; do grep "$x"; done`.
+- **Put multi-line programs in a file and run the file.** A long `node -e '…'` or `python -c '…'` is unreadable inline and can't be re-run or edited; write it to the host's scratch/temp area, run it, then remove it per the scratch-artifact rule above.
+- **Deviate when the simple form is genuinely worse** — a variable used five times, or a loop over a list that would make an unreadable alternation, earns its complexity. This is a default, not an invariant.
+
 ## References
 
 Reference material lives under `./references/`, partitioned into the neutral methodology and the domain packs:
