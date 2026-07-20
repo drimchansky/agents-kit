@@ -89,14 +89,14 @@ When resolving which task to act on, the **base resolution** is shared; skills d
 **Base resolution (every skill):**
 
 - **Bare slug given** → resolve in the canonical root only: `.agents/tasks/<slug>/` among the active folders (excluding `Archive/`, matched case-insensitively — see *Archiving finished tasks*); if none matches, look inside `.agents/tasks/Archive/<slug>/` before giving up — a finished task may have been archived there. A bare slug never searches beyond the canonical root; a task living elsewhere must be named by path. (Anything containing a path separator is a path; a bare kebab-case token is a slug.)
-- **Explicit task folder path given** → use it verbatim, anywhere on disk; the folder's own name is the slug. Confirm it's a task folder by contents — a top-level `CONTEXT.md`, `plan.md`, or `ticket.md` (a young task may have only a `ticket.md` or `CONTEXT.md`). A path to a folder with none of these is not a task folder; say so rather than guessing. There is no archive fallback for a path — verbatim is verbatim.
+- **Explicit task folder path given** → use it verbatim, anywhere on disk; the folder's own name is the slug. Confirm it's a task folder by contents — a top-level `CONTEXT.md`, `goals.md`, `plan.md`, or `ticket.md` (a young task may have only a `ticket.md`, `CONTEXT.md`, or a hand-authored `goals.md`). A path to a folder with none of these is not a task folder; say so rather than guessing. There is no archive fallback for a path — verbatim is verbatim.
 - **A full plan path given** (`.../plan.md`) → use it directly and derive the task folder from its parent — the parent folder is the task folder, wherever it sits.
 
 Once the folder is resolved, its files are found by their fixed role names — no stem-globbing, no path a user typed. Don't guess between ambiguous candidates — ask.
 
 **Destination paths (creating skills).** `refine-idea` and `plan-task` accept an optional destination path naming where the task folder should live. Interpret it by what's on disk:
 
-- **Exists, and is a task folder** (top-level `CONTEXT.md`, `plan.md`, or `ticket.md`) → that *is* the task folder; use it verbatim. Its name is the slug — don't derive one.
+- **Exists, and is a task folder** (top-level `CONTEXT.md`, `goals.md`, `plan.md`, or `ticket.md`) → that *is* the task folder; use it verbatim. Its name is the slug — don't derive one.
 - **Exists, and is a directory** without those files → it's the **parent**: create `<path>/<slug>/` inside it. Exception: if its basename already equals the derived slug, ask — silently creating `<slug>/<slug>/` is almost never intended.
 - **Doesn't exist** → if its basename equals the derived slug, the user named the folder itself: create it verbatim. Otherwise ask whether to create `<path>/<slug>/` inside it (the usual intent) or use `<path>` as the folder itself.
 - **Exists, but is a file** → refuse; a destination must be a directory.

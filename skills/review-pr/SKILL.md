@@ -25,7 +25,7 @@ Before working, read `./references/engineering/review.md` — it carries the len
 
 ## Setup
 
-**Determine base branch** (if not specified): check common ancestors with `main`, `master`, `develop`, or `release/*`; verify the commit count is reasonable.
+**Determine base branch** (unless the user specified one): if the current branch has an open GitHub PR, adopt its declared base — `gh pr view --json state,baseRefName` (requires `gh`; targets the current branch's PR), taking `baseRefName` only when `state` is `OPEN`. `gh pr view` returns the branch's PR whatever its state, so a merged or closed PR with no open successor would otherwise hand back a stale base — check `state` and treat anything but `OPEN` as no PR (the same guard `/publish-pr-review` applies). That declared base is the exact one `/publish-pr-review` re-checks against (it recomputes `git merge-base <baseRefName> HEAD`), so adopting it keeps the review and the publish step from resolving different bases and looping. Only with no open PR — `gh` missing, no GitHub remote, or no PR in `OPEN` state — fall back to local heuristics: check common ancestors with `main`, `master`, `develop`, or `release/*`, and verify the commit count is reasonable.
 
 **Build change map:**
 
@@ -41,7 +41,7 @@ Before working, read `./references/engineering/review.md` — it carries the len
 **Gather context:**
 
 - Read commit messages for the branch
-- Check for an open PR on GitHub for this branch with `gh pr view --json number,title,body,state,url,comments,reviews` (requires `gh` CLI). If the command fails because `gh` is missing or the repo has no GitHub remote, note that and skip the PR lookup.
+- Check for an open PR on GitHub for this branch with `gh pr view --json number,title,body,state,url,comments,reviews,baseRefName` (requires `gh` CLI). If the command fails because `gh` is missing or the repo has no GitHub remote, note that and skip the PR lookup. `baseRefName` is the PR's declared base — the one already adopted in **Determine base branch**; carrying it in the context confirms the review ran against the PR's own base.
 - If a PR exists:
     - Read the PR title, description, and any review comments / discussion threads — these often contain the _why_ behind the change and prior reviewer concerns
     - Extract every URL from the PR body and comments (issue trackers, design docs, Slack threads, RFCs, related PRs, dashboards)

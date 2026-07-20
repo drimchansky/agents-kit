@@ -225,7 +225,7 @@ When implementation reveals the plan is wrong — a step is infeasible, scope wa
 - **Update the plan in place** — revise the affected step or scope; add new steps if needed; remove obsolete steps. Keep step numbers stable when possible (insert as `Step 3a`, `Step 3b` rather than renumbering).
 - **Record the divergence in the result file** under the affected step's `**Deviations from plan:**` field, including _why_ the plan changed.
 - In step-by-step mode, pause and confirm the revision with the user before continuing.
-- **If the right call is to abandon the task** rather than revise it, set the plan's `**Status:**` to `skipped` (record why in the result file) and stop — don't delete the plan or leave it dangling in `executing`. See `./references/workflow/task-lifecycle.md`.
+- **If the right call is to abandon the task** rather than revise it, surface that to the user and get explicit confirmation first — `implement-task` never sets `skipped` on its own (see `./references/workflow/task-lifecycle.md`). On confirmation, set the plan's `**Status:**` to `skipped` (record why in the result file) and stop — don't delete the plan or leave it dangling in `executing`.
 
 ### 7. Acceptance Gate
 

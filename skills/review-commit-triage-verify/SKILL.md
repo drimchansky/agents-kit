@@ -29,7 +29,7 @@ Past these three, a phase departs from its skill only where its own section belo
 
 ## Setup
 
-Before phase 1, confirm the working tree agrees with the index on every staged path: no path appears in both `git diff --cached --name-only` and `git diff --name-only`. A path in both is partially staged — `git add -p`, or an edit made after staging — and the phase-3 probes read the live working tree, so they would verify content the staged diff never carried.
+Before phase 1, confirm the working tree agrees with the index on every staged path: no path from the staged set `git diff --cached --name-only` also appears in the working-tree-divergence set — the union of `git diff --name-only` (tracked paths whose working-tree content differs from the index) and `git ls-files --others --exclude-standard` (untracked files, e.g. a staged path deleted from the index but re-created untracked in the tree). A path in both is partially staged — `git add -p`, an edit made after staging, or an untracked re-creation of a staged-deleted path — and the phase-3 probes read the live working tree, so they would verify content the staged diff never carried.
 
 This is a precondition, not a drift check: it can be false from the first moment. Catching it here costs nothing; catching it at phase 3 would waste the whole review. Fails → stop, name the diverging paths, and say they need staging or stashing first. Passing here is also what makes phase 3's re-run a genuine drift check.
 

@@ -31,7 +31,7 @@ Past these three, a phase departs from its skill only where its own section belo
 
 Resolve the base branch per `../review-pr/SKILL.md`'s Setup, and hand it to phase 1 so it isn't resolved twice — the check below needs it.
 
-Then confirm the working tree carries no uncommitted change, staged or unstaged, to a path the branch touches: no path appears in both `git diff HEAD --name-only` (everything uncommitted, either side of the index) and `git diff --name-only <base>...HEAD` (the reviewed paths). The phase-3 probes read the live tree, so an uncommitted edit to a reviewed path means they verify content the branch's diff never carried.
+Then confirm the working tree carries no uncommitted change — staged, unstaged, or untracked — to a path the branch touches: no path from the reviewed set `git diff --name-only <base>...HEAD` appears in the working-tree change set, the union of `git diff HEAD --name-only` (every tracked change, either side of the index) and `git ls-files --others --exclude-standard` (untracked files, including a reviewed path deleted on the branch but re-created untracked in the tree). The phase-3 probes read the live tree, so an uncommitted edit — or an untracked re-creation — at a reviewed path means they verify content the branch's diff never carried.
 
 This is a precondition, not a drift check: mid-work edits make it false from the first moment. Catching it here costs nothing; catching it at phase 3 would waste the whole review, and with `-x` a cross-vendor probe with it. Fails → stop, name the diverging paths, and say they need committing or stashing first. Passing here is also what makes phase 3's re-run a genuine drift check.
 
@@ -70,7 +70,7 @@ Lists, never tables.
 - **Cross-check** (only with `-x`), **Improvements**, **Inaccessible context** (only if any), **PR description** (only with `-d`) — forwarded from the review phase as `review-pr` specs them. Improvements are non-blocking suggestions, not findings — they pass through unverified.
 - **Reviewed** — the provenance line exactly as `review-pr` specs it, so `/publish-pr-review` can anchor: `Reviewed at <head-sha> (merge-base <base-sha>) by <model>`.
 
-**Next:** `/publish-pr-review` posts the **Findings** list above — Withdrawn are already excluded from it, and `none` posts as a short approval. Or address the batches with `/implement-task` or `/review-commit`.
+**Next:** `/publish-pr-review` posts the **Findings** list above — Withdrawn are already excluded from it, and `none` posts as a short approval. With `-d`, `/update-pr-description` applies the drafted **PR description** to the PR. Or address the batches with `/implement-task` or `/review-commit`.
 
 ## Verification
 

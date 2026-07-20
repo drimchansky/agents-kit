@@ -118,4 +118,4 @@ Key questions: is the vulnerable function actually called in your code path? Is 
 - `Access-Control-Allow-Origin: *` on authenticated endpoints — leaks data to any origin; reflect a validated `Origin` instead
 - `postMessage` receivers without strict `event.origin` check — any opener/iframe can send a payload
 - Long `Strict-Transport-Security` `max-age` shipped before HTTPS is fully working — locks every cached browser out for a year
-- Iframe with `sandbox="allow-scripts allow-same-origin"` on untrusted content — that combo lets the frame remove its own sandbox
+- Iframe with `sandbox="allow-scripts allow-same-origin"` on untrusted content served from your **own** origin — that combo lets the frame script away its own sandbox; safe only when the embed is isolated on a distinct origin (see *Cross-Origin Communication*)

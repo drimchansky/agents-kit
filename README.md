@@ -33,7 +33,6 @@ git clone git@github.com:drimchansky/agents-kit.git ~/agents-kit
 - [**review-note**](skills/review-note/SKILL.md) – validate and expand a personal knowledge-base note. _Example: `/review-note notes/stoicism.md`_
 - [**create-notion-page**](skills/create-notion-page/SKILL.md) – draft the requested content and create it as a Notion page via the session's Notion tools — private by default, or under a destination the user names. _Example: `/create-notion-page packing list for the Lisbon trip`_
 - [**refine-idea-chat**](skills/refine-idea-chat/SKILL.md) – sharpen a vague idea in chat, nothing saved. _Example: `/refine-idea-chat add a draft mode`_
-- [**prepare-ticket**](skills/prepare-ticket/SKILL.md) – draft a self-contained ticket describing the real functional output required — title, minimal context, description, and testable acceptance criteria — from a described task. Writes to a file, or seeds a task folder's `ticket.md` as the workflow's product-facing origin. _Example: `/prepare-ticket add CSV export to the accounts table`_
 
 ## Engineering skills
 
@@ -56,6 +55,8 @@ Core-rules-aware skills that run ad hoc — against a diff, a file, or a codebas
 ## Workflow skills
 
 The set that turns a rough task into finished work. Each works on one task folder — `.agents/tasks/<slug>/` by default, or anywhere on disk when named by path — handing the slug (or path) to the next. A task may begin with a product-facing ticket ([`prepare-ticket`](skills/prepare-ticket/SKILL.md) writes `ticket.md`, or `plan-task -t` drafts one as it plans), which the steps below derive from:
+
+- [**prepare-ticket**](skills/prepare-ticket/SKILL.md) – draft that product-facing `ticket.md` from a described task — title, minimal context, description, and testable acceptance criteria; writes to a file, or seeds a task folder's `ticket.md` as the workflow's product-facing origin. _Example: `/prepare-ticket add CSV export to the accounts table`_
 
 1. [**refine-idea**](skills/refine-idea/SKILL.md) – sharpen a vague idea into grounded context before planning. _Example: `/refine-idea add a draft mode to the editor`_
 2. [**plan-task**](skills/plan-task/SKILL.md) – break the work into a plan with testable goals; add `-t` to first draft a self-contained `ticket.md` (via the `prepare-ticket` process) for the plan to derive from. _Example: `/plan-task migrate auth to JWT` or `/plan-task -t add CSV export`_
