@@ -28,6 +28,7 @@ Semantic structure, native overlays, and document metadata. See `accessibility.m
 - [ ] Close + return value without JS: `<form method="dialog">` with `<button value="confirm">`; read `dialog.returnValue` on the `close` event
 - [ ] Disclosures: `<details>`/`<summary>` for accordions; add `name="group"` on siblings to make the set exclusive (opens one, closes others)
 - [ ] Style `<dialog>` backdrop via `::backdrop`; style `<details>` content via `details::details-content`
+- [ ] Tether a menu or tooltip popover to its invoker with CSS anchor positioning — `popovertarget` already establishes the implicit anchor reference (see `css.md` → Anchor Positioning)
 - [ ] Don't nest interactive elements inside `<summary>` — `<summary>` is itself a button and breaks focus order
 - [ ] Don't call `.showModal()` on an element with a `popover` attribute (mutually exclusive runtime states). Exception: `<dialog popover="auto">` declarative combo is valid
 

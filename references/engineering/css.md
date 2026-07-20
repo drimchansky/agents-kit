@@ -13,7 +13,7 @@
 - [ ] `clamp()` for fluid typography and spacing
 - [ ] Usable without horizontal scroll at 320px viewport
 - [ ] `dvh`/`dvw` (or `svh`/`svw`) over `vh`/`vw` on mobile to account for browser-chrome shift
-- [ ] `100%` (or `100dvw`) for full-width — `100vw` ignores scrollbar width and overflows horizontally
+- [ ] `100%`, not `100vw`/`100dvw`, for full-width — no viewport-width unit subtracts a classic scrollbar, so each overflows by its width
 
 ## Container Queries
 
@@ -83,7 +83,19 @@ Small projects need fewer tiers. Reuse existing conventions before inventing new
 - [ ] `scrollbar-gutter: stable` reserves scrollbar space and prevents shift when content grows
 - [ ] `overscroll-behavior: contain` (or `none`) on scrollable widgets — keeps scroll chains from bubbling into the page
 - [ ] Don't use `grid-auto-flow: dense` on interactive content — it reorders visually but keyboard tab still follows DOM
-- [ ] For native overlays (`<dialog>`, `[popover]`) and anchor positioning, see `html.md`
+- [ ] For native overlays (`<dialog>`, `[popover]`), see `html.md`
+
+## Anchor Positioning
+
+Tethers a floating element to a trigger in CSS — no JS measurement loop, and it works on top-layer elements (`[popover]`, `<dialog>`) where an absolutely positioned ancestor gives you nothing. For the overlay markup itself see `html.md` → Native Overlays.
+
+- [ ] `anchor-name: --x` on the trigger; `position-anchor: --x` plus `position: absolute` (or `fixed`) on the floating element — without a `position` value the anchor properties are inert
+- [ ] `position-area` for placement (a 9-cell grid around the anchor: `position-area: block-end center`) before reaching for `anchor()` in inset properties — `anchor()`/`anchor-size()` are for fine control the grid can't express
+- [ ] `position-try-fallbacks: flip-block, flip-inline` so the element flips instead of overflowing the viewport; `@position-try` for custom fallbacks that change more than placement
+- [ ] `anchor-scope: --x` on the repeating wrapper whenever a component repeats — duplicate `anchor-name`s resolve to the **last** one in source order, so every card's menu lands on the last card
+- [ ] `position-visibility: anchors-visible` to hide the floater when its anchor scrolls out of view; a `display: none` anchor silently re-anchors the element to its nearest positioned ancestor instead
+- [ ] `popovertarget` implicitly anchors a popover to its invoker — no `anchor-name` needed for that pairing
+- [ ] Chrome/Edge 125+, Firefox 147+, Safari 26+ at writing (~82% of traffic — the pre-Safari-26 tail is still real). Feature-detect with `@supports (anchor-name: --a)` and keep the un-anchored fallback usable
 
 ## Transitioning Discrete Properties
 
