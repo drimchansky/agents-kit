@@ -148,12 +148,12 @@ When `-v` is passed, identify and run the project's verification scripts before 
 
 Before finalizing any review or audit output, confirm:
 
-- [ ] All usage sites of modified shared code checked
+- [ ] All usage sites of modified shared code checked (diff reviews only)
 - [ ] Severity ratings reflect user/production impact, not aesthetics
 - [ ] No findings on style preferences alone
 - [ ] No findings on unchanged code (diff reviews only)
-- [ ] Bug fixes have regression tests (or the gap is flagged)
+- [ ] Bug fixes have regression tests, or the gap is flagged (diff reviews only)
 - [ ] Dead code identified and listed explicitly
 - [ ] Assumptions in non-trivial decisions identified
 
-For module / project audits (no diff): items 1, 4, and 5 are diff-scoped and don't apply; items 2, 3, 6, and 7 still do.
+For module / project audits (no diff): the items marked "(diff reviews only)" don't apply; the others still do.

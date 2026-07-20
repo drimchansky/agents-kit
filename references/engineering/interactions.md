@@ -33,7 +33,7 @@ Animate icons that change state (play→pause, like→liked), appear on hover, o
 
 ## Tactile Feedback
 
-- [ ] `scale(0.96)` on press for buttons — never below `0.95` (smaller feels exaggerated)
+- [ ] `scale(0.96)` on press for buttons — below `0.95` starts to feel exaggerated
 - [ ] A `static` prop (or equivalent) to disable press scale where motion would distract — destructive confirmations, dense toolbars
 - [ ] On hover-elevated surfaces, transition the `box-shadow`, not a layout property
 

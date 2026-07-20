@@ -88,4 +88,4 @@ High-level audit of overall project structure, patterns, and health.
 
 ## Verification
 
-Apply the Standard Verification Checklist in `./references/engineering/review.md`; the diff-scoped items (modified shared code, unchanged code, regression tests for bug fixes) don't apply to module/project audits — the others do, including the "no findings on style preferences alone" rule.
+Apply the Standard Verification Checklist in `./references/engineering/review.md`.
