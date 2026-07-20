@@ -31,6 +31,7 @@ git clone git@github.com:drimchansky/agents-kit.git ~/agents-kit
 - [**fact-check**](skills/fact-check/SKILL.md) – verify factual claims against trustworthy sources online. _Example: `/fact-check` (paste claim)_
 - [**create-note**](skills/create-note/SKILL.md) – research a topic and distill it into a compact, self-contained learning note with verified sources. _Example: `/create-note spaced repetition`_
 - [**review-note**](skills/review-note/SKILL.md) – validate and expand a personal knowledge-base note. _Example: `/review-note notes/stoicism.md`_
+- [**create-notion-page**](skills/create-notion-page/SKILL.md) – draft the requested content and create it as a Notion page via the session's Notion tools — private by default, or under a destination the user names. _Example: `/create-notion-page packing list for the Lisbon trip`_
 - [**refine-idea-chat**](skills/refine-idea-chat/SKILL.md) – sharpen a vague idea in chat, nothing saved. _Example: `/refine-idea-chat add a draft mode`_
 - [**prepare-ticket**](skills/prepare-ticket/SKILL.md) – draft a self-contained ticket describing the real functional output required — title, minimal context, description, and testable acceptance criteria — from a described task. Writes to a file, or seeds a task folder's `ticket.md` as the workflow's product-facing origin. _Example: `/prepare-ticket add CSV export to the accounts table`_
 
