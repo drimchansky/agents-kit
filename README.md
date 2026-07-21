@@ -51,6 +51,7 @@ Core-rules-aware skills that run ad hoc — against a diff, a file, or a codebas
 - [**verify-issue**](skills/verify-issue/SKILL.md) – confirm and investigate a reported bug or issue. _Example: `/verify-issue users see 500 on signup`_
 - [**review-commit-triage-verify**](skills/review-commit-triage-verify/SKILL.md) – the pre-commit pipeline composite: `review-commit` → `triage-findings` → per-batch `verify-issue` probes in isolated context — one verdict per finding, plus the drafted commit message. _Example: `/review-commit-triage-verify`, then `/commit`_
 - [**review-pr-triage-verify**](skills/review-pr-triage-verify/SKILL.md) – the PR-review pipeline composite: `review-pr` → `triage-findings` → per-batch `verify-issue` probes in isolated context, ending with one verdict per finding. _Example: `/review-pr-triage-verify`, then `/publish-pr-review`_
+- [**triage-findings-verify**](skills/triage-findings-verify/SKILL.md) – the findings-first pipeline composite: `triage-findings` → per-batch `verify-issue` probes in isolated context — one verdict per finding, for findings you already have (a PR's comments, a saved/pasted list, or this session's review). _Example: `/triage-findings-verify 1234` or `/triage-findings-verify` (after a review)_
 
 ## Workflow skills
 

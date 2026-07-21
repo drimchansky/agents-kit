@@ -66,7 +66,7 @@ just under `**Status:**`:
   is relevant to the question and often answers domain-neutrally, and `implement` infers the domain
   from the request.
 - **Engineering-only skills** — `audit`, `review-commit`, `commit`, `review-pr`, `update-pr-description`, `publish-pr-review`, `triage-findings`, `review-docs`,
-  `verify-issue`, `review-commit-triage-verify`, `review-pr-triage-verify` — operate on a codebase
+  `verify-issue`, `review-commit-triage-verify`, `review-pr-triage-verify`, `triage-findings-verify` — operate on a codebase
   or diff, not a task folder, and load `references/engineering/` unconditionally. They are, in
   effect, skills contributed by the engineering pack; a future domain may contribute its own skills
   the same way.

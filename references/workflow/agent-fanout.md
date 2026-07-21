@@ -1,6 +1,6 @@
 # Agent Fan-Out: Probes, Executors, and Engines
 
-How a skill delegates work to other agents, in two modes: **probes** — self-contained read-only questions whose answers come back as text evidence — and **executors** — write-mode subagents that each carry out one plan step in an isolated working copy, for `implement-task`'s parallel lane only. **This file is the single source of truth for cross-agent fan-out.** The review skills (`review-task`, `review-pr`, `review-commit`, `review-docs`) cite it from their `-x` flag; `implement-task` cites it from its `-p` flag; the `review-pr-triage-verify` and `review-commit-triage-verify` composites cite it for their per-batch verify probes; `CORE_RULES.md`'s parallel-agents rule points here for mechanics. When an engine recipe, the `-x` contract, or the write-mode contract changes, update it here first and propagate to the skills that cite it.
+How a skill delegates work to other agents, in two modes: **probes** — self-contained read-only questions whose answers come back as text evidence — and **executors** — write-mode subagents that each carry out one plan step in an isolated working copy, for `implement-task`'s parallel lane only. **This file is the single source of truth for cross-agent fan-out.** The review skills (`review-task`, `review-pr`, `review-commit`, `review-docs`) cite it from their `-x` flag; `implement-task` cites it from its `-p` flag; the `review-pr-triage-verify`, `review-commit-triage-verify`, and `triage-findings-verify` composites cite it for their per-batch verify probes; `CORE_RULES.md`'s parallel-agents rule points here for mechanics. When an engine recipe, the `-x` contract, or the write-mode contract changes, update it here first and propagate to the skills that cite it.
 
 ## What a probe is
 
@@ -72,7 +72,7 @@ Items:
 
 For the cold-review shape (`review-pr`, `review-commit`), replace the numbered items with the review object — "review the diff `<base>...HEAD`" / "review the staged diff (`git diff --cached`)" — and demand findings, each with a severity, `file:line`, and the concrete failure it causes.
 
-For the verify shape (the `review-pr-triage-verify` / `review-commit-triage-verify` composites' per-batch probes):
+For the verify shape (the `review-pr-triage-verify` / `review-commit-triage-verify` / `triage-findings-verify` composites' per-batch probes):
 
 ```
 You are an independent verifier with no prior context. Working root: <absolute repo path>.
@@ -83,7 +83,7 @@ or tests — verify by reading (analysis-only); where the protocol suggests runn
 command, reason statically instead.
 
 The findings came from a review of <the staged diff (git diff --cached) | the diff
-<base>...HEAD>. Read that diff first — it is what changed. A finding about the change
+<base>...HEAD | the PR's diff (gh pr diff <number>)>. Read that diff first — it is what changed. A finding about the change
 itself (something added, dropped, or missing from it) cannot be judged from current
 file contents alone, and a staged change is absent from git log entirely, so the
 protocol's recent-changes step will not surface it.
@@ -99,8 +99,14 @@ Findings (verbatim, with severity and location when present):
 ```
 
 The findings go in verbatim — a summarized finding verifies a different claim. So does
-the diff line: it is this shape's review object, the counterpart of the cold-review
-shape's, and a probe that isn't handed it verifies a snapshot rather than a change.
+the diff line, this shape's review object and the counterpart of the cold-review shape's:
+hand it whenever the findings came from a change — a staged diff, a branch diff, or a PR's
+diff (`gh pr diff`) — since a probe that isn't handed it then verifies a snapshot rather
+than a change. When the findings are standalone instead — a saved or pasted list with no
+associated change, as `triage-findings-verify` can resolve — drop that paragraph: there is
+no diff, and the probe verifies each finding as a claim against current code, exactly what
+`verify-issue`'s single-issue mode does. A diff that doesn't correspond to the findings is
+worse than none.
 
 ## Merge contract
 
