@@ -31,7 +31,7 @@ A `skipped` plan is exempt from reconciliation entirely — it's terminal; repor
 
 ### The record
 
-- **When `result.md` exists (or is created by the pairing repair)** — record every applied edit in one `## Reconciliation — YYYY-MM-DD` section appended to it (suffix ` (2)` if one for today already exists, keeping anchors unique). Prior sections — including a prior `## Acceptance` — are immutable; supersede them via this entry plus a status flip, never rewrite.
+- **When `result.md` exists (or is created by the pairing repair)** — record every applied edit in one `## Reconciliation — YYYY-MM-DD` section appended to it (suffix ` (2)` if one for today already exists, keeping anchors unique). Prior sections — including a prior `## Acceptance` — are immutable; supersede them via this entry plus a status flip, never rewrite. Two surfaces sit outside this rule: `## Current state` — derived header metadata (contract in `./task-lifecycle.md`), rewritten in place, never appended — and `## Decision log` — an append-only index of dated pointer lines, appended, never rewritten.
 - **When no result file exists and none is owed** (the plan is still `to-do`, or was just reverted to it) — no result record for any edit made in this state; the printed change list is the record. Don't create a result file just to log reconciliation.
 
 ```markdown
@@ -58,6 +58,10 @@ Two in-place annotations recur across skills; the formats below fix both the wor
 - **Broken external link** — **auto**: append `— _broken as of YYYY-MM-DD (404)_` to the citing line (in `CONTEXT.md`'s References or a `plan.md` step), or swap in the new URL when a redirect target is known. Links inside prior `result.md` sections and in `goals.md` are never touched — note them in the Reconciliation entry (when one is being written) only, never in those files.
 - **Answered open question** — **auto** only when the source answers it unambiguously (quote or tightly paraphrase it): append `— _answered YYYY-MM-DD: <answer> ([source](url) when there is one)_` to the question line in `CONTEXT.md`'s or `plan.md`'s Open Questions. **Ask** when the answer needs interpretation. A goal marked `_(unresolved: …)_` is never annotated in `goals.md` — it's surfaced in chat (docs → reality), or handled through the new-goal confirmation row (session → docs).
 
+### Current state refresh
+
+Every reconciler that writes `result.md` ends the run by rewriting its `## Current state` block to post-edit reality: `_Updated: YYYY-MM-DD_`, a one-line status gloss consistent with the (possibly just-changed) `**Status:**`, `**Pointers:**` refreshed to the identifiers currently in play, `**Next:**` naming the concrete next action — ≤1 KB, superseded detail dropped; history lives in the log, not here. The block may never claim a stronger lifecycle state than the `**Status:**` header. Under `-r` this rewrite is re-derivation of a digest constrained by the (possibly weakened) Status — not a strengthen: the weaken-only rule governs `**Status:**` and checkboxes, and the digest merely follows them. A legacy result with no `## Current state` block gains one here (per `./task-lifecycle.md`, create it at the next write).
+
 ### The `plan.md` write surface
 
 Every reconciler writes `plan.md` through the same five shared openings; the session direction adds two more of its own (see its write surface). Nothing else in `plan.md` is written in either direction. Which of the five a direction may use, and which way each may move, is the direction rule's business.
@@ -75,7 +79,8 @@ Every reconciler writes `plan.md` through the same five shared openings; the ses
 1. Print the skill's full report first — a faithful snapshot of **pre-reconcile** state, never regenerated after edits.
 2. Auto-apply the obvious fixes, file-by-file: `result.md` first when a record is owed, then `plan.md`, then `CONTEXT.md`.
 3. Ask the batched judgment questions; apply the answers.
-4. Close with the change list (or `Nothing to reconcile.` when nothing was actionable — and write nothing, not even an empty Reconciliation entry):
+4. Refresh `## Current state` (see *Current state refresh* above); then, if any `**Status:**` changed, regenerate the store index — walk up from the task folder for `scripts/generate-index.mjs`, run `node <that-root>/scripts/generate-index.mjs`, skip silently when the script or `node` is absent (see `./task-layout.md` § *Store-level artifacts*).
+5. Close with the change list (or `Nothing to reconcile.` when nothing was actionable — and write nothing, not even an empty Reconciliation entry):
 
 ```markdown
 ## Reconciliation applied
@@ -98,7 +103,7 @@ Findings come from a printed report comparing the docs against reality on disk, 
 Exactly three task files, and nothing else:
 
 - `plan.md` — the five writes above, under this direction's constraints: it only ever clears a checkbox, never checks one, and the `**Status:**` header moves only downward (*Weaken, never strengthen* below).
-- `result.md` — append-only; see the record format above.
+- `result.md` — append-only, except the `## Current state` block, which is rewritten in place (*Current state refresh*); see the record format above.
 - `CONTEXT.md` — minimal annotations inside `## References` and `## Open Questions` only, per the carve-out in `./task-lifecycle.md`. Never the `**Status:**` origin marker, never prose rewrites.
 
 `goals.md` and the upstream `ticket.md` are **never** edited — they are the user's contract. When a goal needs rewriting, print the suggested text for the user to apply; when the *ask* itself has changed, surface it for the user to update the ticket. An engineer answer still goes to the user as text, not into the file. `-r` never re-runs the acceptance gate and never executes plan work.
@@ -169,3 +174,11 @@ Findings come from diffing the session against the docs. Legend: **auto** = obvi
 - **Changed step scope / new step / changed Verify criterion** → **ask**: confirm, then write `plan.md` within the confirmed finding's scope (update `## Scope`'s goal-ID partition to stay total).
 - **Changed ask** → flag only: the session shows the product requirement itself differs from what `ticket.md` states. The ticket is user-owned; surface it for the user to update (then re-derive goals via `plan-task`). Reconciliation never rewrites the ask.
 - **Work discussed but not done** → flag only: it isn't verified, so it isn't recorded; "Not reconciled" names `implement-task`.
+
+### Compaction (size trigger)
+
+At the end of a `reconcile-task` run, if `result.md` exceeds **20 KB**, add a judgment item to the batched round proposing compaction — never auto-apply it, and `-r` never compacts. Compaction is the one sanctioned removal of prior log sections, and it is safe only because the removed text stays recoverable:
+
+- **Precondition:** the task folder is inside a git repository (`git -C <task-dir> rev-parse --git-dir` succeeds) — refuse otherwise, since compaction deletes text recoverable only via version history. Note in the proposal if the folder has uncommitted changes: the user should commit before consenting.
+- **Collapse only superseded narrative** — sections a later `## Reconciliation` entry supersedes, verbose transcripts, step detail long overtaken by events. Always keep: the link header, `## Current state`, `## Decision log`, every `## Acceptance`, the latest `## Reconciliation`, and any active `**Blocked:**` / `**In review:**` section.
+- Each removed section becomes one line under a single `## Compacted — YYYY-MM-DD` stub naming the collapsed anchors, closing with "full text in git history (pre-compaction state)."

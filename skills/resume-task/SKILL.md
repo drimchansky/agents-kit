@@ -56,7 +56,7 @@ Read all four core artifacts — plus `ticket.md` when present — don't answer 
 - `CONTEXT.md` in the resolved task folder — the static grounding context (problem statement, scope summary, key assumptions, references).
 - `goals.md` — capture the full `## Goals` list by `G<n>` ID. Note any goal marked `_(unresolved: ...)_`.
 - `plan.md` — note its `**Status:**` header and its `**Goals:**` link.
-- `result.md` — note `**Status:**`, find the latest per-step or full-run section, capture every `**Blocked:**` and `**In review:**` block verbatim, and capture any `## Acceptance` section verbatim.
+- `result.md` — read `## Current state` first for orientation (the digest of where things stand — but it's derived metadata, so every claim in it becomes a Step-4 doc claim to verify, never trusted ground truth); then note `**Status:**`, find the latest per-step or full-run section, capture every `**Blocked:**` and `**In review:**` block verbatim, and capture any `## Acceptance` section verbatim.
 
 Status vocabulary and the **pairing rule** live in `./references/workflow/task-lifecycle.md` — flag mismatched pairs as drift. Deliberate pauses are not drift: a `skipped` plan is abandoned (a missing result file is expected), `blocked` + `**Blocked:**` is paused (name the cause), and `in-review` + `**In review:**` is parked awaiting the listed `(external)` goals. The goals file has no status.
 
@@ -85,6 +85,7 @@ Partition the claims by state, because they're checked differently:
 
 - **Done / shipped claims** — anything a `**Shipped:**` block or a `- [x]` step asserts already exists or already happened. Checkable against reality now; a claim that no longer holds is drift.
 - **Pending claims** — anything a `- [ ]` (not yet done) step will produce. These may legitimately not exist yet; absence is **not** drift. A pending artifact that *already* exists is worth an `info` (the step may be partly done, or there's a collision).
+- **`## Current state` claims** — the digest's status gloss, `**Pointers:**` entries, and `**Next:**` line. The digest is derived, so it can rot without any checkbox moving: a gloss that no longer matches the markers, a `**Next:**` naming an action that already happened, or a pointer whose live state diverges from what the gloss implies (Step 5 fetches it) is drift — tag `warn`.
 
 For each done/shipped claim, confirm it still holds and tag the finding. When the domain is code, follow the drift-verification recipe in `./references/engineering/exploration.md` (partition paths shipped vs pending, existence-check, symbol-survival grep, open a shipped file to confirm the change is present and not reverted). For other domains, verify each claim against the domain's own artifacts (a booking still confirmed, a document still signed, a commitment still standing).
 
@@ -98,7 +99,7 @@ Tag each finding `info` (FYI), `warn` (review before resuming), or `block` (plan
 
 External systems cited in the task docs drift independently of the code — a ticket closes, a thread answers an open question, a doc gets rewritten. This is the external counterpart to Step 4: Step 4 catches drift on disk; this step catches drift in the systems the docs point at.
 
-Collect every external URL cited across the task files — including `ticket.md`'s References when present — (skip `mailto:`, `file://`, `localhost`, anchors-only, and relative links), deduplicate, and fetch each one **read-only** with the best capability the host agent offers — a structured integration over raw HTML scraping when one exists. Capture just enough to compare against the citing file's description: current title, status, last-updated. Tag each reference:
+Collect every external URL cited across the task files — including `ticket.md`'s References when present — (skip `mailto:`, `file://`, `localhost`, anchors-only, and relative links), deduplicate, and fetch each one **read-only** with the best capability the host agent offers. The result's `## Current state` `**Pointers:**` entries are first-class citations — a PR or ticket pointer is fetched like any cited URL, and a live state diverging from the digest (a PR recorded as awaited that has merged or closed) is `warn`; a bare branch/SHA pointer isn't fetchable — it's checked against the repo in Step 4 instead. Prefer a structured integration over raw HTML scraping when one exists. Capture just enough to compare against the citing file's description: current title, status, last-updated. Tag each reference:
 
 - `info` — fetched cleanly, no material change since cited. Auth-walled links are also `info`, marked `auth required — re-check manually` — don't pretend they were fetched.
 - `warn` — material change: status flipped, new comments resolving an open question, doc substantively edited, PR merged or closed.
@@ -128,7 +129,7 @@ Skip this step entirely without the flag. With `-r`, apply the brief's findings 
 
 ## Status
 
-<one paragraph: N of M steps done; executing / blocked / in-review / ready to resume / done / skipped; whether the acceptance gate has run and whether any `(external)` goal is still pending>
+<one paragraph: N of M steps done; executing / blocked / in-review / ready to resume / done / skipped; whether the acceptance gate has run and whether any `(external)` goal is still pending. May quote the result's `## Current state` gloss — marked verified or stale per the Step-4 drift check, never repeated unchecked>
 
 ## Goals
 
@@ -221,7 +222,7 @@ Confirm the protocol invariants before finishing:
 - [ ] Task folder resolved per `task-layout.md` (asked when ambiguous); all four core artifacts read (plus `ticket.md` when present); a missing `goals.md` flagged
 - [ ] (no `-r`) Nothing written, edited, renamed, or deleted anywhere; in both modes: no git mutation, external systems fetched read-only, no `BRIEF.md` or scratch briefing file
 - [ ] State reconstructed from checkbox markers, not prose; `**Blocked:**` / `**In review:**` sections surfaced verbatim; a `skipped` plan reported as abandoned, not drift
-- [ ] Drift check compared done/shipped claims against current reality — paths partitioned shipped vs. pending, every `met` goal re-checked on a `done` plan, a missing `## Acceptance` on a `done` plan flagged `block` — with "Drift since plan" rendered even when clean
+- [ ] Drift check compared done/shipped claims against current reality — paths partitioned shipped vs. pending, `## Current state` claims (gloss, Pointers, Next) included, every `met` goal re-checked on a `done` plan, a missing `## Acceptance` on a `done` plan flagged `block` — with "Drift since plan" rendered even when clean
 - [ ] Every cited URL fetched read-only and tagged (`warn` on material change, `block` on broken, `info` on auth-walled); "References update" rendered even when none
 - [ ] Brief printed to chat with the template sections and a concrete "Where to start" action
 - [ ] (`-r`) Reconciliation followed the shared contract; brief printed from pre-reconcile state; every edit maps to a finding; closing change list printed with real-work findings under "Not reconciled"

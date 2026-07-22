@@ -52,6 +52,7 @@ Derive the conformance checklist from the docs at run time — don't migrate aga
 - **Role files** — the set of role-named files, their exact spelling and capitalization, and the rule that no stem prefix remains; some (the upstream `ticket.md`) are optional, so their absence is conformant, not a deviation. (`task-layout.md`)
 - **Link-headers** — which `**Header:**` lines exist and that each points at its `./`-relative role-name target. (`task-layout.md`)
 - **Status vocabulary, per file** — read it from `task-lifecycle.md`, which gives each status-bearing file a **distinct** vocabulary: `CONTEXT.md` carries a one-shot *origin marker*, `plan.md` and `result.md` carry *lifecycle states* (a different pool), and `goals.md` carries **no** status. A value valid for one file is not automatically valid on another — check each file against its own column.
+- **Result Current-state block** — whether `result.md` opens with the `## Current state` header block, read against the liveness rule in `task-lifecycle.md` (expected on live results, frozen on `done`, absence on a legacy result conformant — but a *live*-status result without one is worth flagging; see §3/§6). (`task-lifecycle.md`)
 - **Multi-part layout** — sibling folders (optionally `NN-` prefixed), with whatever shared-layer rule the docs currently state. (`task-layout.md`)
 - **Archive** — the single archive directory the docs define (`Archive/`, recognized case-insensitively), the discovery rule that excludes it, and the case-normalization of a stray lowercase `archive/` container to `Archive/`. (`task-layout.md`)
 
@@ -83,6 +84,7 @@ Diff each folder against the §1 checklist and assign exactly one label:
     - a `plan.md` whose steps carry no `**Goal:**` citation line — back-filling citations maps steps to goals by judgment;
     - a `**Status:**` value not in *that file's* current vocabulary (per `task-lifecycle.md`, checked against its own column — origin marker for `CONTEXT.md`, lifecycle state for `plan.md` / `result.md`) — **always** judgment, even when a 1:1 mapping looks obvious, because §5 has no lossless status rewrite so remapping is never auto-applied;
     - a `goals.md` (or legacy `spec.md`) carrying any `**Status:**` header — it must have none, and removing the line deletes content, so flag it rather than stripping it;
+    - a **live-status** (`executing` / `blocked` / `in-review`) `result.md` with no `## Current state` block — deriving one summarizes the log's content, never a lossless transform (a `done` result, or a folder with no result file, is conformant without one per `task-lifecycle.md`);
     - a **destination-name collision** — a prefixed, wrong-case, or legacy-named file whose target role name is already occupied by a *distinct* file (e.g. both a legacy `spec.md` and a hand-edited `goals.md`) — since renaming would clobber or half-migrate, flag the whole folder;
     - any shape you can't confidently match to the checklist.
 
@@ -173,6 +175,10 @@ Do **not** flatten the directories yourself — flattening without step 1 strand
 **Plan steps with no `**Goal:**` citation** (a `plan.md` whose steps predate the citation convention):
 
 > The current step format carries a `**Goal:**` line naming the goal ID(s) the step delivers, or `none (infra/refactor)` (`task-layout.md`). Back-filling these maps each step to the goals it delivers — a judgment call the skill won't auto-apply. To migrate by hand: add a `**Goal:**` line to each step, then re-run.
+
+**Live-status result with no `## Current state` block** (an `executing` / `blocked` / `in-review` `result.md` predating the block):
+
+> `result.md` is live but predates the `## Current state` header block (`task-lifecycle.md`). Deriving one summarizes the log — content work the skill won't auto-apply. To migrate by hand: read the log's tail and write the block directly under the header `---` — `_Updated: YYYY-MM-DD_`, a one-line status gloss matching `**Status:**`, `**Pointers:**` (branch / PR / SHA / ticket in play), `**Next:**`; ≤1 KB. Or let a reconciler do it: `resume-task -r` and `reconcile-task` create the block as part of their Current-state refresh. Then re-run.
 
 **Two archive containers** (`archive/` *and* `Archive/` both present at the task root — only possible on a case-sensitive filesystem):
 

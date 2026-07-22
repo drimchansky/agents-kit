@@ -12,10 +12,10 @@ A task lives in a single flat folder, named for its slug. A task folder is defin
 ├── CONTEXT.md     # static grounding context (origin marker + inputs)
 ├── goals.md       # acceptance criteria — what "done" means
 ├── plan.md        # the contract: scope, steps, verify criteria
-└── result.md      # append-only execution record
+└── result.md      # rewritable Current-state header + append-only execution log
 ```
 
-One plan per folder. `CONTEXT.md` is capitalized; `ticket.md`, `goals.md`, `plan.md`, and `result.md` are lowercase. A skill finds each file by its fixed role name (convention/glob), so moving, relocating, or archiving a folder never breaks a path. The in-folder `**Context:**` / `**Goals:**` / `**Plan:**` / `**Result:**` link-headers point at `./CONTEXT.md`, `./goals.md`, `./plan.md`, and `./result.md` — stable `./` links that survive folder moves; when the task has a `ticket.md`, the plan's optional `**Ticket:**` header points at `./ticket.md` the same way.
+One plan per folder. `CONTEXT.md` is capitalized; `ticket.md`, `goals.md`, `plan.md`, and `result.md` are lowercase. A skill finds each file by its fixed role name (convention/glob), so moving, relocating, or archiving a folder never breaks a path. The in-folder `**Context:**` / `**Goals:**` / `**Plan:**` / `**Result:**` link-headers point at `./CONTEXT.md`, `./goals.md`, `./plan.md`, and `./result.md` — stable `./` links that survive folder moves; when the task has a `ticket.md`, the plan's optional `**Ticket:**` header points at `./ticket.md` the same way. Inside `result.md`, the first `##` section is the rewritable `## Current state` block (contract in the sibling `task-lifecycle.md`); everything beneath it is the append-only log.
 
 ## The goals file: durable IDs, cited by step
 
@@ -47,6 +47,8 @@ Within a task folder, each piece of information lives in exactly **one** file �
 - **Execution contract** — steps, verify criteria, checkpoints, risks to execution, and the **plan-time deltas**: findings, decisions, and questions that surfaced during planning and aren't already in `CONTEXT.md` — lives in `plan.md`.
 - **History** — what happened — lives in `result.md`.
 - **An answer is recorded where its question lives** — a resolved `CONTEXT.md` open question is annotated there; a resolved plan-time question, in the plan. Never both.
+- **External-system facts** — a fact about a system outside the folder (a PR, a branch, a commit, a ticket, a deploy) splits into two classes. The *identifier* — PR number, branch name, SHA, ticket key, URL — is a durable **pointer**: its home is the result's `## Current state` `**Pointers:**` line for the task's own delivery vehicle, or `CONTEXT.md`'s `## References` for grounding links. The *state* of that system — open/merged/green/deployed/closed — is world-truth, not doc-truth: it may appear only **timestamped**, in the rewritable `## Current state` block or inside a dated log entry as history, never as undated durable prose. Freshness is always derived live — `resume-task` refreshes pointers and drift-checks state claims — never trusted from the doc.
+- **Cross-folder citations use store-root paths.** `./` links survive folder moves; links *between* task folders, or to a store-level doc, do not — archiving relocates one side. Cite another task or a store-level doc by its path from the store root as plain text — e.g. `P2P.org/Hub/Account Management/DECISIONS.md` — not a relative link.
 
 Cite a sibling with a `./` link naming the section — `see [CONTEXT § Recommended Direction](./CONTEXT.md)` — the same stable within-folder links the file headers use. Copying a sibling's content authors future drift: two copies of one fact disagree as soon as either is edited. `review-task` flags restated grounding as cross-file drift; the fix is to keep the copy in the fact's home and collapse the other to a citation.
 
@@ -81,6 +83,13 @@ A completed (`done`) or `skipped` task is moved there to keep its parent's activ
 The `archive-task` skill performs this move — it confirms the plan is `done` or `skipped`, then relocates the whole folder — or you can `mv` it by hand; the result is identical.
 
 Moving a whole task folder preserves its internal `./` links, since every cross-reference inside the folder is relative to the folder itself. Nothing else needs rewriting.
+
+## Store-level artifacts (optional)
+
+A directory tree that groups many task folders — a task **store**, like a central `Tasks/` repo with area subdirectories — may carry store-level files. Both kinds below are optional; skills detect them by existence and degrade silently when absent.
+
+- **`INDEX.md` — generated, never hand-edited.** A status index of every task folder in the store, produced by `scripts/generate-index.mjs` at the store root; the file's own header carries the regeneration command. Skills that flip a `**Status:**` field regenerate it opportunistically: walk up from the task folder looking for `scripts/generate-index.mjs`; when found, run `node <that-root>/scripts/generate-index.mjs`; when the script is absent — or `node` is unavailable — skip silently. Regenerating the index is a store-index refresh, not a task-content edit; no reconciliation finding is needed to run it.
+- **`DECISIONS.md` — the home for project-scoped decisions.** The store root, or an area within it, may carry a `DECISIONS.md`: the single home for decisions that outlive any one task, each entry numbered and dated. Tasks cite an entry as `Decision #N — <store-root path>` (plain text, per the cross-folder citation rule above). Task-local decisions stay in the task's own files; a task that inlines a copy of a project decision for self-sufficiency must name `DECISIONS.md` as the source.
 
 ## Discovery rules for skills
 

@@ -13,7 +13,7 @@ disable-model-invocation: true
 
 This skill executes a plan written by `plan-task` (or any `plan.md` in a task folder — canonically under `.agents/tasks/`, though a task folder anywhere on disk works the same — that follows the same format). It implements the work, updates a companion **result file** as it goes, marks each step `DONE` in the plan with a link back to the result section, and runs a final **acceptance gate** against the goals before flipping the plan to `done`.
 
-The plan is the **contract for how**; the goals are the **contract for what done means**; the result file is the **append-only record**; `CONTEXT.md` is the **static grounding context** for the task; the optional `ticket.md` is the **product-facing ask** the goals derive from. They live side by side in the resolved task folder:
+The plan is the **contract for how**; the goals are the **contract for what done means**; the result file is the **record** — a rewritable `## Current state` digest above an append-only log; `CONTEXT.md` is the **static grounding context** for the task; the optional `ticket.md` is the **product-facing ask** the goals derive from. They live side by side in the resolved task folder:
 
 - Ticket: `ticket.md` (optional; read-only for this skill)
 - Context: `CONTEXT.md` (read-only for this skill)
@@ -101,10 +101,18 @@ Create `<task-dir>/result.md` (when it doesn't already exist) with this header:
 **Started:** YYYY-MM-DD
 **Status:** executing
 
+## Current state
+_Updated: YYYY-MM-DD_
+- **Status:** executing — <one line: where things stand>
+- **Pointers:** <branch `…`, PR #… (url), SHA …, ticket … — or "none yet">
+- **Next:** <one line>
+
 ---
 ```
 
-Update the plan's `**Result:**` line to link to this file (`./result.md`), and flip the plan's `**Status:**` from `to-do` to `executing` to mark that work has begun.
+The `## Current state` block is derived header metadata (contract in `./references/workflow/task-lifecycle.md`): ≤1 KB, rewritten **in place** as work progresses — never appended to — and never claiming a stronger lifecycle state than the `**Status:**` header. Everything below its closing `---` is the append-only log. A pre-existing result file without the block gains one at this run's first write.
+
+Update the plan's `**Result:**` line to link to this file (`./result.md`), and flip the plan's `**Status:**` from `to-do` to `executing` to mark that work has begun — then, since this is a `**Status:**` change, regenerate the store index if the store has one (the §8 walk-up rule).
 
 **Reviving a `skipped` plan** — only after the explicit confirmation the *Skip when* gate requires.
 
@@ -127,7 +135,7 @@ What this skill binds:
     ```
 
 - **Pause or continue** — in step-by-step mode, stop after each step and report progress; in full-plan mode, continue to the next.
-- **Blocked** — when Stop-the-Line can't be cleared this session, set the plan and result `**Status:**` to `blocked` and add a `**Blocked:**` section to the result file naming the cause (what failed, what was tried, and what's needed — or what's awaited). Then stop; don't skip ahead. See `./references/workflow/task-lifecycle.md`.
+- **Blocked** — when Stop-the-Line can't be cleared this session, set the plan and result `**Status:**` to `blocked`, add a `**Blocked:**` section to the result file naming the cause (what failed, what was tried, and what's needed — or what's awaited), and rewrite `## Current state` naming the blocker. Then stop; don't skip ahead — but regenerate the store index if the store has one (the §8 walk-up rule). See `./references/workflow/task-lifecycle.md`.
 - **Integration gates** — the plan's `### Checkpoint after Step N` headings between step blocks, each a **mandatory gate** after marking step N done, not an optional summary. A checkpoint is not a step, has no `- [ ]` marker, and is never flipped. Run its assertions per the shared loop, append a checkpoint section to the result file (§5), and in step-by-step mode pause there just as at a step boundary.
 
 #### Parallel lane (with `-p`)
@@ -218,6 +226,8 @@ With `-p`, merged lane steps are the exception on both counts: each keeps its ow
 
 If the checkpoint failed, record `**Outcome:** failed` and the failure details, then follow Stop-the-Line. Do not move on.
 
+**After appending any section** — step, full-run, or checkpoint — rewrite the `## Current state` block to match: `_Updated:_` refreshed, status gloss, `**Pointers:**` (the branch/PR/SHA/ticket currently in play), `**Next:**`; ≤1 KB, superseded detail dropped. **When a step records a decision**, append a dated one-liner to the `## Decision log` section (creating it directly below the `## Current state` block's closing `---` when absent, as the first section of the append-only log): `- YYYY-MM-DD — <decision> (→ <result anchor / CONTEXT section / plan step / DECISIONS.md #N>)` — a pointer to where the decision is recorded, never the decision text itself (see `./references/workflow/task-lifecycle.md`).
+
 ### 6. Plan Revisions Mid-Execution
 
 When implementation reveals the plan is wrong — a step is infeasible, scope was wrong, a new step is needed, or a step turns out too large to land in one slice — apply the scope-change rules in `./references/workflow/execution-loop.md` § *Scope changes mid-execution*, including its splitting strategies. This skill's binding for what surfacing and recording mean against a plan:
@@ -271,6 +281,8 @@ The gate produces one of two session-terminal outcomes — `done` or `in-review`
 - Update the result file's `**Status:**` to `done` and add a closing `**Completed:** YYYY-MM-DD` line
 - Run the shared loop's *Before presenting* step — the domain's pre-presentation checks over the full changed surface, then the summary of what shipped, acceptance results, deviations, and open follow-ups (`./references/workflow/execution-loop.md`)
 
+In **both** terminal branches, rewrite `## Current state` last — at `in-review` its `**Next:**` names the awaited external verification; at `done` the block stays frozen as the final digest. Then regenerate the store index when the store has one: walk up from the task folder for `scripts/generate-index.mjs`; run `node <that-root>/scripts/generate-index.mjs`; skip silently when the script or `node` is absent (`./references/workflow/task-layout.md` § *Store-level artifacts*).
+
 **Reaching `done` from `in-review` (a later re-run).** When the user reports the external verification happened — a confirmation, a receipt, or the observed live state — re-run the gate on each `pending external` goal against that **best-available proxy** (per `./references/workflow/acceptance-criteria.md`): the user-reported confirmation *is* the sanctioned evidence for an `(external)` goal. Update its `## Acceptance` line from `pending external` to `met` (noting the proxy), then finalize to `done` as above (adding the `**Completed:**` line). If the review instead surfaced problems, flip both files back to `executing` and resume — don't force `done`.
 
 ## Don't Rationalize
@@ -291,6 +303,7 @@ Confirm the protocol invariants before finishing:
 
 - [ ] All four core artifacts read before starting (plus `ticket.md` when present); a missing `goals.md` surfaced to the user, never invented
 - [ ] Result file initialized and kept paired with the plan per `./references/workflow/task-lifecycle.md` — statuses flip together, `**Completed:**` line only at `done`
+- [ ] `## Current state` rewritten at every status flip, after every appended section, and at finalize — ≤1 KB, consistent with `**Status:**`, never claiming more than it
 - [ ] Every completed step: its plan-defined `Verify` criterion actually run and passed, health verify green, checkbox flipped with a link to its result section
 - [ ] Every checkpoint run and recorded; no step started over a failing gate
 - [ ] Acceptance gate ran every goal by `G<n>` ID against live behavior and wrote the `## Acceptance` section — no goal left `unmet` at finalize, `pending external` only on `(external)` goals (parking the task at `in-review`)

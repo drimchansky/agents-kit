@@ -89,6 +89,8 @@ A plain filesystem move — no git. The source is the exact folder resolved and 
 
 Confirm what moved (`<slug>` → the actual `DEST`), note that the folder's internal links are intact, and remind the user that the task is now excluded from active listings; to un-archive it, move it back out of `Archive/` — naming its slug only lets discovery find it there, it does not un-archive it. When the folder is inside a git repo, the change is working-tree-only — review with `git status` and commit; a task outside any repo has nothing to commit.
 
+When the store has an index, regenerate it after the move: walk up from `PARENT` for `scripts/generate-index.mjs`; run `node <that-root>/scripts/generate-index.mjs`; skip silently when the script or `node` is absent. This is a store-index refresh sanctioned by `task-layout.md` § *Store-level artifacts*, not a task-content edit — the never-edit rule above is untouched.
+
 ## Output Template
 
 On success:
@@ -126,4 +128,4 @@ Confirm the protocol invariants before finishing:
 - [ ] Non-terminal, unknown-status, or missing-`plan.md` folders refused with the path to proceed; status and content never edited
 - [ ] Destination guarded — `DEST` collision refused, symlink or non-directory at `PARENT/Archive` refused
 - [ ] The exact resolved `SRC` moved into its own `PARENT/Archive/` in one operation (never a path rebuilt from slug + cwd); internal `./` links intact
-- [ ] No git state mutated; nothing outside `PARENT` touched
+- [ ] No git state mutated; nothing outside `PARENT` touched — except the §5 store-index refresh (regenerating a store-level `INDEX.md` via its own script), which writes no task content

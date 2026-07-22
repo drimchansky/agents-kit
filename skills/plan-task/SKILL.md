@@ -258,6 +258,7 @@ Confirm the protocol invariants before finishing:
 - [ ] No `CONTEXT.md` content restated — sibling sections cited; the plan carries only plan-time deltas (*One home per fact*)
 - [ ] Plan grounded in the domain's actual reality; checkpoints every 2–3 steps for plans >5 steps
 - [ ] Risks specific to this task; open questions that could invalidate the approach surfaced
+- [ ] Store index refreshed when the store has one — walk up from the task folder for `scripts/generate-index.mjs`, run `node <that-root>/scripts/generate-index.mjs`, skip silently when the script or `node` is absent (`./references/workflow/task-layout.md` § *Store-level artifacts*)
 
 ## Plan File Structure
 

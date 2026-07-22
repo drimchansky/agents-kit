@@ -53,7 +53,7 @@ Read all four core artifacts — plus `ticket.md` when present — the docs are 
 - `CONTEXT.md` — the static grounding context (problem statement, recommended direction, key assumptions, MVP scope, not-doing, open questions, references). Note the exact wording of prose sections; you compare, you don't paraphrase.
 - `goals.md` — capture the full `## Goals` list by `G<n>` ID, and the highest ID in use (a new goal takes the next free number).
 - `plan.md` — its `**Status:**`, its steps and their `- [ ]` / `- [x]` markers, each step's **What** / **Verify** / **Goal** / **Depends on**, and the `## Scope` partition.
-- `result.md` — its `**Status:**`, the latest per-step / full-run section, any `**Blocked:**` block, any `**In review:**` block, any `## Acceptance` section. If none exists, note it: work recorded this session may create it (per the pairing rule in `./references/workflow/task-lifecycle.md`).
+- `result.md` — read `## Current state` first for orientation (derived metadata, not ground truth — its refresh at the end of the run is part of this skill's contract); then its `**Status:**`, the latest per-step / full-run section, any `**Blocked:**` block, any `**In review:**` block, any `## Acceptance` section. If none exists, note it: work recorded this session may create it (per the pairing rule in `./references/workflow/task-lifecycle.md`).
 
 A `skipped` plan is terminal — report it as abandoned and stop; write nothing. A plan with no sibling `goals.md` is a gap — surface it (`plan-task` is expected to produce one) rather than fabricating goals.
 
@@ -85,6 +85,8 @@ Starting work this session on a `to-do` plan is evidenced state (checked steps o
 ### 5. Reconcile the Docs
 
 Apply the findings per the shared contract in `./references/workflow/reconciliation.md` — read it before editing. It defines the shared mechanics (consent model, annotation formats, the append-only `## Reconciliation` record, the `skipped`-plan exemption, the sequence ending in the printed change list), the session → docs direction rules (write surface, strengthen-only-on-verified-evidence, grounding-docs-by-confirmation), and — in its `reconcile-task` section — this skill's finding-type → edit mapping with its three-way legend (**auto** / **verify** = only after Step 4's gate / **ask** = the batched confirmation round). Every edit maps to a finding from Step 3; anything the mapping routes to **verify** or **ask** is never auto-applied.
+
+End every run per the contract's *Current state refresh*: rewrite the result's `## Current state` block to post-edit reality (creating it on a legacy result). And when `result.md` exceeds **20 KB**, add the contract's compaction proposal (`./references/workflow/reconciliation.md` § *Compaction*) to the batched confirmation round — never auto-compact.
 
 ## Output Template
 
@@ -151,4 +153,5 @@ Confirm the protocol invariants before finishing:
 - [ ] A `skipped` plan reported as abandoned, with nothing written
 - [ ] Reconciliation followed the shared contract end-to-end; findings report printed from pre-reconcile state; closing change list printed
 - [ ] State advanced only after Step 4's in-session re-verification, with evidence recorded in `result.md`; grounding docs (`goals.md`, `CONTEXT.md` prose, a step's scope) changed only through the batched confirmation round
+- [ ] `## Current state` rewritten to post-edit reality at the end of the run; the >20 KB compaction proposal raised (as an ask item) when the size trigger fired
 - [ ] Docs only — no source code, git, or external-system mutation; no scratch artifact; the upstream `ticket.md` is read-only (a changed ask is surfaced, not rewritten)

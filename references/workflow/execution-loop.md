@@ -179,7 +179,8 @@ Runs the loop against a task folder's `plan.md`, with `goals.md` as the acceptan
 holds the bindings; §5 and §6 the record formats.
 
 - **Source** — one plan step, verified by that step's plan-authored `Verify:` line
-- **Record** — a `result.md` section per step, with the step's checkbox flipped and linked to it
+- **Record** — a `result.md` section per step, with the step's checkbox flipped and linked to it, and
+  the result's `## Current state` block rewritten after each recorded unit (`./task-lifecycle.md`)
 - **Blocked** — the `blocked` status on both files, plus a `**Blocked:**` section naming the cause
   (`./task-lifecycle.md`)
 - **Acceptance** — `goals.md` by `G<n>` ID, tagged and written to the result file's `## Acceptance`

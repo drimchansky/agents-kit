@@ -79,7 +79,7 @@ The workflow skills share a folder-based contract: one task lives in one folder 
 - `CONTEXT.md` – static grounding context, including the `**Domain:**` marker.
 - `goals.md` – the single source of task intent: durably-ID'd `G<n>` goals that double as the acceptance criteria; a goal verified outside the session (deploy-and-check-live, client sign-off) is flagged `(external)`.
 - `plan.md` – the steps, each citing the goals it delivers.
-- `result.md` – append-only record of what happened.
+- `result.md` – a rewritable Current-state header above an append-only log of what happened.
 
 Each fact lives in exactly one of these files and the siblings cite it — plan steps cite goals by `G<n>` ID, plan sections cite `CONTEXT.md` rather than restating it, and when a ticket exists `CONTEXT.md`'s problem statement cites `ticket.md` while `goals.md` sharpens its criteria. See [`task-layout`](references/workflow/task-layout.md) § *One home per fact*.
 
