@@ -1,7 +1,7 @@
 ---
 name: executor
 description: Write-mode executor for implement-task's parallel lane (-p) — carries out exactly one plan step in an isolated working copy, launched by the lane's coordinator with a self-contained prompt. Not for ad-hoc delegation; all other fan-out uses read-only probes.
-model: opus
+model: claude-sonnet-5
 effort: xhigh
 ---
 

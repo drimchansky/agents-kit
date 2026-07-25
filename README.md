@@ -9,7 +9,7 @@ It includes:
 3. **Utility skills** – self-contained helpers that don't rely on the core rules, so they run anywhere: locally via CLI or in any chat.
 4. **Engineering skills** – code-focused skills that apply the core rules and references ad hoc, against a diff, a file, or a codebase.
 5. **Workflow skills** – the core-rules skills that move a task from idea to done through a task folder (by default under `.agents/tasks/`).
-6. **Agent definitions** – Claude Code subagent definitions the skills lean on: today the parallel-lane `executor`, pinned to Opus at `xhigh` — below the top session tiers — because `implement-task -p`'s merge gates re-verify its work.
+6. **Agent definitions** – Claude Code subagent definitions the skills lean on: today the parallel-lane `executor`, pinned to `claude-sonnet-5` at `xhigh` — a tier below the Opus- or Fable-class session that coordinates it — because `implement-task -p`'s merge gates re-verify its work.
 
 ## Getting started
 
@@ -19,6 +19,8 @@ Install the kit into Claude Code and Codex with the setup script:
 git clone git@github.com:drimchansky/agents-kit.git ~/agents-kit
 ~/agents-kit/setup.sh
 ```
+
+Both homes get the same skills; the invocation form differs. Claude Code names them `/skill-name` — the form every example below uses. Codex names them `$skill-name`, and each skill ships `policy.allow_implicit_invocation: false`, so on Codex a skill isn't selected implicitly from matching task wording: name it explicitly to run it.
 
 ## Injecting the rules
 
