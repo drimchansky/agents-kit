@@ -69,7 +69,10 @@ just under `**Status:**`:
   `verify-issue`, `review-commit-triage-verify`, `review-pr-triage-verify`, `triage-findings-verify` — operate on a codebase
   or diff, not a task folder, and load `references/engineering/` unconditionally. They are, in
   effect, skills contributed by the engineering pack; a future domain may contribute its own skills
-  the same way.
+  the same way. `commit` is the lone exception to the load: it belongs to the pack but reads only
+  the neutral core, because it writes no code and the single overlay rule that governs it (Git state
+  is mutated only when explicitly asked) is quoted inline in its SKILL.md. Pack membership is about
+  which domain contributes a skill, not about which files it must read.
 - **Format skills** — `migrate-task-format`, `archive-task` — operate on the task-folder
   *envelope* (file names, layout, link-headers, status vocabulary, archive location), not on any
   task's domain content. They read the neutral core but resolve **no** `**Domain:**` pack: the
@@ -87,7 +90,8 @@ For a spine skill acting on a task:
    (`exploration.md` before exploring, `execution.md` / `verification.md` before executing and
    verifying, etc.).
 
-Engineering-only skills skip step 2 and use `engineering` directly. Format skills
+Engineering-only skills skip step 2 and use `engineering` directly — except `commit`, which for the
+reason given above runs only step 1. Format skills
 (`migrate-task-format`, `archive-task`) run only step 1 — they apply the neutral core and resolve
 no domain pack.
 

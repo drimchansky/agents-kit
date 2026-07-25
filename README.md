@@ -38,7 +38,7 @@ Both homes get the same skills; the invocation form differs. Claude Code names t
 
 ## Engineering skills
 
-Core-rules-aware skills that run ad hoc — against a diff, a file, or a codebase, with no task folder. Most are code-bound and load the engineering references; `explore` and `implement` are the exceptions: domain-neutral spine skills that resolve a domain from the request rather than from a `CONTEXT.md`, pulling the engineering pack when the work is code.
+Core-rules-aware skills that run ad hoc — against a diff, a file, or a codebase, with no task folder. Most are code-bound and load the engineering references. Three are exceptions: `explore` and `implement` are domain-neutral spine skills that resolve a domain from the request rather than from a `CONTEXT.md`, pulling the engineering pack when the work is code; `commit` skips the pack because it writes no code, running on the neutral core alone.
 
 - [**audit**](skills/audit/SKILL.md) – assess a module, directory, or whole project: structure, patterns, and health — no diff, no recent-change focus. _Example: `/audit src/auth` or `/audit` (whole project)_
 - [**explore**](skills/explore/SKILL.md) – explain code, a library, a concept, or how the pieces fit together. _Example: `/explore how does the retry queue work?`_
