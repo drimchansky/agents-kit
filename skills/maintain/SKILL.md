@@ -10,11 +10,11 @@ disable-model-invocation: true
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
 
-The monthly maintenance ritual: one command that keeps the kit and its task store from drifting between audits — the R6 recommendation of the July 2026 workflow audit, "maintenance has no owner; give it one." It runs three backed operations in order — a task-format sweep of the kit, a store-index refresh, and a docs→reality reconcile of the kit's own task folders — then reports what it found and hands the fixes back to you. It operates on the task-folder envelope and store artifacts, not on a task's domain content, so it resolves no `**Domain:**` pack.
+The monthly maintenance ritual: one command that keeps the kit and its task store from drifting between audits — the R6 recommendation of the July 2026 workflow audit, "maintenance has no owner; give it one." It runs three backed operations in order — a task-format sweep of the kit, a store-index refresh, and a docs→reality reconcile of the kit's own task folders — then reports what it found and hands the fixes back to you. It operates on the task-folder envelope and store artifacts, not on a task's domain content, so it resolves no `**Domain:**` pack of its own — though the `resume-task -r` it delegates to in Phase 3 still resolves each task's marker and applies that pack, per `./references/workflow/domain-packs.md`.
 
 Each phase executes its skill file — read the sibling `SKILL.md` and run its full protocol. Three overrides apply pipeline-wide, to every phase:
 
-- **Core Rules blocks** — the composite's own block above covers the run; inner skills' `AGENTS.md` read and `✅` echo are already satisfied and don't repeat.
+- **Core Rules blocks** — the composite's own block above covers the run; inner skills' `AGENTS.md` read and `✅` echo are already satisfied and don't repeat. The override stops at those two: an inner skill's domain-pack step still runs, as `resume-task`'s does in Phase 3.
 - **Chat display** — the final **Output** owns the consolidated report; each phase prints only a one-line progress note plus any inline confirmation gate it requires (a gate is a mutation control, not display to suppress — it must reach you).
 - **Next pointers** — inner skills' follow-up suggestions are dropped; the composite's Output owns the single **Next**.
 

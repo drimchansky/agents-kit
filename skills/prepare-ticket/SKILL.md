@@ -5,7 +5,12 @@ argument-hint: '[task description] [optional task folder, slug, or target file p
 disable-model-invocation: true
 ---
 
-# Prepare Ticket
+## Core Rules
+
+1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
+2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
+
+This skill writes a **product-facing ticket** — deliberately domain-neutral, and *upstream* of `CONTEXT.md`, so no `**Domain:**` marker exists yet to resolve. It reads the neutral core and resolves **no** pack. Its source of truth is `./references/workflow/ticket-format.md` (the ticket's shape and quality bar) and `./references/workflow/task-layout.md` (folder resolution and destination paths), read **at run time**.
 
 Turn a task the user describes into a **self-contained ticket** — a file someone can pick up cold, with no access to this session, and act on. The ticket names the **real functional output required** — what the product should do for its user — in product terms, not implementation. Its four parts (a title, minimal **Context**, a **Description** of the work, and testable **Acceptance Criteria**) and the quality bar they must meet are defined once in [`./references/workflow/ticket-format.md`](./references/workflow/ticket-format.md). Read it before drafting. The file is the deliverable.
 
