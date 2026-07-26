@@ -7,7 +7,7 @@ disable-model-invocation: true
 
 # Create Notion Page
 
-Create a Notion page holding the content the user asked for. Pages land **private by default**: created with no parent, they go to the user's Private section, visible to them alone — a page whose placement nobody chose belongs where nobody else can see it. The user names a destination when they want one. (For a researched knowledge-base note saved to a file, that's `create-note`; this skill writes what's asked into Notion.)
+Create a Notion page holding the content the user asked for. Pages land **private by default**: created with no parent, they go to the user's Private section, visible to them alone — a page whose placement nobody chose belongs where nobody else can see it. The user names a destination when they want one.
 
 ## Hard rules
 

@@ -73,18 +73,16 @@ just under `**Status:**`:
   the neutral core, because it writes no code and the single overlay rule that governs it (Git state
   is mutated only when explicitly asked) is quoted inline in its SKILL.md. Pack membership is about
   which domain contributes a skill, not about which files it must read.
-- **Pack-free skills** — `migrate-task-format`, `archive-task`, `maintain`, `prepare-ticket`,
-  `inject-rules` — read the neutral core but resolve **no** `**Domain:**` pack of their own, for
-  three different reasons. `migrate-task-format`, `archive-task`, and `maintain` operate on the
-  task-folder *envelope* (file names, layout, link-headers, status vocabulary, archive location) and
-  the store artifacts, not on any task's domain content: the on-disk format is identical across
-  every domain, so there is no overlay to load. `migrate-task-format` and `archive-task` read
-  `task-layout.md` + `task-lifecycle.md` at run time as their source of truth; `maintain` reads
-  `task-layout.md` the same way, for the store-artifacts contract. `prepare-ticket` writes a
-  deliberately domain-neutral artifact that sits *upstream* of `CONTEXT.md`, so no `**Domain:**`
-  marker exists yet to resolve; its source of truth is `ticket-format.md` + `task-layout.md`.
-  `inject-rules` loads the neutral core into the session and nothing else — resolving a pack is
-  outside its job.
+- **Pack-free skills** — `archive-task`, `maintain`, `prepare-ticket` — read the neutral core but
+  resolve **no** `**Domain:**` pack of their own, for two different reasons. `archive-task` and
+  `maintain` operate on the task-folder *envelope* (file names, layout, link-headers, status
+  vocabulary, archive location) and the store artifacts, not on any task's domain content: the
+  on-disk format is identical across every domain, so there is no overlay to load. Both read
+  `task-layout.md` + `task-lifecycle.md` at run time as their source of truth — `archive-task` for
+  the archive location and the terminal-state set, `maintain` for its format-conformance sweep and
+  the store-artifacts contract. `prepare-ticket` writes a deliberately domain-neutral artifact that
+  sits *upstream* of `CONTEXT.md`, so no `**Domain:**` marker exists yet to resolve; its source of
+  truth is `ticket-format.md` + `task-layout.md`.
 
   *Of their own* is load-bearing for `maintain`: it is a composite, and its Phase 3 runs
   `resume-task -r` over each active kit task folder, which resolves that task's `**Domain:**`
@@ -103,9 +101,9 @@ For a spine skill acting on a task:
    verifying, etc.).
 
 Engineering-only skills skip step 2 and use `engineering` directly — except `commit`, which for the
-reason given above runs only step 1. Pack-free skills (`migrate-task-format`, `archive-task`,
-`maintain`, `prepare-ticket`, `inject-rules`) run only step 1 — they apply the neutral core and
-resolve no domain pack of their own. A composite's delegated skills still run their own steps 2–3:
+reason given above runs only step 1. Pack-free skills (`archive-task`, `maintain`, `prepare-ticket`)
+run only step 1 — they apply the neutral core and resolve no domain pack of their own. A
+composite's delegated skills still run their own steps 2–3:
 `maintain`'s Phase 3 does, through `resume-task -r`.
 
 ## Missing-pack fallback

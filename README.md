@@ -4,7 +4,7 @@ My personal kit for working with Claude Code, Codex, and other coding agents.
 
 It includes:
 
-1. **Core rules for agents** – how to communicate, when to push back, and when it's better to ask than continue blindly.
+1. [**Core rules for agents**](CORE_RULES.md) – how to communicate, when to push back, and when it's better to ask than continue blindly. Every engineering and workflow skill loads them as its first step; for ad-hoc work outside a skill, point the session at the file.
 2. **References** – important checklists and docs for various cases, for now it's mostly about engineering.
 3. **Utility skills** – self-contained helpers that don't rely on the core rules, so they run anywhere: locally via CLI or in any chat.
 4. **Engineering skills** – code-focused skills that apply the core rules and references ad hoc, against a diff, a file, or a codebase.
@@ -22,16 +22,10 @@ git clone git@github.com:drimchansky/agents-kit.git ~/agents-kit
 
 Both homes get the same skills; the invocation form differs. Claude Code names them `/skill-name` — the form every example below uses. Codex names them `$skill-name`, and each skill ships `policy.allow_implicit_invocation: false`, so on Codex a skill isn't selected implicitly from matching task wording: name it explicitly to run it.
 
-## Injecting the rules
-
-- [**inject-rules**](skills/inject-rules/SKILL.md) – prime the current session with the [core rules](CORE_RULES.md) so ad-hoc work outside a skill still follows them. Every engineering and workflow skill loads these as its first step; this one does it standalone, and resolves no domain pack. _Example: `/inject-rules`, then work as normal — or `/inject-rules review this diff`_
-
 ## Utility skills
 
 - [**proofread**](skills/proofread/SKILL.md) – polish a message, email, or piece of writing for grammar, clarity, and factual accuracy. _Example: `/proofread` (paste text)_
 - [**translate**](skills/translate/SKILL.md) – translate text from one language to another. _Example: `/translate to Spanish`_
-- [**fact-check**](skills/fact-check/SKILL.md) – verify factual claims against trustworthy sources online. _Example: `/fact-check` (paste claim)_
-- [**create-note**](skills/create-note/SKILL.md) – research a topic and distill it into a compact, self-contained learning note with verified sources. _Example: `/create-note spaced repetition`_
 - [**review-note**](skills/review-note/SKILL.md) – validate and expand a personal knowledge-base note. _Example: `/review-note notes/stoicism.md`_
 - [**create-notion-page**](skills/create-notion-page/SKILL.md) – draft the requested content and create it as a Notion page via the session's Notion tools — private by default, or under a destination the user names. _Example: `/create-notion-page packing list for the Lisbon trip`_
 - [**refine-idea-chat**](skills/refine-idea-chat/SKILL.md) – sharpen a vague idea in chat, nothing saved. _Example: `/refine-idea-chat add a draft mode`_
@@ -66,13 +60,12 @@ The set that turns a rough task into finished work. Each works on one task folde
 3. [**review-task**](skills/review-task/SKILL.md) – sanity-check the plan against its context, goals, and current reality before building; add `-r` to reconcile obvious findings and fold your answers into the plan. _Example: `/review-task auth-jwt-migration` or `/review-task auth-jwt-migration -r`_
 4. [**implement-task**](skills/implement-task/SKILL.md) – execute the plan, tracking progress in the task folder; add `-p` to run independent steps in parallel worktrees on the pinned executor model, merged at checkpoints. _Example: `/implement-task auth-jwt-migration` or `/implement-task auth-jwt-migration -p`_
 
-Five more support the workflow:
+Four more support the workflow:
 
 - [**resume-task**](skills/resume-task/SKILL.md) – catch up on a task and get a handoff briefing; add `-r` to also reconcile the task docs to reality — obvious fixes applied, you're asked about the rest. _Example: `/resume-task auth-jwt-migration` or `/resume-task auth-jwt-migration -r`_
 - [**reconcile-task**](skills/reconcile-task/SKILL.md) – capture important information from the current session into the task docs — decisions, references, answered questions, and verified progress that never got written down. The enriching counterpart to `resume-task -r`. _Example: `/reconcile-task auth-jwt-migration`_
 - [**archive-task**](skills/archive-task/SKILL.md) – move a finished (`done`/`skipped`) task folder into `Archive/` to keep the active list short. _Example: `/archive-task auth-jwt-migration`_
-- [**migrate-task-format**](skills/migrate-task-format/SKILL.md) – upgrade older task folders to the current format. _Example: `/migrate-task-format` or `/migrate-task-format ../other-repo`_
-- [**maintain**](skills/maintain/SKILL.md) – the monthly maintenance ritual: `migrate-task-format` sweep of the kit → store `INDEX.md` refresh → `resume-task -r` over the kit's own tasks — report-first, auto-applying only the idempotent index refresh and gating the rest. _Example: `/maintain`_
+- [**maintain**](skills/maintain/SKILL.md) – the monthly maintenance ritual: a format-conformance sweep of the kit's task folders (derived from the workflow references at run time, not a copy of the format) → store `INDEX.md` refresh → `resume-task -r` over the active ones among them — report-first, auto-applying only the idempotent index refresh and gating the rest. _Example: `/maintain`_
 
 ## Task folders
 
