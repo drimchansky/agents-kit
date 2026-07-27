@@ -10,11 +10,11 @@ disable-model-invocation: true
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
 
-The monthly maintenance ritual: one command that keeps the kit and its task store from drifting between audits — the R6 recommendation of the July 2026 workflow audit, "maintenance has no owner; give it one." It runs three operations in order — a format-conformance sweep of the kit's task folders, a store-index refresh, and a docs→reality reconcile of the active ones among them — then reports what it found and hands the fixes back to you. It operates on the task-folder envelope and store artifacts, not on a task's domain content, so it resolves no `**Domain:**` pack of its own — though the `resume-task -r` it delegates to in Phase 3 still resolves each task's marker and applies that pack, per `./references/workflow/domain-packs.md`.
+The monthly maintenance ritual: one command that keeps the kit and its task store from drifting between audits — the R6 recommendation of the July 2026 workflow audit, "maintenance has no owner; give it one." It runs three operations in order — a format-conformance sweep of the kit's task folders, a store-index refresh, and a docs→reality reconcile of the active ones among them — then reports what it found and hands the fixes back to you. It operates on the task-folder envelope and store artifacts, not on a task's domain content, so it resolves no `**Domain:**` pack of its own — though the `resume-task-reconcile` it delegates to in Phase 3 still resolves each task's marker and applies that pack, per `./references/workflow/domain-packs.md`.
 
 Phase 3 executes its skill file — read the sibling `SKILL.md` and run its full protocol; Phases 1 and 2 run inline against the reference contracts they name. Three overrides apply pipeline-wide:
 
-- **Core Rules blocks** — the composite's own block above covers the run; a delegated skill's `AGENTS.md` read and `✅` echo are already satisfied and don't repeat. The override stops at those two: its domain-pack step still runs, as `resume-task`'s does in Phase 3.
+- **Core Rules blocks** — the composite's own block above covers the run; a delegated skill's `AGENTS.md` read and `✅` echo are already satisfied and don't repeat, and the same holds one level down for the skills a delegated composite runs. The override stops at those two: the domain-pack step still runs, as it does inside Phase 3's reconcile composite.
 - **Chat display** — the final **Output** owns the consolidated report; each phase prints only a one-line progress note plus any inline confirmation gate it requires (a gate is a mutation control, not display to suppress — it must reach you).
 - **Next pointers** — a delegated skill's follow-up suggestions are dropped; the composite's Output owns the single **Next**.
 
@@ -60,9 +60,9 @@ Refresh the store index per the store-artifacts contract in `./references/workfl
 
 ## Phase 3 — Reconcile the kit's own tasks
 
-For each **active** task folder under `<kit-root>/.agents/tasks/` — non-terminal `**Status:**`, reading the terminal set from `./references/workflow/task-lifecycle.md` at run time rather than hardcoding it here, excluding the `Archive/` container (matched case-insensitively) — Execute `../resume-task/SKILL.md -r` (passing the folder path) in a **preview posture**: run its docs→reality reconcile *analysis* — which only ever weakens overstated claims (unchecks unbacked steps, reverts unevidenced state, repairs status pairings, adds a missing `## Current state` block; it never advances to `done` or checks a box) — but **apply nothing until confirmed**. This is the phase's declared departure from `resume-task -r`, whose fixes are normally automatic: under this report-first ritual even those are gated.
+For each **active** task folder under `<kit-root>/.agents/tasks/` — non-terminal `**Status:**`, reading the terminal set from `./references/workflow/task-lifecycle.md` at run time rather than hardcoding it here, excluding the `Archive/` container (matched case-insensitively) — Execute `../resume-task-reconcile/SKILL.md` (passing the folder path) in a **preview posture**: run its Phase-2 docs→reality reconcile *analysis* — which only ever weakens overstated claims (unchecks unbacked steps, reverts unevidenced state, repairs status pairings, adds a missing `## Current state` block; it never advances to `done` or checks a box) — but **apply nothing until confirmed**. This is the phase's declared departure from `resume-task-reconcile`, whose fixes are normally automatic: under this report-first ritual even those are gated.
 
-Collect every folder's proposed reconciliations, then apply the obvious ones behind a **single confirmation** for the phase; list the judgment calls (the ones `resume-task -r` would ask about) in the Output for you to decide. Do not block per-folder. Stray folders are Phase 1's concern — they hold no task to reconcile.
+Collect every folder's proposed reconciliations, then apply the obvious ones behind a **single confirmation** for the phase; list the judgment calls (the ones `resume-task-reconcile` would ask about) in the Output for you to decide. Do not block per-folder. Stray folders are Phase 1's concern — they hold no task to reconcile.
 
 ## Output
 
@@ -86,7 +86,7 @@ Confirm the protocol invariants before finishing:
 - [ ] Kit root and store root resolved, existence-checked, and printed; a missing default asked-about, not guessed
 - [ ] Phase 1 derived the format from `./references/workflow/` at run time — never from memory or a copy in this file — and surfaced, rather than enforced, any rule with no home in those docs
 - [ ] Phase 1 applied exactly the previewed lossless transforms — every link repointed that named a renamed file or missed its `./`-relative role name within its own folder (headers and in-body alike, anchors preserved), no cross-folder link retargeted, case-only renames performed rather than read as collisions; every folder carrying a judgment issue was left entirely untouched, and no stray folder was deleted
-- [ ] Phase 2 followed the `task-layout.md` store contract and Phase 3 ran from `resume-task`'s skill file, with its active set read from `task-lifecycle.md` at run time — neither improvised
+- [ ] Phase 2 followed the `task-layout.md` store contract and Phase 3 ran from `resume-task-reconcile`'s skill file, with its active set read from `task-lifecycle.md` at run time — neither improvised
 - [ ] `INDEX.md` regeneration was the **only** change applied without a prompt; format fixes, reconcile edits, and folder removals were each previewed and gated or handed off
 - [ ] No git mutation in any repo; nothing outside the resolved kit root and store root was touched
 - [ ] The three deferred operations are named in the Output, not silently skipped

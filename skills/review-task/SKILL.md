@@ -1,7 +1,7 @@
 ---
 name: review-task
-description: Use when asked to review, validate, or sanity-check a task's plan — confirms the direction is right and still in sync with CONTEXT.md, the goals, and current reality, and surfaces any drift between task artifacts (ticket, CONTEXT, goals, plan, result) and the work itself; pass `-r` to also reconcile obvious findings into the task docs and fold engineer answers into the plan.
-argument-hint: '[task folder path] [-r (reconcile findings into task docs)] [-x (cross-vendor grounding probe)]'
+description: Use when asked to review, validate, or sanity-check a task's plan — confirms the direction is right and still in sync with CONTEXT.md, the goals, and current reality, and surfaces any drift between task artifacts (ticket, CONTEXT, goals, plan, result) and the work itself. Read-only.
+argument-hint: '[task folder path] [-x (cross-vendor grounding probe)]'
 disable-model-invocation: true
 ---
 
@@ -15,11 +15,10 @@ This skill validates a plan against current reality before execution begins. It 
 
 The user provides a plan — typically the output of `plan-task`, written to `<task-dir>/plan.md`. Your job is to determine whether the plan can be executed as written given how things actually are, and surface anything that needs resolution first.
 
-**CRITICAL**: Do not implement. Do not redesign the solution. Validate the plan. In default mode (no `-r`) the output is a feasibility assessment with questions, not a revised plan or code — no file is touched. With `-r`, after the assessment is printed, obvious findings are reconciled into the task docs and the review's Questions are put to the engineer, whose answers are folded into the plan (Step 9) — still no implementation and no redesign; a step that needs rethinking goes back to `plan-task`.
+**CRITICAL**: Do not implement. Do not redesign the solution. Validate the plan. The output is a feasibility assessment with questions, not a revised plan or code — the review is strictly read-only and no file is touched.
 
 ## Flags
 
-- `-r` — Reconcile: after printing the assessment, auto-apply its obvious findings to the task docs, put the review's Questions to the engineer as one batched round, and fold their answers into the plan — per the shared contract in `./references/workflow/reconciliation.md`. Off by default; without `-r` the review is strictly read-only. This skill's finding-type → edit mapping lives in the contract's `review-task -r` section.
 - `-x` — Cross-check: launch one independent grounding probe on the cross-vendor engine and merge it into the grounding pass (Step 2), per the shared contract in `./references/workflow/agent-fanout.md`. Off by default. The probe is read-only; its outcome is recorded on the Plan Summary's `Cross-check:` line.
 
 ## Locate the Plan
@@ -47,6 +46,7 @@ Read the plan, the sibling `goals.md`, the sibling `CONTEXT.md`, **and** the `ti
 
 **Skip when:**
 
+- The assessment's findings should also be written back into the task docs, and its Questions actually put to you → use `review-task-reconcile`, which runs this review and then reconciles against it
 - The plan is trivial enough that review takes longer than execution
 - The user has already validated the plan themselves and wants to move to implementation
 - The task is a small bug fix with a clear root cause
@@ -132,7 +132,7 @@ Compare the artifacts pairwise. For each pair, name the kind of drift the compar
 - **`ticket.md` ↔ `goals.md`** (when a ticket exists) — Does every ticket acceptance criterion map to ≥1 goal (`G<n>`), and does any goal contradict the ticket's stated In/Out scope? The ticket is the product-facing ask; `goals.md` is its sharpened, testable form (`./references/workflow/ticket-format.md` § *Ticket → goals*). Flag a ticket criterion no goal covers, or a goal the ticket's scope excludes.
 - **`ticket.md` ↔ CONTEXT.md** (when a ticket exists) — Is CONTEXT's Problem Statement a citation to `./ticket.md` rather than a restated, now-divergent copy of the ask? Flag a Problem Statement that re-proses the ticket and has drifted; the fix is to collapse it to a citation (`./references/workflow/task-layout.md` § *One home per fact*).
 - **CONTEXT.md ↔ `goals.md`** — Does any goal describe behavior CONTEXT's "Not Doing" list excludes, or behavior outside CONTEXT's MVP scope? Do the goals contradict CONTEXT's Recommended Direction or Key Assumptions?
-- **CONTEXT.md ↔ `plan.md`** — Does the plan's Scope (in / out / boundaries) contradict CONTEXT's MVP scope or "Not Doing"? Does the plan reference assumptions CONTEXT marked still-to-validate as if they were settled? Also flag **restated grounding**: the same decision, finding, or question maintained in both files — an Approach re-prosing Recommended Direction, Exploration Findings repeating References anchors, a copied Open Questions list. The bar is duplicated *content*, verbatim or re-prosed — a section that cites the home and adds only its own refinements, mechanism, or re-verification notes is the correct form, not restatement. Two copies of one fact drift apart as soon as either is edited (`./references/workflow/task-layout.md` § *One home per fact*); the suggested edit is to keep the copy in the fact's home file and collapse the restated content to a citation — preserving any plan-time deltas interleaved with it, which stay in the plan. With `-r`, the fix follows this skill's mapping in the shared contract — a judgment item, never auto-applied.
+- **CONTEXT.md ↔ `plan.md`** — Does the plan's Scope (in / out / boundaries) contradict CONTEXT's MVP scope or "Not Doing"? Does the plan reference assumptions CONTEXT marked still-to-validate as if they were settled? Also flag **restated grounding**: the same decision, finding, or question maintained in both files — an Approach re-prosing Recommended Direction, Exploration Findings repeating References anchors, a copied Open Questions list. The bar is duplicated *content*, verbatim or re-prosed — a section that cites the home and adds only its own refinements, mechanism, or re-verification notes is the correct form, not restatement. Two copies of one fact drift apart as soon as either is edited (`./references/workflow/task-layout.md` § *One home per fact*); the suggested edit is to keep the copy in the fact's home file and collapse the restated content to a citation — preserving any plan-time deltas interleaved with it, which stay in the plan. Under `review-task-reconcile` the fix follows that pipeline's mapping in the shared contract — a judgment item, never auto-applied.
 - **`goals.md` ↔ `plan.md`** — Confirm the plan's `Scope` partition is **total**: every goal ID in `goals.md` is either delivered or explicitly deferred. A goal the Scope neither delivers nor defers is the drift. (This replaces the old "criterion excluded by scope" hunt — with scope expressed as a goal-ID partition, that contradiction can't be silently authored; coverage already catches uncovered goals and orphan steps.)
 - **`plan.md` ↔ `result.md`** (only if `result.md` exists) — Does the result claim a step done while the plan's checkbox is still `- [ ]`? Does the result reference a step number the plan doesn't have (a sign of a stale rename)? Does the **pairing rule** in `./references/workflow/task-lifecycle.md` hold — plan `executing` requires result `executing`, plan `blocked` requires result `blocked` with a `**Blocked:**` section, plan `in-review` requires result `in-review` with an `**In review:**` section, plan `done` requires result `done`, while a `skipped` plan may have no result or an explanatory result that remains `executing`?
 - **Status field consistency** — Does CONTEXT carry a valid origin marker, the plan a valid lifecycle state, and the result a valid lifecycle state compatible with the pairing rule? An **absent** result file is part of this check, not an exemption from it: absence pairs only with a plan in `to-do` or `skipped`. Reject anything outside the vocabulary registered in `./references/workflow/task-lifecycle.md`.
@@ -156,10 +156,6 @@ When the domain is code, also check the engineering-specific gaps in `./referenc
 ### 8. Check Pattern Consistency
 
 Compare the plan's implied approach against the established patterns of the project or effort: does it match how similar work is structured, follow the same conventions, and respect the boundaries the effort enforces? Would it require something new (a dependency, a pattern, a one-off exception), and is that justified? When the domain is code, follow `./references/engineering/exploration.md`'s pattern-consistency checks (structure, data-flow patterns, naming, dependencies, module boundaries).
-
-### 9. Reconcile the Docs (only with `-r`)
-
-Skip this step entirely without the flag; it runs **after** the output below is printed — the assessment must be a faithful pre-reconcile snapshot, never regenerated after edits. Apply the review's findings to the task docs per the shared contract in `./references/workflow/reconciliation.md` — read it before editing. It defines the shared mechanics (consent model, annotation formats, the append-only `## Reconciliation` record, the sequence ending in the printed change list), the docs → reality direction rules (write surface, weaken-never-strengthen), the shared `-r` repairs, and — in its `review-task -r` section — this skill's finding-type → edit mapping. Per that mapping, the review's Questions are put to the engineer as one batched round rather than left rhetorical, and the answers are folded into the plan exactly as given — a step that needs rethinking goes back to `plan-task`.
 
 ## Output Structure
 
@@ -238,8 +234,6 @@ Numbered list of targeted questions. Each question should:
 
 Aspects of the plan that are verified and ready to execute — so the user knows what doesn't need further discussion.
 
-With `-r`, after the assessment is printed and reconciliation has run (Step 9), additionally print the `## Reconciliation applied` change list defined in `./references/workflow/reconciliation.md` — every edit with the finding or engineer answer behind it, plus the "Not reconciled" list (or `Nothing to reconcile.` when nothing was actionable).
-
 ## Don't Rationalize
 
 - "The plan looks reasonable" — Check every integration point in the code. Reasonable isn't verified.
@@ -256,5 +250,5 @@ Confirm the protocol invariants before finishing:
 - [ ] Every integration point verified against the actual artifacts; every step given a verdict with evidence and a concreteness check on its `Verify` criterion
 - [ ] Goals audited per `./references/workflow/acceptance-criteria.md`, and coverage mapped mechanically from `**Goal:**` citations — uncovered goals, orphan steps, an incomplete `## Scope` partition, and `_(unresolved: ...)_` goals lifted into Questions
 - [ ] Cross-file drift checked pairwise, including the `ticket.md` pairs when a ticket exists and status pairing per `./references/workflow/task-lifecycle.md`; Goal Quality, Acceptance Coverage, and Cross-File Drift sections rendered even when clean
-- [ ] Review only — no implementation, no redesign; steps needing rethinking routed to `plan-task`
-- [ ] (`-r`) Reconciliation followed the shared contract, assessment printed from pre-reconcile state, every edit mapped to a finding or an engineer answer; (`-x`) probe merged before verdicts and the Plan Summary carries its `Cross-check:` line
+- [ ] Review only — nothing written; no implementation, no redesign; steps needing rethinking routed to `plan-task`
+- [ ] (`-x`) Probe merged before verdicts and the Plan Summary carries its `Cross-check:` line

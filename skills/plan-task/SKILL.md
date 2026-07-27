@@ -1,7 +1,7 @@
 ---
 name: plan-task
 description: Use when asked to plan, design, architect, scope, or break down a feature or change before implementation.
-argument-hint: '[task or feature description, task folder or destination path] [-t (draft a ticket.md first, via the prepare-ticket process)]'
+argument-hint: '[task or feature description, task folder or destination path]'
 disable-model-invocation: true
 ---
 
@@ -15,11 +15,7 @@ This skill produces an implementation plan inside a resolved task folder, paired
 
 The user provides a task or feature request. They may include context about constraints, preferences, or prior discussion.
 
-**CRITICAL**: The output of this skill is two written files on disk — `goals.md` and `plan.md` (three when `-t` also drafts a `ticket.md`) — not a conversation message. After writing them, summarize briefly in the chat and point at the files.
-
-## Flags
-
-- `-t` — Ticket-first: before planning, draft a self-contained `ticket.md` into the resolved task folder by following the `prepare-ticket` process (apply the bar in `./references/workflow/ticket-format.md`; you don't invoke the skill). The existing "when a `ticket.md` is present" branches then take over — `CONTEXT.md`'s Problem Statement cites it and `goals.md` is sharpened from its acceptance criteria. Off by default; the mechanics (placement, clarifying-question batching, never-overwrite) live in *Draft the ticket first* under Step 2.
+**CRITICAL**: The output of this skill is two written files on disk — `goals.md` and `plan.md` — not a conversation message. After writing them, summarize briefly in the chat and point at the files.
 
 ## When to Plan (and When Not To)
 
@@ -45,7 +41,7 @@ If the task doesn't warrant a full plan, say so and suggest proceeding directly 
 
 ## Output Files
 
-This skill writes **two paired files** per plan: a goals file and a plan — plus a `ticket.md` when `-t` is passed (see the Flags section above). All live in the resolved task folder — canonically `.agents/tasks/<slug>/` — alongside its `CONTEXT.md`, under fixed role names.
+This skill writes **two paired files** per plan: a goals file and a plan. Both live in the resolved task folder — canonically `.agents/tasks/<slug>/` — alongside its `CONTEXT.md`, under fixed role names.
 
 - `<slug>` — names the **task folder** that holds `CONTEXT.md` plus the goals, plan, and result for the effort. Derived from the task: 2–5 lowercase kebab-case words capturing the gist (e.g. `add-csv-export`, `migrate-auth-middleware`, `fix-stale-cache-invalidation`). Don't ask the user — derive it. **If the user passed a slug that resolves to an existing active task folder, or a path to one (typically from `refine-idea`), reuse it — don't create a new one.** A path is used verbatim, anywhere on disk; its folder name is the slug.
 - **Fixed file names.** Inside the folder the goals file and plan are always `goals.md` and `plan.md` — role names, no slug prefix, one plan per folder (so `.agents/tasks/add-csv-export/goals.md` and `.../plan.md`). Skills find them by these fixed names — the folder itself may be given by a path someone typed, but the files inside it never are.
@@ -73,9 +69,9 @@ Resolve the folder per the **resolve-or-create** discovery rules in `./reference
 
 If multiple active task folders look like plausible matches for the user's request, list them and ask — don't guess.
 
-#### Draft the ticket first (only with `-t`)
+#### Ticket-first tasks
 
-With `-t`, once the folder is resolved — and **before** scaffolding `CONTEXT.md` — draft `<task-folder>/ticket.md` by following the `prepare-ticket` process, grounded in `./references/workflow/ticket-format.md` (apply its bar; you don't invoke the skill). Ask clarifying questions only if the description is too thin for testable criteria, and batch them into the single clarifying round with the goals questions (Step 3); when questions are deferred this way, treat the Step 2 draft as provisional — fold the batched answers back into `ticket.md` so it stays consistent with the goals sharpened from it below. If a `ticket.md` already exists, don't overwrite it — read it and ask whether to revise or keep it. With the ticket in place, the ticket branches below fire on their own: the skeleton's `Problem Statement` cites `./ticket.md`, and Step 3 sharpens the ticket's criteria into goals. If a `CONTEXT.md` already exists (e.g. from `refine-idea`), this skill never rewrites it (see Step 10) — surface any missing `./ticket.md` citation in chat rather than editing it.
+This skill never drafts the ticket. When the work should start from a product-facing ask, run `/prepare-ticket` first — pointing it at the task folder so it writes `<task-folder>/ticket.md` — then run this skill. With the ticket already in the folder the branches below fire on their own: the skeleton's `Problem Statement` cites `./ticket.md`, and Step 3 sharpens the ticket's criteria into goals. If a `CONTEXT.md` already exists (e.g. from `refine-idea`), this skill never rewrites it (see Step 10) — surface any missing `./ticket.md` citation in chat rather than editing it.
 
 #### CONTEXT.md skeleton (created when missing)
 
@@ -250,7 +246,6 @@ When the domain is code, `./references/engineering/planning.md` gives file-count
 Confirm the protocol invariants before finishing:
 
 - [ ] Task folder resolved or created per `task-layout.md`; `CONTEXT.md` present (skeleton with `**Status:** drafted-by-plan-task` and an inferred — or asked-for — `**Domain:**` when it was missing)
-- [ ] With `-t`: a `ticket.md` was drafted into the folder conforming to `./references/workflow/ticket-format.md` (or an existing one preserved after asking), before the `CONTEXT.md` skeleton
 - [ ] `goals.md` written with durable `G<n>` IDs and `(external)` markers where verification happens outside the session; no `**Status:**` field; hand-authored goals respected; each goal passes `./references/workflow/acceptance-criteria.md` or is marked `_(unresolved: ...)_`
 - [ ] When a `ticket.md` is present, every one of its acceptance criteria is sharpened into ≥1 `G<n>` goal, and no goal contradicts the ticket's stated scope
 - [ ] `plan.md` written at `to-do` with link-headers to `./CONTEXT.md` and `./goals.md` (and `./ticket.md` when the task has one); every step carries the `- [ ]` checkbox, **What**, **Verify**, **Goal**, **Depends on**
