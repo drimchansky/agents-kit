@@ -15,8 +15,10 @@ work, validate, execute, record, and brief. Nothing in their prose assumes a par
 Everything domain-specific — what to explore, how to slice work, what "verify" means, which
 quality checklists apply — lives in a **domain pack** under `references/<domain>/`.
 
-Engineering is the first and reference domain pack: `references/engineering/`. New domains are
-added as sibling directories without touching the spine.
+Engineering is the first and reference domain pack: `references/engineering/`. Documentation is
+the second: `references/documentation/` — a deliberately partial pack (rules overlay, verification
+recipes, ADR/RFC format checklists) that also contributes the `stage-doc` and `review-docs`
+skills. New domains are added as sibling directories without touching the spine.
 
 ## What a domain pack provides
 
@@ -58,7 +60,7 @@ just under `**Status:**`:
   `CONTEXT.md` header, the same way `**Status:**` is (see `task-lifecycle.md`), never inferred from
   where a file sits. A skill never inspects the filesystem to guess a domain.
 
-## Which skills resolve a domain vs. hardcode engineering
+## Which skills resolve a domain vs. load a fixed pack
 
 - **Spine skills** — `explore`, `refine-idea`, `plan-task`, `decompose-task`, `review-task`,
   `implement-task`, `implement`, `resume-task`, `reconcile-task` — resolve `**Domain:**` and load
@@ -67,14 +69,18 @@ just under `**Status:**`:
   infers the domain from the request, and `decompose-task` — which runs before any part folder
   exists — infers the effort's domain from the source doc and stamps each materialized part's own
   `**Domain:**` in its seeded `CONTEXT.md`.
-- **Engineering-only skills** — `audit`, `review-commit`, `commit`, `review-pr`, `update-pr-description`, `publish-pr-review`, `triage-findings`, `review-docs`,
+- **Engineering-only skills** — `audit`, `review-commit`, `commit`, `review-pr`, `update-pr-description`, `publish-pr-review`, `triage-findings`,
   `verify-issue`, `review-commit-triage-verify`, `review-pr-triage-verify`, `triage-findings-verify` — operate on a codebase
   or diff, not a task folder, and load `references/engineering/` unconditionally. They are, in
-  effect, skills contributed by the engineering pack; a future domain may contribute its own skills
-  the same way. `commit` is the lone exception to the load: it belongs to the pack but reads only
+  effect, skills contributed by the engineering pack; other domains contribute skills the same way
+  (the documentation bullet below). `commit` is the lone exception to the load: it belongs to the pack but reads only
   the neutral core, because it writes no code and the single overlay rule that governs it (Git state
   is mutated only when explicitly asked) is quoted inline in its SKILL.md. Pack membership is about
   which domain contributes a skill, not about which files it must read.
+- **Documentation-contributed skills** — `stage-doc` (a doc task's staging lifecycle) and
+  `review-docs` (existing docs' accuracy against the codebase, plus the whole-doc quality pass) —
+  load `references/documentation/` unconditionally: the same shape as the engineering-only set —
+  the pack that contributes a skill is the pack it loads.
 - **Pack-free skills** — `archive-task`, `maintain`, `prepare-ticket`, and the reconcile
   composites `resume-task-reconcile` / `review-task-reconcile` — read the neutral core but
   resolve **no** `**Domain:**` pack of their own, for three different reasons. `archive-task` and
@@ -106,8 +112,9 @@ For a spine skill acting on a task:
    (`exploration.md` before exploring, `execution.md` / `verification.md` before executing and
    verifying, etc.).
 
-Engineering-only skills skip step 2 and use `engineering` directly — except `commit`, which for the
-reason given above runs only step 1. Pack-free skills (`archive-task`, `maintain`, `prepare-ticket`,
+Engineering-only skills skip step 2 and use `engineering` directly, and the
+documentation-contributed `stage-doc` / `review-docs` likewise skip it and use `documentation` —
+except `commit`, which for the reason given above runs only step 1. Pack-free skills (`archive-task`, `maintain`, `prepare-ticket`,
 `resume-task-reconcile`, `review-task-reconcile`) run only step 1 — they apply the neutral core and
 resolve no domain pack of their own. A composite's delegated skills still run their own steps 2–3:
 the reconcile composites' Phase 1 does, and `maintain`'s Phase 3 does through

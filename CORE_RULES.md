@@ -2,7 +2,7 @@
 
 > **Priority**: Project consistency takes precedence. If the project already follows different patterns, match those first. These rules apply when no established pattern exists.
 
-These are the **domain-neutral core rules** — they hold for every task in every domain. Domain-specific rules (engineering today, any future domain later) live in that domain's pack at `./references/<domain>/rules.md` and load **on top of** these. How a skill resolves and loads its domain is defined in `./references/workflow/domain-packs.md`.
+These are the **domain-neutral core rules** — they hold for every task in every domain. Domain-specific rules (engineering and documentation today, any future domain later) live in that domain's pack at `./references/<domain>/rules.md` and load **on top of** these. How a skill resolves and loads its domain is defined in `./references/workflow/domain-packs.md`.
 
 A skill that loads these rules confirms it did so by echoing the line `✅ Core agents-kit rules applied` on its own line early in its first reply, after actually reading this file — the canonical handshake string, defined once here so it has a single owner; skills echo it verbatim.
 

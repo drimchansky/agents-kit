@@ -264,6 +264,7 @@ Write the file with this top-level layout. Adapt sections to task size — not e
 
 **Status:** to-do
 **Ticket:** [./ticket.md](./ticket.md) _(only when the task has one)_
+**Deliverable:** [./adr.md](./adr.md) _(only for a doc task: its work-product file — see `./references/workflow/task-layout.md` § Doc-task files)_
 **Context:** [./CONTEXT.md](./CONTEXT.md)
 **Goals:** [./goals.md](./goals.md)
 **Result:** _(populated by `implement-task`: link to `./result.md`)_

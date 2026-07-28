@@ -1,6 +1,6 @@
 ---
 name: review-docs
-description: Use when asked to review, audit, or check existing documentation against the codebase — README, AGENTS.md/CLAUDE.md, architecture notes, ADRs, API docs, specs, runbooks, or any other written documentation. Produces an audit; applies fixes only when the user explicitly asks after seeing the review.
+description: Use when asked to review, audit, or check existing documentation — README, AGENTS.md/CLAUDE.md, architecture notes, ADRs, API docs, specs, runbooks, or any other written documentation. Grounds claims against the codebase and runs the whole-doc quality pass (coherence, register); the documentation pack wires it in before staging or publishing a deliverable. Produces an audit; applies fixes only when the user explicitly asks after seeing the review.
 argument-hint: '[doc file path] [-x (cross-vendor grounding probe)]'
 disable-model-invocation: true
 ---
@@ -9,9 +9,9 @@ disable-model-invocation: true
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
-3. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core. See `./references/workflow/domain-packs.md`.
+3. This is a documentation-pack skill: also read `./references/documentation/rules.md` and apply it on top of the core — its repo-grounding license covers the against-codebase audit below. See `./references/workflow/domain-packs.md`.
 
-This skill audits existing documentation against the codebase. It catches stale references, drifted descriptions, missing context, and silent assumptions — producing a clear assessment of what's accurate, what's wrong, and what's missing.
+This skill reviews existing documentation on two axes: **accuracy** — claims audited against the codebase, catching stale references, drifted descriptions, missing context, and silent assumptions — and **quality** — the whole-doc judgment pass (coherence, register) that the documentation pack's mechanical loop gates deliberately exclude (`./references/documentation/verification.md`). The output is a clear assessment of what's accurate, what's wrong, what's missing, and what doesn't hold together.
 
 The user provides a documentation file (or points at a documentation area). This can be a README, project rules file (AGENTS.md / CLAUDE.md), architecture note, ADR, API doc, runbook, or feature spec. Your job is to verify whether the document still matches reality and surface what needs to change.
 
@@ -32,10 +32,11 @@ For reviewing an implementation plan against the codebase (not a doc), use `revi
 - The codebase has shifted significantly since the doc was last updated
 - Multiple readers are about to consume the doc and accuracy matters
 - The user wants to know what would need to change to bring a doc back in sync (the rewrite itself happens after, on explicit follow-up)
+- A doc task's deliverable is about to be staged or published — the documentation pack's before-presenting gate wires this skill in (`./references/documentation/rules.md`), and its checkpoint assertions call for the quality pass
 
 **Skip when:**
 
-- The doc is a draft that hasn't been reviewed yet — review the draft on its own terms, not against shipped code
+- The ask is accuracy-vs-code on a doc that's still a draft — a draft asserts intent, not shipped reality; the quality pass (step 6) still applies, the grounding pass waits
 - The doc is purely aspirational (vision, roadmap) and not meant to describe current state
 - The user wants a brand-new doc written from scratch with no prior file — this skill audits what exists; for greenfield doc creation, draft the doc directly
 
@@ -107,6 +108,15 @@ Different doc types have different validation focuses:
 - **Runbooks** — Referenced systems, dashboards, and commands still exist
 - **Feature specs** — Acceptance criteria match shipped behavior; deviations are documented somewhere
 
+### 6. Doc-Quality Pass
+
+Beyond claim accuracy, review the doc as one artifact — the judgment layer the documentation pack keeps out of its per-step gates:
+
+- **Coherence** — read end to end fresh: no section contradicts another, no stale sentence describes content that's gone, terminology and numbering stay consistent, the TL;DR still summarizes the body.
+- **Register** — read as the intended audience would: acronyms expanded at first use, no internal shorthand an outside reader can't resolve, voice and tense consistent. For a kit-blessed deliverable type, apply the matching format checklist (`./references/documentation/adr-format.md` / `rfc-format.md`), and the store's `DOC_CONVENTIONS.md` when the walk-up finds one (`./references/workflow/task-layout.md` § *Store-level artifacts*).
+
+For a doc with no codebase claims (a pure-product RFC, outreach), steps 2–5 may have nothing to ground — this pass is then the whole review.
+
 ## Findings Output
 
 The audit is the deliverable. Print it to chat and stop — do **not** edit the doc as part of this step, even when the fix is obvious. The user reads the findings and decides what (if anything) to change next.
@@ -127,6 +137,10 @@ For each verifiable claim:
 ### Gaps
 
 Things the codebase has that the doc should mention but doesn't, grouped by category.
+
+### Quality
+
+Coherence and register findings from the quality pass (step 6), each pointing at the section it concerns; state plainly when the pass found nothing.
 
 ### Questions
 
@@ -185,6 +199,7 @@ Confirm the protocol invariants before finishing:
 
 - [ ] Every verifiable claim grounded in the actual source, with a verdict and evidence; stale/misleading findings include the current reality
 - [ ] Code examples traced through current APIs; commands and versions cross-checked against config files
+- [ ] Quality pass run — coherence + register, with the format checklist and `DOC_CONVENTIONS.md` applied when they exist — and its findings (or their absence) in the Quality section
 - [ ] Findings printed to chat; the doc was **not** edited as part of the audit pass
 - [ ] (on explicit request only) Each edit maps to an authorized finding; Confirmed sections and unrequested sections untouched; post-rewrite re-grep confirms paths, symbols, and commands resolve
 - [ ] (`-x`) Probe merged before verdicts and the Doc Summary carries its `Cross-check:` line
