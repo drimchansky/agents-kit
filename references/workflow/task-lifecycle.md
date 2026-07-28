@@ -1,6 +1,6 @@
 # Task Lifecycle: Status Registry
 
-A task folder holds four core artifacts that share a slug but track distinct lifecycles, plus an optional upstream `ticket.md`. Three of the artifacts carry a `**Status:**` header drawn from a closed vocabulary; the goals file and the ticket deliberately have none. **This file is the single source of truth for lifecycle states.** When a status name or transition changes, update it here first and propagate to the skills that read or write these fields: `refine-idea`, `plan-task`, `implement-task`, `resume-task`, `review-task`, `resume-task-reconcile`, `review-task-reconcile`, and `reconcile-task`. (`archive-task` and `maintain` also read this vocabulary, but at run time, so they need no update.) Directory layout (the flat task folder, the optional `ticket.md`, and `Archive/`) is documented separately in the sibling `task-layout.md`.
+A task folder holds four core artifacts that share a slug but track distinct lifecycles, plus an optional upstream `ticket.md`. Three of the artifacts carry a `**Status:**` header drawn from a closed vocabulary; the goals file and the ticket deliberately have none. **This file is the single source of truth for lifecycle states.** When a status name or transition changes, update it here first and propagate to the skills that read or write these fields: `refine-idea`, `plan-task`, `decompose-task`, `implement-task`, `resume-task`, `review-task`, `resume-task-reconcile`, `review-task-reconcile`, and `reconcile-task`. (`archive-task` and `maintain` also read this vocabulary, but at run time, so they need no update.) Directory layout (the flat task folder, the optional `ticket.md`, and `Archive/`) is documented separately in the sibling `task-layout.md`.
 
 ## Files
 
@@ -9,7 +9,7 @@ A task folder holds four core artifacts that share a slug but track distinct lif
   - Authored by the user or `prepare-ticket`, and freely edited by the user. `refine-idea` and `plan-task` read it and derive `CONTEXT.md` / `goals.md` from it; the lifecycle never mutates it. `reconcile-task` treats it as read-only too — a changed ask is surfaced for the user, never written (see `./reconciliation.md`).
 - **`CONTEXT.md`** — the task's static grounding context (capitalized).
   - `**Status:**` is a one-shot **origin marker**.
-  - Created by `refine-idea` or `plan-task`; never mutated after creation, except the reconciliation carve-outs below: the docs → reality annotation carve-out (minimal annotations in `## References` / `## Open Questions` only), and `reconcile-task`'s session → docs carve-out (prose sections rewritten only through a confirmed judgment item). Both leave the `**Status:**` marker immutable; see `./reconciliation.md`.
+  - Created by `refine-idea`, `plan-task`, or `decompose-task`; never mutated after creation, except the reconciliation carve-outs below: the docs → reality annotation carve-out (minimal annotations in `## References` / `## Open Questions` only), and `reconcile-task`'s session → docs carve-out (prose sections rewritten only through a confirmed judgment item). Both leave the `**Status:**` marker immutable; see `./reconciliation.md`.
 - **`goals.md`** — the task's goals: the acceptance criteria for what "done" looks like.
   - No `**Status:**` field.
   - Drafted by `plan-task` before the plan, or hand-authored; freely edited by user. `reconcile-task` (session → docs) may also add or reword a goal, but only through a confirmed judgment item and obeying the durable-`G<n>` scheme (see `./reconciliation.md`); no other skill authors its content — `maintain`'s format sweep may rename a goal-shaped legacy file onto the role name, but never edits what's inside.
@@ -30,6 +30,7 @@ The field name `Status:` is shared across the three status-bearing files even th
 
 - **`refined`** — produced by `refine-idea` Phase 3. The recommended direction is chosen, MVP scope is sketched, and the file is ready for `plan-task` to consume.
 - **`drafted-by-plan-task`** — produced by `plan-task` as a skeleton when no idea step ran. Placeholder sections are intentional; the user enriches them over time.
+- **`seeded-by-decompose-task`** — produced by `decompose-task` when materializing a confirmed decomposition part beside its `ticket.md` (see `./decomposition.md` § *Materialization contract*): Problem Statement cites the part's `./ticket.md`, References carry the source pointer and duplicated shared facts, Open Questions the proposal's gate-nothing items that touch the part. The remaining placeholder sections are intentional; `plan-task` and the user enrich them downstream.
 
 **Docs → reality annotation carve-out.** The one exception to "never mutated": the reconcile composites `resume-task-reconcile` / `review-task-reconcile` (shared contract in the sibling `reconciliation.md`) may append minimal annotations inside the `## References` and `## Open Questions` sections only — marking a dead link broken (with date and error), updating a moved URL, noting an answered question with its answer and source, recording an engineer's ruling on a flagged contradiction (in `## Open Questions`). It never touches the `**Status:**` marker, never rewrites or deletes existing prose, and never adds content outside those two sections. `reconcile-task` (session → docs) has a broader carve-out — it may also rewrite prose sections, but only through a confirmed judgment item, and it too never touches the `**Status:**` marker (see `./reconciliation.md`).
 
@@ -81,5 +82,5 @@ The goals file is not part of the pairing rule — it has no lifecycle state to 
 When changing the vocabulary:
 
 1. Update **this file** first (the registry).
-2. Update the skills that read or write the field: `refine-idea`, `plan-task`, `implement-task`, `resume-task`, `review-task`, `resume-task-reconcile`, `review-task-reconcile`, and `reconcile-task`.
+2. Update the skills that read or write the field: `refine-idea`, `plan-task`, `decompose-task`, `implement-task`, `resume-task`, `review-task`, `resume-task-reconcile`, `review-task-reconcile`, and `reconcile-task`.
 3. `grep -rn "<old-status>" skills/ references/` to catch stragglers (template literals, prose mentions).

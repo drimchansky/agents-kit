@@ -9,8 +9,8 @@ this file covers which body of domain knowledge a skill loads and how it finds i
 
 ## The split
 
-The spine skills (`explore`, `refine-idea`, `plan-task`, `review-task`, `implement-task`,
-`implement`, `resume-task`, `reconcile-task`) carry **methodology only** — how to understand a problem, define "done", sequence
+The spine skills (`explore`, `refine-idea`, `plan-task`, `decompose-task`, `review-task`,
+`implement-task`, `implement`, `resume-task`, `reconcile-task`) carry **methodology only** — how to understand a problem, define "done", sequence
 work, validate, execute, record, and brief. Nothing in their prose assumes a particular domain.
 Everything domain-specific — what to explore, how to slice work, what "verify" means, which
 quality checklists apply — lives in a **domain pack** under `references/<domain>/`.
@@ -60,11 +60,13 @@ just under `**Status:**`:
 
 ## Which skills resolve a domain vs. hardcode engineering
 
-- **Spine skills** — `explore`, `refine-idea`, `plan-task`, `review-task`, `implement-task`,
-  `implement`, `resume-task`, `reconcile-task` — resolve `**Domain:**` and load the matching pack.
-  Two of them have no task folder to read the marker from: `explore` resolves a domain only when one
-  is relevant to the question and often answers domain-neutrally, and `implement` infers the domain
-  from the request.
+- **Spine skills** — `explore`, `refine-idea`, `plan-task`, `decompose-task`, `review-task`,
+  `implement-task`, `implement`, `resume-task`, `reconcile-task` — resolve `**Domain:**` and load
+  the matching pack. Three of them have no task folder to read the marker from: `explore` resolves
+  a domain only when one is relevant to the question and often answers domain-neutrally, `implement`
+  infers the domain from the request, and `decompose-task` — which runs before any part folder
+  exists — infers the effort's domain from the source doc and stamps each materialized part's own
+  `**Domain:**` in its seeded `CONTEXT.md`.
 - **Engineering-only skills** — `audit`, `review-commit`, `commit`, `review-pr`, `update-pr-description`, `publish-pr-review`, `triage-findings`, `review-docs`,
   `verify-issue`, `review-commit-triage-verify`, `review-pr-triage-verify`, `triage-findings-verify` — operate on a codebase
   or diff, not a task folder, and load `references/engineering/` unconditionally. They are, in

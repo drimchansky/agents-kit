@@ -1,6 +1,6 @@
 # Task Layout: Directories and Discovery
 
-How task artifacts are arranged on disk, and how skills discover them. **This file is the single source of truth for layout.** Status values and transitions live in the sibling `task-lifecycle.md`; this file covers where files sit and how they're found. Cited by `prepare-ticket`, `refine-idea`, `plan-task`, `implement-task`, `resume-task`, `review-task`, `reconcile-task`, `archive-task`, and `maintain`.
+How task artifacts are arranged on disk, and how skills discover them. **This file is the single source of truth for layout.** Status values and transitions live in the sibling `task-lifecycle.md`; this file covers where files sit and how they're found. Cited by `prepare-ticket`, `decompose-task`, `refine-idea`, `plan-task`, `implement-task`, `resume-task`, `review-task`, `reconcile-task`, `archive-task`, and `maintain`.
 
 ## One task, one flat folder
 
@@ -67,6 +67,8 @@ A larger effort that won't fit one plan becomes several independent sibling task
 There is no shared layer above these folders — no shared context file, no cross-folder links. Anything a sibling needs is duplicated into its own `CONTEXT.md`. This keeps every folder self-sufficient: discoverable, movable, and archivable on its own.
 
 A multi-part effort's siblings belong in **one parent directory** — the `NN-` ordering is only visible where the folders sort together, and location-relative archiving keeps finished parts (`<parent>/Archive/01-schema/`) beside the live ones.
+
+This section owns **where** siblings live; **how to choose and land the cut** — lenses, part-quality bar, proposal, materialization — is the sibling `decomposition.md`, run by the `decompose-task` skill.
 
 ## Archiving finished tasks (optional)
 

@@ -50,6 +50,7 @@ composite. A genuinely modal flag touches the one phase it modifies and nothing 
 - `maintain` — format sweep, then index refresh, then reconcile the active tasks.
 - `resume-task-reconcile` — print the resume brief, then reconcile the docs to it.
 - `review-task-reconcile` — print the plan assessment, then reconcile the docs and fold in answers.
+- `decompose-task` — propose the cut of an approved source into ordered sibling parts, then materialize each confirmed part (`prepare-ticket` per part + a seeded `CONTEXT.md`).
 
 A composite passes a phase's own modal flags through to that phase unchanged — the flags below stay
 where they are rather than being re-implemented at the pipeline level.
