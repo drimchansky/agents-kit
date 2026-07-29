@@ -3,7 +3,7 @@
 The domain-neutral loop that carries work from "not built" to "verified and done" — the beats, the
 gates, and what happens when a gate fails. **This file is the single source of truth for the loop.**
 Three skills run it: `implement-task` against a task folder's `plan.md`, `implement` against an ask
-framed in the session, and `fix-findings` against the Confirmed findings of a verified review. The
+framed in the session, and `fix-findings` against the fixable members of a findings set. The
 sections below hold for all three; the **Bindings** at the end name what each one substitutes for
 the loop's four parameters. When a beat, a gate, the triage order, or the failure discipline
 changes, update it here first and propagate to the skills that cite it.
@@ -207,15 +207,15 @@ the framing, §5 the report.
 
 ### fix-findings
 
-Runs the loop against the Confirmed findings of the session's most recent verified review, one fix
-per unit. Its *Applying Fixes* section holds the bindings in full.
+Runs the loop against the fixable members of a findings set — a session review, a PR's comments, or a
+saved or pasted list — one fix per unit. Its *Applying Fixes* section holds the bindings in full.
 
-- **Source** — one Confirmed finding with its chosen fix option, verified by the finding's root
-  cause no longer reproducing
+- **Source** — one finding with its chosen fix (a Confirmed verdict's fix option, or a fix the user
+  approved), verified by the problem the finding names no longer reproducing
 - **Record** — the chat report; no task-folder file, no status
 - **Blocked** — revert the failed fix in full, report it, continue with the next finding — never a
   failing fix left in the tree
 - **Acceptance** — every selected finding in exactly one report bucket, re-read against the live
   tree
-- **Integration gates** — none beyond per-fix health verify; the certifying re-review belongs to
-  the composite that drives it (`review-commit-fix-loop`)
+- **Integration gates** — none beyond per-fix health verify; the certifying re-review of the whole
+  set is a separate review run over the changed code

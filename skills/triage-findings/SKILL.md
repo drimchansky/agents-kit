@@ -13,7 +13,7 @@ disable-model-invocation: true
 
 Gather findings from a source — a review produced in this session, a PR's review comments, or a findings list in a file or pasted text — filter to the ones still unaddressed, cluster them by concern, and display the batches so the author can see the shape of the remaining work.
 
-**CRITICAL**: This skill only reads and displays. It never edits code and never writes to any source — no `gh pr comment`, no `gh pr review`, no resolving threads, no editing the findings file. Addressing the batches is a separate, manual follow-up (e.g. `/implement-task` or `/review-commit`).
+**CRITICAL**: This skill only reads and displays. It never edits code and never writes to any source — no `gh pr comment`, no `gh pr review`, no resolving threads, no editing the findings file. Addressing the batches is a separate follow-up — `/fix-findings` takes these batches as a source, or handle them via `/implement-task` or by hand.
 
 ## Sources
 

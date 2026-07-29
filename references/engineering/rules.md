@@ -1,6 +1,6 @@
 # Engineering Rules
 
-The **engineering domain pack's rules overlay** — loaded on top of the neutral `../../CORE_RULES.md` for any task with `**Domain:** engineering` (the default), and unconditionally by the engineering-only skills (`audit`, `review-commit`, `review-pr`, `update-pr-description`, `publish-pr-review`, `triage-findings`, `verify-issue`, `fix-findings`, `review-commit-triage-verify`, `review-pr-triage-verify`, `triage-findings-verify`, `review-commit-fix-loop`). `commit` is the one engineering-contributed skill that does *not* load this overlay — it writes no code, so the only rule bearing on it is the Git-discipline line below, which its SKILL.md carries inline. See `../workflow/domain-packs.md` for how skills resolve and load a domain.
+The **engineering domain pack's rules overlay** — loaded on top of the neutral `../../CORE_RULES.md` for any task with `**Domain:** engineering` (the default), and unconditionally by the engineering-only skills (`audit`, `review-commit`, `review-pr`, `update-pr-description`, `publish-pr-review`, `triage-findings`, `verify-issue`, `fix-findings`, `review-commit-triage-verify`, `review-pr-triage-verify`, `triage-findings-verify`). `commit` is the one engineering-contributed skill that does *not* load this overlay — it writes no code, so the only rule bearing on it is the Git-discipline line below, which its SKILL.md carries inline. See `../workflow/domain-packs.md` for how skills resolve and load a domain.
 
 ## Code & Git discipline
 

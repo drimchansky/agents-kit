@@ -25,16 +25,6 @@ Deviate when a sequential phase is small enough that a second skill file costs m
 worth — a phase of two or three sentences that no one would invoke on its own. Say so in the skill
 rather than leaving the classification implicit.
 
-**Iteration doesn't change the shape.** A composite may repeat its phase sequence under a stated
-cap — each pass is still whole phases with clean seams, so the classification stays composite; the
-cap, the exit criterion, and the per-pass display economy live in the composite's own file. Iteration
-adds one decision a linear composite never faces — which passes receive a forwarded flag — and the
-composite states that policy in its Flags section. A write surface likewise doesn't decide the
-shape — per this file's intro it lives in the skill files: code edits with the member that performs
-them, the between-pass `git add` with the composite that owns that departure.
-`review-commit-fix-loop`, the first iterated composite, is thus also the kit's first composite that
-writes.
-
 ### The diagnostic
 
 Ask where the behavior sits relative to the base skill's protocol:
@@ -61,7 +51,6 @@ composite. A genuinely modal flag touches the one phase it modifies and nothing 
 - `resume-task-reconcile` — print the resume brief, then reconcile the docs to it.
 - `review-task-reconcile` — print the plan assessment, then reconcile the docs and fold in answers.
 - `decompose-task` — propose the cut of an approved source into ordered sibling parts, then materialize each confirmed part (`prepare-ticket` per part + a seeded `CONTEXT.md`).
-- `review-commit-fix-loop` — iterated: review the staged diff (`review-commit-triage-verify`), fix the Confirmed findings (`fix-findings`), re-stage, review again — until a pass confirms no major/critical or 3 passes have run. The kit's one composite that writes: code edits via its fix phase, `git add` of fix-touched paths between passes.
 
 A composite passes a phase's own modal flags through to that phase unchanged — the flags below stay
 where they are rather than being re-implemented at the pipeline level.
