@@ -70,7 +70,7 @@ just under `**Status:**`:
   exists — infers the effort's domain from the source doc and stamps each materialized part's own
   `**Domain:**` in its seeded `CONTEXT.md`.
 - **Engineering-only skills** — `audit`, `review-commit`, `commit`, `review-pr`, `update-pr-description`, `publish-pr-review`, `triage-findings`,
-  `verify-issue`, `review-commit-triage-verify`, `review-pr-triage-verify`, `triage-findings-verify` — operate on a codebase
+  `verify-issue`, `fix-findings`, `review-commit-triage-verify`, `review-pr-triage-verify`, `triage-findings-verify`, `review-commit-fix-loop` — operate on a codebase
   or diff, not a task folder, and load `references/engineering/` unconditionally. They are, in
   effect, skills contributed by the engineering pack; other domains contribute skills the same way
   (the documentation bullet below). `commit` is the lone exception to the load: it belongs to the pack but reads only
