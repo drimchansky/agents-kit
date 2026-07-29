@@ -61,6 +61,8 @@ where they are rather than being re-implemented at the pipeline level.
   merges into the pass *before* its verdicts finalize, so it has no seam to run after.
 - `-d` draft PR description (`review-pr`) — built from the change map the review has already
   assembled; a separate phase would rebuild it from scratch.
+- `-f` fact verification (`proofread`) — verification runs inside the analysis pass, merging into
+  the same errors/improvements list before it finalizes; there is no seam to split.
 
 ## Adding a behavior
 

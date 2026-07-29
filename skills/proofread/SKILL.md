@@ -1,13 +1,17 @@
 ---
 name: proofread
 description: Use when asked to proofread, check, review, or polish a message, email, or piece of writing.
-argument-hint: '[message or file path]'
+argument-hint: '[-f (fact verification)] [message or file path]'
 disable-model-invocation: true
 ---
 
 # Proofread
 
 Review the provided message and suggest improvements. **Strictly preserve the author's original tone, voice, and style** — don't make casual writing formal or direct writing diplomatic.
+
+## Flags
+
+- `-f` — Fact verification: actively verify checkable claims (names, dates, numbers, technical terms). Check the session's existing context first — earlier conversation, files already read, tool output — since the message often describes work done right here; fall back to web search when the session doesn't settle a claim. When a claim can't be verified either way, say so rather than guessing. Off by default because most proofreads are quick passes over short messages where research adds latency without value.
 
 ## Analysis Criteria
 
@@ -17,7 +21,7 @@ Review the provided message and suggest improvements. **Strictly preserve the au
 
 3. **Consistency** — Contradictions within the text, inconsistent terminology, claims that conflict with each other.
 
-4. **Facts** — Verify claims that are checkable (names, dates, numbers, technical terms). Use web search when uncertain. If a claim can't be verified, say so rather than guessing.
+4. **Facts** — Flag claims you know are wrong; verification beyond your own knowledge is opt-in via `-f` (see Flags).
 
 ## Rules
 
