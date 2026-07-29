@@ -1,7 +1,7 @@
 ---
 name: review-pr-triage-verify
 description: Use when asked for a verified review of a PR or branch — one command that reviews the diff against its base, batches the findings by concern, verifies each batch in an isolated read-only probe, and displays one verdict per finding. Reads and displays only; never edits code or posts anywhere.
-argument-hint: '[-v (run automatic verifications)] [-x (cross-vendor second review)] [-d (draft PR description)] — passed through to the review phase'
+argument-hint: '[-x (cross-vendor second review)] [-d (draft PR description)] — passed through to the review phase'
 disable-model-invocation: true
 ---
 
@@ -25,7 +25,7 @@ Past these three, a phase departs from its skill only where its own section belo
 
 ## Flags
 
-`-v` (run verifications), `-x` (cross-vendor second review), `-d` (draft PR description) pass through to the review phase unchanged — see `../review-pr/SKILL.md`. The per-batch verify probes are not `-x`: they run on the native engine regardless of flags. A `-v` finding reaches them like any other, but they never re-run the check that produced it — a lint or type failure re-verifies by reading; a test failure usually can't, and lands **Inconclusive**.
+`-x` (cross-vendor second review) and `-d` (draft PR description) pass through to the review phase unchanged — see `../review-pr/SKILL.md`. The per-batch verify probes are not `-x`: they run on the native engine regardless. The review phase runs its verification scripts as that skill specifies (always), and a script finding reaches the probes like any other — but they never re-run the check that produced it: a lint or type failure re-verifies by reading; a test failure usually can't, and lands **Inconclusive**.
 
 ## Setup
 

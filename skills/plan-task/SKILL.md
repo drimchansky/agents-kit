@@ -187,7 +187,7 @@ The `**Goal:**` line cites the goal ID(s) the step delivers, or `none (infra/ref
 
 `**Due:**` and `**Lead time:**` are **optional**. Omit them (or set `none`) for code work, where steps are ordered by `Depends on:`, not the calendar. They earn their place in time-anchored domains (a relocation, an event) where deadlines and external lead times — not just logical dependencies — drive ordering and surface the long-pole steps that must start early. They are planning information the actor reads; nothing in the kit schedules off them.
 
-`**Touches:**` is likewise **optional**: the artifacts or directories the step is expected to edit — its declared edit surface. It has one consumer: `implement-task`'s `-p` parallel lane, which runs steps concurrently only when no `Depends on:` path connects them *and* their declared surfaces are pairwise disjoint. A step without the line (or with `none`) simply runs serially, so declare surfaces only where parallel execution is plausible and the surfaces are genuinely separate. When the domain is code, `./references/engineering/planning.md` lists the shared-artifact traps to check before calling two surfaces disjoint.
+`**Touches:**` is likewise **optional**: the artifacts or directories the step is expected to edit — its declared edit surface. Its consumers are `implement-task`'s executors: the automatic parallel batch runs steps concurrently only when each declares a surface, no `Depends on:` path connects them, *and* the declared surfaces are pairwise disjoint — a declared surface is what makes a step parallel-eligible — and a serial executor stays inside a declared surface as its scope bound. A step without the line (or with `none`) simply runs serially, so declare surfaces only where parallel execution is plausible and the surfaces are genuinely separate. When the domain is code, `./references/engineering/planning.md` lists the shared-artifact traps to check before calling two surfaces disjoint.
 
 ### 8. Add Checkpoints
 
@@ -293,7 +293,7 @@ Write the file with this top-level layout. Adapt sections to task size — not e
 - **Depends on:** none
 - **Due:** none _(optional; date the step must finish by)_
 - **Lead time:** none _(optional; how long it takes once started)_
-- **Touches:** none _(optional; the step's edit surface — pairwise-disjoint surfaces enable `implement-task -p`)_
+- **Touches:** none _(optional; the step's edit surface — pairwise-disjoint surfaces make steps eligible for `implement-task`'s automatic parallel batch)_
 
 ### Step 2 — <title>
 

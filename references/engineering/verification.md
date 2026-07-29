@@ -13,7 +13,10 @@ Both are required after implementing a step — they answer different questions:
 - **Step verify** — run the unit's stated verify criterion (see the consumer's **Source** binding in
   `../workflow/execution-loop.md`). Proves the new behavior works.
 - **Health verify** — run typecheck, the linter, and the existing test suite on the changed area.
-  Proves nothing else regressed. Do not collapse this into the step verify.
+  Proves nothing else regressed. Do not collapse this into the step verify. When a step's stated
+  criterion already *is* the full health recipe (its verify runs the whole suite), the two gates
+  coincide — run it once and record the coincidence; the rule forbids narrowing health verify, not
+  overlapping it.
 
 Never start the next step while the previous step's verify is failing.
 

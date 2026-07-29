@@ -1,7 +1,7 @@
 ---
 name: implement-task
 description: Use when asked to implement, execute, run, or carry out a task's plan from a task folder (canonically under `.agents/tasks/`) — by task folder path, or the current task if one is already in context.
-argument-hint: '[task folder path] [-p (parallel lane: run independent steps concurrently in isolated worktrees, merged at checkpoints)]'
+argument-hint: '[task folder path]'
 disable-model-invocation: true
 ---
 
@@ -22,10 +22,6 @@ The plan is the **contract for how**; the goals are the **contract for what done
 - Result: `result.md`
 
 **CRITICAL**: The plan and result files are mutated by this skill; `CONTEXT.md`, the goals, and the ticket are not. The plan is mutated _only_ to flip step checkboxes (`- [ ]` → `- [x]`), append result links, update the `Status:` header, and (when necessary) revise scope or steps. Everything else about the plan stays as written. The result file is the place for narrative — what shipped, what surprised you, what diverged. The goals file is the user's contract; if it needs to change, surface that to the user — never edit it from this skill.
-
-## Flags
-
-- `-p` — Parallel lane: in full-plan mode, execute independent steps concurrently through the write-mode executor contract in `./references/workflow/agent-fanout.md`, merging at checkpoints. Off by default; without the flag every step runs serially. Eligibility, the merge procedure, and the fallbacks live in §4's *Parallel lane* subsection.
 
 ## References
 
@@ -84,7 +80,7 @@ Ask the user (or infer from the request):
 
 Respect step `Depends on:` ordering regardless of mode.
 
-The `-p` parallel lane applies only in full-plan mode — step-by-step's per-step pause is the opposite contract: the user inspects between steps, and a lane would collapse those pause points into the checkpoint.
+Both modes execute steps through the delegation default (§4) — step-by-step simply pauses after each step's gates. The automatic parallel batch applies only in full-plan mode: step-by-step's per-step pause is the opposite contract — the user inspects between steps, and a batch would collapse those pause points into the checkpoint.
 
 ### 3. Initialize Execution State
 
@@ -138,29 +134,37 @@ What this skill binds:
 - **Blocked** — when Stop-the-Line can't be cleared this session, set the plan and result `**Status:**` to `blocked`, add a `**Blocked:**` section to the result file naming the cause (what failed, what was tried, and what's needed — or what's awaited), and rewrite `## Current state` naming the blocker. Then stop; don't skip ahead — but regenerate the store index if the store has one (the §8 walk-up rule). See `./references/workflow/task-lifecycle.md`.
 - **Integration gates** — the plan's `### Checkpoint after Step N` headings between step blocks, each a **mandatory gate** after marking step N done, not an optional summary. A checkpoint is not a step, has no `- [ ]` marker, and is never flipped. Run its assertions per the shared loop, append a checkpoint section to the result file (§5), and in step-by-step mode pause there just as at a step boundary.
 
-#### Parallel lane (with `-p`)
+#### Execution strategy: delegated by default
 
-With `-p` in full-plan mode, execute independent steps concurrently as **executors** per the write-mode contract in `./references/workflow/agent-fanout.md` — read it before launching a lane. Its invariants hold throughout: the coordinator (this session) owns the shared tree, both task files, and every status; executors never touch any of them.
+Execute each step through an **executor** per the write-mode contract in `./references/workflow/agent-fanout.md` — read it before the first step. The default is the contract's **serial shape**: one executor per step, in plan order, editing the shared tree, launched with a self-contained prompt (the step's What/Verify text, the goals it cites, the edit surface, the relevant `CONTEXT.md` excerpts, absolute paths) on the contract's executor-model default. After the executor reports, re-run both verify gates on the tree yourself — the executor's pass is advance evidence, not the gate — then record the step (§5).
 
-**Eligibility — mechanical, all conditions required.** Steps may share a lane only when:
+Take the contract's **inline fallback** when delegation clearly doesn't pay (a trivial step, mid-step user interaction, debugging-heavy work) — announce it in chat and record it in the step's `**Executed:**` field. A failed or hung executor degrades the same way: report it, execute the step inline, continue.
+
+The strategy is the same in both execution modes; step-by-step pauses after each step's gates, exactly as before.
+
+#### Automatic parallel batch (full-plan mode)
+
+In full-plan mode, execute eligible independent steps concurrently per the contract's parallel shape in `./references/workflow/agent-fanout.md`. No flag is involved: when a batch qualifies under the eligibility below, launch it and **announce it in chat** — which steps, and why they're eligible — so automatic parallelism is never silent. The contract's invariants hold throughout: the coordinator (this session) owns the shared tree, both task files, and every status; executors never touch the task folder, and parallel executors never touch the shared tree.
+
+**Eligibility — mechanical, all conditions required.** Steps may share a batch only when:
 
 - they sit in the same checkpoint-bounded batch (between the last checkpoint and the next);
 - no `Depends on:` path connects them, directly or transitively;
 - each declares a `**Touches:**` surface and the declared sets are pairwise disjoint — the core rule "do not parallelize sequential edits to the same artifact" (CORE_RULES.md), made checkable;
 - each step's `Verify` can run in an isolated copy.
 
-A step with no `**Touches:**` line (or with `**Touches:** none`) runs serially — an absent declaration is a serial default, not an invitation to infer one. When in doubt about disjointness, run the doubtful step serially: a wrongly-serial step costs minutes, a wrongly-parallel one costs the merge.
+A step with no `**Touches:**` line (or with `**Touches:** none`) runs serially-delegated — an absent declaration is a serial default, not an invitation to infer one. When in doubt about disjointness, run the doubtful step serially: a wrongly-serial step costs minutes, a wrongly-parallel one costs the merge.
 
-**Run.** In a mixed batch, serial steps that depend on a lane step — directly or transitively — run after the merge, on the integrated tree; every other serial step in the batch runs before the lane launches; both in plan order. Launch one executor per eligible step, each with a self-contained prompt per the contract, on the contract's executor-model default — a pinned tier where the host supports one (`./references/workflow/agent-fanout.md` § *Write-mode engines*). While a lane is in flight the shared tree is frozen: the coordinator monitors and runs no step of its own.
+**Run.** In a mixed batch, serial steps that depend on a batch step — directly or transitively — run after the merge, on the integrated tree; every other serial step runs before the batch launches; both in plan order. Launch one executor per eligible step, each with a self-contained prompt per the contract, on the contract's executor-model default — a pinned tier where the host supports one (`./references/workflow/agent-fanout.md` § *Write-mode engines*). While a batch is in flight the shared tree is frozen: the coordinator monitors and runs no step of its own.
 
-**Merge — at the batch's bounding checkpoint, in plan order.** For each lane step, in plan order:
+**Merge — at the batch's bounding checkpoint, in plan order.** For each batch step, in plan order:
 
-1. **Surface check** — confirm the worktree diff stays inside the step's declared `**Touches:**` surface. A violation is the contract's surface-escape case: discard that worktree and re-execute the step serially.
-2. **Merge** the worktree into the shared tree. A conflict means the disjointness claim was wrong: discard that worktree and re-execute the step serially on the integrated tree. Never resolve a lane conflict by hand-editing inside a worktree.
+1. **Surface check** — confirm the worktree diff stays inside the step's declared `**Touches:**` surface. A violation is the contract's surface-escape case: discard that worktree and re-execute the step through serial delegation.
+2. **Merge** the worktree into the shared tree. A conflict means the disjointness claim was wrong: discard that worktree and re-execute the step through serial delegation on the integrated tree. Never resolve a batch conflict by hand-editing inside a worktree.
 3. **Re-verify on the integrated tree** — the step's `Verify` plus health verify, the same two gates as serial execution. Executor-reported success is provisional; these gates are the ones that count.
 4. **Record** — flip the step's checkbox and append its result section (with its `**Executed:**` field, §5), exactly as in serial execution.
 
-Run the checkpoint's assertions only once every step in the batch has executed — every lane step merged or fallen back to serial, every post-merge serial step run. The checkpoint is the lane's integration gate; a failure is Stop-the-Line on the integrated tree. When the batch is the plan's tail and no checkpoint follows it, merge the same way before the acceptance gate — each step's integrated re-verify above plus §7's goal verification and §8's pre-presentation checks serve as the integration gate; don't invent an implicit checkpoint.
+Run the checkpoint's assertions only once every step in the batch has executed — every batch step merged or fallen back to serial delegation, every post-merge serial step run. The checkpoint is the batch's integration gate; a failure is Stop-the-Line on the integrated tree. When no checkpoint follows the batch, merge the same way at its natural bound — before the first serial step that depends on a batch step, or, for the plan's tail, before the acceptance gate; each step's integrated re-verify above plus §7's goal verification and §8's pre-presentation checks serve as the integration gate. Don't invent an implicit checkpoint.
 
 Remove merged worktrees before continuing — they're scratch, per the contract.
 
@@ -178,7 +182,7 @@ Remove merged worktrees before continuing — they're scratch, per the contract.
 
 **Sources:** <official-doc URLs / deep links grounding any framework-specific code in this step; otherwise omit>
 
-**Executed:** <only for a parallel-lane step — "parallel lane (<executor engine>), merged in plan order at Checkpoint after Step N", or "… before the acceptance gate" for a tail batch; omit for serial steps>
+**Executed:** <only when execution deviated from the default serial delegation — for a parallel-batch step, "parallel batch (<executor engine>), merged in plan order at/before <the batch's merge point>", the merge point being its bounding checkpoint, the first post-merge serial step in a checkpoint-free plan, or the acceptance gate for a tail batch; or "inline (<reason>)" for an inline fallback; omit for serially-delegated steps>
 
 **Deviations from plan:** <if any — what differed and why; otherwise omit>
 
@@ -200,6 +204,8 @@ For full-plan mode, write **one combined section** instead — no per-step block
 
 **Sources:** <official-doc URLs / deep links grounding any framework-specific code; otherwise omit>
 
+**Executed:** <only when a folded step deviated from serial delegation — "Step N inline (<reason>)" per such step; omit otherwise>
+
 **Deviations from plan:** <if any>
 
 **Notes:** <surprises, gotchas, follow-ups>
@@ -209,7 +215,7 @@ For full-plan mode, write **one combined section** instead — no per-step block
 
 In full-plan mode, still flip every step's `- [ ]` to `- [x]` in the plan, with each linking to the same `#full-run--<date>` anchor (note the double hyphen — the em-dash in the header drops out and both surrounding spaces become hyphens).
 
-With `-p`, merged lane steps are the exception on both counts: each keeps its own per-step section (its merge gates and `**Executed:**` record are per-step — §4's merge step 4), and its checkbox links to that section instead of the `#full-run` anchor. Only the batch's serial steps fold into the combined block.
+Merged parallel-batch steps are the exception on both counts: each keeps its own per-step section (its merge gates and `**Executed:**` record are per-step — §4's merge step 4), and its checkbox links to that section instead of the `#full-run` anchor. Only the batch's serially-executed steps fold into the combined block.
 
 **Checkpoint section template:**
 
@@ -218,7 +224,7 @@ With `-p`, merged lane steps are the exception on both counts: each keeps its ow
 
 **Asserted:** <which assertions ran — test command, build command, e2e flow exercised>
 **Outcome:** passed
-**Merged:** <lane steps merged at this gate in plan order — e.g. "Steps 3, 4 from the parallel lane"; omit when no lane>
+**Merged:** <parallel-batch steps merged at this gate in plan order — e.g. "Steps 3, 4 from the parallel batch"; omit when no batch>
 **Notes:** <surprises, near-misses, anything important; otherwise omit>
 
 ---
@@ -292,6 +298,7 @@ The shared loop's *Don't Rationalize* list applies in full (`./references/workfl
 - "I'll update the result file at the end" — Update it as you go. End-of-task batching loses the surprises and reasoning that are worth recording.
 - "The worktree verify passed, merging is a formality" — The executor's pass is provisional by contract. Integration is where parallel work breaks; the merge gates are the ones that count.
 - "These steps look independent, I'll parallelize them without declarations" — Undeclared means serial. The `Touches:` declaration is the eligibility evidence, not paperwork.
+- "Delegating this step is overhead, I'll just do it myself" — The default is delegation because context economy compounds over the run. Inline is the contract's named exception — announced and recorded — not a quiet drift back to doing everything in-session.
 
 ### Red flags
 
@@ -309,5 +316,6 @@ Confirm the protocol invariants before finishing:
 - [ ] Acceptance gate ran every goal by `G<n>` ID against live behavior and wrote the `## Acceptance` section — no goal left `unmet` at finalize, `pending external` only on `(external)` goals (parking the task at `in-review`)
 - [ ] Deviations and plan revisions recorded in the result file; `goals.md` and `CONTEXT.md` never edited from this skill
 - [ ] Domain pre-presentation checks re-run on the full changed surface (for code: typecheck, linter, tests, consumer grep; framework code cited to `**Sources:**` or marked `// UNVERIFIED:`)
-- [ ] With `-p`: every lane step merged only through the gates — surface check, conflict-free merge, integrated re-verify, the batch's checkpoint (or the §7/§8 tail gate) — with conflicts and surface escapes falling back to serial
-- [ ] With `-p`: executors wrote no task-folder file and no status; each lane recorded (`**Executed:**` fields, checkpoint `**Merged:**` lines) and worktrees removed after merge
+- [ ] Every step executed through the delegation default — a serial executor with the coordinator's re-run gates, an announced parallel batch, or an announced inline fallback recorded in its `**Executed:**` field
+- [ ] Every parallel-batch step merged only through the gates — surface check, conflict-free merge, integrated re-verify, the batch's checkpoint (or the §7/§8 tail gate) — with conflicts and surface escapes falling back to serial delegation
+- [ ] Executors wrote no task-folder file and no status; batches recorded (`**Executed:**` fields, checkpoint `**Merged:**` lines) and worktrees removed after merge

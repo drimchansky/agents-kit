@@ -137,12 +137,12 @@ For large diffs (20+ files): review types and interfaces first to understand the
 
 ## Verification Scripts
 
-By default a review is **analysis-only**: read the code, reason about it, and produce findings without executing anything. Do not invoke project scripts or run commands that execute code.
+Diff reviews (`review-commit`, `review-pr`) always run the project's verification scripts before producing findings:
 
-When `-v` is passed, identify and run the project's verification scripts before producing findings:
-
-- Identify what the project exposes — lint, typecheck, and test scripts (check `package.json` scripts, a `Makefile`, or the stack's conventional commands) — and run them on the changed/staged files where they exist.
+- Identify what the project exposes — lint, typecheck, and test scripts (check `package.json` scripts, a `Makefile`, or the stack's conventional commands) — and run them on the changed/staged files where they exist; what the project doesn't expose is skipped, not simulated.
 - Treat failures and warnings as findings; record them with file location and severity.
+
+The scripts are a review's only execution surface: everything else stays analysis — read the code, reason about it. An `audit` runs no scripts at all (no diff bounds what they would cover — see `skills/audit/SKILL.md`), and read-only probes never run them (`../workflow/agent-fanout.md`).
 
 ## Standard Verification Checklist
 

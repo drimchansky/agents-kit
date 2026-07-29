@@ -50,7 +50,7 @@ Break a step down further when any of these hold:
 ## Declaring edit surfaces (`Touches:`)
 
 A step's optional `**Touches:**` line declares the files or directories it edits, so
-`implement-task`'s parallel lane can test disjointness mechanically. In code, "different files"
+`implement-task`'s automatic parallel batch can test disjointness mechanically. In code, "different files"
 often still means a shared artifact — check for these before declaring two steps disjoint:
 
 - A shared barrel/index or re-export file both steps must edit to register their work.

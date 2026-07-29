@@ -59,12 +59,8 @@ where they are rather than being re-implemented at the pipeline level.
 
 - `-x` cross-vendor probe (`review-pr`, `review-commit`, `review-docs`, `review-task`) — the probe
   merges into the pass *before* its verdicts finalize, so it has no seam to run after.
-- `-v` run verifications (`review-pr`, `review-commit`) — the checks run *inside* the review, and
-  what they turn up becomes findings the review handles like any other.
 - `-d` draft PR description (`review-pr`) — built from the change map the review has already
   assembled; a separate phase would rebuild it from scratch.
-- `-p` parallel lane (`implement-task`) — an execution strategy *within* the execute phase, choosing
-  which steps run concurrently. It reorders work inside a phase; it is not a phase.
 
 ## Adding a behavior
 

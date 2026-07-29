@@ -1,7 +1,7 @@
 ---
 name: review-commit
 description: Use when asked to review staged changes before committing.
-argument-hint: '[-v (run automatic verifications)] [-x (cross-vendor second review)]'
+argument-hint: '[-x (cross-vendor second review)]'
 disable-model-invocation: true
 ---
 
@@ -15,7 +15,6 @@ Review staged changes before committing — correctness, completeness, accidenta
 
 ## Flags
 
-- `-v` — Identify and run the project's verification scripts (lint, typecheck, tests). Off by default; reviews are analysis-only. See "Verification Scripts" in `./references/engineering/review.md`.
 - `-x` — Cross-check: launch one independent cold review of the staged diff on the cross-vendor engine and merge it before findings are finalized, per the shared contract in `./references/workflow/agent-fanout.md`. Off by default. The probe is read-only; its outcome is recorded on the output's `Cross-check:` line.
 
 ## References
@@ -31,7 +30,7 @@ Before working, read `./references/engineering/review.md` — it carries the len
 
 **Launch the cross-vendor probe** (only with `-x`): once the staged diff is confirmed non-empty, start one background probe per `./references/workflow/agent-fanout.md` — a cold second review of the staged diff (the probe reads `git diff --cached` itself at the repo root), demanding findings with severity and `file:line` evidence. Review inline while it runs; collect and merge per the contract before finalizing findings.
 
-**Run verification scripts** only when `-v` is passed, per "Verification Scripts" in `./references/engineering/review.md`.
+**Run verification scripts** per "Verification Scripts" in `./references/engineering/review.md` — always: identify the project's lint/typecheck/test scripts and run them on the staged files where they exist; failures and warnings land as findings.
 
 ## Review Focus
 
