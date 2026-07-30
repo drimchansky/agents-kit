@@ -1,6 +1,6 @@
 # Documentation Rules
 
-The **documentation domain pack's rules overlay** — loaded on top of the neutral `../../CORE_RULES.md` for any task with `**Domain:** documentation`, and unconditionally by the pack-contributed `stage-doc` and `review-docs` skills. The pack governs document work: RFCs, ADRs, architecture notes, diagrams, outreach and reply drafts, and other document deliverables. See `../workflow/domain-packs.md` for how skills resolve and load a domain.
+The **documentation domain pack's rules overlay** — loaded on top of the neutral `../../CORE_RULES.md` for any task with `**Domain:** documentation`, and unconditionally by the pack-contributed `stage-doc`, `review-docs`, and `prepare-diagram` skills. The pack governs document work: RFCs, ADRs, architecture notes, diagrams, outreach and reply drafts, and other document deliverables. See `../workflow/domain-packs.md` for how skills resolve and load a domain.
 
 ## Send & publish discipline
 
@@ -30,7 +30,8 @@ Beyond this rules overlay, the pack provides:
 - `verification.md` — what "verify a step / criterion" means for a document, plus the documentation acceptance-gate recipe (the two mandatory gates of `../workflow/execution-loop.md`, bound for document work — mechanical checks only; the judgment layer is `review-docs`'s)
 - `adr-format.md` — the generic ADR format bar: header block, section skeleton, decision shape, open-questions bar, register and trim rules
 - `rfc-format.md` — the generic RFC format bar: findings and decision items, decision log, scope bounds
+- `mermaid-core.md` plus five per-type sheets (`mermaid-flowchart.md`, `mermaid-sequence.md`, `mermaid-class.md`, `mermaid-er.md`, `mermaid-state.md`) — distilled Mermaid generation checklists: portability across renderers, label quoting and ID discipline, and each type's own traps and style calls, consumed by `prepare-diagram`
 
-The pack also contributes two skills: `stage-doc` — the staging lifecycle for a doc task's deliverable on Notion (scratch pages, ledger, local sync-back) — and `review-docs` — the doc reviewer carrying the against-codebase audit and the quality pass (whole-doc coherence, register) that the loop's mechanical gates deliberately exclude.
+The pack also contributes three skills: `stage-doc` — the staging lifecycle for a doc task's deliverable on Notion (scratch pages, ledger, local sync-back) — `review-docs` — the doc reviewer carrying the against-codebase audit and the quality pass (whole-doc coherence, register) that the loop's mechanical gates deliberately exclude — and `prepare-diagram` — the Mermaid diagram generator for a provided subject (a repo's code flow or architecture, a figure a doc needs, a process described in prose).
 
 The pack is deliberately partial: it ships no exploration / planning / execution / review files yet. A phase that asks for one runs on the neutral methodology per `../workflow/domain-packs.md` § *Missing-pack fallback* — state it, don't fabricate. Org-specific conventions (people and mention tables, house style, page-handling rules for published docs) are deliberately **not** kit content; they live in a store-level doc-conventions file discovered per `../workflow/task-layout.md` § *Store-level artifacts*, and the kit checklists cite that role rather than carrying org data.

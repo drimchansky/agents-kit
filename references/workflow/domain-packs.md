@@ -17,8 +17,9 @@ quality checklists apply — lives in a **domain pack** under `references/<domai
 
 Engineering is the first and reference domain pack: `references/engineering/`. Documentation is
 the second: `references/documentation/` — a deliberately partial pack (rules overlay, verification
-recipes, ADR/RFC format checklists) that also contributes the `stage-doc` and `review-docs`
-skills. New domains are added as sibling directories without touching the spine.
+recipes, ADR/RFC format checklists, Mermaid cheatsheets) that also contributes the `stage-doc`,
+`review-docs`, and `prepare-diagram` skills. New domains are added as sibling directories without
+touching the spine.
 
 ## What a domain pack provides
 
@@ -77,9 +78,10 @@ just under `**Status:**`:
   the neutral core, because it writes no code and the single overlay rule that governs it (Git state
   is mutated only when explicitly asked) is quoted inline in its SKILL.md. Pack membership is about
   which domain contributes a skill, not about which files it must read.
-- **Documentation-contributed skills** — `stage-doc` (a doc task's staging lifecycle) and
-  `review-docs` (existing docs' accuracy against the codebase, plus the whole-doc quality pass) —
-  load `references/documentation/` unconditionally: the same shape as the engineering-only set —
+- **Documentation-contributed skills** — `stage-doc` (a doc task's staging lifecycle),
+  `review-docs` (existing docs' accuracy against the codebase, plus the whole-doc quality pass),
+  and `prepare-diagram` (a Mermaid diagram for a provided subject) — load
+  `references/documentation/` unconditionally: the same shape as the engineering-only set —
   the pack that contributes a skill is the pack it loads.
 - **Pack-free skills** — `archive-task`, `maintain`, `prepare-ticket`, and the reconcile
   composites `resume-task-reconcile` / `review-task-reconcile` — read the neutral core but
@@ -113,12 +115,12 @@ For a spine skill acting on a task:
    verifying, etc.).
 
 Engineering-only skills skip step 2 and use `engineering` directly, and the
-documentation-contributed `stage-doc` / `review-docs` likewise skip it and use `documentation` —
-except `commit`, which for the reason given above runs only step 1. Pack-free skills (`archive-task`, `maintain`, `prepare-ticket`,
-`resume-task-reconcile`, `review-task-reconcile`) run only step 1 — they apply the neutral core and
-resolve no domain pack of their own. A composite's delegated skills still run their own steps 2–3:
-the reconcile composites' Phase 1 does, and `maintain`'s Phase 3 does through
-`resume-task-reconcile`.
+documentation-contributed `stage-doc` / `review-docs` / `prepare-diagram` likewise skip it and use
+`documentation` — except `commit`, which for the reason given above runs only step 1. Pack-free
+skills (`archive-task`, `maintain`, `prepare-ticket`, `resume-task-reconcile`,
+`review-task-reconcile`) run only step 1 — they apply the neutral core and resolve no domain pack
+of their own. A composite's delegated skills still run their own steps 2–3: the reconcile
+composites' Phase 1 does, and `maintain`'s Phase 3 does through `resume-task-reconcile`.
 
 ## Missing-pack fallback
 
