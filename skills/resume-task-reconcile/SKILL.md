@@ -30,9 +30,10 @@ Past these three, a phase departs from its skill or contract only where its own 
 so — never by improvisation.
 
 **CRITICAL**: The write surface is exactly three task files — `plan.md`, `result.md`, and minimal
-annotations in `CONTEXT.md`'s References / Open Questions sections — and nothing else. `goals.md` and
-`ticket.md` are never edited (the ticket is user-owned; even `reconcile-task` treats it as
-read-only), source code is never written, git state is never mutated, external systems are fetched
+annotations in `CONTEXT.md`'s References / Open Questions sections — and nothing else. `goals.md`,
+`ticket.md`, and `diagram.md` are never edited (the ticket is user-owned; even `reconcile-task`
+treats it as read-only; the diagram is `implement-task`'s to repaint — drift is flagged, never
+repaired), source code is never written, git state is never mutated, external systems are fetched
 read-only, and no `BRIEF.md` or scratch briefing file is created. This pipeline fixes the **docs**,
 not the world — it never re-runs the acceptance gate and never executes plan work.
 
@@ -108,7 +109,7 @@ Confirm the protocol invariants before finishing:
 - [ ] Reconciliation followed the shared contract; every edit maps to a brief finding or an engineer
       answer, and judgment items were asked as one batched round
 - [ ] Write surface held: only `plan.md`, `result.md`, and `CONTEXT.md`'s References / Open Questions
-      annotations — `goals.md` and `ticket.md` untouched, no code written, no git mutation, no
-      `BRIEF.md` or scratch file
+      annotations — `goals.md`, `ticket.md`, and `diagram.md` untouched, no code written, no git
+      mutation, no `BRIEF.md` or scratch file
 - [ ] Closing change list printed, with real-work findings under "Not reconciled" and the next skill
       named — or `Nothing to reconcile.` with nothing written

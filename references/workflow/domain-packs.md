@@ -29,7 +29,11 @@ A pack is a directory `references/<domain>/` holding, by convention:
 - **`exploration.md`** — how to "explore the domain's reality" before planning (what sources to
   read, what to confirm, how to map blast radius / dependencies).
 - **`planning.md`** — domain planning specifics: how to slice work, step-size caps, what a
-  checkpoint asserts.
+  checkpoint asserts — and the domain's **diagram guidance**, when it has any: when a change
+  warrants a task `diagram.md`, what it depicts and at what altitude, and the notation
+  (`../engineering/planning.md` § *The task diagram* is the worked example). A pack that ships no
+  diagram guidance opts its domain out of task diagrams — `plan-task` then draws none
+  (`task-layout.md` § *The diagram file*).
 - **`execution.md`** — how to carry out and record one step in this domain.
 - **`verification.md`** — what "verify a step / criterion" means here, plus the domain's
   acceptance-gate recipe.

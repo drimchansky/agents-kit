@@ -50,6 +50,7 @@ Read all four core artifacts — plus `ticket.md` when present — don't answer 
 - `CONTEXT.md` in the resolved task folder — the static grounding context (problem statement, scope summary, key assumptions, references).
 - `goals.md` — capture the full `## Goals` list by `G<n>` ID. Note any goal marked `_(unresolved: ...)_`.
 - `plan.md` — note its `**Status:**` header and its `**Goals:**` link.
+- `diagram.md` (when present) — the target-state shape the plan builds toward; capture its dated `**Reflects:**` line, which is what freshness is reported from. Absence is normal and is not a gap.
 - `result.md` — read `## Current state` first for orientation (the digest of where things stand — but it's derived metadata, so every claim in it becomes a Step-4 doc claim to verify, never trusted ground truth); then note `**Status:**`, find the latest per-step or full-run section, capture every `**Blocked:**` and `**In review:**` block verbatim, and capture any `## Acceptance` section verbatim.
 
 Status vocabulary and the **pairing rule** live in `./references/workflow/task-lifecycle.md` — flag mismatched pairs as drift. Deliberate pauses are not drift: a `skipped` plan is abandoned (a missing result file is expected), `blocked` + `**Blocked:**` is paused (name the cause), and `in-review` + `**In review:**` is parked awaiting the listed `(external)` goals. The goals file has no status.
@@ -115,6 +116,7 @@ Assemble per the output template below. Print to chat. This is the last step —
 **Task dir:** `<resolved task folder path>`
 **Goals:** `goals.md`
 **Plan:** `plan.md` (Status: <status>)
+**Diagram:** `diagram.md` (Reflects: <the line verbatim>) — _omit this line entirely when the task has no diagram_
 **Result:** `result.md` (Status: <status>) — or "not yet started"
 
 ## Status

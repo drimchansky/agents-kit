@@ -19,9 +19,10 @@ The plan is the **contract for how**; the goals are the **contract for what done
 - Context: `CONTEXT.md` (read-only for this skill)
 - Goals: `goals.md` (read-only for this skill)
 - Plan: `plan.md`
+- Diagram: `diagram.md` (optional; re-checked and repainted at the gates — §4)
 - Result: `result.md`
 
-**CRITICAL**: The plan and result files are mutated by this skill; `CONTEXT.md`, the goals, and the ticket are not. The plan is mutated _only_ to flip step checkboxes (`- [ ]` → `- [x]`), append result links, update the `Status:` header, and (when necessary) revise scope or steps. Everything else about the plan stays as written. The result file is the place for narrative — what shipped, what surprised you, what diverged. The goals file is the user's contract; if it needs to change, surface that to the user — never edit it from this skill.
+**CRITICAL**: The plan, the result file, and the task's `diagram.md` when it has one are mutated by this skill; `CONTEXT.md`, the goals, and the ticket are not. The plan is mutated _only_ to flip step checkboxes (`- [ ]` → `- [x]`), append result links, update the `Status:` header, and (when necessary) revise scope or steps. Everything else about the plan stays as written. The diagram is mutated _only_ by the gate re-checks in §4, §6, and §7 — repainted to match what shipped, never to match the plan's prose instead of reality — with its `**Reflects:**` line re-dated. The result file is the place for narrative — what shipped, what surprised you, what diverged. The goals file is the user's contract; if it needs to change, surface that to the user — never edit it from this skill.
 
 ## References
 
@@ -67,6 +68,7 @@ Read **all four core artifacts** — plus the optional `ticket.md` when present 
 - The sibling `goals.md` — the goals define the final gate this skill runs before marking the plan `done`. If the goals file is missing, stop and tell the user — `plan-task` should produce one. Do not invent goals to fill the gap.
 - The sibling `CONTEXT.md` — problem statement, scope summary, key assumptions, external references. Authoritative for the task's static context; never modify it from this skill.
 - The sibling `ticket.md` when present — the product-facing ask the goals derive from; read-only context (the acceptance gate runs against `goals.md`, not the ticket).
+- The sibling `diagram.md` when present — the target-state shape the plan builds toward. This skill re-checks and repaints it at the gates (§4); its absence is never a gap.
 - The companion `result.md` if it exists — work may have been partially done in a prior session. Pick up where it left off; do not redo completed steps. If the plan is `blocked`, read the result file's `**Blocked:**` section and resume only once the blocker has cleared — then flip both plan and result back to `executing` before continuing. If the plan is `in-review`, read the result file's `**In review:**` section — it lists the pending `(external)` goals; don't re-run the whole plan, jump to the acceptance gate (§7) for just those goals against the external confirmation the user now provides, then finalize per §8 (to `done` if confirmed, or back to `executing` if review sent work back). See `./references/workflow/task-lifecycle.md`.
 
 Treat the goals, `CONTEXT.md`, and `ticket.md` as read-only. If implementation reveals a goal is wrong or missing, surface it to the user and let them edit the goals file — don't edit it from here; likewise a changed product ask is the user's to update in the ticket.
@@ -132,7 +134,20 @@ What this skill binds:
 
 - **Pause or continue** — in step-by-step mode, stop after each step and report progress; in full-plan mode, continue to the next.
 - **Blocked** — when Stop-the-Line can't be cleared this session, set the plan and result `**Status:**` to `blocked`, add a `**Blocked:**` section to the result file naming the cause (what failed, what was tried, and what's needed — or what's awaited), and rewrite `## Current state` naming the blocker. Then stop; don't skip ahead — but regenerate the store index if the store has one (the §8 walk-up rule). See `./references/workflow/task-lifecycle.md`.
-- **Integration gates** — the plan's `### Checkpoint after Step N` headings between step blocks, each a **mandatory gate** after marking step N done, not an optional summary. A checkpoint is not a step, has no `- [ ]` marker, and is never flipped. Run its assertions per the shared loop, append a checkpoint section to the result file (§5), and in step-by-step mode pause there just as at a step boundary.
+- **Integration gates** — the plan's `### Checkpoint after Step N` headings between step blocks, each a **mandatory gate** after marking step N done, not an optional summary. A checkpoint is not a step, has no `- [ ]` marker, and is never flipped. Run its assertions per the shared loop, append a checkpoint section to the result file (§5), and in step-by-step mode pause there just as at a step boundary. When the task has a `diagram.md`, the checkpoint also runs the diagram re-check below.
+
+#### Diagram re-check (only when the task has a `diagram.md`)
+
+A task carrying a `diagram.md` re-checks it at three points: **each checkpoint**, **each plan revision that changes structure** (§6), and **the acceptance gate** (§7). A task without one skips all three, and nothing reports the absence (`./references/workflow/task-layout.md` § *The diagram file*).
+
+The re-check compares the drawing against what actually shipped, and its record names *what was compared* — which nodes and edges, against which files. Writing that down is what keeps the gate from becoming a rubber stamp. Then:
+
+- **Still matches** → re-anchor and re-date the `**Reflects:**` line. No repaint, no render-check.
+- **Diverged** → repaint to match what shipped, render-check it per the resolved domain pack's diagram guidance (for code, `./references/engineering/planning.md` § *The task diagram*, which owns the notation and the render-check), record the divergence in the step's or checkpoint's result section — what changed shape, and why — and re-anchor and re-date the `**Reflects:**` line the same way.
+
+Either way the line leaves the gate anchored to it — `as of Step N` (the last step completed at this checkpoint or revision) or `as of the acceptance gate` — dated today, replacing the plan-time `as of the plan` anchor `plan-task` wrote at creation (`./references/workflow/task-layout.md` § *The diagram file*).
+
+A divergence is usually information rather than failure: it means the build revealed something the plan didn't anticipate, which is what §6 exists to surface. It is Stop-the-Line only when the shipped structure contradicts a goal.
 
 #### Execution strategy: delegated by default
 
@@ -240,12 +255,15 @@ When implementation reveals the plan is wrong — a step is infeasible, scope wa
 
 - **Update the plan in place** — revise the affected step or scope; add new steps if needed; remove obsolete steps. Keep step numbers stable when possible (insert as `Step 3a`, `Step 3b` rather than renumbering).
 - **Record the divergence in the result file** under the affected step's `**Deviations from plan:**` field, including _why_ the plan changed.
+- **Repaint the diagram when the revision changes structure** (only when the task has one), at the revision itself rather than deferred to the next checkpoint — the revision is the causal event, and in step-by-step mode it is exactly where the user inspects. Same rule in both execution modes; run it per the diagram re-check in §4.
 - In step-by-step mode, pause and confirm the revision with the user before continuing.
 - **If the right call is to abandon the task** rather than revise it, surface that to the user and get explicit confirmation first — `implement-task` never sets `skipped` on its own (see `./references/workflow/task-lifecycle.md`). On confirmation, set the plan's `**Status:**` to `skipped` (record why in the result file) and stop — don't delete the plan or leave it dangling in `executing`.
 
 ### 7. Acceptance Gate
 
 After the last step is marked done but **before** flipping either file's `**Status:**` to `done`, run the acceptance gate against `goals.md`, applying the acceptance discipline in `./references/workflow/execution-loop.md`. This skill's binding: the criteria are `goals.md`'s `G<n>` goals, and the verdict goes in an `## Acceptance` section of the result file.
+
+When the task has a `diagram.md`, run the §4 diagram re-check once more here. The gate is where the drawing stops being a target and becomes the **as-built record**, so it is verified against the real tree like any other criterion, and the run ends with its `**Reflects:**` line naming the acceptance gate and the date.
 
 For each goal in `goals.md` (by its `G<n>` ID), **tag the outcome** as `met`, `met with caveats`, `unmet`, `out of scope`, or `pending external`. Tag `out of scope` **only when the plan's `## Scope` lists this goal ID in its deferred partition** — confirm the ID is actually there. If a goal you'd call out-of-scope isn't in the deferred set, it drifted in after the plan was written; surface it to the user rather than silently dropping it under a label the scope never authorized. Tag `pending external` **only for a goal carrying the `(external)` marker** whose verification you genuinely can't perform in-session (a human/client sign-off, or a live/production state you can't drive) — record what's awaited and who/what will verify it. `pending external` is never a substitute for `unmet`: if the agent-verifiable work behind the goal isn't done, it's `unmet`.
 
@@ -314,6 +332,7 @@ Confirm the protocol invariants before finishing:
 - [ ] Every completed step: its plan-defined `Verify` criterion actually run and passed, health verify green, checkbox flipped with a link to its result section
 - [ ] Every checkpoint run and recorded; no step started over a failing gate
 - [ ] Acceptance gate ran every goal by `G<n>` ID against live behavior and wrote the `## Acceptance` section — no goal left `unmet` at finalize, `pending external` only on `(external)` goals (parking the task at `in-review`)
+- [ ] When the task has a `diagram.md`: re-checked at every checkpoint, at every structural plan revision, and at the acceptance gate — each re-check naming what was compared, each repaint render-checked, `**Reflects:**` re-anchored and re-dated
 - [ ] Deviations and plan revisions recorded in the result file; `goals.md` and `CONTEXT.md` never edited from this skill
 - [ ] Domain pre-presentation checks re-run on the full changed surface (for code: typecheck, linter, tests, consumer grep; framework code cited to `**Sources:**` or marked `// UNVERIFIED:`)
 - [ ] Every step executed through the delegation default — a serial executor with the coordinator's re-run gates, an announced parallel batch, or an announced inline fallback recorded in its `**Executed:**` field

@@ -120,6 +120,9 @@ flowchart TD
 ## Before returning a diagram
 
 - Render-check it: `npx -y @mermaid-js/mermaid-cli -i d.mmd -o d.svg`. Exit 0 plus an SVG on disk is
-  the pass; a parse error exits 1 and writes no file. Never hand over an unrendered diagram.
+  the pass; a parse error exits 1 and writes no file. Never hand over an unrendered diagram — with
+  one carve-out: when the tooling is unavailable (no `npx`, or no network for the package fetch),
+  deliver the diagram anyway and state that render validation was skipped and why. A skipped check
+  is stated, never silent.
 - Reread every label as an outside reader: expand acronyms on first use and cut internal shorthand
   that the audience does not share.

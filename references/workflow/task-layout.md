@@ -4,7 +4,7 @@ How task artifacts are arranged on disk, and how skills discover them. **This fi
 
 ## One task, one flat folder
 
-A task lives in a single flat folder, named for its slug. A task folder is defined by its **contents** — the role-named files below — not by its address: any folder holding them is a task folder, wherever it sits on disk. The **canonical root**, `<project-root>/.agents/tasks/`, is the default location: where skills create task folders when no path is given, the only place a bare slug resolves, and the only place discovery listing scans. The folder name *is* the slug — the handoff token passed between `prepare-ticket` → `refine-idea` → `plan-task` → `implement-task`; for a folder in the canonical root the bare slug suffices, for one anywhere else the handoff token is the folder's path. Inside sit the role-named files below, found by their fixed names (never by a path someone typed) — four core files plus an optional upstream `ticket.md`:
+A task lives in a single flat folder, named for its slug. A task folder is defined by its **contents** — the role-named files below — not by its address: any folder holding them is a task folder, wherever it sits on disk. The **canonical root**, `<project-root>/.agents/tasks/`, is the default location: where skills create task folders when no path is given, the only place a bare slug resolves, and the only place discovery listing scans. The folder name *is* the slug — the handoff token passed between `prepare-ticket` → `refine-idea` → `plan-task` → `implement-task`; for a folder in the canonical root the bare slug suffices, for one anywhere else the handoff token is the folder's path. Inside sit the role-named files below, found by their fixed names (never by a path someone typed) — four core files plus two optional role files, an upstream `ticket.md` and a `diagram.md`:
 
 ```
 .agents/tasks/<slug>/        # the canonical default — but any parent directory works
@@ -12,10 +12,11 @@ A task lives in a single flat folder, named for its slug. A task folder is defin
 ├── CONTEXT.md     # static grounding context (origin marker + inputs)
 ├── goals.md       # acceptance criteria — what "done" means
 ├── plan.md        # the contract: scope, steps, verify criteria
+├── diagram.md     # optional: the target-state shape the plan builds toward
 └── result.md      # rewritable Current-state header + append-only execution log
 ```
 
-One plan per folder. `CONTEXT.md` is capitalized; `ticket.md`, `goals.md`, `plan.md`, and `result.md` are lowercase. A skill finds each file by its fixed role name (convention/glob), so moving, relocating, or archiving a folder never breaks a path. The in-folder `**Context:**` / `**Goals:**` / `**Plan:**` / `**Result:**` link-headers point at `./CONTEXT.md`, `./goals.md`, `./plan.md`, and `./result.md` — stable `./` links that survive folder moves; when the task has a `ticket.md`, the plan's optional `**Ticket:**` header points at `./ticket.md` the same way. Inside `result.md`, the first `##` section is the rewritable `## Current state` block (contract in the sibling `task-lifecycle.md`); everything beneath it is the append-only log.
+One plan per folder. `CONTEXT.md` is capitalized; `ticket.md`, `goals.md`, `plan.md`, `diagram.md`, and `result.md` are lowercase. A skill finds each file by its fixed role name (convention/glob), so moving, relocating, or archiving a folder never breaks a path. The in-folder `**Context:**` / `**Goals:**` / `**Plan:**` / `**Result:**` link-headers point at `./CONTEXT.md`, `./goals.md`, `./plan.md`, and `./result.md` — stable `./` links that survive folder moves; when the task has a `ticket.md` or a `diagram.md`, the plan's optional `**Ticket:**` and `**Diagram:**` headers point at `./ticket.md` and `./diagram.md` the same way. Inside `result.md`, the first `##` section is the rewritable `## Current state` block (contract in the sibling `task-lifecycle.md`); everything beneath it is the append-only log.
 
 ## The goals file: durable IDs, cited by step
 
@@ -36,6 +37,24 @@ Like the spec it replaces, `goals.md` is a static input — it carries no `**Sta
 - **Optional `(external)` marker.** A goal verified *outside* the agent's session — a human/client sign-off, or a live/production state the agent can't drive in-session — carries an `(external)` token right after its ID: `- G5 (external) — <outcome>`. It is an optional annotation on the bullet (absent = agent-verifiable, the default); the acceptance gate tags such a goal `pending external` and parks the task at the `in-review` state until it's confirmed. Quality bar and rationale live in the sibling `acceptance-criteria.md`; the `in-review` state in `task-lifecycle.md`.
 - **Steps cite the goals they deliver.** Every plan step carries a `**Goal:**` line naming the goal ID(s) it delivers (`**Goal:** G1, G3`) — or the explicit escape `**Goal:** none (infra/refactor)` for a step that delivers no user-visible goal. Coverage is then mechanical: every goal ID maps to at least one delivering step, and every non-escaped step to at least one goal.
 - **Scope is a partition of goal IDs.** A plan's `## Scope` says which goals it delivers and which it defers, by explicit ID list (e.g. `delivered: G1, G3 · deferred: G4`), instead of re-prosing intent. Do not use ranges: retired goal IDs can leave gaps, so `G1-G3` is ambiguous once `G2` has been removed. Each goal is either in this plan or deferred to another — the partition is what makes goals↔scope drift unwritable.
+
+## The diagram file: optional, dated, drawn only when warranted
+
+`diagram.md` is an **optional** role file holding one diagram of the system the task changes — the target-state *shape*, not the plan's step sequence. A folder may have one or not, and **absence is never a gap**: the same footing a task with no `ticket.md` stands on. `plan-task` draws one when the resolved domain pack's diagram guidance says the change alters structure, and draws none when it doesn't; a domain whose pack ships no diagram guidance never gets one (`./domain-packs.md` § *Missing-pack fallback*). There is no flag and no "none" marker — the file is there or it isn't.
+
+Its header, followed by one fenced ` ```mermaid ` block:
+
+```markdown
+# Diagram: <task title>
+
+**Plan:** [./plan.md](./plan.md)
+**Reflects:** <what the picture is true of> — as of <the plan | Step N | the acceptance gate>, YYYY-MM-DD
+```
+
+- **No `**Status:**` field.** The diagram has no lifecycle of its own, so it stays out of the status registry and out of the pairing rule (`./task-lifecycle.md`) — the same footing as `goals.md` and `ticket.md`.
+- **Currency rides on the dated `**Reflects:**` line**, not on a status. It names what the picture is true of and when that was last confirmed — world-truth, so it appears only timestamped (*One home per fact* below). `plan-task` writes it first anchored `as of the plan` — at creation the picture is a target, not yet an as-built record. `implement-task` re-anchors and re-dates it at each gate that re-checks the diagram; `resume-task` reads it to report freshness.
+- **The diagram is the home of the target-state shape** — components, boundaries, and flows. Rationale stays in `CONTEXT.md`'s Recommended Direction and execution order in `plan.md`'s Steps; the plan's `**Diagram:**` link-header points here instead of re-prosing the component list. A diagram that merely restates the steps' edit surfaces is the derived duplicate *One home per fact* exists to prevent, not a diagram.
+- **What it depicts, at what altitude, when a change warrants one, and the notation itself are the domain pack's** (`../engineering/planning.md` for code work). Nothing in the spine carries diagram knowledge.
 
 ## One home per fact
 

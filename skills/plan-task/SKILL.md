@@ -41,7 +41,7 @@ If the task doesn't warrant a full plan, say so and suggest proceeding directly 
 
 ## Output Files
 
-This skill writes **two paired files** per plan: a goals file and a plan. Both live in the resolved task folder — canonically `.agents/tasks/<slug>/` — alongside its `CONTEXT.md`, under fixed role names.
+This skill writes **two paired files** per plan: a goals file and a plan — plus an optional third, `diagram.md`, when the change warrants one (Step 5a). All live in the resolved task folder — canonically `.agents/tasks/<slug>/` — alongside its `CONTEXT.md`, under fixed role names.
 
 - `<slug>` — names the **task folder** that holds `CONTEXT.md` plus the goals, plan, and result for the effort. Derived from the task: 2–5 lowercase kebab-case words capturing the gist (e.g. `add-csv-export`, `migrate-auth-middleware`, `fix-stale-cache-invalidation`). Don't ask the user — derive it. **If the user passed a slug that resolves to an existing active task folder, or a path to one (typically from `refine-idea`), reuse it — don't create a new one.** A path is used verbatim, anywhere on disk; its folder name is the slug.
 - **Fixed file names.** Inside the folder the goals file and plan are always `goals.md` and `plan.md` — role names, no slug prefix, one plan per folder (so `.agents/tasks/add-csv-export/goals.md` and `.../plan.md`). Skills find them by these fixed names — the folder itself may be given by a path someone typed, but the files inside it never are.
@@ -140,6 +140,15 @@ When `CONTEXT.md` carries a `## Recommended Direction`, treat it as the starting
 
 For each approach, weigh alignment with existing patterns, the minimum complexity that meets the requirements, risk and reversibility, and relative effort — a line per axis is enough.
 
+### 5a. Draw the Task Diagram (when warranted)
+
+With the approach chosen, draw the task's optional `diagram.md` when the resolved domain pack's diagram guidance says the change warrants one — for code, `./references/engineering/planning.md` § *The task diagram*, which owns the warranted test, what the diagram depicts, its altitude, and the notation. This skill owns only the timing and the file; it carries no diagram or Mermaid knowledge of its own.
+
+- **Warranted** → write `<task-dir>/diagram.md` in the format fixed by `./references/workflow/task-layout.md` § *The diagram file* — a `**Plan:**` back-link, a dated `**Reflects:**` line anchored `as of the plan` (no step has run yet — `implement-task`'s gates re-anchor it as it becomes the as-built record), one diagram — and add the `**Diagram:**` link-header to the plan.
+- **Not warranted, or the resolved domain ships no diagram guidance** → write nothing, and add no header. Absence is the intended state rather than a gap, so nothing records the decision and no skill later reports the file as missing.
+
+Most tasks land in the second branch. Drawing one for a change with no structural shape is the failure mode to watch here — the pack's not-warranted examples are the calibration.
+
 ### 6. Define Scope
 
 Explicitly state:
@@ -226,7 +235,7 @@ The plan's `## Open Questions` holds only questions that **arose during planning
 
 Match the plan's detail to the task's complexity — depth scales, but every tier still has to satisfy the Verification checklist below. The goals step (Step 3) is required at every depth — even small tasks benefit from a few explicit goals.
 
-- **Medium** (small, clear pattern) — Steps 1–4, 6–10 — skip approach comparison (Step 5); keep exploration, risks, and open questions light but real
+- **Medium** (small, clear pattern) — Steps 1–4, 5a, 6–10 — skip approach comparison (Step 5); keep exploration, risks, and open questions light but real
 - **Large** (bigger, some ambiguity) — All steps, moderate detail
 - **Complex** (cross-cutting, structural) — All steps, deep exploration, multiple approaches compared
 
@@ -250,6 +259,7 @@ Confirm the protocol invariants before finishing:
 - [ ] When a `ticket.md` is present, every one of its acceptance criteria is sharpened into ≥1 `G<n>` goal, and no goal contradicts the ticket's stated scope
 - [ ] `plan.md` written at `to-do` with link-headers to `./CONTEXT.md` and `./goals.md` (and `./ticket.md` when the task has one); every step carries the `- [ ]` checkbox, **What**, **Verify**, **Goal**, **Depends on**
 - [ ] Coverage is a closed mapping: every goal ID cited by ≥1 step, every non-infra step cites ≥1 goal, and `## Scope` partitions all goal IDs into delivered / deferred (explicit lists, no ranges)
+- [ ] `diagram.md` written with its `**Reflects:**` line and cited by the plan's `**Diagram:**` header when the pack's guidance warranted one — and neither written when it didn't; absence is never annotated
 - [ ] No `CONTEXT.md` content restated — sibling sections cited; the plan carries only plan-time deltas (*One home per fact*)
 - [ ] Plan grounded in the domain's actual reality; checkpoints every 2–3 steps for plans >5 steps
 - [ ] Risks specific to this task; open questions that could invalidate the approach surfaced
@@ -267,6 +277,7 @@ Write the file with this top-level layout. Adapt sections to task size — not e
 **Deliverable:** [./adr.md](./adr.md) _(only for a doc task: its work-product file — see `./references/workflow/task-layout.md` § Doc-task files)_
 **Context:** [./CONTEXT.md](./CONTEXT.md)
 **Goals:** [./goals.md](./goals.md)
+**Diagram:** [./diagram.md](./diagram.md) _(only when the change warranted one — see Step 5a)_
 **Result:** _(populated by `implement-task`: link to `./result.md`)_
 
 ## Exploration Findings

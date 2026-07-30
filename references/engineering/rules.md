@@ -37,7 +37,7 @@ Beyond this rules overlay, the engineering pack provides the methodology bodies 
 loads by phase:
 
 - `exploration.md` — how to explore a codebase before planning or reviewing (read code, trace callers/callees, map blast radius, check versions, ground in prior art)
-- `planning.md` — engineering planning specifics: vertical slicing, step-size caps, checkpoint shape, when-to-plan heuristics
+- `planning.md` — engineering planning specifics: vertical slicing, step-size caps, checkpoint shape, when-to-plan heuristics, and the task-diagram guidance (when a code change warrants a `diagram.md`, what it depicts, and its notation sources)
 - `execution.md` — stack/version detection, authoritative doc-sourcing, the Prove-It bug pattern, health verification, `// UNVERIFIED:`, red flags
 - `verification.md` — what "verify a step / criterion" means in code, and the engineering acceptance-gate recipe
 - `review.md` — code-review lenses, complexity signals, severity calibration

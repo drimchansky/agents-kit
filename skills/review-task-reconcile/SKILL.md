@@ -32,10 +32,11 @@ Past these three, a phase departs from its skill or contract only where its own 
 so — never by improvisation.
 
 **CRITICAL**: The write surface is exactly three task files — `plan.md`, `result.md`, and minimal
-annotations in `CONTEXT.md`'s References / Open Questions sections — and nothing else. `goals.md` and
-`ticket.md` are never edited (they are the user's contract; a suggested goal rewrite is printed for
-the user to apply, and an engineer's answer about a goal goes to the user as text, not into the
-file), source code is never written, and git state is never mutated. This pipeline fixes the
+annotations in `CONTEXT.md`'s References / Open Questions sections — and nothing else. `goals.md`,
+`ticket.md`, and `diagram.md` are never edited (the goals and ticket are the user's contract — a
+suggested goal rewrite is printed for the user to apply, and an engineer's answer about a goal goes
+to the user as text, not into the file; the diagram is `implement-task`'s to repaint — drift is
+flagged, never repaired), source code is never written, and git state is never mutated. This pipeline fixes the
 **docs**, not the world — it never re-runs the acceptance gate and never executes plan work. It
 still does not implement and does not redesign: a step that needs rethinking goes back to
 `plan-task`.
@@ -127,8 +128,8 @@ Confirm the protocol invariants before finishing:
       engineer answer, and the review's Questions were put as one batched round with only answered
       items applied
 - [ ] Write surface held: only `plan.md`, `result.md`, and `CONTEXT.md`'s References / Open Questions
-      annotations — `goals.md` and `ticket.md` untouched (suggested rewrites printed, not written),
-      no code written, no git mutation
+      annotations — `goals.md`, `ticket.md`, and `diagram.md` untouched (suggested rewrites printed,
+      not written), no code written, no git mutation
 - [ ] No implementation and no redesign; steps needing rethinking routed to `plan-task`
 - [ ] Closing change list printed, with real-work findings under "Not reconciled" and the next skill
       named — or `Nothing to reconcile.` with nothing written

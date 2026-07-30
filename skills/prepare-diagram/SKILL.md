@@ -65,7 +65,7 @@ Verification is on by default, because a parse error is invisible in chat and su
 3. Fix and re-render until it passes. **Never present a diagram whose last render-check run failed.**
 4. Remove the scratch files when done.
 
-When the tooling is unavailable — no `npx`, or no network for the package fetch — deliver the diagram anyway and state in the response that render validation was skipped and why. A skipped check is stated, never silent.
+When the tooling is unavailable, take the carve-out in `./references/documentation/mermaid-core.md` § *Before returning a diagram*: deliver anyway and state the skip and its reason — stated, never silent.
 
 ## Output
 

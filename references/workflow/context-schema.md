@@ -1,6 +1,6 @@
 # CONTEXT.md Schema
 
-The canonical structure of a task's `CONTEXT.md` — the static grounding context that sits beside `goals.md`, `plan.md`, `result.md`, and an optional upstream `ticket.md` in a task folder. **This file is the single source of truth for the CONTEXT.md section layout.** Cited by `refine-idea` (which produces it via its three-phase pass), `plan-task` (which scaffolds a skeleton when none exists), and `decompose-task` (which seeds one per materialized decomposition part), so downstream consumers (`review-task`, `implement-task`, `resume-task`, `reconcile-task`) read the same section names regardless of how the task started.
+The canonical structure of a task's `CONTEXT.md` — the static grounding context that sits beside `goals.md`, `plan.md`, `result.md`, and the optional `ticket.md` and `diagram.md` in a task folder. **This file is the single source of truth for the CONTEXT.md section layout.** Cited by `refine-idea` (which produces it via its three-phase pass), `plan-task` (which scaffolds a skeleton when none exists), and `decompose-task` (which seeds one per materialized decomposition part), so downstream consumers (`review-task`, `implement-task`, `resume-task`, `reconcile-task`) read the same section names regardless of how the task started.
 
 ## The schema
 
