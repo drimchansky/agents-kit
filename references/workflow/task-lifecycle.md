@@ -1,6 +1,6 @@
 # Task Lifecycle: Status Registry
 
-A task folder holds four core artifacts that share a slug but track distinct lifecycles, plus two optional role files — an upstream `ticket.md` and a `diagram.md`. Three of the artifacts carry a `**Status:**` header drawn from a closed vocabulary; the goals file, the ticket, and the diagram deliberately have none. **This file is the single source of truth for lifecycle states.** When a status name or transition changes, update it here first and propagate to the skills that read or write these fields: `refine-idea`, `plan-task`, `decompose-task`, `implement-task`, `resume-task`, `review-task`, `resume-task-reconcile`, `review-task-reconcile`, and `reconcile-task`. (`archive-task` and `maintain` also read this vocabulary, but at run time, so they need no update.) Directory layout (the flat task folder, the optional `ticket.md` and `diagram.md`, and `Archive/`) is documented separately in the sibling `task-layout.md`.
+A task folder holds four core artifacts that share a slug but track distinct lifecycles, plus three optional role files — an upstream `ticket.md`, a `diagram.md`, and a derived `observations.md`. Three of the artifacts carry a `**Status:**` header drawn from a closed vocabulary; the goals file, the ticket, the diagram, and the observations file deliberately have none. **This file is the single source of truth for lifecycle states.** When a status name or transition changes, update it here first and propagate to the skills that read or write these fields: `refine-idea`, `plan-task`, `decompose-task`, `implement-task`, `resume-task`, `review-task`, `resume-task-reconcile`, `review-task-reconcile`, and `reconcile-task`. (`archive-task` and `maintain` also read this vocabulary, but at run time, so they need no update.) Directory layout (the flat task folder, its three optional role files, and `Archive/`) is documented separately in the sibling `task-layout.md`.
 
 ## Files
 
@@ -19,6 +19,9 @@ A task folder holds four core artifacts that share a slug but track distinct lif
 - **`diagram.md`** (optional) — the target-state shape of the system the task changes (format in `./task-layout.md` § *The diagram file*).
   - No `**Status:**` field; a dated `**Reflects:**` line carries currency instead.
   - Created by `plan-task` when the resolved domain pack's guidance says the change warrants one, and re-checked by `implement-task` — repainted only when it has diverged — at each checkpoint, at each plan revision that changes structure, and at the acceptance gate. Reconcilers never write it: diagram drift is flagged, never repaired (see `./reconciliation.md`). Its absence is never drift.
+- **`observations.md`** (optional) — the last observed state of the folder's cited external references, one dated line per URL (format in `./task-layout.md` § *The observations file*).
+  - No `**Status:**` field; the dated `_Swept:_` line carries currency instead.
+  - Rewritten **wholesale** by every reconciler's external reference check (`./reconciliation.md` § *External reference check*); no other skill writes it, and nothing in it is appended. `resume-task` reads it and quotes its dated lines without fetching. Its absence is never drift — no sweep has run, or nothing is cited.
 - **`result.md`** — a rewritable `## Current state` header block above an append-only execution log.
   - `**Status:**` is a **lifecycle state**.
   - Created and transitioned by `implement-task`. The docs → reality composites append `## Reconciliation` sections, may flip `done → executing`, and may create a skeleton result file to repair a broken pairing. `reconcile-task` also appends `## Reconciliation` sections and may advance state on in-session verified evidence.
@@ -82,7 +85,7 @@ The plan and its companion result file track in lockstep once execution begins:
 
 A plan in `executing` with no companion result file (or a mismatched pair) signals an incomplete `implement-task` initialization. `resume-task` and `review-task` should flag this as drift; their reconcile composites repair it — a skeleton result file when work is evidenced, the plan back to `to-do` when it is not.
 
-The goals file and the diagram are not part of the pairing rule — neither has a lifecycle state to compare. They differ on absence: `resume-task` should flag a plan with no sibling goals file, since `plan-task` is expected to produce one; a missing `diagram.md` is never flagged, because `plan-task` is expected to produce one only when the change warrants it.
+The goals file, the diagram, and the observations file are not part of the pairing rule — none has a lifecycle state to compare. They differ on absence: `resume-task` should flag a plan with no sibling goals file, since `plan-task` is expected to produce one; a missing `diagram.md` or `observations.md` is never flagged, because `plan-task` is expected to produce a diagram only when the change warrants it, and the ledger exists only once a sweep has run.
 
 ## Adding or renaming statuses
 

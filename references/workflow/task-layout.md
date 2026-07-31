@@ -4,19 +4,20 @@ How task artifacts are arranged on disk, and how skills discover them. **This fi
 
 ## One task, one flat folder
 
-A task lives in a single flat folder, named for its slug. A task folder is defined by its **contents** — the role-named files below — not by its address: any folder holding them is a task folder, wherever it sits on disk. The **canonical root**, `<project-root>/.agents/tasks/`, is the default location: where skills create task folders when no path is given, the only place a bare slug resolves, and the only place discovery listing scans. The folder name *is* the slug — the handoff token passed between `prepare-ticket` → `refine-idea` → `plan-task` → `implement-task`; for a folder in the canonical root the bare slug suffices, for one anywhere else the handoff token is the folder's path. Inside sit the role-named files below, found by their fixed names (never by a path someone typed) — four core files plus two optional role files, an upstream `ticket.md` and a `diagram.md`:
+A task lives in a single flat folder, named for its slug. A task folder is defined by its **contents** — the role-named files below — not by its address: any folder holding them is a task folder, wherever it sits on disk. The **canonical root**, `<project-root>/.agents/tasks/`, is the default location: where skills create task folders when no path is given, the only place a bare slug resolves, and the only place discovery listing scans. The folder name *is* the slug — the handoff token passed between `prepare-ticket` → `refine-idea` → `plan-task` → `implement-task`; for a folder in the canonical root the bare slug suffices, for one anywhere else the handoff token is the folder's path. Inside sit the role-named files below, found by their fixed names (never by a path someone typed) — four core files plus three optional role files: an upstream `ticket.md`, a `diagram.md`, and a derived `observations.md`:
 
 ```
 .agents/tasks/<slug>/        # the canonical default — but any parent directory works
-├── ticket.md      # optional: the product-facing ask (upstream origin) — see ticket-format.md
-├── CONTEXT.md     # static grounding context (origin marker + inputs)
-├── goals.md       # acceptance criteria — what "done" means
-├── plan.md        # the contract: scope, steps, verify criteria
-├── diagram.md     # optional: the target-state shape the plan builds toward
-└── result.md      # rewritable Current-state header + append-only execution log
+├── ticket.md       # optional: the product-facing ask (upstream origin) — see ticket-format.md
+├── CONTEXT.md      # static grounding context (origin marker + inputs)
+├── goals.md        # acceptance criteria — what "done" means
+├── plan.md         # the contract: scope, steps, verify criteria
+├── diagram.md      # optional: the target-state shape the plan builds toward
+├── observations.md # optional, derived: last observed state of the cited external references
+└── result.md       # rewritable Current-state header + append-only execution log
 ```
 
-One plan per folder. `CONTEXT.md` is capitalized; `ticket.md`, `goals.md`, `plan.md`, `diagram.md`, and `result.md` are lowercase. A skill finds each file by its fixed role name (convention/glob), so moving, relocating, or archiving a folder never breaks a path. The in-folder `**Context:**` / `**Goals:**` / `**Plan:**` / `**Result:**` link-headers point at `./CONTEXT.md`, `./goals.md`, `./plan.md`, and `./result.md` — stable `./` links that survive folder moves; when the task has a `ticket.md` or a `diagram.md`, the plan's optional `**Ticket:**` and `**Diagram:**` headers point at `./ticket.md` and `./diagram.md` the same way. Inside `result.md`, the first `##` section is the rewritable `## Current state` block (contract in the sibling `task-lifecycle.md`); everything beneath it is the append-only log.
+One plan per folder. `CONTEXT.md` is capitalized; `ticket.md`, `goals.md`, `plan.md`, `diagram.md`, `observations.md`, and `result.md` are lowercase. A skill finds each file by its fixed role name (convention/glob), so moving, relocating, or archiving a folder never breaks a path. The in-folder `**Context:**` / `**Goals:**` / `**Plan:**` / `**Result:**` link-headers point at `./CONTEXT.md`, `./goals.md`, `./plan.md`, and `./result.md` — stable `./` links that survive folder moves; when the task has a `ticket.md` or a `diagram.md`, the plan's optional `**Ticket:**` and `**Diagram:**` headers point at `./ticket.md` and `./diagram.md` the same way. Inside `result.md`, the first `##` section is the rewritable `## Current state` block (contract in the sibling `task-lifecycle.md`); everything beneath it is the append-only log.
 
 ## The goals file: durable IDs, cited by step
 
@@ -56,6 +57,28 @@ Its header, followed by one fenced ` ```mermaid ` block:
 - **The diagram is the home of the target-state shape** — components, boundaries, and flows. Rationale stays in `CONTEXT.md`'s Recommended Direction and execution order in `plan.md`'s Steps; the plan's `**Diagram:**` link-header points here instead of re-prosing the component list. A diagram that merely restates the steps' edit surfaces is the derived duplicate *One home per fact* exists to prevent, not a diagram.
 - **What it depicts, at what altitude, when a change warrants one, and the notation itself are the domain pack's** (`../engineering/planning.md` for code work). Nothing in the spine carries diagram knowledge.
 
+## The observations file: optional, derived, rewritten by the sweep
+
+`observations.md` is an **optional** derived role file holding the last observed state of every external reference the task folder cites — one dated line per URL, written by the reconcilers' external reference check and rewritten **wholesale** on each sweep (`./reconciliation.md` § *External reference check*); nothing in it is appended or hand-maintained. A folder may have one or not, and **absence is never a gap**: it means no sweep has run yet, or nothing is cited. There is no `**Status:**` field — the `_Swept:_` line carries currency — and the file sits outside the pairing rule (`./task-lifecycle.md`), the same footing as `diagram.md`.
+
+Its shape:
+
+```markdown
+# Observations: <task title>
+
+**Plan:** [./plan.md](./plan.md)
+_Swept: YYYY-MM-DD_
+
+- [info] [Jira CRM-123](https://example.atlassian.net/browse/CRM-123) — "Add CSV export", In Progress (observed YYYY-MM-DD)
+- [info] [Design doc](https://example.notion.site/…) — "Export formats", last edited YYYY-MM-DD (observed YYYY-MM-DD); auth required — re-check manually (attempted YYYY-MM-DD)
+- [warn] [PR #482](https://github.com/org/repo/pull/482) — merged (observed YYYY-MM-DD)
+- [block] [Spec doc](https://docs.google.com/document/d/…) — 404, gone (observed YYYY-MM-DD)
+```
+
+- **It is the home of observed external-reference state** (*One home per fact* below): the sweep records what it saw here, and every other surface cites or digests it — `## Current state` may carry a dated gloss of an observation (it is a regenerable digest, never a sole home), and no file records a swept URL's observation anywhere else. The one carve-out is the scratch-page ledger `stage-doc` owns in `**Pointers:**` — dated entries for the staging pages that skill creates and advances itself (`./task-lifecycle.md`); the sweep observes those URLs like any other and never takes the ledger over. The URL on each line is the citation's key, not a second home for the identifier — the identifier stays in `CONTEXT.md`'s `## References` or the result's `**Pointers:**`.
+- **Every line is a dated cache, never live verification.** Readers — `resume-task`'s brief above all — quote a line with its date; freshness is re-derived only by the next sweep.
+- **A fetch that established nothing carries its line forward** — the previous observation with its own date, plus the dated failed attempt (`auth required`, `unreachable — <error>`), as the second `info` line above shows. That carry-forward is why the sweep reads this file before rewriting it; a first sweep with nothing to carry records the attempt alone.
+
 ## One home per fact
 
 Within a task folder, each piece of information lives in exactly **one** file — its home — and the sibling files **cite** it rather than restate it. The goals file above is the worked example (goal intent lives in `goals.md`; every other artifact cites `G<n>` IDs). The same rule holds across the artifacts:
@@ -66,7 +89,7 @@ Within a task folder, each piece of information lives in exactly **one** file �
 - **Execution contract** — steps, verify criteria, checkpoints, risks to execution, and the **plan-time deltas**: findings, decisions, and questions that surfaced during planning and aren't already in `CONTEXT.md` — lives in `plan.md`.
 - **History** — what happened — lives in `result.md`.
 - **An answer is recorded where its question lives** — a resolved `CONTEXT.md` open question is annotated there; a resolved plan-time question, in the plan. Never both.
-- **External-system facts** — a fact about a system outside the folder (a PR, a branch, a commit, a ticket, a deploy) splits into two classes. The *identifier* — PR number, branch name, SHA, ticket key, URL — is a durable **pointer**: its home is the result's `## Current state` `**Pointers:**` line for the task's own delivery vehicle, or `CONTEXT.md`'s `## References` for grounding links. The *state* of that system — open/merged/green/deployed/closed — is world-truth, not doc-truth: it may appear only **timestamped**, in the rewritable `## Current state` block or inside a dated log entry as history, never as undated durable prose. Freshness is always derived live, never trusted from the doc — split by what each skill can write: `resume-task` drift-checks the on-disk claims (read-only, sweeping no citations), the **reconcilers** re-fetch the folder's cited references and refresh them (`./reconciliation.md` § *External reference check*), and `stage-doc` refreshes the scratch-page entries it owns (`./task-lifecycle.md`).
+- **External-system facts** — a fact about a system outside the folder (a PR, a branch, a commit, a ticket, a deploy) splits into two classes. The *identifier* — PR number, branch name, SHA, ticket key, URL — is a durable **pointer**: its home is the result's `## Current state` `**Pointers:**` line for the task's own delivery vehicle, or `CONTEXT.md`'s `## References` for grounding links. The *state* of that system — open/merged/green/deployed/closed — is world-truth, not doc-truth: for a **fetchable citation** its home is the folder's `observations.md` (§ *The observations file* above), where every observation appears dated; a bare branch/SHA pointer has no ledger line (the file is keyed by URL) and is re-derived from the repo on demand instead. Either way it may appear elsewhere only **timestamped** — digested in the rewritable `## Current state` block or inside a dated log entry as history — never as undated durable prose. Freshness is re-derived only by the reconcilers' sweep, which rewrites `observations.md` (`./reconciliation.md` § *External reference check*); `resume-task` quotes the ledger's dated lines without fetching and drift-checks the on-disk claims (read-only, sweeping no citations), and `stage-doc` refreshes the scratch-page entries it owns (`./task-lifecycle.md`).
 - **Cross-folder citations use store-root paths.** `./` links survive folder moves; links *between* task folders, or to a store-level doc, do not — archiving relocates one side. Cite another task or a store-level doc by its path from the store root as plain text — e.g. `P2P.org/Hub/Account Management/DECISIONS.md` — not a relative link.
 
 Cite a sibling with a `./` link naming the section — `see [CONTEXT § Recommended Direction](./CONTEXT.md)` — the same stable within-folder links the file headers use. Copying a sibling's content authors future drift: two copies of one fact disagree as soon as either is edited. `review-task` flags restated grounding as cross-file drift; the fix is to keep the copy in the fact's home and collapse the other to a citation.
