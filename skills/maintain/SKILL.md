@@ -1,6 +1,6 @@
 ---
 name: maintain
-description: Use when asked to run the monthly maintenance ritual on the agents-kit and its task store — a report-first sweep that checks the kit's task folders against the current format, regenerates the store index, and reconciles those folders to reality, then hands off the rest. Auto-applies only the idempotent index refresh; gates every other change. Never touches git.
+description: Use when asked to run the monthly maintenance ritual on the agents-kit and its task store — a report-first sweep that checks the kit's task folders against the current format and regenerates the store index, then hands off the rest. Auto-applies only the idempotent index refresh; gates every other change. Never touches git.
 argument-hint: '[kit path and/or store path — defaults to the canonical checkouts]'
 disable-model-invocation: true
 ---
@@ -10,21 +10,20 @@ disable-model-invocation: true
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
 
-The monthly maintenance ritual: one command that keeps the kit and its task store from drifting between audits — the R6 recommendation of the July 2026 workflow audit, "maintenance has no owner; give it one." It runs three operations in order — a format-conformance sweep of the kit's task folders, a store-index refresh, and a docs→reality reconcile of the active ones among them — then reports what it found and hands the fixes back to you. It operates on the task-folder envelope and store artifacts, not on a task's domain content, so it resolves no `**Domain:**` pack of its own — though the `resume-task-reconcile` it delegates to in Phase 3 still resolves each task's marker and applies that pack, per `./references/workflow/domain-packs.md`.
+The monthly maintenance ritual: one command that keeps the kit and its task store from drifting between audits — the R6 recommendation of the July 2026 workflow audit, "maintenance has no owner; give it one." It runs three operations in order — a format-conformance sweep of the kit's task folders, a store-index refresh, and a listing of the active tasks for handoff — then reports what it found and hands the fixes back to you. It operates on the task-folder **envelope** and store artifacts, not on any task's domain *content*, so it resolves no `**Domain:**` pack, delegates to no skill, and reconciles nothing: the docs→reality reconcile of a task's own content is `resume-task-reconcile`'s job, handed off in **Next** rather than run here.
 
-Phase 3 executes its skill file — read the sibling `SKILL.md` and run its full protocol; Phases 1 and 2 run inline against the reference contracts they name. Three overrides apply pipeline-wide:
+All three phases run inline against the reference contracts they name. Two overrides apply pipeline-wide:
 
-- **Core Rules blocks** — the composite's own block above covers the run; a delegated skill's `AGENTS.md` read and `✅` echo are already satisfied and don't repeat, and the same holds one level down for the skills a delegated composite runs. The override stops at those two: the domain-pack step still runs, as it does inside Phase 3's reconcile composite.
 - **Chat display** — the final **Output** owns the consolidated report; each phase prints only a one-line progress note plus any inline confirmation gate it requires (a gate is a mutation control, not display to suppress — it must reach you).
-- **Next pointers** — a delegated skill's follow-up suggestions are dropped; the composite's Output owns the single **Next**.
+- **Next pointers** — the Output owns the single **Next**.
 
-Past these three, a phase departs from its skill or contract only where its own section below says so — never by improvisation.
+Past these two, a phase departs from the contract it names only where its own section below says so — never by improvisation.
 
 **CRITICAL**:
 
-- **Report-first; gate every mutation but one.** The store-index regeneration is idempotent and applies without a prompt. Everything else — format fixes, reconcile edits, folder removals — is previewed and applied only on confirmation, or handed off in **Next**. Never auto-apply a doc edit, never auto-delete.
+- **Report-first; gate every mutation but one.** The store-index regeneration is idempotent and applies without a prompt. Everything else — format fixes, folder removals — is previewed and applied only on confirmation, or handed off in **Next**. Never auto-apply a doc edit, never auto-delete.
 - **Never touch git.** No add, commit, push, or checkout in any repo. All changes are working-tree only; you review with `git diff` and commit yourself — including the store's regenerated `INDEX.md`.
-- **Coverage is partial by design.** Three of R6's six operations — memory GC, worktree-husk sweep, and the kit deploy-drift check — have no backing skill yet and are **not run**. Name them in the Output (see **Deferred**) rather than skipping silently.
+- **Coverage is partial by design.** Of R6's six operations this ritual runs two — the format sweep and the index refresh. Three — memory GC, worktree-husk sweep, and the kit deploy-drift check — have no backing skill yet and are **not run**; name them in the Output (see **Deferred**) rather than skipping silently. The sixth, the docs→reality reconcile, is wired but deliberately not run here: it is handed to `resume-task-reconcile` in **Next**.
 
 ## Setup — resolve targets
 
@@ -58,11 +57,9 @@ Scope limit: this sweep is canonical-root-scoped (`<root>/.agents/tasks/`). The 
 
 Refresh the store index per the store-artifacts contract in `./references/workflow/task-layout.md`: from the **store root**, locate `scripts/generate-index.mjs` (walk up if needed) and run it with `node <path-to-located-script>`. This is the **one auto-applied** change — the regeneration is idempotent and, per the contract, needs no reconciliation finding to run. If the script is absent, or `node` is unavailable, **skip silently** and say so in the Output. Report whether `INDEX.md` changed; leave it uncommitted for you to review and commit.
 
-## Phase 3 — Reconcile the kit's own tasks
+## Phase 3 — List the active tasks (no reconcile)
 
-For each **active** task folder under `<kit-root>/.agents/tasks/` — non-terminal `**Status:**`, reading the terminal set from `./references/workflow/task-lifecycle.md` at run time rather than hardcoding it here, excluding the `Archive/` container (matched case-insensitively) — Execute `../resume-task-reconcile/SKILL.md` (passing the folder path) in a **preview posture**: run its Phase-2 docs→reality reconcile *analysis* — which only ever weakens overstated claims (unchecks unbacked steps, reverts unevidenced state, repairs status pairings, adds a missing `## Current state` block; it never advances to `done` or checks a box) — but **apply nothing until confirmed**. This is the phase's declared departure from `resume-task-reconcile`, whose fixes are normally automatic: under this report-first ritual even those are gated.
-
-Collect every folder's proposed reconciliations, then apply the obvious ones behind a **single confirmation** for the phase; list the judgment calls (the ones `resume-task-reconcile` would ask about) in the Output for you to decide. Do not block per-folder. Stray folders are Phase 1's concern — they hold no task to reconcile.
+Name the folders under `<kit-root>/.agents/tasks/` whose `plan.md` `**Status:**` is non-terminal — reading the terminal set from the **plan-state vocabulary** in `./references/workflow/task-lifecycle.md` **at run time** rather than against a remembered list, and excluding the `Archive/` container (matched case-insensitively per `task-layout.md`). A folder with **no `plan.md`** — a young task holding only a `ticket.md`, `CONTEXT.md`, or a hand-authored `goals.md` (`task-layout.md` § *Discovery rules for skills*) — has no status to be terminal and counts as active: name it `no plan yet`. A list for the **Next** handoff, nothing more: this ritual reconciles no task content and reads no task's `**Domain:**`. Stray and needs-judgment folders are Phase 1's concern and are not repeated here.
 
 ## Output
 
@@ -71,23 +68,24 @@ Lists, never tables.
 - **Targets** — the resolved kit root and store root.
 - **Format** — the Phase-1 summary: `N conformant, M structurally-fixable, K needs-judgment`, with each non-conformant folder's issue and whether its lossless fixes were applied or declined; then any **stray folders** flagged for removal, and any format rule you expected but found no home for in the docs.
 - **Index** — `regenerated` (`INDEX.md` changed / unchanged) or `skipped (<reason>)`.
-- **Reconcile** — per active kit task: drift found, obvious fixes applied (after the phase confirm) or declined, and judgment items left to decide.
-- **Deferred (not yet wired)** — the three operations this ritual does not yet run, each one line:
+- **Active kit tasks** — Phase 3's list, named for the **Next** handoff. A list, not an analysis.
+- **Deferred (not yet wired)** — the three operations with no backing skill yet, each one line:
     - *memory GC* — prune and de-duplicate the memory silos and the `MEMORY.md` index; needs a memory-GC procedure.
     - *worktree-husk sweep* — find and remove orphaned or dirty leftover git worktrees; awaits the R5 worktree-lifecycle skills.
     - *kit deploy-drift check* — diff the kit source against the deployed `~/.claude` / `~/.codex`; a `setup.sh --check` mode for this was declined in R4, so it stays unwired.
-- **Next:** review `git diff` and commit the kit (any format / reconcile edits) and the store (`INDEX.md`); resolve the flagged judgment items (`/reconcile-task <slug>`, or by hand); remove confirmed stray folders.
+- **Next:** review `git diff` and commit the kit (any format edits) and the store (`INDEX.md`); run `/resume-task-reconcile <slug>` on the active tasks listed above to reconcile their content and re-check their cited links (`/plan-task <slug>` for any listed `no plan yet`); resolve the flagged judgment folders by hand; remove confirmed stray folders.
 
 ## Verification
 
 Confirm the protocol invariants before finishing:
 
-- [ ] `✅ Core agents-kit rules applied` echoed once; sub-skills did not re-echo
+- [ ] `✅ Core agents-kit rules applied` echoed once
 - [ ] Kit root and store root resolved, existence-checked, and printed; a missing default asked-about, not guessed
 - [ ] Phase 1 derived the format from `./references/workflow/` at run time — never from memory or a copy in this file — and surfaced, rather than enforced, any rule with no home in those docs
 - [ ] Phase 1 applied exactly the previewed lossless transforms — every link repointed that named a renamed file or missed its `./`-relative role name within its own folder (headers and in-body alike, anchors preserved), no cross-folder link retargeted, case-only renames performed rather than read as collisions; every folder carrying a judgment issue was left entirely untouched, and no stray folder was deleted
-- [ ] Phase 2 followed the `task-layout.md` store contract and Phase 3 ran from `resume-task-reconcile`'s skill file, with its active set read from `task-lifecycle.md` at run time — neither improvised
-- [ ] `INDEX.md` regeneration was the **only** change applied without a prompt; format fixes, reconcile edits, and folder removals were each previewed and gated or handed off
+- [ ] Phase 2 followed the `task-layout.md` store contract — not improvised
+- [ ] No task's content was reconciled and no task's `**Domain:**` was resolved; Phase 3 listed the active set for the handoff, with the terminal states read from `task-lifecycle.md` at run time — never from a remembered list
+- [ ] `INDEX.md` regeneration was the **only** change applied without a prompt; format fixes and folder removals were each previewed and gated or handed off
 - [ ] No git mutation in any repo; nothing outside the resolved kit root and store root was touched
 - [ ] The three deferred operations are named in the Output, not silently skipped
 - [ ] Output carries the resolved Targets and the single **Next**

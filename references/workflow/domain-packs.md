@@ -102,10 +102,10 @@ just under `**Status:**`:
   resolves the task's `**Domain:**` and loads the pack, leaving the composite nothing to load
   itself.
 
-  *Of their own* is load-bearing for every composite here: `maintain`'s Phase 3 runs
-  `resume-task-reconcile` over each active kit task folder, whose Phase 1 in turn resolves that
-  task's `**Domain:**` and applies the pack. A composite is pack-free when it loads no pack itself;
-  the skills it delegates to keep their own load unless it says otherwise.
+  *Of their own* is load-bearing for the reconcile composites: they load no pack themselves, but
+  their Phase 1 does, and a composite's delegated skills keep their own load unless it says
+  otherwise. For `maintain` the word is redundant rather than load-bearing — it delegates to no
+  skill at all, so no pack is resolved anywhere in its run.
 
 ## Load order
 
@@ -124,7 +124,7 @@ documentation-contributed `stage-doc` / `review-docs` / `prepare-diagram` likewi
 skills (`archive-task`, `maintain`, `prepare-ticket`, `resume-task-reconcile`,
 `review-task-reconcile`) run only step 1 — they apply the neutral core and resolve no domain pack
 of their own. A composite's delegated skills still run their own steps 2–3: the reconcile
-composites' Phase 1 does, and `maintain`'s Phase 3 does through `resume-task-reconcile`.
+composites' Phase 1 does. `maintain` delegates to nothing, so its run resolves no pack at any depth.
 
 ## Missing-pack fallback
 

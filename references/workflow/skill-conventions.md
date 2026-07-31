@@ -47,7 +47,7 @@ composite. A genuinely modal flag touches the one phase it modifies and nothing 
 - `review-commit-triage-verify` — review the staged diff, then batch findings, then verify each batch.
 - `review-pr-triage-verify` — the same pipeline over a PR or branch diff.
 - `triage-findings-verify` — findings-first: batch findings you already have, then verify each batch.
-- `maintain` — format sweep, then index refresh, then reconcile the active tasks.
+- `maintain` — format sweep, then index refresh, then the active-task listing. All three phases inline; it delegates to no skill and reconciles no task content, handing that to `resume-task-reconcile` in its **Next**. Registered for its phase ordering, not as a variation of a base skill — the one member with none, which is why step 2 below admits an inline phase.
 - `resume-task-reconcile` — print the resume brief, then reconcile the docs to it.
 - `review-task-reconcile` — print the plan assessment, then reconcile the docs and fold in answers.
 - `decompose-task` — propose the cut of an approved source into ordered sibling parts, then materialize each confirmed part (`prepare-ticket` per part + a seeded `CONTEXT.md`).
@@ -67,7 +67,8 @@ where they are rather than being re-implemented at the pipeline level.
 ## Adding a behavior
 
 1. Run the diagnostic above and classify it.
-2. Composite → a new skill folder whose phases execute the sibling skill files, with the pipeline-wide
-   overrides the existing composites carry (one Core Rules block, one Output, the composite owning
-   **Next**). Flag → document it in the host skill's `Flags` section and its `argument-hint`.
+2. Composite → a new skill folder whose phases execute the sibling skill files — or run inline where
+   no sibling skill owns the phase, as `maintain` does — with the pipeline-wide overrides the
+   existing composites carry (one Core Rules block, one Output, the composite owning **Next**).
+   Flag → document it in the host skill's `Flags` section and its `argument-hint`.
 3. Record it under **Current members** here.
