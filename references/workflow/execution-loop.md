@@ -29,13 +29,14 @@ product gets made, so working from stale or invented facts is the biggest failur
 
 Follow the resolved domain's `execution.md` for the recipe. When the domain is code that's
 `../engineering/execution.md` § *Detect stack and sources*: read the dependency manifest and state
-versions explicitly, fetch the matching version's official docs before writing framework code, follow
-the source hierarchy, and mark anything you can't ground `// UNVERIFIED:`. For other domains, confirm
-the equivalent ground truth before committing to it (current prices, the counterparty's actual
-position, the venue's real availability). If versions or facts are missing or ambiguous, ask — don't
-guess.
+versions explicitly, fetch the matching version's official docs before writing framework code,
+follow the source hierarchy, and default to stopping to ask before shipping a pattern you can't
+ground. For other domains, confirm the equivalent ground truth before committing to it (current
+prices, the counterparty's actual position, the venue's real availability). If versions or facts are
+missing or ambiguous, ask — don't guess.
 
-Record the sources you ground the work on per the consumer's **Record** binding, not in code comments.
+Record the sources you ground the work on — and any uncertainty you couldn't resolve — per the
+consumer's **Record** binding, not in code comments.
 
 ## The loop
 
@@ -153,7 +154,8 @@ out, any deviations, any open follow-ups.
 - "I'll handle this scope expansion now since I'm already here" — Stop. Either revise the scope
   explicitly or treat the new work as separate.
 - "I'm confident about this API, no need to check the docs" — Confidence isn't evidence. Training
-  data ages out; framework APIs deprecate. Cite the docs or mark `// UNVERIFIED:`.
+  data ages out; framework APIs deprecate. Cite the docs, or default to asking before shipping the
+  unsupported pattern; keep the uncertainty in the execution record, not a code comment.
 - "I'll fix the bug first and add a test after" — You won't, and a test written after the fix tests
   the implementation, not the bug. Write the failing reproduction first.
 - "I know what the bug is, I'll just patch it" — Maybe. The other times it costs hours. Reproduce →

@@ -68,7 +68,7 @@ Lists, never tables. Chat only — nothing written to disk beyond the work itsel
 
 - **Shipped** — `file:line` (or the domain's equivalent) per change, with what changed
 - **Verified** — how each framed item was proven: command output, test name, behavior observed
-- **Sources** — official-doc URLs grounding any framework-specific work; omit when none
+- **Sources** — official-doc URLs grounding any framework-specific work, plus any pattern shipped without an authoritative source and why; omit when none
 - **Deviations** — anything that differs from the §1 frame, and why; omit when none
 - **Follow-ups** — what's left or worth watching; omit when none
 
@@ -82,4 +82,4 @@ Confirm the protocol invariants before finishing:
 - [ ] Every framed item: its criterion actually run and passed, health verify green — nothing reported done over a failing gate
 - [ ] Acceptance ran against the §1 frame and live behavior, not against the report; no gap downgraded to a caveat
 - [ ] No task-folder file and no status written; the work itself is the only on-disk change
-- [ ] Domain pre-presentation checks re-run on the full changed surface (for code: typecheck, linter, tests, consumer grep; framework work cited to sources or marked `// UNVERIFIED:`)
+- [ ] Domain pre-presentation checks re-run on the full changed surface (for code: typecheck, linter, tests, consumer grep; framework work grounded in cited sources, with any ungrounded pattern stopped or recorded)

@@ -5,7 +5,7 @@
 - Constants: `SCREAMING_SNAKE_CASE`; extract magic numbers to named constants
 - Booleans: `is`, `has`, `should`, `can` prefixes
 - Event handlers: `handle` prefix for handlers, `on` prefix for props
-- JSDoc for public APIs and complex functions
+- JSDoc for public APIs — exported symbols only
 
 ## Types
 

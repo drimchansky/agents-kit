@@ -38,14 +38,14 @@ loads by phase:
 
 - `exploration.md` — how to explore a codebase before planning or reviewing (read code, trace callers/callees, map blast radius, check versions, ground in prior art)
 - `planning.md` — engineering planning specifics: vertical slicing, step-size caps, checkpoint shape, when-to-plan heuristics, and the task-diagram guidance (when a code change warrants a `diagram.md`, what it depicts, and its notation sources)
-- `execution.md` — stack/version detection, authoritative doc-sourcing, the Prove-It bug pattern, health verification, `// UNVERIFIED:`, red flags
+- `execution.md` — stack/version detection, authoritative doc-sourcing, the Prove-It bug pattern, health verification, unresolved-source handling, red flags
 - `verification.md` — what "verify a step / criterion" means in code, and the engineering acceptance-gate recipe
 - `review.md` — code-review lenses, complexity signals, severity calibration
 
 Per-surface checklists — consult the ones a change touches:
 
 - `accessibility.md` — Landmarks, ARIA, keyboard/focus, contrast, live regions, native dialogs, motion preferences, forms a11y
-- `code-style.md` — Function shape, parameter limits, comment discipline (minimal, why-not-what, no duplication of code, comments self-sufficient — links only to official docs / long-lived public resources or in-repo pointers, never internal trackers/wikis/threads; behavioral narrative to tests, public-API JSDoc at the code)
+- `code-style.md` — Function shape, parameter limits, comment discipline (implementation comments only for non-obvious current invariants, no code/task-history/future-work narration, self-sufficient links, scoped validation of affected comments, material findings only; public-API docs and required directives excepted)
 - `css.md` — Layout, responsive, container queries, modern selectors (`:has()`, `@scope`), theming, modern color, cascade layers
 - `forms.md` — Semantics, autocomplete tokens, validation timing (`:user-invalid`), tap sizing, AJAX, multi-page forms
 - `html.md` — Document semantics, landmarks, native overlays (`<dialog>`, `[popover]`, `<details>`), resource prioritization, media

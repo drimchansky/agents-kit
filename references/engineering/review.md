@@ -38,7 +38,7 @@ Concrete patterns to scan for. Flag as Minor by default; promote to Major if the
 - **Generic names** (`data`, `result`, `temp`, `val`, `item`) or **abbreviated names** (`usr`, `cfg`, `btn`, `evt`) — rename to describe the content; allow universal abbreviations (`id`, `url`, `api`)
 - **Repeated conditionals** — the same predicate in multiple places — extract to a named function
 
-For style-level findings (3-param function limit, single responsibility, "why" comments), defer to `code-style.md` instead of duplicating here.
+For style-level findings (3-param function limit, single responsibility, invariant-only comments), defer to `code-style.md` instead of duplicating here.
 
 ### Interface Design
 

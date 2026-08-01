@@ -23,10 +23,13 @@ Writing code is the one place hallucinated APIs do real damage. Before touching 
 - Record sources for non-obvious framework decisions per the consumer's **Record** binding
   (`../workflow/execution-loop.md`), with full URLs and deep links to anchors where possible — keep
   provenance in the execution record, not in code comments (a code comment stays self-sufficient and
-  may link only official docs or a long-lived public resource, never an internal reference; see
-  `code-style.md` → Comments).
-- If you cannot find an authoritative source for a pattern you're about to use, mark it
-  `// UNVERIFIED:` in the code and call it out in that record. Honesty beats false confidence.
+  may supplement its reason only with an allowed long-lived or in-repo reference, never task
+  provenance; see `code-style.md` → Comments).
+- If you cannot find an authoritative source for a pattern you're about to use, default to stopping
+  and asking before shipping it — an ungrounded framework pattern is the expensive kind of wrong —
+  and record the uncertainty per the consumer's **Record** binding. Proceed without asking only
+  when the pattern is local and cheap to reverse, recording it the same way. Do not preserve
+  unresolved provenance or speculation in a code comment.
 
 Before writing framework-specific code for a step, confirm you've consulted these docs. If the
 step touches a domain covered by a per-surface checklist (`react.md`, `security.md`, …), read it
@@ -59,7 +62,8 @@ act on it.
 ## Red flags
 
 - About to write more than ~100 lines without running verify.
-- Framework-specific code shipped without a doc citation.
+- Framework-specific code shipped without a doc citation — unless the pattern is local and cheap to
+  reverse and its uncertainty is recorded.
 - Fixing a bug-step without a failing reproduction test first.
 - "All tests pass" reported when no test command was actually run.
 - A step marked done while typecheck / lint / existing suite is red.

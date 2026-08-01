@@ -52,7 +52,7 @@ If the user describes a task without a plan, suggest `plan-task` first when the 
 
 Establish ground truth before doing the work, per `./references/workflow/execution-loop.md` § *Ground truth before work* — the resolved domain's `execution.md` carries the recipe. This is the skill that produces the actual work product, so working from stale or invented facts is the biggest failure mode.
 
-This skill's binding for the sources you find: record them in the result file's `**Sources:**` field (§5), not in code comments.
+This skill's binding for the sources you find — and for any pattern you couldn't ground: record them in the result file's `**Sources:**` field (§5), not in code comments.
 
 ### 1. Locate and Load the Task
 
@@ -195,7 +195,7 @@ Remove merged worktrees before continuing — they're scratch, per the contract.
 - <file:line or path> — <what changed>
 - <file:line or path> — <what changed>
 
-**Sources:** <official-doc URLs / deep links grounding any framework-specific code in this step; otherwise omit>
+**Sources:** <official-doc URLs / deep links grounding any framework-specific code in this step, plus any pattern shipped without an authoritative source and why; otherwise omit>
 
 **Executed:** <only when execution deviated from the default serial delegation — for a parallel-batch step, "parallel batch (<executor engine>), merged in plan order at/before <the batch's merge point>", the merge point being its bounding checkpoint, the first post-merge serial step in a checkpoint-free plan, or the acceptance gate for a tail batch; or "inline (<reason>)" for an inline fallback; omit for serially-delegated steps>
 
@@ -217,7 +217,7 @@ For full-plan mode, write **one combined section** instead — no per-step block
 
 - <bulleted list of every notable change across all steps>
 
-**Sources:** <official-doc URLs / deep links grounding any framework-specific code; otherwise omit>
+**Sources:** <official-doc URLs / deep links grounding any framework-specific code, plus any pattern shipped without an authoritative source and why; otherwise omit>
 
 **Executed:** <only when a folded step deviated from serial delegation — "Step N inline (<reason>)" per such step; omit otherwise>
 
@@ -320,7 +320,7 @@ The shared loop's *Don't Rationalize* list applies in full (`./references/workfl
 
 ### Red flags
 
-The shared loop's red flags apply in full. When the domain is code, also watch the engineering red flags in `./references/engineering/execution.md` (writing >100 lines without verify, framework code without a doc citation, a bug-step without a failing reproduction, a step marked done while typecheck/lint/suite is red).
+The shared loop's red flags apply in full. When the domain is code, also watch the engineering red flags in `./references/engineering/execution.md` (writing >100 lines without verify, framework code shipped ungrounded outside the recorded exception, a bug-step without a failing reproduction, a step marked done while typecheck/lint/suite is red).
 
 ## Verification
 
@@ -334,7 +334,7 @@ Confirm the protocol invariants before finishing:
 - [ ] Acceptance gate ran every goal by `G<n>` ID against live behavior and wrote the `## Acceptance` section — no goal left `unmet` at finalize, `pending external` only on `(external)` goals (parking the task at `in-review`)
 - [ ] When the task has a `diagram.md`: re-checked at every checkpoint, at every structural plan revision, and at the acceptance gate — each re-check naming what was compared, each repaint render-checked, `**Reflects:**` re-anchored and re-dated
 - [ ] Deviations and plan revisions recorded in the result file; `goals.md` and `CONTEXT.md` never edited from this skill
-- [ ] Domain pre-presentation checks re-run on the full changed surface (for code: typecheck, linter, tests, consumer grep; framework code cited to `**Sources:**` or marked `// UNVERIFIED:`)
+- [ ] Domain pre-presentation checks re-run on the full changed surface (for code: typecheck, linter, tests, consumer grep; framework code grounded in `**Sources:**`, with any ungrounded pattern stopped or recorded there)
 - [ ] Every step executed through the delegation default — a serial executor with the coordinator's re-run gates, an announced parallel batch, or an announced inline fallback recorded in its `**Executed:**` field
 - [ ] Every parallel-batch step merged only through the gates — surface check, conflict-free merge, integrated re-verify, the batch's checkpoint (or the §7/§8 tail gate) — with conflicts and surface escapes falling back to serial delegation
 - [ ] Executors wrote no task-folder file and no status; batches recorded (`**Executed:**` fields, checkpoint `**Merged:**` lines) and worktrees removed after merge

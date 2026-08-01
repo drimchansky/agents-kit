@@ -47,6 +47,8 @@ When you discover issues outside the current task's scope, don't silently fix th
 
 Place at the end of your response. Scope discipline with nothing lost.
 
+Report an observation only when it would matter to someone acting on this work; low-impact hygiene noticed in passing is not a finding. Where the active domain sets a materiality bar for a class of observation, that bar governs.
+
 ## Communication
 
 - Be concise; no trailing summaries, no restating what was asked

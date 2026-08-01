@@ -19,7 +19,7 @@
 - [ ] Descriptive test names that state the behavior being verified
 - [ ] Shared setup in `beforeEach` or helpers; assertions inline
 - [ ] Error paths tested, not just happy paths
-- [ ] Tests carry the behavioral "why it works this way" narrative and worked examples kept out of production code — capture them as comments on the relevant tests (public-API docs stay at the code; see `code-style.md` → Comments)
+- [ ] Tests carry behavioral contracts and worked examples through descriptive names, cases, assertions, and fixtures rather than production-code commentary; test comments follow the same invariant-only discipline as implementation comments (public-API docs stay at the code; see `code-style.md` → Comments)
 
 ## Common Mistakes
 
