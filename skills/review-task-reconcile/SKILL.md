@@ -33,14 +33,15 @@ so — never by improvisation.
 
 **CRITICAL**: The write surface is exactly four task files — `plan.md`, `result.md`, minimal
 annotations in `CONTEXT.md`'s References / Open Questions sections, and the sweep's `observations.md`
-rewrite — and nothing else. `goals.md`, `ticket.md`, and `diagram.md` are never edited (the goals
-and ticket are the user's contract — a suggested goal rewrite is printed for the user to apply, and
-an engineer's answer about a goal goes to the user as text, not into the file; the diagram is
-`implement-task`'s to repaint — drift is flagged, never repaired), source code is never written, git
-state is never mutated, and external systems are fetched read-only — never commented on, updated, or
-posted to. This pipeline fixes the **docs**, not the world — it never re-runs the acceptance gate
-and never executes plan work. It still does not implement and does not redesign: a step that needs
-rethinking goes back to `plan-task`.
+rewrite — and nothing else. `goals.md`, `ticket.md`, `diagram.md`, and a doc task's deliverable are
+never edited (the goals and ticket are the user's contract — a suggested goal rewrite is printed for
+the user to apply, and an engineer's answer about a goal goes to the user as text, not into the file;
+the diagram is `implement-task`'s to repaint — drift is flagged, never repaired; the deliverable's
+`**Published:**` line is `stage-doc`'s), source code is never written, git state is never mutated,
+and external systems are fetched read-only — never commented on, updated, or posted to. This
+pipeline fixes the **docs**, not the world — it never re-runs the acceptance gate and never
+executes plan work. It still does not implement and does not redesign: a step that needs rethinking
+goes back to `plan-task`.
 
 Invoking this skill is the consent for the obvious, evidence-dictated fixes only. Anything needing
 engineer judgment — which is most of this review's findings — is asked first, as one batched round.
@@ -93,8 +94,9 @@ external reference check, annotation formats, the append-only `## Reconciliation
 mapping section — this pipeline's finding-type → edit mapping.
 
 The contract's **external reference check** runs here too: `review-task` sweeps no citations, so
-print the `## References` block before any edit, recording what the sweep saw in `observations.md` —
-it is this pipeline's only source of dead-link and reference-answered-question findings.
+sweep the folder's *citations from an actionable surface* and print the `## References` block before
+any edit, recording what the sweep saw in `observations.md` — it is this pipeline's only source of
+dead-link and reference-answered-question findings.
 
 Per that mapping, the assessment's Questions are **not left rhetorical**: put them to the engineer as
 one batched round, with the concrete options the assessment already attached, and write the answers
@@ -113,7 +115,7 @@ Lists, never tables.
   Phase 1 from pre-reconcile state, including the Plan Summary's `Cross-check:` line when `-x` was
   passed.
 - **References** — the reference check's tagged entries, printed at the start of Phase 2 before any
-  edit, exactly as the shared contract specs it — rendered even when nothing was cited.
+  edit, exactly as the shared contract specs it — rendered even when nothing was in scope.
 - **Reconciliation applied** — the change list exactly as `./references/workflow/reconciliation.md`
   specs it: every edit with the finding or engineer answer behind it, plus the "Not reconciled" list.
   When nothing was actionable, print `Nothing to reconcile.` — and write nothing beyond the sweep's
@@ -135,12 +137,12 @@ Confirm the protocol invariants before finishing:
       reference finding, or an engineer answer, and the review's Questions were put as one batched
       round with only answered items applied
 - [ ] The reference check ran in Phase 2 with its `## References` block printed before any edit —
-      rendered even when none cited — and `observations.md` rewritten with the swept lines, or
-      removed when nothing was cited; Phase 1 swept no citations
+      rendered even when nothing was in scope — and `observations.md` rewritten with the swept
+      lines, or removed in that case; Phase 1 swept no citations
 - [ ] Write surface held: only `plan.md`, `result.md`, `CONTEXT.md`'s References / Open Questions
-      annotations, and the sweep's `observations.md` rewrite — `goals.md`, `ticket.md`, and
-      `diagram.md` untouched (suggested rewrites printed, not written), no code written, no git
-      mutation
+      annotations, and the sweep's `observations.md` rewrite — `goals.md`, `ticket.md`,
+      `diagram.md`, and a doc task's deliverable untouched (suggested rewrites printed, not written),
+      no code written, no git mutation
 - [ ] No implementation and no redesign; steps needing rethinking routed to `plan-task`
 - [ ] Closing change list printed, with real-work findings under "Not reconciled" and the next skill
       named — or `Nothing to reconcile.` with nothing written beyond the sweep's

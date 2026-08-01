@@ -17,7 +17,7 @@ This skill closes the gap a working or design session opens: things get decided,
 
 - **Strengthen only on verified evidence.** It may record progress (check a step, mark a goal `met`, advance status) **only after re-verifying it this session** the way the acceptance gate would (the resolved domain's `verification.md`). A claim it cannot verify is surfaced, never recorded. "Done" means verified, not asserted in chat.
 - **Grounding docs change by confirmation.** Writing `goals.md`, `CONTEXT.md` prose, or a step's scope — anything that redefines scope or acceptance — goes through **one batched confirmation round** first; it is never auto-applied. Pure enrichment (references, answered questions, session narrative) auto-applies.
-- **Docs, not the world.** No source code is written, no git state is mutated (no add, commit, checkout, stash), and no external system is updated — the reference check reads them, never posting, commenting, or transitioning anything. Verification in this skill *runs* checks read-only to back a state change — it changes nothing outside the four core task files and the sweep's `observations.md` rewrite, and never `diagram.md`: repainting is authoring, so diagram drift is flagged for `implement-task`'s gate re-check, never repaired here (the shared contract). The upstream `ticket.md`, when present, is **read-only input**: a changed *ask* is surfaced for the user to update, never rewritten here. Output is those files plus a chat change list — no scratch artifact.
+- **Docs, not the world.** No source code is written, no git state is mutated (no add, commit, checkout, stash), and no external system is updated — the reference check reads them, never posting, commenting, or transitioning anything. Verification in this skill *runs* checks read-only to back a state change — it changes nothing outside the four core task files and the sweep's `observations.md` rewrite, and never `diagram.md` or a doc task's deliverable: repainting is authoring, so diagram drift is flagged for `implement-task`'s gate re-check, never repaired here, and the deliverable's `**Published:**` line is `stage-doc`'s to flip or re-date (the shared contract). The upstream `ticket.md`, when present, is **read-only input**: a changed *ask* is surfaced for the user to update, never rewritten here. Output is those files plus a chat change list — no scratch artifact.
 
 ## When to Use
 
@@ -48,7 +48,7 @@ The in-session task is the common case: reconcile is usually run at the end of a
 
 ### 2. Load Artifacts
 
-Read all four core artifacts — plus `ticket.md`, `diagram.md`, and `observations.md` when present — the docs are the baseline you diff the session against, so don't diff against a skim:
+Read all four core artifacts — plus `ticket.md`, `diagram.md`, `observations.md`, and a doc task's deliverable when present — the docs are the baseline you diff the session against, so don't diff against a skim:
 
 - `ticket.md` (when present) — the product-facing ask and its acceptance criteria; a read-only baseline (the ask is user-owned) and the upstream origin `goals.md` derives from.
 - `CONTEXT.md` — the static grounding context (problem statement, recommended direction, key assumptions, MVP scope, not-doing, open questions, references). Note the exact wording of prose sections; you compare, you don't paraphrase.
@@ -56,6 +56,7 @@ Read all four core artifacts — plus `ticket.md`, `diagram.md`, and `observatio
 - `plan.md` — its `**Status:**`, its steps and their `- [ ]` / `- [x]` markers, each step's **What** / **Verify** / **Goal** / **Depends on**, and the `## Scope` partition.
 - `diagram.md` (when present) — the target-state shape and its dated `**Reflects:**` line; a read-only baseline — structure the session changed that it doesn't show becomes a flag-only finding (the shared contract), never a repaint.
 - `observations.md` (when present) — the previous sweep's dated ledger of the folder's cited references; read-only input to Step 4, which diffs against its lines and carries forward what a failed fetch can't replace before rewriting the file wholesale.
+- **The deliverable** (doc tasks only — `adr.md`, `rfc.md`, …; resolved per `./references/workflow/task-layout.md` § *Doc-task files*, which fixes it without depending on the plan's optional `**Deliverable:**` header) — a read-only baseline: its content is the work product the session may have changed, and its `**Published:**` line is a swept citation Step 4 needs. Never written here — the line is `stage-doc`'s (the shared contract's never-annotated rule), and content the session decided that the file doesn't carry is a flag-only finding, never an edit.
 - `result.md` — read `## Current state` first for orientation (derived metadata, not ground truth — its refresh at the end of the run is part of this skill's contract); then its `**Status:**`, the latest per-step / full-run section, any `**Blocked:**` block, any `**In review:**` block, any `## Acceptance` section. If none exists, note it: work recorded this session may create it (per the pairing rule in `./references/workflow/task-lifecycle.md`).
 
 A `skipped` plan is terminal — report it as abandoned and stop; write nothing. A plan with no sibling `goals.md` is a gap — surface it (`plan-task` is expected to produce one) rather than fabricating goals.
@@ -72,7 +73,7 @@ This is the load-bearing step. Walk the current session and collect everything m
 - **Plan changes** — a step whose scope, verify criterion, or ordering the session changed.
 - **A changed ask** — the session revealed the product requirement itself shifted from what `ticket.md` states. Surface it so the user can update the ticket (then re-derive goals via `plan-task`); reconcile never rewrites the ask.
 
-Group findings by target file (`CONTEXT.md` / `goals.md` / `plan.md` / `result.md`) — the ticket is read-only, so a changed ask lands under "Not reconciled" for the user. If the session adds nothing beyond what the docs already hold and the reference check below turns up nothing either, there is nothing to reconcile — say so in the change list and write nothing beyond the sweep's `observations.md` rewrite.
+Group findings by target file (`CONTEXT.md` / `goals.md` / `plan.md` / `result.md`) — the ticket and a doc task's deliverable are read-only, so a changed ask lands under "Not reconciled" for the user, and a finding on the deliverable lands there too — its `**Published:**` line for `stage-doc`, its content for `implement-task`. If the session adds nothing beyond what the docs already hold and the reference check below turns up nothing either, there is nothing to reconcile — say so in the change list and write nothing beyond the sweep's `observations.md` rewrite.
 
 ### 4. Check the Cited External References
 
@@ -127,13 +128,13 @@ Print the findings report **first** — a faithful snapshot of what the session 
 
 ## References
 
-- [info] [Jira CRM-123](https://example.atlassian.net/browse/CRM-123) — "Add CSV export" — Status: In Progress (unchanged since cited)
+- [info] [Jira CRM-123](https://example.atlassian.net/browse/CRM-123) — "Add CSV export" — Status: In Progress (unchanged since last observed)
 - [warn] [Notion: API contract](https://www.notion.so/...) — last edited 2026-05-23 by alice; the open question about pagination is now answered (cursor-based)
 - [warn] [PR #482](https://github.com/org/repo/pull/482) — merged 2026-05-20; Step 3's blocker no longer applies
 - [block] [Original spec doc](https://docs.google.com/document/d/...) — 404 (moved or deleted); CONTEXT.md cites a now-broken link
 - [info] [Slack #project-x](https://acme.slack.com/archives/...) — auth required, re-check manually
 
-(or, when none cited: `No external references cited.` — this heading always renders)
+(or, when none in scope: `No external references in sweep scope.` — this heading always renders)
 
 ## Not reconciled
 - <finding> — <needs real work via implement-task / unverifiable this session>
@@ -168,10 +169,10 @@ Then run Step 5 (verify) and Step 6 (auto-apply enrichments, then the batched co
 
 Confirm the protocol invariants before finishing:
 
-- [ ] Task folder resolved (in-session task, or asked — never guessed); all four core artifacts read (plus `ticket.md`, `diagram.md`, and `observations.md` when present) before diffing the session against them
+- [ ] Task folder resolved (in-session task, or asked — never guessed); all four core artifacts read (plus `ticket.md`, `diagram.md`, `observations.md`, and a doc task's deliverable when present) before diffing the session against them
 - [ ] A `skipped` plan reported as abandoned, with nothing written
 - [ ] Reconciliation followed the shared contract end-to-end; findings report printed from pre-reconcile state; closing change list printed
-- [ ] **Before any edit:** every URL the folder cited at that point fetched read-only and tagged (`warn` on material change, `block` on broken, `info` on clean / auth-walled / unreachable), with `## References` rendered even when none and `observations.md` rewritten with the swept lines — or removed, when nothing was cited
+- [ ] **Before any edit:** every URL the folder cited from an actionable surface at that point (`./references/workflow/reconciliation.md` § *External reference check* names the surfaces) fetched read-only and tagged (`warn` on material change, `block` on broken, `info` on clean; an auth-walled or unreachable fetch carries its prior line and tag forward, and tags `info` only when there is nothing to carry), with `## References` rendered even when none and `observations.md` rewritten with the swept lines — or removed, when nothing was in scope
 - [ ] State advanced only after Step 5's in-session re-verification, with evidence recorded in `result.md`; grounding docs (`goals.md`, `CONTEXT.md` prose, a step's scope) changed only through the batched confirmation round
 - [ ] `## Current state` rewritten to post-edit reality at the end of the run, including the run that finalizes to `done`; on a result already `done` when the run began, only `**Pointers:**` refreshed and the gloss left frozen; the >20 KB compaction proposal raised (as an ask item) when the size trigger fired
 - [ ] Docs only — no source code, git, or external-system mutation; no scratch artifact; the upstream `ticket.md` is read-only (a changed ask is surfaced, not rewritten)

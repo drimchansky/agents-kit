@@ -31,12 +31,12 @@ so — never by improvisation.
 
 **CRITICAL**: The write surface is exactly four task files — `plan.md`, `result.md`, minimal
 annotations in `CONTEXT.md`'s References / Open Questions sections, and the sweep's `observations.md`
-rewrite — and nothing else. `goals.md`, `ticket.md`, and `diagram.md` are never edited (the ticket
-is user-owned; even `reconcile-task` treats it as read-only; the diagram is `implement-task`'s to
-repaint — drift is flagged, never repaired), source code is never written, git state is never
-mutated, external systems are fetched read-only, and no `BRIEF.md` or scratch briefing file is
-created. This pipeline fixes the **docs**, not the world — it never re-runs the acceptance gate and
-never executes plan work.
+rewrite — and nothing else. `goals.md`, `ticket.md`, `diagram.md`, and a doc task's deliverable are
+never edited (the ticket is user-owned; even `reconcile-task` treats it as read-only; the diagram is
+`implement-task`'s to repaint — drift is flagged, never repaired; the deliverable's `**Published:**`
+line is `stage-doc`'s), source code is never written, git state is never mutated, external systems
+are fetched read-only, and no `BRIEF.md` or scratch briefing file is created. This pipeline fixes
+the **docs**, not the world — it never re-runs the acceptance gate and never executes plan work.
 
 Invoking this skill is the consent for the obvious, evidence-dictated fixes only. Anything needing
 engineer judgment is asked first, as one batched round.
@@ -82,11 +82,11 @@ mapping section — this pipeline's finding-type → edit mapping.
 
 Phase 1 catches drift in what the docs *claim* — on disk, and in whatever artifact a claim names,
 including one behind a URL; the contract's **external reference check**, run here, sweeps the folder's
-*citations* for the freshness the brief never touches, recording what it saw in `observations.md`.
-Different cuts, not a disk/network split: the sweep captures title, status, and last-updated, so it
-never substitutes for Phase 1's claim-level verification. Print its `## References` block after the
-brief and before any edit — it is this pipeline's only source of dead-link and
-reference-answered-question findings.
+*citations from an actionable surface* for the freshness the brief never touches, recording what it
+saw in `observations.md`. Different cuts, not a disk/network split: the sweep captures title,
+status, and last-updated, so it never substitutes for Phase 1's claim-level verification. Print its
+`## References` block after the brief and before any edit — it is this pipeline's only source of
+dead-link and reference-answered-question findings.
 
 Findings that need real work (code changes, re-running the acceptance gate, clearing a blocker) stay
 unfixed: list them under "Not reconciled" with the next skill named (`implement-task`, `plan-task`).
@@ -99,7 +99,7 @@ Lists, never tables.
   pre-reconcile state. Its "Where to start" section is part of that snapshot; the **Next** line below
   is what accounts for the reconciled state.
 - **References** — the reference check's tagged entries, printed at the start of Phase 2 before any
-  edit, exactly as the shared contract specs it — rendered even when nothing was cited.
+  edit, exactly as the shared contract specs it — rendered even when nothing was in scope.
 - **Reconciliation applied** — the change list exactly as `./references/workflow/reconciliation.md`
   specs it: every edit with the finding or engineer answer behind it, plus the "Not reconciled" list.
   When nothing was actionable, print `Nothing to reconcile.` — and write nothing beyond the sweep's
@@ -120,11 +120,12 @@ Confirm the protocol invariants before finishing:
 - [ ] Reconciliation followed the shared contract; every edit maps to a brief finding, a reference
       finding, or an engineer answer, and judgment items were asked as one batched round
 - [ ] The reference check ran in Phase 2 with its `## References` block printed before any edit —
-      rendered even when none cited — and `observations.md` rewritten with the swept lines, or
-      removed when nothing was cited; Phase 1 swept no citations
+      rendered even when nothing was in scope — and `observations.md` rewritten with the swept
+      lines, or removed in that case; Phase 1 swept no citations
 - [ ] Write surface held: only `plan.md`, `result.md`, `CONTEXT.md`'s References / Open Questions
-      annotations, and the sweep's `observations.md` rewrite — `goals.md`, `ticket.md`, and
-      `diagram.md` untouched, no code written, no git mutation, no `BRIEF.md` or scratch file
+      annotations, and the sweep's `observations.md` rewrite — `goals.md`, `ticket.md`,
+      `diagram.md`, and a doc task's deliverable untouched, no code written, no git mutation, no
+      `BRIEF.md` or scratch file
 - [ ] Closing change list printed, with real-work findings under "Not reconciled" and the next skill
       named — or `Nothing to reconcile.` with nothing written beyond the sweep's
       `observations.md` rewrite
