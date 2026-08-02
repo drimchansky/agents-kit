@@ -111,19 +111,25 @@ install_agent() {
   cp "$REPO_DIR/CORE_RULES.md" "$home_dir/CORE_RULES.md"
   echo "  CORE_RULES.md"
 
-  # 3. Agent definitions — Claude Code only: the kit ships Claude-format .md definitions.
-  #    Codex's agents surface (~/.codex/agents/*.toml) would need its own TOML definition.
-  if [ "$(basename "$home_dir")" = ".claude" ]; then
+  # 3. Native agent definitions. Each host consumes only its own source format,
+  #    while sharing the same marker ownership and interrupted-install recovery.
+  local agent_extension=""
+  case "$(basename "$home_dir")" in
+    .claude) agent_extension="md" ;;
+    .codex) agent_extension="toml" ;;
+  esac
+  if [ -n "$agent_extension" ]; then
     local agents_dir="$home_dir/agents"
     mkdir -p "$agents_dir"
     for marker in "$agents_dir"/.agents-kit-*; do
       [ -f "$marker" ] || continue
-      rm -f "$agents_dir/${marker##*.agents-kit-}.md" "$marker"
+      rm -f "$agents_dir/${marker##*.agents-kit-}.$agent_extension" "$marker"
     done
-    for source in "$REPO_DIR"/agents/*.md; do
+    for source in "$REPO_DIR"/agents/*."$agent_extension"; do
+      [ -f "$source" ] || continue
       local name target
-      name="$(basename "$source" .md)"
-      target="$agents_dir/$name.md"
+      name="$(basename "$source" ".$agent_extension")"
+      target="$agents_dir/$name.$agent_extension"
       if [ -e "$target" ] || [ -L "$target" ]; then
         echo "  skipped (not kit-managed): agents/$name"
         continue

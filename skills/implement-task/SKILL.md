@@ -151,15 +151,15 @@ A divergence is usually information rather than failure: it means the build reve
 
 #### Execution strategy: delegated by default
 
-Execute each step through an **executor** per the write-mode contract in `./references/workflow/agent-fanout.md` — read it before the first step. The default is the contract's **serial shape**: one executor per step, in plan order, editing the shared tree, launched with a self-contained prompt (the step's What/Verify text, the goals it cites, the edit surface, the relevant `CONTEXT.md` excerpts, absolute paths) on the contract's executor-model default. After the executor reports, re-run both verify gates on the tree yourself — the executor's pass is advance evidence, not the gate — then record the step (§5).
+Execute each step through an **executor** per the behavioral contract in `./references/workflow/executor-contract.md` — read it before the first step — using the native engine and host adapter defaults in `./references/workflow/agent-fanout.md`. The default is **serial delegation**: one executor per step, in plan order, editing the shared tree, launched with a self-contained prompt (the step's What/Verify text, the goals it cites, the edit surface, the relevant `CONTEXT.md` excerpts, absolute paths). While a serial executor is in flight, the coordinator waits: it runs no step of its own and makes no shared-tree edit until the executor reports. After the executor reports, re-run both verify gates on the tree yourself — the executor's pass is advance evidence, not the gate — then record the step (§5).
 
-Take the contract's **inline fallback** when delegation clearly doesn't pay (a trivial step, mid-step user interaction, debugging-heavy work) — announce it in chat and record it in the step's `**Executed:**` field. A failed or hung executor degrades the same way: report it, execute the step inline, continue.
+Take the **inline fallback** when delegation clearly doesn't pay (a trivial step, mid-step user interaction, debugging-heavy work) — announce it in chat and record it in the step's `**Executed:**` field. A failed or hung executor degrades the same way under the focused contract: report it, execute the step inline, continue.
 
 The strategy is the same in both execution modes; step-by-step pauses after each step's gates, exactly as before.
 
 #### Automatic parallel batch (full-plan mode)
 
-In full-plan mode, execute eligible independent steps concurrently per the contract's parallel shape in `./references/workflow/agent-fanout.md`. No flag is involved: when a batch qualifies under the eligibility below, launch it and **announce it in chat** — which steps, and why they're eligible — so automatic parallelism is never silent. The contract's invariants hold throughout: the coordinator (this session) owns the shared tree, both task files, and every status; executors never touch the task folder, and parallel executors never touch the shared tree.
+In full-plan mode, execute eligible independent steps concurrently through the focused contract in `./references/workflow/executor-contract.md`, using the native engine routed in `./references/workflow/agent-fanout.md`. No flag is involved: when a batch qualifies under the eligibility below, launch it and **announce it in chat** — which steps, and why they're eligible — so automatic parallelism is never silent. The contract's invariants hold throughout: the coordinator (this session) owns the shared tree, both task files, and every status; executors never touch the task folder, and parallel executors never touch the shared tree.
 
 **Eligibility — mechanical, all conditions required.** Steps may share a batch only when:
 
@@ -170,18 +170,18 @@ In full-plan mode, execute eligible independent steps concurrently per the contr
 
 A step with no `**Touches:**` line (or with `**Touches:** none`) runs serially-delegated — an absent declaration is a serial default, not an invitation to infer one. When in doubt about disjointness, run the doubtful step serially: a wrongly-serial step costs minutes, a wrongly-parallel one costs the merge.
 
-**Run.** In a mixed batch, serial steps that depend on a batch step — directly or transitively — run after the merge, on the integrated tree; every other serial step runs before the batch launches; both in plan order. Launch one executor per eligible step, each with a self-contained prompt per the contract, on the contract's executor-model default — a pinned tier where the host supports one (`./references/workflow/agent-fanout.md` § *Write-mode engines*). While a batch is in flight the shared tree is frozen: the coordinator monitors and runs no step of its own.
+**Run.** In a mixed batch, serial steps that depend on a batch step — directly or transitively — run after the merge, on the integrated tree; every other serial step runs before the batch launches; both in plan order. Launch one executor per eligible step, each with a self-contained launch packet per `./references/workflow/executor-contract.md`, through the native adapter and defaults in `./references/workflow/agent-fanout.md` § *Write-mode engine registry*. While a batch is in flight the shared tree is frozen: the coordinator monitors and runs no step of its own.
 
 **Merge — at the batch's bounding checkpoint, in plan order.** For each batch step, in plan order:
 
 1. **Surface check** — confirm the worktree diff stays inside the step's declared `**Touches:**` surface. A violation is the contract's surface-escape case: discard that worktree and re-execute the step through serial delegation.
-2. **Merge** the worktree into the shared tree. A conflict means the disjointness claim was wrong: discard that worktree and re-execute the step through serial delegation on the integrated tree. Never resolve a batch conflict by hand-editing inside a worktree.
+2. **Merge** the worktree's uncommitted work into the shared tree — apply its diff and copy its untracked new files; never commit in a worktree or merge branches to do it, since Git state is not mutated unless explicitly asked. A conflict means the disjointness claim was wrong: discard that worktree and re-execute the step through serial delegation on the integrated tree. Never resolve a batch conflict by hand-editing inside a worktree.
 3. **Re-verify on the integrated tree** — the step's `Verify` plus health verify, the same two gates as serial execution. Executor-reported success is provisional; these gates are the ones that count.
 4. **Record** — flip the step's checkbox and append its result section (with its `**Executed:**` field, §5), exactly as in serial execution.
 
 Run the checkpoint's assertions only once every step in the batch has executed — every batch step merged or fallen back to serial delegation, every post-merge serial step run. The checkpoint is the batch's integration gate; a failure is Stop-the-Line on the integrated tree. When no checkpoint follows the batch, merge the same way at its natural bound — before the first serial step that depends on a batch step, or, for the plan's tail, before the acceptance gate; each step's integrated re-verify above plus §7's goal verification and §8's pre-presentation checks serve as the integration gate. Don't invent an implicit checkpoint.
 
-Remove merged worktrees before continuing — they're scratch, per the contract.
+Remove merged worktrees before continuing.
 
 ### 5. Result File: Per-Step Section Template
 
