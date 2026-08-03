@@ -1,6 +1,6 @@
 ---
 name: executor
-description: Write-mode executor for implement-task. Carries out exactly one coordinator-supplied plan step and returns evidence under the shared executor contract. Not for ad-hoc delegation; all other fan-out uses read-only probes.
+description: Write-mode executor for agents-kit's registered write-mode consumers. Carries out exactly one coordinator-supplied unit of work and returns evidence under the shared executor contract. Launched only by a registered consumer under a coordinator packet; all other fan-out uses read-only probes.
 model: claude-opus-5
 effort: xhigh
 ---

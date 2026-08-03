@@ -1,6 +1,6 @@
 # Agent Fan-Out: Probes, Executors, and Engines
 
-How a skill delegates work to other agents, in two modes: **probes** — self-contained read-only questions whose answers come back as text evidence — and **executors** — write-mode subagents that each carry out one plan step for `implement-task`. **This file is the single source of truth for probe behavior and engine commands, plus the registry and routing of native write-mode executors.** The review skills (`review-task`, `review-pr`, `review-commit`, `review-docs`) cite it from their `-x` flag; `implement-task` cites its write-mode registry from §4's execution strategy; the `review-pr-triage-verify`, `review-commit-triage-verify`, and `triage-findings-verify` composites cite it for their per-batch verify probes; `maintain` cites the probe contract for its Phase 5 session deep-reads (native engine only, per its own privacy binding); `CORE_RULES.md`'s parallel-agents rule points here for mechanics. Write-mode executor behavior lives in `./executor-contract.md`; change that behavior there, and change only engine recipes, adapter defaults, or routing here.
+How a skill delegates work to other agents, in two modes: **probes** — self-contained read-only questions whose answers come back as text evidence — and **executors** — write-mode subagents that each carry out one coordinator-supplied unit of work for a registered write-mode consumer. **This file is the single source of truth for probe behavior and engine commands, plus the registry and routing of native write-mode executors.** The review skills (`review-task`, `review-pr`, `review-commit`, `review-docs`) cite it from their `-x` flag; the three write-mode consumers registered below — `implement-task`, `implement`, and `fix-findings` — cite its write-mode section for their routing and batch mechanics; the `review-pr-triage-verify`, `review-commit-triage-verify`, and `triage-findings-verify` composites cite it for their per-batch verify probes; `maintain` cites the probe contract for its Phase 5 session deep-reads (native engine only, per its own privacy binding); `CORE_RULES.md`'s parallel-agents rule points here for mechanics. Write-mode executor behavior lives in `./executor-contract.md`; change that behavior there, and change only engine recipes, adapter defaults, routing, or the coordinator-side batch mechanics here.
 
 ## What a probe is
 
@@ -117,9 +117,44 @@ The invoking skill compares the probe's answer against its own pass:
 - **Novel probe findings are candidates, not findings.** Verify each against the artifact before adopting it into the output — under the session's own severity calibration; never paste a probe finding unverified.
 - **The outcome line closes the loop.** For the `-x` shapes, the `Cross-check:` line states `clean`, `merged: …`, or `skipped (<reason>)` — the record makes a skipped or empty probe visible instead of leaving absence ambiguous. The verify shape closes on its consuming skill's mandatory **Verified** line instead, which carries the same guarantee for the same reason; `Cross-check:` stays reserved for the `-x` pass, so a composite running both keeps two distinct records.
 
-## Write-mode routing (`implement-task` only)
+## Write-mode routing
 
-`implement-task` is the only write-mode fan-out consumer. It launches one native executor per plan step by default; `./executor-contract.md` governs that executor's behavior, while `implement-task` §4 owns serial/parallel orchestration, parallel eligibility, and merge gates. No other skill launches write-mode executors — every other fan-out consumer uses the probe contract above.
+Write-mode fan-out is limited to the consumers registered here. `./executor-contract.md` governs executor behavior; each consumer's own skill owns how it frames a unit of work and what verdicts it reaches. Every other fan-out consumer uses the probe contract above.
+
+**The registry.** Three consumers launch write-mode executors, each with its own posture:
+
+- **`implement-task`** — unit: one plan step. **Delegate by default**: one serial executor per step, with an inline fallback when delegation clearly doesn't pay. This is the proven posture the other two are calibrated against.
+- **`implement`** — unit: one framed item. Default **inline** because this skill's units are small and assembling a self-contained packet costs more than making the edit; delegate when the remaining run is multi-unit *and* the unit's packet is self-contained — no mid-unit user interaction expected.
+- **`fix-findings`** — unit: one Confirmed finding's fix application. Same inline default and same delegation trigger, scoped to **Confirmed auto-path fixes**: ask-routed fixes stay with the coordinator, which already authored the approved diff, and Withdrawn or Inconclusive findings are never edited at all.
+
+Delegation by a conditional-posture consumer is **announced in chat and recorded in that skill's report** — that record is what keeps the default from drifting silently into always- or never-delegate. The exact record shape is each skill's own.
+
+**Judgment never delegates**, under any posture. The coordinator keeps unit framing, both verify gates — re-run on its own tree, since executor output is advance evidence and never the gate — the report buckets, and every status.
+
+### Coordinator-side parallel batch
+
+This is the single home for the mechanics of running units concurrently. It is written in terms of *units* and *the consumer's declared unit order*, so every registered consumer cites it and none restates it.
+
+**Eligibility — all conditions required.** Two units may share a batch only when:
+
+- no dependency path connects them, directly or transitively;
+- each declares an edit surface and the declared sets are pairwise disjoint — the core rule "do not parallelize sequential edits to the same artifact" (`CORE_RULES.md`), made checkable;
+- each unit's verify can run in an isolated copy.
+
+A unit with no declared surface (or a surface of `none`) runs serially — an absent declaration is a serial default, not an invitation to infer one. When in doubt about disjointness, run the doubtful unit serially: a wrongly-serial unit costs minutes, a wrongly-parallel one costs the merge. Each consumer adds its own eligibility bounds on top — `implement-task`'s checkpoint-bounded batches and `**Touches:**` lines, for instance — and those stay in that skill.
+
+**Run.** Launch one executor per eligible unit, each with a self-contained launch packet per `./executor-contract.md`, through the native adapter and defaults in the engine registry below. Each executor's effective root is its own **coordinator-managed worktree**, seeded to the **batch baseline** — the shared tree's state at launch, uncommitted work included (staged, unstaged, and untracked), since a worktree created bare from a commit hands the executor stale code; executors never create, switch, or seed worktrees themselves. A unit's **change set** is everything in its worktree that differs from that baseline — every path whose content, presence, or absence differs from the seed, tracked or not — and is what the merge gates below operate on. While a batch is in flight the **shared tree is frozen**: the coordinator monitors and runs no unit of its own.
+
+**Merge — in the consumer's declared unit order.** Each binding in `./executor-contract.md` names its consumer's order (plan order, frame order, severity order). Per unit, in that order:
+
+1. **Surface check** — confirm the unit's change set — new files included — stays inside that unit's declared surface. A violation is the contract's surface-escape case: discard that worktree and re-execute the unit serially.
+2. **Merge** the unit's change set into the shared tree — apply its modifications, copy its new files, and mirror its deletions; never commit in a worktree or merge branches to do it, since Git state is not mutated unless explicitly asked. A conflict means the disjointness claim was wrong: discard that worktree and re-execute the unit serially on the integrated tree. Never resolve a batch conflict by hand-editing inside a worktree.
+3. **Re-verify on the integrated tree** — the unit's verify criterion plus health verify, the same two gates as serial execution. Executor-reported success is provisional; these gates are the ones that count.
+4. **Record** — per the consumer's own record binding (`./execution-loop.md`), exactly as in serial execution.
+
+Remove every batch worktree before continuing — merged ones, those discarded on a surface escape or merge conflict, and those abandoned by a failed or hung executor. Coordinator-managed worktrees sit inside the Git-discipline rule, not against it: they are transient scratch — created for the batch with nothing committed and no branch made, merged by diff-apply, removed — not the Git-state mutation the consumers' invariants forbid.
+
+*Where* in a run a batch merges is the consumer's business, not this file's — `implement-task` merges at the batch's bounding checkpoint, and that rule stays in that skill.
 
 ### Write-mode engine registry
 

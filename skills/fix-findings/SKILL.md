@@ -64,13 +64,31 @@ Run each fix through the loop in `./references/workflow/execution-loop.md` — r
 
 Both verify gates apply per fix: step verify (the criterion above) and health verify (typecheck, linter, tests on the changed area — `./references/engineering/verification.md`). A fix is reported Fixed only with both green.
 
+### Execution strategy: inline by default
+
+**The delegation surface is Confirmed auto-path fixes only.** A fix the gate routed to auto on a **Confirmed** verdict is the only kind an executor may apply. Ask-routed fixes stay here: the coordinator authored the diff the user approved, so nothing is left for an executor to decide, and drafting an ask-batch diff sits too close to judgment to hand off. **Withdrawn and Inconclusive findings are never edited at all** — by this session or by any executor; delegation changes nothing about that.
+
+**Default inline** because a single fix is small and assembling a self-contained packet costs more than making the edit; **delegate when** the remaining run holds several auto-path fixes *and* this fix's packet is self-contained — no mid-fix user interaction expected.
+
+A delegated fix runs through an **executor** per the `fix-findings` binding in `./references/workflow/executor-contract.md` § *Bindings* — read it before the first delegation — using the native engine and host adapter defaults in `./references/workflow/agent-fanout.md`. That binding fixes the packet; the point of it is that the executor sees only the packet — the finding verbatim, its root cause, the chosen fix option, the expected surface — and never this session, so whatever the fix depends on has to be in it.
+
+**The write surface binds the executor exactly as it binds you**: working-tree code and nothing else, never staged, never committed, no other Git state mutated, and nothing written back to the findings' source — no reply, no resolved thread, no push. The binding restates it for the executor. Delegation is not an escape hatch from the Git-discipline rule.
+
+**Announce and record.** Say in chat which fixes are being delegated and why the trigger fired, and note the delegation inside the affected `Fixed` / `Fix failed` entry — no new bucket. That record is what keeps the inline default from drifting silently either way.
+
+**Parallel batches.** Eligible independent fixes may run concurrently; the eligibility conditions and every merge gate are `./references/workflow/agent-fanout.md` § *Coordinator-side parallel batch*'s, and this skill adds only what is its own. A fix's **declared surface derives from its chosen fix option's stated blast radius**, not from the finding's `file:line` anchor alone — a real fix reaches past its anchor often enough (the helper it calls, the test that pins it) that the anchor under-declares, and the blast radius is the honest surface. A fix whose surface can't be declared with confidence runs inline or serially delegated. A batch merges in **severity order** — critical → major → minor, or source order where the findings carry no severity — this skill's processing order and the binding's `Merge order`. There is no integration gate within the run (**Integration gates** above), so a batch's natural bound is before the run's report. Worktree creation and removal stay within the Git-discipline rule per that section — transient scratch, not a mutation of the repository's state.
+
+**Judgment stays with the coordinator** under every posture: the auto-vs-ask gate, the one batched ask, both verify gates — re-run on your own tree, since an executor's pass is advance evidence and never the gate — and the report buckets.
+
+**Failure keeps revert-and-continue intact.** The recovery move depends on where the executor worked. A batch fix's failure — a failed or hung executor, a surface escape, or a merge conflict — discards its worktree, which leaves the shared tree untouched, the cleanest revert available. A **serially delegated** fix has no worktree: it edits the shared tree directly, so capture the pre-fix content of its expected surface before launching it — on a dirty tree that capture is the only line between reverting the fix and reverting the user's work — and on failure restore that capture first, per the **Blocked** binding above; residue outside it that no evidence report attributes is surfaced, never blind-reverted. Either way, then retry the fix inline or report `fix failed (reverted): <reason>` and continue with the next finding, since findings are independent units. A fix already merged and then failing its integrated re-verify is reverted by unapplying the change set the coordinator just merged — the worktree is gone, but the merge itself is the record of what to revert. The absolute half holds throughout: never continue with a failing fix left in the tree.
+
 ## Output
 
 Lists, never tables. Omit empty buckets.
 
-- **Fixed** — every applied fix, per finding: the original text with severity, what changed (`file:line`), and how the problem's absence was verified. Mark an entry that had no Confirmed verdict as fixed on the user's approval, so the report never lends a verified finding's authority to one that had none.
+- **Fixed** — every applied fix, per finding: the original text with severity, what changed (`file:line`), and how the problem's absence was verified. Mark an entry that had no Confirmed verdict as fixed on the user's approval, so the report never lends a verified finding's authority to one that had none. A delegated fix's entry notes the delegation, and its batch where it ran in one.
 - **Decided** — ask-routed findings that produced no fix: the user's decision and why nothing was applied — skipped, deferred, or the finding rejected. An ask-routed fix that was applied belongs in **Fixed**, not here.
-- **Fix failed** — reverted fixes with the reason and what would unblock them.
+- **Fix failed** — reverted fixes with the reason and what would unblock them; a delegated one notes the delegation and its batch here too.
 - **Untouched** — Withdrawn and Inconclusive findings with their verdict as the reason, findings triage landed outside **open** with their bucket, external findings dropped as `anchor moved` or `not actionable`, and any finding the user's subset excluded.
 
 **Next:** the fixes are unreviewed and unstaged — certify them with a review of the changed code. For a staged-diff flow that means staging the fixes first, then `/review-commit` (or `/review-commit-triage-verify`), then `/commit`. Findings that came from a PR or a saved list are answered in the working tree only: replying to the source, resolving its threads, and pushing all stay with you.
@@ -81,6 +99,7 @@ Lists, never tables. Omit empty buckets.
 - "This Inconclusive one looks easy, I'll fix it while I'm here" — A probe investigated and couldn't establish the root cause; that verdict is the contract, and "looks easy" is not new evidence. Ask for another verify pass instead.
 - "The user will obviously pick the targeted option, I'll skip the ask" — The gate routed it because judgment was needed. Obvious-to-you is the thing being checked.
 - "I wrote this finding myself an hour ago and I'm sure of it — the ask is a formality" — Confidence in your own unverified finding is the least reliable input available, and it is precisely what the ask exists to check. Sureness is not a verdict.
+- "The executor reported the fix verified, so it's Fixed" — That pass came from a tree that isn't the one you report on. Fixed means both gates green on your tree, re-run after the merge.
 
 ## Verification
 
@@ -92,4 +111,7 @@ Confirm the protocol invariants before finishing:
 - [ ] External findings anchor-checked before fixing; nothing written back to a PR or findings file
 - [ ] Every applied fix passed both verify gates; every failed fix reverted in full and reported
 - [ ] Every selected finding in exactly one output bucket
-- [ ] Nothing staged, nothing committed, no Git state mutated
+- [ ] Delegation confined to Confirmed auto-path fixes — no ask-routed, Withdrawn, or Inconclusive finding sent to an executor — and every delegation announced and noted in its `Fixed` / `Fix failed` entry
+- [ ] Batched fixes ran only over blast-radius-declared, pairwise-disjoint surfaces and came back through `./references/workflow/agent-fanout.md` § *Coordinator-side parallel batch*'s merge gates, in severity order
+- [ ] The gate, the batched ask, both verify gates, and the report buckets stayed with the coordinator
+- [ ] Nothing staged, nothing committed, no Git state mutated (transient coordinator-managed batch worktrees excepted — created scratch, removed after merge)
