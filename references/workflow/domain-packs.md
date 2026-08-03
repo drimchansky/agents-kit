@@ -124,7 +124,8 @@ documentation-contributed `stage-doc` / `review-docs` / `prepare-diagram` likewi
 skills (`archive-task`, `maintain`, `prepare-ticket`, `resume-task-reconcile`,
 `review-task-reconcile`) run only step 1 — they apply the neutral core and resolve no domain pack
 of their own. A composite's delegated skills still run their own steps 2–3: the reconcile
-composites' Phase 1 does. `maintain` delegates to nothing, so its run resolves no pack at any depth.
+composites' Phase 1 does. `maintain` delegates to no skill — only Phase 5's read-only probes, which
+resolve no pack of their own — so its run resolves no pack at any depth.
 
 ## Missing-pack fallback
 

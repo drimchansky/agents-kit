@@ -1,0 +1,12 @@
+{"type":"mode","uuid":"b-mode-1","timestamp":"2026-03-12T10:00:00.000Z","mode":"default"}
+{"type":"user","uuid":"b-u-0","timestamp":"2026-03-12T10:00:01.000Z","message":{"role":"user","content":[{"type":"text","text":"Find the changelog."}]}}
+{"type":"assistant","uuid":"b-a-1","timestamp":"2026-03-12T10:00:02.000Z","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_benign01","name":"Read","input":{"file_path":"/fixture/CHANGELOG.md"}}]}}
+{"type":"user","uuid":"b-u-1","timestamp":"2026-03-12T10:00:03.000Z","message":{"role":"user","content":[{"tool_use_id":"toolu_benign01","type":"tool_result","content":"File does not exist: /fixture/CHANGELOG.md","is_error":true}]}}
+{"type":"assistant","uuid":"b-a-2","timestamp":"2026-03-12T10:00:04.000Z","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_benign02","name":"Grep","input":{"pattern":"changelog"}}]}}
+{"type":"user","uuid":"b-u-2","timestamp":"2026-03-12T10:00:05.000Z","message":{"role":"user","content":[{"tool_use_id":"toolu_benign02","type":"tool_result","content":"No matches found for pattern changelog","is_error":true}]}}
+{"type":"assistant","uuid":"b-a-3","timestamp":"2026-03-12T10:00:06.000Z","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_benign03","name":"Bash","input":{"command":"ls /fixture/docs"}}]}}
+{"type":"user","uuid":"b-u-3","timestamp":"2026-03-12T10:00:07.000Z","message":{"role":"user","content":[{"tool_use_id":"toolu_benign03","type":"tool_result","content":"Exit code 1\nls: /fixture/docs: No such file or directory","is_error":true}]}}
+{"type":"assistant","uuid":"b-a-4","timestamp":"2026-03-12T10:00:08.000Z","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_benign04","name":"Bash","input":{"command":"ls /fixture"}}]}}
+{"type":"user","uuid":"b-u-4","timestamp":"2026-03-12T10:00:09.000Z","message":{"role":"user","content":[{"tool_use_id":"toolu_benign04","type":"tool_result","content":"README.md\nsrc\n"}]}}
+{"type":"assistant","uuid":"b-a-5","timestamp":"2026-03-12T10:00:10.000Z","message":{"role":"assistant","content":[{"type":"text","text":"There is no changelog in this fixture tree."}]}}
+null

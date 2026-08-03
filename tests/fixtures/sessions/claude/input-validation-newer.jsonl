@@ -1,0 +1,5 @@
+{"type":"mode","uuid":"n-mode-1","timestamp":"2026-03-14T09:00:00.000Z","mode":"default"}
+{"type":"user","uuid":"n-u-0","timestamp":"2026-03-14T09:00:01.000Z","message":{"role":"user","content":[{"type":"text","text":"Write the fixture report."}]}}
+{"type":"assistant","uuid":"n-a-1","timestamp":"2026-03-14T09:00:02.000Z","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_newer01","name":"Write","input":{"file_path":"/fixture/report.md"}}]}}
+{"type":"user","uuid":"n-u-1","timestamp":"2026-03-14T09:00:03.000Z","message":{"role":"user","content":[{"tool_use_id":"toolu_newer01","type":"tool_result","content":"<tool_use_error>InputValidationError: Write is missing the required property \"content\".</tool_use_error>","is_error":true}]}}
+{"type":"assistant","uuid":"n-a-2","timestamp":"2026-03-14T09:00:04.000Z","message":{"role":"assistant","content":[{"type":"text","text":"Supplying the missing property now."}]}}

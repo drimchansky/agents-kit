@@ -93,4 +93,5 @@ When changing the vocabulary:
 
 1. Update **this file** first (the registry).
 2. Update the skills that read or write the field: `refine-idea`, `plan-task`, `decompose-task`, `implement-task`, `resume-task`, `review-task`, `resume-task-reconcile`, `review-task-reconcile`, and `reconcile-task`.
-3. `grep -rn "<old-status>" skills/ references/` to catch stragglers (template literals, prose mentions).
+3. Update the scripts that bake this vocabulary rather than reading it at run time: `scripts/health-check.mjs` holds the plan, result, terminal and live sets as literal constants, and a stale set there makes every task in the renamed state read as `unknown` — a state its checks skip in silence.
+4. `grep -rn "<old-status>" skills/ references/ scripts/` to catch stragglers (template literals, prose mentions).

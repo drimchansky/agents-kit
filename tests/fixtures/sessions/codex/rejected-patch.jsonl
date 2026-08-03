@@ -1,0 +1,8 @@
+{"timestamp":"2026-03-13T12:00:00.000Z","type":"session_meta","payload":{"id":"fixture-codex-reject","cli_version":"0.0.0-fixture","cwd":"/fixture"}}
+{"timestamp":"2026-03-13T12:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Turn the sandbox off globally."}}
+{"timestamp":"2026-03-13T12:00:02.000Z","type":"response_item","payload":{"type":"function_call","call_id":"call_fixture_patch","name":"apply_patch","arguments":"{\"input\":\"*** Begin Patch\"}"}}
+{"timestamp":"2026-03-13T12:00:03.000Z","type":"event_msg","payload":{"type":"patch_apply_end","call_id":"call_fixture_patch","success":false,"stdout":"","stderr":"This action was rejected due to unacceptable risk.\nReason: it would persistently disable sandboxing for every future session."}}
+{"timestamp":"2026-03-13T12:00:04.000Z","type":"response_item","payload":{"type":"function_call_output","call_id":"call_fixture_patch","output":"exec_command failed: Rejected(\"This action was rejected due to unacceptable risk.\")"}}
+{"timestamp":"2026-03-13T12:00:05.000Z","type":"event_msg","payload":{"type":"agent_message","message":"I will not disable the sandbox globally."}}
+{"timestamp":"2026-03-13T12:00:06.000Z","type":"event_msg","payload":{"type":"task_complete","turn_id":"turn-fixture-reject"}}
+null

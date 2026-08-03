@@ -1,0 +1,11 @@
+{"timestamp":"2026-03-15T09:00:00.000Z","type":"session_meta","payload":{"id":"fixture-codex-session","cli_version":"0.0.0-fixture","cwd":"/fixture"}}
+{"timestamp":"2026-03-15T09:00:01.000Z","type":"turn_context","payload":{"model":"fixture-model","approval_policy":"on-request"}}
+{"timestamp":"2026-03-15T09:00:02.000Z","type":"event_msg","payload":{"type":"user_message","message":"Rebuild the fixture bundle."}}
+{"timestamp":"2026-03-15T09:00:03.000Z","type":"response_item","payload":{"type":"function_call","call_id":"call_fixture01","name":"exec_command","arguments":"{\"cmd\":\"make bundle\"}"}}
+{"timestamp":"2026-03-15T09:00:04.000Z","type":"response_item","payload":{"type":"function_call_output","call_id":"call_fixture01","output":"Chunk ID: aa11bb\nWall time: 0.4 seconds\nProcess exited with code 0\nOutput:\nbundle written\n"}}
+{"timestamp":"2026-03-15T09:00:05.000Z","type":"event_msg","payload":{"type":"error","message":"stream disconnected before the turn completed"}}
+{"timestamp":"2026-03-15T09:00:06.000Z","type":"event_msg","payload":{"type":"turn_aborted","turn_id":"turn-fixture-1","reason":"interrupted","duration_ms":1200}}
+{"timestamp":"2026-03-15T09:00:07.000Z","type":"fixture_unknown_record","payload":{"type":"something_a_later_cli_version_added","detail":"must be counted, never fatal"}}
+{"timestamp":"2026-03-15T09:00:08.000Z","type":"event_msg","payload":{"type":"turn_aborted","turn_id":"turn-fixture-2","reason":"interrupted","duration_ms":800}}
+this line is deliberately not valid json and must be tolerated
+{"timestamp":"2026-03-15T09:00:09.000Z","type":"event_msg","payload":{"type":"task_complete","turn_id":"turn-fixture-3"}}

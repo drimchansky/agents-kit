@@ -47,7 +47,7 @@ composite. A genuinely modal flag touches the one phase it modifies and nothing 
 - `review-commit-triage-verify` — review the staged diff, then batch findings, then verify each batch.
 - `review-pr-triage-verify` — the same pipeline over a PR or branch diff.
 - `triage-findings-verify` — findings-first: batch findings you already have, then verify each batch.
-- `maintain` — format sweep, then index refresh, then the active-task listing. All three phases inline; it delegates to no skill and reconciles no task content, handing that to `resume-task-reconcile` in its **Next**. Registered for its phase ordering, not as a variation of a base skill — the one member with none, which is why step 2 below admits an inline phase.
+- `maintain` — format sweep, then index refresh, then the health sweep, then the active-task listing, then the session analysis. Every phase inline; it delegates to no skill and reconciles no task content, handing that to `resume-task-reconcile` in its **Next**. Registered for its phase ordering, not as a variation of a base skill — the one member with none, which is why step 2 below admits an inline phase.
 - `resume-task-reconcile` — print the resume brief, then reconcile the docs to it.
 - `review-task-reconcile` — print the plan assessment, then reconcile the docs and fold in answers.
 - `decompose-task` — propose the cut of an approved source into ordered sibling parts, then materialize each confirmed part (`prepare-ticket` per part + a seeded `CONTEXT.md`).
