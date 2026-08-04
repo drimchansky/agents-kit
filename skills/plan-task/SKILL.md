@@ -8,8 +8,7 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
-3. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for (`exploration.md`, `planning.md`, …). If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
+2. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for (`exploration.md`, `planning.md`, …). If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
 
 This skill produces an implementation plan inside a resolved task folder, paired with a sibling **goals file** that captures the testable acceptance criteria. The plan is the contract that `implement-task` later executes against; the goals file is the contract for what "done" means. Each task folder holds one plan (with its goals) plus a `CONTEXT.md`; a multi-part effort becomes several sibling task folders, not many plans in one folder.
 

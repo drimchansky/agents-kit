@@ -1,6 +1,6 @@
 # Code Review
 
-Lenses, calibration, and discipline that apply to **any** code review or audit. Mode-specific orchestration lives in `skills/review-pr/SKILL.md` (branch diff against base), `skills/review-commit/SKILL.md` (staged pre-commit diff), and `skills/audit/SKILL.md` (module / project); this file is mode-agnostic.
+Lenses, calibration, and discipline that apply to **any** code review. Mode-specific orchestration lives in `skills/review-pr/SKILL.md` (branch diff against base) and `skills/review-commit/SKILL.md` (staged pre-commit diff); this file is mode-agnostic.
 
 Other reference checklists cover specific surfaces: `accessibility.md`, `code-style.md`, `css.md`, `forms.md`, `html.md`, `interactions.md`, `performance.md`, `privacy.md`, `react.md`, `security.md`, `tanstack-query.md`, `testing.md`, `typescript.md`. Consult those when the diff touches those domains. This file covers what those checklists don't.
 
@@ -150,19 +150,17 @@ Diff reviews (`review-commit`, `review-pr`) always run the project's verificatio
 - Identify what the project exposes — lint, typecheck, and test scripts (check `package.json` scripts, a `Makefile`, or the stack's conventional commands) — and run them on the changed/staged files where they exist; what the project doesn't expose is skipped, not simulated.
 - Treat failures and warnings as findings; record them with file location and severity.
 
-The scripts are a review's only execution surface: everything else stays analysis — read the code, reason about it. An `audit` runs no scripts at all (no diff bounds what they would cover — see `skills/audit/SKILL.md`), and read-only probes never run them (`../workflow/agent-fanout.md`).
+The scripts are a review's only execution surface: everything else stays analysis — read the code, reason about it. Read-only probes never run them (`../workflow/agent-fanout.md`).
 
 ## Standard Verification Checklist
 
-Before finalizing any review or audit output, confirm:
+Before finalizing any review output, confirm:
 
-- [ ] All usage sites of modified shared code checked (diff reviews only)
+- [ ] All usage sites of modified shared code checked
 - [ ] Severity ratings reflect user/production impact, not aesthetics
 - [ ] No findings on style preferences alone
-- [ ] No findings on unchanged code (diff reviews only)
-- [ ] Bug fixes have regression tests, or the gap is flagged (diff reviews only)
-- [ ] Touched comments validated per `code-style.md` → Comments; any comment-only finding clears the bar Touched Comments assigns it (diff reviews only)
+- [ ] No findings on unchanged code
+- [ ] Bug fixes have regression tests, or the gap is flagged
+- [ ] Touched comments validated per `code-style.md` → Comments; any comment-only finding clears the bar Touched Comments assigns it
 - [ ] Dead code identified and listed explicitly
 - [ ] Assumptions in non-trivial decisions identified
-
-For module / project audits (no diff): the items marked "(diff reviews only)" don't apply; the others still do.

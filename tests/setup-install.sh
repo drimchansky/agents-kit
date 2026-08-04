@@ -193,6 +193,97 @@ verify_shared_payload "$PRIMARY_HOME/.claude"
 verify_shared_payload "$PRIMARY_HOME/.codex"
 pass "managed reinstall refreshes the unchanged shared payload"
 
+mkdir "$PRIMARY_HOME/.claude/skills/retired-fixture" \
+  "$PRIMARY_HOME/.codex/skills/retired-fixture"
+touch "$PRIMARY_HOME/.claude/skills/retired-fixture/.agents-kit" \
+  "$PRIMARY_HOME/.codex/skills/retired-fixture/.agents-kit"
+printf '%s\n' 'retired managed skill' \
+  >"$PRIMARY_HOME/.claude/skills/retired-fixture/SKILL.md"
+printf '%s\n' 'retired managed skill' \
+  >"$PRIMARY_HOME/.codex/skills/retired-fixture/SKILL.md"
+
+run_setup "$PRIMARY_HOME" "$TEST_ROOT/retired-skill.log"
+assert_absent "$PRIMARY_HOME/.claude/skills/retired-fixture"
+assert_absent "$PRIMARY_HOME/.codex/skills/retired-fixture"
+verify_shared_payload "$PRIMARY_HOME/.claude"
+verify_shared_payload "$PRIMARY_HOME/.codex"
+pass "reinstall removes a marker-owned skill dropped from the source set"
+
+mkdir "$TEST_ROOT/snapshots"
+mkdir "$PRIMARY_HOME/.claude/skills/retired-fixture" \
+  "$PRIMARY_HOME/.codex/skills/retired-fixture"
+printf '%s\n' 'user-owned retired-name skill' \
+  >"$PRIMARY_HOME/.claude/skills/retired-fixture/SKILL.md"
+printf '%s\n' 'user-owned retired-name skill' \
+  >"$PRIMARY_HOME/.codex/skills/retired-fixture/SKILL.md"
+cp "$PRIMARY_HOME/.claude/skills/retired-fixture/SKILL.md" \
+  "$TEST_ROOT/snapshots/claude-user-retired.md"
+cp "$PRIMARY_HOME/.codex/skills/retired-fixture/SKILL.md" \
+  "$TEST_ROOT/snapshots/codex-user-retired.md"
+
+run_setup "$PRIMARY_HOME" "$TEST_ROOT/user-owned-skill.log"
+assert_same_bytes \
+  "$TEST_ROOT/snapshots/claude-user-retired.md" \
+  "$PRIMARY_HOME/.claude/skills/retired-fixture/SKILL.md"
+assert_absent "$PRIMARY_HOME/.claude/skills/retired-fixture/.agents-kit"
+pass "Claude unmarked user-owned skill directory is byte-preserved"
+assert_same_bytes \
+  "$TEST_ROOT/snapshots/codex-user-retired.md" \
+  "$PRIMARY_HOME/.codex/skills/retired-fixture/SKILL.md"
+assert_absent "$PRIMARY_HOME/.codex/skills/retired-fixture/.agents-kit"
+pass "Codex unmarked user-owned skill directory is byte-preserved"
+
+COLLIDING_SKILL=""
+for source in "$REPO_DIR"/skills/*/; do
+  [ -d "$source" ] || continue
+  COLLIDING_SKILL="$(basename "$source")"
+  break
+done
+[ -n "$COLLIDING_SKILL" ] || fail "no source skill available for the collision case"
+
+rm -rf "$PRIMARY_HOME/.claude/skills/$COLLIDING_SKILL" \
+  "$PRIMARY_HOME/.codex/skills/$COLLIDING_SKILL"
+mkdir "$PRIMARY_HOME/.claude/skills/$COLLIDING_SKILL" \
+  "$PRIMARY_HOME/.codex/skills/$COLLIDING_SKILL"
+printf '%s\n' 'user-owned live-name skill' \
+  >"$PRIMARY_HOME/.claude/skills/$COLLIDING_SKILL/SKILL.md"
+printf '%s\n' 'user-owned live-name skill' \
+  >"$PRIMARY_HOME/.codex/skills/$COLLIDING_SKILL/SKILL.md"
+cp "$PRIMARY_HOME/.claude/skills/$COLLIDING_SKILL/SKILL.md" \
+  "$TEST_ROOT/snapshots/claude-user-live.md"
+cp "$PRIMARY_HOME/.codex/skills/$COLLIDING_SKILL/SKILL.md" \
+  "$TEST_ROOT/snapshots/codex-user-live.md"
+
+run_setup "$PRIMARY_HOME" "$TEST_ROOT/live-name-collision.log"
+SKIP_COUNT="$(
+  awk -v skill="  skipped (not kit-managed): $COLLIDING_SKILL" '
+    $0 == skill { count++ }
+    END { print count + 0 }
+  ' "$TEST_ROOT/live-name-collision.log"
+)"
+[ "$SKIP_COUNT" -eq 2 ] ||
+  fail "expected both skill-name collisions to be reported skipped"
+assert_same_bytes \
+  "$TEST_ROOT/snapshots/claude-user-live.md" \
+  "$PRIMARY_HOME/.claude/skills/$COLLIDING_SKILL/SKILL.md"
+assert_absent "$PRIMARY_HOME/.claude/skills/$COLLIDING_SKILL/.agents-kit"
+assert_same_bytes \
+  "$TEST_ROOT/snapshots/codex-user-live.md" \
+  "$PRIMARY_HOME/.codex/skills/$COLLIDING_SKILL/SKILL.md"
+assert_absent "$PRIMARY_HOME/.codex/skills/$COLLIDING_SKILL/.agents-kit"
+[ "$(find "$PRIMARY_HOME/.claude/skills/$COLLIDING_SKILL" -mindepth 1 | wc -l)" -eq 1 ] ||
+  fail "setup.sh leaked content into the user-owned Claude $COLLIDING_SKILL directory"
+[ "$(find "$PRIMARY_HOME/.codex/skills/$COLLIDING_SKILL" -mindepth 1 | wc -l)" -eq 1 ] ||
+  fail "setup.sh leaked content into the user-owned Codex $COLLIDING_SKILL directory"
+pass "an unmarked directory at a live skill name is reported, preserved, and never entered"
+
+rm -rf "$PRIMARY_HOME/.claude/skills/$COLLIDING_SKILL" \
+  "$PRIMARY_HOME/.codex/skills/$COLLIDING_SKILL"
+run_setup "$PRIMARY_HOME" "$TEST_ROOT/live-name-recovery.log"
+verify_shared_payload "$PRIMARY_HOME/.claude"
+verify_shared_payload "$PRIMARY_HOME/.codex"
+pass "removing the user directory lets the kit skill reinstall marked"
+
 rm "$PRIMARY_HOME/.claude/agents/.agents-kit-executor"
 rm "$PRIMARY_HOME/.codex/agents/.agents-kit-executor"
 printf '%s\n' 'user-owned Claude executor' \
@@ -203,7 +294,6 @@ printf '%s\n' 'unrelated Claude agent' \
   >"$PRIMARY_HOME/.claude/agents/reviewer.md"
 printf '%s\n' 'unrelated Codex agent' \
   >"$PRIMARY_HOME/.codex/agents/reviewer.toml"
-mkdir "$TEST_ROOT/snapshots"
 cp "$PRIMARY_HOME/.claude/agents/executor.md" \
   "$TEST_ROOT/snapshots/claude-executor.md"
 cp "$PRIMARY_HOME/.codex/agents/executor.toml" \

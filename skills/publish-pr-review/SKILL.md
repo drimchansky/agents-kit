@@ -7,8 +7,7 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
-3. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core. See `./references/workflow/domain-packs.md`.
+2. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core. See `./references/workflow/domain-packs.md`.
 
 Publish the review that `/review-pr` produced to the PR on GitHub. This skill deliberately mutates the PR — invoking it *is* the explicit permission for that outward-facing change. It posts exactly one review: Major and Critical findings as inline comments (a neutral **Comment** review), or a short **Approve** when there are none. It posts nothing else — no code edits, no title/state/merge changes, and no Minor findings, improvements, summary, or other terminal-only detail. The review body names the model(s) that performed the review.
 

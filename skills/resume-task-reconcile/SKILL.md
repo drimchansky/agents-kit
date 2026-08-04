@@ -8,7 +8,6 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
 
 One command for the catch-up-and-fix pipeline: brief the task (`resume-task`), then write the brief's
 findings back into the task docs so they stop overstating what's been built. Two phases, in order —
@@ -18,9 +17,9 @@ Phase 1 executes its skill file — read the sibling `SKILL.md` and run its full
 against the reference contract it names. Three overrides apply pipeline-wide:
 
 - **Core Rules blocks** — the composite's own block above covers the pipeline; the inner skill's
-  AGENTS.md read and `✅` echo are already satisfied and don't repeat. The override stops at those
-  two: `resume-task`'s domain-pack step still runs, resolving the task's `**Domain:**` and applying
-  that pack (`./references/workflow/domain-packs.md`).
+  AGENTS.md read is already satisfied and doesn't repeat. The override stops there: `resume-task`'s
+  domain-pack step still runs, resolving the task's `**Domain:**` and applying that pack
+  (`./references/workflow/domain-packs.md`).
 - **Chat display** — the composite's Output owns what reaches you. Unlike the review pipelines, this
   one holds nothing back: the brief prints in full at the end of Phase 1, **before** any edit.
 - **Next pointers** — the inner skill's follow-up suggestions are dropped; the composite's Output
@@ -113,8 +112,7 @@ needs rethinking), or the first action from the brief when nothing was left unre
 
 Confirm the protocol invariants before finishing:
 
-- [ ] `✅ Core agents-kit rules applied` echoed once; Phase 1 ran from `resume-task`'s skill file with
-      its domain-pack step intact — not improvised
+- [ ] Phase 1 ran from `resume-task`'s skill file with its domain-pack step intact — not improvised
 - [ ] The brief printed in full from pre-reconcile state, before any edit, and was never regenerated
       after one
 - [ ] Reconciliation followed the shared contract; every edit maps to a brief finding, a reference

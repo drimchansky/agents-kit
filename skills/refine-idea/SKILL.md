@@ -8,8 +8,7 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
-3. Load the domain pack: take the task's `**Domain:**` (default `engineering`; infer from the request when there's no `CONTEXT.md` yet, and record it in the `CONTEXT.md` you write) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for. If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
+2. Load the domain pack: take the task's `**Domain:**` (default `engineering`; infer from the request when there's no `CONTEXT.md` yet, and record it in the `CONTEXT.md` you write) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for. If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
 
 This skill turns a raw idea into a sharp, actionable concept worth building. It runs three phases — divergent exploration, convergent evaluation, and a written one-pager — and produces an artifact at `<task-folder>/CONTEXT.md` (canonically `.agents/tasks/<slug>/CONTEXT.md`) that `plan-task` and `implement-task` later consume as the static grounding context for the task.
 

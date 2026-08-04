@@ -8,14 +8,13 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
-3. Load the domain pack: infer the effort's domain from the source (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core; each materialized part records its own `**Domain:**` in its seeded `CONTEXT.md`. If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
+2. Load the domain pack: infer the effort's domain from the source (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core; each materialized part records its own `**Domain:**` in its seeded `CONTEXT.md`. If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
 
 This composite turns one **approved** source — an ADR, an accepted RFC, an epic-scale ask — into an ordered set of sibling task folders, each ready to enter the workflow as its own ticket-first task. Two phases, in order: **propose** the cut (chat-only), then — only after the user confirms — **materialize** each confirmed part by executing `../prepare-ticket/SKILL.md` per part plus a `CONTEXT.md` seed. The method — source intake, cut-line lenses, the part-quality bar, ordering, the proposal's shape, the materialization contract — lives in [`./references/workflow/decomposition.md`](./references/workflow/decomposition.md). Read it before Phase 1 and run it; don't restate it.
 
 Phase 2 executes the sibling skill file — read `../prepare-ticket/SKILL.md` and run its full protocol per part. Four overrides apply pipeline-wide (the composite convention):
 
-- **Core Rules blocks** — this skill's block above covers the pipeline; the inner skill's AGENTS.md read and `✅` echo are already satisfied and don't repeat.
+- **Core Rules blocks** — this skill's block above covers the pipeline; the inner skill's AGENTS.md read is already satisfied and doesn't repeat.
 - **Clarifying questions** — `prepare-ticket`'s per-ticket clarifying round folds into Phase 1's single batched confirmation, so Phase 2 drafts unprompted from the confirmed material. A gap discovered only at drafting time is the one exception: ask then, don't guess.
 - **Next pointers** — the inner skill's handoff suggestions are dropped; this composite's Output owns **Next**.
 - **Destination resolution** — the part folder Phase 2 step 1 just created *is* the task folder: write `ticket.md` into it verbatim, bypassing `task-layout.md`'s *Destination paths* inference — which would read a just-created empty directory as a *parent* and nest a new slug inside it.

@@ -8,8 +8,7 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
-3. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core. See `./references/workflow/domain-packs.md`.
+2. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core. See `./references/workflow/domain-packs.md`.
 
 The write-mode follow-up to every code-review skill and source that produces findings: take a findings set from anywhere, apply the fixes, and report the rest untouched. From a verify composite, each **Confirmed** finding arrives with `verify-issue`'s root cause and fix options (ordered targeted → thorough, each with blast radius) — this skill consumes that judgment; it doesn't re-litigate it. Everything else — a plain review's findings, a PR's review comments, a saved or pasted list — carries less, often just a location and a complaint, and the gate routes it accordingly.
 
@@ -24,7 +23,7 @@ The write surface is **working-tree code and nothing else**: never stages, never
 1. **Explicit argument wins.** A PR number or URL → PR mode. An existing file path → parse that file. Pasted text, or a pointer like "the review above" → those findings. A named subset ("the two majors", specific `file:line`s) → those entries of the latest session findings.
 2. **No argument:** the most recent findings in this session, with everything fixable selected —
    - a **verify composite** (`review-commit-triage-verify`, `review-pr-triage-verify`, `triage-findings-verify`) → its Confirmed and Unverified findings;
-   - a **plain review** (`review-commit`, `review-pr`, `audit`) or a **`triage-findings` batch** → all of it, none of which carries a verdict.
+   - a **plain review** (`review-commit`, `review-pr`) or a **`triage-findings` batch** → all of it, none of which carries a verdict.
 3. **Nothing to work from** → say so, name the forms above, and stop. Unlike `triage-findings`, this skill does **not** fall back to the current branch's open PR: that skill reads, this one edits, and fetching a remote findings list to start editing against is not something to infer from an empty argument.
 
 **Code findings only.** Whatever the route in — a `triage-findings` batch, a file, a paste — a documentation findings set is out of scope: this skill's health verify is the engineering recipe, which proves nothing about prose. A `/review-docs` set belongs back with a doc review.

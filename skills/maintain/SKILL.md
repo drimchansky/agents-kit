@@ -8,7 +8,6 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
 
 The monthly maintenance ritual: one command that keeps the kit and its task store from drifting between audits — the R6 recommendation of the July 2026 workflow audit, "maintenance has no owner; give it one." It runs these operations in order — a format-conformance sweep of the kit's task folders, a store-index refresh, a health sweep across both repos and the two install homes, a listing of the active tasks for handoff, and a misbehavior triage of the Claude and Codex sessions written since the last run — then reports what it found and hands the fixes back to you. It operates on the task-folder **envelope**, its lifecycle bookkeeping, store artifacts, and the host session logs, not on any task's domain *content*, so it resolves no `**Domain:**` pack, delegates to no skill, and reconciles nothing: the docs→reality reconcile of a task's own content is `resume-task-reconcile`'s job, handed off in **Next** rather than run here.
 
@@ -133,7 +132,6 @@ Lists, never tables.
 
 Confirm the protocol invariants before finishing:
 
-- [ ] `✅ Core agents-kit rules applied` echoed once
 - [ ] Kit root and store root resolved, existence-checked, and printed — from the `~/Documents/Repositories/agents-kit` and `~/Documents/Tasks` defaults when no argument named one; a missing default asked-about, not guessed
 - [ ] Phase 1 derived the format from `./references/workflow/` at run time — never from memory or a copy in this file — and surfaced, rather than enforced, any rule with no home in those docs
 - [ ] Phase 1 applied exactly the previewed lossless transforms — every link repointed that named a renamed file or missed its `./`-relative role name within its own folder (headers and in-body alike, anchors preserved), no cross-folder link retargeted, case-only renames performed rather than read as collisions; every folder carrying a judgment issue was left entirely untouched, and no stray folder was deleted

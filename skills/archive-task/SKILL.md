@@ -8,7 +8,6 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
 
 This skill operates on the **task-folder envelope** — it relocates a whole task folder on disk — not on a task's domain content. Like `maintain`, it deliberately does **not** resolve a `**Domain:**` pack: archiving is identical for every task regardless of its domain, so there is no domain-specific overlay to load. Its source of truth is `./references/workflow/task-layout.md` (the archive location and discovery rules) and `./references/workflow/task-lifecycle.md` (the **terminal-state set** that says which tasks are finished), read **at run time** — never a hardcoded status list.
 

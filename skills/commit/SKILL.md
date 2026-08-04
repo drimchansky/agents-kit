@@ -8,7 +8,6 @@ effort: low
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
 
 This skill does not load the engineering pack, alone among the engineering-contributed skills. The one line of `./references/engineering/rules.md` that bears on it — Git state is mutated only when explicitly asked — is carried by the paragraph below; the rest of the overlay (verify-before-presenting, dependencies, stack defaults, per-surface checklists) governs code work, and this skill writes no code. See `./references/workflow/domain-packs.md`.
 

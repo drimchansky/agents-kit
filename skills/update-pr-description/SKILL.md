@@ -7,8 +7,7 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
-3. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core. See `./references/workflow/domain-packs.md`.
+2. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core. See `./references/workflow/domain-packs.md`.
 
 Update the PR body that `/review-pr -d` prepared. This skill deliberately mutates the PR on GitHub — invoking it *is* the explicit permission for that outward-facing change. It writes the PR body only: it edits no code, changes no title, changes no PR state, merges nothing, comments nothing, and pushes nothing — it posts exactly the description review-pr drafted.
 

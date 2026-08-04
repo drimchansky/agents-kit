@@ -8,7 +8,6 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
 
 One command for the review-and-fix pipeline: validate the plan against reality (`review-task`), then
 write the assessment's findings back into the task docs and fold the engineer's answers into the
@@ -19,9 +18,9 @@ Phase 1 executes its skill file — read the sibling `SKILL.md` and run its full
 against the reference contract it names. Three overrides apply pipeline-wide:
 
 - **Core Rules blocks** — the composite's own block above covers the pipeline; the inner skill's
-  AGENTS.md read and `✅` echo are already satisfied and don't repeat. The override stops at those
-  two: `review-task`'s domain-pack step still runs, resolving the task's `**Domain:**` and applying
-  that pack (`./references/workflow/domain-packs.md`).
+  AGENTS.md read is already satisfied and doesn't repeat. The override stops there: `review-task`'s
+  domain-pack step still runs, resolving the task's `**Domain:**` and applying that pack
+  (`./references/workflow/domain-packs.md`).
 - **Chat display** — the composite's Output owns what reaches you. Unlike the review pipelines over a
   diff, this one holds nothing back: the assessment prints in full at the end of Phase 1, **before**
   any edit.
@@ -129,8 +128,8 @@ goal rewrite left for the user to apply in `goals.md`.
 
 Confirm the protocol invariants before finishing:
 
-- [ ] `✅ Core agents-kit rules applied` echoed once; Phase 1 ran from `review-task`'s skill file with
-      its domain-pack step intact and `-x` passed through unchanged — not improvised
+- [ ] Phase 1 ran from `review-task`'s skill file with its domain-pack step intact and `-x` passed
+      through unchanged — not improvised
 - [ ] The assessment printed in full from pre-reconcile state, before any edit, and was never
       regenerated after one
 - [ ] Reconciliation followed the shared contract; every edit maps to an assessment finding, a

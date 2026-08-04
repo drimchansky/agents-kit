@@ -8,8 +8,7 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
-3. Load the domain pack: take the task's `**Domain:**` (default `engineering`; infer from the request when there's no `CONTEXT.md`) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for. If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
+2. Load the domain pack: take the task's `**Domain:**` (default `engineering`; infer from the request when there's no `CONTEXT.md`) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for. If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
 
 This skill carries out a change directly, with no task folder: you frame what's being built, run it through the shared execution loop, and report in chat. It is `implement-task`'s ad-hoc counterpart — the same loop, the same gates, the same Stop-the-Line discipline, read from the same file (`./references/workflow/execution-loop.md`).
 
@@ -27,7 +26,7 @@ Before working, read `./references/workflow/execution-loop.md` — the loop, its
 
 - A task folder or plan already covers the work — use `implement-task`, which records progress against it
 - The work spans multiple modules, has several viable approaches worth comparing, or has requirements ambiguous enough to need decomposition — suggest `plan-task` first
-- The user wants the work assessed rather than done — that's `review-commit`, `review-pr`, or `audit`
+- The user wants the work assessed rather than done — that's `review-commit` or `review-pr`
 
 Default to this skill when the change looks like one or two files with an approach that's already clear, because a plan would cost more than the work; escalate the moment framing or the work itself says otherwise.
 

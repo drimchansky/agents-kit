@@ -37,7 +37,7 @@ A pack is a directory `references/<domain>/` holding, by convention:
 - **`execution.md`** — how to carry out and record one step in this domain.
 - **`verification.md`** — what "verify a step / criterion" means here, plus the domain's
   acceptance-gate recipe.
-- **`review.md`** — the domain's review lenses (used by review/audit skills).
+- **`review.md`** — the domain's review lenses (used by review skills).
 - **per-surface checklists** — any number of focused checklists the domain consults situationally
   (engineering ships `typescript.md`, `react.md`, `css.md`, `security.md`, …).
 
@@ -74,7 +74,7 @@ just under `**Status:**`:
   infers the domain from the request, and `decompose-task` — which runs before any part folder
   exists — infers the effort's domain from the source doc and stamps each materialized part's own
   `**Domain:**` in its seeded `CONTEXT.md`.
-- **Engineering-only skills** — `audit`, `review-commit`, `commit`, `review-pr`, `update-pr-description`, `publish-pr-review`, `triage-findings`,
+- **Engineering-only skills** — `review-commit`, `commit`, `review-pr`, `update-pr-description`, `publish-pr-review`, `triage-findings`,
   `verify-issue`, `fix-findings`, `review-commit-triage-verify`, `review-pr-triage-verify`, `triage-findings-verify` — operate on a codebase
   or diff, not a task folder, and load `references/engineering/` unconditionally. They are, in
   effect, skills contributed by the engineering pack; other domains contribute skills the same way

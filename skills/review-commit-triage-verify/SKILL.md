@@ -8,14 +8,13 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
-3. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core. See `./references/workflow/domain-packs.md`.
+2. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core. See `./references/workflow/domain-packs.md`.
 
 One command for the pre-commit pipeline: review the staged diff (`review-commit`), batch the findings by concern (`triage-findings`), then verify each batch in an isolated read-only probe running the `verify-issue` protocol — cold eyes per batch, uncolored by the session that wrote the findings. The final display is the triage frame with one verdict per finding, plus the drafted commit message for the `/commit` follow-up.
 
 Each phase executes its skill file — read the sibling `SKILL.md` and run its full protocol. Three overrides apply pipeline-wide, to every phase:
 
-- **Core Rules blocks** — the composite's own block above covers the pipeline; inner skills' AGENTS.md read and `✅` echo are already satisfied and don't repeat.
+- **Core Rules blocks** — the composite's own block above covers the pipeline; inner skills' AGENTS.md read is already satisfied and doesn't repeat.
 - **Chat display** — findings render once, in the final Output; phases print only what their section below allows.
 - **Next pointers** — inner skills' follow-up suggestions are dropped; the composite's Output owns **Next**.
 

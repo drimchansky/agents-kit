@@ -8,7 +8,6 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
 
 This skill writes a **product-facing ticket** — deliberately domain-neutral, and *upstream* of `CONTEXT.md`, so no `**Domain:**` marker exists yet to resolve. It reads the neutral core and resolves **no** pack. Its source of truth is `./references/workflow/ticket-format.md` (the ticket's shape and quality bar) and `./references/workflow/task-layout.md` (folder resolution and destination paths), read **at run time**.
 

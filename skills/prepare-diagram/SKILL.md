@@ -8,8 +8,7 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. After reading it, echo `✅ Core agents-kit rules applied` on its own line early in your first reply.
-3. This is a **documentation-pack skill**: apply `./references/documentation/rules.md` on top of the core unconditionally — no `**Domain:**` resolution; the documentation pack is this skill's domain (see `./references/workflow/domain-packs.md`).
+2. This is a **documentation-pack skill**: apply `./references/documentation/rules.md` on top of the core unconditionally — no `**Domain:**` resolution; the documentation pack is this skill's domain (see `./references/workflow/domain-packs.md`).
 
 Produce a Mermaid diagram of the subject the user names — a code flow or architecture in a repository, a figure a document needs, or a process or system described in prose. The bar is a diagram that is correct about its subject, portable across whatever renderer it lands in, and styled consistently with the kit's other diagrams; the deliverable is a fenced ` ```mermaid ` block in the chat reply.
 
