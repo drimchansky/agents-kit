@@ -33,7 +33,8 @@ Writing code is the one place hallucinated APIs do real damage. Before touching 
 
 Before writing framework-specific code for a step, confirm you've consulted these docs. If the
 step touches a domain covered by a per-surface checklist (`react.md`, `security.md`, …), read it
-now.
+now. Those checklists load by domain; `code-style.md` → Comments does not — comments get written
+in every code-writing step, so that section governs each one whatever domains the step triggers.
 
 ## Prove-It pattern (bug-fix steps)
 

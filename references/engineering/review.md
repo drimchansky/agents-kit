@@ -21,6 +21,13 @@ The highest-value part of a review. For every change to shared code:
 - For bug fixes: is there now a test that would have caught this regression?
 - Search for the same pattern elsewhere in the codebase — a fix in one place often applies to siblings
 
+### Touched Comments
+
+Comments ship in diffs of every kind, so this lens applies to **every** diff — it is not gated on which per-surface checklists the diff's domains trigger. Two bars, by what the diff did to the comment:
+
+- **Comments the diff adds or edits** — held to the full discipline in `code-style.md` → Comments. A comment that discipline prohibits is a finding on its own the moment the diff introduces it; the discipline already classes it as a maintenance defect, so it needs no separate impact argument.
+- **Pre-existing comments adjacent to the change** — held to the materiality bar: flag only when the change makes them materially misleading to correctness, security, API compatibility, or maintenance. Untouched comments the change doesn't bear on are not the review's business.
+
 ### Abstraction Justification
 
 - **Premature extraction** — Under ~20 lines rarely needs its own module. Inline until a second or third consumer proves the abstraction — unless the unit owns a meaningful boundary, such as state, hooks, lifecycle, or a distinct concern, which justifies extraction at a single use site (for components, see `react.md` → Components).
@@ -38,7 +45,7 @@ Concrete patterns to scan for. Flag as Minor by default; promote to Major if the
 - **Generic names** (`data`, `result`, `temp`, `val`, `item`) or **abbreviated names** (`usr`, `cfg`, `btn`, `evt`) — rename to describe the content; allow universal abbreviations (`id`, `url`, `api`)
 - **Repeated conditionals** — the same predicate in multiple places — extract to a named function
 
-For style-level findings (3-param function limit, single responsibility, invariant-only comments), defer to `code-style.md` instead of duplicating here.
+For style-level findings (3-param function limit, single responsibility), defer to `code-style.md` instead of duplicating here; comments are not among them, since Touched Comments above applies to every diff.
 
 ### Interface Design
 
@@ -95,6 +102,7 @@ If sibling or related projects exist:
 - **Issues in unchanged code** — unless the diff directly affects them
 - **Nitpicks on code being deleted or moved** — don't review dead code
 - **Hypothetical future problems** — flag only if the current change creates a concrete risk
+- **Comment verbosity or style on its own** — never a standalone finding; a comment-only finding has to clear one of the two bars in Touched Comments above
 
 ## Calibrate Severity
 
@@ -153,6 +161,7 @@ Before finalizing any review or audit output, confirm:
 - [ ] No findings on style preferences alone
 - [ ] No findings on unchanged code (diff reviews only)
 - [ ] Bug fixes have regression tests, or the gap is flagged (diff reviews only)
+- [ ] Touched comments validated per `code-style.md` → Comments; any comment-only finding clears the bar Touched Comments assigns it (diff reviews only)
 - [ ] Dead code identified and listed explicitly
 - [ ] Assumptions in non-trivial decisions identified
 
