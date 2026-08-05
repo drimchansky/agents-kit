@@ -50,7 +50,7 @@ When triage merged several sources, one concern batch can span these — some fi
 
 **Merge** per the fan-out merge contract. A probe's **Not an issue** → the finding is **Withdrawn**, displayed with the probe's evidence. A probe's confirmation → the finding stands as **Confirmed**, with root cause and fix options ordered targeted → thorough. Never silently drop either way. A finding the probe surfaces on its own — `verify-issue`'s scope step routinely turns up the same pattern elsewhere — is a candidate, not a verdict: verify it against the same review object, then adopt it into its batch's zone as an open finding, verdict and all, so **Batches** and the **Verified** count carry it like any other.
 
-**Degrade**: a failed or hung probe never blocks the pipeline — verify that batch inline by the same `verify-issue` protocol and mark its verdicts `verified inline (probe failed: <reason>)`. Inline verdicts lose the cold-eyes property; the mark keeps that visible.
+**Degrade**: a probe that has failed or died never blocks the pipeline — verify that batch inline by the same `verify-issue` protocol and mark its verdicts `verified inline (probe failed: <reason>)`. Slowness alone is not failure, per the probe contract: a probe still making progress is waited on with its status reported, and calling a stalled one off is the user's decision — a called-off batch verifies inline the same way, marked `verified inline (probe called off)`. Inline verdicts lose the cold-eyes property; the mark keeps that visible.
 
 ## Output
 
@@ -58,7 +58,7 @@ Lists, never tables.
 
 - **Overview** — the source(s) triaged and the counts: N open, N to verify, N addressed. This names the provenance — which source was and wasn't covered; there is no review `Reviewed at <sha>` line here.
 - **Batches** — the triage frame: one section per concern zone, ordered by its most severe member. Each finding renders once — original text with its severity prefix, `file:line` (or a short quote when it has no anchor), then its verdict: **Confirmed** (root cause, plus fix options targeted → thorough), **Withdrawn** (the probe's evidence), **Inconclusive** (what's missing), or **Unverified** (reason: probe and fallback failed, or out of probe scope). A finding triage placed in `verify` or `addressed` shows that bucket in place of a verdict.
-- **Verified** — one mandatory line: `Verified: <n> confirmed · <n> withdrawn · <n> inconclusive · <n> unverified — <k> native probes`. Two segments are conditional: ` · <n> triaged out` joins the counts when triage landed findings in `verify`/`addressed` (neither got a verdict here), and `, <m> inline fallbacks` joins the probe count when a probe failed and its batch was verified inline. Mandatory so a skipped or failed verify phase is visible rather than ambiguous.
+- **Verified** — one mandatory line: `Verified: <n> confirmed · <n> withdrawn · <n> inconclusive · <n> unverified — <k> native probes`. Two segments are conditional: ` · <n> triaged out` joins the counts when triage landed findings in `verify`/`addressed` (neither got a verdict here), and `, <m> inline fallbacks` joins the probe count when a batch was verified inline (probe failed or called off). Mandatory so a skipped or failed verify phase is visible rather than ambiguous.
 - **Inaccessible context** (only if any) — sources or links triage couldn't fetch, with the reason, forwarded from phase 1.
 
 **Next:** address the confirmed findings — `/implement-task` for a scoped fix, or `/review-commit` once you've made changes. Withdrawn findings need no action.
