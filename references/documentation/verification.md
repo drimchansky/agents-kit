@@ -3,8 +3,7 @@
 What "verify" means when the deliverable is a document — the recipe behind the neutral verify gates,
 Stop-the-Line, checkpoints, and acceptance gate for `**Domain:** documentation` tasks
 (`implement-task`, `implement`, `review-task`, `resume-task`, `reconcile-task`).
-`../workflow/execution-loop.md` owns *that* you verify and gate; this file owns *what to run*. See
-`../workflow/domain-packs.md`.
+`../workflow/execution-loop.md` owns *that* you verify and gate; this file owns *what to run*.
 
 ## Two verify gates per step
 

@@ -8,86 +8,83 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for (`execution.md`, `verification.md`, …). If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
+2. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for (`execution.md`, `verification.md`, …). If the domain has no pack, run the neutral methodology and say so.
 
-This skill executes a plan written by `plan-task` (or any `plan.md` in a task folder — canonically under `.agents/tasks/`, though a task folder anywhere on disk works the same — that follows the same format). It implements the work, updates a companion **result file** as it goes, marks each step `DONE` in the plan with a link back to the result section, and runs a final **acceptance gate** against the goals before flipping the plan to `done`.
+Executes a plan written by `plan-task` — or any same-format `plan.md` in a task folder, canonically under `.agents/tasks/` though a folder anywhere on disk works the same. It implements the work, records it in a companion **result file** as it goes, marks each step done in the plan with a link to that record, and runs an **acceptance gate** against the goals before flipping the plan to `done`.
 
-The plan is the **contract for how**; the goals are the **contract for what done means**; the result file is the **record** — a rewritable `## Current state` digest above an append-only log; `CONTEXT.md` is the **static grounding context** for the task; the optional `ticket.md` is the **product-facing ask** the goals derive from. They live side by side in the resolved task folder:
+Plan = the contract for **how**. Goals = the contract for **what done means**. Result file = the **record**: a rewritable `## Current state` digest above an append-only log. `CONTEXT.md` = static grounding context. `ticket.md` = the product-facing ask the goals derive from.
 
-- Ticket: `ticket.md` (optional; read-only for this skill)
-- Context: `CONTEXT.md` (read-only for this skill)
-- Goals: `goals.md` (read-only for this skill)
-- Plan: `plan.md`
-- Diagram: `diagram.md` (optional; re-checked and repainted at the gates — §4)
-- Result: `result.md`
+## Inputs
 
-**CRITICAL**: The plan, the result file, and the task's `diagram.md` when it has one are mutated by this skill; `CONTEXT.md`, the goals, and the ticket are not. The plan is mutated _only_ to flip step checkboxes (`- [ ]` → `- [x]`), append result links, update the `Status:` header, and (when necessary) revise scope or steps. Everything else about the plan stays as written. The diagram is mutated _only_ by the gate re-checks in §4, §6, and §7 — repainted to match what shipped, never to match the plan's prose instead of reality — with its `**Reflects:**` line re-dated. The result file is the place for narrative — what shipped, what surprised you, what diverged. The goals file is the user's contract; if it needs to change, surface that to the user — never edit it from this skill.
+All in the resolved task folder, all read before any work (§1):
 
-## References
+- `ticket.md` — optional, read-only
+- `CONTEXT.md` — read-only
+- `goals.md` — read-only; the acceptance contract (§7)
+- `plan.md` — the steps to execute
+- `diagram.md` — optional; re-checked and repainted at the gates (§4)
+- `result.md` — this run's record (§3, §5)
 
-Before working, read `./references/workflow/execution-loop.md` — the loop, its gates, and its failure discipline, with this skill's parameters in its `implement-task` binding. Then load the resolved domain's pack and read the files this skill leans on — `execution.md` (how to carry out a step) and `verification.md` (what its gates run) — plus any per-surface checklists that apply. When the domain is code, that's `./references/engineering/`, and the checklists matter most here since this is the skill that produces the actual work product. If the domain has no pack, run the neutral loop and say so. See `./references/workflow/domain-packs.md`.
+Read `./references/workflow/execution-loop.md` before working — the loop, its gates, its failure discipline, and this skill's parameters in its `implement-task` binding. Then the pack files Core Rules 2 calls for: `execution.md` (how to carry out a step), `verification.md` (what its gates run), and any per-surface checklist the work touches. For code that is `./references/engineering/`, where the checklists matter most because this skill produces the actual work product.
+
+**CRITICAL**: This skill mutates the plan, the result file, and `diagram.md` when the task has one — never `CONTEXT.md`, `goals.md`, or `ticket.md`.
+
+- The **plan** is mutated *only* to flip step checkboxes (`- [ ]` → `- [x]`), append result links, update `**Status:**`, and revise scope or steps (§6). Everything else about it stays as written.
+- The **diagram** is mutated *only* by the §4 re-check at its three gates (§4, §6, §7) — repainted to match what shipped, never the plan's prose instead of reality — with `**Reflects:**` re-anchored and re-dated.
+- The **result file** is the place for narrative: what shipped, what surprised you, what diverged.
+- The **goals** are the user's contract. A goal that turns out wrong or missing is surfaced for the user to edit; a changed product ask is theirs to update in `ticket.md`. Never edit either from here.
 
 ## When to Use
 
-**Use when:**
-
-- The user asks to implement, execute, run, or carry out a task or its plan
-- The user points at a task folder (e.g. `.agents/tasks/add-csv-export/`) or its `plan.md`
-- A task is already established in this session and the user wants to start (or resume) executing it
-- A plan exists in a task folder and the user wants to start (or resume) work on it
+**Use when** the user asks to implement, execute, run, carry out, or resume a task or its plan — pointing at a task folder (e.g. `.agents/tasks/add-csv-export/`) or its `plan.md`, or naming a task already established in this session.
 
 **Skip when:**
 
 - No task folder exists yet — direct the user to `plan-task` first
-- The work is small enough that a plan would be overhead — use `implement`, which runs the same loop against an ask framed in the session
-- The plan is still being iterated on and not yet finalized
-- The plan's `**Status:**` is `skipped` — it was deliberately abandoned. Confirm the user wants to revive it before executing; don't silently run an abandoned plan. On confirmation, §3 takes the registered `skipped → executing` revive (`./references/workflow/task-lifecycle.md`).
+- The work is small enough that a plan would be overhead — use `implement`, the same loop against an ask framed in the session
+- The plan is still being iterated on, not yet finalized
+- The plan's `**Status:**` is `skipped` — deliberately abandoned. Confirm the user wants it revived; never silently run an abandoned plan. On confirmation, §3 takes the registered `skipped → executing` revive (`./references/workflow/task-lifecycle.md`)
 
-If the user describes a task without a plan, suggest `plan-task` first when the task is non-trivial, and `implement` when it isn't.
+A task described with no plan: suggest `plan-task` when it's non-trivial, `implement` when it isn't.
 
 ## Process
 
 ### 0. Prepare Against Authoritative Sources
 
-Establish ground truth before doing the work, per `./references/workflow/execution-loop.md` § *Ground truth before work* — the resolved domain's `execution.md` carries the recipe. This is the skill that produces the actual work product, so working from stale or invented facts is the biggest failure mode.
+Establish ground truth before the work, per `./references/workflow/execution-loop.md` § *Ground truth before work* — the resolved domain's `execution.md` carries the recipe.
 
-This skill's binding for the sources you find — and for any pattern you couldn't ground: record them in the result file's `**Sources:**` field (§5), not in code comments.
+**Binding for what you find:** record the sources you ground the work on — and any pattern you couldn't ground — in the result file's `**Sources:**` field (§5), never in code comments.
 
 ### 1. Locate and Load the Task
 
-Discovery resolves a task folder, then reads its `plan.md`.
+**Resolve the folder** per the **resolve-current-or-ask** discovery rules in `./references/workflow/task-layout.md` — cite them, don't restate them.
 
-**Resolve the task folder** per the **resolve-current-or-ask** discovery rules in `./references/workflow/task-layout.md` — cite it, don't restate it; a full `plan.md` path is taken directly.
+**Read its `plan.md`** (one plan per folder). None → tell the user the folder exists but has no plan, and suggest `plan-task`.
 
-**Read the plan** — once the folder is resolved, read its `plan.md` (one plan per folder). If the folder has no `plan.md`, tell the user the folder exists but has no plan; suggest `plan-task` to create one.
+**Then read every other input above, in full, before doing anything:**
 
-Read **all four core artifacts** — plus the optional `ticket.md` when present — before doing anything:
-
-- The plan in full.
-- The sibling `goals.md` — the goals define the final gate this skill runs before marking the plan `done`. If the goals file is missing, stop and tell the user — `plan-task` should produce one. Do not invent goals to fill the gap.
-- The sibling `CONTEXT.md` — problem statement, scope summary, key assumptions, external references. Authoritative for the task's static context; never modify it from this skill.
-- The sibling `ticket.md` when present — the product-facing ask the goals derive from; read-only context (the acceptance gate runs against `goals.md`, not the ticket).
-- The sibling `diagram.md` when present — the target-state shape the plan builds toward. This skill re-checks and repaints it at the gates (§4); its absence is never a gap.
-- The companion `result.md` if it exists — work may have been partially done in a prior session. Pick up where it left off; do not redo completed steps. If the plan is `blocked`, read the result file's `**Blocked:**` section and resume only once the blocker has cleared — then flip both plan and result back to `executing` before continuing. If the plan is `in-review`, read the result file's `**In review:**` section — it lists the pending `(external)` goals; don't re-run the whole plan, jump to the acceptance gate (§7) for just those goals against the external confirmation the user now provides, then finalize per §8 (to `done` if confirmed, or back to `executing` if review sent work back). See `./references/workflow/task-lifecycle.md`.
-
-Treat the goals, `CONTEXT.md`, and `ticket.md` as read-only. If implementation reveals a goal is wrong or missing, surface it to the user and let them edit the goals file — don't edit it from here; likewise a changed product ask is the user's to update in the ticket.
+- `goals.md` — defines the final gate. Missing → stop and tell the user; `plan-task` should produce one. Never invent goals to fill the gap.
+- `CONTEXT.md` — problem statement, scope summary, key assumptions, external references; authoritative for the task's static context.
+- `ticket.md` when present — the product-facing ask, read-only; the gate runs against `goals.md`, not the ticket.
+- `diagram.md` when present — the target-state shape the plan builds toward; its absence is never a gap.
+- `result.md` when it exists — work may have been partly done in a prior session: pick up where it left off, never redoing completed steps. Then branch on the plan's `**Status:**` (`./references/workflow/task-lifecycle.md`):
+    - `blocked` → read the result's `**Blocked:**` section; resume only once the blocker has cleared, flipping both files back to `executing` first.
+    - `in-review` → read the result's `**In review:**` section listing the pending `(external)` goals. Don't re-run the plan: take those goals alone through §7, against the external confirmation the user now provides, then §8.
 
 ### 2. Decide Execution Mode
 
-Ask the user (or infer from the request):
+Ask the user, or infer from the request:
 
-- **Step-by-step** — Execute one step, update both files, pause for the user to inspect or decide before continuing. Default for risky / large plans.
-- **Full plan** — Execute every step end-to-end, then write a single combined result. Default for small plans (≤3 steps) or when the user explicitly asks to "just run the whole thing."
+- **Step-by-step** — one step, update both files, pause for the user to inspect or decide. Default for risky or large plans.
+- **Full plan** — every step end-to-end, then one combined result (§5). Default for small plans (≤3 steps) or an explicit "just run the whole thing".
 
-Respect step `Depends on:` ordering regardless of mode.
-
-Both modes execute steps through the delegation default (§4) — step-by-step simply pauses after each step's gates. The automatic parallel batch applies only in full-plan mode: step-by-step's per-step pause is the opposite contract — the user inspects between steps, and a batch would collapse those pause points into the checkpoint.
+Both modes execute steps through the §4 delegation default; step-by-step simply pauses after each step's gates. The automatic parallel batch is full-plan only — a batch would collapse exactly the pause points step-by-step exists to give the user.
 
 ### 3. Initialize Execution State
 
-Status values used in this skill and their transitions are registered in `./references/workflow/task-lifecycle.md` — the single source of truth. If anything here disagrees with the registry, the registry wins.
+Every status value and transition used here is registered in `./references/workflow/task-lifecycle.md`, the single source of truth; on any disagreement the registry wins.
 
-Create `<task-dir>/result.md` (when it doesn't already exist) with this header:
+Create `<task-dir>/result.md` when it doesn't already exist, with this header:
 
 ```markdown
 # Result: <plan title>
@@ -107,73 +104,73 @@ _Updated: YYYY-MM-DD_
 ---
 ```
 
-The `## Current state` block is derived header metadata (contract in `./references/workflow/task-lifecycle.md`): ≤1 KB, rewritten **in place** as work progresses — never appended to — and never claiming a stronger lifecycle state than the `**Status:**` header. Everything below its closing `---` is the append-only log. A pre-existing result file without the block gains one at this run's first write.
+`## Current state` is derived header metadata on the contract in `./references/workflow/task-lifecycle.md`: rewritten **in place**, never appended to. Everything below its closing `---` is the append-only log. A pre-existing result file without the block gains one at this run's first write.
 
-Update the plan's `**Result:**` line to link to this file (`./result.md`), and flip the plan's `**Status:**` from `to-do` to `executing` to mark that work has begun — then, since this is a `**Status:**` change, regenerate the store index if the store has one (the §8 walk-up rule).
+Then point the plan's `**Result:**` line at `./result.md` and flip its `**Status:**` from `to-do` to `executing` — a `**Status:**` change, so regenerate the store index (§8's walk-up rule).
 
 **Reviving a `skipped` plan** — only after the explicit confirmation the *Skip when* gate requires.
 
-First check **where the folder sits**. A bare slug falls back to `.agents/tasks/Archive/<slug>/` when no active folder matches (`./references/workflow/task-layout.md`), and skipped tasks are exactly the ones that get archived — so a revive can land inside `Archive/`. A live task must never sit there: archived folders are absent from every active listing, so the revived task would be stranded outside the lists `resume-task` and `review-task` build, and `archive-task` would refuse it as non-terminal though it already sits in the archive. If the resolved folder is under `Archive/`, **stop**: tell the user to move it back out first (a manual `mv` — `archive-task` is one-way), then re-run.
+**Check where the folder sits first.** A bare slug falls back to `Archive/<slug>/` (`./references/workflow/task-layout.md`) and skipped tasks are the ones that get archived, so a revive can land there — but a live task under `Archive/` is stranded outside every active listing `resume-task` and `review-task` build, and `archive-task` would refuse it as non-terminal. Resolved under `Archive/` → **stop**: have the user move it out (a manual `mv`; archiving is one-way), then re-run.
 
-Otherwise flip the plan's `**Status:**` from `skipped` to `executing` (the registered revive edge) and continue as a normal run. If the plan's optional result file already exists — the record of why the work was dropped — ensure its `**Status:**` is `executing`, the pairing rule's value for a live plan (the result has no `to-do` state); a result left in any other state would pair with the revived plan as drift. The append-only rule holds, so that record stays and this run's sections append after it (§5).
+Otherwise flip `skipped → executing` (the registered revive edge) and continue as a normal run. An existing result file — the record of why the work was dropped — must be `executing`, the pairing rule's value for a live plan; any other value pairs as drift. That record stays: the append-only rule holds, and this run's sections append after it (§5).
 
 ### 4. Execute Steps
 
-Run the loop in `./references/workflow/execution-loop.md` — the five beats, both verify gates, Stop-the-Line when either fails, and the integration-gate discipline — with this skill's parameters as its `implement-task` binding states them. Read it before starting.
+Run the loop in `./references/workflow/execution-loop.md` — the five beats, both verify gates, Stop-the-Line when either fails, the integration-gate discipline. Read it before starting.
 
-What this skill binds:
+**This skill's bindings:**
 
-- **Source** — one unit is one plan step; its verify criterion is the step's plan-defined `Verify` line. Stay inside the plan's defined scope, and respect step `Depends on:` ordering regardless of execution mode.
-- **Record** — append a section to the result file (§5) as each step finishes.
+- **Source** — one unit is one plan step; its criterion is that step's plan-defined `Verify` line. Stay inside the plan's scope; respect `Depends on:` ordering in both modes.
+- **Record** — append a result section (§5) as each step finishes.
 - **Mark done** — flip `- [ ]` to `- [x]` for that step and append the result-section link:
 
     ```markdown
     - [x] **What:** <unchanged> ([result](./result.md#step-1--add-csv-writer))
     ```
 
-- **Pause or continue** — in step-by-step mode, stop after each step and report progress; in full-plan mode, continue to the next.
-- **Blocked** — when Stop-the-Line can't be cleared this session, set the plan and result `**Status:**` to `blocked`, add a `**Blocked:**` section to the result file naming the cause (what failed, what was tried, and what's needed — or what's awaited), and rewrite `## Current state` naming the blocker. Then stop; don't skip ahead — but regenerate the store index if the store has one (the §8 walk-up rule). See `./references/workflow/task-lifecycle.md`.
-- **Integration gates** — the plan's `### Checkpoint after Step N` headings between step blocks, each a **mandatory gate** after marking step N done, not an optional summary. A checkpoint is not a step, has no `- [ ]` marker, and is never flipped. Run its assertions per the shared loop, append a checkpoint section to the result file (§5), and in step-by-step mode pause there just as at a step boundary. When the task has a `diagram.md`, the checkpoint also runs the diagram re-check below.
+- **Pause or continue** — step-by-step: stop after each step and report progress. Full-plan: continue.
+- **Blocked** — a Stop-the-Line that can't clear this session: both files' `**Status:**` to `blocked`, a `**Blocked:**` section naming the cause (what failed, what was tried, what's needed — or what's awaited), `## Current state` rewritten naming the blocker, the store index regenerated (§8's walk-up rule), then stop — don't skip ahead (`./references/workflow/task-lifecycle.md`).
+- **Integration gates** — the plan's `### Checkpoint after Step N` headings. Each is **mandatory** after marking step N done, not an optional summary; a checkpoint is not a step, carries no `- [ ]`, and is never flipped. Run its assertions per the shared loop, append a checkpoint section (§5), and in step-by-step mode pause as at a step boundary. With a `diagram.md`, it also runs the re-check below.
 
 #### Diagram re-check (only when the task has a `diagram.md`)
 
-A task carrying a `diagram.md` re-checks it at three points: **each checkpoint**, **each plan revision that changes structure** (§6), and **the acceptance gate** (§7). A task without one skips all three, and nothing reports the absence (`./references/workflow/task-layout.md` § *The diagram file*).
+Three points re-check it: **each checkpoint**, **each structural plan revision** (§6), **the acceptance gate** (§7). No diagram → skip all three, absence unreported (`./references/workflow/task-layout.md` § *The diagram file*).
 
-The re-check compares the drawing against what actually shipped, and its record names *what was compared* — which nodes and edges, against which files. Writing that down is what keeps the gate from becoming a rubber stamp. Then:
+Compare the drawing against what shipped and record *what was compared* — which nodes and edges, against which files; that record is what keeps the gate off rubber-stamping. Then:
 
-- **Still matches** → re-anchor and re-date the `**Reflects:**` line. No repaint, no render-check.
-- **Diverged** → repaint to match what shipped, render-check it per the resolved domain pack's diagram guidance (for code, `./references/engineering/planning.md` § *The task diagram*, which owns the notation and the render-check), record the divergence in the step's or checkpoint's result section — what changed shape, and why — and re-anchor and re-date the `**Reflects:**` line the same way.
+- **Matches** → re-anchor and re-date `**Reflects:**`. No repaint, no render-check.
+- **Diverged** → repaint to what shipped, render-check per the pack's diagram guidance (code: `./references/engineering/planning.md` § *The task diagram*, which owns the notation and the render-check), record the divergence and why in that step's or checkpoint's result section, then re-anchor and re-date the same way.
 
-Either way the line leaves the gate anchored to it — `as of Step N` (the last step completed at this checkpoint or revision) or `as of the acceptance gate` — dated today, replacing the plan-time `as of the plan` anchor `plan-task` wrote at creation (`./references/workflow/task-layout.md` § *The diagram file*).
+Either way `**Reflects:**` leaves anchored to the gate — `as of Step N` (the last step completed here) or `as of the acceptance gate` — dated today, replacing the plan-time `as of the plan`.
 
-A divergence is usually information rather than failure: it means the build revealed something the plan didn't anticipate, which is what §6 exists to surface. It is Stop-the-Line only when the shipped structure contradicts a goal.
+A divergence is usually information, not failure: the build revealed what the plan didn't anticipate, which is what §6 surfaces. Stop-the-Line only when the shipped structure contradicts a goal.
 
 #### Execution strategy: delegated by default
 
-Execute each step through an **executor** per the behavioral contract in `./references/workflow/executor-contract.md`, under its `implement-task` binding — read both before the first step — using the native engine and host adapter defaults in `./references/workflow/agent-fanout.md`. The default is **serial delegation**: one executor per step, in plan order, editing the shared tree, launched with a self-contained prompt (the step's What/Verify text, the goals it cites, the edit surface, the always-applying pack section verbatim, the domain-pack guidance the step's work triggers by path, the relevant `CONTEXT.md` excerpts, absolute paths). While a serial executor is in flight, the coordinator waits: it runs no step of its own and makes no shared-tree edit until the executor reports. After the executor reports, re-run both verify gates on the tree yourself — the executor's pass is advance evidence, not the gate — then record the step (§5).
+Execute each step through an **executor** per `./references/workflow/executor-contract.md` and its `implement-task` binding — read both before the first step — on the native engine and adapter defaults in `./references/workflow/agent-fanout.md`.
 
-Take the **inline fallback** when delegation clearly doesn't pay (a trivial step, mid-step user interaction, debugging-heavy work) — announce it in chat and record it in the step's `**Executed:**` field. A failed or hung executor degrades the same way, per that binding's **Fallback**: report it, execute the step inline, continue.
+Default to **serial delegation** because context economy compounds over a run: one executor per step, in plan order, editing the shared tree, launched with the self-contained packet that contract's *Launch packet* requires. While one is in flight the coordinator waits — no step of its own, no shared-tree edit — until it reports. Then re-run both gates on the tree yourself (its pass is advance evidence, not the gate) and record the step (§5).
 
-The strategy is the same in both execution modes; step-by-step pauses after each step's gates, exactly as before.
+**Inline fallback** when delegation clearly doesn't pay — a trivial step, mid-step user interaction, debugging-heavy work: announce it in chat and record it in `**Executed:**`. A failed or hung executor degrades the same way per that binding's **Fallback**: report it, run the step inline, continue.
 
 #### Automatic parallel batch (full-plan mode)
 
-In full-plan mode, execute eligible independent steps concurrently through the same contract and its `implement-task` binding, using the native engine routed in `./references/workflow/agent-fanout.md`. The mechanics of running a batch are not restated here: worktree placement, the frozen shared tree, the merge gates, and worktree cleanup are `./references/workflow/agent-fanout.md` § *Coordinator-side parallel batch*, and a batch runs them as written there. This section states what this skill adds on top — which steps are eligible, where the batch merges, and what its record is.
+Eligible independent steps run concurrently through the same contract and binding. Batch mechanics are not restated: worktree placement, the frozen shared tree, the merge gates, and cleanup are `./references/workflow/agent-fanout.md` § *Coordinator-side parallel batch*, run as written there. This section adds only eligibility, merge point, and record.
 
-No flag is involved: when a batch qualifies under the eligibility below, launch it and **announce it in chat** — which steps, and why they're eligible — so automatic parallelism is never silent. The contract's invariants hold throughout: the coordinator (this session) owns the shared tree, both task files, and every status; executors never touch the task folder.
+No flag: when a batch qualifies, launch it and **announce it in chat** — which steps, why eligible — so automatic parallelism is never silent. The contract's invariants hold: the coordinator owns the shared tree, both task files, and every status; executors never touch the task folder.
 
-**Eligibility — mechanical, all conditions required.** Every condition in the cited section applies as written — no dependency path, pairwise-disjoint declared surfaces, a `Verify` that runs in an isolated copy, and its when-in-doubt-run-serially default. This skill adds, and binds, these:
+**Eligibility.** Every condition in the cited section applies as written, its when-in-doubt-run-serially default included. This skill adds:
 
 - the steps sit in the same checkpoint-bounded batch (between the last checkpoint and the next);
-- each declares its edit surface as a `**Touches:**` line — that line is the declared surface the cited disjointness test and surface check run against, and `Depends on:` is the dependency path they read.
+- each declares its surface as a `**Touches:**` line — the declared surface the cited disjointness test and surface check read; `Depends on:` is the dependency path they read.
 
-A step with no `**Touches:**` line (or with `**Touches:** none`) runs serially-delegated.
+No `**Touches:**` line (or `**Touches:** none`) → serially-delegated.
 
-**Run.** Launch the batch per the cited section's *Run* rules. In a mixed batch, serial steps that depend on a batch step — directly or transitively — run after the merge, on the integrated tree; every other serial step runs before the batch launches; both in plan order.
+**Run** per the cited *Run* rules. In a mixed batch, serial steps depending on a batch step — directly or transitively — run after the merge on the integrated tree; every other serial step runs before launch; both in plan order.
 
-**Merge — at the batch's bounding checkpoint.** Run the four merge gates of `./references/workflow/agent-fanout.md` § *Coordinator-side parallel batch* — surface check, merge, integrated re-verify, record — for each batch step **in plan order**, plan order being this skill's declared unit order. Their fourth gate, **Record**, resolves here to: flip the step's checkbox and append its result section, with its `**Executed:**` field (§5), exactly as in serial execution.
+**Merge at the batch's bounding checkpoint** — the cited four gates, per batch step, **in plan order**, plan order being this skill's declared unit order. Their fourth gate, **Record**, resolves to: flip the checkbox, append the result section with its `**Executed:**` field (§5), as in serial execution.
 
-Run the checkpoint's assertions only once every step in the batch has executed — every batch step merged or fallen back to serial delegation, every post-merge serial step run. The checkpoint is the batch's integration gate; a failure is Stop-the-Line on the integrated tree. When no checkpoint follows the batch, merge the same way at its natural bound — before the first serial step that depends on a batch step, or, for the plan's tail, before the acceptance gate; each step's integrated re-verify (the cited third gate) plus §7's goal verification and §8's pre-presentation checks serve as the integration gate. Don't invent an implicit checkpoint.
+Run the checkpoint's assertions only once every batch step has executed — merged or fallen back to serial — and every post-merge serial step has run. The checkpoint is the batch's integration gate; failure there is Stop-the-Line on the integrated tree. With no checkpoint after the batch, merge at its natural bound — before the first dependent serial step, or before the acceptance gate for the plan's tail — where each step's integrated re-verify plus §7's goal verification and §8's pre-presentation checks serve as the gate. Don't invent an implicit checkpoint.
 
 ### 5. Result File: Per-Step Section Template
 
@@ -189,7 +186,7 @@ Run the checkpoint's assertions only once every step in the batch has executed �
 
 **Sources:** <official-doc URLs / deep links grounding any framework-specific code in this step, plus any pattern shipped without an authoritative source and why; otherwise omit>
 
-**Executed:** <only when execution deviated from the default serial delegation — for a parallel-batch step, "parallel batch (<executor engine>), merged in plan order at/before <the batch's merge point>", the merge point being its bounding checkpoint, the first post-merge serial step in a checkpoint-free plan, or the acceptance gate for a tail batch; or "inline (<reason>)" for an inline fallback; omit for serially-delegated steps>
+**Executed:** <only when execution deviated from the default serial delegation — "parallel batch (<executor engine>), merged in plan order at/before <the §4 merge point>", or "inline (<reason>)"; omit for serially-delegated steps>
 
 **Deviations from plan:** <if any — what differed and why; otherwise omit>
 
@@ -209,7 +206,7 @@ For full-plan mode, write **one combined section** instead — no per-step block
 
 - <bulleted list of every notable change across all steps>
 
-**Sources:** <official-doc URLs / deep links grounding any framework-specific code, plus any pattern shipped without an authoritative source and why; otherwise omit>
+**Sources:** <as above, across all steps; otherwise omit>
 
 **Executed:** <only when a folded step deviated from serial delegation — "Step N inline (<reason>)" per such step; omit otherwise>
 
@@ -220,9 +217,9 @@ For full-plan mode, write **one combined section** instead — no per-step block
 ---
 ```
 
-In full-plan mode, still flip every step's `- [ ]` to `- [x]` in the plan, with each linking to the same `#full-run--<date>` anchor (note the double hyphen — the em-dash in the header drops out and both surrounding spaces become hyphens).
+In full-plan mode, still flip every step's `- [ ]` to `- [x]`, each linking to the same `#full-run--<date>` anchor (note the double hyphen — the em-dash in the header drops out and both surrounding spaces become hyphens).
 
-Merged parallel-batch steps are the exception on both counts: each keeps its own per-step section (its merge gates and `**Executed:**` record are per-step — §4's cited merge gates, and its binding for their **Record** gate), and its checkbox links to that section instead of the `#full-run` anchor. Only the batch's serially-executed steps fold into the combined block.
+Merged parallel-batch steps are the exception on both counts: each keeps its own per-step section — its merge gates and `**Executed:**` record are per-step — and its checkbox links there instead of the `#full-run` anchor. Only the batch's serially-executed steps fold into the combined block.
 
 **Checkpoint section template:**
 
@@ -237,27 +234,36 @@ Merged parallel-batch steps are the exception on both counts: each keeps its own
 ---
 ```
 
-If the checkpoint failed, record `**Outcome:** failed` and the failure details, then follow Stop-the-Line. Do not move on.
+A failed checkpoint records `**Outcome:** failed` with the failure details, then follows Stop-the-Line. Do not move on.
 
-**After appending any section** — step, full-run, or checkpoint — rewrite the `## Current state` block to match: `_Updated:_` refreshed, status gloss, `**Pointers:**` (the branch/PR/SHA/ticket currently in play), `**Next:**`; ≤1 KB, superseded detail dropped. **When a step records a decision**, append a dated one-liner to the `## Decision log` section (creating it directly below the `## Current state` block's closing `---` when absent, as the first section of the append-only log): `- YYYY-MM-DD — <decision> (→ <result anchor / CONTEXT section / plan step / DECISIONS.md #N>)` — a pointer to where the decision is recorded, never the decision text itself (see `./references/workflow/task-lifecycle.md`).
+**After appending any section** — step, full-run, or checkpoint — rewrite `## Current state` to match on its cited contract: `_Updated:_` refreshed, status gloss, `**Pointers:**` (the branch/PR/SHA/ticket currently in play), `**Next:**`, superseded detail dropped. **When a step records a decision**, append a dated one-liner to the result's `## Decision log`, creating it directly below `## Current state`'s closing `---` when absent, as the first section of the append-only log:
+
+```markdown
+- YYYY-MM-DD — <decision> (→ <result anchor / CONTEXT section / plan step / DECISIONS.md #N>)
+```
+
+A pointer to where the decision is recorded, never the decision text itself (`./references/workflow/task-lifecycle.md`).
 
 ### 6. Plan Revisions Mid-Execution
 
-When implementation reveals the plan is wrong — a step is infeasible, scope was wrong, a new step is needed, or a step turns out too large to land in one slice — apply the scope-change rules in `./references/workflow/execution-loop.md` § *Scope changes mid-execution*, including its splitting strategies. This skill's binding for what surfacing and recording mean against a plan:
+When implementation reveals the plan is wrong — a step infeasible, scope wrong, a new step needed, or a step too large to land in one slice — apply the scope-change rules in `./references/workflow/execution-loop.md` § *Scope changes mid-execution*, including its splitting strategies. Binding for what surfacing and recording mean against a plan:
 
-- **Update the plan in place** — revise the affected step or scope; add new steps if needed; remove obsolete steps. Keep step numbers stable when possible (insert as `Step 3a`, `Step 3b` rather than renumbering).
-- **Record the divergence in the result file** under the affected step's `**Deviations from plan:**` field, including _why_ the plan changed.
-- **Repaint the diagram when the revision changes structure** (only when the task has one), at the revision itself rather than deferred to the next checkpoint — the revision is the causal event, and in step-by-step mode it is exactly where the user inspects. Same rule in both execution modes; run it per the diagram re-check in §4.
+- **Update the plan in place** — revise the affected step or scope, add new steps, remove obsolete ones. Keep step numbers stable where possible (insert as `Step 3a`, `Step 3b` rather than renumbering).
+- **Record the divergence** under the affected step's `**Deviations from plan:**` field, including *why* the plan changed.
+- **Repaint the diagram when the revision changes structure** (only when the task has one), at the revision rather than deferred to the next checkpoint — the revision is the causal event, and in step-by-step mode it is where the user inspects. Same in both modes; run it per the §4 re-check.
 - In step-by-step mode, pause and confirm the revision with the user before continuing.
-- **If the right call is to abandon the task** rather than revise it, surface that to the user and get explicit confirmation first — `implement-task` never sets `skipped` on its own (see `./references/workflow/task-lifecycle.md`). On confirmation, set the plan's `**Status:**` to `skipped` (record why in the result file) and stop — don't delete the plan or leave it dangling in `executing`.
+- **If the right call is to abandon the task** rather than revise it, surface that and get explicit confirmation first — this skill never sets `skipped` on its own (`./references/workflow/task-lifecycle.md`). On confirmation set the plan's `**Status:**` to `skipped`, record why in the result file, and stop — don't delete the plan or leave it dangling in `executing`.
 
 ### 7. Acceptance Gate
 
-After the last step is marked done but **before** flipping either file's `**Status:**` to `done`, run the acceptance gate against `goals.md`, applying the acceptance discipline in `./references/workflow/execution-loop.md`. This skill's binding: the criteria are `goals.md`'s `G<n>` goals, and the verdict goes in an `## Acceptance` section of the result file.
+After the last step is marked done but **before** flipping either file's `**Status:**` to `done`, run the acceptance gate against `goals.md`, applying the acceptance discipline in `./references/workflow/execution-loop.md`. Binding: the criteria are `goals.md`'s `G<n>` goals, and the verdict goes in an `## Acceptance` section of the result file.
 
-When the task has a `diagram.md`, run the §4 diagram re-check once more here. The gate is where the drawing stops being a target and becomes the **as-built record**, so it is verified against the real tree like any other criterion, and the run ends with its `**Reflects:**` line naming the acceptance gate and the date.
+With a `diagram.md`, run the §4 re-check once more here. The gate is where the drawing stops being a target and becomes the **as-built record**, so it is verified against the real tree like any other criterion, and the run ends with `**Reflects:**` naming the acceptance gate and the date.
 
-For each goal in `goals.md` (by its `G<n>` ID), **tag the outcome** as `met`, `met with caveats`, `unmet`, `out of scope`, or `pending external`. Tag `out of scope` **only when the plan's `## Scope` lists this goal ID in its deferred partition** — confirm the ID is actually there. If a goal you'd call out-of-scope isn't in the deferred set, it drifted in after the plan was written; surface it to the user rather than silently dropping it under a label the scope never authorized. Tag `pending external` **only for a goal carrying the `(external)` marker** whose verification you genuinely can't perform in-session (a human/client sign-off, or a live/production state you can't drive) — record what's awaited and who/what will verify it. `pending external` is never a substitute for `unmet`: if the agent-verifiable work behind the goal isn't done, it's `unmet`.
+**Tag each goal** by its `G<n>` ID: `met`, `met with caveats`, `unmet`, `out of scope`, or `pending external`.
+
+- `out of scope` **only when the plan's `## Scope` lists that goal ID in its deferred partition** — confirm the ID is actually there. One you'd call out-of-scope that isn't in the deferred set drifted in after the plan was written: surface it rather than silently dropping it under a label the scope never authorized.
+- `pending external` **only for a goal carrying the `(external)` marker** whose verification you genuinely can't perform in-session (a human/client sign-off, a live/production state you can't drive) — record what's awaited and who/what will verify it. Never a substitute for `unmet`: if the agent-verifiable work behind the goal isn't done, it's `unmet`.
 
 Append a single `## Acceptance` section to the result file:
 
@@ -275,31 +281,31 @@ Append a single `## Acceptance` section to the result file:
 ---
 ```
 
-**If any goal is `unmet`, do not finalize.** Apply Stop-the-Line: localize the gap, decide whether it's a missed step (revise the plan, add steps, return to execution) or a goals misunderstanding (surface to the user, let them edit the goals file, then re-run the gate).
+**Any goal `unmet` → do not finalize.** Apply Stop-the-Line: localize the gap, then decide whether it's a missed step (revise the plan, add steps, return to execution) or a goals misunderstanding (surface it, let the user edit the goals file, re-run the gate).
 
-**If any goal is `met with caveats`, secure explicit user acknowledgement before finalizing.** Surface each caveat — what's caveated and why — and confirm the user accepts shipping with it; this is the same provenance `out of scope` carries at tag time. Record the acknowledgement in the result file's `## Acceptance` entry for that goal. An unacknowledged `met with caveats` is not a pass — treat it like `unmet` and do not finalize.
+**Any goal `met with caveats` → secure explicit user acknowledgement before finalizing.** Surface each caveat — what's caveated and why — confirm the user accepts shipping with it (the provenance `out of scope` carries at tag time), and record the acknowledgement in that goal's `## Acceptance` entry. An unacknowledged `met with caveats` is not a pass: treat it like `unmet` and do not finalize.
 
-**If any goal is `pending external`, do not finalize to `done` — park at `in-review`.** These are `(external)` goals whose verification happens outside the session; every *other* goal must be `met` / acknowledged-caveat / out-of-scope first. Then finalize per §8's `in-review` branch. This is the mechanism that stops a task reaching `done` on code-complete alone.
+**Any goal `pending external` → do not finalize to `done`; park at `in-review`.** Every *other* goal must be `met` / acknowledged-caveat / out-of-scope first. Then take §8's `in-review` branch.
 
 ### 8. Finalize
 
-The gate produces one of two session-terminal outcomes — `done` or `in-review`.
+The gate produces one of two session-terminal outcomes. "Acknowledged" below means the §7 acknowledgement for every `met with caveats` and `out of scope` goal.
 
-**Park at `in-review`** when every agent-verifiable goal is `met` (or `met with caveats` / `out of scope` with explicit user acknowledgement) **but one or more `(external)` goals are `pending external`**:
+**Park at `in-review`** when every agent-verifiable goal is `met` or acknowledged **but one or more `(external)` goals are `pending external`**:
 
-- Update **both** the plan's and the result file's `**Status:**` to `in-review`
-- Add an `**In review:**` section to the result file listing each pending goal — `- G<n> — <what's awaited, who/what verifies it>` — and **do not** add a `**Completed:**` line
-- Run the shared loop's *Before presenting* step (`./references/workflow/execution-loop.md`); its summary additionally names which agent-verifiable goals are `met`, and exactly what external verification is outstanding and how to confirm it
+- Both the plan's and the result file's `**Status:**` to `in-review`
+- An `**In review:**` section in the result file listing each pending goal — `- G<n> — <what's awaited, who/what verifies it>` — and **no** `**Completed:**` line
+- The shared loop's *Before presenting* step (`./references/workflow/execution-loop.md`); its summary additionally names which agent-verifiable goals are `met`, and exactly what external verification is outstanding and how to confirm it
 
-**Finalize to `done`** only after the acceptance gate is fully `met` (or every gap is `met with caveats` / `out of scope` with explicit user acknowledgement) **and no goal is `pending external`**:
+**Finalize to `done`** only once every goal is `met` or acknowledged **and none is `pending external`**:
 
-- Update the plan's `**Status:**` to `done`
-- Update the result file's `**Status:**` to `done` and add a closing `**Completed:** YYYY-MM-DD` line
-- Run the shared loop's *Before presenting* step — the domain's pre-presentation checks over the full changed surface, then the summary of what shipped, acceptance results, deviations, and open follow-ups (`./references/workflow/execution-loop.md`)
+- The plan's `**Status:**` to `done`
+- The result file's `**Status:**` to `done`, plus a closing `**Completed:** YYYY-MM-DD` line
+- The shared loop's *Before presenting* step — the domain's pre-presentation checks over the full changed surface, then the summary of what shipped, acceptance results, deviations, and open follow-ups
 
-In **both** terminal branches, rewrite `## Current state` last — at `in-review` its `**Next:**` names the awaited external verification; at `done` the block stays frozen as the final digest. Then regenerate the store index when the store has one: walk up from the task folder for `scripts/generate-index.mjs`; run `node <that-root>/scripts/generate-index.mjs`; skip silently when the script or `node` is absent (`./references/workflow/task-layout.md` § *Store-level artifacts*).
+In **both** branches, rewrite `## Current state` last — at `in-review` its `**Next:**` names the awaited external verification; at `done` the block stays frozen as the final digest. Then regenerate the store index when the store has one: walk up from the task folder for `scripts/generate-index.mjs`; run `node <that-root>/scripts/generate-index.mjs`; skip silently when the script or `node` is absent (`./references/workflow/task-layout.md` § *Store-level artifacts*).
 
-**Reaching `done` from `in-review` (a later re-run).** When the user reports the external verification happened — a confirmation, a receipt, or the observed live state — re-run the gate on each `pending external` goal against that **best-available proxy** (per `./references/workflow/acceptance-criteria.md`): the user-reported confirmation *is* the sanctioned evidence for an `(external)` goal. Update its `## Acceptance` line from `pending external` to `met` (noting the proxy), then finalize to `done` as above (adding the `**Completed:**` line). If the review instead surfaced problems, flip both files back to `executing` and resume — don't force `done`.
+**Reaching `done` from `in-review` (a later re-run).** When the user reports the external verification happened — a confirmation, a receipt, the observed live state — re-run the gate on each `pending external` goal against that **best-available proxy** (`./references/workflow/acceptance-criteria.md`): the user-reported confirmation *is* the sanctioned evidence for an `(external)` goal. Update its `## Acceptance` line to `met`, noting the proxy, then finalize to `done` as above, adding the `**Completed:**` line. If review instead surfaced problems, flip both files back to `executing` and resume — don't force `done`.
 
 ## Don't Rationalize
 
@@ -312,21 +318,21 @@ The shared loop's *Don't Rationalize* list applies in full (`./references/workfl
 
 ### Red flags
 
-The shared loop's red flags apply in full. When the domain is code, also watch the engineering red flags in `./references/engineering/execution.md` (writing >100 lines without verify, framework code shipped ungrounded outside the recorded exception, a bug-step without a failing reproduction, a step marked done while typecheck/lint/suite is red).
+The shared loop's red flags apply in full. When the domain is code, also watch the engineering red flags in `./references/engineering/execution.md` § *Red flags*.
 
 ## Verification
 
 Confirm the protocol invariants before finishing:
 
-- [ ] All four core artifacts read before starting (plus `ticket.md` when present); a missing `goals.md` surfaced to the user, never invented
+- [ ] All four core artifacts read before starting (plus `ticket.md` when present); a missing `goals.md` surfaced, never invented
 - [ ] Result file initialized and kept paired with the plan per `./references/workflow/task-lifecycle.md` — statuses flip together, `**Completed:**` line only at `done`
-- [ ] `## Current state` rewritten at every status flip, after every appended section, and at finalize — ≤1 KB, consistent with `**Status:**`, never claiming more than it
+- [ ] `## Current state` rewritten at every status flip, after every appended section, and at finalize — on its cited contract, never claiming a stronger state than `**Status:**`
 - [ ] Every completed step: its plan-defined `Verify` criterion actually run and passed, health verify green, checkbox flipped with a link to its result section
 - [ ] Every checkpoint run and recorded; no step started over a failing gate
-- [ ] Acceptance gate ran every goal by `G<n>` ID against live behavior and wrote the `## Acceptance` section — no goal left `unmet` at finalize, `pending external` only on `(external)` goals (parking the task at `in-review`)
-- [ ] When the task has a `diagram.md`: re-checked at every checkpoint, at every structural plan revision, and at the acceptance gate — each re-check naming what was compared, each repaint render-checked, `**Reflects:**` re-anchored and re-dated
+- [ ] The gate ran every goal by `G<n>` ID against live behavior and wrote `## Acceptance` — nothing left `unmet` at finalize, `pending external` only on `(external)` goals (parking the task at `in-review`)
+- [ ] With a `diagram.md`: re-checked at every checkpoint, every structural revision, and the gate — each re-check naming what was compared, each repaint render-checked, `**Reflects:**` re-anchored and re-dated
 - [ ] Deviations and plan revisions recorded in the result file; `goals.md` and `CONTEXT.md` never edited from this skill
-- [ ] Domain pre-presentation checks re-run on the full changed surface (for code: typecheck, linter, tests, consumer grep; framework code grounded in `**Sources:**`, with any ungrounded pattern stopped or recorded there)
+- [ ] Domain pre-presentation checks re-run on the full changed surface (for code: typecheck, linter, tests, consumer grep; framework code grounded in `**Sources:**`, any ungrounded pattern stopped or recorded there)
 - [ ] Every step executed through the delegation default — a serial executor with the coordinator's re-run gates, an announced parallel batch, or an announced inline fallback recorded in its `**Executed:**` field
-- [ ] Every parallel-batch step merged only through §4's cited merge gates — surface check, conflict-free merge, integrated re-verify, the batch's checkpoint (or the §7/§8 tail gate) — with conflicts and surface escapes falling back to serial delegation
+- [ ] Every parallel-batch step merged only through §4's cited merge gates — surface check, conflict-free merge, integrated re-verify, the batch's checkpoint (or the §7/§8 tail gate) — conflicts and surface escapes falling back to serial delegation
 - [ ] Executors wrote no task-folder file and no status; batches recorded (`**Executed:**` fields, checkpoint `**Merged:**` lines) and worktrees removed after merge

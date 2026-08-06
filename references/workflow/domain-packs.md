@@ -1,5 +1,10 @@
 # Domain Packs: Neutral Spine + Pluggable Domains
 
+> **Maintainer documentation — not loaded at run time.** Read it when changing the kit's
+> domain-pack interface, not when running a task. The rules it defines reach a run through their
+> runtime carriers: each skill's Core Rules domain-pack step and `../../CORE_RULES.md`
+> § *References*.
+
 How the workflow separates a **domain-neutral methodology spine** from **domain-specific
 knowledge**, and how skills load the right knowledge for the task at hand. **This file is the
 single source of truth for the domain-pack interface.** When the pack file set, the resolution

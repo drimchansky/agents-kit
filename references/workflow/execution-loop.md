@@ -10,7 +10,7 @@ changes, update it here first and propagate to the skills that cite it.
 
 The loop owns *that* you verify and gate, never *what to run*. The domain pack owns the recipes —
 `<domain>/execution.md` for how to carry out a unit of work, `<domain>/verification.md` for what the
-gates run, plus any per-surface checklists. See `./domain-packs.md`.
+gates run, plus any per-surface checklists.
 
 ## The four parameters
 

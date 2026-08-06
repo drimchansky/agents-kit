@@ -18,8 +18,7 @@ against the reference contract it names. Three overrides apply pipeline-wide:
 
 - **Core Rules blocks** — the composite's own block above covers the pipeline; the inner skill's
   AGENTS.md read is already satisfied and doesn't repeat. The override stops there: `resume-task`'s
-  domain-pack step still runs, resolving the task's `**Domain:**` and applying that pack
-  (`./references/workflow/domain-packs.md`).
+  domain-pack step still runs, resolving the task's `**Domain:**` and applying that pack.
 - **Chat display** — the composite's Output owns what reaches you. Unlike the review pipelines, this
   one holds nothing back: the brief prints in full at the end of Phase 1, **before** any edit.
 - **Next pointers** — the inner skill's follow-up suggestions are dropped; the composite's Output
@@ -29,10 +28,11 @@ Past these three, a phase departs from its skill or contract only where its own 
 so — never by improvisation.
 
 **CRITICAL**: This pipeline writes only what the **docs → reality** direction allows, and
-`./references/workflow/reconciliation.md` § *Write surface* is the whole of that surface — the
-writable files, every never-edited one and its reason, and the bound on what a reconcile may re-run
-or execute. It fixes the **docs**, not the world (same file, § *Docs, not the world*), and creates
-no `BRIEF.md` or scratch briefing file.
+`./references/workflow/reconciliation-docs-to-reality.md` § *Write surface* is the whole of that
+surface — the writable files, every never-edited one and its reason, and the bound on what a
+reconcile may re-run or execute. It fixes the **docs**, not the world
+(`./references/workflow/reconciliation.md` § *Docs, not the world*), and creates no `BRIEF.md` or
+scratch briefing file.
 
 Invoking this skill is this direction's consent, on the terms
 `./references/workflow/reconciliation.md` § *Consent model: obvious fixes only, ask for the rest*
@@ -71,13 +71,14 @@ never lost to a dead pipeline.
 
 ## Phase 2 — Reconcile
 
-Apply the brief's findings to the task docs per the **docs → reality** direction of
-`./references/workflow/reconciliation.md` — read it before editing; it is the single source of truth
-and this phase adds no mechanics of its own. It defines the shared mechanics (consent model, the
-external reference check, annotation formats, the append-only `## Reconciliation` record, the
-`## Current state` refresh, the sequence ending in the printed change list), the direction rules
-(write surface, weaken-never-strengthen), the shared repairs, and — in its `resume-task-reconcile`
-mapping section — this pipeline's finding-type → edit mapping.
+Apply the brief's findings to the task docs per `./references/workflow/reconciliation.md` and its
+**docs → reality** direction file `./references/workflow/reconciliation-docs-to-reality.md` — read
+both before editing; together they are the single source of truth and this phase adds no mechanics of
+its own. The shared file defines the shared mechanics (consent model, the external reference check,
+annotation formats, the append-only `## Reconciliation` record, the `## Current state` refresh, the
+sequence ending in the printed change list); the direction file defines the direction rules (write
+surface, weaken-never-strengthen), the shared repairs, and — in its `resume-task-reconcile` mapping
+section — this pipeline's finding-type → edit mapping.
 
 Run the contract's reference sweep here, per `./references/workflow/reconciliation.md`
 § *External reference check* — which owns it in full, down to why the sweep never substitutes for
@@ -116,16 +117,17 @@ Confirm the protocol invariants before finishing:
 - [ ] The brief printed in full from pre-reconcile state, before any edit, and was never regenerated
       after one, per `./references/workflow/reconciliation.md` § *Sequence and output*
 - [ ] Every edit traces to a brief finding, a reference finding, or an engineer answer, routed by
-      `./references/workflow/reconciliation.md` § *`resume-task-reconcile` — brief findings*
+      `./references/workflow/reconciliation-docs-to-reality.md`
+      § *`resume-task-reconcile` — brief findings*
 - [ ] Judgment items went to the engineer as one batched round, and anything unanswered or declined
       landed under "Not reconciled" with its reason, per `./references/workflow/reconciliation.md`
       § *Consent model: obvious fixes only, ask for the rest*
 - [ ] The reference check ran in Phase 2 with its `## References` block printed after the brief and
       before any edit, and `observations.md` left as `./references/workflow/reconciliation.md`
       § *External reference check* specs; Phase 1 swept no citations
-- [ ] Write surface held — every file written is one `./references/workflow/reconciliation.md`
-      § *Write surface* (docs → reality) allows, nothing outside it was touched, and no `BRIEF.md`
-      or scratch briefing file was created
+- [ ] Write surface held — every file written is one
+      `./references/workflow/reconciliation-docs-to-reality.md` § *Write surface* allows, nothing
+      outside it was touched, and no `BRIEF.md` or scratch briefing file was created
 - [ ] The run closed with the change list `./references/workflow/reconciliation.md`
       § *Sequence and output* specs — real-work findings under "Not reconciled" with the next skill
       named, or `Nothing to reconcile.` when nothing was actionable

@@ -41,7 +41,7 @@ Like the spec it replaces, `goals.md` is a static input — it carries no `**Sta
 
 ## The diagram file: optional, dated, drawn only when warranted
 
-`diagram.md` is an **optional** role file holding one diagram of the system the task changes — the target-state *shape*, not the plan's step sequence. A folder may have one or not, and **absence is never a gap**: the same footing a task with no `ticket.md` stands on. `plan-task` draws one when the resolved domain pack's diagram guidance says the change alters structure, and draws none when it doesn't; a domain whose pack ships no diagram guidance never gets one (`./domain-packs.md` § *Missing-pack fallback*). There is no flag and no "none" marker — the file is there or it isn't.
+`diagram.md` is an **optional** role file holding one diagram of the system the task changes — the target-state *shape*, not the plan's step sequence. A folder may have one or not, and **absence is never a gap**: the same footing a task with no `ticket.md` stands on. `plan-task` draws one when the resolved domain pack's diagram guidance says the change alters structure, and draws none when it doesn't; a domain whose pack ships no diagram guidance never gets one. There is no flag and no "none" marker — the file is there or it isn't.
 
 Its header, followed by one fenced ` ```mermaid ` block:
 

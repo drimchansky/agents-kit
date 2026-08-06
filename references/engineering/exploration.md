@@ -4,7 +4,7 @@ How to "explore the domain's reality" when the domain is **code** — the engine
 neutral spine loads before planning (`plan-task`), grounding a review (`review-task`), grounding
 idea variations (`refine-idea`, via `../workflow/ideation.md`), re-verifying shipped claims on
 resume (`resume-task`), or grounding a standalone exploration (`explore`). The spine owns *that* you must ground in reality before
-designing; this file owns *how* you do it in a codebase. See `../workflow/domain-packs.md`.
+designing; this file owns *how* you do it in a codebase.
 
 ## Ground before designing
 

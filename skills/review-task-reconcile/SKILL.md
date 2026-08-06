@@ -19,8 +19,7 @@ against the reference contract it names. Three overrides apply pipeline-wide:
 
 - **Core Rules blocks** — the composite's own block above covers the pipeline; the inner skill's
   AGENTS.md read is already satisfied and doesn't repeat. The override stops there: `review-task`'s
-  domain-pack step still runs, resolving the task's `**Domain:**` and applying that pack
-  (`./references/workflow/domain-packs.md`).
+  domain-pack step still runs, resolving the task's `**Domain:**` and applying that pack.
 - **Chat display** — the composite's Output owns what reaches you. Unlike the review pipelines over a
   diff, this one holds nothing back: the assessment prints in full at the end of Phase 1, **before**
   any edit.
@@ -30,10 +29,11 @@ against the reference contract it names. Three overrides apply pipeline-wide:
 Past these three, a phase departs from its skill or contract only where its own section below says
 so — never by improvisation.
 
-**CRITICAL**: The write surface is exactly the four task files the **docs → reality** direction's
-§ *Write surface* fixes in `./references/workflow/reconciliation.md`, and nothing else — that
-section names every never-edited file and why. This pipeline fixes the **docs**, not the world
-(§ *Docs, not the world*). It still does not implement and does not redesign: a step that needs
+**CRITICAL**: The write surface is exactly the four task files
+`./references/workflow/reconciliation-docs-to-reality.md` § *Write surface* fixes, and nothing
+else — that section names every never-edited file and why. This pipeline fixes the **docs**, not the
+world (`./references/workflow/reconciliation.md` § *Docs, not the world*). It still does not
+implement and does not redesign: a step that needs
 rethinking is flag-only and goes back to `plan-task`, per the mapping's *Infeasible or
 conflicts-with-existing steps* row.
 
@@ -83,21 +83,22 @@ pipeline.
 
 ## Phase 2 — Reconcile
 
-Apply the assessment's findings to the task docs per the **docs → reality** direction of
-`./references/workflow/reconciliation.md` — read it before editing; it is the single source of truth
-and this phase adds no mechanics of its own. It defines the shared mechanics (consent model, the
-external reference check, annotation formats, the append-only `## Reconciliation` record, the
-`## Current state` refresh, the sequence ending in the printed change list), the direction rules
-(write surface, weaken-never-strengthen), the shared repairs, and — in its `review-task-reconcile`
-mapping section — this pipeline's finding-type → edit mapping.
+Apply the assessment's findings to the task docs per `./references/workflow/reconciliation.md` and
+its **docs → reality** direction file `./references/workflow/reconciliation-docs-to-reality.md` —
+read both before editing; together they are the single source of truth and this phase adds no
+mechanics of its own. The shared file defines the shared mechanics (consent model, the external
+reference check, annotation formats, the append-only `## Reconciliation` record, the
+`## Current state` refresh, the sequence ending in the printed change list); the direction file
+defines the direction rules (write surface, weaken-never-strengthen), the shared repairs, and — in
+its `review-task-reconcile` mapping section — this pipeline's finding-type → edit mapping.
 
-The contract's § *External reference check* runs in this phase, its `## References` block printed
+The shared file's § *External reference check* runs in this phase, its `## References` block printed
 before any edit. It is this pipeline's only source of dead-link and reference-answered-question
 findings.
 
-The assessment's Questions are put to the engineer and folded back into the plan per the contract's
-§ *`review-task-reconcile` — assessment findings*, bounded by § *Weaken, never strengthen* for what
-an engineer answer may move.
+The assessment's Questions are put to the engineer and folded back into the plan per the direction
+file's § *`review-task-reconcile` — assessment findings*, bounded by its § *Weaken, never
+strengthen* for what an engineer answer may move.
 
 Findings that need real work (a step that must be rethought, a goal the user has to rewrite, code
 changes) stay unfixed, listed under "Not reconciled" with the next skill named (`plan-task`,
@@ -131,12 +132,14 @@ Confirm the protocol invariants before finishing:
       regenerated after one — § *Sequence and output*
 - [ ] Every edit maps to an assessment finding, a reference finding, or an engineer answer, and the
       review's Questions were put as one batched round with only answered items applied —
+      `./references/workflow/reconciliation-docs-to-reality.md`
       § *`review-task-reconcile` — assessment findings*
 - [ ] The reference check ran in Phase 2 with its `## References` block printed before any edit —
       rendered even when nothing was in scope — and `observations.md` rewritten with the swept
       lines, or removed in that case — § *External reference check*
 - [ ] Write surface held: nothing written outside the four files the direction fixes, and every file
-      that section keeps off the surface untouched — § *Write surface* (docs → reality)
+      that section keeps off the surface untouched —
+      `./references/workflow/reconciliation-docs-to-reality.md` § *Write surface*
 - [ ] No implementation and no redesign; steps needing rethinking flagged and routed to
       `plan-task` — the *Infeasible or conflicts-with-existing steps* row
 - [ ] Closing change list printed, with real-work findings under "Not reconciled" and the next skill

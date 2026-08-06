@@ -8,7 +8,7 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. Load the domain pack: infer the effort's domain from the source (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core; each materialized part records its own `**Domain:**` in its seeded `CONTEXT.md`. If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
+2. Load the domain pack: infer the effort's domain from the source (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core; each materialized part records its own `**Domain:**` in its seeded `CONTEXT.md`. If the domain has no pack, run the neutral methodology and say so.
 
 This composite turns one **approved** source — an ADR, an accepted RFC, an epic-scale ask — into an ordered set of sibling task folders, each ready to enter the workflow as its own ticket-first task. Two phases, in order: **propose** the cut (chat-only), then — only after the user confirms — **materialize** each confirmed part by executing `../prepare-ticket/SKILL.md` per part plus a `CONTEXT.md` seed. The method — source intake, cut-line lenses, the part-quality bar, ordering, the proposal's shape, the materialization contract — lives in [`./references/workflow/decomposition.md`](./references/workflow/decomposition.md). Read it before Phase 1 and run it; don't restate it.
 

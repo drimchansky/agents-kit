@@ -10,8 +10,8 @@ Start by reading and applying [CORE_RULES.md](./CORE_RULES.md). It is the canoni
 - `references/workflow/` owns cross-skill workflow methodology; `references/workflow/domain-packs.md` owns the domain-pack interface.
 - `references/<domain>/` owns domain-specific guidance.
 - `setup.sh` owns installation and distribution behavior.
-- `scripts/` owns the repository's zero-dependency Node detection helpers; each script's file header owns its own CLI forms and stdout contract.
-- `tests/` owns repository verification; `tests/setup-install.sh` covers installation and distribution behavior, `tests/health-check.sh` the task and install health checks, and `tests/session-triage.sh` the session triage.
+- `scripts/` owns the repository's zero-dependency Node helpers; each script's file header owns its own CLI forms and stdout contract.
+- `tests/` owns repository verification; `tests/setup-install.sh` covers installation and distribution behavior, `tests/health-check.sh` the task and install health checks, `tests/session-triage.sh` the session triage, and `tests/size-report.sh` the skill context-size report.
 - `.agents/tasks/` owns task artifacts and their active work context.
 
 ## Change routing
@@ -21,7 +21,7 @@ Before changing the kit, identify and inspect:
 - the affected `SKILL.md` files and every reference they cite directly;
 - shared-contract consumers when changing a workflow reference, domain-pack interface, core rule, or distribution behavior — identify them by reverse search over `skills/`, `references/`, `scripts/`, `agents/`, and `CORE_RULES.md`, never from a derivable list kept in a file header (§ *Consumer lists*);
 - the installer integration test (`bash tests/setup-install.sh`) when changing `setup.sh`, native agent definitions, or installed payload behavior — and `scripts/health-check.mjs` in the same pass, whose `--installs` mode hardcodes `setup.sh`'s ownership markers, payload categories, and per-host agent extensions;
-- the harness under `tests/` covering a script you changed — `bash tests/health-check.sh` for `scripts/health-check.mjs`, `bash tests/session-triage.sh` for `scripts/session-triage.mjs`;
+- the harness under `tests/` covering a script you changed — `bash tests/health-check.sh` for `scripts/health-check.mjs`, `bash tests/session-triage.sh` for `scripts/session-triage.mjs`, `bash tests/size-report.sh` for `scripts/size-report.mjs`;
 - relevant Git history, to preserve the reason behind an existing contract.
 
 Keep each change with its authoritative owner; update dependent consumers only when the contract they consume changes.
@@ -48,10 +48,10 @@ Derivable — these enumerations were removed and are not re-added; find these c
 Semantic — maintained, each with the reason it can't be derived:
 
 - `references/workflow/task-lifecycle.md:3` propagate list — membership is "reads or writes these status fields", and three members — `refine-idea`, `resume-task-reconcile`, and `review-task-reconcile` — act on the fields without citing the file by name, so grep cannot reconstruct it.
-- `references/workflow/context-schema.md:3` consumer registry — membership is "reads or writes these section names", and its members — `review-task`, `implement-task`, `resume-task`, `reconcile-task`, and `reconciliation.md`'s sweep and annotation rows — consume the schema without citing the file, so grep cannot reconstruct it. The producer half (`refine-idea`, `plan-task`, `decompose-task`, each citing the file) is derivable and stays de-listed.
+- `references/workflow/context-schema.md:3` consumer registry — membership is "reads or writes these section names", and its members — `review-task`, `implement-task`, `resume-task`, `reconcile-task`, `reconciliation.md`'s sweep and annotation formats, and the mapping rows in its two direction files — consume the schema without citing the file, so grep cannot reconstruct it. The producer half (`refine-idea`, `plan-task`, `decompose-task`, each citing the file) is derivable and stays de-listed.
 - `references/workflow/skill-conventions.md` § *Current members* — entries carry per-member classification rationale (why composite, why flag) that is authored rather than derivable, and that file's own registration step mandates recording each new member there.
 - `references/workflow/executor-contract.md` § *Bindings* — each binding *defines* per-consumer behavior (unit, packet, edit surface, fallback, merge order). Contract content, not a citation list.
-- `references/workflow/reconciliation.md:5` direction membership — keys that file's own per-skill mapping sections. Contract structure, not a citation list.
+- `references/workflow/reconciliation.md:5` direction membership — keys the per-skill mapping sections in the two direction files it names, `reconciliation-docs-to-reality.md` and `reconciliation-session-to-docs.md`. Contract structure, not a citation list.
 - `references/workflow/execution-loop.md` intro ("Three skills run it: …") — keys that file's own § *Bindings*; same class as `reconciliation.md:5`.
 - `references/workflow/domain-packs.md` § *The split* spine-skill enumeration — a design classification of which skills are methodology-only, not a record of who cites the file.
 - `references/engineering/verification.md:3` gate-runner parenthetical — membership is "runs the neutral verify gates on code", reached by domain resolution (the loop's "resolved domain's `verification.md`") rather than citation, so grep cannot reconstruct it; `fix-findings` is the one member that also cites the path directly.

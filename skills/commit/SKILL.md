@@ -9,7 +9,7 @@ effort: low
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 
-This skill does not load the engineering pack, alone among the engineering-contributed skills. The one line of `./references/engineering/rules.md` that bears on it — Git state is mutated only when explicitly asked — is carried by the paragraph below; the rest of the overlay (verify-before-presenting, dependencies, stack defaults, per-surface checklists) governs code work, and this skill writes no code. See `./references/workflow/domain-packs.md`.
+This skill does not load the engineering pack, alone among the engineering-contributed skills. The one line of `./references/engineering/rules.md` that bears on it — Git state is mutated only when explicitly asked — is carried by the paragraph below; the rest of the overlay (verify-before-presenting, dependencies, stack defaults, per-surface checklists) governs code work, and this skill writes no code.
 
 Create the commit that `/review-commit` prepared. This is the one skill that deliberately mutates Git state — invoking it *is* the explicit permission `references/engineering/rules.md` requires. It stages nothing, pushes nothing, and creates no branches: it commits exactly what is already staged, using the message review-commit drafted.
 

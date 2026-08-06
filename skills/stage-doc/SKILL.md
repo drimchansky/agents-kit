@@ -8,7 +8,7 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. This is a **documentation-pack skill**: apply `./references/documentation/rules.md` on top of the core unconditionally — no `**Domain:**` resolution; the documentation pack is this skill's domain (see `./references/workflow/domain-packs.md`).
+2. This is a **documentation-pack skill**: apply `./references/documentation/rules.md` on top of the core unconditionally — no `**Domain:**` resolution; the documentation pack is this skill's domain.
 
 Own the **staging lifecycle** of a doc task's deliverable on Notion: produce or refresh the pre-publication **staging page** or the **diff page** for a review round, record every scratch page in a ledger with its state, and sync the local deliverable back after the user applies changes to the live page. The skill writes only *private* scratch pages and the task folder's own files — everything outward-facing stays the user's.
 

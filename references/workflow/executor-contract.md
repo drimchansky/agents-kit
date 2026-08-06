@@ -9,7 +9,7 @@ Treat the coordinator's launch prompt as the source of truth. It supplies:
 - the unit of work's text and its verify criterion, plus the full text of whatever the unit cites as its contract for done;
 - the exact edit surface: the paths the unit declares when it declares them, otherwise the scope the unit itself states;
 - the context the unit depends on and the executor cannot see for itself, with absolute paths for everything it names;
-- the domain guidance governing the unit, delivered two ways: any section the domain applies to every unit of this kind — such as engineering's `code-style.md` → Comments for a code-writing unit — travels verbatim in the packet, its full section text, so what always applies costs the executor no read hop; the active domain's rules overlay and the pack guidance the unit's work triggers travel as absolute paths to the same copies the coordinator loaded. Each binding names how its consumer resolves the domain; a domain with no pack, or none of whose files apply, is named with an explicit `none` per `./domain-packs.md` § *Missing-pack fallback* — less guidance, never substituted guidance;
+- the domain guidance governing the unit, delivered two ways: any section the domain applies to every unit of this kind — such as engineering's `code-style.md` → Comments for a code-writing unit — travels verbatim in the packet, its full section text, so what always applies costs the executor no read hop; the active domain's rules overlay and the pack guidance the unit's work triggers travel as absolute paths to the same copies the coordinator loaded. Each binding names how its consumer resolves the domain; a domain with no pack, or none of whose files apply, is named with an explicit `none` — less guidance, never substituted guidance;
 - one absolute effective working root and its placement: the shared repository tree for serial delegation, or a coordinator-managed worktree for a parallel batch;
 - the consumer the packet is issued under, named explicitly — it selects which binding below governs the packet.
 
@@ -55,7 +55,7 @@ Each consumer binds the body above to its own unit: what the unit is, what its p
 One plan step from a task folder, delegated by default.
 
 - **Unit** — one plan step, its verify criterion the step's plan-defined `Verify` line.
-- **Packet** — the step's `What` and `Verify` text, the full text of every cited goal, the edit surface below, and the relevant task context with the absolute task-folder path. Domain guidance resolves from the task's `**Domain:**` header, default `engineering` (`./domain-packs.md`).
+- **Packet** — the step's `What` and `Verify` text, the full text of every cited goal, the edit surface below, and the relevant task context with the absolute task-folder path. Domain guidance resolves from the task's `**Domain:**` header, default `engineering`.
 - **Edit surface** — the step's declared `**Touches:**` paths when present, otherwise the scope stated by `What`. Never edit the task folder or its records, including `plan.md`, `goals.md`, `CONTEXT.md`, `diagram.md`, and `result.md` — the evidence report goes back to the coordinator, never into the folder.
 - **Fallback** — inline execution for a serial step, serial re-execution for a parallel-batch step.
 - **Merge order** — plan order.
@@ -65,7 +65,7 @@ One plan step from a task folder, delegated by default.
 One item of an ask framed in the session. There is no task folder, so the work is the whole write surface.
 
 - **Unit** — one framed item, its verify criterion the one named for that item when it was framed (`implement` §1).
-- **Packet** — the framed item's text and its criterion, the edit surface below, and the session-established context the executor cannot see: the ask as the user gave it, plus the grounding facts already established. Domain guidance follows the domain the session inferred from the request (`./domain-packs.md`).
+- **Packet** — the framed item's text and its criterion, the edit surface below, and the session-established context the executor cannot see: the ask as the user gave it, plus the grounding facts already established. Domain guidance follows the domain the session inferred from the request.
 - **Edit surface** — the item's declared surface when the frame declares one, otherwise the scope the item states. The work itself is the only thing that changes on disk: the executor writes no record of any kind, because this consumer's only record is the coordinator's chat report.
 - **Fallback** — inline execution.
 - **Merge order** — frame order.

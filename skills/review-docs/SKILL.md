@@ -8,7 +8,7 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. This is a documentation-pack skill: also read `./references/documentation/rules.md` and apply it on top of the core — its repo-grounding license covers the against-codebase audit below. See `./references/workflow/domain-packs.md`.
+2. This is a documentation-pack skill: also read `./references/documentation/rules.md` and apply it on top of the core — its repo-grounding license covers the against-codebase audit below.
 
 This skill reviews existing documentation on two axes: **accuracy** — claims audited against the codebase, catching stale references, drifted descriptions, missing context, and silent assumptions — and **quality** — the whole-doc judgment pass (coherence, register) that the documentation pack's mechanical loop gates deliberately exclude (`./references/documentation/verification.md`). The output is a clear assessment of what's accurate, what's wrong, what's missing, and what doesn't hold together.
 

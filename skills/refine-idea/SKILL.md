@@ -8,7 +8,7 @@ disable-model-invocation: true
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
-2. Load the domain pack: take the task's `**Domain:**` (default `engineering`; infer from the request when there's no `CONTEXT.md` yet, and record it in the `CONTEXT.md` you write) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for. If the domain has no pack, run the neutral methodology and say so — see `./references/workflow/domain-packs.md`.
+2. Load the domain pack: take the task's `**Domain:**` (default `engineering`; infer from the request when there's no `CONTEXT.md` yet, and record it in the `CONTEXT.md` you write) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for. If the domain has no pack, run the neutral methodology and say so.
 
 This skill turns a raw idea into a sharp, actionable concept worth building. It runs three phases — divergent exploration, convergent evaluation, and a written one-pager — and produces an artifact at `<task-folder>/CONTEXT.md` (canonically `.agents/tasks/<slug>/CONTEXT.md`) that `plan-task` and `implement-task` later consume as the static grounding context for the task.
 
@@ -108,4 +108,4 @@ Confirm the protocol invariants before finishing:
 
 Write the file using the canonical schema in `./references/workflow/context-schema.md`. Adapt section depth to the idea's size — keep the one-pager portion to one page where possible. Fill the sections from the two-phase pass: the "How Might We" problem statement, the recommended direction, the key assumptions, the MVP scope, and the "Not Doing" list.
 
-Write `**Status:** refined` — the one-shot origin marker for a file this skill produced, never mutated after creation. Infer `**Domain:**` from the idea (e.g. `engineering` for a code change, `relocation` or `negotiation` otherwise); default to `engineering` only when the work is code or genuinely ambiguous within a coding context, and when the effort is clearly non-code but the right domain is unclear, **ask** rather than stamping a wrong label. See `./references/workflow/domain-packs.md`.
+Write `**Status:** refined` — the one-shot origin marker for a file this skill produced, never mutated after creation. Infer `**Domain:**` from the idea (e.g. `engineering` for a code change, `relocation` or `negotiation` otherwise); default to `engineering` only when the work is code or genuinely ambiguous within a coding context, and when the effort is clearly non-code but the right domain is unclear, **ask** rather than stamping a wrong label.
