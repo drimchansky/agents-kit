@@ -30,20 +30,15 @@ against the reference contract it names. Three overrides apply pipeline-wide:
 Past these three, a phase departs from its skill or contract only where its own section below says
 so — never by improvisation.
 
-**CRITICAL**: The write surface is exactly four task files — `plan.md`, `result.md`, minimal
-annotations in `CONTEXT.md`'s References / Open Questions sections, and the sweep's `observations.md`
-rewrite — and nothing else. `goals.md`, `ticket.md`, `diagram.md`, and a doc task's deliverable are
-never edited (the goals and ticket are the user's contract — a suggested goal rewrite is printed for
-the user to apply, and an engineer's answer about a goal goes to the user as text, not into the file;
-the diagram is `implement-task`'s to repaint — drift is flagged, never repaired; the deliverable's
-`**Published:**` line is `stage-doc`'s), source code is never written, git state is never mutated,
-and external systems are fetched read-only — never commented on, updated, or posted to. This
-pipeline fixes the **docs**, not the world — it never re-runs the acceptance gate and never
-executes plan work. It still does not implement and does not redesign: a step that needs rethinking
-goes back to `plan-task`.
+**CRITICAL**: The write surface is exactly the four task files the **docs → reality** direction's
+§ *Write surface* fixes in `./references/workflow/reconciliation.md`, and nothing else — that
+section names every never-edited file and why. This pipeline fixes the **docs**, not the world
+(§ *Docs, not the world*). It still does not implement and does not redesign: a step that needs
+rethinking is flag-only and goes back to `plan-task`, per the mapping's *Infeasible or
+conflicts-with-existing steps* row.
 
-Invoking this skill is the consent for the obvious, evidence-dictated fixes only. Anything needing
-engineer judgment — which is most of this review's findings — is asked first, as one batched round.
+Invoking this skill is the consent the contract's § *Consent model: obvious fixes only, ask for the
+rest* defines; everything past that bar is asked first, as one batched round.
 
 ## Flags
 
@@ -69,18 +64,22 @@ verdicts finalize; it has no effect on Phase 2.
   its findings back
 - The information to write back came out of **this session's conversation** rather than the docs
   disagreeing with reality → that's the opposite direction; use `reconcile-task`
-- The plan's `**Status:**` is `skipped` — terminal, and exempt from reconciliation entirely; Phase 1
-  reports it as abandoned and Phase 2 writes nothing
+- The plan's `**Status:**` is `skipped` — terminal, and exempt from reconciliation entirely
+  (§ *Skipped plans are exempt*); Phase 1 reports it as abandoned and Phase 2 writes nothing
 
 ## Phase 1 — Review
 
 Execute `../review-task/SKILL.md` end to end against the resolved task folder, passing `-x` through
 when given, and print its assessment in full — every output section, including the always-rendered
-Goal Quality, Acceptance Coverage, and Cross-File Drift sections and its numbered Questions.
+Goal Quality, Acceptance Coverage, and Cross-File Drift sections and its numbered Questions. Like
+every base skill in this direction, `review-task` sweeps no citations of its own — see the
+**docs → reality** direction definition opening `./references/workflow/reconciliation.md`; the
+folder's cited links are Phase 2's business.
 
-The assessment is the pipeline's pre-reconcile snapshot and the evidence Phase 2 acts on, so it
-prints **before** any edit and is never regenerated afterwards. If Phase 2 fails hard, the assessment
-still stands as printed — the review is never lost to a dead pipeline.
+The assessment is the pipeline's pre-reconcile snapshot and the evidence Phase 2 acts on: it prints
+**before** any edit and is never regenerated afterwards, per the contract's § *Sequence and output*.
+If Phase 2 fails hard, the assessment still stands as printed — the review is never lost to a dead
+pipeline.
 
 ## Phase 2 — Reconcile
 
@@ -92,19 +91,17 @@ external reference check, annotation formats, the append-only `## Reconciliation
 (write surface, weaken-never-strengthen), the shared repairs, and — in its `review-task-reconcile`
 mapping section — this pipeline's finding-type → edit mapping.
 
-The contract's **external reference check** runs here too: `review-task` sweeps no citations, so
-sweep the folder's *citations from an actionable surface* and print the `## References` block before
-any edit, recording what the sweep saw in `observations.md` — it is this pipeline's only source of
-dead-link and reference-answered-question findings.
+The contract's § *External reference check* runs in this phase, its `## References` block printed
+before any edit. It is this pipeline's only source of dead-link and reference-answered-question
+findings.
 
-Per that mapping, the assessment's Questions are **not left rhetorical**: put them to the engineer as
-one batched round, with the concrete options the assessment already attached, and write the answers
-into the plan exactly as given — no redesign around them. Engineer answers refine plan *content*;
-they never advance *state*.
+The assessment's Questions are put to the engineer and folded back into the plan per the contract's
+§ *`review-task-reconcile` — assessment findings*, bounded by § *Weaken, never strengthen* for what
+an engineer answer may move.
 
 Findings that need real work (a step that must be rethought, a goal the user has to rewrite, code
-changes) stay unfixed: list them under "Not reconciled" with the next skill named (`plan-task`,
-`implement-task`).
+changes) stay unfixed, listed under "Not reconciled" with the next skill named (`plan-task`,
+`implement-task`) per § *Consent model: obvious fixes only, ask for the rest*.
 
 ## Output
 
@@ -131,18 +128,17 @@ Confirm the protocol invariants before finishing:
 - [ ] Phase 1 ran from `review-task`'s skill file with its domain-pack step intact and `-x` passed
       through unchanged — not improvised
 - [ ] The assessment printed in full from pre-reconcile state, before any edit, and was never
-      regenerated after one
-- [ ] Reconciliation followed the shared contract; every edit maps to an assessment finding, a
-      reference finding, or an engineer answer, and the review's Questions were put as one batched
-      round with only answered items applied
+      regenerated after one — § *Sequence and output*
+- [ ] Every edit maps to an assessment finding, a reference finding, or an engineer answer, and the
+      review's Questions were put as one batched round with only answered items applied —
+      § *`review-task-reconcile` — assessment findings*
 - [ ] The reference check ran in Phase 2 with its `## References` block printed before any edit —
       rendered even when nothing was in scope — and `observations.md` rewritten with the swept
-      lines, or removed in that case; Phase 1 swept no citations
-- [ ] Write surface held: only `plan.md`, `result.md`, `CONTEXT.md`'s References / Open Questions
-      annotations, and the sweep's `observations.md` rewrite — `goals.md`, `ticket.md`,
-      `diagram.md`, and a doc task's deliverable untouched (suggested rewrites printed, not written),
-      no code written, no git mutation
-- [ ] No implementation and no redesign; steps needing rethinking routed to `plan-task`
+      lines, or removed in that case — § *External reference check*
+- [ ] Write surface held: nothing written outside the four files the direction fixes, and every file
+      that section keeps off the surface untouched — § *Write surface* (docs → reality)
+- [ ] No implementation and no redesign; steps needing rethinking flagged and routed to
+      `plan-task` — the *Infeasible or conflicts-with-existing steps* row
 - [ ] Closing change list printed, with real-work findings under "Not reconciled" and the next skill
       named — or `Nothing to reconcile.` with nothing written beyond the sweep's
-      `observations.md` rewrite
+      `observations.md` rewrite — § *Sequence and output*

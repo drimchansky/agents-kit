@@ -2,7 +2,7 @@
 
 What "verify" means when the domain is code — the recipe behind the neutral verify gates,
 Stop-the-Line, checkpoints, and acceptance gate (`implement-task`, `implement`, `review-task`,
-`resume-task`, `reconcile-task`).
+`resume-task`, `reconcile-task`, `fix-findings`).
 `../workflow/execution-loop.md` owns *that* you verify and gate; this file owns *what to run*. See
 `../workflow/domain-packs.md`.
 

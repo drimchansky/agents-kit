@@ -19,9 +19,46 @@ Start by reading and applying [CORE_RULES.md](./CORE_RULES.md). It is the canoni
 Before changing the kit, identify and inspect:
 
 - the affected `SKILL.md` files and every reference they cite directly;
-- shared-contract consumers when changing a workflow reference, domain-pack interface, core rule, or distribution behavior;
+- shared-contract consumers when changing a workflow reference, domain-pack interface, core rule, or distribution behavior — identify them by reverse search over `skills/`, `references/`, `scripts/`, `agents/`, and `CORE_RULES.md`, never from a derivable list kept in a file header (§ *Consumer lists*);
 - the installer integration test (`bash tests/setup-install.sh`) when changing `setup.sh`, native agent definitions, or installed payload behavior — and `scripts/health-check.mjs` in the same pass, whose `--installs` mode hardcodes `setup.sh`'s ownership markers, payload categories, and per-host agent extensions;
 - the harness under `tests/` covering a script you changed — `bash tests/health-check.sh` for `scripts/health-check.mjs`, `bash tests/session-triage.sh` for `scripts/session-triage.mjs`;
 - relevant Git history, to preserve the reason behind an existing contract.
 
 Keep each change with its authoritative owner; update dependent consumers only when the contract they consume changes.
+
+## Consumer lists
+
+A contract file's header often enumerates who consumes it. Most such enumerations duplicate what search derives; a few carry information search cannot recover. One test separates them.
+
+**Membership test: grep reconstructs the full membership.** Run the reverse search over `skills/`, `references/`, `scripts/`, `agents/`, and `CORE_RULES.md`. When grep reconstructs the full membership, the list is derivable. When any member consumes the contract without citing it, or membership carries classification rationale beyond the fact of citing, the list is semantic.
+
+- **Derivable citation lists are not maintained.** A "Cited by …" enumeration the reverse search reproduces does not belong in a file header: it goes stale silently — nothing fails when a new consumer forgets to add itself — and it duplicates the search that would have found the truth. Remove it, and identify consumers by running the search.
+- **Semantic registries are maintained**, and each states in place why it can't be derived — which member consumes the contract without citing it, or what authored rationale the entries carry beyond membership.
+- **Sanctioned copies carry an explicit mirror note.** A deliberate self-contained copy of contract content says it is a copy and names the mirror obligation, as `references/workflow/ideation.md:5` does for `refine-idea-chat`: "When the method changes here, mirror the change into `refine-idea-chat`."
+
+Derivable — these enumerations were removed and are not re-added; find these consumers by reverse search:
+
+- `references/workflow/task-layout.md:3` — the ten-skill "Cited by …" sentence. It was already stale, omitting `review-docs` and `stage-doc`: the failure mode in miniature.
+- `references/workflow/ticket-format.md:3` — the four-consumer "Cited by …" sentence.
+- `references/workflow/decomposition.md:3` — "Cited by the `decompose-task` skill, which runs the method end to end." The neighboring sentence splitting when/where against how across `plan-task`, `task-layout.md`, and that file is an ownership boundary, not a citation list; it stays.
+- `references/workflow/agent-fanout.md:3` — the citer enumeration (the review skills' `-x`, the three write-mode consumers, the triage-verify composites, `maintain`, `CORE_RULES.md`). Only the header enumeration is derivable; the write-mode registry in its § *Write-mode routing* is semantic and stays.
+- `references/engineering/rules.md:3` — the ten-skill loader enumeration, each named skill's `SKILL.md` citing the overlay (confirmed by grep). The `commit` exception is semantic and stays: `commit` cites the file only to state that it does *not* load it, so a reverse search would misread that citation as membership — the exception can't be re-derived from the citation graph.
+- `references/documentation/rules.md:3` — the three-skill pack-contributed loader enumeration, each named skill's `SKILL.md` citing the overlay (confirmed by grep). Unlike the engineering entry, nothing semantic accompanies it — the pack has no `commit`-style exception.
+
+Semantic — maintained, each with the reason it can't be derived:
+
+- `references/workflow/task-lifecycle.md:3` propagate list — membership is "reads or writes these status fields", and three members — `refine-idea`, `resume-task-reconcile`, and `review-task-reconcile` — act on the fields without citing the file by name, so grep cannot reconstruct it.
+- `references/workflow/context-schema.md:3` consumer registry — membership is "reads or writes these section names", and its members — `review-task`, `implement-task`, `resume-task`, `reconcile-task`, and `reconciliation.md`'s sweep and annotation rows — consume the schema without citing the file, so grep cannot reconstruct it. The producer half (`refine-idea`, `plan-task`, `decompose-task`, each citing the file) is derivable and stays de-listed.
+- `references/workflow/skill-conventions.md` § *Current members* — entries carry per-member classification rationale (why composite, why flag) that is authored rather than derivable, and that file's own registration step mandates recording each new member there.
+- `references/workflow/executor-contract.md` § *Bindings* — each binding *defines* per-consumer behavior (unit, packet, edit surface, fallback, merge order). Contract content, not a citation list.
+- `references/workflow/reconciliation.md:5` direction membership — keys that file's own per-skill mapping sections. Contract structure, not a citation list.
+- `references/workflow/execution-loop.md` intro ("Three skills run it: …") — keys that file's own § *Bindings*; same class as `reconciliation.md:5`.
+- `references/workflow/domain-packs.md` § *The split* spine-skill enumeration — a design classification of which skills are methodology-only, not a record of who cites the file.
+- `references/engineering/verification.md:3` gate-runner parenthetical — membership is "runs the neutral verify gates on code", reached by domain resolution (the loop's "resolved domain's `verification.md`") rather than citation, so grep cannot reconstruct it; `fix-findings` is the one member that also cites the path directly.
+- `references/documentation/verification.md:3` gate-runner parenthetical — the documentation twin, same resolution-based membership. Its one direct citer, `review-docs`, cites the file only to name what its judgment pass covers that the loop gates exclude, so a reverse search would misread that citation as membership — the same class as the `commit` exception.
+- `references/engineering/exploration.md:3` loader gloss — membership is "loads the grounding recipe for its phase", and `refine-idea` reaches it through `../workflow/ideation.md` § *Ground in what exists* without citing the path, so grep cannot reconstruct it.
+- `references/engineering/execution.md:3` loader sentence — membership is "carries out code units through the execution loop", and `implement` (and `fix-findings`, whose fixes run the same loop) resolves the recipe without citing the path, so grep cannot reconstruct it.
+
+Sanctioned copy — mirror note required:
+
+- `references/workflow/ideation.md:5` — `refine-idea-chat` is a portable skill that cannot cite references, so it carries a self-contained copy of Phases 1–2 under the explicit mirror instruction quoted above. That is the required form for any sanctioned copy.

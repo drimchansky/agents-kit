@@ -12,11 +12,11 @@ disable-model-invocation: true
 
 This skill closes the gap a working or design session opens: things get decided, discovered, answered, or actually built in the conversation, but the task folder still reflects the state from before the session. `reconcile-task` reviews **this session against the task docs** and writes the missing information back — the *enriching* direction of reconciliation. It is the counterpart to the docs → reality composites `resume-task-reconcile` / `review-task-reconcile`, which reconcile the other way (docs that overstate reality, weakened down to match). The shared contract for both directions lives in `./references/workflow/reconciliation.md`.
 
-**CRITICAL**: This skill writes to the task docs by design — that is its purpose, so there is no opt-in flag; invoking it *is* the consent (see the shared contract's consent model). But it stays inside two guardrails and one boundary:
+**CRITICAL**: This skill writes to the task docs by design — that is its purpose. Consent, and which fixes apply unprompted versus go to the batched round, are fixed by `./references/workflow/reconciliation.md` § *Consent model: obvious fixes only, ask for the rest*. It stays inside two guardrails and one boundary:
 
-- **Strengthen only on verified evidence.** It may record progress (check a step, mark a goal `met`, advance status) **only after re-verifying it this session** the way the acceptance gate would (the resolved domain's `verification.md`). A claim it cannot verify is surfaced, never recorded. "Done" means verified, not asserted in chat.
-- **Grounding docs change by confirmation.** Writing `goals.md`, `CONTEXT.md` prose, or a step's scope — anything that redefines scope or acceptance — goes through **one batched confirmation round** first; it is never auto-applied. Pure enrichment (references, answered questions, session narrative) auto-applies.
-- **Docs, not the world.** No source code is written, no git state is mutated (no add, commit, checkout, stash), and no external system is updated — the reference check reads them, never posting, commenting, or transitioning anything. Verification in this skill *runs* checks read-only to back a state change — it changes nothing outside the four core task files and the sweep's `observations.md` rewrite, and never `diagram.md` or a doc task's deliverable: repainting is authoring, so diagram drift is flagged for `implement-task`'s gate re-check, never repaired here, and the deliverable's `**Published:**` line is `stage-doc`'s to flip or re-date (the shared contract). The upstream `ticket.md`, when present, is **read-only input**: a changed *ask* is surfaced for the user to update, never rewritten here. Output is those files plus a chat change list — no scratch artifact.
+- **Strengthen only on verified evidence.** Progress is recorded only on evidence re-verified in this session — never on a chat claim — per `./references/workflow/reconciliation.md` § *Strengthen only on verified evidence*.
+- **Grounding docs change by confirmation.** Anything that redefines scope or acceptance is never auto-applied; it goes through the batched confirmation round per `./references/workflow/reconciliation.md` § *Grounding docs change by confirmation, never silently*.
+- **Docs, not the world.** No source code is written, no git state is mutated, and no external system is updated — the sweep reads what the folder cites and posts nothing back (`./references/workflow/reconciliation.md` § *Docs, not the world*). Which files this direction may write, and which — the upstream `ticket.md`, `diagram.md`, a doc task's deliverable — stay read-only, is that contract's session → docs § *Write surface*; a `warn` or `block` on one of the read-only surfaces routes by § *External reference check*'s never-annotated rule. Output is those files plus a chat change list — no scratch artifact.
 
 ## When to Use
 
@@ -35,7 +35,7 @@ This skill closes the gap a working or design session opens: things get decided,
 - The docs already overstate reality (stale statuses, vanished shipped claims) → that's the other direction; use `resume-task-reconcile` or `review-task-reconcile`
 - You want to execute the next planned step → use `implement-task`; it records its own work as it goes
 - The session only discussed work that wasn't done — there's nothing verified to record; the skill will surface it, not check it
-- The plan is `skipped` (terminal) → nothing is reconciled; report it as abandoned
+- The plan is `skipped` (terminal) → report it as abandoned, per the contract's § *Skipped plans are exempt*
 
 ## Process
 
@@ -54,11 +54,11 @@ Read all four core artifacts — plus `ticket.md`, `diagram.md`, `observations.m
 - `goals.md` — capture the full `## Goals` list by `G<n>` ID, and the highest ID in use (a new goal takes the next free number).
 - `plan.md` — its `**Status:**`, its steps and their `- [ ]` / `- [x]` markers, each step's **What** / **Verify** / **Goal** / **Depends on**, and the `## Scope` partition.
 - `diagram.md` (when present) — the target-state shape and its dated `**Reflects:**` line; a read-only baseline — structure the session changed that it doesn't show becomes a flag-only finding (the shared contract), never a repaint.
-- `observations.md` (when present) — the previous sweep's dated ledger of the folder's cited references; read-only input to Step 4, which diffs against its lines and carries forward what a failed fetch can't replace before rewriting the file wholesale.
-- **The deliverable** (doc tasks only — `adr.md`, `rfc.md`, …; resolved per `./references/workflow/task-layout.md` § *Doc-task files*, which fixes it without depending on the plan's optional `**Deliverable:**` header) — a read-only baseline: its content is the work product the session may have changed, and its `**Published:**` line is a swept citation Step 4 needs. Never written here — the line is `stage-doc`'s (the shared contract's never-annotated rule), and content the session decided that the file doesn't carry is a flag-only finding, never an edit.
+- `observations.md` (when present) — the previous sweep's dated ledger of the folder's cited references; read-only input to Step 4, which reads, diffs against, and rewrites it per `./references/workflow/reconciliation.md` § *External reference check*.
+- **The deliverable** (doc tasks only — `adr.md`, `rfc.md`, …; resolved per `./references/workflow/task-layout.md` § *Doc-task files*, which fixes it without depending on the plan's optional `**Deliverable:**` header) — a read-only baseline: its content is the work product the session may have changed, and its `**Published:**` line is a swept citation Step 4 needs. Never written here: a finding on the `**Published:**` line routes by `./references/workflow/reconciliation.md` § *External reference check*'s never-annotated rule, and one on its content by the mapping rows in that file's § *`reconcile-task` — session findings*.
 - `result.md` — read `## Current state` first for orientation (derived metadata, not ground truth — its refresh at the end of the run is part of this skill's contract); then its `**Status:**`, the latest per-step / full-run section, any `**Blocked:**` block, any `**In review:**` block, any `## Acceptance` section. If none exists, note it: work recorded this session may create it (per the pairing rule in `./references/workflow/task-lifecycle.md`).
 
-A `skipped` plan is terminal — report it as abandoned and stop; write nothing. A plan with no sibling `goals.md` is a gap — surface it (`plan-task` is expected to produce one) rather than fabricating goals.
+A `skipped` plan is terminal — handle it per `./references/workflow/reconciliation.md` § *Skipped plans are exempt* and stop there. A plan with no sibling `goals.md` is a gap — surface it (`plan-task` is expected to produce one) rather than fabricating goals.
 
 ### 3. Review the Session Against the Docs
 
@@ -70,7 +70,7 @@ This is the load-bearing step. Walk the current session and collect everything m
 - **Answered / new open questions** — a question in `CONTEXT.md` or the plan that the session resolved, or a new one it raised.
 - **Verified progress** — a step or goal the session actually completed *and* whose result you can confirm now (Step 5), plus work merely discussed but not done (surface only).
 - **Plan changes** — a step whose scope, verify criterion, or ordering the session changed.
-- **A changed ask** — the session revealed the product requirement itself shifted from what `ticket.md` states. Surface it so the user can update the ticket (then re-derive goals via `plan-task`); reconcile never rewrites the ask.
+- **A changed ask** — the session revealed the product requirement itself shifted from what `ticket.md` states; it routes by the *Changed ask* row in `./references/workflow/reconciliation.md` § *`reconcile-task` — session findings*.
 
 Group findings by target file (`CONTEXT.md` / `goals.md` / `plan.md` / `result.md`) — the ticket and a doc task's deliverable are read-only, so a changed ask lands under "Not reconciled" for the user, and a finding on the deliverable lands there too — its `**Published:**` line for `stage-doc`, its content for `implement-task`. If the session adds nothing beyond what the docs already hold and the reference check below turns up nothing either, there is nothing to reconcile — say so in the change list and write nothing beyond the sweep's `observations.md` rewrite.
 
@@ -82,20 +82,15 @@ Its findings join Step 3's as one set. They differ in provenance, not in handlin
 
 ### 5. Verify Before Recording State
 
-Any finding that would **advance state** — check a step, mark a goal `met`, flip a status upward — passes through the acceptance gate first, per the resolved domain's `verification.md` — when the domain is code, that's `./references/engineering/verification.md`. Re-verify the step's `**Verify:**` criterion or the goal's acceptance behavior *now*, in this session, the way `implement-task` would:
+Any finding that would **advance state** — check a step, mark a goal `met`, flip a status upward — passes through the acceptance gate first: re-verify the step's `**Verify:**` criterion or the goal's acceptance behavior *now*, in this session, the way `implement-task` would, and surface anything you cannot verify rather than recording it.
 
-- Verifies cleanly → it's recordable: check the box / mark the goal `met`, and write the evidence (`**Shipped:**` paths, what was run, what was observed) into `result.md`.
-- Cannot be verified this session (no evidence, or the check fails) → **surface it, do not record it.** It goes to "Not reconciled" naming `implement-task`. A chat claim of "that's done" is not evidence.
-
-**The one sanctioned exception is a goal marked `(external)`.** Its verification lives outside the session by design, so its **best-available proxy** — the confirmation, receipt, or observed live state the user reports — *is* legitimate evidence (per `./references/workflow/acceptance-criteria.md`), not a bare chat claim. On that proxy you may record the goal as `met` and advance `in-review → done`. Absent the proxy, the goal stays `pending external` and the task stays `in-review`.
-
-Starting work this session on a `to-do` plan is evidenced state (checked steps or shipped artifacts exist) and flips `to-do → executing` with a skeleton `result.md`; finalizing `executing → done` requires the full acceptance gate to pass against `goals.md`. When the only goals left unsatisfied are `(external)` ones still awaiting their proxy, the task finalizes to `in-review` instead of `done`, and reaches `done` on a later confirmation.
+The rule that governs this — the in-session re-verification, the evidence into `result.md`, the never-on-a-bare-assertion bar, and the one sanctioned `(external)` exception — is `./references/workflow/reconciliation.md` § *Strengthen only on verified evidence*. Which findings the gate covers, and what each one writes when it passes or fails (the two-outcome shape, the skeleton-`result.md` / `to-do → executing` flow, the full-gate requirement for `done` and its `in-review` fallback), are the mapping rows in that file's § *`reconcile-task` — session findings*.
 
 ### 6. Reconcile the Docs
 
 Apply the findings per the shared contract in `./references/workflow/reconciliation.md` — read it before editing. It defines the shared mechanics (consent model, the external reference check, annotation formats, the append-only `## Reconciliation` record, the `skipped`-plan exemption, the sequence ending in the printed change list), the session → docs direction rules (write surface, strengthen-only-on-verified-evidence, grounding-docs-by-confirmation), and — in its `reconcile-task` section — this skill's finding-type → edit mapping with its three-way legend (**auto** / **verify** = only after Step 5's gate / **ask** = the batched confirmation round). Every edit maps to a finding from Step 3 or Step 4; anything the mapping routes to **verify** or **ask** is never auto-applied.
 
-End every run per the contract's *Current state refresh*: rewrite the result's `## Current state` block to post-edit reality (creating it on a legacy result). On a result **already `done` when the run began** that contract freezes the gloss and `**Next:**` but not `**Pointers:**`; a run that itself advances the task to `done` writes the final digest before the freeze takes hold. And when `result.md` exceeds **20 KB**, add the contract's compaction proposal (`./references/workflow/reconciliation.md` § *Compaction*) to the batched confirmation round — never auto-compact.
+End every run by refreshing the result's `## Current state` block per that contract's § *Current state refresh*, which fixes the rewrite and its freeze semantics; and add its compaction proposal to the batched confirmation round when the size trigger fires, per § *Compaction (size trigger)*.
 
 ## Output Template
 
@@ -166,12 +161,12 @@ Then run Step 5 (verify) and Step 6 (auto-apply enrichments, then the batched co
 
 ## Verification
 
-Confirm the protocol invariants before finishing:
+Confirm the protocol invariants before finishing. Each item names the section of `./references/workflow/reconciliation.md` that defines it — check the behavior against that section, not against this list:
 
 - [ ] Task folder resolved (in-session task, or asked — never guessed); all four core artifacts read (plus `ticket.md`, `diagram.md`, `observations.md`, and a doc task's deliverable when present) before diffing the session against them
-- [ ] A `skipped` plan reported as abandoned, with nothing written
-- [ ] Reconciliation followed the shared contract end-to-end; findings report printed from pre-reconcile state; closing change list printed
-- [ ] **Before any edit:** every URL the folder cited from an actionable surface at that point (`./references/workflow/reconciliation.md` § *External reference check* names the surfaces) fetched read-only and tagged (`warn` on material change, `block` on broken, `info` on clean; an auth-walled or unreachable fetch carries its prior line and tag forward, and tags `info` only when there is nothing to carry), with `## References` rendered even when none and `observations.md` rewritten with the swept lines — or removed, when nothing was in scope
-- [ ] State advanced only after Step 5's in-session re-verification, with evidence recorded in `result.md`; grounding docs (`goals.md`, `CONTEXT.md` prose, a step's scope) changed only through the batched confirmation round
-- [ ] `## Current state` rewritten to post-edit reality at the end of the run, including the run that finalizes to `done`; on a result already `done` when the run began, only `**Pointers:**` refreshed and the gloss left frozen; the >20 KB compaction proposal raised (as an ask item) when the size trigger fired
-- [ ] Docs only — no source code, git, or external-system mutation; no scratch artifact; the upstream `ticket.md` is read-only (a changed ask is surfaced, not rewritten)
+- [ ] A `skipped` plan handled per § *Skipped plans are exempt* — reported as abandoned, with no sweep run and nothing written
+- [ ] The run followed § *Sequence and output*: findings report printed first from pre-reconcile state, every edit after it, closing change list printed
+- [ ] The reference sweep run before any edit and its results scoped, tagged, rendered under `## References`, and ledgered into `observations.md` per § *External reference check*
+- [ ] State advanced only per § *Strengthen only on verified evidence* (Step 5's in-session re-verification, evidence recorded in `result.md`); grounding docs (`goals.md`, `CONTEXT.md` prose, a step's scope) changed only per § *Grounding docs change by confirmation, never silently*
+- [ ] Every edit made falls inside the session → docs § *Write surface* and maps to a printed finding or an answer to one, with no code, git, or external-system mutation per § *Docs, not the world*; no scratch artifact written
+- [ ] `## Current state` refreshed at the end of the run per § *Current state refresh*, including its freeze on a result already `done` when the run began; the compaction proposal raised as an ask item when § *Compaction (size trigger)*'s trigger fired

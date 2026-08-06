@@ -1,6 +1,6 @@
 # Documentation Rules
 
-The **documentation domain pack's rules overlay** — loaded on top of the neutral `../../CORE_RULES.md` for any task with `**Domain:** documentation`, and unconditionally by the pack-contributed `stage-doc`, `review-docs`, and `prepare-diagram` skills. The pack governs document work: RFCs, ADRs, architecture notes, diagrams, outreach and reply drafts, and other document deliverables. See `../workflow/domain-packs.md` for how skills resolve and load a domain.
+The **documentation domain pack's rules overlay** — loaded on top of the neutral `../../CORE_RULES.md` for any task with `**Domain:** documentation`, and unconditionally by the pack-contributed skills, each of which cites it. The pack governs document work: RFCs, ADRs, architecture notes, diagrams, outreach and reply drafts, and other document deliverables. See `../workflow/domain-packs.md` for how skills resolve and load a domain.
 
 ## Send & publish discipline
 

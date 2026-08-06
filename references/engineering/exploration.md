@@ -1,8 +1,9 @@
 # Engineering Exploration
 
 How to "explore the domain's reality" when the domain is **code** — the engineering recipe the
-neutral spine loads before planning (`plan-task`), grounding a review (`review-task`), or
-grounding idea variations (`refine-idea`). The spine owns *that* you must ground in reality before
+neutral spine loads before planning (`plan-task`), grounding a review (`review-task`), grounding
+idea variations (`refine-idea`, via `../workflow/ideation.md`), re-verifying shipped claims on
+resume (`resume-task`), or grounding a standalone exploration (`explore`). The spine owns *that* you must ground in reality before
 designing; this file owns *how* you do it in a codebase. See `../workflow/domain-packs.md`.
 
 ## Ground before designing

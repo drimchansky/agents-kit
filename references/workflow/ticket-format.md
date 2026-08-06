@@ -1,6 +1,6 @@
 # Ticket Format
 
-The canonical shape of a **ticket** — a self-contained statement of a task, written so someone can pick it up cold, with no access to the session that produced it. **This file is the single source of truth for the ticket format.** Cited by the `prepare-ticket` skill (which drafts a ticket to a file), by `decompose-task` (which holds each materialized part's ticket to this bar), by `plan-task` (which sharpens a present ticket's acceptance criteria into `goals.md`), and by `review-task` (which checks those goals back against it). When the ticket lives inside a task folder it is the role-named `ticket.md`, the product-facing origin of the derivation chain (see `./task-layout.md`); the sections below are identical wherever the ticket is written.
+The canonical shape of a **ticket** — a self-contained statement of a task, written so someone can pick it up cold, with no access to the session that produced it. **This file is the single source of truth for the ticket format.** When the ticket lives inside a task folder it is the role-named `ticket.md`, the product-facing origin of the derivation chain (see `./task-layout.md`); the sections below are identical wherever the ticket is written.
 
 ## What a ticket is
 
