@@ -61,7 +61,7 @@ Run each fix through the loop in `./references/workflow/execution-loop.md` — r
 - **Acceptance** — every selected finding lands in exactly one report bucket, each bucket entry re-read against the live tree before reporting.
 - **Integration gates** — none within the run beyond per-fix health verify: the certifying re-review of the whole set belongs to the re-run **Next** points at.
 
-Both verify gates apply per fix: step verify (the criterion above) and health verify (typecheck, linter, tests on the changed area — `./references/engineering/verification.md`). A fix is reported Fixed only with both green.
+Both verify gates apply per fix: step verify (the criterion above) and health verify (the engineering recipe — `./references/engineering/verification.md`). A fix is reported Fixed only with both green.
 
 ### Execution strategy: inline by default
 
@@ -69,7 +69,7 @@ Both verify gates apply per fix: step verify (the criterion above) and health ve
 
 **Default inline** because a single fix is small and assembling a self-contained packet costs more than making the edit; **delegate when** the remaining run holds several auto-path fixes *and* this fix's packet is self-contained — no mid-fix user interaction expected.
 
-A delegated fix runs through an **executor** per the `fix-findings` binding in `./references/workflow/executor-contract.md` § *Bindings* — read it before the first delegation — using the native engine and host adapter defaults in `./references/workflow/agent-fanout.md`. That binding fixes the packet; the point of it is that the executor sees only the packet — the finding verbatim, its root cause, the chosen fix option, the expected surface, the engineering-pack guidance the fix's surface triggers — and never this session, so whatever the fix depends on has to be in it.
+A delegated fix runs through an **executor** per the `fix-findings` binding in `./references/workflow/executor-contract.md` § *Bindings* — read it before the first delegation — using the native engine and host adapter defaults in `./references/workflow/agent-fanout.md`. That binding fixes the packet; the point of it is that the executor sees only the packet — the finding verbatim, its root cause, the chosen fix option, the expected surface, the always-applying pack section verbatim, the engineering-pack guidance the fix's surface triggers by path — and never this session, so whatever the fix depends on has to be in it.
 
 **The write surface binds the executor exactly as it binds you**: working-tree code and nothing else, never staged, never committed, no other Git state mutated, and nothing written back to the findings' source — no reply, no resolved thread, no push. The binding restates it for the executor. Delegation is not an escape hatch from the Git-discipline rule.
 

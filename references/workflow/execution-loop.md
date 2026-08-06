@@ -62,8 +62,7 @@ Both are required after implementing a unit — they answer different questions:
   that criterion comes from is the consumer's **Source** binding; either way it is stated *before*
   the unit is implemented, never written afterwards to match what was built.
 - **Health verify** — confirm nothing else regressed. Do not collapse this into the step verify. When
-  the domain is code, the recipe (typecheck, linter, existing test suite on the changed area) is in
-  `../engineering/verification.md`.
+  the domain is code, the recipe is in `../engineering/verification.md`.
 
 Never start the next unit while the previous unit's verify is failing.
 

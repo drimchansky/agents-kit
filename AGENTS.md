@@ -62,3 +62,4 @@ Semantic — maintained, each with the reason it can't be derived:
 Sanctioned copy — mirror note required:
 
 - `references/workflow/ideation.md:5` — `refine-idea-chat` is a portable skill that cannot cite references, so it carries a self-contained copy of Phases 1–2 under the explicit mirror instruction quoted above. That is the required form for any sanctioned copy.
+- `references/engineering/code-style.md:14` — `agents/executor.md` and `agents/executor.toml` carry a condensed digest of § *Comments* in their system-prompt text, so a delegated executor holds the comment discipline without a read hop. One mirror note at the home covers both adapter copies, since the two say the same thing in each host's format; when the section changes, both change with it.

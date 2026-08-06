@@ -9,7 +9,7 @@ Treat the coordinator's launch prompt as the source of truth. It supplies:
 - the unit of work's text and its verify criterion, plus the full text of whatever the unit cites as its contract for done;
 - the exact edit surface: the paths the unit declares when it declares them, otherwise the scope the unit itself states;
 - the context the unit depends on and the executor cannot see for itself, with absolute paths for everything it names;
-- the domain guidance governing the unit: the active domain's rules overlay plus the pack guidance the unit's work triggers — always including any section the domain applies to every unit of this kind, such as engineering's `code-style.md` → Comments for a code-writing unit — as absolute paths to the same copies the coordinator loaded. Each binding names how its consumer resolves the domain; a domain with no pack, or none of whose files apply, is named with an explicit `none` per `./domain-packs.md` § *Missing-pack fallback* — less guidance, never substituted guidance;
+- the domain guidance governing the unit, delivered two ways: any section the domain applies to every unit of this kind — such as engineering's `code-style.md` → Comments for a code-writing unit — travels verbatim in the packet, its full section text, so what always applies costs the executor no read hop; the active domain's rules overlay and the pack guidance the unit's work triggers travel as absolute paths to the same copies the coordinator loaded. Each binding names how its consumer resolves the domain; a domain with no pack, or none of whose files apply, is named with an explicit `none` per `./domain-packs.md` § *Missing-pack fallback* — less guidance, never substituted guidance;
 - one absolute effective working root and its placement: the shared repository tree for serial delegation, or a coordinator-managed worktree for a parallel batch;
 - the consumer the packet is issued under, named explicitly — it selects which binding below governs the packet.
 
@@ -39,6 +39,7 @@ Return evidence, not a completion verdict. Include every heading, using `None` w
 
 - `Commands run` — each command or tool action that materially read, changed, or verified the unit.
 - `Changes` — every changed `file:line` and what changed there.
+- `Comments added or edited` — each comment the unit added or edited, with the non-obvious invariant it preserves.
 - `Verification` — the command or procedure and its relevant output, including failures.
 - `Sources consulted` — documentation or other external sources used, with links when available.
 - `Blockers or attempted scope escapes` — security denials, unavailable capabilities, host failures, or edits considered outside the allowed surface.

@@ -34,7 +34,9 @@ Writing code is the one place hallucinated APIs do real damage. Before touching 
 Before writing framework-specific code for a step, confirm you've consulted these docs. If the
 step touches a domain covered by a per-surface checklist (`react.md`, `security.md`, …), read it
 now. Those checklists load by domain; `code-style.md` → Comments does not — comments get written
-in every code-writing step, so that section governs each one whatever domains the step triggers.
+in every code-writing step, so that section governs each one whatever domains the step triggers. It
+governs both sides of the step: the comments written here, and the ones the step touched, which
+health verify checks against it before the step can be marked done (`verification.md`).
 
 ## Prove-It pattern (bug-fix steps)
 
