@@ -59,6 +59,9 @@ where they are rather than being re-implemented at the pipeline level.
 
 - `-x` cross-vendor probe (`review-pr`, `review-commit`, `review-docs`, `review-task`) — the probe
   merges into the pass *before* its verdicts finalize, so it has no seam to run after.
+- `-p` lens-probe fan-out (`review-pr`) — the probes merge into the pass *before* findings
+  finalize, the same seamlessness as `-x`, and the lens set derives from the change map the review
+  has already built.
 - `-d` draft PR description (`review-pr`) — built from the change map the review has already
   assembled; a separate phase would rebuild it from scratch.
 - `-f` fact verification (`proofread`) — verification runs inside the analysis pass, merging into

@@ -24,7 +24,7 @@ Past these three, a phase departs from its skill only where its own section belo
 
 ## Source
 
-There are no flags — `-x`/`-d` belong to the review phase the review composites carry, and this one has none; the per-batch verify probes run on the **native** engine regardless. The only argument is the triage source, passed straight to phase 1.
+There are no flags — `-x`/`-p`/`-d` belong to the review phase the review composites carry, and this one has none; the per-batch verify probes run on the **native** engine regardless. The only argument is the triage source, passed straight to phase 1.
 
 Phase 1 runs `../triage-findings/SKILL.md`'s **full** source resolution — an explicit argument wins (a PR number/URL → PR mode, a file path → that file, pasted text → those findings); with no argument it takes this session's review findings, else falls back to the open PR for the current branch; several named sources merge into one view. This is the departure from the review composites, which pin triage to their own phase-1 review and forbid other sources — here there is no in-session review to pin to, so triage resolves the source itself.
 

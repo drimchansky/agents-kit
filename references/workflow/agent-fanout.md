@@ -40,7 +40,7 @@ A **probe** is one self-contained, read-only question posed to a separate agent,
 
 ## The `-x` cross-check (review skills, opt-in)
 
-The review skills accept a `-x` flag: run one probe on the **cross-vendor engine** — the engine from the other vendor than the host harness (host Claude Code → `codex`; host Codex → `claude`) — as an independent second pass over the skill's own object. **Off by default**: without the flag, no probe runs and no cross-check line appears. The second pass is worth the cross-vendor hop because a different model family is maximally uncorrelated with the session's blind spots; everything else — exploration fan-out, multi-area searches, drift scans, URL refresh — stays `native` and needs no flag.
+The review skills accept a `-x` flag: run one probe on the **cross-vendor engine** — the engine from the other vendor than the host harness (host Claude Code → `codex`; host Codex → `claude`) — as an independent second pass over the skill's own object. **Off by default**: without the flag, no probe runs and no cross-check line appears. The second pass is worth the cross-vendor hop because a different model family is maximally uncorrelated with the session's blind spots; everything else stays `native`: exploration fan-out, multi-area searches, drift scans, and URL refresh need no flag at all, and `-p`'s lens fleet is opt-in for its cost, not for an engine.
 
 What the probe checks, per skill:
 
@@ -71,6 +71,10 @@ Items:
 ```
 
 For the cold-review shape (`review-pr`, `review-commit`), replace the numbered items with the review object — "review the diff `<base>...HEAD`" / "review the staged diff (`git diff --cached`)" — and demand findings, each with a severity, `file:line`, and the concrete failure it causes.
+
+For the lens-review shape (`review-pr`'s opt-in `-p`), run a fleet of cold reviews of the same diff on `native` — one probe per lens, launched in parallel, no cross-vendor hop, since `-x` remains the uncorrelated-model pass and composes independently. One lens per probe *is* the one-concern rule, not a swarm: the lenses are different concerns, not slices of one. Each prompt is the cold-review shape's plus one lens — the absolute path of one per-surface checklist under `../engineering/` (`security.md`, `testing.md`, …), which the probe reads itself and applies to the diff to the exclusion of every other concern, or, for the one general lens, correctness and blast radius with no checklist path. Hand the path, never the checklist's text: inlining bloats every prompt and forks the checklist. The set derives from the change map — the per-surface checklists the diff's domains trigger, the same trigger `../engineering/review.md:5` states, plus the general lens always. Past the large-diff bar `review-pr` states (~1000 non-generated lines), a probe's prompt scopes its review object to the file groups its own concern touches instead of the whole diff.
+
+A lens probe's findings come back with severity and `file:line` like any cold review, and merge under § *Merge contract* below — each one a candidate the session verifies against the diff before adopting it. The record is one `Lens probes:` line naming each lens and its outcome — merged findings, clean, or failed/skipped with the reason — mandatory whenever the flag is passed and absent without it. `Cross-check:` belongs to the `-x` pass, so a `-x -p` run carries both lines.
 
 For the verify shape (the `review-pr-triage-verify` / `review-commit-triage-verify` / `triage-findings-verify` composites' per-batch probes):
 
@@ -115,7 +119,7 @@ The invoking skill compares the probe's answer against its own pass:
 - **Agreement** strengthens the evidence — cite it and move on.
 - **Contradiction is never silently dropped.** Where the probe contradicts the session's grounding or the artifact's own claims, re-check that spot before assigning the verdict; a confirmed contradiction becomes a finding (in `review-task`, a `CONTRADICTED` claim is evidence toward `conflicts with what exists` / `infeasible as stated`; a `NOT FOUND` on a load-bearing reference is a gap).
 - **Novel probe findings are candidates, not findings.** Verify each against the artifact before adopting it into the output — under the session's own severity calibration; never paste a probe finding unverified.
-- **The outcome line closes the loop.** For the `-x` shapes, the `Cross-check:` line states `clean`, `merged: …`, or `skipped (<reason>)` — the record makes a skipped or empty probe visible instead of leaving absence ambiguous. The verify shape closes on its consuming skill's mandatory **Verified** line instead, which carries the same guarantee for the same reason; `Cross-check:` stays reserved for the `-x` pass, so a composite running both keeps two distinct records.
+- **The outcome line closes the loop.** For the `-x` shapes, the `Cross-check:` line states `clean`, `merged: …`, or `skipped (<reason>)` — the record makes a skipped or empty probe visible instead of leaving absence ambiguous. The lens-review shape closes the same way on its `Lens probes:` line (per its shape paragraph above). The verify shape closes on its consuming skill's mandatory **Verified** line instead, which carries the same guarantee for the same reason; `Cross-check:` stays reserved for the `-x` pass, so a composite running both keeps two distinct records.
 
 ## Write-mode routing
 

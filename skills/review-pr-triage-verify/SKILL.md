@@ -1,7 +1,7 @@
 ---
 name: review-pr-triage-verify
 description: Use when asked for a verified review of a PR or branch — one command that reviews the diff against its base, batches the findings by concern, verifies each batch in an isolated read-only probe, and displays one verdict per finding. Reads and displays only; never edits code or posts anywhere.
-argument-hint: '[-x (cross-vendor second review)] [-d (draft PR description)] — passed through to the review phase'
+argument-hint: '[-x (cross-vendor second review)] [-p (parallel lens probes)] [-d (draft PR description)] — passed through to the review phase'
 disable-model-invocation: true
 ---
 
@@ -24,7 +24,7 @@ Past these three, a phase departs from its skill only where its own section belo
 
 ## Flags
 
-`-x` (cross-vendor second review) and `-d` (draft PR description) pass through to the review phase unchanged — see `../review-pr/SKILL.md`. The per-batch verify probes are not `-x`: they run on the native engine regardless. The review phase runs its verification scripts as that skill specifies (always), and a script finding reaches the probes like any other — but they never re-run the check that produced it: a lint or type failure re-verifies by reading; a test failure usually can't, and lands **Inconclusive**.
+`-x` (cross-vendor second review), `-p` (parallel lens probes), and `-d` (draft PR description) pass through to the review phase unchanged — see `../review-pr/SKILL.md`. The per-batch verify probes are neither `-x` nor `-p`: they run on the native engine regardless, and they verify batches after the review rather than reviewing the diff during it. The review phase runs its verification scripts as that skill specifies (always), and a script finding reaches the probes like any other — but they never re-run the check that produced it: a lint or type failure re-verifies by reading; a test failure usually can't, and lands **Inconclusive**.
 
 ## Setup
 
@@ -66,7 +66,7 @@ Lists, never tables.
 - **Batches** — the triage frame: one section per concern zone, ordered by its most severe member. Each finding renders once: original text with its severity prefix, `file:line` (or the diff-wide scope when it has no anchor), then its verdict — **Confirmed** (root cause, plus fix options targeted → thorough), **Withdrawn** (the probe's evidence), **Inconclusive** (what's missing), or **Unverified** (reason: probe and fallback failed, or out of probe scope) — or, for a finding triage landed outside open, its bucket in place of a verdict.
 - **Findings** — the publishable list, in `review-pr`'s Findings format: every surviving Major/Critical finding — verdict Confirmed, Inconclusive, or Unverified — with its severity, `file:line`, and original text verbatim. A verdict other than Confirmed rides along as a closing note on the entry — `(Inconclusive: <what's missing>)` / `(Unverified: <reason>)` — and counts as part of the finding's text downstream, so `/publish-pr-review` posts the caveat with the claim instead of giving an unsettled finding a confirmed one's authority. Withdrawn findings are excluded here; their evidence lives in Batches. This is the section `/publish-pr-review` consumes; write `none` when nothing survives — that's what makes the follow-up post an approval.
 - **Verified** — one mandatory line: `Verified: <n> confirmed · <n> withdrawn · <n> inconclusive · <n> unverified — <k> native probes`. Two segments are conditional: ` · <n> triaged out` joins the counts only when triage landed findings outside open — the **addressed** and **verify** buckets both, since neither got a verdict here — and `, <m> inline fallbacks` joins the probe count only when a batch was verified inline (probe failed or called off). Mandatory so a skipped or failed verify phase is visible rather than ambiguous.
-- **Cross-check** (only with `-x`), **Improvements**, **Inaccessible context** (only if any), **PR description** (only with `-d`) — forwarded from the review phase as `review-pr` specs them. Improvements are non-blocking suggestions, not findings — they pass through unverified.
+- **Cross-check** (only with `-x`), **Lens probes** (only with `-p`), **Improvements**, **Inaccessible context** (only if any), **PR description** (only with `-d`) — forwarded from the review phase as `review-pr` specs them. Improvements are non-blocking suggestions, not findings — they pass through unverified.
 - **Reviewed** — the provenance line exactly as `review-pr` specs it, so `/publish-pr-review` can anchor: `Reviewed at <head-sha> (merge-base <base-sha>) by <model>`.
 
 **Next:** `/publish-pr-review` posts the **Findings** list above — Withdrawn are already excluded from it, and `none` posts as a short approval. With `-d`, `/update-pr-description` applies the drafted **PR description** to the PR. Or address the batches with `/implement-task` or `/review-commit`.

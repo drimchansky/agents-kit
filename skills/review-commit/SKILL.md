@@ -29,7 +29,7 @@ Before working, read `./references/engineering/review.md` — it carries the len
 
 **Launch the cross-vendor probe** (only with `-x`): once the staged diff is confirmed non-empty, start one background probe per `./references/workflow/agent-fanout.md` — a cold second review of the staged diff (the probe reads `git diff --cached` itself at the repo root), demanding findings with severity and `file:line` evidence. Review inline while it runs; collect and merge per the contract before finalizing findings.
 
-**Run verification scripts** per "Verification Scripts" in `./references/engineering/review.md` — always: identify the project's lint/typecheck/test scripts and run them on the staged files where they exist; failures and warnings land as findings.
+**Launch verification scripts** per "Verification Scripts" in `./references/engineering/review.md` — always: as soon as the staged diff is confirmed, launch the project's lint/typecheck/test scripts over the staged files and review while they run; their failures and warnings land as findings before output.
 
 ## Review Focus
 

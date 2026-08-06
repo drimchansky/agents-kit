@@ -145,10 +145,11 @@ For large diffs (20+ files): review types and interfaces first to understand the
 
 ## Verification Scripts
 
-Diff reviews (`review-commit`, `review-pr`) always run the project's verification scripts before producing findings:
+Diff reviews (`review-commit`, `review-pr`) always run the project's verification scripts, launched early rather than after the review:
 
-- Identify what the project exposes — lint, typecheck, and test scripts (check `package.json` scripts, a `Makefile`, or the stack's conventional commands) — and run them on the changed/staged files where they exist; what the project doesn't expose is skipped, not simulated.
-- Treat failures and warnings as findings; record them with file location and severity.
+- **Launch as soon as the reviewed set is known** — the staged set for `review-commit`, the diff against the base for `review-pr`. Identify what the project exposes — lint, typecheck, and test scripts (check `package.json` scripts, a `Makefile`, or the stack's conventional commands) — and start them on the changed/staged files where they exist; what the project doesn't expose is skipped, not simulated.
+- **Run them in the background where the host supports it**, reviewing inline while they run; where it doesn't, run them in the foreground at that same early point.
+- **Collect before output** — merge failures and warnings into the findings, each with file location and severity.
 
 The scripts are a review's only execution surface: everything else stays analysis — read the code, reason about it. Read-only probes never run them (`../workflow/agent-fanout.md`).
 
