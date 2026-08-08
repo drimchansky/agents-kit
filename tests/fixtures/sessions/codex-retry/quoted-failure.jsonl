@@ -1,0 +1,9 @@
+{"timestamp":"2026-03-14T09:10:00.000Z","type":"session_meta","payload":{"id":"fixture-codex-quoted","cli_version":"0.0.0-fixture","cwd":"/fixture"}}
+{"timestamp":"2026-03-14T09:10:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Find where that error string comes from."}}
+{"timestamp":"2026-03-14T09:10:02.000Z","type":"response_item","payload":{"type":"function_call","call_id":"call_grep_1","name":"shell","arguments":"{\"command\":\"rg exec_command\"}"}}
+{"timestamp":"2026-03-14T09:10:03.000Z","type":"response_item","payload":{"type":"function_call_output","call_id":"call_grep_1","output":"core/src/tools/handlers/exec_command.rs:7911:exec_command failed for `{cmd}`"}}
+{"timestamp":"2026-03-14T09:10:04.000Z","type":"response_item","payload":{"type":"function_call","call_id":"call_grep_2","name":"shell","arguments":"{\"command\":\"rg exec_command\"}"}}
+{"timestamp":"2026-03-14T09:10:05.000Z","type":"response_item","payload":{"type":"function_call_output","call_id":"call_grep_2","output":"core/src/tools/handlers/exec_command.rs:7911:exec_command failed for `{cmd}`"}}
+{"timestamp":"2026-03-14T09:10:06.000Z","type":"response_item","payload":{"type":"function_call","call_id":"call_grep_3","name":"shell","arguments":"{\"command\":\"rg exec_command\"}"}}
+{"timestamp":"2026-03-14T09:10:07.000Z","type":"response_item","payload":{"type":"function_call_output","call_id":"call_grep_3","output":"core/src/tools/handlers/exec_command.rs:7911:exec_command failed for `{cmd}`"}}
+{"timestamp":"2026-03-14T09:10:08.000Z","type":"event_msg","payload":{"type":"task_complete","turn_id":"turn-fixture-quoted"}}

@@ -205,10 +205,11 @@ else
   OUT_UNREADABLE="$TEST_ROOT/unreadable.json"
   run_check "$OUT_UNREADABLE" "$UNREADABLE"
   assert_equals "$(unreadable_count "$OUT_UNREADABLE")" "1" "a task file that cannot be read is counted"
-  # The field is the caller's coverage list, so it holds the path in the same display shape a
-  # finding's own `path` carries — not a label the caller would have to parse back off it.
-  assert_equals "$(unreadable_paths "$OUT_UNREADABLE")" "unreadable-store/locked-task/plan.md" \
-    "unreadablePaths names the file by path alone"
+  # The field is the caller's coverage list, and it holds the absolute path rather than the
+  # basename-prefixed display shape a finding's `path` carries: findings are attributed by their
+  # absolute `root`, so a gap has to be attributable the same way once two roots share a basename.
+  assert_equals "$(unreadable_paths "$OUT_UNREADABLE")" "$UNREADABLE/locked-task/plan.md" \
+    "unreadablePaths names the file by absolute path"
   assert_equals "$(findings_count "$OUT_UNREADABLE" unknown-status)" "0" \
     "an unreadable status file is not classified as an unknown lifecycle value"
   pass "an unreadable task file reaches the contract, not only stderr"
@@ -229,11 +230,25 @@ else
   run_check "$OUT_LOCKED_DIR" "$LOCKED_DIR"
   assert_equals "$(unreadable_count "$OUT_LOCKED_DIR")" "1" \
     "a directory that cannot be listed is counted once, not once per walk pass"
-  assert_equals "$(unreadable_paths "$OUT_LOCKED_DIR")" "unreadable-tree/area/locked-task" \
-    "unreadablePaths names the directory by path alone, once"
+  assert_equals "$(unreadable_paths "$OUT_LOCKED_DIR")" "$LOCKED_DIR/area/locked-task" \
+    "unreadablePaths names the directory by absolute path, once"
   pass "an unlistable directory reaches the contract exactly once"
 fi
 chmod 755 "$LOCKED_DIR/area/locked-task"
+
+# A root argument that exists but is not a directory contributed nothing to the walk. Reported only
+# on stderr it would read as a clean root, since the caller treats `scanned` as a floor solely while
+# `unreadable` is non-zero — the same failure `unreadablePaths` was added to close.
+NOT_A_DIR="$TEST_ROOT/not-a-dir.md"
+printf 'not a store\n' > "$NOT_A_DIR"
+OUT_NOT_DIR="$TEST_ROOT/not-a-dir.json"
+run_check "$OUT_NOT_DIR" "$NOT_A_DIR"
+assert_equals "$(scanned_count "$OUT_NOT_DIR")" "0" "a root that is not a directory walks nothing"
+assert_equals "$(unreadable_count "$OUT_NOT_DIR")" "1" \
+  "a root that is not a directory is counted as uncovered"
+assert_equals "$(unreadable_paths "$OUT_NOT_DIR")" "$NOT_A_DIR" \
+  "unreadablePaths names the root that could not be walked"
+pass "a root that exists but is not a directory reaches the contract, not only stderr"
 
 OUT_BOUNDARY="$TEST_ROOT/boundary.json"
 run_check "$OUT_BOUNDARY" --stale-days 62 "$STORE"
@@ -500,6 +515,88 @@ assert_equals "$(finding_detail "$OUT_INSTALLS" install-drift .claude/skills/use
   "a kit-named skill the home owns unmarked is present, so it is never reported missing"
 pass "never-deployed kit payloads are reported in every home setup.sh has partially installed"
 
+# Every installed skill resolves ./AGENTS.md and ./references into the two install-root shared
+# payloads, so an unmarked one is not a private file the way an unmarked skill is — it is what all of
+# them load, and setup.sh refuses the whole home over it. Skipping it silently reported a home as
+# clean while every kit skill ran on a file the kit does not own.
+CONFLICT_HOME="$INSTALLS/conflict/.claude"
+mkdir -p "$CONFLICT_HOME/skills/kept-skill" "$CONFLICT_HOME/references"
+touch "$CONFLICT_HOME/skills/kept-skill/.agents-kit"
+cp "$INSTALLS/kit/skills/kept-skill/SKILL.md" "$CONFLICT_HOME/skills/kept-skill/SKILL.md"
+printf 'MY OWN RULES\n' > "$CONFLICT_HOME/CORE_RULES.md"
+printf 'mine\n' > "$CONFLICT_HOME/references/sample.md"
+OUT_CONFLICT="$TEST_ROOT/conflict-install.json"
+run_check "$OUT_CONFLICT" --installs "$INSTALLS/kit" "$CONFLICT_HOME"
+assert_equals \
+  "$(finding_detail "$OUT_CONFLICT" install-drift .claude/CORE_RULES.md)" \
+  "present but not kit-owned — every kit skill resolves into it; move it aside and rerun setup.sh" \
+  "an unmarked CORE_RULES.md is reported rather than treated as the user's business"
+assert_equals \
+  "$(finding_detail "$OUT_CONFLICT" install-drift .claude/references)" \
+  "present but not kit-owned — every kit skill resolves into it; move it aside and rerun setup.sh" \
+  "an unmarked references/ is reported the same way"
+pass "an unmarked shared payload is a conflict, not a clean home"
+
+# An ownership marker the run cannot stat is not evidence the item is the user's. Read as unowned it
+# dropped a whole kit-managed skill from the comparison while `unreadable` stayed zero, so the caller
+# was told a deploy was clean over an item nothing compared.
+LOCKED_SKILL="$INSTALLS/locked/.claude"
+mkdir -p "$LOCKED_SKILL/skills/kept-skill"
+touch "$LOCKED_SKILL/skills/kept-skill/.agents-kit"
+printf 'drifted\n' > "$LOCKED_SKILL/skills/kept-skill/SKILL.md"
+chmod 000 "$LOCKED_SKILL/skills/kept-skill"
+if [ -r "$LOCKED_SKILL/skills/kept-skill" ]; then
+  pass "skipped: the unreadable-marker case needs a user that chmod 000 actually stops"
+else
+  OUT_LOCKED_SKILL="$TEST_ROOT/locked-skill.json"
+  run_check "$OUT_LOCKED_SKILL" --installs "$INSTALLS/kit" "$LOCKED_SKILL"
+  assert_equals "$(scanned_count "$OUT_LOCKED_SKILL")" "1" \
+    "a skill whose marker cannot be read still counts as an item compared"
+  case "$(unreadable_count "$OUT_LOCKED_SKILL")" in
+    0) fail "an unreadable ownership marker must reach the contract, not be read as user-owned" ;;
+  esac
+  case "$(unreadable_paths "$OUT_LOCKED_SKILL")" in
+    *"$LOCKED_SKILL/skills/kept-skill/.agents-kit"*) ;;
+    *) fail "unreadablePaths must name the marker that could not be stat'd" ;;
+  esac
+  pass "an unreadable ownership marker is a coverage gap, not proof the item is the user's"
+fi
+chmod 755 "$LOCKED_SKILL/skills/kept-skill"
+
+# setup.sh marks a staging dir before it finishes copying into it, so an interrupted install leaves
+# one behind. Comparing it reported phantom paths the next setup.sh run deletes on its own, and its
+# item count suppressed the single never-installed line a first interrupted install should get.
+STAGING_HOME="$INSTALLS/staging/.claude"
+mkdir -p "$STAGING_HOME/skills/.agents-kit-staging.4242-kept-skill"
+touch "$STAGING_HOME/skills/.agents-kit-staging.4242-kept-skill/.agents-kit"
+printf 'half-copied\n' > "$STAGING_HOME/skills/.agents-kit-staging.4242-kept-skill/SKILL.md"
+OUT_STAGING="$TEST_ROOT/staging-install.json"
+run_check "$OUT_STAGING" --installs "$INSTALLS/kit" "$STAGING_HOME"
+assert_equals "$(scanned_count "$OUT_STAGING")" "0" "a leftover staging dir is not counted as an installed item"
+assert_equals "$(findings_count "$OUT_STAGING" install-drift)" "1" \
+  "a home holding only a staging dir reports the never-installed line, not one finding per file"
+assert_equals \
+  "$(finding_detail "$OUT_STAGING" install-drift .claude)" \
+  "no kit markers — never installed" \
+  "an interrupted first install is one fact about the home"
+pass "a leftover staging dir is an interrupted install, not drift to reconcile"
+
+# skills/ is copied link-preserving so each skill's AGENTS.md and references resolve to the
+# install-root originals. A copy that materialized them holds identical bytes, so only the link-ness
+# difference itself shows the loss — ~1,500 duplicated files per home otherwise reporting clean.
+MATERIALIZED="$INSTALLS/materialized/.claude"
+mkdir -p "$MATERIALIZED/skills/kept-skill"
+touch "$MATERIALIZED/skills/kept-skill/.agents-kit"
+cp "$INSTALLS/kit/skills/kept-skill/SKILL.md" "$MATERIALIZED/skills/kept-skill/SKILL.md"
+cp -L "$INSTALLS/kit/skills/kept-skill/AGENTS.md" "$MATERIALIZED/skills/kept-skill/AGENTS.md"
+OUT_MATERIALIZED="$TEST_ROOT/materialized-install.json"
+run_check "$OUT_MATERIALIZED" --installs "$INSTALLS/kit" "$MATERIALIZED"
+assert_equals \
+  "$(finding_detail "$OUT_MATERIALIZED" install-drift .claude/skills/kept-skill/AGENTS.md)" \
+  "symlink replaced by a copy" \
+  "a kit symlink materialized into a regular copy is drift, not a copy-mode difference"
+pass "the two sides disagreeing on link-ness is reported rather than compared through the link"
+
 PARTIAL_HOME="$INSTALLS/partial/.claude"
 mkdir -p "$PARTIAL_HOME"
 touch "$PARTIAL_HOME/.agents-kit-core-rules"
@@ -531,6 +628,24 @@ assert_equals \
   "a home with no markers reports one line, not one per kit file"
 assert_equals "$(scanned_count "$OUT_FRESH")" "0" "scanned count for a never-installed home"
 pass "a home setup.sh never installed into is reported once rather than flooding"
+
+# The unmarked shared payload is why setup.sh refuses this home, so it rides on the never-installed
+# line instead of stacking a second finding beside it: two lines would break the one-fact-per-home
+# rendering the caller keys on, and dropping it would leave the refusal with no reason attached.
+BLOCKED_FRESH="$TEST_ROOT/blocked-fresh/.claude"
+mkdir -p "$BLOCKED_FRESH"
+printf 'MY OWN RULES\n' > "$BLOCKED_FRESH/CORE_RULES.md"
+OUT_BLOCKED_FRESH="$TEST_ROOT/blocked-fresh.json"
+run_check "$OUT_BLOCKED_FRESH" --installs "$INSTALLS/kit" "$BLOCKED_FRESH"
+assert_equals "$(findings_count "$OUT_BLOCKED_FRESH" install-drift)" "1" \
+  "a never-installed home blocked by its own shared payload is still one finding"
+assert_equals \
+  "$(finding_detail "$OUT_BLOCKED_FRESH" install-drift .claude)" \
+  "no kit markers — never installed; CORE_RULES.md present but not kit-owned — move aside and rerun setup.sh" \
+  "the one line names the payload blocking the install"
+assert_equals "$(scanned_count "$OUT_BLOCKED_FRESH")" "0" \
+  "a blocked never-installed home compares nothing"
+pass "the conflict that blocks a never-installed home rides on its one line"
 
 OUT_ABSENT="$TEST_ROOT/absent-home.json"
 run_check "$OUT_ABSENT" --installs "$INSTALLS/kit" "$TEST_ROOT/absent/.claude"
@@ -670,6 +785,68 @@ assert_equals "$(scanned_count "$OUT_DUP_REV")" "2" \
 assert_equals "$(findings_count "$OUT_DUP_REV" duplicate-slug)" "2" \
   "argument order does not decide whether the overlap is caught"
 pass "overlap detection is order-independent"
+
+# canonicalRoot resolves with realpathSync.native, which returns the spelling the filesystem holds;
+# the JS implementation returns the caller's own, so two case-spellings of one root canonicalize
+# differently and the containment guard above misses — both are walked, `scanned` doubles, and every
+# folder reports itself as its own collision peer. The divergence exists only on a case-insensitive
+# volume, so the case is probed for rather than assumed, like the chmod cases above.
+mkdir "$TEST_ROOT/case-probe"
+if [ ! -d "$TEST_ROOT/CASE-PROBE" ]; then
+  pass "skipped: the root case-collision case needs a case-insensitive volume"
+else
+  OUT_DUP_CASE="$TEST_ROOT/duplicate-slug-case.json"
+  run_check "$OUT_DUP_CASE" "$DUP_C" "$TEST_ROOT/DUP-C"
+  assert_equals "$(scanned_count "$OUT_DUP_CASE")" "2" \
+    "a root respelled in another case is walked once"
+  assert_equals "$(findings_count "$OUT_DUP_CASE" duplicate-slug)" "2" \
+    "a case-respelled root adds no self-collision"
+  assert_equals "$(unreadable_count "$OUT_DUP_CASE")" "0" \
+    "both spellings resolve, so neither is a coverage gap"
+  pass "two case-spellings of one root are one root"
+fi
+
+# parseArgs peeks a flag's separate value and consumes it only once it validates, so a root spelled
+# after a dateless flag is not swallowed. The other half of that trade: a rejected value re-enters
+# the roots only when it names something on disk, or a typo would report as store the sweep did not
+# see — the twin of the shape test tests/session-triage.sh runs.
+OUT_FLAG_ROOT="$TEST_ROOT/flag-value-root.json"
+run_check "$OUT_FLAG_ROOT" --stale-days "$STORE"
+assert_equals "$(scanned_count "$OUT_FLAG_ROOT")" "6" \
+  "a root spelled after a valueless flag is still walked"
+assert_equals "$(unreadable_count "$OUT_FLAG_ROOT")" "0" \
+  "the root a valueless flag would have swallowed is not a coverage gap"
+
+OUT_FLAG_JUNK="$TEST_ROOT/flag-value-junk.json"
+run_check "$OUT_FLAG_JUNK" --stale-days 20KB "$STORE"
+assert_equals "$(scanned_count "$OUT_FLAG_JUNK")" "6" \
+  "a malformed flag value leaves the roots after it alone"
+assert_equals "$(unreadable_count "$OUT_FLAG_JUNK")" "0" \
+  "a malformed flag value is not reported as store the sweep did not see"
+
+# `resolve("")` is the process directory, so an empty value re-entering the roots would walk the
+# caller's own checkout as a task store.
+OUT_FLAG_EMPTY="$TEST_ROOT/flag-value-empty.json"
+run_check "$OUT_FLAG_EMPTY" --result-max-kb "" "$STORE"
+assert_equals "$(scanned_count "$OUT_FLAG_EMPTY")" "6" \
+  "an empty flag value does not add the process directory as a root"
+assert_equals "$(unreadable_count "$OUT_FLAG_EMPTY")" "0" \
+  "an empty flag value is not a coverage gap"
+pass "a rejected flag value re-enters the roots only when it names something on disk"
+
+# A `-`-prefixed argument is the one value neither numeric flag can ever take, and it can never
+# become a root either — the option, `--`, and unknown-option branches all intercept it first. So
+# consuming one only ever loses a flag: swallowing `--installs` turns the install comparison into a
+# task walk over the kit and the home, with nothing in the JSON to say the probe never ran.
+OUT_FLAG_FLAG="$TEST_ROOT/flag-value-flag.json"
+run_check "$OUT_FLAG_FLAG" --stale-days --installs "$INSTALLS/kit" "$FRESH/.claude"
+assert_equals "$(findings_count "$OUT_FLAG_FLAG" install-drift)" "1" \
+  "a flag spelled where a flag value belongs still reaches the argument walk"
+assert_equals \
+  "$(finding_detail "$OUT_FLAG_FLAG" install-drift .claude)" \
+  "no kit markers — never installed" \
+  "the install probe runs as asked rather than degrading to a task walk"
+pass "a value that can never be a value is never consumed"
 
 OUT_NO_ROOT="$TEST_ROOT/no-root.json"
 run_check "$OUT_NO_ROOT"

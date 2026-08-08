@@ -1,9 +1,10 @@
 # Engineering Execution
 
-The engineering recipe `implement-task` and `implement` load when carrying out a unit of work in
-code. `../workflow/execution-loop.md` owns the neutral *loop* (implement → verify → record → mark
-done → pause/continue, with Stop-the-Line on failure); this file owns the code-specific *how*.
-Verification gates and the acceptance-gate recipe live in the sibling `verification.md`.
+The engineering recipe `implement-task`, `implement`, and `fix-findings` load when carrying out a
+unit of work in code. `../workflow/execution-loop.md` owns the neutral *loop* (implement → verify →
+record → mark done → pause/continue, with Stop-the-Line on failure); this file owns the
+code-specific *how*. Verification gates and the acceptance-gate recipe live in the sibling
+`verification.md`.
 
 ## Detect stack and sources (before writing any code)
 

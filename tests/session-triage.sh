@@ -182,9 +182,41 @@ grep -q -- "--since must be YYYY-MM-DD" "$ERR" ||
   fail "expected a stderr warning for the missing --since"
 pass "a missing --since warns on stderr and still exits 0"
 
+# Without a window nothing is walked, and the payload is otherwise byte-identical to a window that
+# was walked in full and found clean. The caller gates its since-marker on `unreadable`, so leaving
+# the two indistinguishable would advance the marker over transcripts nothing ever read.
+assert_query 'j.unreadable' "1" "a directory left unwalked by a missing --since is counted as unread"
+assert_query 'j.unreadableDirs.length' "1" "unreadableDirs names the directory the missing window skipped"
+
 run_triage "$OUT" "$ERR" --since not-a-date "$CORPUS/claude"
 assert_query 'j.scanned' "0" "an unparsable --since scans nothing"
-pass "an unparsable --since is reported without a crash"
+assert_query 'j.unreadable' "1" "a directory left unwalked by an unparsable --since is counted as unread"
+pass "an unparsable --since is reported in the contract, not only on stderr"
+
+# A `--since` given no date would otherwise consume the session directory as its value, emptying
+# `dirs` — so the guard above would have nothing left to report and the run would read as a clean
+# walk. A value is taken only when it has the shape of a date.
+run_triage "$OUT" "$ERR" --since "$CORPUS/claude"
+assert_query 'j.scanned' "0" "a --since missing its date scans nothing"
+assert_query 'j.unreadable' "1" "the directory a dateless --since would have swallowed is still counted"
+assert_query 'j.unreadableDirs[0].endsWith("claude")' "true" \
+  "the unconsumed argument is read as the session directory it is"
+pass "a flag value is consumed only when it has the shape the flag wants"
+
+# Three identical genuine failures are a retry loop; three outputs that merely quote the phrase
+# mid-line — a grep hit over Codex's own sources, a diff of the classifier itself — are not. The
+# corpus is kept out of the main run so its counts stay independent of these two files.
+touch -t 202603140900.00 "$CORPUS/codex-retry/anchored-retry-loop.jsonl"
+touch -t 202603140900.00 "$CORPUS/codex-retry/quoted-failure.jsonl"
+run_triage "$OUT" "$ERR" --since 2026-03-10 "$CORPUS/codex-retry"
+assert_query 'j.scanned' "2" "both retry-corpus transcripts are scanned"
+assert_query 'j.flagged.length' "1" "only the genuine retry loop is flagged"
+assert_query 'j.flagged[0].path.endsWith("anchored-retry-loop.jsonl")' "true" \
+  "three identical line-anchored failures of one tool are a retry loop"
+assert_query 'j.flagged[0].classes["retry-loop"]' "1" "the retry loop is classified as such"
+assert_query 'j.flagged.some((f) => f.path.endsWith("quoted-failure.jsonl"))' "false" \
+  "a failure phrase quoted mid-line is not a failure"
+pass "the Codex failure markers are line-anchored, so quoted output does not read as a retry loop"
 
 run_triage "$OUT" "$ERR" --since 2026-03-10 "$TEST_ROOT/absent-corpus"
 assert_query 'j.scanned' "0" "a missing directory scans nothing"

@@ -64,6 +64,9 @@ install_agent() {
 
   # 1. Remove previously-installed agents-kit skills (anything with the .agents-kit marker).
   #    Sweep leftover staging dirs first, so an interrupt before the atomic mv self-heals.
+  #    references/ and CORE_RULES.md are deliberately not removed here: every installed skill
+  #    symlinks into them, so deleting them before the skills loop would leave every skill already
+  #    copied pointing at nothing for the length of the loop. Each is replaced at its own site below.
   for stale in "$skills_dir"/.agents-kit-staging.* "$home_dir"/.agents-kit-references.staging.*; do
     [ -d "$stale" ] && rm -rf "$stale"
   done
@@ -71,8 +74,6 @@ install_agent() {
     [ -L "${target%/}" ] && continue   # never follow a symlinked entry (rm -rf would hit its target)
     [ -d "$target" ] && [ -f "$target/.agents-kit" ] && rm -rf "$target"
   done
-  [ -f "$home_dir/references/.agents-kit" ] && rm -rf "$home_dir/references"
-  [ -f "$home_dir/.agents-kit-core-rules" ] && rm -f "$home_dir/CORE_RULES.md" "$home_dir/.agents-kit-core-rules"
 
   # 2. Copy current skills + references. Skip a same-named user dir. Each item is built
   #    under a hidden .agents-kit-staging.* dir with its marker inside, then atomically
@@ -104,9 +105,15 @@ install_agent() {
   mkdir "$ref_staging"
   touch "$ref_staging/.agents-kit"
   cp -RfL "$REPO_DIR/references"/. "$ref_staging"/
+  # Removed only once its replacement is staged and ready to rename, so the window in which no
+  # references/ exists is one rename wide: mv onto an existing directory nests inside it.
+  [ -f "$home_dir/references/.agents-kit" ] && rm -rf "$home_dir/references"
   mv "$ref_staging" "$home_dir/references"
   echo "  references"
 
+  # No pre-delete: cp overwrites a regular file in place, and the conflict gate above already
+  # refused this home if CORE_RULES.md were present without its marker. The marker is written first
+  # so the payload is never present-but-unmarked.
   touch "$home_dir/.agents-kit-core-rules"
   cp "$REPO_DIR/CORE_RULES.md" "$home_dir/CORE_RULES.md"
   echo "  CORE_RULES.md"

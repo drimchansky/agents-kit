@@ -23,7 +23,8 @@
 // {skill,direct:{files,bytes,approxTokens},transitive:{files,bytes,approxTokens}}, and each `files`
 // entry is {path,bytes,approxTokens} with `path` relative to the kit root — direct in citation order,
 // transitive in breadth-first order. `unresolved` names every citation that reached no readable file as
-// "<citing file> -> <citation>", so a byte total is never read as complete coverage while it is
+// "<citing file> -> <citation>", and a file whose own contents could not be read as
+// "<file> -> (contents)", so a byte total is never read as complete coverage while it is
 // non-empty. Warnings go to stderr and the exit status is always 0, so a partly unreadable kit still
 // parses.
 
@@ -97,7 +98,11 @@ function readText(abs, from) {
   try {
     return readFileSync(abs, "utf8");
   } catch (err) {
-    warnings.push(`unreadable file ${from}: ${err.code ?? err.message}`);
+    // Its citations go unread, so everything they would have reached is missing from the closure
+    // while its own bytes still count. Recorded in `unresolved`, which is what the contract ties
+    // completeness to — a stat-level failure already lands there through `measure`, and only the
+    // read-level one, the likelier of the two, escaped.
+    noteUnresolved("(contents)", from, err.code ?? err.message);
     return null;
   }
 }

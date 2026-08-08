@@ -17,9 +17,11 @@
 // {"findings":[…],"scanned":N,"unreadable":N,"unreadablePaths":[…]}. Task findings are
 // {check,path,detail,root}, with `root` the resolved absolute task root; `--installs` findings are
 // {check,path,detail}. `scanned` counts the task folders walked — or, under `--installs`, the
-// marker-owned items compared — and `unreadablePaths` names everything this run could not open, so
-// findings alone are never read as coverage (`scanned` is a floor while it is non-empty). Warnings
-// go to stderr and the exit status is always 0, so a partly unreadable store still parses.
+// marker-owned items compared — and `unreadablePaths` names everything this run could not open, by
+// absolute path, so a coverage gap is attributable to its root the way a finding is and two roots
+// sharing a basename stay distinct; findings alone are never read as coverage (`scanned` is a floor
+// while it is non-empty). Warnings go to stderr and the exit status is always 0, so a partly
+// unreadable store still parses.
 
 import { lstatSync, readdirSync, readFileSync, readlinkSync, realpathSync, statSync } from "node:fs";
 import { join, resolve, basename, sep } from "node:path";
@@ -93,27 +95,33 @@ const AGENT_EXTENSIONS = new Map([[".claude", "md"], [".codex", "toml"]]);
 // dotfile rule, because a skill may legitimately ship one (a template's `.gitignore`) and it stays
 // comparable.
 const OS_ARTIFACTS = new Set([".DS_Store", ".localized", "Thumbs.db"]);
+// setup.sh builds each skill under `skills/.agents-kit-staging.<pid>-<name>` and marks it before
+// copying into it, so a marked entry with this prefix is an interrupted install rather than a
+// payload (setup.sh § step 2). Comparing one reports phantom drift for files the next setup.sh run
+// sweeps on its own, and counting it as an item defeats the never-installed line below.
+const STAGING_PREFIX = ".agents-kit-staging.";
 const skipInInstalls = (name) => name === MARKER || OS_ARTIFACTS.has(name) || name.startsWith("._");
 
 const warnings = [];
 // What this run could not read, reported in the contract rather than only on stderr: a caller reading
 // findings alone would take a store it never opened for a clean one. `scanned` is a floor while this
-// is non-empty. Warnings that are not coverage gaps — an ignored flag, a missing root — stay stderr-only.
+// is non-empty. Warnings that are not coverage gaps — an ignored flag value, a usage error — stay stderr-only.
 const unreadablePaths = [];
 
-// What kind of thing could not be read rides on the warning; `unreadablePaths` carries the path
-// alone, in the same display shape a finding's own `path` uses, so a caller can line a coverage gap
-// up against the findings instead of parsing a label back out of it.
-function unreachable(kind, path, err) {
-  warnings.push(`unreadable ${kind} ${path}: ${err.code ?? err.message}`);
-  unreadablePaths.push(path);
+// What kind of thing could not be read rides on the warning, which keeps the compact display path.
+// `unreadablePaths` carries the absolute one: every finding is attributed by its absolute `root`,
+// and a display path prefixed with a root's basename alone cannot be lined up against them once two
+// roots share that basename.
+function unreachable(kind, abs, display, err) {
+  warnings.push(`unreadable ${kind} ${display}: ${err.code ?? err.message}`);
+  unreadablePaths.push(abs);
 }
 
 function listEntries(dir, display, optional = false) {
   try {
     return readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name, "en"));
   } catch (err) {
-    if (!(optional && err.code === "ENOENT")) unreachable("dir", display, err);
+    if (!(optional && err.code === "ENOENT")) unreachable("dir", dir, display, err);
     return [];
   }
 }
@@ -126,12 +134,42 @@ function isFile(path) {
   }
 }
 
-// Collapses symlinked, repeated, and nested root arguments to one identity. A path that vanishes
-// between the directory check and this call falls back to its resolved form rather than throwing:
-// the contract above is one JSON object on stdout and exit 0, so no step of the walk may raise.
+// Presence alone, of anything: used to tell a rejected flag value that names a real path (a root the
+// flag would otherwise swallow) from one that names nothing (a typed value). Deliberately not
+// `isDirectory` — a root pointing at a file must still reach the coverage list through that check.
+function pathExists(path) {
+  try {
+    statSync(resolve(path));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Whether setup.sh owns a path, by the marker beside it. A marker that cannot be read is not the
+// user's: answering "unowned" there would drop a kit-managed item from the comparison, leaving
+// `scanned` short and `unreadable` at zero — a clean-looking report over an item never compared.
+// It is recorded as a coverage gap and compared anyway, where each unreadable path reports on its
+// own. Only ENOENT means the marker is genuinely absent.
+function markerState(markerPath, display) {
+  try {
+    return statSync(markerPath).isFile() ? "owned" : "unowned";
+  } catch (err) {
+    if (err.code === "ENOENT") return "unowned";
+    unreachable("marker", markerPath, display, err);
+    return "unreadable";
+  }
+}
+
+// Collapses symlinked, repeated, and nested root arguments to one identity. `.native` returns the
+// spelling the filesystem holds, where the JS implementation returns the caller's own: on a
+// case-insensitive volume two roots differing only in case are one directory, and only the on-disk
+// spelling makes the overlap comparison below see that. A path that vanishes between the directory
+// check and this call falls back to its resolved form rather than throwing: the contract above is
+// one JSON object on stdout and exit 0, so no step of the walk may raise.
 function canonicalRoot(rootDir) {
   try {
-    return realpathSync(rootDir);
+    return realpathSync.native(rootDir);
   } catch {
     return rootDir;
   }
@@ -140,9 +178,12 @@ function canonicalRoot(rootDir) {
 function isDirectory(pathArg, label) {
   try {
     if (statSync(resolve(pathArg)).isDirectory()) return true;
-    warnings.push(`not a directory: ${pathArg}`);
+    // The same fact for a caller as a path that could not be opened at all: this argument
+    // contributed nothing to the walk. Left on stderr it would let a registry entry pointing at a
+    // file report as a clean root, which is what the other arm of this function already prevents.
+    unreachable(label, resolve(pathArg), pathArg, { code: "not a directory" });
   } catch (err) {
-    unreachable(label, pathArg, err);
+    unreachable(label, resolve(pathArg), pathArg, err);
   }
   return false;
 }
@@ -160,7 +201,7 @@ function fileText(path, display) {
   try {
     return readFileSync(path, "utf8");
   } catch (err) {
-    unreachable("file", display, err);
+    unreachable("file", path, display, err);
     return null;
   }
 }
@@ -551,7 +592,7 @@ function kindOf(path, display) {
     st = lstatSync(path);
   } catch (err) {
     if (err.code === "ENOENT") return "missing";
-    unreachable("path", display, err);
+    unreachable("path", path, display, err);
     return "unreadable";
   }
   if (st.isSymbolicLink()) return "link";
@@ -560,20 +601,11 @@ function kindOf(path, display) {
   return "other";
 }
 
-function followedKind(path) {
-  try {
-    const st = statSync(path);
-    return st.isDirectory() ? "dir" : st.isFile() ? "file" : "other";
-  } catch {
-    return "missing";
-  }
-}
-
 function linkTarget(path, display) {
   try {
     return readlinkSync(path);
   } catch (err) {
-    unreachable("symlink", display, err);
+    unreachable("symlink", path, display, err);
     return null;
   }
 }
@@ -582,7 +614,7 @@ function bytesOf(path, display) {
   try {
     return readFileSync(path);
   } catch (err) {
-    unreachable("file", display, err);
+    unreachable("file", path, display, err);
     return null;
   }
 }
@@ -607,8 +639,11 @@ function unionNames(kitPath, installPath, display) {
 }
 
 // setup.sh copies skills with `cp -R` (symlinks preserved) and references with `cp -RfL` (symlinks
-// materialized), so the two sides can legitimately disagree on link-ness: compare two links by
-// their targets, and a link facing a regular file by the content each resolves to.
+// materialized), so two links are compared by their targets. One side being a link and the other
+// not is drift rather than a copy-mode difference: `cp -RfL` reaches only references/, which
+// carries no symlinks, while skills/ is copied link-preserving precisely so each skill's AGENTS.md
+// and references resolve to the install-root originals. A materialized link holds the same bytes,
+// so no comparison below would see the loss.
 function comparePath(kitPath, installPath, display, out) {
   const drift = (path, detail) => out.push({ check: "install-drift", path, detail });
   const kitKind = kindOf(kitPath, kitPath);
@@ -630,16 +665,18 @@ function comparePath(kitPath, installPath, display, out) {
     if (kitLink !== installLink) drift(display, "differs from kit source");
     return;
   }
-  const kit = kitKind === "link" ? followedKind(kitPath) : kitKind;
-  const install = installKind === "link" ? followedKind(installPath) : installKind;
-  if (kit === "dir" && install === "dir") {
+  if (kitKind === "link" || installKind === "link") {
+    drift(display, kitKind === "link" ? "symlink replaced by a copy" : "kit path replaced by a symlink");
+    return;
+  }
+  if (kitKind === "dir" && installKind === "dir") {
     for (const name of unionNames(kitPath, installPath, display)) {
       if (skipInInstalls(name)) continue;
       comparePath(join(kitPath, name), join(installPath, name), join(display, name), out);
     }
     return;
   }
-  if (kit === "file" && install === "file") {
+  if (kitKind === "file" && installKind === "file") {
     const kitBytes = bytesOf(kitPath, kitPath);
     const installBytes = bytesOf(installPath, display);
     if (kitBytes == null || installBytes == null) return;
@@ -649,10 +686,27 @@ function comparePath(kitPath, installPath, display, out) {
   drift(display, "differs from kit source");
 }
 
-// Only the items setup.sh marked as its own are compared; an unmarked same-named skill, references
-// dir, or agent file belongs to the user, so its content is none of this check's business. The
-// kit-side pass at the end covers what marker-scoping structurally cannot see: an item that was
-// never installed carries no marker to be found.
+// The two install-root shared payloads are unlike a skill or an agent file: every installed skill's
+// own `AGENTS.md` and `references` symlinks resolve into them, so an unmarked one is not a private
+// file this check should ignore — it is what all of them now load, and setup.sh refuses the whole
+// home over it. Reported with the remedy setup.sh names, because the usual answer to install-drift,
+// rerunning setup.sh, exits 1 on this state instead of repairing it.
+// Returned rather than filed, because where it lands depends on whether anything else was compared:
+// in a home with no markers at all it is folded into the single never-installed line below.
+function sharedPayloadConflict(home, display, rel) {
+  if (kindOf(join(home, rel), join(display, rel)) === "missing") return null;
+  return {
+    check: "install-drift",
+    path: join(display, rel),
+    detail: "present but not kit-owned — every kit skill resolves into it; move it aside and rerun setup.sh",
+  };
+}
+
+// Only the items setup.sh marked as its own are compared; an unmarked same-named skill or agent
+// file belongs to the user, so its content is none of this check's business — the two shared
+// payloads above are the exception, and say why. The kit-side pass at the end covers what
+// marker-scoping structurally cannot see: an item that was never installed carries no marker to be
+// found.
 function installFindings(kitRoot, homeArg) {
   const home = resolve(homeArg);
   const display = basename(home) || homeArg;
@@ -662,26 +716,30 @@ function installFindings(kitRoot, homeArg) {
   // payload deleted out from under its surviving sibling marker (CORE_RULES.md, an agent file)
   // would otherwise report "missing in install" once per pass.
   const compared = new Set();
+  const conflicts = [];
 
   for (const entry of listEntries(join(home, "skills"), join(display, "skills"), true)) {
-    if (!entry.isDirectory() || !isFile(join(home, "skills", entry.name, MARKER))) continue;
+    if (!entry.isDirectory() || entry.name.startsWith(STAGING_PREFIX)) continue;
+    const skillDisplay = join(display, "skills", entry.name);
+    if (markerState(join(home, "skills", entry.name, MARKER), join(skillDisplay, MARKER)) === "unowned") continue;
     items++;
     compared.add(join("skills", entry.name));
-    comparePath(
-      join(kitRoot, "skills", entry.name),
-      join(home, "skills", entry.name),
-      join(display, "skills", entry.name),
-      findings,
-    );
+    comparePath(join(kitRoot, "skills", entry.name), join(home, "skills", entry.name), skillDisplay, findings);
   }
 
-  if (isFile(join(home, "references", MARKER))) {
+  if (markerState(join(home, "references", MARKER), join(display, "references", MARKER)) === "unowned") {
+    const conflict = sharedPayloadConflict(home, display, "references");
+    if (conflict) conflicts.push(conflict);
+  } else {
     items++;
     compared.add("references");
     comparePath(join(kitRoot, "references"), join(home, "references"), join(display, "references"), findings);
   }
 
-  if (isFile(join(home, CORE_RULES_MARKER))) {
+  if (markerState(join(home, CORE_RULES_MARKER), join(display, CORE_RULES_MARKER)) === "unowned") {
+    const conflict = sharedPayloadConflict(home, display, "CORE_RULES.md");
+    if (conflict) conflicts.push(conflict);
+  } else {
     items++;
     compared.add("CORE_RULES.md");
     comparePath(join(kitRoot, "CORE_RULES.md"), join(home, "CORE_RULES.md"), join(display, "CORE_RULES.md"), findings);
@@ -702,11 +760,21 @@ function installFindings(kitRoot, homeArg) {
   }
 
   // A home setup.sh never installed into would otherwise report every kit file one by one; no marker
-  // of any kind is a single fact about the home, so it reports as a single line.
+  // of any kind is a single fact about the home, so it reports as a single line. A shared-payload
+  // conflict folds into that line rather than stacking beside it: it is why setup.sh refuses this
+  // home, so dropping it would leave the never-installed state with no reason attached.
   if (items === 0) {
-    findings.push({ check: "install-drift", path: display, detail: "no kit markers — never installed" });
+    const named = conflicts.map((conflict) => basename(conflict.path)).join(" and ");
+    findings.push({
+      check: "install-drift",
+      path: display,
+      detail: named
+        ? `no kit markers — never installed; ${named} present but not kit-owned — move aside and rerun setup.sh`
+        : "no kit markers — never installed",
+    });
     return { findings, items };
   }
+  findings.push(...conflicts);
 
   // Absence is tested against the home path itself rather than its marker: a path that does not
   // exist cannot be a user's, so naming it claims no ownership the marker scheme withholds. Once
@@ -755,9 +823,28 @@ function parseArgs(argv) {
     }
     const option = NUMERIC_OPTIONS.find((o) => arg === o.flag || arg.startsWith(`${o.flag}=`));
     if (option) {
-      const raw = arg.includes("=") ? arg.slice(arg.indexOf("=") + 1) : argv[++i];
-      if (/^\d+$/.test(String(raw ?? "").trim())) values[option.key] = Number(raw);
-      else warnings.push(`ignoring ${option.flag} "${raw ?? ""}" (want a non-negative integer); using ${option.fallback}`);
+      const inline = arg.includes("=");
+      // A separate value is peeked and consumed only once it validates: `argv[++i]` would take the
+      // next argument whatever it is, and a swallowed task root leaves the walk short with nothing
+      // in the JSON to say so.
+      const raw = inline ? arg.slice(arg.indexOf("=") + 1) : argv[i + 1];
+      if (/^\d+$/.test(String(raw ?? "").trim())) {
+        values[option.key] = Number(raw);
+        if (!inline) i++;
+      } else {
+        warnings.push(`ignoring ${option.flag} "${raw ?? ""}" (want a non-negative integer); using ${option.fallback}`);
+        // A rejected value falls through to the positional branch only when it names something on
+        // disk — that swallowed root is the case this peek exists for — or when it is itself a flag:
+        // no numeric value can start with `-`, and the branches above intercept such a token before
+        // it could reach the roots, so consuming one loses a flag and gains nothing. Anything else
+        // was a typed flag value, so consume it: as a root it would be named in `unreadablePaths` as
+        // store the sweep did not see, or, under `--installs`, take the kit-root slot and skip the
+        // whole probe. An empty value is consumed for the same reason — `resolve("")` is the process
+        // directory, which would walk the caller's own checkout as a store.
+        const fallsThrough =
+          !inline && typeof raw === "string" && raw !== "" && (raw.startsWith("-") || pathExists(raw));
+        if (!inline && !fallsThrough) i++;
+      }
       continue;
     }
     if (arg === "--") continue;

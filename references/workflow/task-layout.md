@@ -195,8 +195,8 @@ Once the folder is resolved, its files are found by their fixed role names — n
 
 **Destination paths (creating skills).** `refine-idea` and `plan-task` accept an optional destination path naming where the task folder should live. Interpret it by what's on disk:
 
-- **Exists, and is a task folder** (top-level `CONTEXT.md`, `goals.md`, `plan.md`, or `ticket.md`) → that *is* the task folder; use it verbatim. Its name is the slug — don't derive one.
-- **Exists, and is a directory** without those files → it's the **parent**: create `<path>/<slug>/` inside it. Exception: if its basename already equals the derived slug, ask — silently creating `<slug>/<slug>/` is almost never intended.
+- **Exists, and is a task folder** (by contents, per the **recognition set** in § *One task, one flat folder* — that section owns the file list, including the legacy suffix forms) → that *is* the task folder; use it verbatim. Its name is the slug — don't derive one.
+- **Exists, and is a directory** holding no recognition-set file → it's the **parent**: create `<path>/<slug>/` inside it. Exception: if its basename already equals the derived slug, ask — silently creating `<slug>/<slug>/` is almost never intended.
 - **Doesn't exist** → if its basename equals the derived slug, the user named the folder itself: create it verbatim. Otherwise ask whether to create `<path>/<slug>/` inside it (the usual intent) or use `<path>` as the folder itself.
 - **Exists, but is a file** → refuse; a destination must be a directory.
 

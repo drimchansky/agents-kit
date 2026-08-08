@@ -213,8 +213,13 @@ else
     "an unreadable reference is still measured by size"
   assert_equals "$(set_total "$OUT_LOCKED" tiny-skill transitive bytes)" "1100" \
     "an unreadable reference contributes no citations to the closure"
-  assert_contains "$(cat "$OUT_LOCKED.err")" "unreadable file references/workflow/alpha.md" \
+  assert_contains "$(cat "$OUT_LOCKED.err")" "unresolved citation in references/workflow/alpha.md: (contents)" \
     "an unreadable reference warns on stderr"
+  # The gap belongs in the contract, not only on stderr: `unresolved` is what the header ties a byte
+  # total's completeness to, so a shrunken closure beside an empty `unresolved` reads as real
+  # slimming. A stat-level failure already lands there; only the read-level one escaped.
+  assert_contains "$(unresolved_list "$OUT_LOCKED")" "references/workflow/alpha.md -> (contents)" \
+    "an unreadable reference names itself in unresolved"
   pass "a reference that cannot be opened shrinks the closure loudly, not silently"
 fi
 chmod 644 "$KIT/references/workflow/alpha.md"

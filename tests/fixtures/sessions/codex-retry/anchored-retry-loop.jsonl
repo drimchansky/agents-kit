@@ -1,0 +1,9 @@
+{"timestamp":"2026-03-14T09:00:00.000Z","type":"session_meta","payload":{"id":"fixture-codex-retry","cli_version":"0.0.0-fixture","cwd":"/fixture"}}
+{"timestamp":"2026-03-14T09:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Build the project."}}
+{"timestamp":"2026-03-14T09:00:02.000Z","type":"response_item","payload":{"type":"function_call","call_id":"call_build_1","name":"shell","arguments":"{\"command\":\"pnpm build\"}"}}
+{"timestamp":"2026-03-14T09:00:03.000Z","type":"response_item","payload":{"type":"function_call_output","call_id":"call_build_1","output":"exec_command failed for `/bin/zsh -lc 'pnpm build'`"}}
+{"timestamp":"2026-03-14T09:00:04.000Z","type":"response_item","payload":{"type":"function_call","call_id":"call_build_2","name":"shell","arguments":"{\"command\":\"pnpm build\"}"}}
+{"timestamp":"2026-03-14T09:00:05.000Z","type":"response_item","payload":{"type":"function_call_output","call_id":"call_build_2","output":"exec_command failed for `/bin/zsh -lc 'pnpm build'`"}}
+{"timestamp":"2026-03-14T09:00:06.000Z","type":"response_item","payload":{"type":"function_call","call_id":"call_build_3","name":"shell","arguments":"{\"command\":\"pnpm build\"}"}}
+{"timestamp":"2026-03-14T09:00:07.000Z","type":"response_item","payload":{"type":"function_call_output","call_id":"call_build_3","output":"exec_command failed for `/bin/zsh -lc 'pnpm build'`"}}
+{"timestamp":"2026-03-14T09:00:08.000Z","type":"event_msg","payload":{"type":"task_complete","turn_id":"turn-fixture-retry"}}

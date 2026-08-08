@@ -60,7 +60,11 @@ const CLAUDE_SANDBOX_BLOCK = "<tool_use_error>Blocked:";
 const CLAUDE_ISOLATION_BLOCK = "Refusing to run it";
 const INPUT_VALIDATION = "InputValidationError";
 const CODEX_REJECTED = /rejected due to unacceptable risk|Rejected\("/;
-const CODEX_FAILURE = /(?:^|\n)(?:Process exited with code [1-9]|Exit code: [1-9]|Script failed)|exec_command failed for/;
+// Every alternative is line-anchored: unanchored, a phrase matches its own quotation — a grep hit
+// over Codex's sources, a diff of this file — and three such outputs in a row read as a retry loop.
+// A literal `\\n` is accepted beside a real newline because a non-string tool output reaches the
+// classifier JSON-stringified, which turns its newlines into that two-character escape.
+const CODEX_FAILURE = /(?:^|\n|\\n)(?:Process exited with code [1-9]|Exit code: [1-9]|Script failed|exec_command failed for)/;
 // Per-call noise Codex prepends to every tool output; stripped so identical failures compare equal.
 const CODEX_VOLATILE = /^(?:Chunk ID|Wall time|Original token count|Total token count):/;
 
@@ -93,8 +97,12 @@ function isoDate(ms) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
+// The shape a `--since` value must have before it is worth parsing. Shared with the argument
+// scanner, which consumes a value only once it matches, so the two cannot drift apart.
+const SINCE_SHAPE = /^(\d{4})-(\d{2})-(\d{2})$/;
+
 function parseSince(value) {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value ?? "");
+  const m = SINCE_SHAPE.exec(value ?? "");
   if (!m) return null;
   const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
   // `new Date(y, m, d)` normalizes an out-of-range component instead of failing, so a well-shaped
@@ -109,10 +117,18 @@ function parseArgs(argv) {
   let top = "10";
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
-    if (arg === "--since") since = argv[++i] ?? "";
-    else if (arg.startsWith("--since=")) since = arg.slice("--since=".length);
-    else if (arg === "--top") top = argv[++i] ?? "";
-    else if (arg.startsWith("--top=")) top = arg.slice("--top=".length);
+    // A separate value is peeked and consumed only once it has the shape its flag wants: `argv[++i]`
+    // would take the next argument whatever it is, and a swallowed session directory leaves the walk
+    // short with nothing in the JSON to say so — the empty-window guard below can only report the
+    // directories it still has. An unconsumed value falls through to the positional branch instead.
+    if (arg === "--since") {
+      since = argv[i + 1] ?? "";
+      if (SINCE_SHAPE.test(since)) i++;
+    } else if (arg.startsWith("--since=")) since = arg.slice("--since=".length);
+    else if (arg === "--top") {
+      top = argv[i + 1] ?? "";
+      if (/^\d+$/.test(top)) i++;
+    } else if (arg.startsWith("--top=")) top = arg.slice("--top=".length);
     else if (arg.startsWith("-")) warnings.push(`ignoring unknown option: ${arg}`);
     else dirs.push(arg);
   }
@@ -125,6 +141,21 @@ function parseArgs(argv) {
   if (!Number.isInteger(topN) || topN < 1) warnings.push(`--top must be a positive integer (got ${JSON.stringify(top)})`);
   if (dirs.length === 0) warnings.push("no session directory given");
   return { dirs, sinceMs, topN: Number.isInteger(topN) && topN >= 1 ? topN : 10 };
+}
+
+// A directory this run did not walk, recorded for the caller's coverage check. ENOENT is excluded on
+// collectFiles' rule below — a corpus that is not there is an uninstalled host, not one that went
+// unread — which also keeps a malformed flag value that fell through to the positional branch from
+// counting as a directory the caller ever asked for.
+function noteUnwalked(dir) {
+  try {
+    statSync(dir);
+  } catch (err) {
+    warnings.push(`unreadable dir ${dir}: ${err.code ?? err.message}`);
+    if (err.code !== "ENOENT") unreadableDirs.push(dir);
+    return;
+  }
+  unreadableDirs.push(dir);
 }
 
 function collectFiles(dir, sinceMs, out) {
@@ -299,7 +330,12 @@ function triage(file) {
 
 const { dirs, sinceMs, topN } = parseArgs(process.argv.slice(2));
 const files = [];
-if (sinceMs != null) for (const dir of dirs) collectFiles(dir, sinceMs, files);
+// A window that never parsed leaves every directory unread. Recorded as unread rather than left to
+// the stderr warning alone: the payload would otherwise be byte-identical to a window that was
+// walked in full and found clean, and a caller advancing its since-marker past this run would skip
+// the whole elapsed window for good.
+if (sinceMs == null) for (const dir of dirs) noteUnwalked(dir);
+else for (const dir of dirs) collectFiles(dir, sinceMs, files);
 
 const results = [];
 let skippedUnknownRecords = 0;

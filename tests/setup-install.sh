@@ -73,6 +73,11 @@ verify_shared_payload() {
   assert_file "$host_home/.agents-kit-core-rules"
   assert_same_bytes "$REPO_DIR/CORE_RULES.md" "$host_home/CORE_RULES.md"
   assert_file "$host_home/references/.agents-kit"
+  # setup.sh installs references/ with `cp -RfL`, which materializes any symlink it finds, while
+  # health-check.mjs now reports a one-sided link as drift. A symlink added under references/ would
+  # therefore report as permanent, unfixable drift in every home.
+  [ -z "$(find "$REPO_DIR/references" -type l)" ] ||
+    fail "references/ must stay symlink-free: setup.sh installs it with cp -RfL"
   diff -r -x .agents-kit "$REPO_DIR/references" "$host_home/references" >/dev/null ||
     fail "installed references differ in $host_home"
 
@@ -80,7 +85,10 @@ verify_shared_payload() {
     name="$(basename "$source")"
     target="$host_home/skills/$name"
     assert_file "$target/.agents-kit"
-    diff -r -x .agents-kit "${source%/}" "$target" >/dev/null ||
+    # --no-dereference: without it diff compares what each symlink resolves to, so a skills copy
+    # that materialized AGENTS.md and references/ into private duplicates would pass unnoticed —
+    # the very regression health-check.mjs now reports as drift.
+    diff -r --no-dereference -x .agents-kit "${source%/}" "$target" >/dev/null ||
       fail "installed skill differs: $target"
   done
 }
