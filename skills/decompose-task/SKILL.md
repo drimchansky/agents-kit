@@ -19,7 +19,7 @@ Phase 2 executes the sibling skill file — read `../prepare-ticket/SKILL.md` an
 - **Next pointers** — the inner skill's handoff suggestions are dropped; this composite's Output owns **Next**.
 - **Destination resolution** — the part folder Phase 2 step 1 just created *is* the task folder: write `ticket.md` into it verbatim, bypassing `task-layout.md`'s *Destination paths* inference — which would read a just-created empty directory as a *parent* and nest a new slug inside it.
 
-**CRITICAL**: Phase 1 writes nothing. Phase 2's write surface is exactly the confirmed part folders — each new `<parent>/<NN->slug/` with its `ticket.md` and seeded `CONTEXT.md` — plus the store-index refresh; nothing else. No source-doc edits, no writes into existing task folders, no Jira writes (every mapped ticket body is paste-ready for the user), no git mutation.
+**CRITICAL**: Phase 1 writes nothing. Phase 2's write surface is exactly the confirmed part folders — each new `<parent>/<NN->slug/` with its `ticket.md` and seeded `CONTEXT.md`; nothing else. No source-doc edits, no writes into existing task folders, no Jira writes (every mapped ticket body is paste-ready for the user), no git mutation.
 
 ## When to Use
 
@@ -52,15 +52,13 @@ Run `decomposition.md` § *Materialization contract* per part:
 2. Draft `ticket.md` by executing `../prepare-ticket/SKILL.md` against the part's confirmed acceptance sketch — destination: the part folder; bar: `./references/workflow/ticket-format.md`; clarifications: already batched in Phase 1.
 3. Seed `CONTEXT.md` per `./references/workflow/context-schema.md`: `**Status:** seeded-by-decompose-task` (registered in `./references/workflow/task-lifecycle.md`), the part's `**Domain:**`, `## Problem Statement` citing `./ticket.md`, `## References` carrying the source pointer, the part's Jira key when mapped, and the duplicated shared facts, `## Recommended Direction` holding only what the source decides for this part (cited to its section), `## Open Questions` carrying the proposal's gate-nothing items that touch this part, every other section heading present as a placeholder.
 
-After the last part, **refresh the store index** when the store has one: walk up from the parent for `scripts/generate-index.mjs`, run `node <that-root>/scripts/generate-index.mjs`, skip silently when the script or `node` is absent (`task-layout.md` § *Store-level artifacts*).
-
 ## Output
 
 Lists, never tables. Report — don't paste the tickets:
 
 - **Materialized parts** — per part: folder path, ticket title, and — when a Jira mapping exists — the disposition (*absorb into `<KEY>`* — the ticket body doubles as that key's paste-ready description refresh — or *needs-new* with the parent/epic named); omitted for a run with no Jira context.
 - **Assumptions and open items** — anything inferred while drafting, plus the gate-nothing items carried from the proposal.
-- **Next:** `/plan-task <first-part-path>` (absolute path for a non-canonical store), then one line per remaining part in order.
+- **Next:** `/plan-task <first-part>` — the bare slug when the parts landed in the canonical root or a registered one, the folder's path when their root is neither (`./references/workflow/task-layout.md` § *One task, one flat folder*) — then one line per remaining part in order.
 
 ## Don't Rationalize
 
@@ -78,5 +76,5 @@ Confirm the protocol invariants before finishing:
 - [ ] Proposal printed with the recommended cut, numbering, acceptance sketches, and dependency notes — plus real alternatives, the Jira mapping, and gate-nothing items where they apply; nothing written before confirmation
 - [ ] One batched confirmation round; only confirmed parts materialized, exactly as answered, without renumbering surviving parts
 - [ ] Per part: folder placed per the numbering rules; `ticket.md` meets `ticket-format.md`'s bar; `CONTEXT.md` seed is the full schema skeleton with `seeded-by-decompose-task`, Problem Statement citing `./ticket.md`, References carrying source pointer + key + shared facts, gate-nothing items in Open Questions; nothing pre-existing silently overwritten
-- [ ] No Jira write, no git mutation, no source-doc edit; store index refreshed when the store has one
+- [ ] No Jira write, no git mutation, no source-doc edit
 - [ ] Output reports every part — with its Jira disposition when a mapping exists — and owns **Next** with the `/plan-task` handoff

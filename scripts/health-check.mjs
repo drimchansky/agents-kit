@@ -4,9 +4,15 @@
 // Run: node scripts/health-check.mjs [--stale-days N] [--result-max-kb N] <root> [<root>...]
 //  or: node scripts/health-check.mjs --installs <kit-root> <home> [<home>...]
 // Emitted `check` values: the task walk reports `stale`, `done-unarchived`, `unknown-status`,
-// `dead-anchor`, `goal-id`, `no-current-state`, and `oversized-result`; `--installs` walks no tasks
-// and reports `install-drift` instead. Archived folders are counted in `scanned` but exempt from
-// every check.
+// `dead-anchor`, `goal-id`, `no-current-state`, `oversized-result`, and `duplicate-slug`;
+// `--installs` walks no tasks and reports `install-drift` instead. Archived folders are counted in
+// `scanned` and exempt from every check but `duplicate-slug`, which sees them because a bare slug
+// falls back into `Archive/` (references/workflow/task-layout.md § Discovery rules for skills), so an
+// archived slug stays citable and must stay unique. `duplicate-slug` is also the one check that
+// spans roots: a slug must be unique across every root walked and within each one, since the walk
+// is recursive. It emits one finding per colliding folder, each keeping its own `root`, so every
+// finding still carries the single root its consumer attributes it by, and names its peers by
+// absolute directory rather than by the root-basename-prefixed display path.
 // Contract: stdout is exactly one JSON object,
 // {"findings":[…],"scanned":N,"unreadable":N,"unreadablePaths":[…]}. Task findings are
 // {check,path,detail,root}, with `root` the resolved absolute task root; `--installs` findings are
@@ -15,8 +21,8 @@
 // findings alone are never read as coverage (`scanned` is a floor while it is non-empty). Warnings
 // go to stderr and the exit status is always 0, so a partly unreadable store still parses.
 
-import { lstatSync, readdirSync, readFileSync, readlinkSync, statSync } from "node:fs";
-import { join, resolve, basename } from "node:path";
+import { lstatSync, readdirSync, readFileSync, readlinkSync, realpathSync, statSync } from "node:fs";
+import { join, resolve, basename, sep } from "node:path";
 
 // stdout is asynchronous on a macOS pipe, so the report is written and the module then ends: calling
 // process.exit after the write would discard whatever the pipe buffer could not take, truncating the
@@ -28,8 +34,12 @@ process.stdout.on("error", (err) => {
 
 // Pruned at every depth because the walk would never finish otherwise. A helper directory needs no
 // entry here — isTaskDir already rejects a folder holding no role file — and a name-based prune costs
-// a real task its scan, silently: `.git` and every other dotted name are skipped by the walk itself.
+// a real task its scan, silently: `.git` and every other dotted name bar `.agents` are skipped by
+// the walk itself.
 const SKIP_DIRS = new Set(["node_modules"]);
+// The recognition set defined in references/workflow/task-layout.md § One task, one flat folder —
+// this is its executable copy; the suffix forms are legacy names the format sweep renames, kept
+// here because only the kit's own canonical root is ever swept.
 const ROLE_FILES = ["CONTEXT.md", "goals.md", "plan.md", "result.md", "ticket.md"];
 const ROLE_SUFFIXES = [".plan.md", ".result.md", ".spec.md", ".ticket.md"];
 // Closed plan vocabulary defined by references/workflow/task-lifecycle.md § Status values; a value
@@ -113,6 +123,17 @@ function isFile(path) {
     return statSync(path).isFile();
   } catch {
     return false;
+  }
+}
+
+// Collapses symlinked, repeated, and nested root arguments to one identity. A path that vanishes
+// between the directory check and this call falls back to its resolved form rather than throwing:
+// the contract above is one JSON object on stdout and exit 0, so no step of the walk may raise.
+function canonicalRoot(rootDir) {
+  try {
+    return realpathSync(rootDir);
+  } catch {
+    return rootDir;
   }
 }
 
@@ -245,7 +266,11 @@ function collect(rootDir, rootDisplay) {
   // report an unreadable directory as two coverage gaps, one per pass.
   const walk = (dir, display, entries, archived) => {
     for (const e of entries) {
-      if (!e.isDirectory() || e.name.startsWith(".") || SKIP_DIRS.has(e.name)) continue;
+      if (!e.isDirectory() || SKIP_DIRS.has(e.name)) continue;
+      // `.agents` is the one dotted name entered: the canonical root `<project>/.agents/tasks` sits
+      // inside it, so pruning it costs a root registered as a project directory every task it
+      // holds — silently, since an unwalked root and an empty one report the same zero.
+      if (e.name.startsWith(".") && e.name !== ".agents") continue;
       const child = join(dir, e.name);
       const childDisplay = join(display, e.name);
       const childEntries = listEntries(child, childDisplay);
@@ -278,6 +303,32 @@ function lifecycleStatus(task) {
   if (task.plan) return { value: task.plan.value, source: task.plan.file };
   if (task.result) return { value: task.result.value, source: task.result.file };
   return { value: null, source: null };
+}
+
+// One finding per colliding folder rather than one per collision: each keeps its own `root`, which is
+// what consumers attribute a finding by, and naming the peers in `detail` is what makes the pair
+// actionable from either side. Peers are named by absolute directory, not by the compact display
+// path the other findings use: that path is prefixed by its root's basename alone, and two roots
+// sharing a basename would leave the peer unresolvable in the one check whose payload is which
+// other folder.
+function duplicateSlugFindings(bySlug) {
+  const out = [];
+  for (const [slug, holders] of bySlug) {
+    if (holders.length < 2) continue;
+    for (const holder of holders) {
+      const peers = holders
+        .filter((other) => other !== holder)
+        .map((other) => `${other.dir}${other.archived ? " (archived)" : ""}`)
+        .join(", ");
+      out.push({
+        check: "duplicate-slug",
+        path: holder.path,
+        detail: `slug "${slug}"${holder.archived ? " (archived)" : ""} also at ${peers}`,
+        root: holder.root,
+      });
+    }
+  }
+  return out;
 }
 
 // A folder with no status-bearing file at all (context- or ticket-only) counts as live rather than
@@ -747,11 +798,55 @@ if (installs) {
   if (roots.length === 0) {
     warnings.push("no task root given; usage: node scripts/health-check.mjs [--stale-days N] [--result-max-kb N] <root> [<root>...]");
   }
-  for (const rootArg of roots) {
-    if (!isDirectory(rootArg, "root")) continue;
+  // Slug → every folder carrying it, across all roots. A slug is globally unique by contract, so
+  // this stays empty on a healthy set; it is filled during the per-root walk and judged after it,
+  // because a collision can span roots and no root can be ruled out until every one is walked.
+  const bySlug = new Map();
+  const candidates = roots
+    .filter((rootArg) => isDirectory(rootArg, "root"))
+    .map((rootArg) => {
+      const rootDir = resolve(rootArg);
+      // Canonicalize for the overlap comparison alone — findings keep the caller's own resolved
+      // path, which is what a consumer matches them against.
+      return { rootArg, rootDir, canonical: canonicalRoot(rootDir) };
+    });
+  // A root repeated, reached through a symlink, or overlapping another walks the same folders
+  // twice: `scanned` overcounts, every finding doubles, and duplicate-slug reports a folder as
+  // colliding with itself. Which roots to walk is therefore settled before any of them is
+  // walked: the containment test only catches a root nested inside one already kept, so deciding
+  // it in argument order would let the caller's ordering of an overlapping pair determine
+  // whether the overlap is caught at all. An ancestor is a strict path prefix of its
+  // descendants, so a pass over the candidates sorted by canonical path always reaches the outer
+  // root first, and the sort is stable, so of two spellings of one root the caller's first
+  // survives. The walk below then runs in argument order, which is the order findings are
+  // emitted in.
+  const walked = [];
+  const kept = new Set();
+  const byDepth = [...candidates].sort((a, b) =>
+    (a.canonical < b.canonical ? -1 : a.canonical > b.canonical ? 1 : 0));
+  for (const candidate of byDepth) {
+    const { canonical } = candidate;
+    if (walked.some((seen) => canonical === seen || canonical.startsWith(seen + sep))) continue;
+    walked.push(canonical);
+    kept.add(candidate);
+  }
+  for (const candidate of candidates) {
+    if (!kept.has(candidate)) {
+      warnings.push(`skipping root already covered by another: ${candidate.rootArg}`);
+      continue;
+    }
+    const { rootArg, rootDir } = candidate;
     // The display path stays compact, while the resolved root keeps same-basename roots distinct.
-    const rootDir = resolve(rootArg);
     const tasks = collect(rootDir, basename(rootDir) || rootArg);
+    for (const task of tasks) {
+      const slug = basename(task.dir);
+      // Only the fields the collision report reads: a whole-task copy would pin every parsed
+      // plan.md, goals.md, and result.md body in memory until the process exits.
+      const holder = { path: task.path, dir: task.dir, archived: task.archived, root: rootDir };
+      const holders = bySlug.get(slug);
+      if (holders) holders.push(holder);
+      else bySlug.set(slug, [holder]);
+    }
     const rootFindings = [];
     scanned += tasks.length;
     for (const task of tasks) {
@@ -769,6 +864,7 @@ if (installs) {
     }
     findings.push(...rootFindings.map((finding) => ({ ...finding, root: rootDir })));
   }
+  findings.push(...duplicateSlugFindings(bySlug));
 }
 
 process.stdout.write(JSON.stringify({

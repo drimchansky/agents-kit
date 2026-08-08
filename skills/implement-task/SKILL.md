@@ -106,7 +106,7 @@ _Updated: YYYY-MM-DD_
 
 `## Current state` is derived header metadata on the contract in `./references/workflow/task-lifecycle.md`: rewritten **in place**, never appended to. Everything below its closing `---` is the append-only log. A pre-existing result file without the block gains one at this run's first write.
 
-Then point the plan's `**Result:**` line at `./result.md` and flip its `**Status:**` from `to-do` to `executing` — a `**Status:**` change, so regenerate the store index (§8's walk-up rule).
+Then point the plan's `**Result:**` line at `./result.md` and flip its `**Status:**` from `to-do` to `executing`.
 
 **Reviving a `skipped` plan** — only after the explicit confirmation the *Skip when* gate requires.
 
@@ -129,7 +129,7 @@ Run the loop in `./references/workflow/execution-loop.md` — the five beats, bo
     ```
 
 - **Pause or continue** — step-by-step: stop after each step and report progress. Full-plan: continue.
-- **Blocked** — a Stop-the-Line that can't clear this session: both files' `**Status:**` to `blocked`, a `**Blocked:**` section naming the cause (what failed, what was tried, what's needed — or what's awaited), `## Current state` rewritten naming the blocker, the store index regenerated (§8's walk-up rule), then stop — don't skip ahead (`./references/workflow/task-lifecycle.md`).
+- **Blocked** — a Stop-the-Line that can't clear this session: both files' `**Status:**` to `blocked`, a `**Blocked:**` section naming the cause (what failed, what was tried, what's needed — or what's awaited), `## Current state` rewritten naming the blocker, then stop — don't skip ahead (`./references/workflow/task-lifecycle.md`).
 - **Integration gates** — the plan's `### Checkpoint after Step N` headings. Each is **mandatory** after marking step N done, not an optional summary; a checkpoint is not a step, carries no `- [ ]`, and is never flipped. Run its assertions per the shared loop, append a checkpoint section (§5), and in step-by-step mode pause as at a step boundary. With a `diagram.md`, it also runs the re-check below.
 
 #### Diagram re-check (only when the task has a `diagram.md`)
@@ -303,7 +303,7 @@ The gate produces one of two session-terminal outcomes. "Acknowledged" below mea
 - The result file's `**Status:**` to `done`, plus a closing `**Completed:** YYYY-MM-DD` line
 - The shared loop's *Before presenting* step — the domain's pre-presentation checks over the full changed surface, then the summary of what shipped, acceptance results, deviations, and open follow-ups
 
-In **both** branches, rewrite `## Current state` last — at `in-review` its `**Next:**` names the awaited external verification; at `done` the block stays frozen as the final digest. Then regenerate the store index when the store has one: walk up from the task folder for `scripts/generate-index.mjs`; run `node <that-root>/scripts/generate-index.mjs`; skip silently when the script or `node` is absent (`./references/workflow/task-layout.md` § *Store-level artifacts*).
+In **both** branches, rewrite `## Current state` last — at `in-review` its `**Next:**` names the awaited external verification; at `done` the block stays frozen as the final digest.
 
 **Reaching `done` from `in-review` (a later re-run).** When the user reports the external verification happened — a confirmation, a receipt, the observed live state — re-run the gate on each `pending external` goal against that **best-available proxy** (`./references/workflow/acceptance-criteria.md`): the user-reported confirmation *is* the sanctioned evidence for an `(external)` goal. Update its `## Acceptance` line to `met`, noting the proxy, then finalize to `done` as above, adding the `**Completed:**` line. If review instead surfaced problems, flip both files back to `executing` and resume — don't force `done`.
 

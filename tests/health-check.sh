@@ -247,8 +247,8 @@ assert_equals "$(findings_count "$OUT_HIGH" done-unarchived)" "1" \
   "done-unarchived count is independent of --stale-days"
 pass "--stale-days raises the threshold without affecting the archive check"
 
-# `scripts` was pruned at every depth to skip the store's generate-index.mjs helper — but isTaskDir
-# already rejects a folder holding no role file, so the prune only ever cost a real task its scan.
+# `scripts` was pruned at every depth to skip a store's helper directory — but isTaskDir already
+# rejects a folder holding no role file, so the prune only ever cost a real task its scan.
 NAMED="$TEST_ROOT/named-scripts"
 mkdir -p "$NAMED/scripts"
 cp "$STORE/fresh-executing/plan.md" "$NAMED/scripts/plan.md"
@@ -256,6 +256,19 @@ OUT_NAMED="$TEST_ROOT/named-scripts.json"
 run_check "$OUT_NAMED" "$NAMED"
 assert_equals "$(scanned_count "$OUT_NAMED")" "1" "a task folder named scripts is scanned like any other"
 pass "a directory's name no longer decides whether the task inside it exists"
+
+# `.agents` is the one dotted directory the walk enters: the canonical root sits inside it, so
+# pruning it by the general dotted rule cost a registered project root every task it holds —
+# silently, since an unwalked root and an empty one report identically.
+PROJECT="$TEST_ROOT/project-root"
+mkdir -p "$PROJECT/.agents/tasks" "$PROJECT/.git"
+cp -R "$STORE/fresh-executing" "$PROJECT/.agents/tasks/nested-task"
+cp "$STORE/fresh-executing/plan.md" "$PROJECT/.git/plan.md"
+OUT_PROJECT="$TEST_ROOT/project-root.json"
+run_check "$OUT_PROJECT" "$PROJECT"
+assert_equals "$(scanned_count "$OUT_PROJECT")" "1" \
+  "a project root reaches the tasks under its .agents/tasks"
+pass "the canonical root is found from a project root, while every other dotted name stays pruned"
 
 SECOND_ROOT="$TEST_ROOT/second/store"
 mkdir -p "$SECOND_ROOT"
@@ -564,6 +577,99 @@ early_status=${PIPESTATUS[0]}
 set -e
 assert_equals "$early_status" "0" "a reader that closes the pipe early must leave the exit status at 0"
 pass "an early-closing reader does not turn into a non-zero exit"
+
+# duplicate-slug spans roots and is the only check that sees archived folders, so it needs a
+# two-root fixture: one active/active collision, one active/archived, and a slug unique to each
+# root that must stay silent. Peers are named by absolute directory — a compact display path is
+# prefixed by its root's basename alone, which two roots can share.
+DUP_A="$TEST_ROOT/dup-a"
+DUP_B="$TEST_ROOT/dup-b"
+for d in "$DUP_A/add-csv-export" "$DUP_B/add-csv-export" "$DUP_A/only-here" "$DUP_B/Archive/only-here" "$DUP_A/unique-a" "$DUP_B/unique-b"; do
+  mkdir -p "$d"
+  printf '# t\n\n**Status:** to-do\n' >"$d/plan.md"
+done
+
+OUT_DUP="$TEST_ROOT/duplicate-slug.json"
+run_check "$OUT_DUP" "$DUP_A" "$DUP_B"
+
+assert_equals "$(findings_count "$OUT_DUP" duplicate-slug)" "4" "duplicate-slug finding count"
+pass "a slug in two roots reports once per colliding folder, not once per collision"
+
+assert_equals \
+  "$(finding_detail "$OUT_DUP" duplicate-slug dup-a/add-csv-export)" \
+  "slug \"add-csv-export\" also at $DUP_B/add-csv-export" \
+  "active/active collision detail names the peer by absolute path"
+assert_equals \
+  "$(finding_detail "$OUT_DUP" duplicate-slug dup-b/add-csv-export)" \
+  "slug \"add-csv-export\" also at $DUP_A/add-csv-export" \
+  "the peer's own finding names it back"
+pass "each side of a collision is actionable from its own finding"
+
+assert_equals \
+  "$(finding_detail "$OUT_DUP" duplicate-slug dup-a/only-here)" \
+  "slug \"only-here\" also at $DUP_B/Archive/only-here (archived)" \
+  "an archived peer is reported and labelled archived"
+assert_equals \
+  "$(finding_detail "$OUT_DUP" duplicate-slug dup-b/Archive/only-here)" \
+  "slug \"only-here\" (archived) also at $DUP_A/only-here" \
+  "the archived folder gets its own finding despite the archive exemption"
+pass "duplicate-slug sees archived folders, because a bare slug still falls back into Archive/"
+
+assert_equals "$(finding_detail "$OUT_DUP" duplicate-slug dup-a/unique-a)" "" \
+  "a slug unique to its root is not reported"
+assert_equals "$(finding_detail "$OUT_DUP" duplicate-slug dup-b/unique-b)" "" \
+  "a slug unique to the other root is not reported"
+pass "a globally unique slug stays silent"
+
+OUT_DUP_ONE="$TEST_ROOT/duplicate-slug-single-root.json"
+run_check "$OUT_DUP_ONE" "$DUP_A"
+assert_equals "$(findings_count "$OUT_DUP_ONE" duplicate-slug)" "0" \
+  "single-root run reports no duplicate-slug"
+pass "a root whose slugs are all distinct stays silent, with no cross-root state leaking in"
+
+# Uniqueness is global, not per-parent: the walk is recursive, so one root can hold the same slug
+# under two area directories (references/workflow/task-layout.md § The root registry).
+DUP_C="$TEST_ROOT/dup-c"
+for d in "$DUP_C/area-a/nested-dup" "$DUP_C/area-b/nested-dup"; do
+  mkdir -p "$d"
+  printf '# t\n\n**Status:** to-do\n' >"$d/plan.md"
+done
+
+OUT_DUP_NESTED="$TEST_ROOT/duplicate-slug-nested.json"
+run_check "$OUT_DUP_NESTED" "$DUP_C"
+assert_equals "$(findings_count "$OUT_DUP_NESTED" duplicate-slug)" "2" \
+  "nested same-root collision finding count"
+assert_equals \
+  "$(finding_detail "$OUT_DUP_NESTED" duplicate-slug dup-c/area-a/nested-dup)" \
+  "slug \"nested-dup\" also at $DUP_C/area-b/nested-dup" \
+  "a within-root collision names its peer"
+pass "two area directories of one root collide — uniqueness is global, not per-parent"
+
+# A root repeated, or nested inside one already walked, must not be walked twice: that doubled
+# `scanned` and every finding, and made each folder report itself as its own collision peer.
+OUT_DUP_REPEAT="$TEST_ROOT/duplicate-slug-repeat.json"
+run_check "$OUT_DUP_REPEAT" "$DUP_C" "$DUP_C"
+assert_equals "$(scanned_count "$OUT_DUP_REPEAT")" "2" "a repeated root is walked once"
+assert_equals "$(findings_count "$OUT_DUP_REPEAT" duplicate-slug)" "2" \
+  "a repeated root does not double the collision findings"
+
+OUT_DUP_OVERLAP="$TEST_ROOT/duplicate-slug-overlap.json"
+run_check "$OUT_DUP_OVERLAP" "$DUP_C" "$DUP_C/area-a"
+assert_equals "$(scanned_count "$OUT_DUP_OVERLAP")" "2" \
+  "a root nested inside one already walked is skipped"
+assert_equals "$(findings_count "$OUT_DUP_OVERLAP" duplicate-slug)" "2" \
+  "an overlapping root adds no self-collision"
+pass "an overlapping root argument is skipped rather than reported as a folder colliding with itself"
+
+# Containment is tested one way only by the case above: the guard asks whether a root sits inside
+# one already walked, so passing the inner root first would leave the outer one to walk it again.
+OUT_DUP_REV="$TEST_ROOT/duplicate-slug-overlap-reversed.json"
+run_check "$OUT_DUP_REV" "$DUP_C/area-a" "$DUP_C"
+assert_equals "$(scanned_count "$OUT_DUP_REV")" "2" \
+  "a root containing one already walked is skipped too"
+assert_equals "$(findings_count "$OUT_DUP_REV" duplicate-slug)" "2" \
+  "argument order does not decide whether the overlap is caught"
+pass "overlap detection is order-independent"
 
 OUT_NO_ROOT="$TEST_ROOT/no-root.json"
 run_check "$OUT_NO_ROOT"

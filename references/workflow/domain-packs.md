@@ -100,7 +100,7 @@ just under `**Status:**`:
   on-disk format is identical across every domain, so there is no overlay to load. Both read
   `task-layout.md` + `task-lifecycle.md` at run time as their source of truth — `archive-task` for
   the archive location and the terminal-state set, `maintain` for its format-conformance sweep and
-  the store-artifacts contract. `prepare-ticket` writes a deliberately domain-neutral artifact that
+  the root registry. `prepare-ticket` writes a deliberately domain-neutral artifact that
   sits *upstream* of `CONTEXT.md`, so no `**Domain:**` marker exists yet to resolve; its source of
   truth is `ticket-format.md` + `task-layout.md`. And the reconcile composites delegate their
   first phase to a spine skill — `resume-task` / `review-task` — whose own domain-pack step

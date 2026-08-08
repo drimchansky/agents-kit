@@ -64,10 +64,10 @@ Per confirmed part, in order:
 3. **`CONTEXT.md` seed** — the full schema skeleton per `context-schema.md`, every section heading present, placeholders where nothing is decided:
     - `**Status:** seeded-by-decompose-task` (the registered origin marker — `task-lifecycle.md`) · `**Domain:**` inferred per part — and when a part is clearly non-code with no clear domain, asked in the confirmation round rather than stamped wrong (`context-schema.md`'s field note).
     - `## Problem Statement` cites `./ticket.md` — never restates the ask.
-    - `## References` carries the **source pointer** (store-root path or URL; for a pasted source, a dated *pasted into session* note — the duplicated facts below are then the part's only durable copy), the part's **Jira key** when mapped, and the **shared facts duplicated** from the source that this part needs — siblings share no layer above them, so each folder carries its own copy (`task-layout.md` § *One home per fact*, closing rule).
+    - `## References` carries the **source pointer** (the source task's slug and the doc's role name, a root-relative path for a store-level doc, or a URL — per `task-layout.md` § *One home per fact*; for a pasted source, a dated *pasted into session* note — the duplicated facts below are then the part's only durable copy), the part's **Jira key** when mapped, and the **shared facts duplicated** from the source that this part needs — siblings share no layer above them, so each folder carries its own copy (`task-layout.md` § *One home per fact*, closing rule).
     - `## Recommended Direction` holds only what the source already decides for this part, cited to its section — decomposition never invents direction.
     - `## Open Questions` carries the proposal's gate-nothing open items that touch this part — deferral stays a visible, durable decision, not a chat-only note.
-4. **Handoff** — the run's report ends with `Next: /plan-task <first-part-path>` (absolute path for a non-canonical store) plus one line per remaining part.
+4. **Handoff** — the run's report ends with `Next: /plan-task <first-part>` — the bare slug when the parts landed in the canonical root or a registered one, the folder's path when their root is neither (`task-layout.md` § *One task, one flat folder*) — plus one line per remaining part.
 
 Each seeded folder is a normal task folder from that moment: `plan-task` respects the existing `CONTEXT.md` and `ticket.md`, sharpens the ticket's criteria into `goals.md`, and the standard lifecycle takes over.
 

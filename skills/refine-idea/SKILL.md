@@ -64,7 +64,7 @@ This skill runs the shared two-phase ideation method — **Phase 1 (Diverge)** a
 
 ### Phase 3 — Sharpen
 
-Write the one-pager to the resolved task folder's `CONTEXT.md`. Then post a short summary in this exact shape, so the user can copy-paste the next command. For a task in the canonical root:
+Write the one-pager to the resolved task folder's `CONTEXT.md`. Then post a short summary in this exact shape, so the user can copy-paste the next command. For a task whose root is the canonical one or a registered one, where the bare slug resolves:
 
 ```
 Context: .agents/tasks/<slug>/CONTEXT.md
@@ -73,7 +73,7 @@ Slug: <slug>
 Next: /plan-task <slug>
 ```
 
-For a task anywhere else, the handoff token is the folder's absolute path (a bare slug only resolves canonically):
+For a task whose root is neither, the handoff token is the folder's absolute path (that is the only case where a bare slug does not resolve):
 
 ```
 Context: <abs-path>/CONTEXT.md
@@ -82,7 +82,7 @@ Slug: <slug>
 Next: /plan-task <abs-path>/
 ```
 
-`plan-task` discovers `CONTEXT.md` by resolving the task folder. The handoff token is the **slug** when the folder is in the canonical root and the folder's **absolute path** otherwise — so for an anywhere-task the `Next:` line must carry the path. The pre-formatted next-command is what makes the handoff frictionless; don't drop it or paraphrase it.
+`plan-task` discovers `CONTEXT.md` by resolving the task folder. The handoff token is the **slug** when the folder sits in the canonical root or a registered one, and the folder's **absolute path** only when its root is neither (`./references/workflow/task-layout.md` § *One task, one flat folder*) — so for that last case the `Next:` line must carry the path. The pre-formatted next-command is what makes the handoff frictionless; don't drop it or paraphrase it.
 
 The "Not Doing" list is the most valuable part — focus is about saying no to good ideas. Make trade-offs explicit.
 

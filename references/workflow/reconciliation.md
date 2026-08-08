@@ -118,7 +118,7 @@ Every reconciler writes `plan.md` through the same five shared openings; the ses
 2. Run § *External reference check* — **always before any edit**, and before composing the report in the case step 1 names. Its `## References` block prints where the run's report puts it: inline where the reconciler owns its own report, at the start of the reconcile phase where a composite's first phase owns it. Its tagged entries join the report's findings as evidence for the edits below, and its `observations.md` rewrite lands with the sweep — part of the check, not one of the edits.
 3. Auto-apply the obvious fixes, file-by-file: `result.md` first when a record is owed, then `plan.md`, then `CONTEXT.md`.
 4. Ask the batched judgment questions; apply the answers.
-5. Refresh `## Current state` (§ *Current state refresh*); then, if any `**Status:**` changed, regenerate the store index — walk up from the task folder for `scripts/generate-index.mjs`, run `node <that-root>/scripts/generate-index.mjs`, skip silently when the script or `node` is absent (`./task-layout.md` § *Store-level artifacts*).
+5. Refresh `## Current state` (§ *Current state refresh*).
 6. Close with the change list (or `Nothing to reconcile.` when nothing was actionable — writing nothing beyond the sweep's `observations.md` rewrite, not even an empty Reconciliation entry):
 
 ```markdown

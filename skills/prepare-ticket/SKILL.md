@@ -45,7 +45,7 @@ Every acceptance criterion must pass the quality bar in [`./references/workflow/
 
 Write the file. Then, in chat, **report — don't paste the ticket**:
 
-- **Ticket** — the path and the title. When it seeded a task folder, add the handoff line so the next step is one copy-paste away: `Next: /plan-task <slug>` (or `/refine-idea <slug>` first when the ask still needs sharpening) — the slug for a canonical task folder, the absolute path otherwise.
+- **Ticket** — the path and the title. When it seeded a task folder, add the handoff line so the next step is one copy-paste away: `Next: /plan-task <slug>` (or `/refine-idea <slug>` first when the ask still needs sharpening) — the bare slug when the folder sits in the canonical root or a registered one, the absolute path only when its root is neither (`./references/workflow/task-layout.md` § *One task, one flat folder*).
 - **Assumptions** — anything you inferred to fill a gap the user didn't state.
 - **Open questions** — anything still genuinely undecided. These stay out of the ticket file; a ready ticket is decided, and unresolved calls belong in chat where the user can answer them.
 

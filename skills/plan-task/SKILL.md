@@ -244,4 +244,3 @@ Confirm the protocol invariants before finishing:
 - [ ] No `CONTEXT.md` content restated — sibling sections cited, the plan carrying only plan-time deltas
 - [ ] Plan grounded in the domain's actual reality; checkpoints every 2–3 steps for plans >5 steps
 - [ ] Risks specific to this task; open questions that could invalidate the approach surfaced
-- [ ] Store index refreshed when the store has one, per `./references/workflow/task-layout.md` § *Store-level artifacts*

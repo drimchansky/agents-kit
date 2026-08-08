@@ -39,12 +39,12 @@ This skill moves a finished task folder into its own parent's `Archive/` — can
 
 ### 1. Resolve the target task folder
 
-Resolve per the base resolution rules in `./references/workflow/task-layout.md`:
+Resolve per the **resolve-or-ask** base resolution in `./references/workflow/task-layout.md` § *Discovery rules for skills*, read at run time — that section owns every branch (a bare slug across the canonical root and every registered one, each with its `Archive/` fallback; an explicit folder path; a `plan.md` path; and the nothing-named listing). Don't work from a copy: this skill carried one, and it went stale the moment the registry widened where a slug resolves.
 
-- **Bare slug given** → resolve to `.agents/tasks/<slug>/` among the canonical root's active folders (excluding `Archive/`). If it matches an active folder, use it. If the slug matches only an **already-archived** folder (`.agents/tasks/Archive/<slug>/`), report that it's already archived and stop — nothing to do.
-- **Explicit task-folder path given** → use it verbatim, anywhere on disk; the folder's own name is the slug.
-- **Full `plan.md` path given** → derive the task folder from its parent.
-- **Nothing named** → list the active task folders with each one's `plan.md` `**Status:**`, and ask which to archive (the **resolve-or-ask** fallback). Don't guess.
+Two additions are this skill's own:
+
+- **Already archived** → when the slug matches only a folder inside an `Archive/`, report that it's already archived and stop. Nothing to do, and re-archiving would nest it.
+- **The nothing-named listing carries status** → show each active folder's `plan.md` `**Status:**` beside it, so the choice is made against what is actually terminal. Don't guess.
 
 If nothing matches, report the task wasn't found and list the active folders.
 
@@ -88,7 +88,7 @@ A plain filesystem move — no git. The source is the exact folder resolved and 
 
 Confirm what moved (`<slug>` → the actual `DEST`), note that the folder's internal links are intact, and remind the user that the task is now excluded from active listings; to un-archive it, move it back out of `Archive/` — naming its slug only lets discovery find it there, it does not un-archive it. When the folder is inside a git repo, the change is working-tree-only — review with `git status` and commit; a task outside any repo has nothing to commit.
 
-When the store has an index, regenerate it after the move: walk up from `PARENT` for `scripts/generate-index.mjs`; run `node <that-root>/scripts/generate-index.mjs`; skip silently when the script or `node` is absent. This is a store-index refresh sanctioned by `task-layout.md` § *Store-level artifacts*, not a task-content edit — the never-edit rule above is untouched.
+The move is the whole of this section's write surface: nothing is regenerated, refreshed, or recorded outside `PARENT` afterwards.
 
 ## Output Template
 
@@ -127,4 +127,4 @@ Confirm the protocol invariants before finishing:
 - [ ] Non-terminal, unknown-status, or missing-`plan.md` folders refused with the path to proceed; status and content never edited
 - [ ] Destination guarded — `DEST` collision refused, symlink or non-directory at `PARENT/Archive` refused
 - [ ] The exact resolved `SRC` moved into its own `PARENT/Archive/` in one operation (never a path rebuilt from slug + cwd); internal `./` links intact
-- [ ] No git state mutated; nothing outside `PARENT` touched — except the §5 store-index refresh (regenerating a store-level `INDEX.md` via its own script), which writes no task content
+- [ ] No git state mutated; nothing outside `PARENT` touched
