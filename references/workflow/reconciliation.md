@@ -31,7 +31,7 @@ A `skipped` plan is exempt from reconciliation entirely — it's terminal; repor
 
 The **reference sweep** re-derives the freshness of the external systems a task folder cites. Every reconciler runs it while assembling its finding set, and it is the **only** re-deriver of cited-reference freshness (`./task-layout.md` § *One home per fact*, external-system facts) — distinct from `stage-doc`'s refresh of the scratch-page ledger it owns in `**Pointers:**`.
 
-**Ledger.** `observations.md` is the sweep's record (`./task-layout.md` § *The observations file*). Read it **before the sweep**: its lines are both the diff baseline and what a failed fetch carries forward. Rewrite it **wholesale** at the end, one dated line per swept URL, `info` included. The rewrite is part of the check, not an evidenced edit, and is the one write an otherwise-empty run still makes. A folder citing nothing from an actionable surface gets no file; a stale one from a broader earlier sweep is deleted.
+**Ledger.** `observations.md` is the sweep's record (`./task-observations.md`). Read it **before the sweep**: its lines are both the diff baseline and what a failed fetch carries forward. Rewrite it **wholesale** at the end, one dated line per swept URL, `info` included. The rewrite is part of the check, not an evidenced edit, and is the one write an otherwise-empty run still makes. A folder citing nothing from an actionable surface gets no file; a stale one from a broader earlier sweep is deleted.
 
 **In scope** — every external URL cited from an **actionable surface**:
 
@@ -40,7 +40,7 @@ The **reference sweep** re-derives the freshness of the external systems a task 
 - `ticket.md`'s References;
 - the result's `## Current state` `**Pointers:**` entries, first-class citations: a PR or ticket pointer is fetched like any URL, a bare branch/SHA pointer checked against the repo instead;
 - the result's **active pause section** — the `**Blocked:**` / `**In review:**` section a current status pairs with: only when `**Status:**` is `blocked` or `in-review`, and then only the most recent one;
-- a doc-task deliverable's `**Published:**` URL, the deliverable resolved per `./task-layout.md` § *Doc-task files* (fixed without the plan's optional `**Deliverable:**` header).
+- a doc-task deliverable's `**Published:**` URL, the deliverable resolved per `./doc-task-files.md` (fixed without the plan's optional `**Deliverable:**` header).
 
 **Out of scope**, however much they cite: `observations.md`, the sweep's own record; `result.md` below `## Current state` bar the active pause section (prior log sections and the append-only `## Decision log` alike); the `## Current state` gloss and `**Next:**` line; `goals.md`; `CONTEXT.md` prose; `plan.md` outside its steps and `## Open Questions`. No annotation row targets them — nothing there is repairable.
 

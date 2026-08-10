@@ -19,7 +19,7 @@ This direction may **advance** state — check a `- [ ]` step `→ - [x]`, mark 
 
 ## Grounding docs change by confirmation, never silently
 
-Writing `goals.md`, `CONTEXT.md` prose (`Recommended Direction`, `MVP Scope`, `Not Doing`, `Key Assumptions`), or a step's scope — anything that redefines scope or acceptance — is a **judgment item**: it goes through the batched confirmation round, never an unprompted auto-apply. `goals.md` edits obey the durable-ID scheme in `./task-layout.md`: a new goal takes the next free `G<n>`, IDs are never renumbered and a retired ID never reused, and the file keeps its no-`**Status:**` / no-`## Description` shape.
+Writing `goals.md`, `CONTEXT.md` prose (`Recommended Direction`, `MVP Scope`, `Not Doing`, `Key Assumptions`), or a step's scope — anything that redefines scope or acceptance — is a **judgment item**: it goes through the batched confirmation round, never an unprompted auto-apply. `goals.md` edits obey the durable-ID scheme in `./task-goals.md`: a new goal takes the next free `G<n>`, IDs are never renumbered and a retired ID never reused, and the file keeps its no-`**Status:**` / no-`## Description` shape.
 
 ## `reconcile-task` — session findings
 

@@ -11,7 +11,7 @@ Start by reading and applying [CORE_RULES.md](./CORE_RULES.md). It is the canoni
 - `references/<domain>/` owns domain-specific guidance.
 - `setup.sh` owns installation and distribution behavior.
 - `scripts/` owns the repository's zero-dependency Node helpers; each script's file header owns its own CLI forms and stdout contract.
-- `tests/` owns repository verification; `tests/setup-install.sh` covers installation and distribution behavior, `tests/health-check.sh` the task and install health checks, `tests/session-triage.sh` the session triage, and `tests/size-report.sh` the skill context-size report.
+- `tests/` owns repository verification; `tests/setup-install.sh` covers installation and distribution behavior, `tests/health-check.sh` the task and install health checks, `tests/session-triage.sh` the session triage, `tests/size-report.sh` the skill context-size report, and `tests/size-check.sh` the context-size baseline (`tests/size-baseline.json`).
 - `.agents/tasks/` owns task artifacts and their active work context.
 
 ## Change routing
@@ -21,7 +21,8 @@ Before changing the kit, identify and inspect:
 - the affected `SKILL.md` files and every reference they cite directly;
 - shared-contract consumers when changing a workflow reference, domain-pack interface, core rule, or distribution behavior — identify them by reverse search over `skills/`, `references/`, `scripts/`, `agents/`, and `CORE_RULES.md`, never from a derivable list kept in a file header (§ *Consumer lists*);
 - the installer integration test (`bash tests/setup-install.sh`) when changing `setup.sh`, native agent definitions, or installed payload behavior — and `scripts/health-check.mjs` in the same pass, whose `--installs` mode hardcodes `setup.sh`'s ownership markers, payload categories, and per-host agent extensions;
-- the harness under `tests/` covering a script you changed — `bash tests/health-check.sh` for `scripts/health-check.mjs`, `bash tests/session-triage.sh` for `scripts/session-triage.mjs`, `bash tests/size-report.sh` for `scripts/size-report.mjs`;
+- the harness under `tests/` covering a script you changed — `bash tests/health-check.sh` for `scripts/health-check.mjs`, `bash tests/session-triage.sh` for `scripts/session-triage.mjs`, `bash tests/size-report.sh` for `scripts/size-report.mjs`, `bash tests/size-check.sh` for `scripts/size-check.mjs`;
+- the size baseline (`tests/size-baseline.json`) when changing any `SKILL.md`, reference file, or `CORE_RULES.md` — the measured context loads move with the content, so re-capture with `node scripts/size-check.mjs --update .` in the same change; `bash tests/size-check.sh` fails while the committed baseline lags;
 - relevant Git history, to preserve the reason behind an existing contract.
 
 Keep each change with its authoritative owner; update dependent consumers only when the contract they consume changes.

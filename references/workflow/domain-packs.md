@@ -9,7 +9,7 @@ How the workflow separates a **domain-neutral methodology spine** from **domain-
 knowledge**, and how skills load the right knowledge for the task at hand. **This file is the
 single source of truth for the domain-pack interface.** When the pack file set, the resolution
 rule, or the spine/pack skill split changes, update it here first and propagate to the skills.
-Status vocabulary lives in `task-lifecycle.md`; on-disk task layout lives in `task-layout.md`;
+Status vocabulary lives in `task-lifecycle.md`; on-disk task layout lives in `task-layout.md` and its role-file satellites;
 this file covers which body of domain knowledge a skill loads and how it finds it.
 
 ## The split
@@ -38,7 +38,7 @@ A pack is a directory `references/<domain>/` holding, by convention:
   warrants a task `diagram.md`, what it depicts and at what altitude, and the notation
   (`../engineering/planning.md` § *The task diagram* is the worked example). A pack that ships no
   diagram guidance opts its domain out of task diagrams — `plan-task` then draws none
-  (`task-layout.md` § *The diagram file*).
+  (`task-diagram.md`).
 - **`execution.md`** — how to carry out and record one step in this domain.
 - **`verification.md`** — what "verify a step / criterion" means here, plus the domain's
   acceptance-gate recipe.
@@ -101,9 +101,9 @@ just under `**Status:**`:
   `maintain` operate on the task-folder *envelope* (file names, layout, link-headers, status
   vocabulary, archive location) and the store artifacts, not on any task's domain content: the
   on-disk format is identical across every domain, so there is no overlay to load. Both read
-  `task-layout.md` + `task-lifecycle.md` at run time as their source of truth — `archive-task` for
-  the archive location and the terminal-state set, `maintain` for its format-conformance sweep and
-  the root registry. `prepare-ticket` writes a deliberately domain-neutral artifact that
+  `task-layout.md` (with its role-file and archiving satellites) + `task-lifecycle.md` at run time
+  as their source of truth — `archive-task` for the archive location and the terminal-state set,
+  `maintain` for its format-conformance sweep and the root registry. `prepare-ticket` writes a deliberately domain-neutral artifact that
   sits *upstream* of `CONTEXT.md`, so no `**Domain:**` marker exists yet to resolve; its source of
   truth is `ticket-format.md` + `task-layout.md`. And the reconcile composites delegate their
   first phase to a spine skill — `resume-task` / `review-task` — whose own domain-pack step

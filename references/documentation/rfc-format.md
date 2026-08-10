@@ -1,7 +1,7 @@
 # RFC Format Checklist
 
 The generic format bar for an RFC deliverable — the `rfc.md` work product of a doc task (the
-deliverable role in `../workflow/task-layout.md` § *Doc-task files*). An RFC here is the
+deliverable role in `../workflow/doc-task-files.md`). An RFC here is the
 findings-and-decisions-to-confirm doc: it pins what is known, asks exactly the decisions that gate
 the work, and records answers as they land. This file owns *shape*; how a step over the doc is
 verified is `./verification.md` — this checklist supplies the `F<n>` / `D<n>` IDs its coverage
@@ -23,7 +23,7 @@ exists), then a compact header block:
 - Delivery-frame links when they exist — the epic / milestone / deadline that anchors the ask.
 - `**Companions:**` — the research dossier, the task context, sibling docs on adjacent questions.
 - `**Published:**` — the published-pointer line when a copy lives outside the folder
-  (`../workflow/task-layout.md` § *Doc-task files*).
+  (`../workflow/doc-task-files.md`).
 - A **numbering note** whenever item IDs changed mid-review — IDs are durable (below), so a
   renumber is recorded with date and reason, never silent.
 

@@ -16,7 +16,7 @@ Own the **staging lifecycle** of a doc task's deliverable on Notion: produce or 
 
 **Use when:**
 
-- A doc task's deliverable (`adr.md`, `rfc.md`, … — the deliverable role in `./references/workflow/task-layout.md` § *Doc-task files*) needs a staging page created or refreshed for review
+- A doc task's deliverable (`adr.md`, `rfc.md`, … — the deliverable role in `./references/workflow/doc-task-files.md`) needs a staging page created or refreshed for review
 - A locked/applied published page needs a **diff page** carrying proposed changes
 - The user reports having applied staged changes and the local copy / ledger needs the sync-back
 
@@ -38,7 +38,7 @@ Own the **staging lifecycle** of a doc task's deliverable on Notion: produce or 
 
 ## Grounding
 
-- Resolve the task folder and its deliverable per `./references/workflow/task-layout.md` — the deliverable role (own status header, optional `**Deliverable:**` plan link-header) and the `**Published:**` pointer line naming which copy is live truth.
+- Resolve the task folder per `./references/workflow/task-layout.md` and its deliverable per `./references/workflow/doc-task-files.md` — the deliverable role (own status header, optional `**Deliverable:**` plan link-header) and the `**Published:**` pointer line naming which copy is live truth.
 - Walk up from the task folder for the store's `DOC_CONVENTIONS.md` (`./references/workflow/task-layout.md` § *Store-level artifacts*). When present, apply its published-page conventions (public-header shape, minimal-public trimming, house style) to what you stage; absent, the kit's generic format bars alone apply.
 - Read the deliverable and the task's `result.md` `## Current state` before writing anything — the ledger and the `**Published:**` line say which copy is currently authoritative and which scratch pages already exist.
 

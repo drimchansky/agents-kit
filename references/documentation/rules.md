@@ -5,7 +5,7 @@ The **documentation domain pack's rules overlay** — loaded on top of the neutr
 ## Send & publish discipline
 
 - **Nothing is sent, shared, or published without an explicit ask.** Drafting is the agent's job; distribution is the user's. Sharing a page, moving it under a shared parent, locking or unlocking it, applying changes to a live/shared page, and every Slack / Jira / email send stay user actions unless the current request explicitly asks otherwise.
-- Outbound content (messages, ticket text, reply drafts, patch instructions for docs the agent doesn't own) is produced as **paste-ready drafts** in the task folder, carrying the send-state lifecycle from `../workflow/task-layout.md` § *Doc-task files*.
+- Outbound content (messages, ticket text, reply drafts, patch instructions for docs the agent doesn't own) is produced as **paste-ready drafts** in the task folder, carrying the send-state lifecycle from `../workflow/doc-task-files.md`.
 - Run `proofread` over an outbound draft before handing it to the user to send.
 
 ## Before presenting a doc

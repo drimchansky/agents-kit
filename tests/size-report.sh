@@ -125,7 +125,7 @@ cp -R "$FIXTURES" "$KIT"
 OUT="$TEST_ROOT/kit.json"
 run_report "$OUT" "$KIT"
 assert_equals "$(report_root "$OUT")" "$KIT" "root is the resolved kit root"
-assert_equals "$(skills_list "$OUT")" "leaf-skill | tiny-skill" "every skill holding a SKILL.md is reported"
+assert_equals "$(skills_list "$OUT")" "leaf-skill | template-skill | tiny-skill" "every skill holding a SKILL.md is reported"
 pass "a miniature kit reports one entry per skill and exits 0"
 
 # The direct set is the SKILL.md plus what it cites: `./AGENTS.md` counted as the kit's CORE_RULES.md,
@@ -164,6 +164,19 @@ assert_equals "$(set_total "$OUT" leaf-skill direct bytes)" "200" "direct bytes 
 assert_equals "$(set_total "$OUT" leaf-skill transitive approxTokens)" "50" \
   "transitive approxTokens for leaf-skill"
 pass "a skill citing no reference reports its SKILL.md alone in both sets"
+
+# The Core Rules domain-pack template is a real load the plain citation regex cannot see: the literal
+# `./references/<domain>/rules.md` resolves to the default pack's rules.md, and each backticked
+# lowercase phase file on that same line resolves beside it. `CONTEXT.md` (uppercase) and the
+# off-line `epsilon.md` stay uncounted, without a warning. 400 + 200 + 240 + 160 = 1000 bytes.
+assert_equals \
+  "$(set_files "$OUT" template-skill direct)" \
+  "skills/template-skill/SKILL.md | CORE_RULES.md | references/engineering/rules.md | references/engineering/delta.md" \
+  "direct files for template-skill, the template resolved against the default pack"
+assert_equals "$(set_total "$OUT" template-skill direct bytes)" "1000" "direct bytes for template-skill"
+assert_equals "$(set_total "$OUT" template-skill transitive bytes)" "1000" \
+  "the template's resolved pack files cite nothing further"
+pass "the domain-pack template counts the default pack's rules.md and same-line phase files"
 
 # A citation naming no file contributes no bytes, so it has to reach the contract: a caller reading the
 # totals alone would take a partly measured path for a complete one.

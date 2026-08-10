@@ -1,0 +1,389 @@
+{
+  "skills": [
+    {
+      "skill": "archive-task",
+      "direct": {
+        "bytes": 63185,
+        "approxTokens": 15796
+      },
+      "transitive": {
+        "bytes": 252851,
+        "approxTokens": 63213
+      }
+    },
+    {
+      "skill": "challenge-task",
+      "direct": {
+        "bytes": 118714,
+        "approxTokens": 29679
+      },
+      "transitive": {
+        "bytes": 273268,
+        "approxTokens": 68317
+      }
+    },
+    {
+      "skill": "commit",
+      "direct": {
+        "bytes": 22493,
+        "approxTokens": 5623
+      },
+      "transitive": {
+        "bytes": 249703,
+        "approxTokens": 62426
+      }
+    },
+    {
+      "skill": "create-notion-page",
+      "direct": {
+        "bytes": 4588,
+        "approxTokens": 1147
+      },
+      "transitive": {
+        "bytes": 4588,
+        "approxTokens": 1147
+      }
+    },
+    {
+      "skill": "decompose-task",
+      "direct": {
+        "bytes": 83330,
+        "approxTokens": 20833
+      },
+      "transitive": {
+        "bytes": 254487,
+        "approxTokens": 63622
+      }
+    },
+    {
+      "skill": "explore",
+      "direct": {
+        "bytes": 23837,
+        "approxTokens": 5959
+      },
+      "transitive": {
+        "bytes": 254869,
+        "approxTokens": 63717
+      }
+    },
+    {
+      "skill": "fix-findings",
+      "direct": {
+        "bytes": 81343,
+        "approxTokens": 20336
+      },
+      "transitive": {
+        "bytes": 258014,
+        "approxTokens": 64504
+      }
+    },
+    {
+      "skill": "implement",
+      "direct": {
+        "bytes": 85996,
+        "approxTokens": 21499
+      },
+      "transitive": {
+        "bytes": 250730,
+        "approxTokens": 62683
+      }
+    },
+    {
+      "skill": "implement-task",
+      "direct": {
+        "bytes": 150295,
+        "approxTokens": 37574
+      },
+      "transitive": {
+        "bytes": 267839,
+        "approxTokens": 66960
+      }
+    },
+    {
+      "skill": "init-config",
+      "direct": {
+        "bytes": 39686,
+        "approxTokens": 9922
+      },
+      "transitive": {
+        "bytes": 251135,
+        "approxTokens": 62784
+      }
+    },
+    {
+      "skill": "maintain",
+      "direct": {
+        "bytes": 132875,
+        "approxTokens": 33219
+      },
+      "transitive": {
+        "bytes": 277998,
+        "approxTokens": 69500
+      }
+    },
+    {
+      "skill": "plan-task",
+      "direct": {
+        "bytes": 143307,
+        "approxTokens": 35827
+      },
+      "transitive": {
+        "bytes": 275422,
+        "approxTokens": 68856
+      }
+    },
+    {
+      "skill": "prepare-diagram",
+      "direct": {
+        "bytes": 52866,
+        "approxTokens": 13217
+      },
+      "transitive": {
+        "bytes": 267836,
+        "approxTokens": 66959
+      }
+    },
+    {
+      "skill": "prepare-ticket",
+      "direct": {
+        "bytes": 47231,
+        "approxTokens": 11808
+      },
+      "transitive": {
+        "bytes": 248389,
+        "approxTokens": 62097
+      }
+    },
+    {
+      "skill": "proofread",
+      "direct": {
+        "bytes": 2541,
+        "approxTokens": 635
+      },
+      "transitive": {
+        "bytes": 2541,
+        "approxTokens": 635
+      }
+    },
+    {
+      "skill": "publish-pr-review",
+      "direct": {
+        "bytes": 59030,
+        "approxTokens": 14758
+      },
+      "transitive": {
+        "bytes": 249958,
+        "approxTokens": 62490
+      }
+    },
+    {
+      "skill": "reconcile-task",
+      "direct": {
+        "bytes": 110790,
+        "approxTokens": 27698
+      },
+      "transitive": {
+        "bytes": 258205,
+        "approxTokens": 64551
+      }
+    },
+    {
+      "skill": "refine-idea",
+      "direct": {
+        "bytes": 54688,
+        "approxTokens": 13672
+      },
+      "transitive": {
+        "bytes": 261670,
+        "approxTokens": 65418
+      }
+    },
+    {
+      "skill": "refine-idea-chat",
+      "direct": {
+        "bytes": 6006,
+        "approxTokens": 1502
+      },
+      "transitive": {
+        "bytes": 6006,
+        "approxTokens": 1502
+      }
+    },
+    {
+      "skill": "resume-task",
+      "direct": {
+        "bytes": 97552,
+        "approxTokens": 24388
+      },
+      "transitive": {
+        "bytes": 264123,
+        "approxTokens": 66031
+      }
+    },
+    {
+      "skill": "resume-task-reconcile",
+      "direct": {
+        "bytes": 49776,
+        "approxTokens": 12444
+      },
+      "transitive": {
+        "bytes": 248714,
+        "approxTokens": 62179
+      }
+    },
+    {
+      "skill": "review-commit",
+      "direct": {
+        "bytes": 54551,
+        "approxTokens": 13638
+      },
+      "transitive": {
+        "bytes": 245479,
+        "approxTokens": 61370
+      }
+    },
+    {
+      "skill": "review-commit-triage-verify",
+      "direct": {
+        "bytes": 47720,
+        "approxTokens": 11930
+      },
+      "transitive": {
+        "bytes": 250735,
+        "approxTokens": 62684
+      }
+    },
+    {
+      "skill": "review-docs",
+      "direct": {
+        "bytes": 83783,
+        "approxTokens": 20946
+      },
+      "transitive": {
+        "bytes": 254487,
+        "approxTokens": 63622
+      }
+    },
+    {
+      "skill": "review-note",
+      "direct": {
+        "bytes": 13908,
+        "approxTokens": 3477
+      },
+      "transitive": {
+        "bytes": 13908,
+        "approxTokens": 3477
+      }
+    },
+    {
+      "skill": "review-pr",
+      "direct": {
+        "bytes": 60951,
+        "approxTokens": 15238
+      },
+      "transitive": {
+        "bytes": 251879,
+        "approxTokens": 62970
+      }
+    },
+    {
+      "skill": "review-pr-triage-verify",
+      "direct": {
+        "bytes": 49282,
+        "approxTokens": 12321
+      },
+      "transitive": {
+        "bytes": 252297,
+        "approxTokens": 63074
+      }
+    },
+    {
+      "skill": "review-task",
+      "direct": {
+        "bytes": 130400,
+        "approxTokens": 32600
+      },
+      "transitive": {
+        "bytes": 272758,
+        "approxTokens": 68190
+      }
+    },
+    {
+      "skill": "review-task-reconcile",
+      "direct": {
+        "bytes": 50396,
+        "approxTokens": 12599
+      },
+      "transitive": {
+        "bytes": 249334,
+        "approxTokens": 62334
+      }
+    },
+    {
+      "skill": "stage-doc",
+      "direct": {
+        "bytes": 65624,
+        "approxTokens": 16406
+      },
+      "transitive": {
+        "bytes": 248062,
+        "approxTokens": 62016
+      }
+    },
+    {
+      "skill": "translate",
+      "direct": {
+        "bytes": 555,
+        "approxTokens": 139
+      },
+      "transitive": {
+        "bytes": 555,
+        "approxTokens": 139
+      }
+    },
+    {
+      "skill": "triage-findings",
+      "direct": {
+        "bytes": 32490,
+        "approxTokens": 8123
+      },
+      "transitive": {
+        "bytes": 247613,
+        "approxTokens": 61903
+      }
+    },
+    {
+      "skill": "triage-findings-verify",
+      "direct": {
+        "bytes": 47851,
+        "approxTokens": 11963
+      },
+      "transitive": {
+        "bytes": 250866,
+        "approxTokens": 62717
+      }
+    },
+    {
+      "skill": "update-pr-description",
+      "direct": {
+        "bytes": 16606,
+        "approxTokens": 4152
+      },
+      "transitive": {
+        "bytes": 243816,
+        "approxTokens": 60954
+      }
+    },
+    {
+      "skill": "verify-issue",
+      "direct": {
+        "bytes": 18394,
+        "approxTokens": 4599
+      },
+      "transitive": {
+        "bytes": 245604,
+        "approxTokens": 61401
+      }
+    }
+  ]
+}

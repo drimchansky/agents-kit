@@ -25,7 +25,7 @@ reversible), and **effort** (relative size S/M/L).
 `plan-task` draws a task's optional `diagram.md` after approach selection, and `implement-task`
 re-checks it at each gate; the spine owns that timing. This section owns what a *code* diagram
 depicts and whether the change warrants one at all. Format, the dated `**Reflects:**` line, and the
-absence-is-never-a-gap rule live in `../workflow/task-layout.md` § *The diagram file*.
+absence-is-never-a-gap rule live in `../workflow/task-diagram.md`.
 
 **Draw one when the change alters structure** — when a reader's mental model of the system would be
 wrong without it: a new module, service, or boundary; a new path data takes through existing

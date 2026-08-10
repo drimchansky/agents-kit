@@ -1,6 +1,6 @@
 # Decomposition: One Approved Ask into Sibling Tasks
 
-How a large, already-decided piece of work — an approved ADR, an accepted RFC, an epic-scale ask — becomes an ordered set of sibling task folders, each ready to enter the workflow as its own ticket-first task. **This file is the single source of truth for the decomposition method**: source intake, cut-line lenses, the part-quality bar, ordering, the proposal's shape, and the materialization contract. `plan-task` § *Multi-part efforts* and `task-layout.md` § *Multi-part efforts* name **when** a split is needed and **where** siblings live — this file owns **how to choose and land the cut**.
+How a large, already-decided piece of work — an approved ADR, an accepted RFC, an epic-scale ask — becomes an ordered set of sibling task folders, each ready to enter the workflow as its own ticket-first task. **This file is the single source of truth for the decomposition method**: source intake, cut-line lenses, the part-quality bar, ordering, the proposal's shape, and the materialization contract. `plan-task` § *Multi-part efforts* and `task-siblings.md` name **when** a split is needed and **where** siblings live — this file owns **how to choose and land the cut**.
 
 Decomposition sits between deciding and planning: upstream, the source has settled *what* to build (`refine-idea` is the tool when it hasn't); downstream, each part gets its own `plan-task` → `implement-task` lifecycle. The method **proposes first and materializes only after confirmation** — the cut is a judgment call the user owns; the method structures it and surfaces the trade-offs, never decides it silently.
 
@@ -34,7 +34,7 @@ Test every candidate part before it enters the proposal:
 
 ## Ordering and numbering
 
-Ordering lives in folder names, and only there (`task-layout.md` § *Multi-part efforts*):
+Ordering lives in folder names, and only there (`task-siblings.md`):
 
 - `NN-` prefixes **only when the parts have a blocking order**; unordered parts get plain slugs.
 - **Continue an existing sequence** — when the parent directory already carries numbered siblings of the same effort, new parts take the next free numbers (`01-`/`02-` present → new parts start at `03-`).

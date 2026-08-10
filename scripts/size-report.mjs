@@ -7,7 +7,13 @@
 // Two sets per skill. The `direct` set is what the skill itself pulls in: its own SKILL.md plus every
 // distinct `./references/<path>.md` and `./AGENTS.md` the file cites, resolved against <kit-root> — the
 // installed layout resolves a skill's `./AGENTS.md` to its copy of CORE_RULES.md, so that is the file
-// counted, never this repository's maintainer-facing AGENTS.md. The `transitive` set is an upper bound:
+// counted, never this repository's maintainer-facing AGENTS.md. A SKILL.md whose Core Rules step cites
+// the domain pack as the literal template `./references/<domain>/rules.md` loads a real pack at run
+// time, so the direct scan resolves the template against the kit's default pack (`engineering`, the
+// default the template's own sentence names) and counts each phase file the same line names in
+// backticks (`execution.md`, …) beside it — without this the template's unconditional loads would be
+// invisible to the byte totals. The template is counted only in a SKILL.md; a reference file's prose
+// mention of `<domain>` stays unexpanded. The `transitive` set is an upper bound:
 // the direct set plus, recursively, every `./<path>.md` or `../<path>.md` a counted reference file
 // cites, resolved against the citing file's own directory. Cycles terminate and each file is counted
 // once per set. Reference files expand; a SKILL.md never does, so a composite skill's sibling-skill
@@ -28,7 +34,7 @@
 // non-empty. Warnings go to stderr and the exit status is always 0, so a partly unreadable kit still
 // parses.
 
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { lstatSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 
 // stdout is asynchronous on a macOS pipe, so the report is written and the module then ends: calling
@@ -44,14 +50,22 @@ const CORE_RULES = "CORE_RULES.md";
 const AGENTS_CITATION = "./AGENTS.md";
 const SKILL_FILE = "SKILL.md";
 
-// What a SKILL.md pulls in at run time. Both forms are rooted at the kit root rather than at the skill
-// directory, which is why the direct scan resolves them there and not against the citing file.
-const SKILL_CITATION = /\.\/(?:references\/[A-Za-z0-9._/-]+\.md|AGENTS\.md)/g;
+// What a SKILL.md pulls in at run time. All three forms are rooted at the kit root rather than at the
+// skill directory, which is why the direct scan resolves them there and not against the citing file.
+// The third alternative is the Core Rules domain-pack template, matched literally.
+const SKILL_CITATION = /\.\/(?:references\/(?:[A-Za-z0-9._/-]+|<domain>\/rules)\.md|AGENTS\.md)/g;
+const DOMAIN_TEMPLATE = "./references/<domain>/rules.md";
+// The pack the template resolves to when nothing overrides it — the measured default load.
+const DEFAULT_PACK = "references/engineering";
+// A phase file named in backticks on the template's own line (`execution.md`, `verification.md`, …).
+// Lowercase-only on purpose: the same line names task artifacts like `CONTEXT.md`, which are not pack
+// files and must stay uncounted.
+const PHASE_FILE = /`([a-z][a-z-]*\.md)`/g;
 // What a reference file pulls in: any relative Markdown citation, resolved against its own directory.
 const REFERENCE_CITATION = /\.\.?\/[A-Za-z0-9._/-]*\.md/g;
 
 // The task folder's role-named files, plus the two named deliverable roles
-// (references/workflow/task-layout.md § One task, one flat folder and § Doc-task files). A reference
+// (references/workflow/task-layout.md § One task, one flat folder and references/workflow/doc-task-files.md). A reference
 // file cites these to describe the user's task folder, so a citation to one that resolves to nothing is
 // not a broken kit citation and reporting it would give every healthy run a permanent false warning.
 // The suppression is warning-only: a path that resolves is counted whatever its name.
@@ -145,7 +159,17 @@ function directSet(root, skill) {
   const text = readText(skillFile, from);
   if (text != null) {
     for (const match of text.matchAll(SKILL_CITATION)) {
-      countCitation(match[0], root, from, root, seen, files);
+      if (match[0] !== DOMAIN_TEMPLATE) {
+        countCitation(match[0], root, from, root, seen, files);
+        continue;
+      }
+      countCitation(`./${DEFAULT_PACK}/rules.md`, root, from, root, seen, files);
+      const lineStart = text.lastIndexOf("\n", match.index) + 1;
+      const lineEnd = text.indexOf("\n", match.index);
+      const line = text.slice(lineStart, lineEnd === -1 ? text.length : lineEnd);
+      for (const phase of line.matchAll(PHASE_FILE)) {
+        countCitation(`./${DEFAULT_PACK}/${phase[1]}`, root, from, root, seen, files);
+      }
     }
   }
   return files;
@@ -192,10 +216,31 @@ function skillNames(root) {
     warnings.push(`cannot list ${display(root, skillsDir)}: ${reason}`);
     return [];
   }
-  return entries
-    .filter((entry) => entry.isDirectory() && measure(join(skillsDir, entry.name, SKILL_FILE)).bytes != null)
-    .map((entry) => entry.name)
-    .sort((a, b) => a.localeCompare(b, "en"));
+  const names = [];
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const skillFile = join(skillsDir, entry.name, SKILL_FILE);
+    const result = measure(skillFile);
+    if (result.bytes != null) {
+      names.push(entry.name);
+      continue;
+    }
+    // Only a genuinely absent SKILL.md marks a non-skill directory. Every other miss — EACCES, a
+    // SKILL.md that is itself a directory, a dangling symlink (stat fails while lstat succeeds) —
+    // is a skill the report would otherwise omit with no trace, and `unresolved` is what
+    // size-check.mjs's incomplete-measurement refusal keys on.
+    let reason = result.error === "no such file" ? null : result.error;
+    if (reason == null) {
+      try {
+        lstatSync(skillFile);
+        reason = "dangling symlink";
+      } catch {
+        // truly absent — a directory that simply isn't a skill
+      }
+    }
+    if (reason != null) noteUnresolved("(unmeasurable)", display(root, skillFile), reason);
+  }
+  return names.sort((a, b) => a.localeCompare(b, "en"));
 }
 
 function parseArgs(argv) {

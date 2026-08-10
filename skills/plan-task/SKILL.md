@@ -32,7 +32,7 @@ For code, `./references/engineering/planning.md` gives these heuristics in engin
 
 - **One folder, fixed names.** Everything lands in the resolved task folder — canonically `.agents/tasks/<slug>/` — beside its `CONTEXT.md`, under fixed role names: always `goals.md` and `plan.md`, no slug prefix, one plan per folder. Skills find them by these names; the folder itself may be a path someone typed, the files inside it never are.
 - **Slug.** The folder name is the slug: 2–5 lowercase kebab-case words capturing the gist (`add-csv-export`, `fix-stale-cache-invalidation`). Derive it — don't ask. A slug colliding with an existing folder for a different effort gets a more specific one.
-- **Multi-part efforts.** Work that won't fit one plan splits into sibling task folders, one plan each — never several plans in one folder. Ordering between siblings lives in their folder names (`./references/workflow/task-layout.md`). When the cut itself deserves a proposal — an approved ADR / RFC / epic-scale ask — hand it to `decompose-task` (`./references/workflow/decomposition.md`).
+- **Multi-part efforts.** Work that won't fit one plan splits into sibling task folders, one plan each — never several plans in one folder. Ordering between siblings lives in their folder names (`./references/workflow/task-siblings.md`). When the cut itself deserves a proposal — an approved ADR / RFC / epic-scale ask — hand it to `decompose-task` (`./references/workflow/decomposition.md`).
 - **Never written here.** An existing `CONTEXT.md` (Step 10) and an existing hand-authored `goals.md` (Step 3) are read and respected, never rewritten. This skill never drafts a `ticket.md` either — `/prepare-ticket` does, pointed at the task folder. And don't rewrite `plan.md` in place during planning iteration unless the user asks for revisions: refine through conversation, then write the final version.
 - **One home per fact.** Anything the folder already records is cited, never restated; the plan carries only the deltas this pass adds (`./references/workflow/task-layout.md` § *One home per fact*). Steps 4, 5, 6, and 10 apply it to their own sections.
 
@@ -89,7 +89,7 @@ A `CONTEXT.md` `## Recommended Direction` is the starting point: `## Approach` *
 
 With the approach chosen, draw the task's optional `diagram.md` when the resolved domain pack's diagram guidance says the change warrants one — for code, `./references/engineering/planning.md` § *The task diagram*, which owns the warranted test, what a diagram depicts, its altitude, and the notation. This skill owns only the timing and the file; it carries no diagram or Mermaid knowledge of its own.
 
-- **Warranted** → write `<task-dir>/diagram.md` in the format fixed by `./references/workflow/task-layout.md` § *The diagram file*, its dated `**Reflects:**` line anchored `as of the plan`, and add the `**Diagram:**` link-header to the plan.
+- **Warranted** → write `<task-dir>/diagram.md` in the format fixed by `./references/workflow/task-diagram.md`, its dated `**Reflects:**` line anchored `as of the plan`, and add the `**Diagram:**` link-header to the plan.
 - **Not warranted, or the resolved domain ships no diagram guidance** → write nothing, add no header. This is where most tasks land, and absence is the intended state rather than a gap: nothing records the decision, and no skill later reports the file as missing. Drawing one for a change with no structural shape is the failure mode to watch; the pack's not-warranted examples are the calibration.
 
 ### 6. Define Scope
@@ -98,7 +98,7 @@ With the approach chosen, draw the task's optional `diagram.md` when the resolve
 - **Out of scope** — which goals are deferred (by ID), and what will NOT be changed, even if related
 - **Boundaries** — where this work ends and future work begins
 
-Express the in/out split as a **partition of the goal IDs** in explicit lists (`delivered: G1, G3 · deferred: G4`), never re-prosed intent and never ranges (`./references/workflow/task-layout.md` § *The goals file*). An exclusion's *why* stays in CONTEXT's "Not Doing", and a `ticket.md`'s In/Out scope fixes the product-level boundary the partition must reflect — cite both rather than re-prosing them. Scope is what prevents creep during implementation; a vague one produces vague work.
+Express the in/out split as a **partition of the goal IDs** in explicit lists (`delivered: G1, G3 · deferred: G4`), never re-prosed intent and never ranges (`./references/workflow/task-goals.md`). An exclusion's *why* stays in CONTEXT's "Not Doing", and a `ticket.md`'s In/Out scope fixes the product-level boundary the partition must reflect — cite both rather than re-prosing them. Scope is what prevents creep during implementation; a vague one produces vague work.
 
 ### 7. Break Down Steps
 
@@ -108,7 +108,7 @@ An ordered list of steps, each a **verifiable piece of work**: after completing 
 
 Every step carries **What** (one concern, one sentence), **Verify** (how to confirm it works — non-negotiable; a step you can't state a verification for is too vague or too small to be a step), **Goal**, and **Depends on**; three further lines are optional. Format: § *Output*.
 
-- **`Goal:`** — the goal ID(s) the step delivers (`G1, G3`), or `none (infra/refactor)`, the first-class escape for setup/refactor work with no user-visible goal. `review-task` keys coverage off these citations, so a step that delivers a goal must name it (`./references/workflow/task-layout.md` § *The goals file*).
+- **`Goal:`** — the goal ID(s) the step delivers (`G1, G3`), or `none (infra/refactor)`, the first-class escape for setup/refactor work with no user-visible goal. `review-task` keys coverage off these citations, so a step that delivers a goal must name it (`./references/workflow/task-goals.md`).
 - **`Due:` / `Lead time:`** *(optional)* — omit them, or set `none`, for code work, ordered by `Depends on:` rather than the calendar. They earn their place in time-anchored domains (a relocation, an event) where deadlines and external lead times drive ordering and surface the long-pole steps that must start early. Planning information the actor reads; nothing in the kit schedules off them.
 - **`Touches:`** *(optional)* — the artifacts or directories the step is expected to edit, its declared edit surface. `implement-task`'s executors are the consumers: its automatic parallel batch runs steps concurrently only when each declares a surface, no `Depends on:` path connects them, *and* the declared surfaces are pairwise disjoint, and a serial executor stays inside a declared surface as its scope bound. Undeclared (or `none`) runs serially — so declare only where parallel execution is plausible and the surfaces are genuinely separate. For code, `./references/engineering/planning.md` lists the shared-artifact traps to check first.
 
@@ -176,7 +176,7 @@ For code, `./references/engineering/planning.md` gives file-count proxies for th
 
 **Status:** to-do
 **Ticket:** [./ticket.md](./ticket.md) _(only when the task has one)_
-**Deliverable:** [./adr.md](./adr.md) _(only for a doc task — `./references/workflow/task-layout.md` § Doc-task files)_
+**Deliverable:** [./adr.md](./adr.md) _(only for a doc task — `./references/workflow/doc-task-files.md`)_
 **Context:** [./CONTEXT.md](./CONTEXT.md)
 **Goals:** [./goals.md](./goals.md)
 **Diagram:** [./diagram.md](./diagram.md) _(only when the change warranted one — see Step 5a)_

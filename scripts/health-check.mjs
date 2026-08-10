@@ -58,7 +58,7 @@ const LIVE_STATUSES = new Set(["to-do", "executing", "blocked", "in-review"]);
 // expects a `## Current state` block on a live result, and carves out a legacy `done` one, which
 // keeps its last rewrite frozen and never gains a block retroactively.
 const LIVE_RESULT_STATUSES = new Set([...RESULT_VOCAB].filter((v) => !TERMINAL_STATUSES.has(v)));
-// references/workflow/task-layout.md § Archiving finished tasks: new archives are created as
+// references/workflow/task-archiving.md: new archives are created as
 // `Archive/`, but an existing one is recognized case-insensitively, so a pre-rename `archive/`
 // (or the same folder on a case-insensitive filesystem) still counts as archived.
 const ARCHIVE_DIR = /^archive$/i;
@@ -70,7 +70,7 @@ const DAY_MS = 86_400_000;
 const DEFAULT_RESULT_MAX_KB = 20;
 
 const CURRENT_STATE = /^##[ \t]+Current state\b/im;
-// references/workflow/task-layout.md § The goals file: every `## Goals` bullet leads with a durable
+// references/workflow/task-goals.md: every `## Goals` bullet leads with a durable
 // `G<n>` ID (optionally followed by an `(external)` token) and the IDs are unique across the file.
 const GOALS_HEADING = /^##[ \t]+Goals\b/;
 const GOAL_ID = /^G\d+$/;
@@ -241,7 +241,7 @@ function* liveLines(text) {
   }
 }
 
-// references/workflow/task-layout.md § Doc-task files bounds a status header to the file's header
+// references/workflow/doc-task-files.md bounds a status header to the file's header
 // block — under the `#` title, above the first `##` section, never inside fenced or quoted content —
 // so the scan stops at the first `##`-or-deeper heading and a status-shaped body line (a log entry,
 // a quoted example) is not a candidate.
@@ -939,7 +939,7 @@ if (installs) {
     for (const task of tasks) {
       const single = [staleFinding(task, now, staleDays), doneUnarchivedFinding(task)];
       // The content checks skip archived folders: they are frozen history no reconciler repairs
-      // (references/workflow/task-layout.md § Archiving finished tasks), so re-reporting their
+      // (references/workflow/task-archiving.md), so re-reporting their
       // imperfections every run would be permanent noise.
       if (!task.archived) {
         single.push(currentStateFinding(task), oversizedResultFinding(task, resultMaxKb));

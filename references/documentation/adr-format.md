@@ -1,7 +1,7 @@
 # ADR Format Checklist
 
 The generic format bar for an ADR deliverable — the `adr.md` work product of a doc task (the
-deliverable role in `../workflow/task-layout.md` § *Doc-task files*). This file owns document
+deliverable role in `../workflow/doc-task-files.md`). This file owns document
 *shape*: structure, decision form, register. How a step over the doc is verified is
 `./verification.md` — this checklist supplies the ID'd shapes its coverage check counts — and the
 register & trim bar below is applied by `review-docs`'s quality pass. Org specifics (people and
@@ -24,7 +24,7 @@ this checklist stays org-free by design.
 - `**Drafting basis:**` — the fixed inputs the ADR synthesizes (accepted upstream decisions, prior
   docs, draft contracts), stated as fixed.
 - `**Published:**` — when a copy lives outside the folder, the published-pointer line declaring
-  which copy is live truth, dated (`../workflow/task-layout.md` § *Doc-task files*).
+  which copy is live truth, dated (`../workflow/doc-task-files.md`).
 
 ## Section skeleton
 

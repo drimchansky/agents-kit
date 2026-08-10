@@ -9,9 +9,9 @@ disable-model-invocation: true
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 
-This skill operates on the **task-folder envelope** — it relocates a whole task folder on disk — not on a task's domain content. Like `maintain`, it deliberately does **not** resolve a `**Domain:**` pack: archiving is identical for every task regardless of its domain, so there is no domain-specific overlay to load. Its source of truth is `./references/workflow/task-layout.md` (the archive location and discovery rules) and `./references/workflow/task-lifecycle.md` (the **terminal-state set** that says which tasks are finished), read **at run time** — never a hardcoded status list.
+This skill operates on the **task-folder envelope** — it relocates a whole task folder on disk — not on a task's domain content. Like `maintain`, it deliberately does **not** resolve a `**Domain:**` pack: archiving is identical for every task regardless of its domain, so there is no domain-specific overlay to load. Its source of truth is `./references/workflow/task-archiving.md` (the archive location), `./references/workflow/task-layout.md` (the discovery rules), and `./references/workflow/task-lifecycle.md` (the **terminal-state set** that says which tasks are finished), read **at run time** — never a hardcoded status list.
 
-This skill moves a finished task folder into its own parent's `Archive/` — canonically from `.agents/tasks/` into `.agents/tasks/Archive/`, though a task folder anywhere on disk archives the same way — so the active list shows only live work. It is the **write** side of the archive boundary whose read side already exists: discovery rules already exclude `Archive/` from active scans and fall back into it for an explicit slug (`task-layout.md`). Archiving is a one-way move — a plain `mv` of the whole folder, which preserves every internal `./` link. It never edits task content, never changes a `**Status:**`, and never touches git.
+This skill moves a finished task folder into its own parent's `Archive/` — canonically from `.agents/tasks/` into `.agents/tasks/Archive/`, though a task folder anywhere on disk archives the same way — so the active list shows only live work. It is the **write** side of the archive boundary whose read side already exists: discovery rules already exclude `Archive/` from active scans and fall back into it for an explicit slug (`task-layout.md`); the location-relative move itself is the contract in `./references/workflow/task-archiving.md`, read at run time. Archiving is a one-way move — a plain `mv` of the whole folder, which preserves every internal `./` link. It never edits task content, never changes a `**Status:**`, and never touches git.
 
 **CRITICAL**:
 
@@ -32,7 +32,7 @@ This skill moves a finished task folder into its own parent's `Archive/` — can
 **Skip when:**
 
 - The task is still live (any non-terminal state) — finish or abandon it first; this skill won't archive in-flight work.
-- You want to *un-archive* a task — that's a manual `mv` back out of `Archive/`; this skill is one-way (see `task-layout.md`'s un-archive note).
+- You want to *un-archive* a task — that's a manual `mv` back out of `Archive/`; this skill is one-way (see `task-archiving.md`).
 - There's no `.agents/tasks/` folder yet and no task was named by path — nothing to archive.
 
 ## Process
@@ -52,8 +52,8 @@ Call the folder you resolve here `SRC`, and the directory that *contains* it `PA
 
 **Validate the resolved folder (every branch, before going further).** However `SRC` was produced — slug, folder path, or `plan.md` path — confirm it is a real, live task folder by **contents and position**, not by address shape:
 
-- `SRC` must be a task folder by contents: a real directory (not a symlink) holding a top-level `plan.md` — Step 2 reads its `**Status:**` and refuses when the file is missing or the status isn't in the lifecycle vocabulary, so a folder that merely "looks done" never passes. A folder that itself *contains* an `Archive/` subdirectory (matched case-insensitively, per `task-layout.md`) is a task **parent**, not a task folder — **refuse**; moving it would drag its whole archive along.
-- If `SRC`'s **immediate parent directory is named `Archive`** (matched **case-insensitively**, per `task-layout.md` — a lowercase `archive/` from an older layout, or the same folder on a case-insensitive filesystem such as macOS's APFS, still counts), the task is already archived — that is exactly where location-relative archiving puts one → report it and stop (a no-op). This is the case a bare `plan.md` path can otherwise slip past: never let `PARENT` resolve to an `Archive/` directory and re-archive into `Archive/Archive/<slug>`. A directory named `Archive` *higher* up the path (the user's own tree naming) does not count — only the immediate parent.
+- `SRC` must be a task folder by contents: a real directory (not a symlink) holding a top-level `plan.md` — Step 2 reads its `**Status:**` and refuses when the file is missing or the status isn't in the lifecycle vocabulary, so a folder that merely "looks done" never passes. A folder that itself *contains* an `Archive/` subdirectory (matched case-insensitively, per `task-archiving.md`) is a task **parent**, not a task folder — **refuse**; moving it would drag its whole archive along.
+- If `SRC`'s **immediate parent directory is named `Archive`** (matched **case-insensitively**, per `task-archiving.md` — a lowercase `archive/` from an older layout, or the same folder on a case-insensitive filesystem such as macOS's APFS, still counts), the task is already archived — that is exactly where location-relative archiving puts one → report it and stop (a no-op). This is the case a bare `plan.md` path can otherwise slip past: never let `PARENT` resolve to an `Archive/` directory and re-archive into `Archive/Archive/<slug>`. A directory named `Archive` *higher* up the path (the user's own tree naming) does not count — only the immediate parent.
 
 ### 2. Confirm the task is terminal
 
@@ -122,7 +122,7 @@ Carry it to `done`, or mark the plan `skipped`, then re-run.
 
 Confirm the protocol invariants before finishing:
 
-- [ ] Terminal vs. live decided by reading `task-lifecycle.md`'s terminal set at run time; archive location and discovery read from `task-layout.md` — nothing baked in
+- [ ] Terminal vs. live decided by reading `task-lifecycle.md`'s terminal set at run time; archive location read from `task-archiving.md`, discovery from `task-layout.md` — nothing baked in
 - [ ] `SRC` validated by contents and position (real non-symlink directory with a top-level `plan.md`; not a tasks-parent; immediate parent not named `Archive/` in any case); already-archived folders no-op'd, never nested into `Archive/Archive/`
 - [ ] Non-terminal, unknown-status, or missing-`plan.md` folders refused with the path to proceed; status and content never edited
 - [ ] Destination guarded — `DEST` collision refused, symlink or non-directory at `PARENT/Archive` refused

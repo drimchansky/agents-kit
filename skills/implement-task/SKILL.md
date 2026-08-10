@@ -134,7 +134,7 @@ Run the loop in `./references/workflow/execution-loop.md` — the five beats, bo
 
 #### Diagram re-check (only when the task has a `diagram.md`)
 
-Three points re-check it: **each checkpoint**, **each structural plan revision** (§6), **the acceptance gate** (§7). No diagram → skip all three, absence unreported (`./references/workflow/task-layout.md` § *The diagram file*).
+Three points re-check it: **each checkpoint**, **each structural plan revision** (§6), **the acceptance gate** (§7). No diagram → skip all three, absence unreported (`./references/workflow/task-diagram.md`).
 
 Compare the drawing against what shipped and record *what was compared* — which nodes and edges, against which files; that record is what keeps the gate off rubber-stamping. Then:
 

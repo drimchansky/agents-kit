@@ -378,7 +378,7 @@ assert_equals \
 pass "a three-backtick example inside a four-backtick fence does not toggle scanning back on"
 
 # The status scan reads the same file as the anchor and liveness scans, so it owes them the same rule:
-# task-layout.md § One task, one flat folder puts the status header outside fenced or quoted content.
+# doc-task-files.md puts the status header outside fenced or quoted content.
 assert_equals "$(finding_detail "$OUT_ANCHORS" done-unarchived anchors/fenced-status)" "" \
   "a **Status:** line inside a fence must not be read as the plan's own"
 pass "a fenced status example is illustrative markdown, not a lifecycle state"
