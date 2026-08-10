@@ -112,6 +112,38 @@ no diff, and the probe verifies each finding as a claim against current code, ex
 `verify-issue`'s single-issue mode does. A diff that doesn't correspond to the findings is
 worse than none.
 
+For the re-derivation shape (`challenge-task`'s cold derivation, on `native`), the probe is handed a task's *inputs* and asked to derive an approach. It is the one shape defined by what it withholds: every other shape hands the probe the artifact under judgment, and this one must not.
+
+```
+You are an independent planner with no prior context. Working root: <absolute path>.
+Below are the problem a piece of work exists to solve and the goals it must meet.
+Derive the simplest approach that meets every goal — its shape and the steps it takes.
+
+Ground the derivation in the codebase: explore the working root and design against what
+is there, not against what a greenfield project would allow. Cite the files your design
+turns on as file:line.
+
+You derive and report only: never edit anything, and never run the project's build,
+typecheck, or tests — ground the derivation by reading (analysis-only).
+
+Read no file in the task folder at <absolute task-folder path> — not its plan, not its
+context, not its result. Everything you are given is below, and an approach taken from
+what someone already wrote there is not an independent derivation.
+
+Begin your answer by restating the inputs you were given, then give the derivation.
+
+Problem Statement:
+<verbatim>
+
+Ticket (when the task has one):
+<verbatim>
+
+Goals:
+<goals.md, verbatim>
+```
+
+Every input travels inline and verbatim — the Problem Statement, `ticket.md` when present, `goals.md` — and nothing else from the folder does: no `plan.md` content, no Recommended Direction, no paraphrase of either. Plan-blindness is a promise no engine enforces (a read-only sandbox stops writes, not reads), which is why the instruction withholds the whole folder rather than the plan alone, and why the restate-your-inputs opener is part of the shape: it makes a peek visible in the answer. A probe that read the plan and then agrees with it reads as corroboration, and that is the worst failure this shape has. The withholding holds only while the inputs themselves are direction-free — a Problem Statement, ticket, or goals file that records the chosen direction hands it over verbatim, and the invoking skill skips the probe rather than merging a corroboration that proves nothing. The answer merges under § *Merge contract* below — each divergence from the withheld artifact is a candidate the invoking skill tests against its own bar before printing — and closes on that skill's own mandatory outcome line.
+
 ## Merge contract
 
 The invoking skill compares the probe's answer against its own pass:
@@ -119,7 +151,7 @@ The invoking skill compares the probe's answer against its own pass:
 - **Agreement** strengthens the evidence — cite it and move on.
 - **Contradiction is never silently dropped.** Where the probe contradicts the session's grounding or the artifact's own claims, re-check that spot before assigning the verdict; a confirmed contradiction becomes a finding (in `review-task`, a `CONTRADICTED` claim is evidence toward `conflicts with what exists` / `infeasible as stated`; a `NOT FOUND` on a load-bearing reference is a gap).
 - **Novel probe findings are candidates, not findings.** Verify each against the artifact before adopting it into the output — under the session's own severity calibration; never paste a probe finding unverified.
-- **The outcome line closes the loop.** For the `-x` shapes, the `Cross-check:` line states `clean`, `merged: …`, or `skipped (<reason>)` — the record makes a skipped or empty probe visible instead of leaving absence ambiguous. The lens-review shape closes the same way on its `Lens probes:` line (per its shape paragraph above). The verify shape closes on its consuming skill's mandatory **Verified** line instead, which carries the same guarantee for the same reason; `Cross-check:` stays reserved for the `-x` pass, so a composite running both keeps two distinct records.
+- **The outcome line closes the loop.** For the `-x` shapes, the `Cross-check:` line states `clean`, `merged: …`, or `skipped (<reason>)` — the record makes a skipped or empty probe visible instead of leaving absence ambiguous. The lens-review shape closes the same way on its `Lens probes:` line (per its shape paragraph above). The verify shape closes on its consuming skill's mandatory **Verified** line instead, which carries the same guarantee for the same reason; `Cross-check:` stays reserved for the `-x` pass, so a composite running both keeps two distinct records. The re-derivation shape closes on its consumer's mandatory `Cold re-derivation:` line the same way (per its shape paragraph above).
 
 ## Write-mode routing
 

@@ -80,12 +80,15 @@ just under `**Status:**`:
   exists — infers the effort's domain from the source doc and stamps each materialized part's own
   `**Domain:**` in its seeded `CONTEXT.md`.
 - **Engineering-only skills** — `review-commit`, `commit`, `review-pr`, `update-pr-description`, `publish-pr-review`, `triage-findings`,
-  `verify-issue`, `fix-findings`, `review-commit-triage-verify`, `review-pr-triage-verify`, `triage-findings-verify` — operate on a codebase
+  `verify-issue`, `fix-findings`, `challenge-task`, `review-commit-triage-verify`, `review-pr-triage-verify`, `triage-findings-verify` — operate on a codebase
   or diff, not a task folder, and load `references/engineering/` unconditionally. They are, in
   effect, skills contributed by the engineering pack; other domains contribute skills the same way
   (the documentation bullet below). `commit` is the lone exception to the load: it belongs to the pack but reads only
   the neutral core, because it writes no code and the single overlay rule that governs it (Git state
-  is mutated only when explicitly asked) is quoted inline in its SKILL.md. Pack membership is about
+  is mutated only when explicitly asked) is quoted inline in its SKILL.md. `challenge-task` is the lone
+  exception to the surface: it reads a task folder, but its passes are calibrated for engineering only,
+  so it loads the pack unconditionally rather than resolving `**Domain:**`, and says so before running
+  on a task in another domain (its SKILL.md § Core Rules). Pack membership is about
   which domain contributes a skill, not about which files it must read.
 - **Documentation-contributed skills** — `stage-doc` (a doc task's staging lifecycle),
   `review-docs` (existing docs' accuracy against the codebase, plus the whole-doc quality pass),

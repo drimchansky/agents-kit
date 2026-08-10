@@ -46,6 +46,7 @@ Read the plan, the sibling `goals.md`, the sibling `CONTEXT.md`, **and** the `ti
 **Skip when:**
 
 - The assessment's findings should also be written back into the task docs, and its Questions actually put to you → use `review-task-reconcile`, which runs this review and then reconciles against it
+- The question is whether the plan *should* be executed at that size — whether its complexity is proportionate to the problem → use `challenge-task`; this skill asks only whether it *can* be executed as written
 - The plan is trivial enough that review takes longer than execution
 - The user has already validated the plan themselves and wants to move to implementation
 - The task is a small bug fix with a clear root cause
