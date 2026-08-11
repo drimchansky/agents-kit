@@ -76,7 +76,7 @@ Group findings by target file (`CONTEXT.md` / `goals.md` / `plan.md` / `result.m
 
 ### 4. Check the Cited External References
 
-Run the **External reference check** in `./references/workflow/reconciliation.md` — cite it, don't restate it. It is a shared mechanic of every reconciler, and this skill is where it lands for a task you're actively working: the reporting skills (`resume-task`, `review-task`) sweep no citations, so a ticket that closed, a PR that merged, or a spec that moved reaches the docs only through a reconcile.
+Run the **External reference check** in `./references/workflow/reconciliation.md` — cite it, don't restate it. It is a shared mechanic of the reconcilers that run one, and this skill is where it lands for a task you're actively working: the reporting skills (`resume-task`, `review-task`) sweep no citations, so a ticket that closed, a PR that merged, or a spec that moved reaches the docs only through a reconcile.
 
 Its findings join Step 3's as one set. They differ in provenance, not in handling — a question answered by a fetched doc is annotated exactly like one answered in chat, in the file where the question lives. The mapping for each tag is in `./references/workflow/reconciliation-session-to-docs.md` § *`reconcile-task` — session findings*.
 
