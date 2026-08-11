@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // Compares the kit's measured context loads against a committed baseline, so growth in what a skill
 // loads is a conscious, reviewed choice rather than silent drift. The measurement itself is
-// scripts/size-report.mjs, run as a child process; this script only compares and records.
-// Zero dependencies; Node >= 18.
-// Run: node scripts/size-check.mjs [--update] [--baseline FILE] <kit-root>
+// scripts/size-report.ts, run as a child process; this script only compares and records.
+// Zero dependencies; Node >= 23.6.
+// Run: node scripts/size-check.ts [--update] [--baseline FILE] <kit-root>
 //
 // Modes. Without --update, each skill's direct and transitive byte totals are compared against the
 // baseline (default: <kit-root>/tests/size-baseline.json): any difference — a grown or shrunk total, a
@@ -27,18 +27,45 @@ import { fileURLToPath } from "node:url";
 
 const BYTES_PER_TOKEN = 4;
 
+interface Totals {
+  readonly bytes: number;
+  readonly approxTokens: number;
+}
+
+interface SkillTotals {
+  readonly skill: string;
+  readonly direct: Totals;
+  readonly transitive: Totals;
+}
+
+interface Report {
+  readonly root: string | null;
+  readonly skills: readonly SkillTotals[];
+  readonly unresolved: readonly string[];
+}
+
+interface Baseline {
+  readonly skills?: readonly BaselineEntry[];
+}
+
+interface BaselineEntry {
+  readonly skill: string;
+  readonly direct?: Totals;
+  readonly transitive?: Totals;
+}
+
 // Everything printed here is far below the pipe buffer, so `process.exitCode` plus a natural return
 // (never process.exit) is enough to keep the output intact.
-function refuse(message) {
+function refuse(message: string): void {
   console.error(`[size-check] ${message}`);
   process.exitCode = 2;
 }
 
-function main() {
+function main(): void {
   const args = process.argv.slice(2);
   let update = false;
-  let baselineArg = null;
-  const roots = [];
+  let baselineArg: string | null = null;
+  const roots: string[] = [];
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg === "--update") {
@@ -54,13 +81,13 @@ function main() {
     roots.push(arg);
   }
   if (roots.length !== 1) {
-    return refuse("usage: node scripts/size-check.mjs [--update] [--baseline FILE] <kit-root>");
+    return refuse("usage: node scripts/size-check.ts [--update] [--baseline FILE] <kit-root>");
   }
   const root = resolve(roots[0]);
   const baselinePath = baselineArg ? resolve(baselineArg) : join(root, "tests", "size-baseline.json");
 
-  const reportScript = fileURLToPath(new URL("./size-report.mjs", import.meta.url));
-  let report;
+  const reportScript = fileURLToPath(new URL("./size-report.ts", import.meta.url));
+  let report: Report;
   try {
     report = JSON.parse(
       execFileSync(process.execPath, [reportScript, root], {
@@ -70,7 +97,7 @@ function main() {
       }),
     );
   } catch (err) {
-    return refuse(`size-report.mjs produced no readable report: ${err.message}`);
+    return refuse(`size-report.ts produced no readable report: ${err.message}`);
   }
   if (report.root == null || report.skills.length === 0) {
     return refuse(`not a measurable kit root: ${root}`);
@@ -84,7 +111,7 @@ function main() {
     );
   }
 
-  const measured = report.skills.map((s) => ({
+  const measured: SkillTotals[] = report.skills.map((s) => ({
     skill: s.skill,
     direct: { bytes: s.direct.bytes, approxTokens: s.direct.approxTokens },
     transitive: { bytes: s.transitive.bytes, approxTokens: s.transitive.approxTokens },
@@ -92,7 +119,7 @@ function main() {
 
   if (update) {
     try {
-      writeFileSync(baselinePath, JSON.stringify({ skills: measured }, null, 2) + "\n");
+      writeFileSync(baselinePath, JSON.stringify({ skills: measured } satisfies Baseline, null, 2) + "\n");
     } catch (err) {
       return refuse(`cannot write baseline ${baselinePath}: ${err.code ?? err.message}`);
     }
@@ -100,7 +127,7 @@ function main() {
     return;
   }
 
-  let baseline;
+  let baseline: Baseline | null;
   try {
     baseline = JSON.parse(readFileSync(baselinePath, "utf8"));
   } catch (err) {
@@ -115,7 +142,7 @@ function main() {
   const names = [...new Set([...baseByName.keys(), ...nowByName.keys()])].sort((a, b) =>
     a.localeCompare(b, "en"),
   );
-  const drift = [];
+  const drift: string[] = [];
   for (const name of names) {
     const base = baseByName.get(name);
     const now = nowByName.get(name);
@@ -127,7 +154,7 @@ function main() {
       drift.push(`${name}: in the baseline but not in the kit`);
       continue;
     }
-    for (const set of ["direct", "transitive"]) {
+    for (const set of ["direct", "transitive"] as const) {
       const from = base[set]?.bytes;
       const to = now[set].bytes;
       if (from === to) continue;
@@ -144,7 +171,7 @@ function main() {
     for (const line of drift) console.log(line);
     console.log(
       `[size-check] ${drift.length} drift line(s) against ${baselinePath} — when the change is ` +
-        `intended, re-capture in the same change: node scripts/size-check.mjs --update ` +
+        `intended, re-capture in the same change: node scripts/size-check.ts --update ` +
         `${baselineArg ? `--baseline ${baselineArg} ` : ""}${roots[0]}`,
     );
     process.exitCode = 1;

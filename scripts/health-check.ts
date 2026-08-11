@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Walks task roots and reports lifecycle health findings for the `maintain` skill.
-// Zero dependencies; Node >= 18.
-// Run: node scripts/health-check.mjs [--stale-days N] [--result-max-kb N] <root> [<root>...]
-//  or: node scripts/health-check.mjs --installs <kit-root> <home> [<home>...]
+// Zero dependencies; Node >= 23.6.
+// Run: node scripts/health-check.ts [--stale-days N] [--result-max-kb N] <root> [<root>...]
+//  or: node scripts/health-check.ts --installs <kit-root> <home> [<home>...]
 // Emitted `check` values: the task walk reports `stale`, `done-unarchived`, `unknown-status`,
 // `dead-anchor`, `goal-id`, `no-current-state`, `oversized-result`, and `duplicate-slug`;
 // `--installs` walks no tasks and reports `install-drift` instead. Archived folders are counted in
@@ -24,13 +24,14 @@
 // unreadable store still parses.
 
 import { lstatSync, readdirSync, readFileSync, readlinkSync, realpathSync, statSync } from "node:fs";
+import type { Dirent, Stats } from "node:fs";
 import { join, resolve, basename, sep } from "node:path";
 
 // stdout is asynchronous on a macOS pipe, so the report is written and the module then ends: calling
 // process.exit after the write would discard whatever the pipe buffer could not take, truncating the
 // JSON above 64 KB. A reader that closes early then raises EPIPE on a stream nothing awaits, and
 // swallowing that is what keeps the always-zero exit status the contract above promises.
-process.stdout.on("error", (err) => {
+process.stdout.on("error", (err: NodeJS.ErrnoException) => {
   if (err.code !== "EPIPE") throw err;
 });
 
@@ -38,7 +39,7 @@ process.stdout.on("error", (err) => {
 // entry here — isTaskDir already rejects a folder holding no role file — and a name-based prune costs
 // a real task its scan, silently: `.git` and every other dotted name bar `.agents` are skipped by
 // the walk itself.
-const SKIP_DIRS = new Set(["node_modules"]);
+const SKIP_DIRS = new Set<string>(["node_modules"]);
 // The recognition set defined in references/workflow/task-layout.md § One task, one flat folder —
 // this is its executable copy; the suffix forms are legacy names the format sweep renames, kept
 // here because only the kit's own canonical root is ever swept.
@@ -46,18 +47,19 @@ const ROLE_FILES = ["CONTEXT.md", "goals.md", "plan.md", "result.md", "ticket.md
 const ROLE_SUFFIXES = [".plan.md", ".result.md", ".spec.md", ".ticket.md"];
 // Closed plan vocabulary defined by references/workflow/task-lifecycle.md § Status values; a value
 // outside it is "unknown" rather than a guess, so a typo never reads as a lifecycle state.
-const PLAN_VOCAB = new Set(["to-do", "executing", "blocked", "in-review", "done", "skipped"]);
+const PLAN_VOCAB = new Set<string>(["to-do", "executing", "blocked", "in-review", "done", "skipped"]);
 // Closed result vocabulary from the same section; the result file has no `to-do` or `skipped` state.
-const RESULT_VOCAB = new Set(["executing", "blocked", "in-review", "done"]);
+const RESULT_VOCAB = new Set<string>(["executing", "blocked", "in-review", "done"]);
 // Terminal (finished) plan states per references/workflow/task-lifecycle.md § Terminal vs. live
 // states. Read here rather than baked into the skill so a vocabulary change lands in one place.
-const TERMINAL_STATUSES = new Set(["done", "skipped"]);
-// The non-terminal complement of the plan vocabulary, from the same section.
-const LIVE_STATUSES = new Set(["to-do", "executing", "blocked", "in-review"]);
+const TERMINAL_STATUSES = new Set<string | null>(["done", "skipped"]);
+// The non-terminal complement of the plan vocabulary, derived rather than spelled out so the two
+// cannot drift apart when a status is added to or removed from the vocabulary above.
+const LIVE_STATUSES = new Set<string>([...PLAN_VOCAB].filter((v) => !TERMINAL_STATUSES.has(v)));
 // The same complement over the result vocabulary: references/workflow/task-lifecycle.md § Files
 // expects a `## Current state` block on a live result, and carves out a legacy `done` one, which
 // keeps its last rewrite frozen and never gains a block retroactively.
-const LIVE_RESULT_STATUSES = new Set([...RESULT_VOCAB].filter((v) => !TERMINAL_STATUSES.has(v)));
+const LIVE_RESULT_STATUSES = new Set<string | null>([...RESULT_VOCAB].filter((v) => !TERMINAL_STATUSES.has(v)));
 // references/workflow/task-archiving.md: new archives are created as
 // `Archive/`, but an existing one is recognized case-insensitively, so a pre-rename `archive/`
 // (or the same folder on a case-insensitive filesystem) still counts as archived.
@@ -84,40 +86,79 @@ const CHECKED_STEP = /^[ \t]*-[ \t]+\[[xX]\]/;
 // may cite a literal `([result](…))` as an example — so the last match is the link, never the first.
 const RESULT_LINK = /\(\[result\]\(([^()]*)\)\)/g;
 
-// Ownership markers written by setup.sh; only a marked item is kit-managed and comparable.
+// Ownership markers written by setup.ts; only a marked item is kit-managed and comparable.
 const MARKER = ".agents-kit";
 const CORE_RULES_MARKER = ".agents-kit-core-rules";
 const AGENT_MARKER_PREFIX = ".agents-kit-";
-// setup.sh installs each host's native agent format only, keyed by the home's own directory name.
+// setup.ts installs each host's native agent format only, keyed by the home's own directory name.
 const AGENT_EXTENSIONS = new Map([[".claude", "md"], [".codex", "toml"]]);
-// setup.sh's recursive copies carry OS-generated files into the homes, where each side is then
+// setup.ts's recursive copies carry OS-generated files into the homes, where each side is then
 // rewritten independently — drift no redeploy can durably clear. Matched by name rather than by a
 // dotfile rule, because a skill may legitimately ship one (a template's `.gitignore`) and it stays
 // comparable.
-const OS_ARTIFACTS = new Set([".DS_Store", ".localized", "Thumbs.db"]);
-// setup.sh builds each skill under `skills/.agents-kit-staging.<pid>-<name>` and marks it before
+const OS_ARTIFACTS = new Set<string>([".DS_Store", ".localized", "Thumbs.db"]);
+// setup.ts builds each skill under `skills/.agents-kit-staging.<pid>-<name>` and marks it before
 // copying into it, so a marked entry with this prefix is an interrupted install rather than a
-// payload (setup.sh § step 2). Comparing one reports phantom drift for files the next setup.sh run
-// sweeps on its own, and counting it as an item defeats the never-installed line below.
+// payload. Comparing one reports phantom drift for files the next setup.ts run sweeps on its own,
+// and counting it as an item defeats the never-installed line below.
 const STAGING_PREFIX = ".agents-kit-staging.";
-const skipInInstalls = (name) => name === MARKER || OS_ARTIFACTS.has(name) || name.startsWith("._");
+const skipInInstalls = (name: string): boolean => name === MARKER || OS_ARTIFACTS.has(name) || name.startsWith("._");
 
-const warnings = [];
+type TaskCheck =
+  | "stale"
+  | "done-unarchived"
+  | "unknown-status"
+  | "dead-anchor"
+  | "goal-id"
+  | "no-current-state"
+  | "oversized-result"
+  | "duplicate-slug";
+
+interface TaskFinding {
+  readonly check: TaskCheck;
+  readonly path: string;
+  readonly detail: string;
+  readonly root: string;
+}
+
+type UnrootedFinding = Omit<TaskFinding, "root">;
+
+interface InstallFinding {
+  readonly check: "install-drift";
+  readonly path: string;
+  readonly detail: string;
+}
+
+type Finding = TaskFinding | InstallFinding;
+
+interface Report {
+  readonly findings: readonly Finding[];
+  readonly scanned: number;
+  readonly unreadable: number;
+  readonly unreadablePaths: readonly string[];
+}
+
+const warnings: string[] = [];
 // What this run could not read, reported in the contract rather than only on stderr: a caller reading
 // findings alone would take a store it never opened for a clean one. `scanned` is a floor while this
 // is non-empty. Warnings that are not coverage gaps — an ignored flag value, a usage error — stay stderr-only.
-const unreadablePaths = [];
+const unreadablePaths: string[] = [];
+
+interface ErrorLike {
+  readonly code?: string;
+  readonly message?: string;
+}
 
 // What kind of thing could not be read rides on the warning, which keeps the compact display path.
 // `unreadablePaths` carries the absolute one: every finding is attributed by its absolute `root`,
 // and a display path prefixed with a root's basename alone cannot be lined up against them once two
 // roots share that basename.
-function unreachable(kind, abs, display, err) {
+function unreachable(kind: string, abs: string, display: string, err: ErrorLike): void {
   warnings.push(`unreadable ${kind} ${display}: ${err.code ?? err.message}`);
   unreadablePaths.push(abs);
 }
 
-function listEntries(dir, display, optional = false) {
+function listEntries(dir: string, display: string, optional = false): Dirent[] {
   try {
     return readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name, "en"));
   } catch (err) {
@@ -126,7 +167,7 @@ function listEntries(dir, display, optional = false) {
   }
 }
 
-function isFile(path) {
+function isFile(path: string): boolean {
   try {
     return statSync(path).isFile();
   } catch {
@@ -137,7 +178,7 @@ function isFile(path) {
 // Presence alone, of anything: used to tell a rejected flag value that names a real path (a root the
 // flag would otherwise swallow) from one that names nothing (a typed value). Deliberately not
 // `isDirectory` — a root pointing at a file must still reach the coverage list through that check.
-function pathExists(path) {
+function pathExists(path: string): boolean {
   try {
     statSync(resolve(path));
     return true;
@@ -146,12 +187,14 @@ function pathExists(path) {
   }
 }
 
-// Whether setup.sh owns a path, by the marker beside it. A marker that cannot be read is not the
+type MarkerState = "owned" | "unowned" | "unreadable";
+
+// Whether setup.ts owns a path, by the marker beside it. A marker that cannot be read is not the
 // user's: answering "unowned" there would drop a kit-managed item from the comparison, leaving
 // `scanned` short and `unreadable` at zero — a clean-looking report over an item never compared.
 // It is recorded as a coverage gap and compared anyway, where each unreadable path reports on its
 // own. Only ENOENT means the marker is genuinely absent.
-function markerState(markerPath, display) {
+function markerState(markerPath: string, display: string): MarkerState {
   try {
     return statSync(markerPath).isFile() ? "owned" : "unowned";
   } catch (err) {
@@ -167,7 +210,7 @@ function markerState(markerPath, display) {
 // spelling makes the overlap comparison below see that. A path that vanishes between the directory
 // check and this call falls back to its resolved form rather than throwing: the contract above is
 // one JSON object on stdout and exit 0, so no step of the walk may raise.
-function canonicalRoot(rootDir) {
+function canonicalRoot(rootDir: string): string {
   try {
     return realpathSync.native(rootDir);
   } catch {
@@ -175,7 +218,7 @@ function canonicalRoot(rootDir) {
   }
 }
 
-function isDirectory(pathArg, label) {
+function isDirectory(pathArg: string, label: string): boolean {
   try {
     if (statSync(resolve(pathArg)).isDirectory()) return true;
     // The same fact for a caller as a path that could not be opened at all: this argument
@@ -188,7 +231,7 @@ function isDirectory(pathArg, label) {
   return false;
 }
 
-function isAbsent(pathArg) {
+function isAbsent(pathArg: string): boolean {
   try {
     statSync(resolve(pathArg));
     return false;
@@ -197,7 +240,7 @@ function isAbsent(pathArg) {
   }
 }
 
-function fileText(path, display) {
+function fileText(path: string, display: string): string | null {
   try {
     return readFileSync(path, "utf8");
   } catch (err) {
@@ -206,12 +249,12 @@ function fileText(path, display) {
   }
 }
 
-function clip(text, max = 60) {
+function clip(text: string, max = 60): string {
   const line = text.trim();
   return line.length > max ? line.slice(0, max - 1) + "…" : line;
 }
 
-function isTaskDir(entries) {
+function isTaskDir(entries: readonly Dirent[]): boolean {
   const files = entries.filter((e) => e.isFile()).map((e) => e.name);
   return files.some((f) => ROLE_FILES.includes(f) || ROLE_SUFFIXES.some((s) => f.endsWith(s) && f !== s));
 }
@@ -228,8 +271,8 @@ const STATUS_PATTERNS = [
 // inside a fence is illustrative markdown rather than the file's own. Closing a fence takes the
 // opener's marker at its own length or longer (CommonMark), so a shorter or different-marker run
 // inside an open block is content: a boolean flag would invert on it and hand back what it skipped.
-function* liveLines(text) {
-  let fence = null;
+function* liveLines(text: string): Generator<string> {
+  let fence: { char: string; len: number } | null = null;
   for (const line of text.split("\n")) {
     const marker = line.match(FENCE)?.[1];
     if (marker) {
@@ -245,8 +288,8 @@ function* liveLines(text) {
 // block — under the `#` title, above the first `##` section, never inside fenced or quoted content —
 // so the scan stops at the first `##`-or-deeper heading and a status-shaped body line (a log entry,
 // a quoted example) is not a candidate.
-function rawStatus(text) {
-  const header = [];
+function rawStatus(text: string): string | null {
+  const header: string[] = [];
   for (const line of liveLines(text)) {
     if (/^#{2,6}[ \t]/.test(line)) break;
     header.push(line);
@@ -259,7 +302,12 @@ function rawStatus(text) {
   return null;
 }
 
-function normalize(raw, vocab) {
+interface StatusFields {
+  readonly value: string | null;
+  readonly raw: string | null;
+}
+
+function normalize(raw: string | null, vocab: ReadonlySet<string>): StatusFields {
   if (raw == null) return { value: null, raw: null };
   const cleaned = raw.replace(/[*_`]/g, "").trim();
   const token = (cleaned.split(/[\s,;.]+/)[0] ?? "").toLowerCase().replace(/[^a-z-]/g, "");
@@ -267,26 +315,46 @@ function normalize(raw, vocab) {
   return { value: "unknown", raw: cleaned.length > 60 ? cleaned.slice(0, 57) + "…" : cleaned };
 }
 
-function roleFileName(entries, exactName, suffix) {
+interface RoleFile {
+  readonly file: string;
+  readonly text: string | null;
+}
+
+type RoleStatus = RoleFile & StatusFields;
+
+function roleFileName(entries: readonly Dirent[], exactName: string, suffix: string | null): string | undefined {
   const files = entries.filter((e) => e.isFile()).map((e) => e.name);
   if (files.includes(exactName)) return exactName;
   return suffix ? files.find((f) => f.endsWith(suffix) && f !== suffix) : undefined;
 }
 
-function readRoleFile(dir, display, entries, exactName, suffix) {
+function readRoleFile(
+  dir: string,
+  display: string,
+  entries: readonly Dirent[],
+  exactName: string,
+  suffix: string | null,
+): RoleFile | null {
   const name = roleFileName(entries, exactName, suffix);
   if (!name) return null;
   return { file: name, text: fileText(join(dir, name), join(display, name)) };
 }
 
-function readStatusFrom(dir, display, entries, exactName, suffix, vocab) {
+function readStatusFrom(
+  dir: string,
+  display: string,
+  entries: readonly Dirent[],
+  exactName: string,
+  suffix: string | null,
+  vocab: ReadonlySet<string>,
+): RoleStatus | null {
   const role = readRoleFile(dir, display, entries, exactName, suffix);
   if (!role) return null;
   if (role.text == null) return { ...role, value: "unknown", raw: "unreadable" };
   return { ...role, ...normalize(rawStatus(role.text), vocab) };
 }
 
-function lastModified(dir, entries) {
+function lastModified(dir: string, entries: readonly Dirent[]): number {
   let max = 0;
   for (const e of entries) {
     if (!e.isFile() || !e.name.endsWith(".md")) continue;
@@ -300,12 +368,22 @@ function lastModified(dir, entries) {
   return max;
 }
 
-function collect(rootDir, rootDisplay) {
-  const tasks = [];
+interface Task {
+  readonly dir: string;
+  readonly path: string;
+  readonly archived: boolean;
+  readonly plan: RoleStatus | null;
+  readonly result: RoleStatus | null;
+  readonly goals: RoleFile | null;
+  readonly updated: number;
+}
+
+function collect(rootDir: string, rootDisplay: string): Task[] {
+  const tasks: Task[] = [];
   // Every directory is listed exactly once and its entries handed down: the listing that decides
   // whether a folder is a task is the same one the recursion walks. Listing it a second time would
   // report an unreadable directory as two coverage gaps, one per pass.
-  const walk = (dir, display, entries, archived) => {
+  const walk = (dir: string, display: string, entries: readonly Dirent[], archived: boolean): void => {
     for (const e of entries) {
       if (!e.isDirectory() || SKIP_DIRS.has(e.name)) continue;
       // `.agents` is the one dotted name entered: the canonical root `<project>/.agents/tasks` sits
@@ -338,12 +416,24 @@ function collect(rootDir, rootDisplay) {
   return tasks;
 }
 
+interface Lifecycle {
+  readonly value: string | null;
+  readonly source: string | null;
+}
+
 // The plan owns the lifecycle, so it wins whenever it exists; the result file only stands in for a
 // folder that has no plan at all, where it is the sole remaining record of how the task ended.
-function lifecycleStatus(task) {
+function lifecycleStatus(task: Task): Lifecycle {
   if (task.plan) return { value: task.plan.value, source: task.plan.file };
   if (task.result) return { value: task.result.value, source: task.result.file };
   return { value: null, source: null };
+}
+
+interface SlugHolder {
+  readonly path: string;
+  readonly dir: string;
+  readonly archived: boolean;
+  readonly root: string;
 }
 
 // One finding per colliding folder rather than one per collision: each keeps its own `root`, which is
@@ -352,8 +442,8 @@ function lifecycleStatus(task) {
 // path the other findings use: that path is prefixed by its root's basename alone, and two roots
 // sharing a basename would leave the peer unresolvable in the one check whose payload is which
 // other folder.
-function duplicateSlugFindings(bySlug) {
-  const out = [];
+function duplicateSlugFindings(bySlug: ReadonlyMap<string, readonly SlugHolder[]>): TaskFinding[] {
+  const out: TaskFinding[] = [];
   for (const [slug, holders] of bySlug) {
     if (holders.length < 2) continue;
     for (const holder of holders) {
@@ -374,7 +464,7 @@ function duplicateSlugFindings(bySlug) {
 
 // A folder with no status-bearing file at all (context- or ticket-only) counts as live rather than
 // being skipped, so a task abandoned before it ever got a plan still surfaces once it ages.
-function staleFinding(task, now, staleDays) {
+function staleFinding(task: Task, now: number, staleDays: number): UnrootedFinding | null {
   if (task.archived) return null;
   const { value, source } = lifecycleStatus(task);
   if (value != null && !LIVE_STATUSES.has(value)) return null;
@@ -396,9 +486,9 @@ function staleFinding(task, now, staleDays) {
 // both skip it — and a task no check reaches is exactly what this sweep exists to surface. Report the
 // value the file actually carries, per file, so a typo or a vocabulary renamed out from under
 // PLAN_VOCAB is visible rather than quietly unsupervised.
-function unknownStatusFindings(task) {
+function unknownStatusFindings(task: Task): UnrootedFinding[] {
   if (task.archived) return [];
-  const out = [];
+  const out: UnrootedFinding[] = [];
   for (const role of [task.plan, task.result]) {
     if (role?.text == null || role.value !== "unknown") continue;
     out.push({
@@ -410,7 +500,7 @@ function unknownStatusFindings(task) {
   return out;
 }
 
-function doneUnarchivedFinding(task) {
+function doneUnarchivedFinding(task: Task): UnrootedFinding | null {
   if (task.archived) return null;
   const { value, source } = lifecycleStatus(task);
   if (!TERMINAL_STATUSES.has(value)) return null;
@@ -422,7 +512,7 @@ function doneUnarchivedFinding(task) {
 // hyphen, underscore, or space, then map each space to a hyphen — so an em-dash vanishes and
 // leaves the double hyphen the kit's own step anchors carry, while a `FLAG_LIKE_THIS` token keeps
 // its underscores.
-function slugify(heading) {
+function slugify(heading: string): string {
   return heading.trim().toLowerCase().replace(/[^\p{L}\p{N} _-]/gu, "").replace(/ /g, "-");
 }
 
@@ -437,12 +527,12 @@ const TOMBSTONE_BULLET = /^[ \t]*-[ \t]+(.+?)[ \t]*$/;
 // also walks a candidate past every slug already assigned — `Foo`, `Foo-1`, `Foo` yields `foo-2` for
 // the third — so allocation advances to an unclaimed slug rather than trusting the per-base count.
 // Headings inside a fenced block are illustrative markdown, not anchors, so fences are tracked.
-function headingSlugs(text) {
-  const seen = new Map();
-  const slugs = new Set();
+function headingSlugs(text: string): Set<string> {
+  const seen = new Map<string, number>();
+  const slugs = new Set<string>();
   // Heading-assigned slugs only: a tombstone bullet's slug resolves links but reserves nothing,
   // since compaction removed its rendered heading.
-  const taken = new Set();
+  const taken = new Set<string>();
   let inCompacted = false;
   for (const line of liveLines(text)) {
     const m = line.match(HEADING);
@@ -471,17 +561,17 @@ function headingSlugs(text) {
   return slugs;
 }
 
-function stepLabel(heading) {
+function stepLabel(heading: string): string {
   const m = heading.match(/^Step[ \t]+(\d+)/);
   return m ? `Step ${m[1]}` : clip(heading, 40);
 }
 
-function anchorFindings(task) {
-  const out = [];
+function anchorFindings(task: Task): UnrootedFinding[] {
+  const out: UnrootedFinding[] = [];
   if (!task.plan?.text) return out;
-  const slugCache = new Map();
-  const report = (step, detail) => out.push({ check: "dead-anchor", path: task.path, detail: `${step}: ${detail}` });
-  let step = null;
+  const slugCache = new Map<string, Set<string> | null>();
+  const report = (step: string, detail: string) => out.push({ check: "dead-anchor", path: task.path, detail: `${step}: ${detail}` });
+  let step: string | null = null;
   for (const line of liveLines(task.plan.text)) {
     const heading = line.match(HEADING);
     if (heading) {
@@ -529,10 +619,10 @@ function anchorFindings(task) {
   return out;
 }
 
-function goalIdFindings(task) {
-  const out = [];
+function goalIdFindings(task: Task): UnrootedFinding[] {
+  const out: UnrootedFinding[] = [];
   if (!task.goals?.text) return out;
-  const seen = new Set();
+  const seen = new Set<string>();
   let inGoals = false;
   for (const line of liveLines(task.goals.text)) {
     if (HEADING.test(line)) {
@@ -557,14 +647,14 @@ function goalIdFindings(task) {
   return out;
 }
 
-function hasCurrentState(text) {
+function hasCurrentState(text: string): boolean {
   for (const line of liveLines(text)) {
     if (CURRENT_STATE.test(line)) return true;
   }
   return false;
 }
 
-function currentStateFinding(task) {
+function currentStateFinding(task: Task): UnrootedFinding | null {
   if (!task.result?.text) return null;
   if (!LIVE_RESULT_STATUSES.has(task.result.value)) return null;
   if (hasCurrentState(task.result.text)) return null;
@@ -575,7 +665,7 @@ function currentStateFinding(task) {
   };
 }
 
-function oversizedResultFinding(task, resultMaxKb) {
+function oversizedResultFinding(task: Task, resultMaxKb: number): UnrootedFinding | null {
   if (!task.result?.text) return null;
   const kb = Buffer.byteLength(task.result.text, "utf8") / 1024;
   if (kb <= resultMaxKb) return null;
@@ -586,8 +676,10 @@ function oversizedResultFinding(task, resultMaxKb) {
   };
 }
 
-function kindOf(path, display) {
-  let st;
+type PathKind = "missing" | "unreadable" | "link" | "dir" | "file" | "other";
+
+function kindOf(path: string, display: string): PathKind {
+  let st: Stats;
   try {
     st = lstatSync(path);
   } catch (err) {
@@ -601,7 +693,7 @@ function kindOf(path, display) {
   return "other";
 }
 
-function linkTarget(path, display) {
+function linkTarget(path: string, display: string): string | null {
   try {
     return readlinkSync(path);
   } catch (err) {
@@ -610,7 +702,7 @@ function linkTarget(path, display) {
   }
 }
 
-function bytesOf(path, display) {
+function bytesOf(path: string, display: string): Buffer | null {
   try {
     return readFileSync(path);
   } catch (err) {
@@ -621,9 +713,9 @@ function bytesOf(path, display) {
 
 // Every file under a one-sided item, so a whole missing or unmanaged subtree reports per path
 // rather than as a single opaque line. A Dirent reflects lstat, so a symlink counts as a file.
-function filesUnder(path, display, kind) {
+function filesUnder(path: string, display: string, kind: PathKind): string[] {
   if (kind !== "dir") return [display];
-  const files = [];
+  const files: string[] = [];
   for (const e of listEntries(path, display)) {
     if (skipInInstalls(e.name)) continue;
     files.push(...filesUnder(join(path, e.name), join(display, e.name), e.isDirectory() ? "dir" : "file"));
@@ -631,21 +723,21 @@ function filesUnder(path, display, kind) {
   return files;
 }
 
-function unionNames(kitPath, installPath, display) {
-  const names = new Set();
+function unionNames(kitPath: string, installPath: string, display: string): string[] {
+  const names = new Set<string>();
   for (const e of listEntries(kitPath, kitPath)) names.add(e.name);
   for (const e of listEntries(installPath, display)) names.add(e.name);
   return [...names].sort((a, b) => a.localeCompare(b, "en"));
 }
 
-// setup.sh copies skills with `cp -R` (symlinks preserved) and references with `cp -RfL` (symlinks
-// materialized), so two links are compared by their targets. One side being a link and the other
-// not is drift rather than a copy-mode difference: `cp -RfL` reaches only references/, which
-// carries no symlinks, while skills/ is copied link-preserving precisely so each skill's AGENTS.md
-// and references resolve to the install-root originals. A materialized link holds the same bytes,
-// so no comparison below would see the loss.
-function comparePath(kitPath, installPath, display, out) {
-  const drift = (path, detail) => out.push({ check: "install-drift", path, detail });
+// setup.ts copies skills with `verbatimSymlinks` (symlinks preserved) and references with
+// `dereference` (symlinks materialized), so two links are compared by their targets. One side being
+// a link and the other not is drift rather than a copy-mode difference: `dereference` reaches only
+// references/, which carries no symlinks, while skills/ is copied link-preserving precisely so each
+// skill's AGENTS.md and references resolve to the install-root originals. A materialized link holds
+// the same bytes, so no comparison below would see the loss.
+function comparePath(kitPath: string, installPath: string, display: string, out: InstallFinding[]): void {
+  const drift = (path: string, detail: string) => out.push({ check: "install-drift", path, detail });
   const kitKind = kindOf(kitPath, kitPath);
   const installKind = kindOf(installPath, display);
   if (kitKind === "unreadable" || installKind === "unreadable") return;
@@ -688,35 +780,40 @@ function comparePath(kitPath, installPath, display, out) {
 
 // The two install-root shared payloads are unlike a skill or an agent file: every installed skill's
 // own `AGENTS.md` and `references` symlinks resolve into them, so an unmarked one is not a private
-// file this check should ignore — it is what all of them now load, and setup.sh refuses the whole
-// home over it. Reported with the remedy setup.sh names, because the usual answer to install-drift,
-// rerunning setup.sh, exits 1 on this state instead of repairing it.
+// file this check should ignore — it is what all of them now load, and setup.ts refuses the whole
+// home over it. Reported with the remedy setup.ts names, because the usual answer to install-drift,
+// rerunning setup.ts, exits 1 on this state instead of repairing it.
 // Returned rather than filed, because where it lands depends on whether anything else was compared:
 // in a home with no markers at all it is folded into the single never-installed line below.
-function sharedPayloadConflict(home, display, rel) {
+function sharedPayloadConflict(home: string, display: string, rel: string): InstallFinding | null {
   if (kindOf(join(home, rel), join(display, rel)) === "missing") return null;
   return {
     check: "install-drift",
     path: join(display, rel),
-    detail: "present but not kit-owned — every kit skill resolves into it; move it aside and rerun setup.sh",
+    detail: "present but not kit-owned — every kit skill resolves into it; move it aside and rerun setup.ts",
   };
 }
 
-// Only the items setup.sh marked as its own are compared; an unmarked same-named skill or agent
+interface InstallResult {
+  readonly findings: InstallFinding[];
+  readonly items: number;
+}
+
+// Only the items setup.ts marked as its own are compared; an unmarked same-named skill or agent
 // file belongs to the user, so its content is none of this check's business — the two shared
 // payloads above are the exception, and say why. The kit-side pass at the end covers what
 // marker-scoping structurally cannot see: an item that was never installed carries no marker to be
 // found.
-function installFindings(kitRoot, homeArg) {
+function installFindings(kitRoot: string, homeArg: string): InstallResult {
   const home = resolve(homeArg);
   const display = basename(home) || homeArg;
-  const findings = [];
+  const findings: InstallFinding[] = [];
   let items = 0;
   // Paths the marker-owned pass compared, so the kit-side sweep below never walks them again: a
   // payload deleted out from under its surviving sibling marker (CORE_RULES.md, an agent file)
   // would otherwise report "missing in install" once per pass.
-  const compared = new Set();
-  const conflicts = [];
+  const compared = new Set<string>();
+  const conflicts: InstallFinding[] = [];
 
   for (const entry of listEntries(join(home, "skills"), join(display, "skills"), true)) {
     if (!entry.isDirectory() || entry.name.startsWith(STAGING_PREFIX)) continue;
@@ -759,9 +856,9 @@ function installFindings(kitRoot, homeArg) {
     }
   }
 
-  // A home setup.sh never installed into would otherwise report every kit file one by one; no marker
+  // A home setup.ts never installed into would otherwise report every kit file one by one; no marker
   // of any kind is a single fact about the home, so it reports as a single line. A shared-payload
-  // conflict folds into that line rather than stacking beside it: it is why setup.sh refuses this
+  // conflict folds into that line rather than stacking beside it: it is why setup.ts refuses this
   // home, so dropping it would leave the never-installed state with no reason attached.
   if (items === 0) {
     const named = conflicts.map((conflict) => basename(conflict.path)).join(" and ");
@@ -769,7 +866,7 @@ function installFindings(kitRoot, homeArg) {
       check: "install-drift",
       path: display,
       detail: named
-        ? `no kit markers — never installed; ${named} present but not kit-owned — move aside and rerun setup.sh`
+        ? `no kit markers — never installed; ${named} present but not kit-owned — move aside and rerun setup.ts`
         : "no kit markers — never installed",
     });
     return { findings, items };
@@ -778,11 +875,11 @@ function installFindings(kitRoot, homeArg) {
 
   // Absence is tested against the home path itself rather than its marker: a path that does not
   // exist cannot be a user's, so naming it claims no ownership the marker scheme withholds. Once
-  // any marker proves setup.sh installed this home, every payload setup.sh would copy is expected;
+  // any marker proves setup.ts installed this home, every payload setup.ts would copy is expected;
   // an existing unmarked same-named path remains user-owned and is neither compared nor missing.
   // A path the marker pass compared is excluded — its verdict, missing included, is already filed.
-  const absent = (rel) => !compared.has(rel) && kindOf(join(home, rel), join(display, rel)) === "missing";
-  const kitOnly = [];
+  const absent = (rel: string) => !compared.has(rel) && kindOf(join(home, rel), join(display, rel)) === "missing";
+  const kitOnly: string[] = [];
   if (absent("CORE_RULES.md")) kitOnly.push("CORE_RULES.md");
   if (absent("references")) kitOnly.push("references");
   const kitSkills = join(kitRoot, "skills");
@@ -806,14 +903,23 @@ function installFindings(kitRoot, homeArg) {
   return { findings, items };
 }
 
-const NUMERIC_OPTIONS = [
+type NumericKey = "staleDays" | "resultMaxKb";
+
+const NUMERIC_OPTIONS: readonly { flag: string; key: NumericKey; fallback: number }[] = [
   { flag: "--stale-days", key: "staleDays", fallback: DEFAULT_STALE_DAYS },
   { flag: "--result-max-kb", key: "resultMaxKb", fallback: DEFAULT_RESULT_MAX_KB },
 ];
 
-function parseArgs(argv) {
-  const roots = [];
-  const values = { staleDays: DEFAULT_STALE_DAYS, resultMaxKb: DEFAULT_RESULT_MAX_KB };
+interface Options {
+  readonly roots: string[];
+  readonly installs: boolean;
+  readonly staleDays: number;
+  readonly resultMaxKb: number;
+}
+
+function parseArgs(argv: readonly string[]): Options {
+  const roots: string[] = [];
+  const values: Record<NumericKey, number> = { staleDays: DEFAULT_STALE_DAYS, resultMaxKb: DEFAULT_RESULT_MAX_KB };
   let installs = false;
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
@@ -860,13 +966,19 @@ function parseArgs(argv) {
 const { roots, installs, staleDays, resultMaxKb } = parseArgs(process.argv.slice(2));
 
 const now = Date.now();
-const findings = [];
+const findings: Finding[] = [];
 let scanned = 0;
+
+interface RootCandidate {
+  readonly rootArg: string;
+  readonly rootDir: string;
+  readonly canonical: string;
+}
 
 if (installs) {
   const [kitRootArg, ...homes] = roots;
   if (kitRootArg == null || homes.length === 0) {
-    warnings.push("usage: node scripts/health-check.mjs --installs <kit-root> <home> [<home>...]");
+    warnings.push("usage: node scripts/health-check.ts --installs <kit-root> <home> [<home>...]");
   } else if (isDirectory(kitRootArg, "kit root")) {
     for (const homeArg of homes) {
       if (isAbsent(homeArg)) {
@@ -883,13 +995,13 @@ if (installs) {
   }
 } else {
   if (roots.length === 0) {
-    warnings.push("no task root given; usage: node scripts/health-check.mjs [--stale-days N] [--result-max-kb N] <root> [<root>...]");
+    warnings.push("no task root given; usage: node scripts/health-check.ts [--stale-days N] [--result-max-kb N] <root> [<root>...]");
   }
   // Slug → every folder carrying it, across all roots. A slug is globally unique by contract, so
   // this stays empty on a healthy set; it is filled during the per-root walk and judged after it,
   // because a collision can span roots and no root can be ruled out until every one is walked.
-  const bySlug = new Map();
-  const candidates = roots
+  const bySlug = new Map<string, SlugHolder[]>();
+  const candidates: RootCandidate[] = roots
     .filter((rootArg) => isDirectory(rootArg, "root"))
     .map((rootArg) => {
       const rootDir = resolve(rootArg);
@@ -907,8 +1019,8 @@ if (installs) {
   // root first, and the sort is stable, so of two spellings of one root the caller's first
   // survives. The walk below then runs in argument order, which is the order findings are
   // emitted in.
-  const walked = [];
-  const kept = new Set();
+  const walked: string[] = [];
+  const kept = new Set<RootCandidate>();
   const byDepth = [...candidates].sort((a, b) =>
     (a.canonical < b.canonical ? -1 : a.canonical > b.canonical ? 1 : 0));
   for (const candidate of byDepth) {
@@ -934,7 +1046,7 @@ if (installs) {
       if (holders) holders.push(holder);
       else bySlug.set(slug, [holder]);
     }
-    const rootFindings = [];
+    const rootFindings: UnrootedFinding[] = [];
     scanned += tasks.length;
     for (const task of tasks) {
       const single = [staleFinding(task, now, staleDays), doneUnarchivedFinding(task)];
@@ -959,5 +1071,5 @@ process.stdout.write(JSON.stringify({
   scanned,
   unreadable: unreadablePaths.length,
   unreadablePaths,
-}) + "\n");
+} satisfies Report) + "\n");
 for (const w of warnings) console.error(`[health-check] ${w}`);

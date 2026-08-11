@@ -9,10 +9,12 @@ Start by reading and applying [CORE_RULES.md](./CORE_RULES.md). It is the canoni
 - `skills/<name>/SKILL.md` owns that skill's protocol and its direct reference citations.
 - `references/workflow/` owns cross-skill workflow methodology; `references/workflow/domain-packs.md` owns the domain-pack interface.
 - `references/<domain>/` owns domain-specific guidance.
-- `setup.sh` owns installation and distribution behavior.
+- `setup.ts` owns installation and distribution behavior.
 - `scripts/` owns the repository's zero-dependency Node helpers; each script's file header owns its own CLI forms and stdout contract.
-- `tests/` owns repository verification; `tests/setup-install.sh` covers installation and distribution behavior, `tests/health-check.sh` the task and install health checks, `tests/session-triage.sh` the session triage, `tests/size-report.sh` the skill context-size report, and `tests/size-check.sh` the context-size baseline (`tests/size-baseline.json`).
+- `tests/` owns repository verification; `tests/setup-install.test.ts` covers installation and distribution behavior, `tests/health-check.test.ts` the task and install health checks, `tests/session-triage.test.ts` the session triage, `tests/size-report.test.ts` the skill context-size report, and `tests/size-check.test.ts` the context-size baseline (`tests/size-baseline.json`). Run them all with `node --test "tests/*.test.ts"` — quoted, because the runner takes glob patterns and resolves a bare directory as a module path.
 - `.agents/tasks/` owns task artifacts and their active work context.
+
+**The `.ts` sources are unchecked by design.** `setup.ts`, `scripts/`, and `tests/` run directly on Node under type stripping — no build step, no bundler, no typechecker. Type stripping runs unflagged from Node 22.18 and 23.6, so that is the floor every `.ts` source here assumes, `setup.ts` included; below it the failure is a parse error on a type annotation, not a version message. Their annotations are erased at run time and nothing validates them, so the engineering pack's "run typecheck and linter on changed files" step has no target in this repository and `node --test "tests/*.test.ts"` is the whole verification surface. Adding a checker would put a `package.json`, a lockfile, and `node_modules` in a tree that otherwise carries only Markdown and the `.ts` sources themselves; that cost is why it is declined, and it is what to weigh if the decision is revisited.
 
 ## Change routing
 
@@ -20,9 +22,9 @@ Before changing the kit, identify and inspect:
 
 - the affected `SKILL.md` files and every reference they cite directly;
 - shared-contract consumers when changing a workflow reference, domain-pack interface, core rule, or distribution behavior — identify them by reverse search over `skills/`, `references/`, `scripts/`, `agents/`, and `CORE_RULES.md`, never from a derivable list kept in a file header (§ *Consumer lists*);
-- the installer integration test (`bash tests/setup-install.sh`) when changing `setup.sh`, native agent definitions, or installed payload behavior — and `scripts/health-check.mjs` in the same pass, whose `--installs` mode hardcodes `setup.sh`'s ownership markers, payload categories, and per-host agent extensions;
-- the harness under `tests/` covering a script you changed — `bash tests/health-check.sh` for `scripts/health-check.mjs`, `bash tests/session-triage.sh` for `scripts/session-triage.mjs`, `bash tests/size-report.sh` for `scripts/size-report.mjs`, `bash tests/size-check.sh` for `scripts/size-check.mjs`;
-- the size baseline (`tests/size-baseline.json`) when changing any `SKILL.md`, reference file, or `CORE_RULES.md` — the measured context loads move with the content, so re-capture with `node scripts/size-check.mjs --update .` in the same change; `bash tests/size-check.sh` fails while the committed baseline lags;
+- the installer integration test (`tests/setup-install.test.ts`) when changing `setup.ts`, native agent definitions, or installed payload behavior — and `scripts/health-check.ts` in the same pass, whose `--installs` mode hardcodes `setup.ts`'s ownership markers, payload categories, and per-host agent extensions;
+- the harness under `tests/` covering a script you changed — `node --test tests/setup-install.test.ts` for `setup.ts`, `node --test tests/health-check.test.ts` for `scripts/health-check.ts`, `node --test tests/session-triage.test.ts` for `scripts/session-triage.ts`, `node --test tests/size-report.test.ts` for `scripts/size-report.ts`, `node --test tests/size-check.test.ts` for `scripts/size-check.ts`;
+- the size baseline (`tests/size-baseline.json`) when changing any `SKILL.md`, reference file, or `CORE_RULES.md` — the measured context loads move with the content, so re-capture with `node scripts/size-check.ts --update .` in the same change; `node --test tests/size-check.test.ts` fails while the committed baseline lags;
 - relevant Git history, to preserve the reason behind an existing contract.
 
 Keep each change with its authoritative owner; update dependent consumers only when the contract they consume changes.

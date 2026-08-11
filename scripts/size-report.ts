@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Reports the runtime context each skill loads, in bytes and approximate tokens, so a
 // contract-slimming change can be measured against a captured baseline.
-// Zero dependencies; Node >= 18.
-// Run: node scripts/size-report.mjs [--skill NAME]... <kit-root>
+// Zero dependencies; Node >= 23.6.
+// Run: node scripts/size-report.ts [--skill NAME]... <kit-root>
 //
 // Two sets per skill. The `direct` set is what the skill itself pulls in: its own SKILL.md plus every
 // distinct `./references/<path>.md` and `./AGENTS.md` the file cites, resolved against <kit-root> — the
@@ -41,7 +41,7 @@ import { basename, dirname, join, relative, resolve, sep } from "node:path";
 // process.exit after the write would discard whatever the pipe buffer could not take, truncating the
 // JSON above 64 KB. A reader that closes early then raises EPIPE on a stream nothing awaits, and
 // swallowing that is what keeps the always-zero exit status the contract above promises.
-process.stdout.on("error", (err) => {
+process.stdout.on("error", (err: NodeJS.ErrnoException) => {
   if (err.code !== "EPIPE") throw err;
 });
 
@@ -52,10 +52,8 @@ const SKILL_FILE = "SKILL.md";
 
 // What a SKILL.md pulls in at run time. All three forms are rooted at the kit root rather than at the
 // skill directory, which is why the direct scan resolves them there and not against the citing file.
-// The third alternative is the Core Rules domain-pack template, matched literally.
 const SKILL_CITATION = /\.\/(?:references\/(?:[A-Za-z0-9._/-]+|<domain>\/rules)\.md|AGENTS\.md)/g;
 const DOMAIN_TEMPLATE = "./references/<domain>/rules.md";
-// The pack the template resolves to when nothing overrides it — the measured default load.
 const DEFAULT_PACK = "references/engineering";
 // A phase file named in backticks on the template's own line (`execution.md`, `verification.md`, …).
 // Lowercase-only on purpose: the same line names task artifacts like `CONTEXT.md`, which are not pack
@@ -81,17 +79,52 @@ const TASK_ARTIFACTS = new Set([
   "rfc.md",
 ]);
 
-const warnings = [];
+interface FileEntry {
+  readonly path: string;
+  readonly bytes: number;
+  readonly approxTokens: number;
+}
+
+interface CountedFile extends FileEntry {
+  readonly abs: string;
+}
+
+interface MeasuredSet {
+  readonly files: readonly FileEntry[];
+  readonly bytes: number;
+  readonly approxTokens: number;
+}
+
+interface SkillReport {
+  readonly skill: string;
+  readonly direct: MeasuredSet;
+  readonly transitive: MeasuredSet;
+}
+
+interface Report {
+  readonly root: string | null;
+  readonly skills: readonly SkillReport[];
+  readonly warnings: number;
+  readonly unresolved: readonly string[];
+}
+
+// `bytes` when the path is a regular file, `error` for every other outcome — which is what the
+// callers below branch on, and why the union keeps the two exclusive.
+type Measurement =
+  | { readonly bytes: number; readonly error?: undefined }
+  | { readonly bytes?: undefined; readonly error: string };
+
+const warnings: string[] = [];
 // Citations that reached no readable file, in the contract rather than only on stderr: a caller reading
 // byte totals alone would take a path whose references it never opened for a fully measured one.
-const unresolved = [];
-const unresolvedSeen = new Set();
+const unresolved: string[] = [];
+const unresolvedSeen = new Set<string>();
 
-const approxTokens = (bytes) => Math.round(bytes / BYTES_PER_TOKEN);
-const display = (root, abs) => relative(root, abs).split(sep).join("/");
-const withinRoot = (abs, root) => abs === root || abs.startsWith(root + sep);
+const approxTokens = (bytes: number): number => Math.round(bytes / BYTES_PER_TOKEN);
+const display = (root: string, abs: string): string => relative(root, abs).split(sep).join("/");
+const withinRoot = (abs: string, root: string): boolean => abs === root || abs.startsWith(root + sep);
 
-function noteUnresolved(citation, from, reason) {
+function noteUnresolved(citation: string, from: string, reason: string): void {
   const entry = `${from} -> ${citation}`;
   if (unresolvedSeen.has(entry)) return;
   unresolvedSeen.add(entry);
@@ -99,7 +132,7 @@ function noteUnresolved(citation, from, reason) {
   warnings.push(`unresolved citation in ${from}: ${citation} (${reason})`);
 }
 
-function measure(abs) {
+function measure(abs: string): Measurement {
   try {
     const st = statSync(abs);
     return st.isFile() ? { bytes: st.size } : { error: "not a regular file" };
@@ -108,7 +141,7 @@ function measure(abs) {
   }
 }
 
-function readText(abs, from) {
+function readText(abs: string, from: string): string | null {
   try {
     return readFileSync(abs, "utf8");
   } catch (err) {
@@ -121,13 +154,19 @@ function readText(abs, from) {
   }
 }
 
-function fileEntry(root, abs, bytes) {
+function fileEntry(root: string, abs: string, bytes: number): CountedFile {
   return { abs, path: display(root, abs), bytes, approxTokens: approxTokens(bytes) };
 }
 
-// Resolves one citation and appends its entry to `files`, returning the absolute path when it counted
-// and null otherwise. `seen` carries the per-set dedup, which is also what terminates citation cycles.
-function countCitation(citation, fromDir, from, root, seen, files) {
+// `seen` carries the per-set dedup, which is also what terminates citation cycles.
+function countCitation(
+  citation: string,
+  fromDir: string,
+  from: string,
+  root: string,
+  seen: Set<string>,
+  files: CountedFile[],
+): string | null {
   const abs = citation === AGENTS_CITATION ? join(root, CORE_RULES) : resolve(fromDir, citation);
   if (seen.has(abs)) return null;
   // A citation climbing out of the kit root names something no installed home carries, so it is
@@ -146,7 +185,7 @@ function countCitation(citation, fromDir, from, root, seen, files) {
   return abs;
 }
 
-function directSet(root, skill) {
+function directSet(root: string, skill: string): CountedFile[] | null {
   const skillFile = join(root, "skills", skill, SKILL_FILE);
   const from = display(root, skillFile);
   const result = measure(skillFile);
@@ -175,7 +214,7 @@ function directSet(root, skill) {
   return files;
 }
 
-function transitiveSet(root, direct) {
+function transitiveSet(root: string, direct: readonly CountedFile[]): CountedFile[] {
   const seen = new Set(direct.map((entry) => entry.abs));
   const files = [...direct];
   const queue = direct.map((entry) => entry.abs);
@@ -193,7 +232,7 @@ function transitiveSet(root, direct) {
   return files;
 }
 
-function summarize(files) {
+function summarize(files: readonly CountedFile[]): MeasuredSet {
   const bytes = files.reduce((total, entry) => total + entry.bytes, 0);
   return {
     files: files.map(({ path, bytes: fileBytes, approxTokens: tokens }) => ({
@@ -206,7 +245,7 @@ function summarize(files) {
   };
 }
 
-function skillNames(root) {
+function skillNames(root: string): string[] {
   const skillsDir = join(root, "skills");
   let entries;
   try {
@@ -216,7 +255,7 @@ function skillNames(root) {
     warnings.push(`cannot list ${display(root, skillsDir)}: ${reason}`);
     return [];
   }
-  const names = [];
+  const names: string[] = [];
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
     const skillFile = join(skillsDir, entry.name, SKILL_FILE);
@@ -228,7 +267,7 @@ function skillNames(root) {
     // Only a genuinely absent SKILL.md marks a non-skill directory. Every other miss — EACCES, a
     // SKILL.md that is itself a directory, a dangling symlink (stat fails while lstat succeeds) —
     // is a skill the report would otherwise omit with no trace, and `unresolved` is what
-    // size-check.mjs's incomplete-measurement refusal keys on.
+    // size-check.ts's incomplete-measurement refusal keys on.
     let reason = result.error === "no such file" ? null : result.error;
     if (reason == null) {
       try {
@@ -243,9 +282,9 @@ function skillNames(root) {
   return names.sort((a, b) => a.localeCompare(b, "en"));
 }
 
-function parseArgs(argv) {
-  const roots = [];
-  const only = [];
+function parseArgs(argv: readonly string[]): { roots: string[]; only: string[] } {
+  const roots: string[] = [];
+  const only: string[] = [];
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--skill" || arg.startsWith("--skill=")) {
@@ -266,11 +305,11 @@ function parseArgs(argv) {
 
 const { roots, only } = parseArgs(process.argv.slice(2));
 
-let root = null;
-const skills = [];
+let root: string | null = null;
+const skills: SkillReport[] = [];
 
 if (roots.length === 0) {
-  warnings.push("no kit root given; usage: node scripts/size-report.mjs [--skill NAME]... <kit-root>");
+  warnings.push("no kit root given; usage: node scripts/size-report.ts [--skill NAME]... <kit-root>");
 } else {
   for (const extra of roots.slice(1)) warnings.push(`ignoring extra kit root ${extra}`);
   const candidate = resolve(roots[0]);
@@ -307,5 +346,5 @@ process.stdout.write(JSON.stringify({
   skills,
   warnings: warnings.length,
   unresolved,
-}) + "\n");
+} satisfies Report) + "\n");
 for (const warning of warnings) console.error(`[size-report] ${warning}`);

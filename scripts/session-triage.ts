@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Triages Claude and Codex session transcripts for agent-misbehavior signals.
-// Zero dependencies; Node >= 18.
-// Usage: node scripts/session-triage.mjs --since YYYY-MM-DD [--top N] <dir> [<dir>...]
+// Zero dependencies; Node >= 23.6.
+// Usage: node scripts/session-triage.ts --since YYYY-MM-DD [--top N] <dir> [<dir>...]
 // Contract: stdout is one JSON object {flagged, remainder, remainderPaths, scanned,
 // skippedUnknownRecords, skippedUnrecognized, skippedUnrecognizedPaths, unreadable, unreadableDirs,
 // unreadablePaths} — flagged is the ranked top slice, remainderPaths names every flagged session
@@ -20,7 +20,7 @@ import { join } from "node:path";
 // process.exit after the write would discard whatever the pipe buffer could not take, truncating the
 // JSON above 64 KB. A reader that closes early then raises EPIPE on a stream nothing awaits, and
 // swallowing that is what keeps the always-zero exit status the contract above promises.
-process.stdout.on("error", (err) => {
+process.stdout.on("error", (err: NodeJS.ErrnoException) => {
   if (err.code !== "EPIPE") throw err;
 });
 
@@ -33,6 +33,14 @@ process.stdout.on("error", (err) => {
 // input-validation  Tool input rejected by the schema layer (InputValidationError).
 // retry-loop        Three or more consecutive identical failures of one tool — a stuck retry.
 // user-abort        Two or more user interrupts in one session — suggests runaway behavior.
+type SignalClass =
+  | "api-error"
+  | "permission-denial"
+  | "policy-block"
+  | "input-validation"
+  | "retry-loop"
+  | "user-abort";
+
 const MIN_EVENTS = {
   "api-error": 1,
   "permission-denial": 1,
@@ -40,15 +48,15 @@ const MIN_EVENTS = {
   "input-validation": 1,
   "retry-loop": 1,
   "user-abort": 2,
-};
+} satisfies Record<SignalClass, number>;
 
 // Record types each host is known to emit; anything else is counted, never fatal.
-const CLAUDE_TYPES = new Set([
+const CLAUDE_TYPES = new Set<string | undefined>([
   "assistant", "user", "system", "mode", "last-prompt", "attachment", "permission-mode",
   "file-history-snapshot", "file-history-delta", "ai-title", "queue-operation",
   "agent-name", "custom-title", "pr-link", "frame-link",
 ]);
-const CODEX_TYPES = new Set([
+const CODEX_TYPES = new Set<string | undefined>([
   "response_item", "event_msg", "turn_context", "session_meta", "world_state",
   "inter_agent_communication_metadata", "compacted",
 ]);
@@ -68,32 +76,94 @@ const CODEX_FAILURE = /(?:^|\n|\\n)(?:Process exited with code [1-9]|Exit code: 
 // Per-call noise Codex prepends to every tool output; stripped so identical failures compare equal.
 const CODEX_VOLATILE = /^(?:Chunk ID|Wall time|Original token count|Total token count):/;
 
-const warnings = [];
+type Host = "claude" | "codex";
+type SignalCounts = Partial<Record<SignalClass, number>>;
+
+interface TranscriptRecord {
+  readonly type?: string;
+  readonly payload?: CodexPayload;
+  readonly isApiErrorMessage?: boolean;
+  readonly preventedContinuation?: boolean;
+  readonly hookErrors?: unknown;
+  readonly message?: { readonly content?: ContentBlock[] };
+}
+
+interface CodexPayload {
+  readonly type?: string;
+  readonly reason?: string;
+  readonly success?: boolean;
+  readonly stderr?: unknown;
+  readonly call_id?: string;
+  readonly name?: string;
+  readonly output?: unknown;
+}
+
+interface ContentBlock {
+  readonly type?: string;
+  readonly id?: string;
+  readonly name?: string;
+  readonly text?: string;
+  readonly content?: unknown;
+  readonly is_error?: boolean;
+  readonly tool_use_id?: string;
+}
+
+interface SessionFile {
+  readonly path: string;
+  readonly mtimeMs: number;
+}
+
+interface FlaggedSession {
+  readonly path: string;
+  readonly host: Host;
+  readonly mtime: string;
+  readonly classes: SignalCounts;
+  readonly score: number;
+}
+
+interface SessionScore extends FlaggedSession {
+  readonly mtimeMs: number;
+  readonly unknown: number;
+}
+
+interface Report {
+  readonly flagged: readonly FlaggedSession[];
+  readonly remainder: number;
+  readonly remainderPaths: readonly string[];
+  readonly scanned: number;
+  readonly skippedUnknownRecords: number;
+  readonly skippedUnrecognized: number;
+  readonly skippedUnrecognizedPaths: readonly string[];
+  readonly unreadable: number;
+  readonly unreadableDirs: readonly string[];
+  readonly unreadablePaths: readonly string[];
+}
+
+const warnings: string[] = [];
 // Reported separately from `warnings`: a caller that advances a since-marker past this run needs to
 // know a file went unread, and a stderr line is not something the JSON contract lets it see.
-const unreadablePaths = [];
+const unreadablePaths: string[] = [];
 // A failed directory listing hides a whole subtree, so it belongs in the same gate — kept in its own
 // list because these are directories, not transcripts. ENOENT stays out: a corpus that isn't there is
 // an uninstalled host, and counting it would pin the caller's marker forever on a single-agent machine.
-const unreadableDirs = [];
+const unreadableDirs: string[] = [];
 // A transcript whose host can't be sniffed is as unread as one that wouldn't open. Reported, but
 // deliberately outside the `unreadable` gate: it would never sniff on a later run either, so gating
 // on it would freeze the window permanently on one stray non-session file.
-const skippedUnrecognizedPaths = [];
+const skippedUnrecognizedPaths: string[] = [];
 
-function textOf(value) {
+function textOf(value: unknown): string {
   return typeof value === "string" ? value : value == null ? "" : JSON.stringify(value);
 }
 
-// Collapses a failure message to a comparable signature: drop volatile headers, digits, spacing.
-function signature(text) {
+function signature(text: string): string {
   const body = text.split("\n").filter((line) => !CODEX_VOLATILE.test(line)).join("\n");
   return body.replace(/\d+/g, "#").replace(/\s+/g, " ").trim().slice(0, 160);
 }
 
-function isoDate(ms) {
+function isoDate(ms: number): string {
   const d = new Date(ms);
-  const pad = (n) => String(n).padStart(2, "0");
+  const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
@@ -101,7 +171,7 @@ function isoDate(ms) {
 // scanner, which consumes a value only once it matches, so the two cannot drift apart.
 const SINCE_SHAPE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
-function parseSince(value) {
+function parseSince(value: string | null): number | null {
   const m = SINCE_SHAPE.exec(value ?? "");
   if (!m) return null;
   const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
@@ -111,9 +181,9 @@ function parseSince(value) {
   return isoDate(d.getTime()) === value ? d.getTime() : null;
 }
 
-function parseArgs(argv) {
-  const dirs = [];
-  let since = null;
+function parseArgs(argv: readonly string[]): { dirs: string[]; sinceMs: number | null; topN: number } {
+  const dirs: string[] = [];
+  let since: string | null = null;
   let top = "10";
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
@@ -135,7 +205,7 @@ function parseArgs(argv) {
   const sinceMs = parseSince(since);
   if (sinceMs == null) warnings.push(`--since must be YYYY-MM-DD (got ${JSON.stringify(since)})`);
   // `parseInt` takes the leading digit run and drops the rest, so `2junk` and `1.5` would pass as 2
-  // and 1 with nothing said; the whole value has to be an integer, as health-check.mjs also requires.
+  // and 1 with nothing said; the whole value has to be an integer, as health-check.ts also requires.
   const topRaw = String(top).trim();
   const topN = /^\d+$/.test(topRaw) ? Number(topRaw) : NaN;
   if (!Number.isInteger(topN) || topN < 1) warnings.push(`--top must be a positive integer (got ${JSON.stringify(top)})`);
@@ -147,7 +217,7 @@ function parseArgs(argv) {
 // collectFiles' rule below — a corpus that is not there is an uninstalled host, not one that went
 // unread — which also keeps a malformed flag value that fell through to the positional branch from
 // counting as a directory the caller ever asked for.
-function noteUnwalked(dir) {
+function noteUnwalked(dir: string): void {
   try {
     statSync(dir);
   } catch (err) {
@@ -158,7 +228,7 @@ function noteUnwalked(dir) {
   unreadableDirs.push(dir);
 }
 
-function collectFiles(dir, sinceMs, out) {
+function collectFiles(dir: string, sinceMs: number, out: SessionFile[]): void {
   let entries;
   try {
     entries = readdirSync(dir, { withFileTypes: true });
@@ -186,7 +256,7 @@ function collectFiles(dir, sinceMs, out) {
 }
 
 // Decides the host from record shape rather than path, so fixtures and real corpora agree.
-function sniffHost(records) {
+function sniffHost(records: readonly TranscriptRecord[]): Host | null {
   for (const r of records) {
     if (r && typeof r === "object") {
       if (r.payload && typeof r.payload === "object" && CODEX_TYPES.has(r.type)) return "codex";
@@ -196,8 +266,12 @@ function sniffHost(records) {
   return null;
 }
 
-function classifyClaude(records, bump, countUnknown) {
-  const toolNames = new Map();
+function classifyClaude(
+  records: readonly TranscriptRecord[],
+  bump: (cls: SignalClass) => void,
+  countUnknown: () => void,
+): void {
+  const toolNames = new Map<string | undefined, string>();
   let runKey = null;
   let runLength = 0;
   for (const r of records) {
@@ -246,8 +320,12 @@ function classifyClaude(records, bump, countUnknown) {
   }
 }
 
-function classifyCodex(records, bump, countUnknown) {
-  const callNames = new Map();
+function classifyCodex(
+  records: readonly TranscriptRecord[],
+  bump: (cls: SignalClass) => void,
+  countUnknown: () => void,
+): void {
+  const callNames = new Map<string | undefined, string>();
   let runKey = null;
   let runLength = 0;
   for (const r of records) {
@@ -289,7 +367,7 @@ function classifyCodex(records, bump, countUnknown) {
   }
 }
 
-function triage(file) {
+function triage(file: SessionFile): SessionScore | null {
   let text;
   try {
     text = readFileSync(file.path, "utf8");
@@ -298,7 +376,7 @@ function triage(file) {
     unreadablePaths.push(file.path);
     return null;
   }
-  const records = [];
+  const records: TranscriptRecord[] = [];
   let unknown = 0;
   for (const line of text.split("\n")) {
     if (!line.trim()) continue;
@@ -314,13 +392,13 @@ function triage(file) {
     skippedUnrecognizedPaths.push(file.path);
     return null;
   }
-  const counts = new Map();
-  const bump = (cls) => counts.set(cls, (counts.get(cls) ?? 0) + 1);
+  const counts = new Map<SignalClass, number>();
+  const bump = (cls: SignalClass) => counts.set(cls, (counts.get(cls) ?? 0) + 1);
   const countUnknown = () => { unknown++; };
   if (host === "claude") classifyClaude(records, bump, countUnknown);
   else classifyCodex(records, bump, countUnknown);
 
-  const classes = {};
+  const classes: SignalCounts = {};
   for (const [cls, n] of [...counts].sort((a, b) => a[0].localeCompare(b[0], "en"))) {
     if (n >= (MIN_EVENTS[cls] ?? 1)) classes[cls] = n;
   }
@@ -329,7 +407,7 @@ function triage(file) {
 }
 
 const { dirs, sinceMs, topN } = parseArgs(process.argv.slice(2));
-const files = [];
+const files: SessionFile[] = [];
 // A window that never parsed leaves every directory unread. Recorded as unread rather than left to
 // the stderr warning alone: the payload would otherwise be byte-identical to a window that was
 // walked in full and found clean, and a caller advancing its since-marker past this run would skip
@@ -337,7 +415,7 @@ const files = [];
 if (sinceMs == null) for (const dir of dirs) noteUnwalked(dir);
 else for (const dir of dirs) collectFiles(dir, sinceMs, files);
 
-const results = [];
+const results: SessionScore[] = [];
 let skippedUnknownRecords = 0;
 for (const file of files) {
   const result = triage(file);
@@ -360,5 +438,5 @@ process.stdout.write(JSON.stringify({
   unreadable: unreadablePaths.length + unreadableDirs.length,
   unreadableDirs,
   unreadablePaths,
-}) + "\n");
+} satisfies Report) + "\n");
 for (const w of warnings) console.error(`[session-triage] ${w}`);

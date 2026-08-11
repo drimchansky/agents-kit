@@ -158,5 +158,5 @@ relocation pack exists), or a pack omits a file a phase asks for:
 3. If the domain needs its own skills (a non-linear domain like negotiation may want a strategy
    skill rather than the linear `plan-task`), add them under `skills/` and list them here under
    the skill split.
-4. No spine change is required. `setup.sh` copies `references/` wholesale, so a new pack installs
+4. No spine change is required. `setup.ts` copies `references/` wholesale, so a new pack installs
    automatically.
