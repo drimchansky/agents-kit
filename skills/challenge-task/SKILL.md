@@ -43,7 +43,7 @@ The codebase is the fifth input: the two code-priced yardsticks (new dependencie
 
 ## Challenge Process
 
-Three passes, run in order. Each asks one question at a different level — **what does this cost if it is absent?** — and answers it against the Problem Statement, never against a plan you would have written instead. A divergence that is merely different is not a finding — `./references/engineering/review.md:101` ("equally valid alternatives" is not a review finding) is the standard, and the bar below is the test that enforces it.
+Three passes, run in order. Each asks one question at a different level — **what does this cost if it is absent?** — and answers it against the Problem Statement, never against a plan you would have written instead. A divergence that is merely different is not a finding — `./references/engineering/review.md:117` ("equally valid alternatives" is not a review finding) is the standard, and the bar below is the test that enforces it.
 
 The passes run top-down, each taking the previous one's survivors as its input: a goal challenged in an earlier pass is not re-tested in a later one, and a step that exists only to serve it is named in pass 3 as a consequence of that finding rather than as an independent one. A pass whose input was largely challenged above still renders — it states what it took as given, so the reader sees what the assessment did and did not test.
 
