@@ -2,7 +2,8 @@
 // Installs the kit into the native agent homes (~/.claude, ~/.codex): skills, references/,
 // CORE_RULES.md, and each host's native agent definitions, each written beside an ownership marker so
 // a later run reclaims what the kit installed and leaves everything else alone.
-// Zero dependencies; Node >= 23.6.
+// Zero dependencies; runs under Node type stripping — too old a Node fails as a parse error, not a
+// version message. Floor in AGENTS.md § The `.ts` sources are unchecked by design.
 // Run: node setup.ts
 //
 // Contract: stdout names each home and every item installed or skipped under it; a refused home is

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Reports the runtime context each skill loads, in bytes and approximate tokens, so a
 // contract-slimming change can be measured against a captured baseline.
-// Zero dependencies; Node >= 23.6.
+// Zero dependencies; runs under Node type stripping — too old a Node fails as a parse error, not a
+// version message. Floor in AGENTS.md § The `.ts` sources are unchecked by design.
 // Run: node scripts/size-report.ts [--skill NAME]... <kit-root>
 //
 // Two sets per skill. The `direct` set is what the skill itself pulls in: its own SKILL.md plus every

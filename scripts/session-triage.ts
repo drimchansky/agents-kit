@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Triages Claude and Codex session transcripts for agent-misbehavior signals.
-// Zero dependencies; Node >= 23.6.
+// Zero dependencies; runs under Node type stripping — too old a Node fails as a parse error, not a
+// version message. Floor in AGENTS.md § The `.ts` sources are unchecked by design.
 // Usage: node scripts/session-triage.ts --since YYYY-MM-DD [--top N] <dir> [<dir>...]
 // Contract: stdout is one JSON object {flagged, remainder, remainderPaths, scanned,
 // skippedUnknownRecords, skippedUnrecognized, skippedUnrecognizedPaths, unreadable, unreadableDirs,

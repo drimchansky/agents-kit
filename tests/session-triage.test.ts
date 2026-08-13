@@ -1,6 +1,6 @@
 // Covers scripts/session-triage.ts: transcript triage, its six signal classes, and its ranking.
-// Zero dependencies; Node >= 23.6 — type stripping runs unflagged from 23.6, and the test runner
-// only discovers .ts files when it is enabled.
+// Zero dependencies; runs under Node type stripping — too old a Node fails as a parse error, not a
+// version message. Floor in AGENTS.md § The `.ts` sources are unchecked by design.
 // Run: node --test tests/<name>.test.ts   ·   all five: node --test "tests/*.test.ts"
 
 import assert from "node:assert";

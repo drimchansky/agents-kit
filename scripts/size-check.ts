@@ -2,7 +2,8 @@
 // Compares the kit's measured context loads against a committed baseline, so growth in what a skill
 // loads is a conscious, reviewed choice rather than silent drift. The measurement itself is
 // scripts/size-report.ts, run as a child process; this script only compares and records.
-// Zero dependencies; Node >= 23.6.
+// Zero dependencies; runs under Node type stripping — too old a Node fails as a parse error, not a
+// version message. Floor in AGENTS.md § The `.ts` sources are unchecked by design.
 // Run: node scripts/size-check.ts [--update] [--baseline FILE] <kit-root>
 //
 // Modes. Without --update, each skill's direct and transitive byte totals are compared against the
