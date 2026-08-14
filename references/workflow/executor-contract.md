@@ -29,7 +29,7 @@ Do not assume access to the coordinator's conversation or infer a repository loc
 
 ## Verification and fallback
 
-Run the unit's stated verify criterion — its command or procedure — in the effective root after editing. Preserve the relevant output. This is local advance evidence only: the coordinator re-runs the governing gates and decides whether the unit is complete.
+Run only the unit's stated verify criterion — its command or procedure — in the effective root after editing. Preserve the relevant output. This is local advance evidence only: after incorporation the coordinator re-proves the full unit-outcome tier (`./execution-loop.md` § *Two verification tiers*) on the integrated tree, then runs full health only at the owning consumer's declared boundary.
 
 If execution cannot proceed because the executor is unavailable, hangs, encounters a host failure, lacks required capability, or is blocked by placement, scope, or security constraints, report the condition without changing placement or scope. The coordinator owns graceful fallback — each binding names its consumer's — and the coordinator-side mechanics of placement, batching, and merge live in `./agent-fanout.md`.
 
@@ -48,13 +48,13 @@ Do not claim that the unit is done, update a status, or write this report anywhe
 
 ## Bindings
 
-Each consumer binds the body above to its own unit: what the unit is, what its packet carries, the surface the executor may edit, the fallback the coordinator takes when the executor fails, and the order a batch merges in. A launch prompt from anywhere else is not a coordinator packet. Coordinator-side orchestration — eligibility, batching, worktree placement, merge gates — stays with the consuming skill and `./agent-fanout.md`.
+Each consumer binds the body above to its own unit: what the unit is, what its packet carries, the surface the executor may edit, the fallback the coordinator takes when the executor fails, and the order a batch merges in. A launch prompt from anywhere else is not a coordinator packet. Coordinator-side orchestration — eligibility, batching, worktree placement, incorporated change sets, merge gates, and health-boundary hand-off — stays with the consuming skill and `./agent-fanout.md`.
 
 ### implement-task
 
 One plan step from a task folder, delegated by default.
 
-- **Unit** — one plan step, its verify criterion the step's plan-defined `Verify` line.
+- **Unit** — one plan step, its verify criterion the step's plan-defined `Verify` line. The executor proves that criterion only; the coordinator re-proves the full unit-outcome tier on the integrated tree and owns the health boundary.
 - **Packet** — the step's `What` and `Verify` text, the full text of every cited goal, the edit surface below, and the relevant task context with the absolute task-folder path. Domain guidance resolves from the task's `**Domain:**` header, default `engineering`.
 - **Edit surface** — the step's declared `**Touches:**` paths when present, otherwise the scope stated by `What`. Never edit the task folder or its records, including `plan.md`, `goals.md`, `CONTEXT.md`, `diagram.md`, and `result.md` — the evidence report goes back to the coordinator, never into the folder.
 - **Fallback** — inline execution for a serial step, serial re-execution for a parallel-batch step.
@@ -64,7 +64,7 @@ One plan step from a task folder, delegated by default.
 
 One item of an ask framed in the session. There is no task folder, so the work is the whole write surface.
 
-- **Unit** — one framed item, its verify criterion the one named for that item when it was framed (`implement` §1).
+- **Unit** — one framed item, its verify criterion the one named for that item when it was framed (`implement` §1). The executor proves that criterion only; the coordinator re-proves the full unit-outcome tier on the integrated tree and owns the health boundary.
 - **Packet** — the framed item's text and its criterion, the edit surface below, and the session-established context the executor cannot see: the ask as the user gave it, plus the grounding facts already established. Domain guidance follows the domain the session inferred from the request.
 - **Edit surface** — the item's declared surface when the frame declares one, otherwise the scope the item states. The work itself is the only thing that changes on disk: the executor writes no record of any kind, because this consumer's only record is the coordinator's chat report.
 - **Fallback** — inline execution.
@@ -72,11 +72,23 @@ One item of an ask framed in the session. There is no task folder, so the work i
 
 ### fix-findings
 
-One **Confirmed** finding's fix, applied to working-tree code.
+One **Confirmed** finding's immediate fix application, applied to working-tree code.
 
-- **Unit** — one Confirmed finding's fix application, its verify criterion the problem the finding names no longer reproducing.
-- **Packet** — the finding verbatim, with its severity and `file:line` as its source left them; its root cause; the chosen fix option; and the expected edit surface derived from that option's stated blast radius. Domain guidance is `engineering` unconditionally — the pack this consumer's skill loads.
+- **Unit** — one Confirmed finding's fix application, its verify criterion the problem the finding names no longer reproducing. The executor proves that criterion only; the coordinator re-checks the full unit-outcome tier on the integrated tree and owns the retained-collection health boundary.
+- **Packet** — the finding verbatim, with its severity and `file:line` as its source left them; its root cause; the chosen fix option; the expected edit surface derived from that option's stated blast radius; and its processing order plus any known dependencies. Domain guidance is `engineering` unconditionally — the pack this consumer's skill loads.
 - **Edit surface** — working-tree code and nothing else, bounded by the packet's expected surface. Never stage, never commit, never otherwise mutate Git state, and never write back to the findings' source — no PR reply, no resolved thread, no push. The executor writes no record; the coordinator's chat report is the run's only one.
 - **Outside the delegation surface** — ask-routed fixes stay with the coordinator, which authored the approved diff and applies it inline; Withdrawn and Inconclusive findings are never edited at all.
-- **Fallback** — a failed executor is reported. A batch fix's worktree is discarded — the shared tree is untouched there. A serial delegate edits the shared tree directly, so the coordinator captures the pre-fix content of the packet's expected surface before launching it; reverting in full means restoring that capture, and residue outside it that no evidence report attributes is surfaced to the user, never blind-reverted. The coordinator then retries the fix inline or buckets it as `fix failed (reverted): <reason>` and continues with the next finding. These units are independent, so one failure does not halt the run.
-- **Merge order** — severity order, this consumer's processing order.
+- **Fallback** — serial re-execution for a batch fix, inline execution for a serial delegate. A failed
+  executor is reported. A batch fix's worktree is discarded — the shared tree is untouched there — and
+  the fix re-executes serially against the integrated tree, whether the executor was unavailable, hung,
+  surface-escaping, or conflicting. Before any serial delegate, the coordinator has the immutable run
+  baseline and an exact pre-fix content capture; on immediate failure it restores only that pre-fix
+  content — bounded by the skill's attribution rule, which surfaces content the run did not write rather
+  than reverting it — then retries inline or buckets the finding `fix failed (reverted): <reason>` and
+  continues. After a merged
+  or serial fix passes its integrated outcome re-proof, the coordinator appends its ordered incorporated
+  content/presence change set — relative to the shared state immediately before that fix, with known
+  dependencies — to the immutable recovery ledger. Later final-outcome or health recovery uses the
+  skill's dependency-safe baseline rebuild, never a Git reset, checkout, or reverse patch. These units
+  are independent, so one failure does not halt independent survivors.
+- **Merge order** — severity order within dependency order, this consumer's processing order. Ordered change sets are recovery evidence, never Git staging or commit state.

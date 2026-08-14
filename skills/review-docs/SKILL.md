@@ -10,7 +10,7 @@ disable-model-invocation: true
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. This is a documentation-pack skill: also read `./references/documentation/rules.md` and apply it on top of the core — its repo-grounding license covers the against-codebase audit below.
 
-This skill reviews existing documentation on two axes: **accuracy** — claims audited against the codebase, catching stale references, drifted descriptions, missing context, and silent assumptions — and **quality** — the whole-doc judgment pass (coherence, register) that the documentation pack's mechanical loop gates deliberately exclude (`./references/documentation/verification.md`). The output is a clear assessment of what's accurate, what's wrong, what's missing, and what doesn't hold together.
+This skill reviews existing documentation on two axes: **accuracy** — claims audited against the codebase, catching stale references, drifted descriptions, missing context, and silent assumptions — and **quality** — the whole-doc judgment pass (coherence, register) that the documentation pack's mechanical verification tiers deliberately exclude (`./references/documentation/verification.md`). The output is a clear assessment of what's accurate, what's wrong, what's missing, and what doesn't hold together.
 
 The user provides a documentation file (or points at a documentation area). This can be a README, project rules file (AGENTS.md / CLAUDE.md), architecture note, ADR, API doc, runbook, or feature spec. Your job is to verify whether the document still matches reality and surface what needs to change.
 
@@ -31,7 +31,7 @@ For reviewing an implementation plan against the codebase (not a doc), use `revi
 - The codebase has shifted significantly since the doc was last updated
 - Multiple readers are about to consume the doc and accuracy matters
 - The user wants to know what would need to change to bring a doc back in sync (the rewrite itself happens after, on explicit follow-up)
-- A doc task's deliverable is about to be staged or published — the documentation pack's before-presenting gate wires this skill in (`./references/documentation/rules.md`), and its checkpoint assertions call for the quality pass
+- A doc task's deliverable is about to be staged or published — the documentation pack's before-presenting gate wires this skill in (`./references/documentation/rules.md`), and `./references/documentation/verification.md` § *Integration assertions* runs the quality pass at the checkpoint as judgment, separate from the mechanical tiers
 
 **Skip when:**
 
@@ -109,7 +109,7 @@ Different doc types have different validation focuses:
 
 ### 6. Doc-Quality Pass
 
-Beyond claim accuracy, review the doc as one artifact — the judgment layer the documentation pack keeps out of its per-step gates:
+Beyond claim accuracy, review the doc as one artifact — the judgment layer the documentation pack keeps out of its mechanical verification tiers:
 
 - **Coherence** — read end to end fresh: no section contradicts another, no stale sentence describes content that's gone, terminology and numbering stay consistent, the TL;DR still summarizes the body.
 - **Register** — read as the intended audience would: acronyms expanded at first use, no internal shorthand an outside reader can't resolve, voice and tense consistent. For a kit-blessed deliverable type, apply the matching format checklist (`./references/documentation/adr-format.md` / `rfc-format.md`), and the store's `DOC_CONVENTIONS.md` when the walk-up finds one (`./references/workflow/task-layout.md` § *Store-level artifacts*).

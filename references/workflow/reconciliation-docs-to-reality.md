@@ -19,7 +19,7 @@ Exactly four task files, and nothing else:
 
 ## Weaken, never strengthen
 
-Reconciliation in this direction may uncheck `- [x]` → `- [ ]`, flip `done → executing` or `in-review → executing`, or revert `executing → to-do`. It never checks a box, never sets `done` or `skipped`, and introduces `blocked` or `in-review` only by copying an already-evidenced sibling value. This holds **even with an engineer's answer** — "yes, that step was done" is a claim for `implement-task`'s verify gates to back, not for reconciliation to record. Engineer answers refine plan *content*; they never advance *state*.
+Reconciliation in this direction may uncheck `- [x]` → `- [ ]`, flip `done → executing` or `in-review → executing`, or revert `executing → to-do`. It never checks a box, never sets `done` or `skipped`, and introduces `blocked` or `in-review` only by copying an already-evidenced sibling value. This holds **even with an engineer's answer** — "yes, that step was done" requires `implement-task`'s immediate outcome proof, and a changed-code run still needs that skill's declared health boundary before it is complete; neither is for reconciliation to record. Engineer answers refine plan *content*; they never advance *state*.
 
 ## Shared repairs (both composites)
 

@@ -106,10 +106,12 @@ Cadence and shape — when a checkpoint is due, that it's a gate and not a step,
 skip them — are owned by the planning spine (`plan-task` § *Add Checkpoints*); this file owns only
 what a code checkpoint asserts:
 
-- The test suite still passes (not just the test for the latest step).
-- Build / typecheck still succeeds.
 - A concrete end-to-end flow still works — name it ("user can log in and see dashboard", not "core
   flow").
+
+The integrated suite, typecheck, lint, and build run at the checkpoint's adjacent health boundary
+(`./verification.md` § *Two verification tiers*), not as authored assertions — an assertion names an
+end-to-end outcome the health recipe cannot prove.
 
 ## Scaling plan depth
 

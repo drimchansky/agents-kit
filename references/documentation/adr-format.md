@@ -81,7 +81,7 @@ doc → no supersession).
 
 ## Verify
 
-Shape conformance is checked inside the step verify over the doc — the mechanical recipe (coverage
+Shape conformance is checked inside the unit-outcome criterion over the doc — the mechanical recipe (coverage
 closure, citation spot-checks, render fidelity, sign-off disposition) is `./verification.md`; the
 register & trim bar is applied by `review-docs`'s quality pass. Run them there rather than treating
 this checklist as a separate gate.

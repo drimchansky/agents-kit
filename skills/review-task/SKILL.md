@@ -59,7 +59,7 @@ Extract the concrete claims and steps:
 
 - **Goal** — What the plan is trying to accomplish
 - **Steps** — Each ordered step's "What", "Verify", "Depends on", and any "Due" / "Lead time" / "Touches"
-- **Checkpoints** — Any `### Checkpoint after Step N` blocks: where they're placed, what assertions they list (test suite, build, named end-to-end flow)
+- **Checkpoints** — Any `### Checkpoint after Step N` blocks: where they're placed and what assertions they list (for code, the named end-to-end flow — `./references/engineering/planning.md` § *Checkpoints*, whose integrated suite, typecheck, lint, and build run at the adjacent health boundary rather than as authored assertions)
 - **Scope** — What's in / out of scope and why
 - **Integration points** — What existing code, components, APIs, or patterns the plan references or depends on
 - **Implicit assumptions** — What the plan takes for granted without stating (available APIs, existing components, data availability)
@@ -149,7 +149,7 @@ Look for what the plan doesn't say but executing it will need:
 - **Missing inputs** — Where required information or resources come from, and whether they're actually available
 - **Step ordering & timing** — Are dependencies between steps correct? Is anything required out of order? For steps carrying `Due` / `Lead time`, is the schedule feasible — does each step's lead time fit before its own (or a dependent step's) due date, and do long-lead items start early enough?
 - **Declared surfaces** — For steps carrying `Touches:`, does each declared surface cover what the step will actually edit, and are surfaces claimed disjoint genuinely disjoint? When the domain is code, check them against the shared-artifact traps in `./references/engineering/planning.md` ("Declaring edit surfaces")
-- **Checkpoint placement** — Does the plan follow the checkpoint cadence the planning spine requires (`plan-task` § *Add Checkpoints* — the single home for when checkpoints are due and when short plans skip them), and does each checkpoint name a concrete end-to-end outcome (e.g. "user can log in and see dashboard"), not a vague "core flow works"? Flag missing, misplaced, or vague checkpoints.
+- **Checkpoint placement** — Does the plan follow the checkpoint cadence the planning spine requires (`plan-task` § *Add Checkpoints* — the single home for when checkpoints are due and when short plans skip them), and does each checkpoint name a concrete end-to-end outcome (e.g. "user can log in and see dashboard"), not a vague "core flow works"? An authored assertion that merely restates the health recipe — the suite, typecheck, lint, or build — belongs at the adjacent health boundary instead (`./references/engineering/planning.md` § *Checkpoints*). Flag missing, misplaced, vague, or health-shaped checkpoint assertions.
 - **Domain constraints** — Rules, limits, or timing the work must respect
 
 When the domain is code, also check the engineering-specific gaps in `./references/engineering/planning.md` ("Common gaps to check in a code plan": UI states, navigation, data fetching/caching/invalidation, analytics, new-pattern acknowledgement).

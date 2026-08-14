@@ -10,13 +10,13 @@ disable-model-invocation: true
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. Load the domain pack: take the task's `**Domain:**` (default `engineering`; infer from the request when there's no `CONTEXT.md`) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for (`execution.md`, `verification.md`, …). If the domain has no pack, run the neutral methodology and say so.
 
-This skill carries out a change directly, with no task folder: you frame what's being built, run it through the shared execution loop, and report in chat. It is `implement-task`'s ad-hoc counterpart — the same loop, the same gates, the same Stop-the-Line discipline, read from the same file (`./references/workflow/execution-loop.md`).
+This skill carries out a change directly, with no task folder: you frame what's being built, run it through the shared execution loop, and report in chat. It is `implement-task`'s ad-hoc counterpart — the same loop, the same verification tiers, the same Stop-the-Line discipline, read from the same file (`./references/workflow/execution-loop.md`).
 
 **CRITICAL**: This skill writes no task-folder file and no status. The work itself is the only thing it changes on disk. Work that wants a durable record — a plan, a result file, an acceptance gate against written goals — belongs in `plan-task` → `implement-task`.
 
 ## References
 
-Before working, read `./references/workflow/execution-loop.md` — the loop, its gates, and its failure discipline, with this skill's parameters in its `implement` binding. Then load the resolved domain's pack: `execution.md` (how to carry out the work) and `verification.md` (what its gates run), plus any per-surface checklists that apply. When the domain is code, that's `./references/engineering/`, and the checklists matter most here since this is a skill that produces the actual work product.
+Before working, read `./references/workflow/execution-loop.md` — the loop, its two verification tiers, and its failure discipline, with the six parameters §3 below binds for this skill — stated there in full, so this skill needs nothing from the cross-consumer index. Then load the resolved domain's pack: `execution.md` (how to carry out the work) and `verification.md` (what its two tiers run), plus any per-surface checklists that apply. When the domain is code, that's `./references/engineering/`, and the checklists matter most here since this is a skill that produces the actual work product.
 
 ## When to Use
 
@@ -50,7 +50,16 @@ Establish what you're acting on and where the authoritative information lives, p
 
 ### 3. Run the Loop
 
-Run the loop in `./references/workflow/execution-loop.md` — the five beats, both verify gates, Stop-the-Line when either fails, and the scope-change rules — with this skill's parameters as its `implement` binding states them. Both gates hold unchanged: step verify proves the item's §1 criterion, health verify proves nothing else regressed.
+Run the loop in `./references/workflow/execution-loop.md` — the five beats, its two verification tiers, Stop-the-Line when required evidence fails, and the scope-change rules. Read it before the first item. **This skill's bindings:**
+
+- **Source** — one item of the framed ask; its criterion is the one named when §1 framed it, never written afterwards to match what was built.
+- **Record** — the §5 chat report. **This skill writes no task-folder file and no status** — work wanting a durable record belongs in `plan-task` → `implement-task`.
+- **Blocked** — report what failed, what was tried, and what's needed, then stop; don't skip ahead to another item. There is no status to set.
+- **Acceptance** — the framed ask, verified live and reported in chat; a gap is Stop-the-Line, not a caveat.
+- **Health boundaries** — the end-of-run assertion gate before acceptance; each mid-run pause before the user inspects the tree; and once after a fully merged parallel batch before a dependent item runs on top of it. A tail batch shares the end-of-run boundary. At each boundary, run the integrated recipe (`./references/engineering/verification.md` for code) on the current shared tree. Between boundaries, an item proves its own outcome tier — its criterion plus the per-unit checks the resolved domain's `verification.md` adds, per `./references/workflow/execution-loop.md` § *Two verification tiers* — and may progress when that tier passes.
+- **Integration assertions** — one at the end of the run, before acceptance: exercise the ask's end-to-end outcome whole. A run wanting more gates than that is a sign the work wanted `plan-task`.
+
+The two tiers answer different questions: an item's criterion proves that item's outcome and permits the next one; the end-of-run boundary proves nothing else regressed. A passing criterion is never the second.
 
 Take the items in whatever order their dependencies require. Pause between them when the user asked to inspect as you go; otherwise run through and report once at the end.
 
@@ -62,9 +71,9 @@ Default to executing each framed item **inline**, in this session, because this 
 
 A delegated item goes out under `./references/workflow/executor-contract.md`, whose `implement` binding (§ *Bindings*) governs what the packet carries, what the edit surface is, and what the fallback is — the executor sees that packet and nothing of this session. Announce the delegation in chat as it happens, naming which items go out and why the trigger fired, and record it in the §5 report's `Executed` bullet; that record is what keeps the default from drifting silently into always- or never-delegate.
 
-**Parallel batches.** Eligible independent items may run concurrently. Eligibility and every merge gate are `./references/workflow/agent-fanout.md` § *Coordinator-side parallel batch*'s — work from there, not from a copy. What's this skill's own: an item's declared surface is the optional per-item declaration in the §1 frame, an item with no declared surface runs inline or serially-delegated, and a batch merges in **frame order**, this skill's unit order. A run has one integration gate — the ask's end-to-end outcome exercised whole at §4, before its acceptance verdict — so the end of the run is a batch's natural bound.
+**Parallel batches.** Eligible independent items may run concurrently. Eligibility and every merge gate are `./references/workflow/agent-fanout.md` § *Coordinator-side parallel batch*'s — work from there, not from a copy. What's this skill's own: an item's declared surface is the optional per-item declaration in the §1 frame, an item with no declared surface runs inline or serially-delegated, and a batch merges in **frame order**, this skill's unit order. A run has one assertion gate — the ask's end-to-end outcome exercised whole at §4, before its acceptance verdict — so the end of the run is a tail batch's natural bound. A batch a later item depends on bounds before that item instead; after its ordered merges and integrated outcome re-proofs, run one boundary before the dependent. No full health runs per merged item.
 
-**Judgment stays here.** The §1 framing, both verify gates, and the §5 report are the coordinator's whether or not an item was delegated. Re-run both gates yourself on your own tree after an executor reports: its pass is advance evidence, never the gate.
+**Judgment stays here.** The §1 framing, both verification tiers, and the §5 report are the coordinator's whether or not an item was delegated. Re-prove the item's full outcome tier yourself on your own tree after an executor reports, the executor having run the criterion alone — its pass is advance evidence, never the gate — and run every health boundary yourself.
 
 **Fallback is inline execution.** A failed, hung, or unavailable executor is reported and its item run inline; a surface escape or a merge conflict discards that worktree per the cited merge gates, and the item re-runs inline or serially-delegated.
 
@@ -72,7 +81,7 @@ Coordinator-managed worktrees don't dent the **CRITICAL** invariant above. They'
 
 ### 4. Confirm the Ask Is Met
 
-Before reporting, run the acceptance discipline in `./references/workflow/execution-loop.md` against the §1 frame: re-read each item as it was framed, verify it against live behavior rather than your memory of doing the work, and exercise the ask's end-to-end outcome whole.
+Before reporting, close the run at its end-of-run gate, in this order: **exercise the ask's end-to-end outcome whole** (the §3 **Integration assertions** binding), then **run the integrated health recipe over the current shared tree** (its **Health boundaries** binding — `./references/workflow/execution-loop.md` § *Health boundaries*; for code the recipe is `./references/engineering/verification.md`), then run the acceptance discipline in `./references/workflow/execution-loop.md` against the §1 frame: re-read each item as it was framed and verify it against live behavior rather than your memory of doing the work. The assertion and the boundary answer different questions and are recorded separately (§5).
 
 An item that isn't met is Stop-the-Line, not a caveat in the report. Close it, or surface the gap and stop — don't ship a report that quietly reframes what was asked.
 
@@ -82,6 +91,8 @@ Lists, never tables. Chat only — nothing written to disk beyond the work itsel
 
 - **Shipped** — `file:line` (or the domain's equivalent) per change, with what changed
 - **Verified** — how each framed item was proven: command output, test name, behavior observed
+- **Asserted** — the ask's end-to-end outcome exercised whole at §4's gate, and how it was exercised; recorded separately from **Health** below, which never substitutes for it
+- **Health** — the end-of-run boundary's integrated recipe result on the final tree, plus any mid-run boundary that ran; the end-of-run boundary runs at §4's assertion gate, before the acceptance verdict
 - **Executed** — deviations from the inline default only: which items were delegated and why the trigger fired, and for a batched item that it ran in a parallel batch merged in frame order; omit when everything ran inline
 - **Sources** — official-doc URLs grounding any framework-specific work, plus any pattern shipped without an authoritative source and why; omit when none
 - **Deviations** — anything that differs from the §1 frame, and why; omit when none
@@ -94,9 +105,10 @@ Close with `**Noticed but not touching:**` when applicable (`./AGENTS.md`), and 
 Confirm the protocol invariants before finishing:
 
 - [ ] The ask was framed with each item's verify criterion stated **before** that item was implemented
-- [ ] Every framed item: its criterion actually run and passed, health verify green — nothing reported done over a failing gate
+- [ ] Every framed item: its full unit-outcome tier actually run and passed — the criterion named when it was framed plus the per-unit checks the resolved domain's `verification.md` adds (touched-comment validation for code) — nothing reported done over a failing outcome
+- [ ] Integrated health established at every boundary the binding declares — the end-of-run assertion gate, each inspection pause, and once after each batch before dependent work — with a tail batch sharing the end-of-run boundary, and current against the final unchanged tree
 - [ ] Acceptance ran against the §1 frame and live behavior, not against the report; no gap downgraded to a caveat
 - [ ] Any delegation announced in chat and recorded in the report's `Executed` bullet; batched items ran only over declared pairwise-disjoint surfaces and came back through the cited merge gates, merged in frame order
-- [ ] Framing, both gates, and the report stayed with the coordinator; no executor wrote a record of any kind
+- [ ] Framing, both verification tiers, and the report stayed with the coordinator; no executor wrote a record of any kind
 - [ ] No task-folder file and no status written; the work itself is the only durable on-disk change, any batch worktree removed after merge
-- [ ] Domain pre-presentation checks re-run on the full changed surface (for code: typecheck, linter, tests, consumer grep; framework work grounded in cited sources, with any ungrounded pattern stopped or recorded)
+- [ ] Domain pre-presentation checks run over the full changed surface — for code, the consumer grep when exports or shared code changed; framework work grounded in cited sources, any ungrounded pattern stopped or recorded. Health is consumed from the final current boundary rather than re-run for presentation's sake

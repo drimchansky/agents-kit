@@ -118,7 +118,7 @@ Break a step down further when its title contains "and" (two steps wearing one h
 
 Per-step `Verify` confirms one unit of work. It does **not** catch the case where step 3 silently broke step 1's outcome. For plans of more than ~5 steps, insert a **Checkpoint** every 2–3 steps that re-verifies the integrated whole, not just the latest change. Skip them entirely for short plans (≤5 steps), where the final step's verification doubles as an end-to-end check.
 
-A checkpoint re-asserts that everything done so far still holds together — including a concrete end-to-end outcome, named ("user can log in and see dashboard", not "core flow"). For code, the specific assertions are in `./references/engineering/planning.md`.
+A checkpoint's own assertions name concrete end-to-end outcomes the health recipe cannot prove — named ("user can log in and see dashboard", not "core flow") — while the integrated suite, typecheck, lint, and build run at the health boundary adjacent to it. For code, the specific assertions are in `./references/engineering/planning.md`.
 
 Checkpoints are not steps — no `- [ ]` checkbox for `implement-task` to flip. They are gates it must pause at to confirm before the next batch of steps. Format: § *Output*.
 
@@ -217,7 +217,6 @@ For code, `./references/engineering/planning.md` gives file-count proxies for th
 
 ### Checkpoint after Step 2 _(only for plans >5 steps)_
 
-- <assertion that the integrated whole still holds>
 - End-to-end: <name the concrete outcome>
 
 ## Risks

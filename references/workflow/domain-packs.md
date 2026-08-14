@@ -40,7 +40,7 @@ A pack is a directory `references/<domain>/` holding, by convention:
   diagram guidance opts its domain out of task diagrams — `plan-task` then draws none
   (`task-diagram.md`).
 - **`execution.md`** — how to carry out and record one step in this domain.
-- **`verification.md`** — what "verify a step / criterion" means here, plus the domain's
+- **`verification.md`** — the domain's mapping for unit outcomes and integrated health, plus its
   acceptance-gate recipe.
 - **`review.md`** — the domain's review lenses (used by review skills).
 - **per-surface checklists** — any number of focused checklists the domain consults situationally
@@ -90,10 +90,10 @@ just under `**Status:**`:
   surface, and they differ on what reading a task folder buys them. `challenge-task` reads one, but its
   passes are calibrated for engineering only, so it loads the pack unconditionally rather than resolving
   `**Domain:**`, and says so before running on a task in another domain (its SKILL.md § Core Rules).
-  `review-pr-triage-verify-reconcile` reads one too and *does* resolve `**Domain:**` — but only to name
-  the health verify in the plan step its reconcile phase writes, never to swap its own overlay, which
-  stays engineering unconditionally. Pack membership is about
-  which domain contributes a skill, not about which files it must read.
+  `review-pr-triage-verify-reconcile` reads one too and *does* resolve `**Domain:**` — but only to
+  announce a domain mismatch before running, as `challenge-task` does, never to swap its own overlay,
+  which stays engineering unconditionally. Pack membership is about which domain contributes a skill,
+  not about which files it must read.
 - **Documentation-contributed skills** — `stage-doc` (a doc task's staging lifecycle),
   `review-docs` (existing docs' accuracy against the codebase, plus the whole-doc quality pass),
   and `prepare-diagram` (a Mermaid diagram for a provided subject) — load
@@ -140,8 +140,8 @@ composites' Phase 1 does. `maintain` delegates to no skill — only Phase 5's re
 resolve no pack of their own — so its run resolves no pack at any depth.
 `review-pr-triage-verify-reconcile` skips step 2 for its own overlay like any engineering-only skill,
 and its Phase 1 delegate is engineering-only too, so nothing in its run resolves a pack — yet its
-Setup still reads `**Domain:**`, which is step 2's *read* put to a different use: naming the health
-verify in a plan step rather than selecting what this skill loads.
+Setup still reads `**Domain:**`, which is step 2's *read* put to a different use: announcing a domain
+mismatch before an engineering-calibrated pipeline runs, rather than selecting what this skill loads.
 
 ## Missing-pack fallback
 

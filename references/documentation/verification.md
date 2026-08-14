@@ -1,31 +1,35 @@
 # Documentation Verification
 
-What "verify" means when the deliverable is a document — the recipe behind the neutral verify gates,
-Stop-the-Line, checkpoints, and acceptance gate for `**Domain:** documentation` tasks
+What "verify" means when the deliverable is a document — the recipe behind the neutral **unit
+outcome**, **integrated health**, **integration assertions**, Stop-the-Line, and acceptance gate for
+`**Domain:** documentation` tasks
 (`implement-task`, `implement`, `review-task`, `resume-task`, `reconcile-task`).
 `../workflow/execution-loop.md` owns *that* you verify and gate; this file owns *what to run*.
 
-## Two verify gates per step
+## Documentation mapping to the shared verification tiers
 
-Both are required after implementing a step — they answer different questions:
+Documentation retains its existing per-unit mechanical cadence. The shared tiers classify the
+evidence and declare where it becomes current for the integrated deliverable set; they do not defer
+the whole-deliverable sweep or import an engineering recipe.
 
-- **Step verify** — run the unit's stated verify criterion (the consumer's **Source** binding in
-  `../workflow/execution-loop.md`). For document work the criterion is normally assembled from the
-  four checks below — a plan step picks the ones its outcome makes applicable. A criterion needing a
+### Unit outcome — every unit
+
+Before a documentation unit is marked outcome-complete, prove both of these mechanical parts:
+
+- **The stated unit criterion** — the consumer's **Source** binding in
+  `../workflow/execution-bindings.md` supplies it. For document work it is normally assembled from the
+  four checks below; a plan step picks the ones its outcome makes applicable. A criterion needing a
   check none of the four name is a signal to look twice at the step (or extend this recipe), not to
   improvise silently.
-- **Health verify** — prove the doc as a whole still holds after the step, not just the changed
-  part. The document recipe is the sweep below. Do not collapse this into the step verify.
+- **The whole-deliverable link / cross-ref sweep** — after every unit, not only at a consumer health
+  boundary, confirm that every relative link, URL, and section anchor in the deliverable resolves and
+  each internal "see §N" pointer still reaches the intended section after any renumbering.
 
-Both gates are deliberately **mechanical** — checks that produce an observable artifact (a count, an
-opened source, a fetched page, a link target) and can fail on their own. Document *quality* —
-whole-doc coherence, register — is judgment, not a gate: it runs as a `review-docs` pass at
-checkpoints and before publishing (`./rules.md` § *Before presenting a doc*), producing findings,
-never a silent per-step "passed".
+The outcome tier is deliberately mechanical: every check produces an observable artifact (a count,
+opened source, fetched page, or link target) and can fail on its own. Never start the next unit while
+the prior unit outcome is failing.
 
-Never start the next step while the previous step's verify is failing.
-
-### Step-verify checks (the document recipe)
+### Unit-outcome criterion checks (the document recipe)
 
 1. **Coverage / mapping closure** — prove "every X is accounted for" by counting both sides, never
    by reading and nodding. Enumerate the items on the source side and on the deliverable side —
@@ -47,14 +51,21 @@ Never start the next step while the previous step's verify is failing.
    closes on its best-available proxy — see `../workflow/acceptance-criteria.md`; never record one
    on an expectation.
 
-### Health verify (the document recipe)
+### Integrated health — declared boundaries
 
-After every step, one mechanical sweep over the whole deliverable — not just the changed sections:
+At every **Health boundary** the consumer declares, run and record the link / cross-ref sweep over
+the integrated deliverable **set** — the deliverable, dossiers, and outbound drafts that must not
+disagree. This establishes current integrated-health evidence for that exact set; it does not replace
+the same whole-deliverable sweep required in every unit outcome.
 
-- **Link / cross-ref sweep** — every relative link, URL, and section anchor in the doc resolves,
-  and internal "see §N" pointers still point at the section they meant after any renumbering.
+The documentation integrated-health recipe is mechanical only. Do not run engineering typecheck,
+lint, test, stack-detection, or build commands for a documentation task.
 
-## Stop-the-Line (when either gate fails)
+Document *quality* — whole-doc coherence and register — is judgment, not a verification tier or an
+integration assertion. Run `review-docs` at checkpoints and before publishing
+(`./rules.md` § *Before presenting a doc*); it produces findings, never a silent mechanical pass.
+
+## Stop-the-Line (when a verification tier or assertion fails)
 
 Stop. Don't start the next step, don't mark the current step done, don't bandage the wording. Work
 the triage in order:
@@ -67,21 +78,24 @@ the triage in order:
 3. **Record the correction dated, never silently** — a corrected claim in an already-reviewed doc
    is itself information. Record what changed and why per the consumer's **Record** binding, and in
    the doc's own annotation convention when it has one (a dated inline note, a changelog line).
-4. **Re-verify both gates.** Only then mark the step done.
+4. **Re-prove the failed unit outcome, rerun the failed integrated-health boundary, or rerun the
+   failed integration assertion.** Only then continue.
 
 If it can't be resolved this session, stop — don't skip ahead — and record the pause per the
-consumer's **Blocked** binding in `../workflow/execution-loop.md`.
+consumer's **Blocked** binding in `../workflow/execution-bindings.md`.
 
-## Checkpoint assertions
+## Integration assertions
 
-At each integration gate (`implement-task`'s `### Checkpoint after Step N`, or the end of an
-`implement` run), run every assertion it lists. For document work that typically means: the
-link/cross-ref sweep over the whole deliverable **set** (deliverable, dossiers, outbound drafts —
-they must not disagree with each other), coverage closure re-run across the integrated whole, a
-`review-docs` quality pass over the integrated deliverable (whole-doc coherence + register — the
-judgment layer the per-step gates exclude), and the named end-to-end outcome exercised the way a
-reader would — follow the doc's own path (TL;DR → decision → cited source) as a reviewer, not as
-its author. If any assertion fails, apply Stop-the-Line.
+At each assertion point the consumer declares (`implement-task`'s `### Checkpoint after Step N`, or
+the end of an `implement` run), run every named assertion. For document work that typically means
+coverage closure re-run across the integrated whole and the named reader journey — follow the doc's
+own path (TL;DR → decision → cited source) as a reviewer, not as its author. If an assertion fails,
+apply Stop-the-Line.
+
+The integrated deliverable-set link / cross-ref sweep runs at the adjacent health boundary, not as
+an assertion. The `review-docs` quality pass also remains separate: run it at the checkpoint or
+before publishing, assess its findings as judgment, and never count it as a mechanical-tier or
+assertion result.
 
 ## Acceptance-gate recipe
 

@@ -74,6 +74,7 @@ The **reference sweep** re-derives the freshness of the external systems a task 
 ## Reconciliation — YYYY-MM-DD
 
 **Trigger:** `<skill>`; report printed this session from pre-reconcile state.
+**Health:** <the domain's integrated-health recipe result, when this run's advance required a boundary; omit otherwise>
 
 - plan.md — Step 3 unchecked; shipped claim gone (`src/auth/handler.ts` no longer defines `validateToken`) — finding: Drift since plan [warn]. Prior record: `#step-3--add-token-validation`
 - CONTEXT.md — References: spec-doc link marked broken (404) — finding: References [block]
@@ -140,5 +141,5 @@ Every reconciler writes `plan.md` through the same five shared openings; the ses
 At the end of a `reconcile-task` run, if `result.md` exceeds **20 KB**, add a judgment item to the batched round proposing compaction — never auto-apply it, and docs → reality never compacts. Compaction is the one sanctioned removal of prior log sections, safe only because the removed text stays recoverable:
 
 - **Precondition:** the result file **resolves at `HEAD`** — `git -C <task-dir> cat-file -e HEAD:./<result-file>` succeeds — refuse otherwise, since compaction deletes text recoverable only via version history. Repo membership is not enough: an **ignored** task folder passes it while holding nothing in history. Being **tracked** is not enough either: a staged-but-never-committed file has no commit holding its text, and index membership is not history. Only a `HEAD`-resolvable version makes the tombstone's "full text in git history" line true. Note in the proposal if the file has uncommitted changes: the user should commit before consenting.
-- **Collapse only superseded narrative** — sections a later `## Reconciliation` entry supersedes, verbose transcripts, step detail long overtaken by events. Always keep: the link header, `## Current state`, `## Decision log`, every `## Acceptance`, the latest `## Reconciliation`, and any active pause section.
+- **Collapse only superseded narrative** — sections a later `## Reconciliation` entry supersedes, verbose transcripts, step detail long overtaken by events. Always keep: the link header, `## Current state`, `## Decision log`, every `## Acceptance`, every `## Health boundary`, the latest `## Reconciliation`, and any active pause section.
 - Each removed section becomes one line under a single `## Compacted — YYYY-MM-DD` stub naming the collapsed anchors. Each bullet is the removed heading's text and nothing else — `- Step 1 — Old title` — because `scripts/health-check.ts` resolves a step's evidence link by slugifying the whole bullet line, so any word added to one stops the tombstone answering the anchor it names. The stub then closes with "full text in git history (pre-compaction state)." as its own line after the bullets, never appended to one.

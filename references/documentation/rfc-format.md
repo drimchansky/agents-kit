@@ -62,6 +62,6 @@ first use, restatement and jargon trimmed, diagram labels written for the audien
 
 ## Verify
 
-Shape conformance is checked inside the step verify over the doc — the recipe is
+Shape conformance is checked inside the unit-outcome criterion over the doc — the recipe is
 `./verification.md`; the `F<n>` / `D<n>` item IDs above are exactly the keys its coverage /
 mapping-closure check counts on both sides.
