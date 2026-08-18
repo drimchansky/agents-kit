@@ -7,7 +7,7 @@ the work, and records answers as they land. This file owns *shape*; how a step o
 verified is `./verification.md` — this checklist supplies the `F<n>` / `D<n>` IDs its coverage
 check counts — and the register bar below is applied by `review-docs`'s quality pass. Org specifics
 (people and mention tables, house style, published-page handling) live in the store's
-doc-conventions file, discovered per `../workflow/task-layout.md` § *Store-level artifacts* —
+doc-conventions file, discovered per `../workflow/task-store.md` § *Store-level artifacts* —
 consult it when present; this checklist stays org-free by design.
 
 ## Header block

@@ -27,6 +27,7 @@ Before changing the kit, identify and inspect:
 - the installer integration test (`tests/setup-install.test.ts`) when changing `setup.ts`, native agent definitions, or installed payload behavior — and `scripts/health-check.ts` in the same pass, whose `--installs` mode hardcodes `setup.ts`'s ownership markers, payload categories, and per-host agent extensions;
 - the harness under `tests/` covering a script you changed — `node --test tests/setup-install.test.ts` for `setup.ts`, `node --test tests/health-check.test.ts` for `scripts/health-check.ts`, `node --test tests/session-triage.test.ts` for `scripts/session-triage.ts`, `node --test tests/size-report.test.ts` for `scripts/size-report.ts`, `node --test tests/size-check.test.ts` for `scripts/size-check.ts`;
 - the size baseline (`tests/size-baseline.json`) when changing any `SKILL.md`, reference file, or `CORE_RULES.md` — the measured context loads move with the content, so re-capture with `node scripts/size-check.ts --update .` in the same change; `node --test tests/size-check.test.ts` fails while the committed baseline lags;
+- the `-notes.md` sibling of any reference you change, where one exists — it records the reasoning behind the rule being edited, and nothing fails when it goes stale;
 - relevant Git history, to preserve the reason behind an existing contract.
 
 Keep each change with its authoritative owner; update dependent consumers only when the contract they consume changes.

@@ -50,7 +50,7 @@ Establish what you're acting on and where the authoritative information lives, p
 
 ### 3. Run the Loop
 
-Run the loop in `./references/workflow/execution-loop.md` — the five beats, its two verification tiers, Stop-the-Line when required evidence fails, and the scope-change rules. Read it before the first item. **This skill's bindings:**
+Run the loop in `./references/workflow/execution-loop.md` — the five beats, its two verification tiers, Stop-the-Line when required evidence fails — plus the scope-change rules in `./references/workflow/execution-recovery.md`. Read them before the first item. **This skill's bindings:**
 
 - **Source** — one item of the framed ask; its criterion is the one named when §1 framed it, never written afterwards to match what was built.
 - **Record** — the §5 chat report. **This skill writes no task-folder file and no status** — work wanting a durable record belongs in `plan-task` → `implement-task`.
@@ -71,7 +71,7 @@ Default to executing each framed item **inline**, in this session, because this 
 
 A delegated item goes out under `./references/workflow/executor-contract.md`, whose `implement` binding (§ *Bindings*) governs what the packet carries, what the edit surface is, and what the fallback is — the executor sees that packet and nothing of this session. Announce the delegation in chat as it happens, naming which items go out and why the trigger fired, and record it in the §5 report's `Executed` bullet; that record is what keeps the default from drifting silently into always- or never-delegate.
 
-**Parallel batches.** Eligible independent items may run concurrently. Eligibility and every merge gate are `./references/workflow/agent-fanout.md` § *Coordinator-side parallel batch*'s — work from there, not from a copy. What's this skill's own: an item's declared surface is the optional per-item declaration in the §1 frame, an item with no declared surface runs inline or serially-delegated, and a batch merges in **frame order**, this skill's unit order. A run has one assertion gate — the ask's end-to-end outcome exercised whole at §4, before its acceptance verdict — so the end of the run is a tail batch's natural bound. A batch a later item depends on bounds before that item instead; after its ordered merges and integrated outcome re-proofs, run one boundary before the dependent. No full health runs per merged item.
+**Parallel batches.** Eligible independent items may run concurrently. Eligibility and every merge gate are `./references/workflow/parallel-batch.md` § *Coordinator-side parallel batch*'s — work from there, not from a copy. What's this skill's own: an item's declared surface is the optional per-item declaration in the §1 frame, an item with no declared surface runs inline or serially-delegated, and a batch merges in **frame order**, this skill's unit order. A run has one assertion gate — the ask's end-to-end outcome exercised whole at §4, before its acceptance verdict — so the end of the run is a tail batch's natural bound. A batch a later item depends on bounds before that item instead; after its ordered merges and integrated outcome re-proofs, run one boundary before the dependent. No full health runs per merged item. <!-- cold -->
 
 **Judgment stays here.** The §1 framing, both verification tiers, and the §5 report are the coordinator's whether or not an item was delegated. Re-prove the item's full outcome tier yourself on your own tree after an executor reports, the executor having run the criterion alone — its pass is advance evidence, never the gate — and run every health boundary yourself.
 
@@ -81,7 +81,7 @@ Coordinator-managed worktrees don't dent the **CRITICAL** invariant above. They'
 
 ### 4. Confirm the Ask Is Met
 
-Before reporting, close the run at its end-of-run gate, in this order: **exercise the ask's end-to-end outcome whole** (the §3 **Integration assertions** binding), then **run the integrated health recipe over the current shared tree** (its **Health boundaries** binding — `./references/workflow/execution-loop.md` § *Health boundaries*; for code the recipe is `./references/engineering/verification.md`), then run the acceptance discipline in `./references/workflow/execution-loop.md` against the §1 frame: re-read each item as it was framed and verify it against live behavior rather than your memory of doing the work. The assertion and the boundary answer different questions and are recorded separately (§5).
+Before reporting, close the run at its end-of-run gate, in this order: **exercise the ask's end-to-end outcome whole** (the §3 **Integration assertions** binding), then **run the integrated health recipe over the current shared tree** (its **Health boundaries** binding — `./references/workflow/execution-loop.md` § *Health boundaries*; for code the recipe is `./references/engineering/verification.md`), then run the acceptance discipline in `./references/workflow/execution-acceptance.md` against the §1 frame: re-read each item as it was framed and verify it against live behavior rather than your memory of doing the work. The assertion and the boundary answer different questions and are recorded separately (§5).
 
 An item that isn't met is Stop-the-Line, not a caveat in the report. Close it, or surface the gap and stop — don't ship a report that quietly reframes what was asked.
 

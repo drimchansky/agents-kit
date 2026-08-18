@@ -41,7 +41,8 @@ A pack is a directory `references/<domain>/` holding, by convention:
   (`task-diagram.md`).
 - **`execution.md`** — how to carry out and record one step in this domain.
 - **`verification.md`** — the domain's mapping for unit outcomes and integrated health, plus its
-  acceptance-gate recipe.
+  acceptance-gate recipe (which a pack may split into a sibling file, as engineering does with
+  `acceptance-gate.md`).
 - **`review.md`** — the domain's review lenses (used by review skills).
 - **per-surface checklists** — any number of focused checklists the domain consults situationally
   (engineering ships `typescript.md`, `react.md`, `css.md`, `security.md`, …).

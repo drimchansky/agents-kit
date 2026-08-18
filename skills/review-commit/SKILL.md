@@ -15,7 +15,7 @@ Review staged changes before committing — correctness, completeness, accidenta
 ## Flags
 
 - `-w` — Working tree: review the uncommitted change — index, working tree, and untracked non-ignored files — instead of the index alone, per the target defined in `./references/engineering/review.md` § *Working-tree review target*. Off by default. Nothing is staged and the index is never written, so a `-w` run's output cannot be handed to `/commit`; **Next** below says what it hands off to instead.
-- `-x` — Cross-check: launch one independent cold review of the reviewed object on the cross-vendor engine and merge it before findings are finalized, per the shared contract in `./references/workflow/agent-fanout.md`. Off by default. The probe is read-only; its outcome is recorded on the output's `Cross-check:` line.
+- `-x` — Cross-check: launch one independent cold review of the reviewed object on the cross-vendor engine and merge it before findings are finalized, per the shared contract in `./references/workflow/agent-fanout.md`, with the engine and its launch recipe in `./references/workflow/probe-engines.md`. Off by default. The probe is read-only; its outcome is recorded on the output's `Cross-check:` line. <!-- cold -->
 
 ## References
 
@@ -28,7 +28,7 @@ Before working, read `./references/engineering/review.md` — it carries the len
 - Record the reviewed-set identity for the follow-up. Default: the digest `git diff --cached | git hash-object --stdin` and the reviewed paths `git diff --cached --name-only` — that digest covers the index *and* its base, so a HEAD that moves after the review reads as a changed set, which it is, since the commit would carry a different change. Under `-w`: the identity digest the cited contract defines, captured now, at this pass's own review start. Every command on either path only reads — nothing here writes the index or the object store.
 - Group changes by file and intent
 
-**Launch the cross-vendor probe** (only with `-x`): once the review object is confirmed non-empty, start one background probe per `./references/workflow/agent-fanout.md` — a cold second review of that same object, demanding findings with severity and `file:line` evidence. The probe assembles the object itself at the repo root, so the prompt must name which one: the staged diff (`git diff --cached`) by default, or under `-w` the working-tree target, specified concretely enough for the probe to build it — quote the cited contract's own commands rather than recalling them. A probe handed the wrong object reviews a different change than this pass did. Review inline while it runs; collect and merge per the contract before finalizing findings.
+**Launch the cross-vendor probe** (only with `-x`): once the review object is confirmed non-empty, start one background probe per `./references/workflow/agent-fanout.md`, on the engine and launch recipe in `./references/workflow/probe-engines.md` — a cold second review of that same object, demanding findings with severity and `file:line` evidence. The probe assembles the object itself at the repo root, so the prompt must name which one: the staged diff (`git diff --cached`) by default, or under `-w` the working-tree target, specified concretely enough for the probe to build it — quote the cited contract's own commands rather than recalling them. A probe handed the wrong object reviews a different change than this pass did. Review inline while it runs; collect and merge per the contract before finalizing findings. <!-- cold -->
 
 **Launch verification scripts** per "Verification Scripts" in `./references/engineering/review.md` — always: as soon as the review object is confirmed, launch the project's lint/typecheck/test scripts over its files and review while they run; their failures and warnings land as findings before output.
 
@@ -49,7 +49,7 @@ Apply the full review process from `./references/engineering/review.md` — the 
 
 **Review findings** (if any) — Issues with severity, file location, recommendation, and impact.
 
-**Cross-check** (only with `-x`) — the probe's `Cross-check:` outcome line per `./references/workflow/agent-fanout.md`, after the findings.
+**Cross-check** (only with `-x`) — the probe's `Cross-check:` outcome line per `./references/workflow/agent-fanout.md`, after the findings. <!-- cold -->
 
 **Reviewed** — a provenance line recording the reviewed-set digest from Setup, the reviewed-file count, and the model that produced this review (plus its reasoning-effort level, when known), e.g. `Reviewed <digest> (3 files) by <model> <effort>`. Under `-w` the line keeps every one of those fields and marks the target in place: `Reviewed (working tree) <digest> (<n> files) by <model> <effort>`. Count only, never the path list — on a large set the list drowns the line, and `/commit` doesn't read it: what it reads is the digest, to confirm the set it would commit is still the set reviewed here, so that check survives the diff itself scrolling out of context. That comparison is exactly what the `(working tree)` marker withdraws — the two digests cover different objects — which is why `/commit` refuses the marked form outright rather than reading a mismatch off it. The model is for the human record only — unlike `review-pr`'s line, which `/publish-pr-review` reads to attribute the posted review, nothing downstream consumes it here: the commit carries no AI attribution.
 
@@ -76,4 +76,6 @@ Under `-w` that handoff does not apply, and this output cannot be handed to `/co
 
 ## Verification
 
-Apply the Standard Verification Checklist in `./references/engineering/review.md`. The output carries the **Reviewed** provenance line (reviewed-set digest + file count + the reviewing model and effort), in the `(working tree)`-marked form under `-w` and the plain form otherwise, and **Next** points at `/commit` only in the plain case. With `-x`: the probe was merged per `./references/workflow/agent-fanout.md`, its prompt named the same review object Setup resolved, and the output carries its `Cross-check:` line. Under `-w`: nothing was staged and the index was never written.
+Apply the Standard Verification Checklist in `./references/engineering/review.md`. The output carries the **Reviewed** provenance line (reviewed-set digest + file count + the reviewing model and effort), in the `(working tree)`-marked form under `-w` and the plain form otherwise, and **Next** points at `/commit` only in the plain case.
+With `-x`: the probe was merged per `./references/workflow/agent-fanout.md`, its prompt named the same review object Setup resolved, and the output carries its `Cross-check:` line. <!-- cold -->
+Under `-w`: nothing was staged and the index was never written.

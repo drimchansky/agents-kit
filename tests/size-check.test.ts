@@ -12,6 +12,7 @@ import {
   mkdtempSync,
   readFileSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -35,14 +36,28 @@ const EXTRA_SKILL = join(KIT, "skills", "extra-skill");
 const OTHER_SKILL = join(KIT, "skills", "other-skill");
 const REFERENCES_DIR = join(KIT, "references", "workflow");
 const CITED_REFERENCE = join(REFERENCES_DIR, "alpha.md");
+const CORE_RULES_FILE = join(KIT, "CORE_RULES.md");
+const ONE_SKILL_FILE = join(ONE_SKILL, "SKILL.md");
+
+const CITATION_LINE = "Read `./AGENTS.md`, then `./references/workflow/alpha.md`.";
+const HOT_SKILL = `# one-skill\n\n${CITATION_LINE}\n`;
+const COLD_SKILL = `# one-skill\n\n${CITATION_LINE} <!-- cold -->\n`;
 
 interface CheckRun {
   readonly stdout: string;
   readonly stderr: string;
 }
 
+interface Totals {
+  readonly bytes: number;
+  readonly approxTokens: number;
+}
+
 interface BaselineEntry {
   readonly skill: string;
+  readonly hot: Totals;
+  readonly cold: Totals;
+  readonly transitive: Totals;
 }
 
 interface Baseline {
@@ -74,11 +89,8 @@ function assertIncludes(haystack: string, needle: string, message: string): void
 function writeCleanKit(): void {
   mkdirSync(ONE_SKILL, { recursive: true });
   mkdirSync(REFERENCES_DIR, { recursive: true });
-  writeFileSync(join(KIT, "CORE_RULES.md"), "# core\n");
-  writeFileSync(
-    join(ONE_SKILL, "SKILL.md"),
-    "# one-skill\n\nRead `./AGENTS.md`, then `./references/workflow/alpha.md`.\n",
-  );
+  writeFileSync(CORE_RULES_FILE, "# core\n");
+  writeFileSync(ONE_SKILL_FILE, HOT_SKILL);
   writeFileSync(CITED_REFERENCE, "# alpha\n");
 }
 
@@ -103,6 +115,22 @@ test("--update writes a parseable baseline holding the measured skills", () => {
     ["one-skill"],
     "the written baseline holds the measured skill",
   );
+  const [entry] = baseline.skills;
+  assert.deepStrictEqual(
+    Object.keys(entry),
+    ["skill", "hot", "cold", "transitive"],
+    "every ratcheted set is recorded, and nothing else is",
+  );
+  assert.deepStrictEqual(
+    Object.keys(entry.hot),
+    ["bytes", "approxTokens"],
+    "a recorded set holds totals only — a per-file list would churn on every edit",
+  );
+  assert.deepStrictEqual(
+    entry.cold,
+    { bytes: 0, approxTokens: 0 },
+    "a kit marking no citation cold baselines an empty cold set rather than omitting it",
+  );
 });
 
 test("an unchanged kit passes against its captured baseline", () => {
@@ -113,7 +141,7 @@ test("an unchanged kit passes against its captured baseline", () => {
 test("a grown reference fails the check, naming each moved total", () => {
   appendFileSync(CITED_REFERENCE, "grown by a sentence the baseline never measured\n");
   const { stdout } = runCheck(1, ["--baseline", BASELINE, KIT]);
-  assertIncludes(stdout, "one-skill: direct", "growth names the skill and the direct set");
+  assertIncludes(stdout, "one-skill: hot", "growth in an unmarked citation names the hot set");
   assertIncludes(stdout, "one-skill: transitive", "growth names the transitive set too");
   assertIncludes(stdout, "--update", "the drift summary carries the re-capture hint");
 });
@@ -131,6 +159,48 @@ test("a skill the baseline has never seen is reported, not silently admitted", (
   writeFileSync(join(EXTRA_SKILL, "SKILL.md"), "# extra-skill\n");
   const { stdout } = runCheck(1, ["--baseline", BASELINE, KIT]);
   assertIncludes(stdout, "extra-skill: not in the baseline", "a new skill is drift until captured");
+});
+
+test("a citation marked cold moves its bytes out of the hot set, which is drift", (t: TestContext) => {
+  // The cases below measure the kit this one leaves behind, so the marker comes out even on failure.
+  t.after(() => writeFileSync(ONE_SKILL_FILE, HOT_SKILL));
+  const referenceBytes = statSync(CITED_REFERENCE).size;
+  const coreBytes = statSync(CORE_RULES_FILE).size;
+  const hotBefore = statSync(ONE_SKILL_FILE).size + coreBytes + referenceBytes;
+  writeFileSync(ONE_SKILL_FILE, COLD_SKILL);
+  const hotAfter = statSync(ONE_SKILL_FILE).size + coreBytes;
+  const { stdout } = runCheck(1, ["--baseline", BASELINE, KIT]);
+  assertIncludes(
+    stdout,
+    `one-skill: hot ${hotBefore} -> ${hotAfter} bytes`,
+    "the marked reference leaves the hot set",
+  );
+  assertIncludes(
+    stdout,
+    `one-skill: cold 0 -> ${referenceBytes} bytes`,
+    "and lands in the cold set the baseline recorded as empty",
+  );
+});
+
+// A baseline captured before a set was renamed carries no entry under the new name. The tolerance
+// for that is real (BaselineEntry's sets are optional), so the reported line has to name the missing
+// set rather than do arithmetic on `undefined`.
+test("a baseline missing a set names it rather than reporting NaN", (t: TestContext) => {
+  const stale = join(TEST_ROOT, "stale-baseline.json");
+  t.after(() => rmSync(stale, { force: true }));
+  runCheck(0, ["--update", "--baseline", stale, KIT]);
+  const captured: Baseline = JSON.parse(readFileSync(stale, "utf8"));
+  writeFileSync(
+    stale,
+    JSON.stringify(
+      { skills: captured.skills.map(({ skill, transitive }) => ({ skill, transitive })) },
+      null,
+      2,
+    ) + "\n",
+  );
+  const { stdout } = runCheck(1, ["--baseline", stale, KIT]);
+  assertIncludes(stdout, "one-skill: hot not in the baseline", "the missing set is named, not subtracted");
+  assert.ok(!stdout.includes("NaN"), `no drift line reports NaN, got "${stdout}"`);
 });
 
 test("a baseline entry with no skill behind it is reported", () => {

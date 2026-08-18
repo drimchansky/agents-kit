@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 
-Writes one file: `~/.config/agents-kit/config.json`, the **root registry** whose schema, semantics, and consumers are owned by `./references/workflow/task-layout.md` § *The root registry*. Read that section at run time and treat it as the only source of truth for the file's shape — this skill carries **no** copy of the schema, so a key added or retired there needs no edit here.
+Writes one file: `~/.config/agents-kit/config.json`, the **root registry** whose schema, semantics, and consumers are owned by `./references/workflow/task-store.md` § *The root registry*. Read that section at run time and treat it as the only source of truth for the file's shape — this skill carries **no** copy of the schema, so a key added or retired there needs no edit here.
 
 This skill operates on one machine's configuration. It resolves no task, reads no `**Domain:**` pack, and touches no task folder: the config names *where* tasks live, and is not itself task content.
 
@@ -29,7 +29,7 @@ This skill operates on one machine's configuration. It resolves no task, reads n
 
 ### 1. Read the contract, then the current file
 
-Read `./references/workflow/task-layout.md` § *The root registry* first: the fixed path, the key set, and the rules a root obeys. Everything below fills that shape.
+Read `./references/workflow/task-store.md` § *The root registry* first: the fixed path, the key set, and the rules a root obeys. Everything below fills that shape.
 
 Then read `~/.config/agents-kit/config.json` if it exists. Unreadable or invalid JSON is **not** a reason to overwrite it: report the parse error with its line, treat the file as unknown rather than empty, and offer only to write a proposal the user confirms against what they can see. A file whose top-level keys are unknown to the contract is reported the same way and its entries carried forward untouched.
 
@@ -40,7 +40,7 @@ Walk the search directories — the invocation's arguments, or, when none is giv
 - A **task folder** is any directory matching the **recognition set** in `./references/workflow/task-layout.md` § *One task, one flat folder* — read it at run time; that section owns the file list, legacy suffix forms included, and a root whose folders still carry those forms is exactly the kind this walk must not miss. Never descend into a task folder.
 - A task folder under `<x>/.agents/tasks/` belongs to the **canonical root** `<x>/.agents/tasks` — propose that, not the project directory.
 - Otherwise the root is the **highest ancestor whose every sibling directory also leads to a task folder**. That is what separates a store (`Tasks/` holding `area/task/`) from a directory that merely happens to contain one. Climb out of any `Archive/` container first — it is a container, not a root.
-- Skip `node_modules`, dotted directories other than `.agents`, and a `tests/fixtures/` tree: the first two are the walk prunes § *The root registry* states, and a fixture tree is this skill's own — fixture task folders are test data, and proposing them as roots is the most likely way this skill produces a wrong file.
+- Skip `node_modules`, dotted directories other than `.agents`, and a `tests/fixtures/` tree: the first two are the walk prunes `./references/workflow/task-store.md` § *The root registry* states, and a fixture tree is this skill's own — fixture task folders are test data, and proposing them as roots is the most likely way this skill produces a wrong file.
 - **`~` is reachable by argument, and is deliberately not the default.** A full-home walk enters `Library` and every other large non-dotted tree, and nothing lets it stop early: recognition is by directory contents, so every directory must be listed, and the highest-ancestor rule above cannot judge an ancestor until every subtree beneath it is known. A root outside the defaults is named as an argument once and then lives in the config, so the cost is paid on the run that needs it rather than on every run.
 - **A directory the walk cannot read is counted and named, never silently skipped.** A permission-denied tree — `~/Library/Mail`, `~/Library/Messages`, anything behind a TCC prompt — is a hole in discovery, and an unreported hole reads as a clean walk. This is the discipline the rest of the kit already applies: `scripts/health-check.ts` carries `unreadable` and `unreadablePaths` in its stdout contract, and `maintain` refuses to report a skipped probe silently.
 - **`kitRoot`** is a directory holding `setup.ts`, `CORE_RULES.md`, and `references/`. More than one found is a question for the user, never a guess; none found means the key is simply omitted — say so in the preview, and never fall back to a deployed install home, which is not a checkout.
@@ -94,7 +94,7 @@ Lists, never tables.
 
 Confirm the protocol invariants before finishing:
 
-- [ ] The schema came from `task-layout.md` § *The root registry* read at run time, never from a copy in this file
+- [ ] The schema came from `task-store.md` § *The root registry* read at run time, never from a copy in this file
 - [ ] Discovery was read-only, and identified task folders by role-file contents rather than by path shape
 - [ ] Every proposed path uses `~` for the home directory
 - [ ] An existing config was read before anything was proposed; an unparseable or unknown-key file was reported and carried forward, never treated as empty

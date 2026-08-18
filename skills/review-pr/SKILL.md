@@ -14,8 +14,8 @@ Review all changes in the current branch against its base branch for correctness
 
 ## Flags
 
-- `-x` — Cross-check: launch one independent cold review of the same diff on the cross-vendor engine and merge it before findings are finalized, per the shared contract in `./references/workflow/agent-fanout.md`. Off by default. The probe is read-only; its outcome is recorded on the output's `Cross-check:` line.
-- `-p` — Lens probes: launch one native cold review per lens in parallel — each per-surface checklist the diff triggers, plus one general correctness lens — and merge them before findings are finalized, per the lens-review shape in `./references/workflow/agent-fanout.md`. Off by default. The probes are read-only; their outcomes are recorded on the output's `Lens probes:` line.
+- `-x` — Cross-check: launch one independent cold review of the same diff on the cross-vendor engine and merge it before findings are finalized, per the shared contract in `./references/workflow/agent-fanout.md`, with the engine and its launch recipe in `./references/workflow/probe-engines.md`. Off by default. The probe is read-only; its outcome is recorded on the output's `Cross-check:` line. <!-- cold -->
+- `-p` — Lens probes: launch one native cold review per lens in parallel — each per-surface checklist the diff triggers, plus one general correctness lens — and merge them before findings are finalized, per the lens-review shape in `./references/workflow/probe-engines.md`. Off by default. The probes are read-only; their outcomes are recorded on the output's `Lens probes:` line. <!-- cold -->
 - `-d` — Draft a ready-to-paste PR description (body only) in addition to the review, per the "PR description" section. Off by default.
 
 ## References
@@ -35,9 +35,9 @@ Before working, read `./references/engineering/review.md` — it carries the len
 - If the diff exceeds ~1000 non-generated lines and isn't a single logically cohesive change, the first finding is "split this PR" — large diffs hide bugs and exceed reviewer working memory
 - If the diff bundles refactoring with feature work or bug fixes, flag "separate the refactor" — mixed-purpose PRs are harder to review, harder to revert, and dilute commit history. Exception: refactors required _to enable_ the feature, which should be called out in the PR description.
 
-**Launch the cross-vendor probe** (only with `-x`): as soon as the base branch is determined, start one background probe per `./references/workflow/agent-fanout.md` — a cold second review of the `<base>...HEAD` diff at the repo root, demanding findings with severity and `file:line` evidence. Continue the setup and review inline while it runs; collect and merge per the contract before finalizing Findings.
+**Launch the cross-vendor probe** (only with `-x`): as soon as the base branch is determined, start one background probe per `./references/workflow/agent-fanout.md`, on the engine and launch recipe in `./references/workflow/probe-engines.md` — a cold second review of the `<base>...HEAD` diff at the repo root, demanding findings with severity and `file:line` evidence. Continue the setup and review inline while it runs; collect and merge per the contract before finalizing Findings. <!-- cold -->
 
-**Launch the lens probes** (only with `-p`): as soon as the change map exists, start one probe per lens per the lens-review shape in `./references/workflow/agent-fanout.md` — the lens set derives from the change map: the per-surface checklists its domains trigger, plus the general lens. Continue the review inline while they run; merge each probe's findings as candidates verified against the diff before finalizing Findings, per that file's merge contract.
+**Launch the lens probes** (only with `-p`): as soon as the change map exists, start one probe per lens per the lens-review shape in `./references/workflow/probe-engines.md` — the lens set derives from the change map: the per-surface checklists its domains trigger, plus the general lens. Continue the review inline while they run; merge each probe's findings as candidates verified against the diff before finalizing Findings, per that file's merge contract. <!-- cold -->
 
 **Gather context:**
 
@@ -64,7 +64,7 @@ Apply the full review process from `./references/engineering/review.md` — its 
 - **Findings** — Issues with severity, file location, recommendation, and impact
 - **Reviewed** — a provenance line recording the reviewed head commit and its merge-base (the `git rev-parse HEAD` and `git merge-base` from Setup) and the model that produced this review, e.g. `Reviewed at <head-sha> (merge-base <base-sha>) by <model>`. `/publish-pr-review` reads it to anchor the posted review to the head commit, re-check the diff hasn't moved, and attribute it — so attribution survives the model changing between review and publish.
 - **Cross-check** (only with `-x`) — the probe's `Cross-check:` outcome line per `./references/workflow/agent-fanout.md`
-- **Lens probes** (only with `-p`) — the `Lens probes:` outcome line per the lens-review shape in `./references/workflow/agent-fanout.md`, naming each lens and its outcome
+- **Lens probes** (only with `-p`) — the `Lens probes:` outcome line per the lens-review shape in `./references/workflow/probe-engines.md`, naming each lens and its outcome <!-- cold -->
 - **Improvements** (optional) — Non-blocking suggestions
 - **Inaccessible context** (only if any) — Links from the PR that couldn't be fetched, with URL and reason (auth required, private, 404, tool unavailable). Note which findings might shift if that context were available.
 - **PR description** (only with `-d`) — A ready-to-paste description (body only); drafted per the **PR description** section below.

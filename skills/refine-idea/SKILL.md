@@ -44,7 +44,7 @@ If the resolved task folder doesn't exist, create it — `.agents/tasks/<slug>/`
 
 `CONTEXT.md` is the **static grounding context for the task**: the chosen direction, the assumptions it depends on, the scope decisions already made, plus any external references (tickets, links, pasted specs) the user adds later. It is read by the plan and its result inside the folder. Don't rewrite it during refinement — refine through conversation, then write the final version.
 
-**When the task folder holds a `ticket.md`**, it is the authoritative product-facing ask — read it first as the primary input to refine. Let `CONTEXT.md`'s `## Problem Statement` **cite** `./ticket.md` rather than restating it: the ticket carries the requester's framing, required functional output, and references; `CONTEXT.md` adds the grounding this refinement produces (recommended direction, assumptions, MVP scope, "Not Doing"). See [`./references/workflow/task-layout.md`](./references/workflow/task-layout.md) § *One home per fact*.
+**When the task folder holds a `ticket.md`**, it is the authoritative product-facing ask — read it first as the primary input to refine. Let `CONTEXT.md`'s `## Problem Statement` **cite** `./ticket.md` rather than restating it: the ticket carries the requester's framing, required functional output, and references; `CONTEXT.md` adds the grounding this refinement produces (recommended direction, assumptions, MVP scope, "Not Doing"). See [`./references/workflow/one-home.md`](./references/workflow/one-home.md) § *One home per fact*.
 
 ### What belongs in CONTEXT.md (and what doesn't)
 

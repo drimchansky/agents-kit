@@ -1,10 +1,10 @@
 # Agent Fan-Out: Probes, Executors, and Engines
 
-How a skill delegates work to other agents, in two modes: **probes** — self-contained read-only questions whose answers come back as text evidence — and **executors** — write-mode subagents that each carry out one coordinator-supplied unit of work for a registered write-mode consumer. **This file is the single source of truth for probe behavior and engine commands, plus the registry and routing of native write-mode executors.** Write-mode executor behavior lives in `./executor-contract.md`; change that behavior there, and change only engine recipes, adapter defaults, routing, or the coordinator-side batch mechanics here.
+How a skill delegates work to other agents, in two modes: **probes** — self-contained read-only questions whose answers come back as text evidence — and **executors** — write-mode subagents that each carry out one coordinator-supplied unit of work for a registered write-mode consumer. **This file is the single source of truth for probe behavior and the routing of native write-mode executors.** Engine commands, the `-x` cross-check, and the probe prompt shapes live in `./probe-engines.md`; the coordinator-side parallel-batch mechanics live in `./parallel-batch.md`. Write-mode executor behavior lives in `./executor-contract.md`; change that behavior there, and change probe contracts, routing, and the write-mode engine registry here.
 
 ## What a probe is
 
-A **probe** is one self-contained, read-only question posed to a separate agent, whose answer comes back as text evidence. Its defining property is **independence**: the probe sees only what its prompt carries — no session context, no accumulated assumptions, no stake in the answer. That isolation is a feature, not a limitation; it's what makes a probe worth consulting where the session's own read might be biased (grounding a plan it helped write, reviewing a diff whose intent it has already internalized).
+A **probe** is one self-contained, read-only question posed to a separate agent, whose answer comes back as text evidence. Its defining property is **independence**: the probe sees only what its prompt carries — no session context, no accumulated assumptions, no stake in the answer.
 
 ## Probe contract (every engine)
 
@@ -17,132 +17,7 @@ A **probe** is one self-contained, read-only question posed to a separate agent,
 - **Content leaves the machine.** A probe ships its prompt to the engine's vendor. Run a cross-vendor probe only on work the user already uses that vendor's CLI on; when in doubt, ask first.
 - **Scratch, not record.** Probe output lands in the host's scratch/temp area — never in the task folder; result files record the *merged outcome*, not probe transcripts.
 
-## Engine registry
-
-- **`native`** — the host harness's own subagents (Claude Code's agent tool; Codex's multi-agent). **Default for all fan-out** except the opt-in `-x` cross-check below: bulk exploration, parallel searches, reference refresh. Richer integration, no process overhead. **No engine-side read-only enforcement**: the cross-vendor engines seal the promise with a sandbox flag, but a native subagent inherits the session's tools, so here it is prompt-borne — always state it, and launch on the most restricted agent type whose reading discipline still fits the probe's shape (on Claude Code, `Explore` and `Plan` drop `Edit`/`Write`/`NotebookEdit`, though both keep Bash; `Explore` reads excerpts rather than whole files, which suits a search probe and starves a verify-shape one). A native probe is trusted, not confined.
-- **`codex`** — OpenAI Codex CLI, headless. The cross-vendor engine when the host is Claude Code. Requires `codex` on PATH and an active login — `command -v codex` checks presence; a failed login surfaces at run time and degrades to `skipped`.
-
-  ```bash
-  codex exec --ephemeral --sandbox read-only --skip-git-repo-check \
-    -C <working-root> -o <scratch>/probe.md - < <scratch>/probe-prompt.md
-  ```
-
-  The prompt goes in on stdin, never as a command-line argument: the invoking agent writes the filled skeleton (findings verbatim) to `<scratch>/probe-prompt.md` with its file tool, and the trailing `-` makes `codex exec` read it from stdin — so a `$`, backtick, or apostrophe in a finding is data, not shell syntax to expand or execute (`<scratch>` is an absolute path). `--sandbox read-only` is the engine-side enforcement of the read-only promise; `-o` captures just the final message for merging; `--ephemeral` leaves no session files. Parallel probes are plain shell jobs (`&` + `wait`), one prompt file and one `-o` file each. A probe has no fixed time budget — a high-reasoning run takes as long as it takes. Launch early, run in the background where the host supports it, and report the probe's status in chat at a regular cadence while it runs — a brief launched / still running / collected line at each check-in — so a long probe reads as visible progress rather than silence; collect at the merge point, and reserve `skipped` for real failure (missing engine, failed login, dead process) or the user calling a stalled probe off — never the skill's own timeout.
-
-- **`claude`** — Claude Code, headless. The cross-vendor engine when the host is Codex — the mirror of the above:
-
-  ```bash
-  cd <working-root> && claude -p --permission-mode plan \
-    --no-session-persistence < <scratch>/probe-prompt.md > <scratch>/probe.md
-  ```
-
-  The leading `cd` pins the working root (`claude` has no `-C` equivalent); `--no-session-persistence` is the mirror of `--ephemeral` — no session files left behind. Prompt passing mirrors codex — the same `<scratch>/probe-prompt.md` fed on stdin (both `<scratch>` paths are absolute, since the `cd` changes directory), so untrusted finding text never reaches the shell as syntax.
-
-## The `-x` cross-check (review skills, opt-in)
-
-The review skills accept a `-x` flag: run one probe on the **cross-vendor engine** — the engine from the other vendor than the host harness (host Claude Code → `codex`; host Codex → `claude`) — as an independent second pass over the skill's own object. **Off by default**: without the flag, no probe runs and no cross-check line appears. The second pass is worth the cross-vendor hop because a different model family is maximally uncorrelated with the session's blind spots; everything else stays `native`: exploration fan-out, multi-area searches, drift scans, and URL refresh need no flag at all, and `-p`'s lens fleet is opt-in for its cost, not for an engine.
-
-What the probe checks, per skill:
-
-- **`review-task`** — independent grounding: the plan's reality claims (integration points, "reuse X" assumptions, referenced files/symbols/APIs), verdict per claim.
-- **`review-pr`** — a cold second review of the branch diff against its base, findings with severity.
-- **`review-commit`** — a cold second review of the reviewed object: the staged diff, or the working-tree target under `-w` (`../engineering/review.md` § *Working-tree review target*), findings with severity.
-- **`review-docs`** — independent grounding of the doc's verifiable claims against the artifacts they describe, verdict per claim.
-
-Shared mechanics, every `-x` run:
-
-- **Launch early, merge late.** Start the probe in the background as soon as its input is ready (the claims list, the diff scope); do the inline pass while it runs; collect and merge per the contract below before verdicts or findings are finalized. The probe supplements the session's pass, never replaces it. No time cap bounds the wait: a probe still running when the inline pass finishes is waited on, its status reported at a regular cadence per the engine registry — the visible wait is what lets the user call a stalled probe off instead of a timeout deciding for them.
-- **Record the outcome.** The skill's output carries exactly one `Cross-check:` line — `clean` (nothing new, nothing contested) · `merged: <what the probe added or contested, and how it settled>` · `skipped (<reason>)`. With `-x` passed the line is mandatory, so a forgotten or failed probe is visible rather than ambiguous; without the flag the line doesn't appear. Each skill's output format says where the line lives.
-
-## Probe prompt skeleton
-
-For the grounding shape (`review-task`, `review-docs`):
-
-```
-You are an independent verifier with no prior context. Working root: <absolute path>.
-For each numbered item below, answer with a verdict and file:line evidence.
-Do not trust the item's own text — read the actual files.
-
-Verdicts: CONFIRMED / CONTRADICTED / NOT FOUND
-
-Items:
-1. <claim>
-2. …
-```
-
-For the cold-review shape (`review-pr`, `review-commit`), replace the numbered items with the review object — "review the diff `<base>...HEAD`" / "review the staged diff (`git diff --cached`)" — and demand findings, each with a severity, `file:line`, and the concrete failure it causes.
-
-For the lens-review shape (`review-pr`'s opt-in `-p`), run a fleet of cold reviews of the same diff on `native` — one probe per lens, launched in parallel, no cross-vendor hop, since `-x` remains the uncorrelated-model pass and composes independently. One lens per probe *is* the one-concern rule, not a swarm: the lenses are different concerns, not slices of one. Each prompt is the cold-review shape's plus one lens — the absolute path of one per-surface checklist under `../engineering/` (`security.md`, `testing.md`, …), which the probe reads itself and applies to the diff to the exclusion of every other concern, or, for the one general lens, correctness and blast radius with no checklist path. Hand the path, never the checklist's text: inlining bloats every prompt and forks the checklist. The set derives from the change map — the per-surface checklists the diff's domains trigger, the same trigger `../engineering/review.md:5` states, plus the general lens always. Past the large-diff bar `review-pr` states (~1000 non-generated lines), a probe's prompt scopes its review object to the file groups its own concern touches instead of the whole diff.
-
-A lens probe's findings come back with severity and `file:line` like any cold review, and merge under § *Merge contract* below — each one a candidate the session verifies against the diff before adopting it. The record is one `Lens probes:` line naming each lens and its outcome — merged findings, clean, or failed/skipped with the reason — mandatory whenever the flag is passed and absent without it. `Cross-check:` belongs to the `-x` pass, so a `-x -p` run carries both lines.
-
-For the verify shape (the `review-pr-triage-verify` / `review-commit-triage-verify` / `triage-findings-verify` composites' per-batch probes):
-
-```
-You are an independent verifier with no prior context. Working root: <absolute repo path>.
-Read <absolute path to the installed verify-issue/SKILL.md> and apply its protocol
-from "## Multiple Findings" onward — skip the Core Rules and intro above it. You verify
-and report only: never edit anything, and never run the project's build, typecheck,
-or tests — verify by reading (analysis-only); where the protocol suggests running a
-command, reason statically instead.
-
-The findings came from a review of <the staged diff (git diff --cached) | the diff
-<base>...HEAD | the PR's diff (gh pr diff <number>)>. Read that diff first — it is what changed. A finding about the change
-itself (something added, dropped, or missing from it) cannot be judged from current
-file contents alone, and a staged change is absent from git log entirely, so the
-protocol's recent-changes step will not surface it.
-
-Treat each finding below as a separate verification target (its Multiple Findings
-rule). For each: a verdict — Confirmed / Not an issue / Inconclusive — with
-file:line evidence, root cause when confirmed, and fix options ordered
-targeted → thorough.
-
-Findings (verbatim, with severity and location when present):
-1. <finding text — severity, file:line, recommendation, exactly as reviewed>
-2. …
-```
-
-The findings go in verbatim — a summarized finding verifies a different claim. So does
-the diff line, this shape's review object and the counterpart of the cold-review shape's:
-hand it whenever the findings came from a change — a staged diff, a branch diff, or a PR's
-diff (`gh pr diff`) — since a probe that isn't handed it then verifies a snapshot rather
-than a change. When the findings are standalone instead — a saved or pasted list with no
-associated change, as `triage-findings-verify` can resolve — drop that paragraph: there is
-no diff, and the probe verifies each finding as a claim against current code, exactly what
-`verify-issue`'s single-issue mode does. A diff that doesn't correspond to the findings is
-worse than none.
-
-For the re-derivation shape (`challenge-task`'s cold derivation, on `native`), the probe is handed a task's *inputs* and asked to derive an approach. It is the one shape defined by what it withholds: every other shape hands the probe the artifact under judgment, and this one must not.
-
-```
-You are an independent planner with no prior context. Working root: <absolute path>.
-Below are the problem a piece of work exists to solve and the goals it must meet.
-Derive the simplest approach that meets every goal — its shape and the steps it takes.
-
-Ground the derivation in the codebase: explore the working root and design against what
-is there, not against what a greenfield project would allow. Cite the files your design
-turns on as file:line.
-
-You derive and report only: never edit anything, and never run the project's build,
-typecheck, or tests — ground the derivation by reading (analysis-only).
-
-Read no file in the task folder at <absolute task-folder path> — not its plan, not its
-context, not its result. Everything you are given is below, and an approach taken from
-what someone already wrote there is not an independent derivation.
-
-Begin your answer by restating the inputs you were given, then give the derivation.
-
-Problem Statement:
-<verbatim>
-
-Ticket (when the task has one):
-<verbatim>
-
-Goals:
-<goals.md, verbatim>
-```
-
-Every input travels inline and verbatim — the Problem Statement, `ticket.md` when present, `goals.md` — and nothing else from the folder does: no `plan.md` content, no Recommended Direction, no paraphrase of either. Plan-blindness is a promise no engine enforces (a read-only sandbox stops writes, not reads), which is why the instruction withholds the whole folder rather than the plan alone, and why the restate-your-inputs opener is part of the shape: it makes a peek visible in the answer. A probe that read the plan and then agrees with it reads as corroboration, and that is the worst failure this shape has. The withholding holds only while the inputs themselves are direction-free — a Problem Statement, ticket, or goals file that records the chosen direction hands it over verbatim, and the invoking skill skips the probe rather than merging a corroboration that proves nothing. The answer merges under § *Merge contract* below — each divergence from the withheld artifact is a candidate the invoking skill tests against its own bar before printing — and closes on that skill's own mandatory outcome line.
+Engine commands and launch recipes, the `-x` cross-check contract, and the probe prompt skeletons live in `./probe-engines.md` — read it when launching a probe or running a cross-check; the probe contract above and the merge contract below govern every engine.
 
 ## Merge contract
 
@@ -151,7 +26,7 @@ The invoking skill compares the probe's answer against its own pass:
 - **Agreement** strengthens the evidence — cite it and move on.
 - **Contradiction is never silently dropped.** Where the probe contradicts the session's grounding or the artifact's own claims, re-check that spot before assigning the verdict; a confirmed contradiction becomes a finding (in `review-task`, a `CONTRADICTED` claim is evidence toward `conflicts with what exists` / `infeasible as stated`; a `NOT FOUND` on a load-bearing reference is a gap).
 - **Novel probe findings are candidates, not findings.** Verify each against the artifact before adopting it into the output — under the session's own severity calibration; never paste a probe finding unverified.
-- **The outcome line closes the loop.** For the `-x` shapes, the `Cross-check:` line states `clean`, `merged: …`, or `skipped (<reason>)` — the record makes a skipped or empty probe visible instead of leaving absence ambiguous. The lens-review shape closes the same way on its `Lens probes:` line (per its shape paragraph above). The verify shape closes on its consuming skill's mandatory **Verified** line instead, which carries the same guarantee for the same reason; `Cross-check:` stays reserved for the `-x` pass, so a composite running both keeps two distinct records. The re-derivation shape closes on its consumer's mandatory `Cold re-derivation:` line the same way (per its shape paragraph above).
+- **The outcome line closes the loop.** For the `-x` shapes, the `Cross-check:` line states `clean`, `merged: …`, or `skipped (<reason>)` — the record makes a skipped or empty probe visible instead of leaving absence ambiguous. The lens-review shape closes the same way on its `Lens probes:` line (per its shape paragraph in `./probe-engines.md`). The verify shape closes on its consuming skill's mandatory **Verified** line instead, which carries the same guarantee for the same reason; `Cross-check:` stays reserved for the `-x` pass, so a composite running both keeps two distinct records. The re-derivation shape closes on its consumer's mandatory `Cold re-derivation:` line the same way (per its shape paragraph in `./probe-engines.md`).
 
 ## Write-mode routing
 
@@ -159,7 +34,7 @@ Write-mode fan-out is limited to the consumers registered here. `./executor-cont
 
 **The registry.** Three consumers launch write-mode executors, each with its own posture:
 
-- **`implement-task`** — unit: one plan step. **Delegate by default**: one serial executor per step, with an inline fallback when delegation clearly doesn't pay. This is the proven posture the other two are calibrated against.
+- **`implement-task`** — unit: one plan step. **Delegate by default**: one serial executor per step, with an inline fallback when delegation clearly doesn't pay.
 - **`implement`** — unit: one framed item. Default **inline** because this skill's units are small and assembling a self-contained packet costs more than making the edit; delegate when the remaining run is multi-unit *and* the unit's packet is self-contained — no mid-unit user interaction expected.
 - **`fix-findings`** — unit: one Confirmed finding's fix application. Same inline default and same delegation trigger, scoped to **Confirmed auto-path fixes**: ask-routed fixes stay with the coordinator, which already authored the approved diff, and Withdrawn or Inconclusive findings are never edited at all.
 
@@ -169,32 +44,9 @@ Delegation by a conditional-posture consumer is **announced in chat and recorded
 outcome re-proof on its own tree, the consumer-declared integrated-health boundary, the report
 buckets, and every status. Executor output is advance evidence, never the gate.
 
-### Coordinator-side parallel batch
+The mechanics of running units concurrently — eligibility, worktree placement, the frozen shared tree, the merge gates, incorporation order, and cleanup — live in `./parallel-batch.md`; read it when a batch qualifies.
 
-This is the single home for the mechanics of running units concurrently. It is written in terms of *units* and *the consumer's declared unit order*, so every registered consumer cites it and none restates it.
-
-**Eligibility — all conditions required.** Two units may share a batch only when:
-
-- no dependency path connects them, directly or transitively;
-- each declares an edit surface and the declared sets are pairwise disjoint — the core rule "do not parallelize sequential edits to the same artifact" (`CORE_RULES.md`), made checkable;
-- each unit's verify can run in an isolated copy.
-
-A unit with no declared surface (or a surface of `none`) runs serially — an absent declaration is a serial default, not an invitation to infer one. When in doubt about disjointness, run the doubtful unit serially: a wrongly-serial unit costs minutes, a wrongly-parallel one costs the merge. Each consumer adds its own eligibility bounds on top — `implement-task`'s checkpoint-bounded batches and `**Touches:**` lines, for instance — and those stay in that skill.
-
-**Run.** Launch one executor per eligible unit, each with a self-contained launch packet per `./executor-contract.md`, through the native adapter and defaults in the engine registry below. Each executor's effective root is its own **coordinator-managed worktree**, seeded to the **batch baseline** — the shared tree's state at launch, uncommitted work included (staged, unstaged, and untracked), since a worktree created bare from a commit hands the executor stale code; executors never create, switch, or seed worktrees themselves. A unit's **change set** is everything in its worktree that differs from that baseline — every path whose content, presence, or absence differs from the seed, tracked or not — and is what the merge gates below operate on. While a batch is in flight the **shared tree is frozen**: the coordinator monitors and runs no unit of its own, including a serial fallback, until every executor has returned or its worktree has been discarded.
-
-**Merge — in the consumer's declared unit order.** Each binding in `./executor-contract.md` names its consumer's order (plan order, frame order, severity order). Once every executor has returned or its worktree has been discarded, process each unit in that order. An unavailable or hung executor enters its owning consumer's declared serial fallback with no raw worktree delta. For every unit:
-
-1. **Returned-worktree surface check** — inspect a returned worktree's raw, complete content/presence delta against the batch baseline, including new and deleted paths, and confirm it stays inside that unit's declared surface. A surface escape discards that worktree and enters the serial fallback.
-2. **Capture, incorporate, or fall back** — at the unit's ordered position, capture the exact shared content/presence state immediately before it. Incorporate a worktree that passed the surface check atomically: modify files, copy new files, and mirror deletions. Never commit in a worktree or merge branches. If incorporation conflicts, restore that exact capture, discard the worktree, and enter the serial fallback; never hand-resolve a batch conflict inside an executor worktree. An unavailable, hung, surface-escaping, or conflicting unit executes only that unit serially against the current integrated tree. Check its complete actual content/presence delta against the immediate pre-unit capture and its declared surface; if it escapes, restore that exact capture, discard the unit's work, and stop under the owning consumer's **Blocked** binding (`./execution-bindings.md`) — except `fix-findings`, whose units are independent, which buckets the finding and continues. A serial fallback that escapes is never re-executed serially again.
-3. **Re-prove the unit outcome** — after either a successful incorporation or its serial fallback, run that unit's full outcome tier on the integrated tree as `./execution-loop.md` § *Two verification tiers* defines it: its stated criterion plus the per-unit checks the resolved domain's `verification.md` adds. Not the health recipe, and not the criterion alone. Executor-reported success is provisional; this is the pass that counts. On failure, remove every remaining batch worktree before the owning consumer applies its Stop-the-Line or recovery behavior; do not record the failed outcome. A unit whose worktree is removed that way has not itself failed and is not one of the fallback triggers above: where the owning consumer's units are independent (`fix-findings`) it enters that consumer's declared serial fallback, and where they are not it is left unstarted under the consumer's **Blocked** binding. Neither case silently drops it.
-4. **Expose and record** — only after the integrated outcome passes, expose the ordered incorporated content/presence change set: the actual delta from the exact shared state immediately before that unit to the state it left behind, together with the consumer order and declared dependencies. The raw worktree delta is merge input; this incorporated set is recovery evidence, not Git state. Then record per the consumer's own binding (`./execution-bindings.md`), exactly as in serial execution.
-
-Integrated health is not owed by any individual merge. Once every batch unit has incorporated or completed its declared serial fallback, remove every executor worktree before continuing — merged, discarded, failed, or hung — then hand the accumulated shared tree to the owning consumer's declared health boundary. That consumer runs the full recipe once at that boundary, not once per merge. Coordinator-managed worktrees sit inside the Git-discipline rule, not against it: they are transient scratch — created for the batch with nothing committed and no branch made, merged by diff-apply, removed — not the Git-state mutation the consumers' invariants forbid.
-
-*Where* in a run a batch merges and where its one health pass lands are the consumer's business, not this file's. A checkpoint-bounded `implement-task` batch, for example, shares the checkpoint's health boundary rather than creating another one.
-
-### Write-mode engine registry
+## Write-mode engine registry
 
 - **`native`** — the only registered write-mode engine: Claude Code's native subagents on Claude, and Codex multi-agent on Codex. The coordinator launches the named `executor` adapter on both hosts and supplies its effective root: the shared tree for serial delegation or a coordinator-managed worktree for a parallel batch. The adapter then loads its installed copy of `./executor-contract.md`.
 
@@ -202,4 +54,4 @@ Integrated health is not owed by any individual merge. Once every batch unit has
 
   **Degradation.** If the named adapter, its configured model, or native subagent support is unavailable, report the failure. The coordinator-owned fallback in `./executor-contract.md` applies unchanged and symmetrically on either host; adapter availability never changes placement or scope.
 
-The `codex` and `claude` CLI entries in the probe registry above remain cross-vendor, read-only probe engines only. They are not registered for write mode.
+The `codex` and `claude` CLI entries in the probe engine registry (`./probe-engines.md`) remain cross-vendor, read-only probe engines only. They are not registered for write mode.

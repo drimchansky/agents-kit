@@ -1,0 +1,66 @@
+# implement-task: Non-Default Branches
+
+The `implement-task` skill's non-default branches — reviving a `skipped` plan, the diagram re-check, the automatic parallel batch, mid-execution plan revisions, and the later-run `in-review` → `done` finalization — split out of that skill's SKILL.md, which keeps the loop, the templates, and the gates. Read the section a branch names when its condition fires. An `implement-task §N` reference names that SKILL.md's process step.
+
+## Reviving a skipped plan
+
+**Check where the folder sits first.** A bare slug falls back to `Archive/<slug>/` (`./task-layout.md`) and skipped tasks are the ones that get archived, so a revive can land there — but a live task under `Archive/` is stranded outside every active listing `resume-task` and `review-task` build, and `archive-task` would refuse it as non-terminal. Resolved under `Archive/` → **stop**: have the user move it out (a manual `mv`; archiving is one-way), then re-run.
+
+Otherwise flip `skipped → executing` (the registered revive edge) and continue as a normal run. An existing result file — the record of why the work was dropped — must be `executing`, the pairing rule's value for a live plan; any other value pairs as drift. That record stays: the append-only rule holds, and this run's sections append after it (implement-task §5).
+
+## Diagram re-check
+
+Three points re-check it: **each checkpoint**, **each structural plan revision** (implement-task §6), **the acceptance gate** (implement-task §7). No diagram → skip all three, absence unreported (`./task-diagram.md`).
+
+Compare the drawing against what shipped and record *what was compared* — which nodes and edges, against which files; that record is what keeps the gate off rubber-stamping. Then:
+
+- **Matches** → re-anchor and re-date `**Reflects:**`. No repaint, no render-check.
+- **Diverged** → repaint to what shipped, render-check per the pack's diagram guidance (code: `../engineering/planning.md` § *The task diagram*, which owns the notation and the render-check), record the divergence and why in that step's or checkpoint's result section, then re-anchor and re-date the same way.
+
+Either way `**Reflects:**` leaves anchored to the gate — `as of Step N` (the last step completed here) or `as of the acceptance gate` — dated today, replacing the plan-time `as of the plan`.
+
+A divergence is usually information, not failure: the build revealed what the plan didn't anticipate, which is what implement-task §6 surfaces. Stop-the-Line only when the shipped structure contradicts a goal.
+
+## Automatic parallel batch
+
+Eligible independent steps run concurrently through the same contract and binding. Batch mechanics are not restated: worktree placement, the frozen shared tree, the merge gates, and cleanup are `./parallel-batch.md` § *Coordinator-side parallel batch*, run as written there. This section adds only eligibility, merge point, and record.
+
+No flag: when a batch qualifies, launch it and **announce it in chat** — which steps, why eligible — so automatic parallelism is never silent. The contract's invariants hold: the coordinator owns the shared tree, both task files, and every status; executors never touch the task folder.
+
+**Eligibility.** Every condition in the cited section applies as written, its when-in-doubt-run-serially default included. This skill adds:
+
+- the steps sit in the same checkpoint-bounded batch (between the last checkpoint and the next);
+- each declares its surface as a `**Touches:**` line — the declared surface the cited disjointness test and surface check read; `Depends on:` is the dependency path they read.
+
+No `**Touches:**` line (or `**Touches:** none`) → serially-delegated.
+
+**Run** per the cited *Run* rules. In a mixed batch, serial steps depending on a batch step — directly or transitively — run only after the batch's declared health boundary on the integrated tree; every other serial step runs before launch; both in plan order.
+
+**Merge at the batch's bound** — run the cited ordered gates per batch step, **in plan order**, plan order being this skill's declared unit order. Its integrated re-proof is that step's full outcome tier — never the health recipe, never the criterion alone; record the step only after it passes, by flipping the checkbox and appending the result section with its `**Executed:**` field (implement-task §5), as in serial execution. The cited mechanics expose each incorporated change set; no project-health command runs between merged steps.
+
+When the batch directly reaches its bounding checkpoint, run that checkpoint's assertions once every batch step has executed — merged or fallen back to serial — then run its health recipe **once** for both the checkpoint and the batch. Failure in either is Stop-the-Line on the integrated tree. Otherwise merge at its natural bound — before the first dependent serial step, or before the acceptance gate for the plan's tail — and don't invent an implicit checkpoint there. At a dependent-work bound, run one health boundary before the dependent step; at the tail, the full-plan boundary runs once before acceptance.
+
+## Plan revisions
+
+- **Update the plan in place** — revise the affected step or scope, add new steps, remove obsolete ones. Keep step numbers stable where possible (insert as `Step 3a`, `Step 3b` rather than renumbering).
+- **Record the divergence** under the affected step's `**Deviations from plan:**` field, including *why* the plan changed.
+- **Repaint the diagram when the revision changes structure** (only when the task has one), at the revision rather than deferred to the next checkpoint — the revision is the causal event, and in step-by-step mode it is where the user inspects. Same in both modes; run it per § *Diagram re-check* above.
+- In step-by-step mode, pause and confirm the revision with the user before continuing.
+- **If the right call is to abandon the task** rather than revise it, surface that and get explicit confirmation first — this skill never sets `skipped` on its own (`./task-lifecycle.md`). On confirmation set the plan's `**Status:**` to `skipped`, record why in the result file, and stop — don't delete the plan or leave it dangling in `executing`.
+
+## Reaching done from in-review
+
+**Reaching `done` from `in-review` (a later re-run).** When the user reports the external verification happened — a confirmation, a receipt, the observed live state — re-run the gate on each `pending external` goal against that **best-available proxy** (`./acceptance-criteria.md`): the user-reported confirmation *is* the sanctioned evidence for an `(external)` goal. Update its `## Acceptance` line to `met`, noting the proxy. Then run a fresh full domain health boundary on the current work product — never reuse the earlier tail result, because this record carries no exact boundary identity across runs (`./execution-loop.md` § *Health boundaries*).
+
+On success, append the fresh evidence before advancing status:
+
+```markdown
+## Health boundary — YYYY-MM-DD
+
+**Trigger:** later-run `in-review → done` finalization
+**Health:** <the full domain health recipe result on the current work product>
+
+---
+```
+
+Then finalize to `done` per implement-task §8 and add the `**Completed:**` line. If the fresh boundary fails, do not append the success section and do not finalize: flip both files through the registered `in-review → executing` edge, then apply implement-task §4's **Blocked** behavior, recording the failed finalization boundary and the last boundary that passed. If review instead surfaced problems, flip both files back to `executing` and resume — don't force `done`.

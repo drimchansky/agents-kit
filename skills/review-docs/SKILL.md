@@ -20,7 +20,7 @@ For reviewing an implementation plan against the codebase (not a doc), use `revi
 
 ## Flags
 
-- `-x` — Cross-check: launch one independent grounding probe on the cross-vendor engine over the doc's verifiable claims and merge it before verdicts are assigned, per the shared contract in `./references/workflow/agent-fanout.md`. Off by default. The probe is read-only; its outcome is recorded on the Doc Summary's `Cross-check:` line.
+- `-x` — Cross-check: launch one independent grounding probe on the cross-vendor engine over the doc's verifiable claims and merge it before verdicts are assigned, per the shared contract in `./references/workflow/agent-fanout.md`, with the engine and its launch recipe in `./references/workflow/probe-engines.md`. Off by default. The probe is read-only; its outcome is recorded on the Doc Summary's `Cross-check:` line. <!-- cold -->
 
 ## When to Use
 
@@ -69,7 +69,7 @@ Skip soft claims (philosophy, intent, motivation) — those don't have a ground 
 
 Every claim about the codebase must be verified against the actual source — that's the whole job of this pass.
 
-**With `-x`, launch the grounding probe first.** Once the claims are extracted (Step 2), start one background probe on the **cross-vendor engine** per `./references/workflow/agent-fanout.md`: a self-contained prompt carrying the extracted claims and the doc's path, with the repo root as working root, demanding per-claim `CONFIRMED` / `CONTRADICTED` / `NOT FOUND` verdicts with `file:line` evidence. Ground inline yourself as below while it runs; collect and merge per the contract before assigning verdicts — where the probe contradicts your grounding, re-check that spot first. Record the outcome on the Doc Summary's `Cross-check:` line — including `skipped (<reason>)` when the engine is unavailable, in which case proceed on your own pass.
+**With `-x`, launch the grounding probe first.** Once the claims are extracted (Step 2), start one background probe on the **cross-vendor engine** per `./references/workflow/agent-fanout.md`, on the launch recipe in `./references/workflow/probe-engines.md`: a self-contained prompt carrying the extracted claims and the doc's path, with the repo root as working root, demanding per-claim `CONFIRMED` / `CONTRADICTED` / `NOT FOUND` verdicts with `file:line` evidence. Ground inline yourself as below while it runs; collect and merge per the contract before assigning verdicts — where the probe contradicts your grounding, re-check that spot first. Record the outcome on the Doc Summary's `Cross-check:` line — including `skipped (<reason>)` when the engine is unavailable, in which case proceed on your own pass. <!-- cold -->
 
 For each claim:
 
@@ -112,7 +112,7 @@ Different doc types have different validation focuses:
 Beyond claim accuracy, review the doc as one artifact — the judgment layer the documentation pack keeps out of its mechanical verification tiers:
 
 - **Coherence** — read end to end fresh: no section contradicts another, no stale sentence describes content that's gone, terminology and numbering stay consistent, the TL;DR still summarizes the body.
-- **Register** — read as the intended audience would: acronyms expanded at first use, no internal shorthand an outside reader can't resolve, voice and tense consistent. For a kit-blessed deliverable type, apply the matching format checklist (`./references/documentation/adr-format.md` / `rfc-format.md`), and the store's `DOC_CONVENTIONS.md` when the walk-up finds one (`./references/workflow/task-layout.md` § *Store-level artifacts*).
+- **Register** — read as the intended audience would: acronyms expanded at first use, no internal shorthand an outside reader can't resolve, voice and tense consistent. For a kit-blessed deliverable type, apply the matching format checklist (`./references/documentation/adr-format.md` / `rfc-format.md`), and the store's `DOC_CONVENTIONS.md` when the walk-up finds one (`./references/workflow/task-store.md` § *Store-level artifacts*).
 
 For a doc with no codebase claims (a pure-product RFC, outreach), steps 2–5 may have nothing to ground — this pass is then the whole review.
 
@@ -122,7 +122,7 @@ The audit is the deliverable. Print it to chat and stop — do **not** edit the 
 
 ### Doc Summary
 
-Brief statement of what the doc covers and the date / commit it appears to reflect (if discoverable from git history). With `-x`, end this section with the probe's `Cross-check:` outcome line per `./references/workflow/agent-fanout.md`; without the flag, no such line appears.
+Brief statement of what the doc covers and the date / commit it appears to reflect (if discoverable from git history). With `-x`, end this section with the probe's `Cross-check:` outcome line per `./references/workflow/agent-fanout.md`; without the flag, no such line appears. <!-- cold -->
 
 ### Accuracy Assessment
 

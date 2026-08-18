@@ -13,7 +13,7 @@ Quality bar for the goals in `goals.md`, each a durably-ID'd `G<n>` bullet (`- G
 
 ## Verifying outcomes that can't be re-run
 
-Some goals name a one-shot or irreversible result — an event that occurred, a deal closed, a lease signed. They are still testable: verify them against the **best available proxy** (a confirmation, a receipt, the observed end state) or evaluate them **post-hoc** in a retro. "Testable" never requires the check to be *repeatable* — only that there's an observable yardstick. This is the non-code counterpart to running a test; the engineering acceptance-gate recipe (run the command, observe the output) lives in `../engineering/verification.md`.
+Some goals name a one-shot or irreversible result — an event that occurred, a deal closed, a lease signed. They are still testable: verify them against the **best available proxy** (a confirmation, a receipt, the observed end state) or evaluate them **post-hoc** in a retro. "Testable" never requires the check to be *repeatable* — only that there's an observable yardstick. This is the non-code counterpart to running a test; the engineering acceptance-gate recipe (run the command, observe the output) lives in `../engineering/acceptance-gate.md`.
 
 ## Externally-verified goals — the `(external)` marker
 

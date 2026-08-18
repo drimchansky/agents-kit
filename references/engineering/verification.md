@@ -1,8 +1,9 @@
 # Engineering Verification
 
 What "verify" means when the domain is code — the recipe behind the neutral verification tiers,
-Stop-the-Line, health boundaries, and acceptance gate (`implement-task`, `implement`, `review-task`,
-`resume-task`, `reconcile-task`, `fix-findings`).
+Stop-the-Line, health boundaries, and the acceptance gate, whose recipe sits in the sibling
+`./acceptance-gate.md` (`implement-task`, `implement`, `review-task`, `resume-task`,
+`reconcile-task`, `fix-findings`).
 `../workflow/execution-loop.md` owns *that* you verify and gate; this file owns *what to run*.
 
 ## Two verification tiers
@@ -28,23 +29,9 @@ next health boundary from running the full recipe.
 Never start the next unit while its outcome proof is failing, and never proceed past a health
 boundary while its integrated-health recipe is failing.
 
-### Batched finding fixes
-
-`fix-findings` applies the unit-outcome tier immediately but pays the full recipe once for the
-retained collection at its declared health boundary; it never starts with a health run or runs the
-recipe once per finding. A red boundary reruns only its failed command or commands, never a second
-full recipe merely to compare, and a rebuilt candidate earns one fresh complete recipe. What that
-comparison establishes, what it implicates, and what it restores is that skill's own procedure —
-`skills/fix-findings/SKILL.md` § *Integrated health boundary* owns it.
-
-Both isolations obey the green-control rule in `../workflow/execution-loop.md` § *Evidence
-lifecycle*: replaying a subset only implicates it when the predicate under test is green on the state
-the replay starts from. A failed health command qualifies once it is green at the baseline, which is
-why the comparison above runs first. A finding's own outcome tier never qualifies against the
-bare baseline — the baseline predates that finding's fix, so the tier is red there by
-construction — so isolate it from the baseline plus that finding's own change set, never from the
-baseline alone. The tier is also what the replay tests: it is the whole tier that failed, and
-narrowing the predicate back to the criterion hides a failure in the per-unit checks.
+How `fix-findings` pays these tiers across a batch, and what a red boundary reruns:
+`./batched-fixes.md` — read at a `fix-findings` health boundary, and above all when that boundary is
+red.
 
 ## Stop-the-Line (when either tier fails)
 
@@ -77,22 +64,5 @@ does not narrow or replace the full health recipe, and health does not replace a
 an assertion fails, apply Stop-the-Line; if its recovery changes the work product, run a fresh health
 boundary before presenting the run as complete.
 
-## Acceptance-gate recipe
-
-When running the acceptance gate, verify each criterion against the **shipped behavior**, not
-against your record of the work: run the actual command, exercise the actual flow, observe the
-actual output. "Step 3 says it works" is not verification — a record describes intent, not current
-state.
-
-Spot-checking a prior `met` goal (drift / resume): open the file or run the command it cites
-and confirm the behavior still holds; if the result file claims `met` but the named flow no longer
-behaves as required, flag it so the gate is re-run before the prior result is trusted.
-
-**Goals verified after the session (`(external)`).** Some code goals can't be re-run in-session
-because verification happens downstream — a change confirmed only once it's deployed and observed
-live in production, a manual-QA pass, or a client/stakeholder sign-off. These carry the
-`(external)` marker in `goals.md` and the gate can't close them here: tag such a goal
-`pending external` (not `met`, not `unmet`) and let the task park at `in-review` until the check is
-confirmed on a later re-run. Don't verify-by-proxy an outcome you can't actually observe yet just to
-reach `done`. See `../workflow/acceptance-criteria.md` and the `in-review` state in
-`../workflow/task-lifecycle.md`.
+What the acceptance gate runs against shipped behavior, including drift spot-checks and `(external)`
+goals: `./acceptance-gate.md` — read when running the acceptance gate on code goals.

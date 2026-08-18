@@ -59,7 +59,8 @@ interface MeasuredSet {
 
 interface SkillReport {
   readonly skill: string;
-  readonly direct: MeasuredSet;
+  readonly hot: MeasuredSet;
+  readonly cold: MeasuredSet;
   readonly transitive: MeasuredSet;
 }
 
@@ -157,25 +158,67 @@ test("a miniature kit reports one entry per skill and exits 0", () => {
   assert.strictEqual(report.root, KIT, "root is the resolved kit root");
   assert.deepStrictEqual(
     skillNames(report),
-    ["leaf-skill", "template-skill", "tiny-skill"],
+    ["leaf-skill", "mixed-skill", "template-skill", "tiny-skill"],
     "every skill holding a SKILL.md is reported",
   );
 });
 
-test("the direct set holds the SKILL.md, its CORE_RULES.md, and each cited reference exactly once", () => {
+test("the hot set holds the SKILL.md, its CORE_RULES.md, and each cited reference exactly once", () => {
   const { report } = runReport([KIT]);
-  const { direct } = skillRow(report, "tiny-skill");
+  const { hot, cold } = skillRow(report, "tiny-skill");
   assert.deepStrictEqual(
-    filePaths(direct),
+    filePaths(hot),
     ["skills/tiny-skill/SKILL.md", "CORE_RULES.md", "references/workflow/alpha.md"],
-    "direct files for tiny-skill, in citation order",
+    "hot files for tiny-skill, in citation order",
   );
-  assert.strictEqual(direct.bytes, 1100, "direct bytes for tiny-skill");
-  assert.strictEqual(direct.approxTokens, 275, "direct approxTokens for tiny-skill");
+  assert.strictEqual(hot.bytes, 1100, "hot bytes for tiny-skill");
+  assert.strictEqual(hot.approxTokens, 275, "hot approxTokens for tiny-skill");
   assert.deepStrictEqual(
-    fileEntry(direct, "CORE_RULES.md"),
+    fileEntry(hot, "CORE_RULES.md"),
     { path: "CORE_RULES.md", bytes: 200, approxTokens: 50 },
     "a skill's ./AGENTS.md citation is measured as the kit's CORE_RULES.md",
+  );
+  assert.deepStrictEqual(
+    cold,
+    { files: [], bytes: 0, approxTokens: 0 },
+    "no tiny-skill citation carries the marker, so its whole closure stays hot",
+  );
+});
+
+// The marker is unanimous or it does not hold: one unmarked citation loads the file on every
+// invocation, whatever any marked citation of it said (references/workflow/skill-conventions.md
+// § Cold citations). Both citation orders are fixtured on purpose — alpha unmarked-then-marked,
+// gamma marked-then-unmarked — because a fold that simply keeps the last write agrees with the
+// unanimous answer on one order and contradicts it on the other. Asserted on membership rather
+// than bytes so the fixture stays editable.
+test("a file cited both marked and unmarked stays hot in either order; one cited only marked goes cold", () => {
+  const { report } = runReport([KIT]);
+  const { hot, cold } = skillRow(report, "mixed-skill");
+  assert.deepStrictEqual(
+    filePaths(hot),
+    [
+      "skills/mixed-skill/SKILL.md",
+      "CORE_RULES.md",
+      "references/workflow/unmarked-first.md",
+      "references/workflow/marked-first.md",
+    ],
+    "each carries one unmarked citation, so both stay hot whichever order the marker came in",
+  );
+  assert.deepStrictEqual(
+    filePaths(cold),
+    ["references/workflow/marked-always.md"],
+    "marked-always carries the marker on every one of its citations, so it is cold",
+  );
+});
+
+// The core rules load with the skill whatever a marker says, and mixed-skill marks the very line its
+// ./AGENTS.md citation sits on — so this pins the exemption rather than the line's gating.
+test("a marked line's ./AGENTS.md citation is still hot", () => {
+  const { report } = runReport([KIT]);
+  const { hot } = skillRow(report, "mixed-skill");
+  assert.ok(
+    filePaths(hot).includes("CORE_RULES.md"),
+    "the ./AGENTS.md citation resolves to CORE_RULES.md and ignores the marker on its line",
   );
 });
 
@@ -207,37 +250,38 @@ test("approxTokens is round(bytes / 4), including at the half-token boundary", (
   );
 });
 
-test("a skill citing no reference reports its SKILL.md alone in both sets", () => {
+test("a skill citing no reference reports its SKILL.md alone in every set", () => {
   const { report } = runReport([KIT]);
-  const { direct, transitive } = skillRow(report, "leaf-skill");
+  const { hot, cold, transitive } = skillRow(report, "leaf-skill");
   assert.deepStrictEqual(
-    filePaths(direct),
+    filePaths(hot),
     ["skills/leaf-skill/SKILL.md"],
-    "direct files for a skill citing nothing",
+    "hot files for a skill citing nothing",
   );
+  assert.deepStrictEqual(filePaths(cold), [], "cold files for a skill citing nothing");
   assert.deepStrictEqual(
     filePaths(transitive),
     ["skills/leaf-skill/SKILL.md"],
     "transitive files for a skill citing nothing",
   );
-  assert.strictEqual(direct.bytes, 200, "direct bytes for leaf-skill");
+  assert.strictEqual(hot.bytes, 200, "hot bytes for leaf-skill");
   assert.strictEqual(transitive.approxTokens, 50, "transitive approxTokens for leaf-skill");
 });
 
 test("the domain-pack template counts the default pack's rules.md and same-line phase files", () => {
   const { report } = runReport([KIT]);
-  const { direct, transitive } = skillRow(report, "template-skill");
+  const { hot, transitive } = skillRow(report, "template-skill");
   assert.deepStrictEqual(
-    filePaths(direct),
+    filePaths(hot),
     [
       "skills/template-skill/SKILL.md",
       "CORE_RULES.md",
       "references/engineering/rules.md",
       "references/engineering/delta.md",
     ],
-    "direct files for template-skill, the template resolved against the default pack",
+    "hot files for template-skill, the template resolved against the default pack",
   );
-  assert.strictEqual(direct.bytes, 1000, "direct bytes for template-skill");
+  assert.strictEqual(hot.bytes, 1000, "hot bytes for template-skill");
   assert.strictEqual(transitive.bytes, 1000, "the template's resolved pack files cite nothing further");
 });
 
@@ -277,7 +321,7 @@ test("--skill reports one skill's paths without changing what they measure", () 
   const { report } = runReport(["--skill", "tiny-skill", KIT]);
   assert.deepStrictEqual(skillNames(report), ["tiny-skill"], "--skill narrows the report to the named skill");
   assert.strictEqual(
-    skillRow(report, "tiny-skill").direct.bytes,
+    skillRow(report, "tiny-skill").hot.bytes,
     1100,
     "a filtered skill carries the same totals as an unfiltered run",
   );
@@ -298,8 +342,8 @@ test("a reference that cannot be opened shrinks the closure loudly, not silently
     return;
   }
   const { report, stderr } = runReport(["--skill", "tiny-skill", LOCKED_KIT]);
-  const { direct, transitive } = skillRow(report, "tiny-skill");
-  assert.strictEqual(direct.bytes, 1100, "an unreadable reference is still measured by size");
+  const { hot, transitive } = skillRow(report, "tiny-skill");
+  assert.strictEqual(hot.bytes, 1100, "an unreadable reference is still measured by size");
   assert.strictEqual(
     transitive.bytes,
     1100,

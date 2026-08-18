@@ -44,7 +44,7 @@ What a code diagram depicts:
 - **The target state at module-or-service altitude** — the components involved and how data and
   control move between them. Not a call graph, not a class map, and above all not the files the
   plan's steps touch: that is `plan.md`'s `Touches:` data restated, which
-  `../workflow/task-layout.md` § *One home per fact* forbids.
+  `../workflow/one-home.md` § *One home per fact* forbids.
 - **The delta, marked** — new, changed, and removed elements carry a marker, so the reader sees the
   change rather than only the endpoint. This is the sanctioned exception to
   `../documentation/mermaid-core.md`'s no-styling default ("add styling only … when color carries

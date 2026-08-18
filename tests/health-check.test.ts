@@ -1057,7 +1057,7 @@ test("a root whose slugs are all distinct stays silent, with no cross-root state
 });
 
 // Uniqueness is global, not per-parent: the walk is recursive, so one root can hold the same slug
-// under two area directories (references/workflow/task-layout.md § The root registry).
+// under two area directories (references/workflow/task-store.md § The root registry).
 test("two area directories of one root collide — uniqueness is global, not per-parent", () => {
   const { report } = runCheck([DUP_C]);
   assert.strictEqual(

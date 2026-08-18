@@ -6,7 +6,7 @@
 // version message. Floor in AGENTS.md § The `.ts` sources are unchecked by design.
 // Run: node scripts/size-check.ts [--update] [--baseline FILE] <kit-root>
 //
-// Modes. Without --update, each skill's direct and transitive byte totals are compared against the
+// Modes. Without --update, each skill's hot, cold, and transitive byte totals are compared against the
 // baseline (default: <kit-root>/tests/size-baseline.json): any difference — a grown or shrunk total, a
 // skill missing from the baseline, a baseline entry no longer in the kit — prints one line to stdout
 // and the run exits 1 with a re-capture hint. --update rewrites the baseline from the current
@@ -14,7 +14,11 @@
 // change that moves a total re-captures it in the same change, which is what keeps the diff — and the
 // growth it would reveal — reviewable.
 //
-// The baseline holds totals only ({skill, direct/transitive {bytes, approxTokens}}, sorted as the
+// Hot and cold are ratcheted apart because moving a citation between them leaves the transitive total
+// where it was: recorded as one number, the very change this ratchet exists to expose — what a skill
+// pays on every invocation — would be the change it could not see.
+//
+// The baseline holds totals only ({skill, hot/cold/transitive {bytes, approxTokens}}, sorted as the
 // report emits them): per-file lists would churn on every edit without making the ratchet stricter.
 //
 // Exit status: 0 = clean (or baseline written), 1 = drift, 2 = the check could not run — no kit root,
@@ -35,7 +39,8 @@ interface Totals {
 
 interface SkillTotals {
   readonly skill: string;
-  readonly direct: Totals;
+  readonly hot: Totals;
+  readonly cold: Totals;
   readonly transitive: Totals;
 }
 
@@ -51,9 +56,14 @@ interface Baseline {
 
 interface BaselineEntry {
   readonly skill: string;
-  readonly direct?: Totals;
+  readonly hot?: Totals;
+  readonly cold?: Totals;
   readonly transitive?: Totals;
 }
+
+// A measured set arrives carrying its file list; copying the two totals out is what keeps that list
+// from reaching the baseline, where it would churn on every edit.
+const totals = (set: Totals): Totals => ({ bytes: set.bytes, approxTokens: set.approxTokens });
 
 // Everything printed here is far below the pipe buffer, so `process.exitCode` plus a natural return
 // (never process.exit) is enough to keep the output intact.
@@ -114,8 +124,9 @@ function main(): void {
 
   const measured: SkillTotals[] = report.skills.map((s) => ({
     skill: s.skill,
-    direct: { bytes: s.direct.bytes, approxTokens: s.direct.approxTokens },
-    transitive: { bytes: s.transitive.bytes, approxTokens: s.transitive.approxTokens },
+    hot: totals(s.hot),
+    cold: totals(s.cold),
+    transitive: totals(s.transitive),
   }));
 
   if (update) {
@@ -148,17 +159,24 @@ function main(): void {
     const base = baseByName.get(name);
     const now = nowByName.get(name);
     if (!base) {
-      drift.push(`${name}: not in the baseline (direct ${now.direct.bytes} bytes)`);
+      drift.push(`${name}: not in the baseline (hot ${now.hot.bytes} bytes)`);
       continue;
     }
     if (!now) {
       drift.push(`${name}: in the baseline but not in the kit`);
       continue;
     }
-    for (const set of ["direct", "transitive"] as const) {
+    for (const set of ["hot", "cold", "transitive"] as const) {
       const from = base[set]?.bytes;
       const to = now[set].bytes;
       if (from === to) continue;
+      // A baseline predating a set rename carries no entry for the new name. Subtracting from
+      // `undefined` would report the drift as `undefined -> N bytes (NaN, ~NaN tokens)`, so the
+      // missing set is named instead; the exit status and re-capture hint are unchanged either way.
+      if (from === undefined) {
+        drift.push(`${name}: ${set} not in the baseline (${to} bytes)`);
+        continue;
+      }
       const delta = to - from;
       const tokens = Math.round(delta / BYTES_PER_TOKEN);
       drift.push(

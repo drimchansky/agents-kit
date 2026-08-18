@@ -39,7 +39,7 @@ Own the **staging lifecycle** of a doc task's deliverable on Notion: produce or 
 ## Grounding
 
 - Resolve the task folder per `./references/workflow/task-layout.md` and its deliverable per `./references/workflow/doc-task-files.md` — the deliverable role (own status header, optional `**Deliverable:**` plan link-header) and the `**Published:**` pointer line naming which copy is live truth.
-- Walk up from the task folder for the store's `DOC_CONVENTIONS.md` (`./references/workflow/task-layout.md` § *Store-level artifacts*). When present, apply its published-page conventions (public-header shape, minimal-public trimming, house style) to what you stage; absent, the kit's generic format bars alone apply.
+- Walk up from the task folder for the store's `DOC_CONVENTIONS.md` (`./references/workflow/task-store.md` § *Store-level artifacts*). When present, apply its published-page conventions (public-header shape, minimal-public trimming, house style) to what you stage; absent, the kit's generic format bars alone apply.
 - Read the deliverable and the task's `result.md` `## Current state` before writing anything — the ledger and the `**Published:**` line say which copy is currently authoritative and which scratch pages already exist.
 
 ## Write discipline (Notion)
@@ -63,7 +63,7 @@ Compose the page content from the deliverable — trimmed to the public form per
 
 ### 3. Ledger
 
-Record the page in the task's `result.md` `## Current state` `**Pointers:**` as a dated entry — `staging <url> (YYYY-MM-DD, awaiting user)` / `diff <url> (YYYY-MM-DD, awaiting user)` — advancing existing entries (`applied` / `trashed`) rather than duplicating them; name superseded scratch pages as **trash candidates** (trashing is the user's). `./references/workflow/task-lifecycle.md` registers this skill as a `## Current state` writer. If per-page entries would push the block past its ≤1 KB contract, keep `**Pointers:**` to the live page plus the newest scratch page and move the full ledger to dated lines in the result log.
+Record the page in the task's `result.md` `## Current state` `**Pointers:**` as a dated entry — `staging <url> (YYYY-MM-DD, awaiting user)` / `diff <url> (YYYY-MM-DD, awaiting user)` — advancing existing entries (`applied` / `trashed`) rather than duplicating them; name superseded scratch pages as **trash candidates** (trashing is the user's). `./references/workflow/task-authorship.md` registers this skill as a `## Current state` writer. If per-page entries would push the block past its ≤1 KB contract, keep `**Pointers:**` to the live page plus the newest scratch page and move the full ledger to dated lines in the result log.
 
 ### 4. Sync back (after the user applies)
 

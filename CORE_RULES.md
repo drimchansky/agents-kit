@@ -55,7 +55,7 @@ Report an observation only when it would matter to someone acting on this work; 
 ## Workflow
 
 - Read the project's and task's context (its `CONTEXT.md`, project docs, `AGENTS.md` / `CLAUDE.md`) before starting work
-- Use parallel agents for independent subtasks: exploring multiple areas, searching for a pattern across the project, gathering one source while reading another — probe contracts and parallel-agent mechanics in `./references/workflow/agent-fanout.md`; write-mode executor behavior, for the consumers registered there, in `./references/workflow/executor-contract.md`
+- Use parallel agents for independent subtasks: exploring multiple areas, searching for a pattern across the project, gathering one source while reading another — probe contracts in `./references/workflow/agent-fanout.md`, engines and prompt shapes in `./references/workflow/probe-engines.md`, batch mechanics in `./references/workflow/parallel-batch.md`; write-mode executor behavior, for the consumers registered there, in `./references/workflow/executor-contract.md`
 - Do not parallelize sequential edits to the same artifact, or changes that depend on each other's output
 - When spawning parallel tasks, define what each agent investigates and how results will be merged
 - Before presenting results from any changes, run the domain's verification (see the domain pack) and remove scratch artifacts left over from the work
@@ -63,20 +63,20 @@ Report an observation only when it would matter to someone acting on this work; 
 
 ## Shell Commands
 
-Prefer the purpose-built tools over shell equivalents, and keep the shell commands you do run simple enough to read at a glance. Shell text that a permission layer cannot decompose stalls on an approval prompt even when the tool is allowed, and it is usually the harder version to read anyway. The first bullet chooses between tool and shell; the rest shape the commands that do need the shell.
+Prefer the purpose-built tools over shell equivalents, and keep the shell commands you do run simple enough to read at a glance — shell text a permission layer cannot decompose stalls on an approval prompt even when the tool is allowed.
 
-- **Default to `Read` / `Grep` / `Glob` over `cat`, `grep`, `find`.** They are purpose-built, permitted by default, and return structured results. Reach for the shell when no tool covers the job.
-- **Inline literal values instead of capturing them into variables.** `sqlite3 path/to.db "SELECT …"` over `DB=path/to.db; sqlite3 "$DB" "…"`. One less indirection to follow, and it stays analyzable.
-- **Run a discovery command, then act on what it returned** — don't pipe it through a variable in the same command. `find …` followed by `Read` on the hit beats `F=$(find …); sed -n '1,40p' "$F"`.
-- **Collapse repeated commands into one pattern rather than looping.** `grep -rnE "a|b|c"` over `for x in a b c; do grep "$x"; done`.
-- **Put multi-line programs in a file and run the file.** A long `node -e '…'` or `python -c '…'` is unreadable inline and can't be re-run or edited; write it to the host's scratch/temp area, run it, then remove it per the scratch-artifact rule above.
-- **Deviate when the simple form is genuinely worse** — a variable used five times, or a loop over a list that would make an unreadable alternation, earns its complexity. This is a default, not an invariant.
+- **Default to `Read` / `Grep` / `Glob` over `cat`, `grep`, `find`.** Reach for the shell when no tool covers the job.
+- **Inline literal values instead of capturing them into variables.** `sqlite3 path/to.db "SELECT …"` over `DB=path/to.db; sqlite3 "$DB" "…"`.
+- **Run a discovery command, then act on what it returned** — don't pipe it through a variable in the same command.
+- **Collapse repeated commands into one pattern rather than looping.** `grep -rnE "a|b|c"`.
+- **Put multi-line programs in a file and run the file** — in the host's scratch/temp area, removed per the scratch-artifact rule above.
+- **Deviate when the simple form is genuinely worse** — a variable used five times, or a loop over a list that would make an unreadable alternation, earns its complexity. A default, not an invariant.
 
 ## References
 
-Reference material lives under `./references/`, partitioned into the neutral methodology and the domain packs:
+Reference material lives under `./references/`:
 
-- `./references/workflow/` — the **domain-neutral methodology**: `task-lifecycle.md` (status registry), `task-layout.md` (on-disk layout and discovery — with its role-file satellites `task-goals.md`, `task-diagram.md`, `task-observations.md`, `doc-task-files.md`, `task-siblings.md`, and `task-archiving.md`, each owning one role or envelope operation), `acceptance-criteria.md` (the "done" bar), `ticket-format.md` (the product-facing ticket), `context-schema.md` (the `CONTEXT.md` layout), `decomposition.md` (one approved ask into ordered sibling tasks), `ideation.md` (the diverge/converge method), `execution-loop.md` (the implement → verify loop and its verification tiers — with its satellite `execution-bindings.md`, the per-consumer binding index), `reconciliation.md` (the contract for both reconcile directions), `skill-conventions.md` (when behavior composes into a pipeline and when it stays a flag), `agent-fanout.md` (probe fan-out contracts and engines, plus native executor routing), `executor-contract.md` (write-mode executor contract, with a binding per registered consumer). Consult the ones a task touches.
-- `./references/<domain>/` — **domain packs**: the rules, exploration/planning/execution/verification guidance, review lenses, and checklists for one domain. The active domain is resolved from `**Domain:**` in the task's `CONTEXT.md` (default `engineering`). The engineering pack is the worked example.
+- `./references/workflow/` — the **domain-neutral methodology**: `task-lifecycle.md` (statuses), `task-layout.md` (layout, discovery, the task files' roles), `one-home.md`, `task-store.md`, `acceptance-criteria.md`, `ticket-format.md`, `context-schema.md`, `decomposition.md`, `ideation.md`, `execution-loop.md`, `reconciliation.md`, `skill-conventions.md`, `agent-fanout.md`, and `executor-contract.md` — several with satellite files split out beside them. Consult the ones a task touches.
+- `./references/<domain>/` — **domain packs**: the rules, exploration/planning/execution/verification guidance, review lenses, and checklists for one domain. The active domain is resolved from `**Domain:**` in the task's `CONTEXT.md` (default `engineering`).
 
 Most skills load the applicable references as part of their workflow. For ad-hoc work outside a skill, consult them on your own — the same rule applies. If a task's domain has no pack (or a pack omits a file), run the neutral methodology and say so; never fabricate domain rules or silently borrow another domain's.

@@ -5,32 +5,42 @@
 // version message. Floor in AGENTS.md § The `.ts` sources are unchecked by design.
 // Run: node scripts/size-report.ts [--skill NAME]... <kit-root>
 //
-// Two sets per skill. The `direct` set is what the skill itself pulls in: its own SKILL.md plus every
-// distinct `./references/<path>.md` and `./AGENTS.md` the file cites, resolved against <kit-root> — the
-// installed layout resolves a skill's `./AGENTS.md` to its copy of CORE_RULES.md, so that is the file
-// counted, never this repository's maintainer-facing AGENTS.md. A SKILL.md whose Core Rules step cites
-// the domain pack as the literal template `./references/<domain>/rules.md` loads a real pack at run
-// time, so the direct scan resolves the template against the kit's default pack (`engineering`, the
-// default the template's own sentence names) and counts each phase file the same line names in
-// backticks (`execution.md`, …) beside it — without this the template's unconditional loads would be
-// invisible to the byte totals. The template is counted only in a SKILL.md; a reference file's prose
-// mention of `<domain>` stays unexpanded. The `transitive` set is an upper bound:
-// the direct set plus, recursively, every `./<path>.md` or `../<path>.md` a counted reference file
-// cites, resolved against the citing file's own directory. Cycles terminate and each file is counted
-// once per set. Reference files expand; a SKILL.md never does, so a composite skill's sibling-skill
-// loads are outside both sets. Citations are matched wherever they appear in the text, fenced examples
-// included — the transitive number is a bound, so over-counting is the safe direction. Section anchors
-// are ignored: the unit of loading is the file.
+// Three sets per skill. The direct closure is what the skill itself pulls in: its own SKILL.md plus
+// every distinct `./references/<path>.md` and `./AGENTS.md` the file cites, resolved against
+// <kit-root> — the installed layout resolves a skill's `./AGENTS.md` to its copy of CORE_RULES.md, so
+// that is the file counted, never this repository's maintainer-facing AGENTS.md. A SKILL.md whose Core
+// Rules step cites the domain pack as the literal template `./references/<domain>/rules.md` loads a
+// real pack at run time, so the direct scan resolves the template against the kit's default pack
+// (`engineering`, the default the template's own sentence names) and counts each phase file the same
+// line names in backticks (`execution.md`, …) beside it — without this the template's unconditional
+// loads would be invisible to the byte totals. The template is counted only in a SKILL.md; a reference
+// file's prose mention of `<domain>` stays unexpanded.
+//
+// That closure is reported split in two, as `hot` and `cold`. A citation is cold when the HTML comment
+// `<!-- cold -->` sits on its line — one marker gates the whole line, the template's expanded pack
+// files included — and a cited file lands in `cold` only when every one of its citations carries the
+// marker, because a single unmarked citation loads it unconditionally. The skill's own SKILL.md and its
+// `./AGENTS.md` are hot whatever a marker says. The marker classifies and nothing more: the condition a
+// cold file loads on is named in the SKILL.md prose beside the citation
+// (references/workflow/skill-conventions.md § Cold citations).
+//
+// The `transitive` set is an upper bound: the whole direct closure, hot and cold together, plus,
+// recursively, every `./<path>.md` or `../<path>.md` a counted reference file cites, resolved against
+// the citing file's own directory. Cycles terminate and each file is counted once per set. Reference
+// files expand; a SKILL.md never does, so a composite skill's sibling-skill loads are outside every
+// set. Citations are matched wherever they appear in the text, fenced examples included — the
+// transitive number is a bound, so over-counting is the safe direction. Section anchors are ignored:
+// the unit of loading is the file.
 //
 // approxTokens is round(bytes / 4) — the flat approximation, applied to a set's total bytes rather than
 // summed from its per-file values.
 //
 // Contract: stdout is exactly one JSON object,
 // {"root":<absolute kit root, or null>,"skills":[…],"warnings":N,"unresolved":[…]}. Each skill is
-// {skill,direct:{files,bytes,approxTokens},transitive:{files,bytes,approxTokens}}, and each `files`
-// entry is {path,bytes,approxTokens} with `path` relative to the kit root — direct in citation order,
-// transitive in breadth-first order. `unresolved` names every citation that reached no readable file as
-// "<citing file> -> <citation>", and a file whose own contents could not be read as
+// {skill,hot:{files,bytes,approxTokens},cold:{…},transitive:{…}}, and each `files` entry is
+// {path,bytes,approxTokens} with `path` relative to the kit root — hot and cold in citation order,
+// transitive in breadth-first order. `unresolved` names every citation that reached no readable file
+// as "<citing file> -> <citation>", and a file whose own contents could not be read as
 // "<file> -> (contents)", so a byte total is never read as complete coverage while it is
 // non-empty. Warnings go to stderr and the exit status is always 0, so a partly unreadable kit still
 // parses.
@@ -62,6 +72,9 @@ const DEFAULT_PACK = "references/engineering";
 const PHASE_FILE = /`([a-z][a-z-]*\.md)`/g;
 // What a reference file pulls in: any relative Markdown citation, resolved against its own directory.
 const REFERENCE_CITATION = /\.\.?\/[A-Za-z0-9._/-]*\.md/g;
+// Gates every citation on its line as cold. Written `<!-- cold -->`; the inner spacing is tolerated so
+// a hand-typed variant is classified rather than silently counted as an unconditional load.
+const COLD_MARKER = /<!--\s*cold\s*-->/;
 
 // The task folder's role-named files, plus the two named deliverable roles
 // (references/workflow/task-layout.md § One task, one flat folder and references/workflow/doc-task-files.md). A reference
@@ -96,9 +109,21 @@ interface MeasuredSet {
   readonly approxTokens: number;
 }
 
+interface DirectCitation {
+  readonly citation: string;
+  readonly cold: boolean;
+}
+
+interface DirectClosure {
+  // Citation order, hot and cold together: the seed the transitive closure expands from.
+  readonly files: readonly CountedFile[];
+  readonly coldPaths: ReadonlySet<string>;
+}
+
 interface SkillReport {
   readonly skill: string;
-  readonly direct: MeasuredSet;
+  readonly hot: MeasuredSet;
+  readonly cold: MeasuredSet;
   readonly transitive: MeasuredSet;
 }
 
@@ -159,6 +184,9 @@ function fileEntry(root: string, abs: string, bytes: number): CountedFile {
   return { abs, path: display(root, abs), bytes, approxTokens: approxTokens(bytes) };
 }
 
+const citationTarget = (citation: string, fromDir: string, root: string): string =>
+  citation === AGENTS_CITATION ? join(root, CORE_RULES) : resolve(fromDir, citation);
+
 // `seen` carries the per-set dedup, which is also what terminates citation cycles.
 function countCitation(
   citation: string,
@@ -168,7 +196,7 @@ function countCitation(
   seen: Set<string>,
   files: CountedFile[],
 ): string | null {
-  const abs = citation === AGENTS_CITATION ? join(root, CORE_RULES) : resolve(fromDir, citation);
+  const abs = citationTarget(citation, fromDir, root);
   if (seen.has(abs)) return null;
   // A citation climbing out of the kit root names something no installed home carries, so it is
   // reported rather than measured: counting it would put a file outside the kit in a kit load path.
@@ -186,7 +214,32 @@ function countCitation(
   return abs;
 }
 
-function directSet(root: string, skill: string): CountedFile[] | null {
+function lineAround(text: string, index: number): string {
+  const start = text.lastIndexOf("\n", index) + 1;
+  const end = text.indexOf("\n", index);
+  return text.slice(start, end === -1 ? text.length : end);
+}
+
+// Every citation a SKILL.md loads, in citation order, each carrying the gating of the line it sits on.
+// The domain template expands here so the pack files it stands for inherit that same line's gating.
+function skillCitations(text: string): DirectCitation[] {
+  const citations: DirectCitation[] = [];
+  for (const match of text.matchAll(SKILL_CITATION)) {
+    const line = lineAround(text, match.index);
+    const cold = COLD_MARKER.test(line);
+    if (match[0] !== DOMAIN_TEMPLATE) {
+      citations.push({ citation: match[0], cold });
+      continue;
+    }
+    citations.push({ citation: `./${DEFAULT_PACK}/rules.md`, cold });
+    for (const phase of line.matchAll(PHASE_FILE)) {
+      citations.push({ citation: `./${DEFAULT_PACK}/${phase[1]}`, cold });
+    }
+  }
+  return citations;
+}
+
+function directSet(root: string, skill: string): DirectClosure | null {
   const skillFile = join(root, "skills", skill, SKILL_FILE);
   const from = display(root, skillFile);
   const result = measure(skillFile);
@@ -196,23 +249,26 @@ function directSet(root: string, skill: string): CountedFile[] | null {
   }
   const seen = new Set([skillFile]);
   const files = [fileEntry(root, skillFile, result.bytes)];
+  // Per cited file, whether every citation of it so far was marked. The SKILL.md itself is absent from
+  // the map and so stays hot.
+  const gating = new Map<string, boolean>();
   const text = readText(skillFile, from);
   if (text != null) {
-    for (const match of text.matchAll(SKILL_CITATION)) {
-      if (match[0] !== DOMAIN_TEMPLATE) {
-        countCitation(match[0], root, from, root, seen, files);
-        continue;
-      }
-      countCitation(`./${DEFAULT_PACK}/rules.md`, root, from, root, seen, files);
-      const lineStart = text.lastIndexOf("\n", match.index) + 1;
-      const lineEnd = text.indexOf("\n", match.index);
-      const line = text.slice(lineStart, lineEnd === -1 ? text.length : lineEnd);
-      for (const phase of line.matchAll(PHASE_FILE)) {
-        countCitation(`./${DEFAULT_PACK}/${phase[1]}`, root, from, root, seen, files);
-      }
+    for (const { citation, cold } of skillCitations(text)) {
+      countCitation(citation, root, from, root, seen, files);
+      // The core rules load with the skill whatever a marker says, and one unmarked citation of any
+      // other file means that file loads unconditionally too — so a marker only holds while it is
+      // unanimous.
+      const marked = cold && citation !== AGENTS_CITATION;
+      const abs = citationTarget(citation, root, root);
+      gating.set(abs, marked && (gating.get(abs) ?? true));
     }
   }
-  return files;
+  const coldPaths = new Set<string>();
+  for (const [abs, isCold] of gating) {
+    if (isCold) coldPaths.add(abs);
+  }
+  return { files, coldPaths };
 }
 
 function transitiveSet(root: string, direct: readonly CountedFile[]): CountedFile[] {
@@ -333,10 +389,12 @@ if (roots.length === 0) {
     for (const name of selected) {
       const direct = directSet(root, name);
       if (!direct) continue;
+      const { files, coldPaths } = direct;
       skills.push({
         skill: name,
-        direct: summarize(direct),
-        transitive: summarize(transitiveSet(root, direct)),
+        hot: summarize(files.filter((entry) => !coldPaths.has(entry.abs))),
+        cold: summarize(files.filter((entry) => coldPaths.has(entry.abs))),
+        transitive: summarize(transitiveSet(root, files)),
       });
     }
   }

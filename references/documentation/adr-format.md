@@ -6,7 +6,7 @@ deliverable role in `../workflow/doc-task-files.md`). This file owns document
 `./verification.md` — this checklist supplies the ID'd shapes its coverage check counts — and the
 register & trim bar below is applied by `review-docs`'s quality pass. Org specifics (people and
 mention tables, house style, published-page handling) live in the store's doc-conventions file,
-discovered per `../workflow/task-layout.md` § *Store-level artifacts* — consult it when present;
+discovered per `../workflow/task-store.md` § *Store-level artifacts* — consult it when present;
 this checklist stays org-free by design.
 
 ## Header block

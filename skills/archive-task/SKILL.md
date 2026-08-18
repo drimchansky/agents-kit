@@ -9,13 +9,13 @@ disable-model-invocation: true
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 
-This skill operates on the **task-folder envelope** — it relocates a whole task folder on disk — not on a task's domain content. Like `maintain`, it deliberately does **not** resolve a `**Domain:**` pack: archiving is identical for every task regardless of its domain, so there is no domain-specific overlay to load. Its source of truth is `./references/workflow/task-archiving.md` (the archive location), `./references/workflow/task-layout.md` (the discovery rules), and `./references/workflow/task-lifecycle.md` (the **terminal-state set** that says which tasks are finished), read **at run time** — never a hardcoded status list.
+This skill operates on the **task-folder envelope** — it relocates a whole task folder on disk — not on a task's domain content. Like `maintain`, it deliberately does **not** resolve a `**Domain:**` pack: archiving is identical for every task regardless of its domain, so there is no domain-specific overlay to load. Its source of truth is `./references/workflow/task-archiving.md` (the archive location), `./references/workflow/task-layout.md` (the discovery rules), and `./references/workflow/status-transitions.md` (the **terminal-state set** that says which tasks are finished), read **at run time** — never a hardcoded status list.
 
 This skill moves a finished task folder into its own parent's `Archive/` — canonically from `.agents/tasks/` into `.agents/tasks/Archive/`, though a task folder anywhere on disk archives the same way — so the active list shows only live work. It is the **write** side of the archive boundary whose read side already exists: discovery rules already exclude `Archive/` from active scans and fall back into it for an explicit slug (`task-layout.md`); the location-relative move itself is the contract in `./references/workflow/task-archiving.md`, read at run time. Archiving is a one-way move — a plain `mv` of the whole folder, which preserves every internal `./` link. It never edits task content, never changes a `**Status:**`, and never touches git.
 
 **CRITICAL**:
 
-- **Terminal tasks only.** Archive a task only when its `plan.md` `**Status:**` is one of the **terminal states** that `task-lifecycle.md` defines — read them from there at run time; don't bake the names in here. A task in any non-terminal (live) state is refused and reported; never archive it, and never change its status to make it archivable.
+- **Terminal tasks only.** Archive a task only when its `plan.md` `**Status:**` is one of the **terminal states** that `status-transitions.md` defines — read them from there at run time; don't bake the names in here. A task in any non-terminal (live) state is refused and reported; never archive it, and never change its status to make it archivable.
 - **Operate only on the resolved folder.** Everything after Step 1 — the terminal check, the destination guard, and the move — acts on the *exact path resolved in Step 1*, never on a path rebuilt from the slug plus the current directory. A path can resolve to a folder in another project or anywhere else on disk; a cwd-relative `.agents/tasks/<slug>` would then validate one task but move a same-slug task somewhere else. Derive the archive destination from the resolved folder's own parent directory, not from cwd.
 - **Read-only on status and content.** This skill moves the folder; it does not edit `**Status:**`, goals, plan steps, or the result record. If a task should be abandoned, the user does that through the normal lifecycle (`task-lifecycle.md`) first, then re-runs.
 - **Never clobber.** If the destination `Archive/<slug>/` under the resolved task's own parent already exists, refuse — don't overwrite or merge into it.
@@ -26,7 +26,7 @@ This skill moves a finished task folder into its own parent's `Archive/` — can
 
 **Use when:**
 
-- A task has reached a terminal state (finished or abandoned, per `task-lifecycle.md`) and you want it out of its parent's active listing (canonically `.agents/tasks/`).
+- A task has reached a terminal state (finished or abandoned, per `status-transitions.md`) and you want it out of its parent's active listing (canonically `.agents/tasks/`).
 - The active task list has grown cluttered with completed work.
 
 **Skip when:**
@@ -59,7 +59,7 @@ Call the folder you resolve here `SRC`, and the directory that *contains* it `PA
 
 Read the resolved folder's `plan.md` `**Status:**`, then look it up in the plan-state vocabulary in `task-lifecycle.md` — don't compare against a list of names baked into this skill:
 
-- **A terminal state** (one of the terminal set `task-lifecycle.md` defines) → proceed to step 3.
+- **A terminal state** (one of the terminal set `./references/workflow/status-transitions.md` defines) → proceed to step 3.
 - **A non-terminal (live) state** → **Refuse**: report the current status and tell the user to carry the task to a terminal state — finish it, or abandon it — through the normal lifecycle, then re-run. Change nothing on disk.
 - **No `plan.md`, or a `**Status:**` not in that vocabulary** → can't confirm the task is finished. Refuse and report; don't archive a folder of unknown state.
 
@@ -122,7 +122,7 @@ Carry it to `done`, or mark the plan `skipped`, then re-run.
 
 Confirm the protocol invariants before finishing:
 
-- [ ] Terminal vs. live decided by reading `task-lifecycle.md`'s terminal set at run time; archive location read from `task-archiving.md`, discovery from `task-layout.md` — nothing baked in
+- [ ] Terminal vs. live decided by reading `./references/workflow/status-transitions.md`'s terminal set at run time; archive location read from `task-archiving.md`, discovery from `task-layout.md` — nothing baked in
 - [ ] `SRC` validated by contents and position (real non-symlink directory with a top-level `plan.md`; not a tasks-parent; immediate parent not named `Archive/` in any case); already-archived folders no-op'd, never nested into `Archive/Archive/`
 - [ ] Non-terminal, unknown-status, or missing-`plan.md` folders refused with the path to proceed; status and content never edited
 - [ ] Destination guarded — `DEST` collision refused, symlink or non-directory at `PARENT/Archive` refused

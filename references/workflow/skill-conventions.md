@@ -6,6 +6,10 @@ given behavior takes.** When a new behavior is added, or an existing one is recl
 here first and propagate to the skills. Everything else about a skill — its protocol, its output, its
 write surface — lives in the skill file; this file only rules on the *shape* the variation takes.
 
+The file carries one convention that is not a variation at all: the **cold-citation marker** in the
+last section, which rules on *when* a file a skill cites is loaded rather than on how the skill
+behaves. It sits here for the same reason — decided once, then propagated to the skills.
+
 The rule covers variations of **one skill's** behavior. Sibling skills that share a method but own
 different deliverables — `refine-idea` and `refine-idea-chat` (a saved one-pager feeding `plan-task`
 vs. a chat-only one) — are two skills, not a base plus a variation, and sit outside this file; each
@@ -92,3 +96,38 @@ where they are rather than being re-implemented at the pipeline level.
    existing composites carry (one Core Rules block, one Output, the composite owning **Next**).
    Flag → document it in the host skill's `Flags` section and its `argument-hint`.
 3. Record it under **Current members** here.
+
+## Cold citations
+
+A SKILL.md's citations are its load list, and by default every one of them is paid on every
+invocation. Some are not: a file the skill opens only when a flag is set, only when a task folder is
+present, only when it delegates. **A citation with the HTML comment `<!-- cold -->` on the same line
+is cold — not read on the typical invocation path.** Every unmarked citation is hot, loaded the
+moment the skill runs, and a skill's own SKILL.md and its core-rules citation (`AGENTS.md`) stay hot
+whatever a marker says.
+
+**The marker classifies; it never states the condition.** The condition a cold file loads on — the
+flag, the file's presence, the non-default branch — is named in the prose beside the citation, which
+stays its one home. A marker with nothing named beside it tells the reader a file is skippable
+without telling them when, which is worse than no marker at all.
+
+One marker governs its whole line. A line whose citations do not share a gating gets split into one
+line per gating rather than half-marked, and a file cited more than once is cold only when every one
+of its citations carries the marker: a single unmarked citation loads it unconditionally, so the file
+is hot.
+
+**A condition that fires on most runs is not cold.** A read at a health boundary that all but the
+smallest runs reach is hot however the sentence around it is worded, and marking it buys a smaller
+reported number while every run still pays the bytes. The honest fix for such a file is to split it —
+the part every run reads stays hot, the part only some runs reach becomes a cold satellite, and the
+marker goes on the satellite.
+
+A cold satellite is still loaded at run time, on its condition. That makes it a different thing from
+a **non-normative maintainer-notes file**, which no run loads at all: behavior lives in the runtime
+files and the notes only annotate them, so a notes file carries no marker because nothing cites it as
+a load. A contract's notes sibling is named `<contract>-notes.md` beside it, and is cited
+root-relative on purpose: writing it as a `./` citation would drop a never-loaded file into the
+measured context of every skill that reaches this file.
+
+`scripts/size-report.ts` reads the marker and reports each skill's hot and cold sets separately, so
+moving work off the hot path shows up as a number rather than a claim.

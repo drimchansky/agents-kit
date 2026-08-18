@@ -4,11 +4,11 @@ The engineering recipe `implement-task`, `implement`, and `fix-findings` load wh
 unit of work in code. `../workflow/execution-loop.md` owns the neutral *loop* (implement → immediate
 unit outcome → record → mark outcome complete → pause/continue, with boundary-scoped integrated
 health and Stop-the-Line on failure); this file owns the code-specific *how*. The verification tiers
-and acceptance-gate recipe live in the sibling `verification.md`.
+live in the sibling `verification.md`, the acceptance-gate recipe in its satellite `acceptance-gate.md`.
 
 ## Detect stack and sources (before writing any code)
 
-Writing code is the one place hallucinated APIs do real damage. Before touching code:
+Before touching code:
 
 - Read the project's dependency manifest (`package.json`, `pyproject.toml`, `go.mod`,
   `Cargo.toml`, `Gemfile`, `composer.json`, …) and state versions explicitly: _"React 19.1.0,
@@ -67,7 +67,7 @@ lines before the next immediate outcome check), split it using one of:
 - **Contract-first** — define the type/interface/schema as a sub-step, then implement producers and
   consumers against it independently.
 - **Risk-first** — tackle the most uncertain piece (new protocol, unfamiliar API, unproven
-  assumption) first. If it fails, you discover it before investing in the rest.
+  assumption) first.
 
 ## Untrusted data
 

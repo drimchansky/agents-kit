@@ -51,13 +51,13 @@ const ROLE_SUFFIXES = [".plan.md", ".result.md", ".spec.md", ".ticket.md"];
 const PLAN_VOCAB = new Set<string>(["to-do", "executing", "blocked", "in-review", "done", "skipped"]);
 // Closed result vocabulary from the same section; the result file has no `to-do` or `skipped` state.
 const RESULT_VOCAB = new Set<string>(["executing", "blocked", "in-review", "done"]);
-// Terminal (finished) plan states per references/workflow/task-lifecycle.md § Terminal vs. live
+// Terminal (finished) plan states per references/workflow/status-transitions.md § Terminal vs. live
 // states. Read here rather than baked into the skill so a vocabulary change lands in one place.
 const TERMINAL_STATUSES = new Set<string | null>(["done", "skipped"]);
 // The non-terminal complement of the plan vocabulary, derived rather than spelled out so the two
 // cannot drift apart when a status is added to or removed from the vocabulary above.
 const LIVE_STATUSES = new Set<string>([...PLAN_VOCAB].filter((v) => !TERMINAL_STATUSES.has(v)));
-// The same complement over the result vocabulary: references/workflow/task-lifecycle.md § Files
+// The same complement over the result vocabulary: references/workflow/task-authorship.md § Files
 // expects a `## Current state` block on a live result, and carves out a legacy `done` one, which
 // keeps its last rewrite frozen and never gains a block retroactively.
 const LIVE_RESULT_STATUSES = new Set<string | null>([...RESULT_VOCAB].filter((v) => !TERMINAL_STATUSES.has(v)));

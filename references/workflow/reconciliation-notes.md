@@ -49,7 +49,7 @@ The same section's inclusion test turns on a surface being live and owned, not o
 
 ## Why compaction demands a `HEAD`-resolvable file
 
-`./reconciliation.md` § *Compaction (size trigger)*, the precondition. Two weaker preconditions were considered and rejected:
+`./reconciliation-compaction.md`, the precondition. Two weaker preconditions were considered and rejected:
 
 - **Repo membership** (`rev-parse --git-dir`) — an *ignored* task folder passes it while holding nothing in history, and `git status --porcelain` prints nothing for it, so both that precondition and the uncommitted-changes note would read clean over a file no commit can restore.
 - **Being tracked** (`ls-files --error-unmatch`) — a staged-but-never-committed file passes while no commit holds its text. Index membership is not history.
@@ -59,3 +59,19 @@ Only a `HEAD`-resolvable version makes the tombstone's "full text in git history
 ## Why `diagram.md` is never repaired
 
 `./reconciliation-docs-to-reality.md` § *Write surface*, and the diagram rows in both directions. Repainting a diagram is authoring: it is interpretive, so it fails the obvious-fixes bar of `./reconciliation.md` § *Consent model: obvious fixes only, ask for the rest*. And a picture has no weaker direction for `./reconciliation-docs-to-reality.md` § *Weaken, never strengthen* to move in — there is no partial repaint that overstates less. A doc task's deliverable is excluded for the same reason, which is why both directions flag rather than edit.
+
+## Where a flag can and cannot reach
+
+`./reconciliation.md`, the direction map, the session → docs bullet. (`reconcile-task` takes no flag at all; the composite's flags are its review phase's, forwarded there and without effect on the write.)
+
+## Why the record is not a second home
+
+`./reconciliation.md` § *One home per fact*. (The `## Reconciliation` record is not a mirror — it logs the *edit*, not a second copy of the fact.)
+
+## Why the sweep exemption changes no ownership
+
+`./reconciliation.md` § *External reference check*, the exempt paragraph. The exemption transfers no ownership: `reconcile-task` stays this direction's sweep owner and still sweeps the same folder, so the folder's citations keep being swept and the sweep stays their only re-deriver.
+
+## What the session direction's two guardrails are for
+
+`./reconciliation-session-to-docs.md`, the opening paragraph, over §§ *Strengthen only on verified evidence* and *Grounding docs change by confirmation, never silently*. It may write all four core task files (the upstream `ticket.md` is read-only — a changed ask is surfaced, not written), under two guardrails that keep it from silently redefining what's built or what "done" means.
