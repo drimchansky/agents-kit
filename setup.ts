@@ -22,6 +22,7 @@ import {
   renameSync,
   rmSync,
   statSync,
+  unlinkSync,
 } from "node:fs";
 import { homedir } from "node:os";
 import { basename, dirname, isAbsolute, join, sep } from "node:path";
@@ -105,7 +106,9 @@ function installAgent(homeDir: string): void {
     const linkTarget = readlinkSync(skillsDir);
     const isThisRepo = linkTarget === REPO_DIR || linkTarget.startsWith(REPO_DIR + sep);
     if (isThisRepo || !existsSync(skillsDir) || isMovedKitClone(linkTarget)) {
-      rmSync(skillsDir);
+      // unlinkSync, not rmSync: only the link goes away here, and rmSync refuses a link whose
+      // target is a directory (ERR_FS_EISDIR).
+      unlinkSync(skillsDir);
     } else {
       console.error(
         `Skipping ${homeDir}: ${skillsDir} is a symlink to ${linkTarget} — kit skills keep ../../ relative links that resolve only when skills/ is a real directory in ${homeDir}. Move it aside (or make skills/ a real dir) and rerun.`,
