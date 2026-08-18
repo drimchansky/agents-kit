@@ -33,16 +33,16 @@
     {
       "skill": "commit",
       "hot": {
-        "bytes": 22236,
-        "approxTokens": 5559
+        "bytes": 29789,
+        "approxTokens": 7447
       },
       "cold": {
         "bytes": 0,
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 308639,
-        "approxTokens": 77160
+        "bytes": 316192,
+        "approxTokens": 79048
       }
     },
     {
