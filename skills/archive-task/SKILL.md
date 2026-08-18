@@ -52,8 +52,9 @@ Call the folder you resolve here `SRC`, and the directory that *contains* it `PA
 
 **Validate the resolved folder (every branch, before going further).** However `SRC` was produced — slug, folder path, or `plan.md` path — confirm it is a real, live task folder by **contents and position**, not by address shape:
 
-- `SRC` must be a task folder by contents: a real directory (not a symlink) holding a top-level `plan.md` — Step 2 reads its `**Status:**` and refuses when the file is missing or the status isn't in the lifecycle vocabulary, so a folder that merely "looks done" never passes. A folder that itself *contains* an `Archive/` subdirectory (matched case-insensitively, per `task-archiving.md`) is a task **parent**, not a task folder — **refuse**; moving it would drag its whole archive along.
+- `SRC` must be a task folder by contents: a real directory (not a symlink) holding a top-level `plan.md` — Step 2 reads its `**Status:**` and refuses when the file is missing or the status isn't in the lifecycle vocabulary, so a folder that merely "looks done" never passes. A folder that itself *contains* an `Archive/` or a `Backlog/` subdirectory (both matched case-insensitively, per `task-archiving.md` and `task-backlog.md`) is a task **parent**, not a task folder — **refuse**; moving it would drag its whole archive and backlog along.
 - If `SRC`'s **immediate parent directory is named `Archive`** (matched **case-insensitively**, per `task-archiving.md` — a lowercase `archive/` from an older layout, or the same folder on a case-insensitive filesystem such as macOS's APFS, still counts), the task is already archived — that is exactly where location-relative archiving puts one → report it and stop (a no-op). This is the case a bare `plan.md` path can otherwise slip past: never let `PARENT` resolve to an `Archive/` directory and re-archive into `Archive/Archive/<slug>`. A directory named `Archive` *higher* up the path (the user's own tree naming) does not count — only the immediate parent.
+- If `SRC`'s **immediate parent directory is named `Backlog`** (matched **case-insensitively**, per `task-backlog.md`), the task is parked — and a terminal task inside a backlog is misfiled there (`task-backlog.md`). It still archives, but **out of the backlog**, per the backlog exception in `task-archiving.md`: **rebind `PARENT` to the backlog container's own parent** before Step 3, so `DEST` derives as `<backlog's parent>/Archive/<slug>` and the one move both leaves the backlog and archives — never a nested `Backlog/Archive/<slug>`. As with the `Archive` check above, only the immediate parent counts.
 
 ### 2. Confirm the task is terminal
 
@@ -65,7 +66,7 @@ Read the resolved folder's `plan.md` `**Status:**`, then look it up in the plan-
 
 ### 3. Guard the destination
 
-Let `slug` be `SRC`'s own folder name and `DEST = PARENT/Archive/<slug>` — both anchored on the parent resolved in Step 1, **never** on the current directory. Then:
+Let `slug` be `SRC`'s own folder name and `DEST = PARENT/Archive/<slug>` — both anchored on the parent resolved in Step 1 (rebound to the backlog's own parent when Step 1 found `SRC` parked — the one case where `PARENT` is not `SRC`'s immediate parent), **never** on the current directory. Then:
 
 - If `DEST` already exists → **refuse**: something already holds that slug in this archive; report it rather than overwriting or merging.
 - If `PARENT/Archive` exists but is a **symlink** or **not a directory** → **refuse**: a symlinked `Archive/` sends the move through the link to an unexpected location, and a file named `Archive` can't hold the task. Require a real directory — or nothing — at `PARENT/Archive`. (Only `PARENT/Archive` itself matters; a symlinked *ancestor* — macOS's `/tmp` → `/private/tmp`, say — affects `SRC` and `DEST` identically and is fine.)
@@ -86,7 +87,7 @@ A plain filesystem move — no git. The source is the exact folder resolved and 
 
 ### 5. Report
 
-Confirm what moved (`<slug>` → the actual `DEST`), note that the folder's internal links are intact, and remind the user that the task is now excluded from active listings; to un-archive it, move it back out of `Archive/` — naming its slug only lets discovery find it there, it does not un-archive it. When the folder is inside a git repo, the change is working-tree-only — review with `git status` and commit; a task outside any repo has nothing to commit.
+Confirm what moved (`<slug>` → the actual `DEST`), note that the folder's internal links are intact, and remind the user that the task is now excluded from active listings; when `SRC` was parked, say the move also took it out of `Backlog/`. To un-archive it, move it back out of `Archive/` — naming its slug only lets discovery find it there, it does not un-archive it. When the folder is inside a git repo, the change is working-tree-only — review with `git status` and commit; a task outside any repo has nothing to commit.
 
 The move is the whole of this section's write surface: nothing is regenerated, refreshed, or recorded outside `PARENT` afterwards.
 
@@ -113,7 +114,8 @@ Carry it to `done`, or mark the plan `skipped`, then re-run.
 
 ## Don't Rationalize
 
-- "This `plan.md` path has a `done` plan, good enough to move" — Check *what* it is first: a real task folder (top-level `plan.md`, no `Archive/` subdirectory inside it, its own parent not named `Archive/`). A tasks-parent directory would drag its whole archive along; an already-archived folder would nest `Archive/Archive/`. Refuse the former; no-op the latter.
+- "This `plan.md` path has a `done` plan, good enough to move" — Check *what* it is first: a real task folder (top-level `plan.md`, no `Archive/` or `Backlog/` subdirectory inside it, its own parent not named `Archive/`). A tasks-parent directory would drag its whole archive and backlog along; an already-archived folder would nest `Archive/Archive/`. Refuse the former; no-op the latter.
+- "It's parked in `Backlog/`, so its own parent's `Archive/` is `Backlog/Archive/` — close enough" — No: frozen history never files inside the container that holds unstarted work (`task-backlog.md`). Rebind `PARENT` to the backlog's own parent per the backlog exception in `task-archiving.md`; the archive lands beside the backlog, not inside it.
 - "I'll just `mv .agents/tasks/<slug> …` from here" — That rebuilds the path from the current directory plus the slug, which can differ from the folder you resolved and validated. Move the exact resolved `SRC` into its own `PARENT/Archive/`; never assume the current directory is the resolved folder's project.
 - "`Archive/` is probably a normal directory" — Check. If `PARENT/Archive` is a symlink, `mv` follows it and relocates the task somewhere else entirely. Refuse a symlinked (or file) `PARENT/Archive`.
 - "`<parent>/Archive/` has the user's own files in it — I'll refuse or pick another spot" — No: an existing `Archive/` directory is fine at any location; archiving adds `<slug>/` beside whatever is there. The only refusals are a `DEST` collision or a symlink/non-directory at `PARENT/Archive`.
@@ -123,7 +125,7 @@ Carry it to `done`, or mark the plan `skipped`, then re-run.
 Confirm the protocol invariants before finishing:
 
 - [ ] Terminal vs. live decided by reading `./references/workflow/status-transitions.md`'s terminal set at run time; archive location read from `task-archiving.md`, discovery from `task-layout.md` — nothing baked in
-- [ ] `SRC` validated by contents and position (real non-symlink directory with a top-level `plan.md`; not a tasks-parent; immediate parent not named `Archive/` in any case); already-archived folders no-op'd, never nested into `Archive/Archive/`
+- [ ] `SRC` validated by contents and position (real non-symlink directory with a top-level `plan.md`; not a tasks-parent; immediate parent not named `Archive/` in any case); already-archived folders no-op'd, never nested into `Archive/Archive/`; a parked `SRC` (immediate parent named `Backlog/`, any case) archived out with `PARENT` rebound to the backlog's own parent — never into `Backlog/Archive/`
 - [ ] Non-terminal, unknown-status, or missing-`plan.md` folders refused with the path to proceed; status and content never edited
 - [ ] Destination guarded — `DEST` collision refused, symlink or non-directory at `PARENT/Archive` refused
 - [ ] The exact resolved `SRC` moved into its own `PARENT/Archive/` in one operation (never a path rebuilt from slug + cwd); internal `./` links intact

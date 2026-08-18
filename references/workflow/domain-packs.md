@@ -100,14 +100,15 @@ just under `**Status:**`:
   and `prepare-diagram` (a Mermaid diagram for a provided subject) — load
   `references/documentation/` unconditionally: the same shape as the engineering-only set —
   the pack that contributes a skill is the pack it loads.
-- **Pack-free skills** — `archive-task`, `maintain`, `prepare-ticket`, and the reconcile
+- **Pack-free skills** — `archive-task`, `backlog-task`, `maintain`, `prepare-ticket`, and the reconcile
   composites `resume-task-reconcile` / `review-task-reconcile` — read the neutral core but
-  resolve **no** `**Domain:**` pack of their own, for three different reasons. `archive-task` and
-  `maintain` operate on the task-folder *envelope* (file names, layout, link-headers, status
-  vocabulary, archive location) and the store artifacts, not on any task's domain content: the
-  on-disk format is identical across every domain, so there is no overlay to load. Both read
-  `task-layout.md` (with its role-file and archiving satellites) + `task-lifecycle.md` at run time
+  resolve **no** `**Domain:**` pack of their own, for three different reasons. `archive-task`,
+  `backlog-task`, and `maintain` operate on the task-folder *envelope* (file names, layout, link-headers, status
+  vocabulary, archive and backlog locations) and the store artifacts, not on any task's domain content: the
+  on-disk format is identical across every domain, so there is no overlay to load. All three read
+  `task-layout.md` (with its role-file, archiving, and backlog satellites) + `task-lifecycle.md` at run time
   as their source of truth — `archive-task` for the archive location and the terminal-state set,
+  `backlog-task` for the backlog location and the unstarted entry gate,
   `maintain` for its format-conformance sweep and the root registry. `prepare-ticket` writes a deliberately domain-neutral artifact that
   sits *upstream* of `CONTEXT.md`, so no `**Domain:**` marker exists yet to resolve; its source of
   truth is `ticket-format.md` + `task-layout.md`. And the reconcile composites delegate their
@@ -134,7 +135,7 @@ For a spine skill acting on a task:
 Engineering-only skills skip step 2 and use `engineering` directly, and the
 documentation-contributed `stage-doc` / `review-docs` / `prepare-diagram` likewise skip it and use
 `documentation` — except `commit`, which for the reason given above runs only step 1. Pack-free
-skills (`archive-task`, `maintain`, `prepare-ticket`, `resume-task-reconcile`,
+skills (`archive-task`, `backlog-task`, `maintain`, `prepare-ticket`, `resume-task-reconcile`,
 `review-task-reconcile`) run only step 1 — they apply the neutral core and resolve no domain pack
 of their own. A composite's delegated skills still run their own steps 2–3: the reconcile
 composites' Phase 1 does. `maintain` delegates to no skill — only Phase 5's read-only probes, which

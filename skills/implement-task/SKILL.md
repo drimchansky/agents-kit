@@ -59,6 +59,8 @@ Establish ground truth before the work, per `./references/workflow/execution-loo
 
 **Resolve the folder** per the **resolve-current-or-ask** discovery rules in `./references/workflow/task-layout.md` — cite them, don't restate them.
 
+The activation offer for a folder resolving under `Backlog/` is `./references/workflow/implement-task-edges.md` § *Activating a backlogged task* — read it when resolution lands there. <!-- cold -->
+
 **Read its `plan.md`** (one plan per folder). None → tell the user the folder exists but has no plan, and suggest `plan-task`.
 
 **Then read every other input above, in full, before doing anything:**

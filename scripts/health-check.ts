@@ -4,12 +4,22 @@
 // version message. Floor in AGENTS.md § The `.ts` sources are unchecked by design.
 // Run: node scripts/health-check.ts [--stale-days N] [--result-max-kb N] <root> [<root>...]
 //  or: node scripts/health-check.ts --installs <kit-root> <home> [<home>...]
-// Emitted `check` values: the task walk reports `stale`, `done-unarchived`, `unknown-status`,
-// `dead-anchor`, `goal-id`, `no-current-state`, `oversized-result`, and `duplicate-slug`;
-// `--installs` walks no tasks and reports `install-drift` instead. Archived folders are counted in
-// `scanned` and exempt from every check but `duplicate-slug`, which sees them because a bare slug
-// falls back into `Archive/` (references/workflow/task-layout.md § Discovery rules for skills), so an
-// archived slug stays citable and must stay unique. `duplicate-slug` is also the one check that
+// Emitted `check` values: the task walk reports `stale`, `done-unarchived`, `started-in-backlog`,
+// `unknown-status`, `dead-anchor`, `goal-id`, `no-current-state`, `oversized-result`, and
+// `duplicate-slug`; `--installs` walks no tasks and reports `install-drift` instead. Archived
+// folders are counted in `scanned` and exempt from every check but `duplicate-slug`, which sees
+// them because a bare slug falls back into `Archive/` (references/workflow/task-layout.md
+// § Discovery rules for skills), so an archived slug stays citable and must stay unique.
+// Backlogged folders are exempt from `stale` alone — parked work is deliberately dormant
+// (references/workflow/task-backlog.md) — and stay in every other check, `duplicate-slug` included,
+// since the same slug fallback reaches `Backlog/` and a parked task's docs are future work a later
+// reconcile repairs rather than the frozen history an archived folder holds. Two checks read the
+// location itself: `done-unarchived` names the backlog for a terminal task, which belongs in
+// `Archive/`, and `started-in-backlog` fires for a plan past `to-do`, which no longer meets the
+// backlog's unstarted entry gate, and for a plan with no parseable status, which cannot be judged
+// against it — the stale exemption would otherwise leave that shape silent. A plan-less folder
+// fires it too when its `result.md` carries a live status — the stand-in the terminal check reads —
+// since a result file exists only once execution starts. `duplicate-slug` is also the one check that
 // spans roots: a slug must be unique across every root walked and within each one, since the walk
 // is recursive. It emits one finding per colliding folder, each keeping its own `root`, so every
 // finding still carries the single root its consumer attributes it by, and names its peers by
@@ -65,6 +75,9 @@ const LIVE_RESULT_STATUSES = new Set<string | null>([...RESULT_VOCAB].filter((v)
 // `Archive/`, but an existing one is recognized case-insensitively, so a pre-rename `archive/`
 // (or the same folder on a case-insensitive filesystem) still counts as archived.
 const ARCHIVE_DIR = /^archive$/i;
+// references/workflow/task-backlog.md: the parked counterpart of the archive, and recognized by the
+// same rule — new backlogs are created as `Backlog/`, an existing one is matched case-insensitively.
+const BACKLOG_DIR = /^backlog$/i;
 const DEFAULT_STALE_DAYS = 30;
 const DAY_MS = 86_400_000;
 // The compaction trigger is owned by references/workflow/reconciliation.md § Compaction, which
@@ -108,6 +121,7 @@ const skipInInstalls = (name: string): boolean => name === MARKER || OS_ARTIFACT
 type TaskCheck =
   | "stale"
   | "done-unarchived"
+  | "started-in-backlog"
   | "unknown-status"
   | "dead-anchor"
   | "goal-id"
@@ -373,6 +387,7 @@ interface Task {
   readonly dir: string;
   readonly path: string;
   readonly archived: boolean;
+  readonly backlogged: boolean;
   readonly plan: RoleStatus | null;
   readonly result: RoleStatus | null;
   readonly goals: RoleFile | null;
@@ -384,7 +399,13 @@ function collect(rootDir: string, rootDisplay: string): Task[] {
   // Every directory is listed exactly once and its entries handed down: the listing that decides
   // whether a folder is a task is the same one the recursion walks. Listing it a second time would
   // report an unreadable directory as two coverage gaps, one per pass.
-  const walk = (dir: string, display: string, entries: readonly Dirent[], archived: boolean): void => {
+  const walk = (
+    dir: string,
+    display: string,
+    entries: readonly Dirent[],
+    archived: boolean,
+    backlogged: boolean,
+  ): void => {
     for (const e of entries) {
       if (!e.isDirectory() || SKIP_DIRS.has(e.name)) continue;
       // `.agents` is the one dotted name entered: the canonical root `<project>/.agents/tasks` sits
@@ -394,8 +415,15 @@ function collect(rootDir: string, rootDisplay: string): Task[] {
       const child = join(dir, e.name);
       const childDisplay = join(display, e.name);
       const childEntries = listEntries(child, childDisplay);
+      // Neither container clears the other's flag, so a `Backlog/` under an `Archive/` stays
+      // archived: the archived exemptions are the wider set, and every check reading `backlogged`
+      // honors `archived` first.
       if (ARCHIVE_DIR.test(e.name)) {
-        walk(child, childDisplay, childEntries, true);
+        walk(child, childDisplay, childEntries, true, backlogged);
+        continue;
+      }
+      if (BACKLOG_DIR.test(e.name)) {
+        walk(child, childDisplay, childEntries, archived, true);
         continue;
       }
       if (isTaskDir(childEntries)) {
@@ -403,6 +431,7 @@ function collect(rootDir: string, rootDisplay: string): Task[] {
           dir: child,
           path: childDisplay,
           archived,
+          backlogged,
           plan: readStatusFrom(child, childDisplay, childEntries, "plan.md", ".plan.md", PLAN_VOCAB),
           result: readStatusFrom(child, childDisplay, childEntries, "result.md", ".result.md", RESULT_VOCAB),
           goals: readRoleFile(child, childDisplay, childEntries, "goals.md", null),
@@ -410,10 +439,10 @@ function collect(rootDir: string, rootDisplay: string): Task[] {
         });
         continue;
       }
-      walk(child, childDisplay, childEntries, archived);
+      walk(child, childDisplay, childEntries, archived, backlogged);
     }
   };
-  walk(rootDir, rootDisplay, listEntries(rootDir, rootDisplay), false);
+  walk(rootDir, rootDisplay, listEntries(rootDir, rootDisplay), false, false);
   return tasks;
 }
 
@@ -434,7 +463,16 @@ interface SlugHolder {
   readonly path: string;
   readonly dir: string;
   readonly archived: boolean;
+  readonly backlogged: boolean;
   readonly root: string;
+}
+
+// Which container a colliding folder sits in, since neither is in the active listing a reader looks
+// through first. A folder inside both is named archived alone — the wider fact, matching the
+// exemptions it gets.
+function containerNote(holder: SlugHolder): string {
+  if (holder.archived) return " (archived)";
+  return holder.backlogged ? " (backlogged)" : "";
 }
 
 // One finding per colliding folder rather than one per collision: each keeps its own `root`, which is
@@ -450,12 +488,12 @@ function duplicateSlugFindings(bySlug: ReadonlyMap<string, readonly SlugHolder[]
     for (const holder of holders) {
       const peers = holders
         .filter((other) => other !== holder)
-        .map((other) => `${other.dir}${other.archived ? " (archived)" : ""}`)
+        .map((other) => `${other.dir}${containerNote(other)}`)
         .join(", ");
       out.push({
         check: "duplicate-slug",
         path: holder.path,
-        detail: `slug "${slug}"${holder.archived ? " (archived)" : ""} also at ${peers}`,
+        detail: `slug "${slug}"${containerNote(holder)} also at ${peers}`,
         root: holder.root,
       });
     }
@@ -467,6 +505,9 @@ function duplicateSlugFindings(bySlug: ReadonlyMap<string, readonly SlugHolder[]
 // being skipped, so a task abandoned before it ever got a plan still surfaces once it ages.
 function staleFinding(task: Task, now: number, staleDays: number): UnrootedFinding | null {
   if (task.archived) return null;
+  // Parked work is dormant by intent (references/workflow/task-backlog.md), so age says nothing
+  // about a backlogged folder — this is the only check parking exempts.
+  if (task.backlogged) return null;
   const { value, source } = lifecycleStatus(task);
   if (value != null && !LIVE_STATUSES.has(value)) return null;
   if (!task.updated) {
@@ -506,7 +547,45 @@ function doneUnarchivedFinding(task: Task): UnrootedFinding | null {
   const { value, source } = lifecycleStatus(task);
   if (!TERMINAL_STATUSES.has(value)) return null;
   const origin = task.plan ? "" : ` (status from ${source})`;
-  return { check: "done-unarchived", path: task.path, detail: `${value}${origin}, outside Archive/` };
+  // A terminal task under a `Backlog/` is misfiled rather than merely unarchived — the backlog holds
+  // unstarted work only (references/workflow/task-backlog.md) — so the detail names where it sits.
+  const place = task.backlogged ? "parked in Backlog/ — belongs in Archive/" : "outside Archive/";
+  return { check: "done-unarchived", path: task.path, detail: `${value}${origin}, ${place}` };
+}
+
+// The backlog's entry gate is *unstarted*: no `plan.md`, or a plan at `to-do`
+// (references/workflow/task-backlog.md). Any other live status means work began where the folder
+// lies, which parking cannot express — a live task pauses through `blocked` instead of moving. A
+// plan that carries no parseable status can't be judged against the gate at all, and stale — the
+// check that reports that shape everywhere else — is the one check parking exempts, so it is
+// reported here rather than left silent. The gate is written on the plan, and an absent plan is the
+// parked-intended state — unless a `result.md` says otherwise: a result file exists only once
+// execution starts, so a live one fails the gate on the same stand-in the terminal check accepts.
+function startedInBacklogFinding(task: Task): UnrootedFinding | null {
+  if (task.archived || !task.backlogged) return null;
+  const value = task.plan?.value;
+  if (task.plan != null && value == null) {
+    return {
+      check: "started-in-backlog",
+      path: task.path,
+      detail: "no parseable plan status, parked in Backlog/ — cannot judge the entry gate",
+    };
+  }
+  if (task.plan == null) {
+    const result = task.result;
+    if (result == null || result.value == null || !LIVE_RESULT_STATUSES.has(result.value)) return null;
+    return {
+      check: "started-in-backlog",
+      path: task.path,
+      detail: `${result.value} (status from ${result.file}), parked in Backlog/ — a parked task must be unstarted`,
+    };
+  }
+  if (value === "to-do" || !LIVE_STATUSES.has(value)) return null;
+  return {
+    check: "started-in-backlog",
+    path: task.path,
+    detail: `${value}, parked in Backlog/ — a parked task must be unstarted`,
+  };
 }
 
 // GitHub's heading-anchor rule: lowercase, drop every character that is not a letter, digit,
@@ -1042,7 +1121,13 @@ if (installs) {
       const slug = basename(task.dir);
       // Only the fields the collision report reads: a whole-task copy would pin every parsed
       // plan.md, goals.md, and result.md body in memory until the process exits.
-      const holder = { path: task.path, dir: task.dir, archived: task.archived, root: rootDir };
+      const holder = {
+        path: task.path,
+        dir: task.dir,
+        archived: task.archived,
+        backlogged: task.backlogged,
+        root: rootDir,
+      };
       const holders = bySlug.get(slug);
       if (holders) holders.push(holder);
       else bySlug.set(slug, [holder]);
@@ -1050,10 +1135,15 @@ if (installs) {
     const rootFindings: UnrootedFinding[] = [];
     scanned += tasks.length;
     for (const task of tasks) {
-      const single = [staleFinding(task, now, staleDays), doneUnarchivedFinding(task)];
+      const single = [
+        staleFinding(task, now, staleDays),
+        doneUnarchivedFinding(task),
+        startedInBacklogFinding(task),
+      ];
       // The content checks skip archived folders: they are frozen history no reconciler repairs
       // (references/workflow/task-archiving.md), so re-reporting their
-      // imperfections every run would be permanent noise.
+      // imperfections every run would be permanent noise. A backlogged folder is not frozen — it is
+      // future work a later reconcile still repairs — so it stays in them.
       if (!task.archived) {
         single.push(currentStateFinding(task), oversizedResultFinding(task, resultMaxKb));
         rootFindings.push(...anchorFindings(task), ...goalIdFindings(task), ...unknownStatusFindings(task));

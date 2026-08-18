@@ -1,12 +1,24 @@
 # implement-task: Non-Default Branches
 
-The `implement-task` skill's non-default branches — reviving a `skipped` plan, the diagram re-check, the automatic parallel batch, mid-execution plan revisions, and the later-run `in-review` → `done` finalization — split out of that skill's SKILL.md, which keeps the loop, the templates, and the gates. Read the section a branch names when its condition fires. An `implement-task §N` reference names that SKILL.md's process step.
+The `implement-task` skill's non-default branches — reviving a `skipped` plan, activating a backlogged task, the diagram re-check, the automatic parallel batch, mid-execution plan revisions, and the later-run `in-review` → `done` finalization — split out of that skill's SKILL.md, which keeps the loop, the templates, and the gates. Read the section a branch names when its condition fires. An `implement-task §N` reference names that SKILL.md's process step.
 
 ## Reviving a skipped plan
 
 **Check where the folder sits first.** A bare slug falls back to `Archive/<slug>/` (`./task-layout.md`) and skipped tasks are the ones that get archived, so a revive can land there — but a live task under `Archive/` is stranded outside every active listing `resume-task` and `review-task` build, and `archive-task` would refuse it as non-terminal. Resolved under `Archive/` → **stop**: have the user move it out (a manual `mv`; archiving is one-way), then re-run.
 
 Otherwise flip `skipped → executing` (the registered revive edge) and continue as a normal run. An existing result file — the record of why the work was dropped — must be `executing`, the pairing rule's value for a live plan; any other value pairs as drift. That record stays: the append-only rule holds, and this run's sections append after it (implement-task §5).
+
+## Activating a backlogged task
+
+**Check the container at resolution too** (implement-task §1). The condition is the resolved folder's immediate parent being named `Backlog` — matched case-insensitively (`./task-backlog.md`) — however resolution reached it: the bare-slug container fallback, an explicit folder path, or a `plan.md` path. `resume-task` takes this branch at its own resolution step, on the same terms.
+
+Such a task is parked, and execution does not run on it in place (`./task-backlog.md` § *Planning acts in place; execution activates first*) — location alone carries "parked", so a run left where it lies would leave live work sitting where every active listing excludes it. **Offer activation instead:** name the folder, name the container's parent it would return to, and ask.
+
+- **Confirmed** → `mv` the whole folder to that parent in one operation — one move keeps the folder's internal `./` links intact (the move mechanics `./task-backlog.md` cites) — then continue the run against the new location.
+- **Declined** → **stop**, reporting that the task stays parked. Never execute a task in place under `Backlog/`.
+- **`<container-parent>/<slug>` already exists** → **stop** and surface it; never clobber it.
+
+The asymmetry with § *Reviving a skipped plan* above is deliberate: an archived task is finished, so getting it back out is the user's own `mv`; a backlogged one is exactly the work this run is about to start, so the move is offered here.
 
 ## Diagram re-check
 

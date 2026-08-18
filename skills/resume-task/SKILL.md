@@ -12,7 +12,7 @@ disable-model-invocation: true
 
 This skill loads an existing task folder (canonically under `.agents/tasks/`, though anywhere on disk works the same) and produces a chat-only briefing — to resume work after time away, hand off, review what was done, or answer questions about a task, whether in progress, blocked, or already shipped.
 
-**CRITICAL**: This skill is **read-only**, and it runs **no reference sweep** — task files, source code, and git state are never modified, and the folder's cited links are never swept for freshness. Those links are the reconcilers' business (`references/workflow/reconciliation.md` § *External reference check*). When the folder carries an `observations.md`, quoting its dated lines is reading the folder, not sweeping — quote them with their dates, as cache, never as live state. Verifying a *claim* is not sweeping a *citation*, though: where a domain's own artifacts live behind a URL, the Step-4 drift check still reads them, read-only, per the domain's `verification.md`. Output is **chat only**: no `BRIEF.md` or scratch briefing file.
+**CRITICAL**: This skill is **read-only**, and it runs **no reference sweep** — task files, source code, and git state are never modified — save the user-confirmed activation `mv` of a backlogged folder, which relocates it untouched rather than editing anything in it (`./references/workflow/implement-task-edges.md` § *Activating a backlogged task*) — and the folder's cited links are never swept for freshness. Those links are the reconcilers' business (`references/workflow/reconciliation.md` § *External reference check*). When the folder carries an `observations.md`, quoting its dated lines is reading the folder, not sweeping — quote them with their dates, as cache, never as live state. Verifying a *claim* is not sweeping a *citation*, though: where a domain's own artifacts live behind a URL, the Step-4 drift check still reads them, read-only, per the domain's `verification.md`. Output is **chat only**: no `BRIEF.md` or scratch briefing file.
 
 ## When to Use
 
@@ -39,6 +39,8 @@ This skill loads an existing task folder (canonically under `.agents/tasks/`, th
 ### 1. Resolve the Task Folder
 
 Resolve a task folder per the **resolve-current-or-ask** discovery rules in `./references/workflow/task-layout.md` § *Discovery rules for skills* — cite it, don't restate it; a full `plan.md` path is taken directly.
+
+The activation offer for a folder resolving under `Backlog/` is `./references/workflow/implement-task-edges.md` § *Activating a backlogged task* — read it when resolution lands there; the confirmed `mv` it asks for is the one exception to this skill's read-only rule. <!-- cold -->
 
 **Read the plan** — read the resolved folder's `plan.md` (one plan per folder). No `plan.md` → tell the user the folder exists but has no plan; suggest `plan-task`.
 
@@ -170,7 +172,7 @@ Omit sections with nothing to report — **except** "Drift since plan", which al
 Confirm the protocol invariants before finishing:
 
 - [ ] Task folder resolved per `task-layout.md` (asked when ambiguous); all four core artifacts read (plus `ticket.md`, `diagram.md`, and `observations.md` when present); a missing `goals.md` flagged
-- [ ] Nothing written, edited, renamed, or deleted anywhere; no git mutation, no reference sweep run, no `BRIEF.md` or scratch briefing file
+- [ ] Nothing written, edited, renamed, or deleted anywhere — save a user-confirmed activation `mv` of a backlogged folder; no git mutation, no reference sweep run, no `BRIEF.md` or scratch briefing file
 - [ ] State reconstructed from checkbox markers, not prose; `**Blocked:**` / `**In review:**` sections surfaced verbatim; a `skipped` plan reported as abandoned, not drift
 - [ ] Drift check compared done/shipped claims against current reality — partitioned shipped vs. pending, `## Current state` claims included, every `met` goal re-checked on a `done` plan, a missing `## Acceptance` on a `done` plan flagged `block` — with "Drift since plan" rendered even when clean
 - [ ] Brief printed to chat with the template sections and a concrete "Where to start" action

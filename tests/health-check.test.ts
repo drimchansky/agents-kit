@@ -98,6 +98,9 @@ const FIXTURE_AGE_DAYS: readonly (readonly [string, number])[] = [
   [join(STORE, "no-status-plan"), 70],
   [join(STORE, "unknown-status"), 70],
   [join(STORE, "Archive", "done-archived"), 400],
+  // Aged past the 30-day default on purpose: the only thing keeping it out of `stale` is then the
+  // backlog exemption, so a regression there fails the stale counts below.
+  [join(STORE, "Backlog", "parked-todo"), 70],
   // This root exercises the durability checks, so every folder stays fresh and the age check is quiet.
   [ANCHORS, 1],
 ];
@@ -319,13 +322,15 @@ before(() => {
   writeInstallFixtures();
 
   // duplicate-slug spans roots and is the only check that sees archived folders, so it needs a
-  // two-root fixture: one active/active collision, one active/archived, and a slug unique to each
-  // root that must stay silent. Peers are named by absolute directory — a compact display path is
+  // two-root fixture: one active/active collision, one active/archived, one active/backlogged, and a
+  // slug unique to each root that must stay silent. Peers are named by absolute directory — a compact display path is
   // prefixed by its root's basename alone, which two roots can share.
   writeTaskFolder(join(DUP_A, "add-csv-export"));
   writeTaskFolder(join(DUP_B, "add-csv-export"));
   writeTaskFolder(join(DUP_A, "only-here"));
   writeTaskFolder(join(DUP_B, "Archive", "only-here"));
+  writeTaskFolder(join(DUP_A, "parked-too"));
+  writeTaskFolder(join(DUP_B, "Backlog", "parked-too"));
   writeTaskFolder(join(DUP_A, "unique-a"));
   writeTaskFolder(join(DUP_B, "unique-b"));
   writeTaskFolder(join(DUP_C, "area-a", "nested-dup"));
@@ -348,9 +353,9 @@ test("a readable store scans without warnings and exits 0", () => {
   assert.strictEqual(stderr, "", "a readable fixture store must produce no warnings");
 });
 
-test("scanned counts every task folder, archived ones included", () => {
+test("scanned counts every task folder, archived and backlogged ones included", () => {
   const { report } = runCheck(STORE_ARGS);
-  assert.strictEqual(report.scanned, 6, "scanned task count");
+  assert.strictEqual(report.scanned, 11, "scanned task count");
   assert.strictEqual(report.unreadable, 0, "a readable store reports nothing unread");
 });
 
@@ -403,11 +408,57 @@ test("a plan with no parseable status is reported stale under a named label, not
 
 test("a done task outside Archive/ is reported with its status", () => {
   const { report } = runCheck(STORE_ARGS);
-  assert.strictEqual(findingCount(report, "done-unarchived"), 1, "done-unarchived finding count");
+  assert.strictEqual(findingCount(report, "done-unarchived"), 2, "done-unarchived finding count");
   assert.strictEqual(
     findingDetail(report, "done-unarchived", "store/done-unarchived"),
     "done, outside Archive/",
     "done-unarchived detail for store/done-unarchived",
+  );
+});
+
+test("a done task parked in Backlog/ is reported as misfiled, not merely unarchived", () => {
+  const { report } = runCheck(STORE_ARGS);
+  assert.strictEqual(
+    findingDetail(report, "done-unarchived", "store/Backlog/done-parked"),
+    "done, parked in Backlog/ — belongs in Archive/",
+    "done-unarchived detail for a terminal task inside a backlog",
+  );
+});
+
+test("a parked to-do task produces no findings, its 70-day age included", () => {
+  const { report } = runCheck(STORE_ARGS);
+  assert.deepStrictEqual(
+    report.findings.filter((entry) => entry.path === "store/Backlog/parked-todo"),
+    [],
+    "an aged to-do task inside a backlog must stay silent",
+  );
+});
+
+test("a live task parked in Backlog/ is reported under started-in-backlog", () => {
+  const { report } = runCheck(STORE_ARGS);
+  assert.strictEqual(findingCount(report, "started-in-backlog"), 3, "started-in-backlog finding count");
+  assert.strictEqual(
+    findingDetail(report, "started-in-backlog", "store/Backlog/started-parked"),
+    "executing, parked in Backlog/ — a parked task must be unstarted",
+    "started-in-backlog detail for a live parked task",
+  );
+});
+
+test("a parked plan with no parseable status is reported as unjudgeable, not left silent", () => {
+  const { report } = runCheck(STORE_ARGS);
+  assert.strictEqual(
+    findingDetail(report, "started-in-backlog", "store/Backlog/statusless-parked"),
+    "no parseable plan status, parked in Backlog/ — cannot judge the entry gate",
+    "the stale exemption must not silence a statusless parked plan",
+  );
+});
+
+test("a plan-less parked folder with a live result.md is reported as started", () => {
+  const { report } = runCheck(STORE_ARGS);
+  assert.strictEqual(
+    findingDetail(report, "started-in-backlog", "store/Backlog/resultonly-parked"),
+    "executing (status from result.md), parked in Backlog/ — a parked task must be unstarted",
+    "the result-file stand-in must fail the entry gate for a plan-less parked folder",
   );
 });
 
@@ -423,7 +474,7 @@ test("an archived task produces no findings", () => {
     "",
     "archived task must not be reported stale",
   );
-  assert.strictEqual(findingCount(report), 4, "total finding count");
+  assert.strictEqual(findingCount(report), 8, "total finding count");
 });
 
 // Findings alone would read clean over a task the run never opened, so incomplete coverage has to be
@@ -495,7 +546,7 @@ test("--stale-days raises the threshold without affecting the archive check", ()
   assert.strictEqual(findingCount(report, "stale"), 0, "stale count above the age boundary");
   assert.strictEqual(
     findingCount(report, "done-unarchived"),
-    1,
+    2,
     "done-unarchived count is independent of --stale-days",
   );
 });
@@ -515,10 +566,10 @@ test("the canonical root is found from a project root, while every other dotted 
 
 test("findings from same-basename roots remain unambiguous through the root field", () => {
   const { report } = runCheck([STORE, SECOND_ROOT]);
-  assert.strictEqual(report.scanned, 7, "scanned count across two roots");
+  assert.strictEqual(report.scanned, 12, "scanned count across two roots");
   assert.strictEqual(
     findingCount(report, "done-unarchived"),
-    2,
+    3,
     "done-unarchived count across two roots",
   );
   assert.strictEqual(
@@ -1002,7 +1053,7 @@ test("an early-closing reader does not turn into a non-zero exit", async () => {
 
 test("a slug in two roots reports once per colliding folder, not once per collision", () => {
   const { report } = runCheck(DUP_ARGS);
-  assert.strictEqual(findingCount(report, "duplicate-slug"), 4, "duplicate-slug finding count");
+  assert.strictEqual(findingCount(report, "duplicate-slug"), 6, "duplicate-slug finding count");
 });
 
 test("each side of a collision is actionable from its own finding", () => {
@@ -1030,6 +1081,20 @@ test("duplicate-slug sees archived folders, because a bare slug still falls back
     findingDetail(report, "duplicate-slug", "dup-b/Archive/only-here"),
     `slug "only-here" (archived) also at ${join(DUP_A, "only-here")}`,
     "the archived folder gets its own finding despite the archive exemption",
+  );
+});
+
+test("duplicate-slug sees backlogged folders, because a bare slug still falls back into Backlog/", () => {
+  const { report } = runCheck(DUP_ARGS);
+  assert.strictEqual(
+    findingDetail(report, "duplicate-slug", "dup-a/parked-too"),
+    `slug "parked-too" also at ${join(DUP_B, "Backlog", "parked-too")} (backlogged)`,
+    "a backlogged peer is reported and labelled backlogged",
+  );
+  assert.strictEqual(
+    findingDetail(report, "duplicate-slug", "dup-b/Backlog/parked-too"),
+    `slug "parked-too" (backlogged) also at ${join(DUP_A, "parked-too")}`,
+    "the backlogged folder gets its own finding despite the stale exemption",
   );
 });
 
@@ -1128,7 +1193,7 @@ test("two case-spellings of one root are one root", (t: TestContext) => {
 // see — the twin of the shape test tests/session-triage.test.ts runs.
 test("a rejected flag value re-enters the roots only when it names something on disk", () => {
   const { report: afterValuelessFlag } = runCheck(["--stale-days", STORE]);
-  assert.strictEqual(afterValuelessFlag.scanned, 6, "a root spelled after a valueless flag is still walked");
+  assert.strictEqual(afterValuelessFlag.scanned, 11, "a root spelled after a valueless flag is still walked");
   assert.strictEqual(
     afterValuelessFlag.unreadable,
     0,
@@ -1136,7 +1201,7 @@ test("a rejected flag value re-enters the roots only when it names something on 
   );
 
   const { report: afterJunkValue } = runCheck(["--stale-days", "20KB", STORE]);
-  assert.strictEqual(afterJunkValue.scanned, 6, "a malformed flag value leaves the roots after it alone");
+  assert.strictEqual(afterJunkValue.scanned, 11, "a malformed flag value leaves the roots after it alone");
   assert.strictEqual(
     afterJunkValue.unreadable,
     0,
@@ -1148,7 +1213,7 @@ test("a rejected flag value re-enters the roots only when it names something on 
   const { report: afterEmptyValue } = runCheck(["--result-max-kb", "", STORE]);
   assert.strictEqual(
     afterEmptyValue.scanned,
-    6,
+    11,
     "an empty flag value does not add the process directory as a root",
   );
   assert.strictEqual(afterEmptyValue.unreadable, 0, "an empty flag value is not a coverage gap");
