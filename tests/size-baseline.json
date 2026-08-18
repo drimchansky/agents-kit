@@ -48,16 +48,16 @@
     {
       "skill": "create-notion-page",
       "hot": {
-        "bytes": 4588,
-        "approxTokens": 1147
+        "bytes": 4557,
+        "approxTokens": 1139
       },
       "cold": {
         "bytes": 0,
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 4588,
-        "approxTokens": 1147
+        "bytes": 4557,
+        "approxTokens": 1139
       }
     },
     {
@@ -93,31 +93,31 @@
     {
       "skill": "fix-findings",
       "hot": {
-        "bytes": 48766,
-        "approxTokens": 12192
+        "bytes": 48735,
+        "approxTokens": 12184
       },
       "cold": {
         "bytes": 29110,
         "approxTokens": 7278
       },
       "transitive": {
-        "bytes": 319737,
-        "approxTokens": 79934
+        "bytes": 319706,
+        "approxTokens": 79927
       }
     },
     {
       "skill": "implement",
       "hot": {
-        "bytes": 71546,
-        "approxTokens": 17887
+        "bytes": 71515,
+        "approxTokens": 17879
       },
       "cold": {
         "bytes": 6487,
         "approxTokens": 1622
       },
       "transitive": {
-        "bytes": 312671,
-        "approxTokens": 78168
+        "bytes": 312640,
+        "approxTokens": 78160
       }
     },
     {
@@ -363,16 +363,16 @@
     {
       "skill": "review-docs",
       "hot": {
-        "bytes": 46202,
-        "approxTokens": 11551
+        "bytes": 46171,
+        "approxTokens": 11543
       },
       "cold": {
         "bytes": 21314,
         "approxTokens": 5329
       },
       "transitive": {
-        "bytes": 313334,
-        "approxTokens": 78334
+        "bytes": 313303,
+        "approxTokens": 78326
       }
     },
     {

@@ -2,7 +2,6 @@
 name: create-notion-page
 description: Use when asked to create a Notion page — drafts the requested content and creates the page through the session's Notion tools, private by default unless the user names a destination.
 argument-hint: '[what the page should contain] [optional destination: page or database]'
-disable-model-invocation: true
 ---
 
 # Create Notion Page

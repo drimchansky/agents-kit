@@ -2,7 +2,6 @@
 name: review-docs
 description: Use when asked to review, audit, or check existing documentation — README, AGENTS.md/CLAUDE.md, architecture notes, ADRs, API docs, specs, runbooks, or any other written documentation. Grounds claims against the codebase and runs the whole-doc quality pass (coherence, register); the documentation pack wires it in before staging or publishing a deliverable. Produces an audit; applies fixes only when the user explicitly asks after seeing the review.
 argument-hint: '[doc file path] [-x (cross-vendor grounding probe)]'
-disable-model-invocation: true
 ---
 
 ## Core Rules

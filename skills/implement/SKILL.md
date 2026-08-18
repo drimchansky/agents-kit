@@ -2,7 +2,6 @@
 name: implement
 description: Use when asked to implement, build, fix, or change something directly — described in the session or pointing at a file, issue, or diff — with no task folder or plan.
 argument-hint: '[what to implement]'
-disable-model-invocation: true
 ---
 
 ## Core Rules

@@ -2,7 +2,6 @@
 name: fix-findings
 description: Use when asked to fix, apply, or address a set of findings — from a review in this session, a PR's review comments, or a pasted or saved list. Applies the fixes (a Confirmed finding automatically when the targeted fix is clear and low-blast-radius; anything unverified only through one batched ask showing the change as a diff) and reports the rest untouched. Edits code only; never stages, never commits, never writes back to the findings' source.
 argument-hint: '[source: PR number/URL, file path, pasted findings, or a named subset — defaults to the latest session findings]'
-disable-model-invocation: true
 ---
 
 ## Core Rules
