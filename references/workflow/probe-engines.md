@@ -70,6 +70,13 @@ from "## Multiple Findings" onward — skip the Core Rules and intro above it. Y
 and report only: never edit anything, and never run the project's build, typecheck,
 or tests — verify by reading (analysis-only); where the protocol suggests running a
 command, reason statically instead.
+Where that protocol and the answer shape below differ on what to report, the shape
+below governs — it is the whole output, so the protocol's own report headings
+(Severity, Scope, Misunderstanding, Suggestion, What was checked, Best guess) do
+not appear in your answer, and its per-option Tradeoffs field appears only where a
+tradeoff decides between two of the options. Its scope step still runs: investigate
+the same pattern elsewhere exactly as it says, and report what that turns up in
+the form below.
 
 The findings came from a review of <the staged diff (git diff --cached) | the diff
 <base>...HEAD | the PR's diff (gh pr diff <number>)>. Read that diff first — it is what changed. A finding about the change
@@ -78,9 +85,22 @@ file contents alone, and a staged change is absent from git log entirely, so the
 protocol's recent-changes step will not surface it.
 
 Treat each finding below as a separate verification target (its Multiple Findings
-rule). For each: a verdict — Confirmed / Not an issue / Inconclusive — with
-file:line evidence, root cause when confirmed, and fix options ordered
-targeted → thorough.
+rule). Answer per finding with its number and a verdict — Confirmed / Not an issue
+/ Inconclusive — and nothing beyond what that verdict needs: Confirmed carries
+file:line evidence, the root cause, the path that reaches it, and fix options
+ordered targeted → thorough each naming its blast radius; Not an issue carries the
+file:line evidence that settles it; Inconclusive carries what is missing to settle
+it.
+
+Send back no prose this prompt already carries. Do not restate or summarize a
+finding below, and do not repeat or re-rank its severity — a file:line is
+evidence rather than prose, and is cited freely even where the finding names the
+same anchor, as is a fix option that matches the finding's own recommendation. Do
+not quote the source under review — code, prose, or diff hunk alike — beyond a
+single line, and quote even that only where the line is itself the evidence for a
+Not an issue verdict. Report scope as bare file:line references rather than prose;
+a pattern you turn up elsewhere is not a finding below, so state it in one
+sentence with its own file:line.
 
 Findings (verbatim, with severity and location when present):
 1. <finding text — severity, file:line, recommendation, exactly as reviewed>
@@ -96,6 +116,10 @@ associated change, as `triage-findings-verify` can resolve — drop that paragra
 no diff, and the probe verifies each finding as a claim against current code, exactly what
 `verify-issue`'s single-issue mode does. A diff that doesn't correspond to the findings is
 worse than none.
+The *answer* is bounded for the mirror reason: the coordinator already holds the
+findings and their severities, so restating them spends merge context on what it
+sent in, and the severity calibration a re-rank would displace is the session's
+own (`./agent-fanout.md` § *Merge contract*).
 
 For the re-derivation shape (`challenge-task`'s cold derivation, on `native`), the probe is handed a task's *inputs* and asked to derive an approach. It is the one shape defined by what it withholds: every other shape hands the probe the artifact under judgment, and this one must not.
 
