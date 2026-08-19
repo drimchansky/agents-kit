@@ -30,7 +30,7 @@ Before working, read `./references/engineering/review.md` — it carries the len
 
 **Launch the cross-vendor probe** (only with `-x`): once the review object is confirmed non-empty, start one background probe per `./references/workflow/agent-fanout.md`, on the engine and launch recipe in `./references/workflow/probe-engines.md` — a cold second review of that same object, demanding findings with severity and `file:line` evidence. The probe assembles the object itself at the repo root, so the prompt must name which one: the staged diff (`git diff --cached`) by default, or under `-w` the working-tree target, specified concretely enough for the probe to build it — quote the cited contract's own commands rather than recalling them. A probe handed the wrong object reviews a different change than this pass did. Review inline while it runs; collect and merge per the contract before finalizing findings. <!-- cold -->
 
-**Launch verification scripts** per "Verification Scripts" in `./references/engineering/review.md` — always: as soon as the review object is confirmed, launch the project's lint/typecheck/test scripts over its files and review while they run; their failures and warnings land as findings before output.
+**Launch verification scripts** per "Verification Scripts" in `./references/engineering/review.md` — always: as soon as the review object is confirmed, launch the project's lint/typecheck/test scripts over its files and review while they run; their failures and warnings land as findings before output. That same section carries the reproduction bar a candidate must clear before it is adopted.
 
 ## Review Focus
 
@@ -47,7 +47,7 @@ Apply the full review process from `./references/engineering/review.md` — the 
 
 ## Output
 
-**Review findings** (if any) — Issues with severity, file location, recommendation, and impact.
+**Review findings** (if any) — in the shape `./references/engineering/review.md` § *Findings output shape* defines: one entry per issue with its severity, `file:line`, recommendation, and impact, Minors in that same shape and the list never capped.
 
 **Cross-check** (only with `-x`) — the probe's `Cross-check:` outcome line per `./references/workflow/agent-fanout.md`, after the findings. <!-- cold -->
 

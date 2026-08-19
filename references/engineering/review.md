@@ -130,6 +130,14 @@ Severity reflects **user and production impact**, not code aesthetics:
 
 When suggesting findings the user will paste as inline PR comments, prefix the comment text instead of using the emoji: `Critical:` (🔴, blocks merge), `Major:` (🟡, should fix before merge), `Nit:` / `Optional:` (🟢, non-blocking), `FYI:` (informational, no action requested).
 
+## Findings output shape
+
+What a diff review's findings list looks like, for `review-commit` and `review-pr` alike — defined once here, cited by both rather than restated. **One entry per issue**, each carrying its severity, `file:line`, the recommendation, and the impact, the whole list ordered by severity.
+
+Minor findings take that same shape — listed individually, never collapsed into a prose block or a trailing summary line — and the list is never capped or truncated, however long it runs. The per-entry shape is what lets `/fix-findings` take findings one at a time in severity order; a collapsed block or a dropped tail is a finding the follow-up cannot select.
+
+Each skill's own Output section says where the list sits and what else rides on an entry; what a downstream publish step selects from it is that step's business, not this shape's.
+
 ## Approval Bar
 
 Approve when the change **definitely improves overall code health**, even if it isn't perfect. The bar is improvement over the current state, not perfection — chasing perfect blocks shippable improvements. Block merge only when Critical findings remain. Major findings should be fixed before merge but don't get rubber-stamped as "fix in follow-up." Minor findings approve-with-comment.
@@ -167,7 +175,9 @@ Diff reviews (`review-commit`, `review-pr`) always run the project's verificatio
 - **Run them in the background where the host supports it**, reviewing inline while they run; where it doesn't, run them in the foreground at that same early point.
 - **Collect before output** — merge failures and warnings into the findings, each with file location and severity.
 
-The scripts are a review's only execution surface: everything else stays analysis — read the code, reason about it. Read-only probes never run them (`../workflow/agent-fanout.md`).
+Beyond these scripts and the reproduction below, a review executes nothing: everything else stays analysis — read the code, reason about it. Read-only probes run neither (`../workflow/agent-fanout.md`).
+
+**Reproduce before adopting.** A candidate whose failure mode is reproducible is reproduced in the session's scratch area before it is adopted, and the adopted finding carries the observed output — what the run printed, not a paraphrase of it — as its evidence. What runs is that one candidate's failure mode as an isolated scratch invocation: a crafted input against the defective unit, a minimal script. The project's build and suite stay out of bounds, and reproducing a candidate widens nothing past its own invocation. The reviewing session is what runs it — a probe never does, whatever the probe found. The bar binds only where the on-disk tree carries the review object's post-change content — the working-tree target under `-w`, a staged set the tree matches, or a branch diff whose head is checked out over a clean tree. A scratch run exercises what is on disk, so over a tree that diverges from the review object it exercises content the object never carried, and the observed output would be evidence for something other than the change under review; such a candidate takes the verify route below instead. Where the failure mode doesn't reproduce there — it needs infrastructure or prohibitive setup, or the claim isn't executable at all — the bar doesn't apply, and the candidate settles by the verify route in `../workflow/agent-fanout.md`.
 
 ## Standard Verification Checklist
 
@@ -181,3 +191,4 @@ Before finalizing any review output, confirm:
 - [ ] Touched comments validated per `code-style.md` → Comments; any comment-only finding clears the bar Touched Comments assigns it
 - [ ] Dead code identified and listed explicitly
 - [ ] Assumptions in non-trivial decisions identified
+- [ ] Findings render in the shape § *Findings output shape* defines — one entry per issue, Minors included, the list never capped or collapsed

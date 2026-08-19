@@ -1,7 +1,7 @@
 ---
 name: review-pr
 description: Use when asked to review or give feedback on a PR or branch diff against its base.
-argument-hint: '[-x (cross-vendor second review)] [-p (parallel lens probes)] [-d (draft PR description)]'
+argument-hint: '[-x (cross-vendor second review)] [-p (parallel lens probes + gap sweep)] [-d (draft PR description)]'
 disable-model-invocation: true
 ---
 
@@ -15,7 +15,7 @@ Review all changes in the current branch against its base branch for correctness
 ## Flags
 
 - `-x` — Cross-check: launch one independent cold review of the same diff on the cross-vendor engine and merge it before findings are finalized, per the shared contract in `./references/workflow/agent-fanout.md`, with the engine and its launch recipe in `./references/workflow/probe-engines.md`. Off by default. The probe is read-only; its outcome is recorded on the output's `Cross-check:` line. <!-- cold -->
-- `-p` — Lens probes: launch one native cold review per lens in parallel — each per-surface checklist the diff triggers, plus one general correctness lens — and merge them before findings are finalized, per the lens-review shape in `./references/workflow/probe-engines.md`. Off by default. The probes are read-only; their outcomes are recorded on the output's `Lens probes:` line. <!-- cold -->
+- `-p` — Lens probes: launch one native cold review per lens in parallel — each per-surface checklist the diff triggers, plus one per correctness angle derived from the change map — then one gap sweep over what the fleet returned, and merge them all before findings are finalized, per the lens-review shape in `./references/workflow/probe-engines.md`. Off by default. The probes are read-only; their outcomes are recorded on the output's `Lens probes:` line. A composite driving this skill may suppress the cold settling of these candidates — where it does, its own text governs, and the mentions below are subject to it. <!-- cold -->
 - `-d` — Draft a ready-to-paste PR description (body only) in addition to the review, per the "PR description" section. Off by default.
 
 ## References
@@ -37,7 +37,7 @@ Before working, read `./references/engineering/review.md` — it carries the len
 
 **Launch the cross-vendor probe** (only with `-x`): as soon as the base branch is determined, start one background probe per `./references/workflow/agent-fanout.md`, on the engine and launch recipe in `./references/workflow/probe-engines.md` — a cold second review of the `<base>...HEAD` diff at the repo root, demanding findings with severity and `file:line` evidence. Continue the setup and review inline while it runs; collect and merge per the contract before finalizing Findings. <!-- cold -->
 
-**Launch the lens probes** (only with `-p`): as soon as the change map exists, start one probe per lens per the lens-review shape in `./references/workflow/probe-engines.md` — the lens set derives from the change map: the per-surface checklists its domains trigger, plus the general lens. Continue the review inline while they run; merge each probe's findings as candidates verified against the diff before finalizing Findings, per that file's merge contract. <!-- cold -->
+**Launch the lens probes** (only with `-p`): as soon as the change map exists, start one probe per lens per the lens-review shape in `./references/workflow/probe-engines.md` — the lens set derives from the change map: the per-surface checklists its domains trigger, plus the correctness angles the change presents — and, once the fleet has landed, the single gap sweep that shape defines. Continue the review inline while they run; merge each probe's findings per that file's merge contract before finalizing Findings — which routes a fleet's candidates to a cold settling pass rather than this session's own read, subject to the suppression the `-p` bullet notes. <!-- cold -->
 
 **Gather context:**
 
@@ -50,7 +50,7 @@ Before working, read `./references/engineering/review.md` — it carries the len
     - If a link can't be accessed (auth-walled, private workspace, 404, tool unavailable), record it in the output under **Inaccessible context** with the URL and reason. Do not fabricate what's behind it — flag the gap so the user can decide whether to paste the content in or proceed without it
 - If no PR exists, proceed with just the branch commits and any context the user provided
 
-**Launch verification scripts** per "Verification Scripts" in `./references/engineering/review.md` — always: as soon as the diff against the base is determined, launch the project's lint/typecheck/test scripts over the changed files and review while they run; their failures and warnings land as findings before output.
+**Launch verification scripts** per "Verification Scripts" in `./references/engineering/review.md` — always: as soon as the diff against the base is determined, launch the project's lint/typecheck/test scripts over the changed files and review while they run; their failures and warnings land as findings before output. That same section carries the reproduction bar a candidate must clear before it is adopted.
 
 ## Review Focus
 
@@ -61,10 +61,10 @@ Apply the full review process from `./references/engineering/review.md` — its 
 ## Output
 
 - **Summary** — What changed, intent, overall assessment (approve / request changes / needs discussion)
-- **Findings** — Issues with severity, file location, recommendation, and impact
+- **Findings** — in the shape `./references/engineering/review.md` § *Findings output shape* defines: one entry per issue with its severity, `file:line`, recommendation, and impact, Minors in that same shape and the list never capped. That shape changes nothing about what `/publish-pr-review` posts, which stays Major/Critical.
 - **Reviewed** — a provenance line recording the reviewed head commit and its merge-base (the `git rev-parse HEAD` and `git merge-base` from Setup) and the model that produced this review, e.g. `Reviewed at <head-sha> (merge-base <base-sha>) by <model>`. `/publish-pr-review` reads it to anchor the posted review to the head commit, re-check the diff hasn't moved, and attribute it — so attribution survives the model changing between review and publish.
 - **Cross-check** (only with `-x`) — the probe's `Cross-check:` outcome line per `./references/workflow/agent-fanout.md`
-- **Lens probes** (only with `-p`) — the `Lens probes:` outcome line per the lens-review shape in `./references/workflow/probe-engines.md`, naming each lens and its outcome <!-- cold -->
+- **Lens probes** (only with `-p`) — the `Lens probes:` outcome line per the lens-review shape in `./references/workflow/probe-engines.md`, naming each lens and the gap sweep, each with its outcome, and any candidate its settling left unsettled <!-- cold -->
 - **Improvements** (optional) — Non-blocking suggestions
 - **Inaccessible context** (only if any) — Links from the PR that couldn't be fetched, with URL and reason (auth required, private, 404, tool unavailable). Note which findings might shift if that context were available.
 - **PR description** (only with `-d`) — A ready-to-paste description (body only); drafted per the **PR description** section below.
@@ -105,4 +105,4 @@ toolbar became a shared component to host the new button.
 
 ## Verification
 
-Apply the Standard Verification Checklist in `./references/engineering/review.md`. The output carries the **Reviewed** provenance line (reviewed head SHA + merge-base SHA + reviewing model). With `-x`: the probe was merged per `./references/workflow/agent-fanout.md` and the output carries its `Cross-check:` line. With `-p`: each probe's findings were merged as candidates verified against the diff per `./references/workflow/agent-fanout.md`, and the output carries its mandatory `Lens probes:` line. With `-d`: the drafted description is body-only and verdict-free, sources its links only from those already gathered — a `Task: <add ticket link>` placeholder rather than a fabricated URL — and carries no AI-attribution footer.
+Apply the Standard Verification Checklist in `./references/engineering/review.md`. The output carries the **Reviewed** provenance line (reviewed head SHA + merge-base SHA + reviewing model). With `-x`: the probe was merged per `./references/workflow/agent-fanout.md` and the output carries its `Cross-check:` line. With `-p`: each probe's findings were settled per `./references/workflow/agent-fanout.md` § *Merge contract*, subject to the suppression the `-p` bullet notes, and the output carries its mandatory `Lens probes:` line naming every lens, the gap sweep, and any candidate a group's settling left Inconclusive. With `-d`: the drafted description is body-only and verdict-free, sources its links only from those already gathered — a `Task: <add ticket link>` placeholder rather than a fabricated URL — and carries no AI-attribution footer.

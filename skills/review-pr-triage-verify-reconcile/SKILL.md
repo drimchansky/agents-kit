@@ -1,7 +1,7 @@
 ---
 name: review-pr-triage-verify-reconcile
 description: Use when asked for a verified review of a PR or branch and to act on it in the same sitting — one command that runs the review → triage → verify pipeline, prints its verdicts in full, then appends one plan step per Confirmed finding you accept to a task folder's `plan.md` and records the append in `result.md`. Writes those two task files only; never code, never git, never the PR.
-argument-hint: '[task folder path or slug] [-x (cross-vendor second review)] [-p (parallel lens probes)] [-d (draft PR description)] — flags passed through to the review phase'
+argument-hint: '[task folder path or slug] [-x (cross-vendor second review)] [-p (parallel lens probes + gap sweep)] [-d (draft PR description)] — flags passed through to the review phase'
 disable-model-invocation: true
 ---
 
@@ -26,7 +26,7 @@ Invoking this skill is **not** consent to the append. `./references/workflow/rec
 
 ## Flags
 
-`-x` (cross-vendor second review), `-p` (parallel lens probes), and `-d` (draft PR description) pass through to Phase 1 unchanged — see `../review-pr-triage-verify/SKILL.md`, which forwards them to its own review phase. They shape what the review finds and have no effect on Phase 2, which writes what the round accepts either way.
+`-x` (cross-vendor second review), `-p` (parallel lens probes), and `-d` (draft PR description) pass through to Phase 1 — see `../review-pr-triage-verify/SKILL.md`, which forwards them to its own review phase with the one suppression it states on `-p`. They shape what the review finds and have no effect on Phase 2, which writes what the round accepts either way.
 
 ## When to Use
 
@@ -98,7 +98,7 @@ Confirm the protocol invariants before finishing. A `§` names a heading of `./r
 
 - [ ] Setup resolved the task before Phase 1 ran, and stopped there — nothing written, no review spent — on a `skipped` plan, a target with no companion `result.md` (the `to-do` plan among them), an unresolvable task, or a run naming none
 - [ ] A `**Domain:**` other than `engineering` announced before Phase 1 ran — the pipeline is engineering-calibrated end to end — rather than run silently against the wrong pack
-- [ ] Phase 1 ran from `../review-pr-triage-verify/SKILL.md` end to end, its own Setup included and `-x` / `-p` / `-d` passed through unchanged — not improvised
+- [ ] Phase 1 ran from `../review-pr-triage-verify/SKILL.md` end to end, its own Setup included and `-x` / `-p` / `-d` passed through as that skill specifies — not improvised
 - [ ] Its Output printed in full before any file was written and stands exactly as printed — never regenerated after an edit, and still standing had Phase 2 stopped — § *Sequence and output*
 - [ ] Every appended step maps to a **Confirmed** finding accepted in the batched round, and was built, placed, and numbered per **The produced step** and **Where the steps land** — no existing step number moved
 - [ ] Write surface held: `plan.md` and `result.md` only, everything else in the folder untouched, and no code, git, or PR mutation anywhere in the run — § *Write surface*

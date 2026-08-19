@@ -81,8 +81,11 @@ where they are rather than being re-implemented at the pipeline level.
   every later phase reads that same object; there is no seam to run a second skill after. Forwarded
   unchanged through `review-commit-triage-verify`, and always passed by `review-commit-fix-loop`.
 - `-p` lens-probe fan-out (`review-pr`) — the probes merge into the pass *before* findings
-  finalize, the same seamlessness as `-x`, and the lens set derives from the change map the review
-  has already built.
+  finalize, the same seamlessness as `-x`, and both halves of the lens set — the triggered
+  per-surface checklists and the derived correctness angles — come from the change map the review
+  has already built. One composite departs from the pass-through rule above:
+  `review-pr-triage-verify` suppresses the cold settling of this flag's candidates, since its own
+  phase 3 verifies every finding the review hands forward and would pay twice for one verdict.
 - `-d` draft PR description (`review-pr`) — built from the change map the review has already
   assembled; a separate phase would rebuild it from scratch.
 - `-f` fact verification (`proofread`) — verification runs inside the analysis pass, merging into
