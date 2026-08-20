@@ -66,9 +66,9 @@ When Stop-the-Line can't be cleared this session — the failure won't resolve, 
 
 #### Execution strategy: inline by default
 
-Default to executing each framed item **inline**, in this session, because this skill's items are small and assembling a self-contained packet costs more than making the edit; **delegate** an item to an executor when the remaining run is multi-unit *and* that item's packet is self-contained — no mid-item user interaction expected.
+Default to executing each framed item **inline**, in this session: this skill's packet-cost prior for the shared posture procedure is high — an item framed in session has no packet on disk, so one must be reconstructed from context. Run that procedure — `./references/workflow/write-mode-posture.md`, which sets its own cadence — and **delegate** the items it comes out that way for.
 
-A delegated item goes out under `./references/workflow/executor-contract.md`, whose `implement` binding (§ *Bindings*) governs what the packet carries, what the edit surface is, and what the fallback is — the executor sees that packet and nothing of this session. Announce the delegation in chat as it happens, naming which items go out and why the trigger fired, and record it in the §5 report's `Executed` bullet; that record is what keeps the default from drifting silently into always- or never-delegate.
+A delegated item goes out under `./references/workflow/executor-contract.md`, whose `implement` binding (§ *Bindings*) governs what the packet carries, what the edit surface is, and what the fallback is — the executor sees that packet and nothing of this session. Announce the delegation in chat as it happens, naming which items go out and why the procedure came out delegate, and record it in the §5 report's `Executed` bullet; that record is what keeps the default from drifting silently into always- or never-delegate.
 
 **Parallel batches.** Eligible independent items may run concurrently. Eligibility and every merge gate are `./references/workflow/parallel-batch.md` § *Coordinator-side parallel batch*'s — work from there, not from a copy. What's this skill's own: an item's declared surface is the optional per-item declaration in the §1 frame, an item with no declared surface runs inline or serially-delegated, and a batch merges in **frame order**, this skill's unit order. A run has one assertion gate — the ask's end-to-end outcome exercised whole at §4, before its acceptance verdict — so the end of the run is a tail batch's natural bound. A batch a later item depends on bounds before that item instead; after its ordered merges and integrated outcome re-proofs, run one boundary before the dependent. No full health runs per merged item. <!-- cold -->
 
@@ -92,7 +92,7 @@ Lists, never tables. Chat only — nothing written to disk beyond the work itsel
 - **Verified** — how each framed item was proven: command output, test name, behavior observed
 - **Asserted** — the ask's end-to-end outcome exercised whole at §4's gate, and how it was exercised; recorded separately from **Health** below, which never substitutes for it
 - **Health** — the end-of-run boundary's integrated recipe result on the final tree, plus any mid-run boundary that ran; the end-of-run boundary runs at §4's assertion gate, before the acceptance verdict
-- **Executed** — deviations from the inline default only: which items were delegated and why the trigger fired, and for a batched item that it ran in a parallel batch merged in frame order; omit when everything ran inline
+- **Executed** — deviations from the inline default only: which items were delegated and why the procedure came out delegate, and for a batched item that it ran in a parallel batch merged in frame order; omit when everything ran inline
 - **Sources** — official-doc URLs grounding any framework-specific work, plus any pattern shipped without an authoritative source and why; omit when none
 - **Deviations** — anything that differs from the §1 frame, and why; omit when none
 - **Follow-ups** — what's left or worth watching; omit when none

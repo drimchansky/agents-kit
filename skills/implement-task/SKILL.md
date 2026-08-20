@@ -141,9 +141,9 @@ No diagram → skip every re-check, absence unreported. With one, the three re-c
 
 Execute each step through an **executor** per `./references/workflow/executor-contract.md` and its `implement-task` binding — read both before the first step — on the native engine and adapter defaults in `./references/workflow/agent-fanout.md`.
 
-Default to **serial delegation** because context economy compounds over a run: one executor per step, in plan order, editing the shared tree, launched with the self-contained packet that contract's *Launch packet* requires. While one is in flight the coordinator waits — no step of its own, no shared-tree edit — until it reports. Then the coordinator re-proves the step's full outcome tier on the tree (`./references/workflow/execution-loop.md` § *Two verification tiers*), the executor having run the criterion alone (its pass is advance evidence, never the gate), and records the step (§5); integrated health is not owed here, only at the boundaries the binding declares.
+Default to **serial delegation**. This skill's packet-cost prior for the posture procedure in `./references/workflow/write-mode-posture.md`: a plan step arrives pre-specified in a durable artifact — its `What`, its `Verify` line, and its declared surface are already written — so its packet cost is low. Run that procedure — it sets its own cadence — and delegate the steps it comes out that way for. One executor per step, launched with the self-contained packet that contract's *Launch packet* requires — serially, in plan order and editing the shared tree, unless the steps qualify for the parallel batch below. While a serial executor is in flight the coordinator waits — no step of its own, no shared-tree edit — until it reports. Then the coordinator re-proves the step's full outcome tier on the tree (`./references/workflow/execution-loop.md` § *Two verification tiers*), the executor having run the criterion alone (its pass is advance evidence, never the gate), and records the step (§5); integrated health is not owed here, only at the boundaries the binding declares.
 
-**Inline fallback** when delegation clearly doesn't pay — a trivial step, mid-step user interaction, debugging-heavy work: announce it in chat and record it in `**Executed:**`. A failed or hung executor degrades the same way per that binding's **Fallback**: report it, run the step inline, continue.
+**Inline fallback** when the procedure comes out inline for a step: announce it in chat and record it in `**Executed:**`. A failed or hung executor degrades the same way per that binding's **Fallback**: report it, run the step inline, continue.
 
 #### Automatic parallel batch (full-plan mode)
 
@@ -292,7 +292,7 @@ The shared loop's *Don't Rationalize* list applies in full (`./references/workfl
 - "I'll update the result file at the end" — Update it as you go. End-of-task batching loses the surprises and reasoning that are worth recording.
 - "The worktree verify passed, merging is a formality" — The executor's pass is provisional by contract. Integration is where parallel work breaks; the merge gates are the ones that count.
 - "These steps look independent, I'll parallelize them without declarations" — Undeclared means serial. The `Touches:` declaration is the eligibility evidence, not paperwork.
-- "Delegating this step is overhead, I'll just do it myself" — The default is delegation because context economy compounds over the run. Inline is the contract's named exception — announced and recorded — not a quiet drift back to doing everything in-session.
+- "Delegating this step is overhead, I'll just do it myself" — The default is delegation because a plan step arrives pre-specified, so its packet cost is low. Inline is a procedure outcome — announced and recorded — not a quiet drift back to doing everything in-session.
 
 ### Red flags
 

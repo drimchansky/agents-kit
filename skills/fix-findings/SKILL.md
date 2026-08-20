@@ -118,7 +118,7 @@ are `./references/workflow/fix-findings-recovery.md` § *Red boundary: compariso
 
 **The delegation surface is Confirmed auto-path fixes only.** A fix the gate routed to auto on a **Confirmed** verdict is the only kind an executor may apply. Ask-routed fixes stay here: the coordinator authored the diff the user approved, so nothing is left for an executor to decide, and drafting an ask-batch diff sits too close to judgment to hand off. **Withdrawn and Inconclusive findings are never edited at all** — by this session or by any executor; delegation changes nothing about that.
 
-**Default inline** because a single fix is small and assembling a self-contained packet costs more than making the edit; **delegate when** the remaining run holds several auto-path fixes *and* this fix's packet is self-contained — no mid-fix user interaction expected.
+**Default inline**: this skill's packet-cost prior for the shared posture procedure is high — one fix framed in session has no packet on disk, so one must be reconstructed from context. Run that procedure — `./references/workflow/write-mode-posture.md`, which sets its own cadence — and **delegate** the fixes it comes out that way for, within the Confirmed auto-path surface above.
 
 The executor-contract binding, the write-surface restatement, the announce-and-record duty, the batch
 mechanics, and the failure fallbacks are `./references/workflow/fix-findings-recovery.md` § *Delegation mechanics* — read it before the first delegation. <!-- cold -->

@@ -1,6 +1,6 @@
 # Agent Fan-Out: Probes, Executors, and Engines
 
-How a skill delegates work to other agents, in two modes: **probes** — self-contained read-only questions whose answers come back as text evidence — and **executors** — write-mode subagents that each carry out one coordinator-supplied unit of work for a registered write-mode consumer. **This file is the single source of truth for probe behavior and the routing of native write-mode executors.** Engine commands, the `-x` cross-check, and the probe prompt shapes live in `./probe-engines.md`; the coordinator-side parallel-batch mechanics live in `./parallel-batch.md`. Write-mode executor behavior lives in `./executor-contract.md`; change that behavior there, and change probe contracts, routing, and the write-mode engine registry here.
+How a skill delegates work to other agents, in two modes: **probes** — self-contained read-only questions whose answers come back as text evidence — and **executors** — write-mode subagents that each carry out one coordinator-supplied unit of work for a registered write-mode consumer. **This file is the single source of truth for probe behavior and the routing of native write-mode executors.** Engine commands, the `-x` cross-check, and the probe prompt shapes live in `./probe-engines.md`; the coordinator-side parallel-batch mechanics live in `./parallel-batch.md`; when delegation pays lives in `./write-mode-posture.md`. Write-mode executor behavior lives in `./executor-contract.md`; change that behavior there, and change probe contracts, routing, and the write-mode engine registry here.
 
 ## What a probe is
 
@@ -33,13 +33,11 @@ The invoking skill compares the probe's answer against its own pass:
 
 Write-mode fan-out is limited to the consumers registered here. `./executor-contract.md` governs executor behavior; each consumer's own skill owns how it frames a unit of work and what verdicts it reaches. Every other fan-out consumer uses the probe contract above.
 
-**The registry.** Three consumers launch write-mode executors, each with its own posture:
+**The posture procedure.** The one procedure for when delegation pays lives in `./write-mode-posture.md`, read by a consumer taking the decision. That file owns the cadence as well as the inputs, so no consumer states a cadence of its own.
 
-- **`implement-task`** — unit: one plan step. **Delegate by default**: one serial executor per step, with an inline fallback when delegation clearly doesn't pay.
-- **`implement`** — unit: one framed item. Default **inline** because this skill's units are small and assembling a self-contained packet costs more than making the edit; delegate when the remaining run is multi-unit *and* the unit's packet is self-contained — no mid-unit user interaction expected.
-- **`fix-findings`** — unit: one Confirmed finding's fix application. Same inline default and same delegation trigger, scoped to **Confirmed auto-path fixes**: ask-routed fixes stay with the coordinator, which already authored the approved diff, and Withdrawn or Inconclusive findings are never edited at all.
+**The registry.** Three consumers launch write-mode executors: **`implement-task`**, **`implement`**, and **`fix-findings`**. Each one's unit, packet, edit surface, fallback, merge order, and any restriction on what it may delegate are its binding in `./executor-contract.md` § *Bindings* — `fix-findings`'s delegation surface among them, under that binding's *Outside the delegation surface*. Each consumer's packet-cost prior and default posture live in its own skill.
 
-Delegation by a conditional-posture consumer is **announced in chat and recorded in that skill's report** — that record is what keeps the default from drifting silently into always- or never-delegate. The exact record shape is each skill's own.
+A consumer's departure from its own default — delegation where the default is inline, inline where the default is delegation — is **announced in chat and recorded in that skill's report**; that record is what keeps the default from drifting silently into always- or never-delegate. The exact record shape is each skill's own.
 
 **Judgment never delegates**, under any posture. The coordinator keeps unit framing, each unit's
 outcome re-proof on its own tree, the consumer-declared integrated-health boundary, the report

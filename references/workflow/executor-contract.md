@@ -52,7 +52,7 @@ Each consumer binds the body above to its own unit: what the unit is, what its p
 
 ### implement-task
 
-One plan step from a task folder, delegated by default.
+One plan step from a task folder.
 
 - **Unit** — one plan step, its verify criterion the step's plan-defined `Verify` line. The executor proves that criterion only; the coordinator re-proves the full unit-outcome tier on the integrated tree and owns the health boundary.
 - **Packet** — the step's `What` and `Verify` text, the full text of every cited goal, the edit surface below, and the relevant task context with the absolute task-folder path. Domain guidance resolves from the task's `**Domain:**` header, default `engineering`.

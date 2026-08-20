@@ -8,10 +8,6 @@ Each entry names the contract section it annotates and records the reasoning beh
 
 `./agent-fanout.md` § *What a probe is*. That isolation is a feature, not a limitation; it's what makes a probe worth consulting where the session's own read might be biased (grounding a plan it helped write, reviewing a diff whose intent it has already internalized).
 
-## Why `implement-task` is the delegate-by-default posture
-
-`./agent-fanout.md` § *Write-mode routing*, the registry's `implement-task` bullet. This is the proven posture the other two are calibrated against.
-
 ## Why candidates pool by location before any of them is settled
 
 `./agent-fanout.md` § *Merge contract*, the pooling bullet. In the measured head-to-head of 2026-08-08 a fleet reported one branch of a two-branch defect and left the sibling unreported: each probe stopped where its own concern led it, and nothing downstream looked at the spot as a whole. Grouping by location is what brings the corroborating and contradicting reads on one spot together before any verdict is taken, and the session's own walk of the surrounding branches is what reaches the half no probe was pointed at.
