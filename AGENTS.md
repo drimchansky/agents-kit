@@ -40,16 +40,16 @@ A contract file's header often enumerates who consumes it. Most such enumeration
 
 - **Derivable citation lists are not maintained.** A "Cited by …" enumeration the reverse search reproduces does not belong in a file header: it goes stale silently — nothing fails when a new consumer forgets to add itself — and it duplicates the search that would have found the truth. Remove it, and identify consumers by running the search.
 - **Semantic registries are maintained**, and each states in place why it can't be derived — which member consumes the contract without citing it, or what authored rationale the entries carry beyond membership.
-- **Sanctioned copies carry an explicit mirror note.** A deliberate self-contained copy of contract content says it is a copy and names the mirror obligation, as `references/workflow/ideation.md:5` does for `refine-idea-chat`: "When the method changes here, mirror the change into `refine-idea-chat`."
+- **Sanctioned copies carry an explicit mirror note.** A deliberate self-contained copy of contract content says it is a copy and names the mirror obligation, as `references/engineering/code-style.md:14` does for the executor adapters: "When this section changes, mirror the change into both."
 
 Derivable — these enumerations were removed and are not re-added; find these consumers by reverse search:
 
-- `references/workflow/task-layout.md:3` — the ten-skill "Cited by …" sentence. It was already stale, omitting `review-docs` and `stage-doc`: the failure mode in miniature.
-- `references/workflow/ticket-format.md:3` — the four-consumer "Cited by …" sentence.
+- `references/workflow/task-layout.md:3` — the "Cited by …" sentence. It was already stale, omitting `review-docs`: the failure mode in miniature.
+- `references/workflow/ticket-format.md:3` — the "Cited by …" sentence.
 - `references/workflow/decomposition.md:3` — "Cited by the `decompose-task` skill, which runs the method end to end." The neighboring sentence splitting when/where against how across `plan-task`, `task-layout.md`, and that file is an ownership boundary, not a citation list; it stays.
 - `references/workflow/agent-fanout.md:3` — the citer enumeration (the review skills' `-x`, the three write-mode consumers, the triage-verify composites, `maintain`, `CORE_RULES.md`). Only the header enumeration is derivable; the write-mode registry in its § *Write-mode routing* is semantic and stays.
-- `references/engineering/rules.md:3` — the ten-skill loader enumeration, each named skill's `SKILL.md` citing the overlay (confirmed by grep). The `commit` exception is semantic and stays: `commit` cites the file only to state that it does *not* load it, so a reverse search would misread that citation as membership — the exception can't be re-derived from the citation graph.
-- `references/documentation/rules.md:3` — the three-skill pack-contributed loader enumeration, each named skill's `SKILL.md` citing the overlay (confirmed by grep). Unlike the engineering entry, nothing semantic accompanies it — the pack has no `commit`-style exception.
+- `references/engineering/rules.md:3` — the loader enumeration, each named skill's `SKILL.md` citing the overlay (confirmed by grep). The `commit` exception is semantic and stays: `commit` cites the file only to state that it does *not* load it, so a reverse search would misread that citation as membership — the exception can't be re-derived from the citation graph.
+- `references/documentation/rules.md:3` — the pack-contributed loader enumeration, each named skill's `SKILL.md` citing the overlay (confirmed by grep). Unlike the engineering entry, nothing semantic accompanies it — the pack has no `commit`-style exception.
 
 Semantic — maintained, each with the reason it can't be derived:
 
@@ -67,5 +67,4 @@ Semantic — maintained, each with the reason it can't be derived:
 
 Sanctioned copy — mirror note required:
 
-- `references/workflow/ideation.md:5` — `refine-idea-chat` is a portable skill that cannot cite references, so it carries a self-contained copy of Phases 1–2 under the explicit mirror instruction quoted above. That is the required form for any sanctioned copy.
 - `references/engineering/code-style.md:14` — `agents/executor.md` and `agents/executor.toml` carry a condensed digest of § *Comments* in their system-prompt text, so a delegated executor holds the comment discipline without a read hop. One mirror note at the home covers both adapter copies, since the two say the same thing in each host's format; when the section changes, both change with it.

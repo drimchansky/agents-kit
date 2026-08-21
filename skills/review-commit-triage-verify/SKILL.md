@@ -32,7 +32,7 @@ Before phase 1, confirm the working tree agrees with the index on every staged p
 
 This is a precondition, not a drift check: it can be false from the first moment. Catching it here costs nothing; catching it at phase 3 would waste the whole review. Fails → stop, name the diverging paths, and say they need staging or stashing first. Passing here is also what makes phase 3's re-run a genuine drift check.
 
-`/review-commit` alone carries no such constraint — it reads the index, never the tree. This one belongs to the verify phase, so it binds only this composite. Within `../review-commit-fix-loop/SKILL.md` it is satisfied by construction — that loop stages with `git add -A` immediately before every pass, leaving tree and index in agreement on every staged path — which is what makes its stage-before-review ordering load-bearing here. Only a standalone run of this composite can fail the check.
+`/review-commit` alone carries no such constraint — it reads the index, never the tree. This one belongs to the verify phase, so it binds only this composite. A caller that stages the whole change immediately before invoking it satisfies the check by construction — tree and index then agree on every staged path — so what the check bites on is a run over a partly staged tree, which is the case it exists to catch.
 
 ## Phase 1 — Review
 
@@ -46,7 +46,7 @@ Execute `../triage-findings/SKILL.md` with the source pinned to the phase-1 find
 
 ## Phase 3 — Verify
 
-First re-confirm the reviewed identity, both halves of it: recompute the staged-set digest (`git diff --cached | git hash-object --stdin`) and check it still matches **this run's own** Reviewed line — the one phase 1 printed, never one carried from an earlier pass of an outer loop, whose digest is expected to differ because that loop re-stages after every fix phase — and re-run Setup's working-tree check. Both held when the review started, so a mismatch now is genuine drift — the index or the tree moved under the pipeline. Either → stop and report: probes read the live working tree, and a moved index or tree verifies code the review didn't see.
+First re-confirm the reviewed identity, both halves of it: recompute the staged-set digest (`git diff --cached | git hash-object --stdin`) and check it still matches **this run's own** Reviewed line — the one phase 1 printed — and re-run Setup's working-tree check. Both held when the review started, so a mismatch now is genuine drift — the index or the tree moved under the pipeline. Either → stop and report: probes read the live working tree, and a moved index or tree verifies code the review didn't see.
 
 Fan out per `./references/workflow/agent-fanout.md` — its probe contract and merge contract bind, with engines and prompt shapes per `./references/workflow/probe-engines.md` here; this skill is a registered consumer. One probe per batch on the **native** engine, launched in parallel — a zone's findings share one investigation context; merging two small zones into one probe is fine when their concerns overlap. Default to probing every finding, because a wrong minor finding still costs the author time; on a large review, scoping probes to Major/Critical is fair economy — scoped-out findings take the verdict `Unverified (out of probe scope)`.
 

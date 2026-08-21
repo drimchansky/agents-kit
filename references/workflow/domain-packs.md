@@ -22,9 +22,9 @@ quality checklists apply — lives in a **domain pack** under `references/<domai
 
 Engineering is the first and reference domain pack: `references/engineering/`. Documentation is
 the second: `references/documentation/` — a deliberately partial pack (rules overlay, verification
-recipes, ADR/RFC format checklists, Mermaid cheatsheets) that also contributes the `stage-doc`,
-`review-docs`, and `prepare-diagram` skills. New domains are added as sibling directories without
-touching the spine.
+recipes, ADR/RFC format checklists, Mermaid cheatsheets) that also contributes the `review-docs`
+and `prepare-diagram` skills. New domains are added as sibling directories without touching the
+spine.
 
 ## What a domain pack provides
 
@@ -81,7 +81,7 @@ just under `**Status:**`:
   exists — infers the effort's domain from the source doc and stamps each materialized part's own
   `**Domain:**` in its seeded `CONTEXT.md`.
 - **Engineering-only skills** — `review-commit`, `commit`, `review-pr`, `update-pr-description`, `publish-pr-review`, `triage-findings`,
-  `verify-issue`, `fix-findings`, `challenge-task`, `review-commit-triage-verify`, `review-pr-triage-verify`, `triage-findings-verify`, `review-commit-fix-loop`,
+  `verify-issue`, `fix-findings`, `challenge-task`, `review-commit-triage-verify`, `review-pr-triage-verify`, `triage-findings-verify`,
   `review-pr-triage-verify-reconcile` — operate on a codebase
   or diff, not a task folder, and load `references/engineering/` unconditionally. They are, in
   effect, skills contributed by the engineering pack; other domains contribute skills the same way
@@ -95,11 +95,10 @@ just under `**Status:**`:
   announce a domain mismatch before running, as `challenge-task` does, never to swap its own overlay,
   which stays engineering unconditionally. Pack membership is about which domain contributes a skill,
   not about which files it must read.
-- **Documentation-contributed skills** — `stage-doc` (a doc task's staging lifecycle),
-  `review-docs` (existing docs' accuracy against the codebase, plus the whole-doc quality pass),
-  and `prepare-diagram` (a Mermaid diagram for a provided subject) — load
-  `references/documentation/` unconditionally: the same shape as the engineering-only set —
-  the pack that contributes a skill is the pack it loads.
+- **Documentation-contributed skills** — `review-docs` (existing docs' accuracy against the
+  codebase, plus the whole-doc quality pass) and `prepare-diagram` (a Mermaid diagram for a
+  provided subject) — load `references/documentation/` unconditionally: the same shape as the
+  engineering-only set — the pack that contributes a skill is the pack it loads.
 - **Pack-free skills** — `archive-task`, `backlog-task`, `maintain`, `prepare-ticket`, and the reconcile
   composites `resume-task-reconcile` / `review-task-reconcile` — read the neutral core but
   resolve **no** `**Domain:**` pack of their own, for three different reasons. `archive-task`,
@@ -133,7 +132,7 @@ For a spine skill acting on a task:
    verifying, etc.).
 
 Engineering-only skills skip step 2 and use `engineering` directly, and the
-documentation-contributed `stage-doc` / `review-docs` / `prepare-diagram` likewise skip it and use
+documentation-contributed `review-docs` / `prepare-diagram` likewise skip it and use
 `documentation` — except `commit`, which for the reason given above runs only step 1. Pack-free
 skills (`archive-task`, `backlog-task`, `maintain`, `prepare-ticket`, `resume-task-reconcile`,
 `review-task-reconcile`) run only step 1 — they apply the neutral core and resolve no domain pack

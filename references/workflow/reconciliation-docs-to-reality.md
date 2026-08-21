@@ -15,7 +15,7 @@ Exactly four task files, and nothing else:
 
 `diagram.md` is **never** edited in either direction — repainting is authoring, which fails the obvious-fixes bar and has no weaker direction to move in. Diagram drift is flagged, never repaired (shared repairs below).
 
-`goals.md` and the upstream `ticket.md` are **never** edited: they are the user's contract. A goal needing a rewrite gets its suggested text printed for the user to apply; a changed *ask* is surfaced for the user to update the ticket. An engineer answer still goes to the user as text, not into the file. A doc task's **deliverable** is outside the surface for the same reason as the diagram — authored content, whose `**Published:**` line is `stage-doc`'s to flip or re-date: the sweep reads it, the never-annotated rule routes what it finds, nothing here writes it. This direction never re-runs the acceptance gate and never executes plan work.
+`goals.md` and the upstream `ticket.md` are **never** edited: they are the user's contract. A goal needing a rewrite gets its suggested text printed for the user to apply; a changed *ask* is surfaced for the user to update the ticket. An engineer answer still goes to the user as text, not into the file. A doc task's **deliverable** is outside the surface for the same reason as the diagram — authored content, whose `**Published:**` line is the user's to flip or re-date: the sweep reads it, the never-annotated rule routes what it finds, nothing here writes it. This direction never re-runs the acceptance gate and never executes plan work.
 
 ## Weaken, never strengthen
 

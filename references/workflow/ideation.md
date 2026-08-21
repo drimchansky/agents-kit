@@ -1,8 +1,6 @@
 # Ideation Method: Diverge then Converge
 
-The shared two-phase ideation method behind `refine-idea` and `refine-idea-chat`. **This file is the single source of truth for the method.** Each skill runs these two phases, then differs only in how it outputs the result — `refine-idea` writes a `CONTEXT.md` one-pager to disk and hands off to `plan-task`; `refine-idea-chat` posts the one-pager as a chat message and writes nothing.
-
-`refine-idea` cites this file directly. `refine-idea-chat` is a portable utility skill meant to run without the kit installed, so it can't cite references — it carries a self-contained copy of Phases 1–2 (with its own non-citing wording of the grounding step). When the method changes here, mirror the change into `refine-idea-chat`.
+The two-phase ideation method behind `refine-idea`, which cites this file directly. **This file is the single source of truth for the method.** The skill runs these two phases, then writes the result as a `CONTEXT.md` one-pager and hands off to `plan-task`.
 
 The two phases are sequential. Don't skip them to jump straight to the one-pager.
 
@@ -50,4 +48,4 @@ After the user reacts to Phase 1 (signals which variations resonate, pushes back
 
 **Be honest, not supportive.** A good ideation partner is not a yes-machine. If a direction is weak, say so with kindness and specificity.
 
-After converging, hand the chosen direction, its key assumptions, MVP scope, and "Not Doing" list to the skill's output phase. The testable, plan-specific goals are not written here — `refine-idea` defers them to `plan-task`'s goals step, and `refine-idea-chat` leaves them for whatever follows the chat.
+After converging, hand the chosen direction, its key assumptions, MVP scope, and "Not Doing" list to the skill's output phase. The testable, plan-specific goals are not written here — `refine-idea` defers them to `plan-task`'s goals step.

@@ -29,7 +29,6 @@ The user provides a rough concept, problem, or "what if" question. They may incl
 
 - The user already knows what they want to build and just needs a plan → use `plan-task`
 - The change is well-scoped and the problem is concrete → use `plan-task`
-- The user wants to sharpen an idea without writing anything to disk → use `refine-idea-chat` (chat-only sibling)
 - The user is asking how something works, not deciding what to build → use `explore`
 
 If the idea is already concrete enough to plan, say so and recommend `plan-task` directly.

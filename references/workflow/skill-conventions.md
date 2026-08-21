@@ -11,9 +11,9 @@ last section, which rules on *when* a file a skill cites is loaded rather than o
 behaves. It sits here for the same reason — decided once, then propagated to the skills.
 
 The rule covers variations of **one skill's** behavior. Sibling skills that share a method but own
-different deliverables — `refine-idea` and `refine-idea-chat` (a saved one-pager feeding `plan-task`
-vs. a chat-only one) — are two skills, not a base plus a variation, and sit outside this file; each
-carries its full contract.
+different deliverables — `implement-task` and `implement` (the same execution loop against a task
+folder's plan vs. an ask framed in the session) — are two skills, not a base plus a variation, and
+sit outside this file; each carries its full contract.
 
 ## The rule
 
@@ -31,16 +31,9 @@ rather than leaving the classification implicit.
 
 **Iteration doesn't change the shape.** A composite may repeat its phase sequence under a stated
 cap — each pass is still whole phases with clean seams, so the classification stays composite; the
-cap, the exit criterion, and the per-pass display economy live in the composite's own file.
-`review-commit-fix-loop` is the worked example, and every one of those three is its own: three
-review passes, an exit on a pass leaving no open Confirmed finding of **any** severity, and one
-progress line per pass. Iteration adds one decision a linear composite never faces — which passes
-receive a forwarded flag — and the composite states that policy in its Flags section. A write
-surface likewise doesn't decide the shape — per this file's intro it lives in the skill files, with
-the member that performs the edits. That composite, the first iterated one, is thus also the kit's
-first composite that writes **code**; it writes working-tree code and stages it, mutating no Git
-state beyond the index — it commits nothing, branches nothing, and pushes nothing. The reconcile
-composites wrote before it and write still, but they write task docs.
+cap, the exit criterion, and the per-pass display economy live in the composite's own file. A write
+surface doesn't decide the shape either — per this file's intro it lives in the skill files, with
+the member that performs the edits.
 
 ### The diagnostic
 
@@ -68,7 +61,6 @@ composite. A genuinely modal flag touches the one phase it modifies and nothing 
 - `resume-task-reconcile` — print the resume brief, then reconcile the docs to it.
 - `review-task-reconcile` — print the plan assessment, then reconcile the docs and fold in answers.
 - `decompose-task` — propose the cut of an approved source into ordered sibling parts, then materialize each confirmed part (`prepare-ticket` per part + a seeded `CONTEXT.md`).
-- `review-commit-fix-loop` — iterated: stage the whole uncommitted change, review the staged diff (`review-commit-triage-verify`), fix the Confirmed findings (`fix-findings`), stage and review again — until a pass leaves no open Confirmed finding of any severity, a fix phase applies nothing, or 3 review passes have run. The kit's one composite that writes **code**, and it writes the index with it: it stages, and it never commits. Re-staging at the top of every pass is what lets each pass see the previous pass's fixes, the new files among them — `fix-findings` never writes the index, so a loop that staged once would hand pass 2 the same object pass 1 already read.
 - `review-pr-triage-verify-reconcile` — run the verified review of a PR or branch (`review-pr-triage-verify`), then append one plan step per Confirmed finding the engineer accepts to a task folder's `plan.md`, recording the append in `result.md`. Composite rather than a flag on the base pipeline: the write runs entirely after phase 3's Output is complete and printed, so there is a clean seam to split at, and the base pipeline stays whole, unaware, and read-only — its CRITICAL end-to-end read-only guarantee is what a conditional write inside it would have broken, and the "(only when a task is in play)" branches through its Setup, phase 3, Output, and checklist are this file's own tell for a misclassified flag. Its write surface is task docs only, and narrower than its `*-reconcile` siblings': `plan.md` and `result.md`, never the other two core files. Its reconcile phase is the second member of the session → docs reconciliation direction, and the one whose finding set is pinned to a producing phase rather than derived from the folder or the session.
 
 A composite passes a phase's own modal flags through to that phase unchanged — the flags below stay

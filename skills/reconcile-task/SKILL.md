@@ -73,7 +73,7 @@ Walk the current session and collect everything material the docs don't already 
 - **Plan changes** — a step whose scope, verify criterion, or ordering the session changed.
 - **A changed ask** — the session revealed the product requirement itself shifted from what `ticket.md` states; it routes by the *Changed ask* row in `./references/workflow/reconciliation-session-to-docs.md` § *`reconcile-task` — session findings*.
 
-Group findings by target file (`CONTEXT.md` / `goals.md` / `plan.md` / `result.md`) — the ticket and a doc task's deliverable are read-only, so a changed ask lands under "Not reconciled" for the user, and a finding on the deliverable lands there too — its `**Published:**` line for `stage-doc`, its content for `implement-task`.
+Group findings by target file (`CONTEXT.md` / `goals.md` / `plan.md` / `result.md`) — the ticket and a doc task's deliverable are read-only, so a changed ask lands under "Not reconciled" for the user, and a finding on the deliverable lands there too — its `**Published:**` line for the user, its content for `implement-task`.
 
 ### 4. Check the Cited External References
 
