@@ -10,7 +10,7 @@ disable-model-invocation: true
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. Load the domain pack: take the task's `**Domain:**` (default `engineering`; infer from the request when there's no `CONTEXT.md` yet, and record it in the `CONTEXT.md` you write) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for (`exploration.md`, …). If the domain has no pack, run the neutral methodology and say so.
 
-This skill turns a raw idea into a sharp, actionable concept worth building. It runs three phases — divergent exploration, convergent evaluation, and a written one-pager — and produces an artifact at `<task-folder>/CONTEXT.md` (canonically `.agents/tasks/<slug>/CONTEXT.md`) that `plan-task` and `implement-task` later consume as the static grounding context for the task.
+This skill turns a raw idea into a sharp, actionable concept worth building. It runs three phases — divergent exploration, convergent evaluation, and a written one-pager — and produces an artifact at `<task-folder>/CONTEXT.md` that `plan-task` and `implement-task` later consume as the static grounding context for the task.
 
 The user provides a rough concept, problem, or "what if" question. They may include partial context, constraints, or prior thinking. The idea may be vague on purpose — that's the input.
 
@@ -36,11 +36,11 @@ If the idea is already concrete enough to plan, say so and recommend `plan-task`
 
 ## Output File
 
-**Location:** `<task-folder>/CONTEXT.md` — canonically `.agents/tasks/<slug>/CONTEXT.md` at the project root; a user-supplied destination path overrides the location, interpreted per the *Destination paths* rule in `./references/workflow/task-layout.md` (cite it, don't restate it).
+**Location:** `<task-folder>/CONTEXT.md` — the folder resolved per the **resolve-or-create** and *Destination paths* rules in `./references/workflow/task-layout.md`, whose precedence decides where a new one lands (cite it, don't restate it).
 
 - `<slug>` — derive from the idea: 2–5 lowercase kebab-case words capturing the gist (e.g. `weekly-digest-email`, `replace-cache-invalidation`, `internal-search-rebuild`). Don't ask the user — derive it. The slug names the **task folder** that will hold this `CONTEXT.md` plus the goals, plan, and result for the effort — the folder layout and discovery rules are defined in `./references/workflow/task-layout.md`.
 
-If the resolved task folder doesn't exist, create it — `.agents/tasks/<slug>/` when no destination was given. If a `CONTEXT.md` already exists at that path, read it first and ask whether to overwrite or pick a different slug — don't clobber an existing task's context.
+If the resolved task folder doesn't exist, create it where that precedence puts it. If a `CONTEXT.md` already exists at that path, read it first and ask whether to overwrite or pick a different slug — don't clobber an existing task's context.
 
 `CONTEXT.md` is the **static grounding context for the task**: the chosen direction, the assumptions it depends on, the scope decisions already made, plus any external references (tickets, links, pasted specs) the user adds later. It is read by the plan and its result inside the folder. Don't rewrite it during refinement — refine through conversation, then write the final version.
 
@@ -67,7 +67,7 @@ This skill runs the shared two-phase ideation method — **Phase 1 (Diverge)** a
 Write the one-pager to the resolved task folder's `CONTEXT.md`. Then post a short summary in this exact shape, so the user can copy-paste the next command. For a task whose root is the canonical one or a registered one, where the bare slug resolves:
 
 ```
-Context: .agents/tasks/<slug>/CONTEXT.md
+Context: <task-folder>/CONTEXT.md
 Slug: <slug>
 
 Next: /plan-task <slug>

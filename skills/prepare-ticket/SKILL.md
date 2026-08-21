@@ -29,7 +29,7 @@ If you can't write testable criteria from the description — scope is fuzzy, "d
 
 The ticket is always written to a file. Decide where:
 
-- **Seeding a task folder** (the workflow starting point) — when the user names a task folder or slug, or asks to start a task, the ticket is the folder's role-named `ticket.md`. Resolve or create the folder per the *resolve-or-create* and *Destination paths* rules in [`./references/workflow/task-layout.md`](./references/workflow/task-layout.md): derive a 2–5-word kebab-case slug from the task and create `.agents/tasks/<slug>/` when no path is given, or use the task-folder path/slug the user supplied. Write `<task-folder>/ticket.md`. If a `ticket.md` already exists there, read it and ask whether to update it or pick a different slug — never silently overwrite.
+- **Seeding a task folder** (the workflow starting point) — when the user names a task folder or slug, or asks to start a task, the ticket is the folder's role-named `ticket.md`. Resolve or create the folder per the *resolve-or-create* and *Destination paths* rules in [`./references/workflow/task-layout.md`](./references/workflow/task-layout.md): use the task-folder path/slug the user supplied, or derive a 2–5-word kebab-case slug from the task and let that precedence place the new folder. Write `<task-folder>/ticket.md`. If a `ticket.md` already exists there, read it and ask whether to update it or pick a different slug — never silently overwrite.
 - **A target path in the arguments** (standalone) — that's the file. If it already exists, read it and ask whether to update it or write elsewhere.
 - **No path and no task intent** — suggest `<kebab-case-title>.md`, or offer to seed a task folder instead, and confirm before writing.
 

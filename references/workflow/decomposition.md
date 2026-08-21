@@ -59,7 +59,7 @@ The confirmation is **one batched round**: the cut, the numbering, the parent di
 
 Per confirmed part, in order:
 
-1. **Folder** — `<parent>/NN-<slug>/` (plain `<slug>/` when unordered). A folder already present at the confirmed path is a stop-and-ask: materialization never writes into an existing task folder and never silently overwrites an existing file.
+1. **Folder** — `<parent>/NN-<slug>/` (plain `<slug>/` when unordered). The part's slug clears the cross-root collision check `task-layout.md` § *Discovery rules for skills* binds to every **resolve-or-create** member first. A folder already present at the confirmed path is a stop-and-ask: materialization never writes into an existing task folder and never silently overwrites an existing file.
 2. **`ticket.md`** — the part's acceptance sketch sharpened to the full bar in `ticket-format.md`; self-contained (a reader with no access to the source session can act); its References cite the source doc.
 3. **`CONTEXT.md` seed** — the full schema skeleton per `context-schema.md`, every section heading present, placeholders where nothing is decided:
     - `**Status:** seeded-by-decompose-task` (the registered origin marker — `task-lifecycle.md`) · `**Domain:**` inferred per part — and when a part is clearly non-code with no clear domain, asked in the confirmation round rather than stamped wrong (`context-schema.md`'s field note).
