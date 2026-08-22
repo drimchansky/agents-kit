@@ -93,6 +93,10 @@ Tag each finding `info` (FYI), `warn` (review before resuming), or `block` (plan
 
 **Always render the "Drift since plan" heading** — print `No drift detected.` when clean; the absence line is the verification statement.
 
+**Commits since watermark.** When the task acts on a resolvable git repository holding a path some plan step names, scan for work that reached the repo outside this folder's gates. `./references/workflow/reconciliation-commits.md` owns the mechanics — the watermark entry on `**Pointers:**`, the `<sha>..HEAD` enumeration, the path set a step names, pending → candidate against checked-only → `[info]`, and the two degenerate cases — so run the scan from there rather than restating it here. Report each kept commit with the step(s) it nominates; a nomination is a lead for the next reconcile run, never a done claim.
+
+The brief only **reads** — `git log`, `git merge-base`. It never seeds, re-seeds, or advances the watermark, and never re-runs a candidate's `**Verify:**`; both are reconcile-phase writes (that file § *Read/write split*). Render the section whenever that file's two conditions hold — printing the commit list, the missing-baseline line, or the orphaned line — and omit it entirely when the repository does not resolve, or no path a step names exists under it; an omitted section scans nothing and leaves nothing for the reconcile phase to seed.
+
 ### 5. Produce the Brief
 
 Assemble per the output template below and print it to chat. This is the last step; no file is written.
@@ -148,6 +152,13 @@ Assemble per the output template below and print it to chat. This is the last st
 
 (or, when clean: `No drift detected.`)
 
+## Commits since watermark
+
+- `abc1234` (2026-08-20) — `src/auth/handler.ts` — nominates Step 3 (pending; verifying it is the reconcile phase's act)
+- `def5678` (2026-08-21) — `src/cache/ttl.ts` — [info] touches only checked steps' paths (Step 1)
+
+(or: `No commits since <sha> touch a step's paths.` / `No watermark recorded — baseline missing; nothing scanned. A reconcile run seeds it.` / `Watermark <sha> is no longer an ancestor of HEAD — orphaned; nothing scanned. A reconcile run re-seeds it.` — omit the whole section when the repository does not resolve, or when no path a step names exists under the one that did)
+
 ## Open questions
 
 - <deduped from CONTEXT.md "Open Questions" + plan "Open Questions" + any goals marked `_(unresolved: ...)_`; questions the result file already answers are removed, and the answer surfaced in their place>
@@ -157,7 +168,7 @@ Assemble per the output template below and print it to chat. This is the last st
 <2–3 sentences naming the concrete first action — file to open, command to run (e.g. `/implement-task <slug>`), or a specific drift item to resolve before resuming>
 ```
 
-Omit sections with nothing to report — **except** "Drift since plan", which always renders.
+Omit sections with nothing to report — **except** "Drift since plan", which always renders, and "Commits since watermark", which renders on the two conditions Step 4 fixes.
 
 ## Don't Rationalize
 
@@ -166,13 +177,14 @@ Omit sections with nothing to report — **except** "Drift since plan", which al
 - "The result file is recent, skip the drift check" — Recent ≠ unchanged. The implementation can shift after a step lands.
 - "User said 'resume', so I'll just start coding" — In this skill, _resume_ means brief, then decide; the user picks the next move.
 - "The ticket link is right there; one fetch would sharpen the brief" — This skill sweeps no citations, by design; point the user at `resume-task-reconcile`. Reading the artifact a *claim* points at stays in scope — that's the drift check.
+- "A commit touched Step 3's files, so Step 3 is done" — A commit nominates; it never evidences (`./references/workflow/reconciliation-commits.md`). A revert touches the same paths. Report the nomination and leave the box to the reconcile phase's verification.
 
 ## Verification
 
 Confirm the protocol invariants before finishing:
 
 - [ ] Task folder resolved per `task-layout.md` (asked when ambiguous); all four core artifacts read (plus `ticket.md`, `diagram.md`, and `observations.md` when present); a missing `goals.md` flagged
-- [ ] Nothing written, edited, renamed, or deleted anywhere — save a user-confirmed activation `mv` of a backlogged folder; no git mutation, no reference sweep run, no `BRIEF.md` or scratch briefing file
+- [ ] Nothing written, edited, renamed, or deleted anywhere — save a user-confirmed activation `mv` of a backlogged folder; no git mutation, no watermark seeded or advanced, no candidate's `**Verify:**` re-run, no reference sweep run, no `BRIEF.md` or scratch briefing file
 - [ ] State reconstructed from checkbox markers, not prose; `**Blocked:**` / `**In review:**` sections surfaced verbatim; a `skipped` plan reported as abandoned, not drift
-- [ ] Drift check compared done/shipped claims against current reality — partitioned shipped vs. pending, `## Current state` claims included, every `met` goal re-checked on a `done` plan, a missing `## Acceptance` on a `done` plan flagged `block` — with "Drift since plan" rendered even when clean
+- [ ] Drift check compared done/shipped claims against current reality — partitioned shipped vs. pending, `## Current state` claims included, every `met` goal re-checked on a `done` plan, a missing `## Acceptance` on a `done` plan flagged `block` — with "Drift since plan" rendered even when clean, and "Commits since watermark" reporting the commit list, the missing baseline, or the orphan wherever the repository resolves and a path a step names exists under it — omitted, scanning nothing, where either condition fails
 - [ ] Brief printed to chat with the template sections and a concrete "Where to start" action

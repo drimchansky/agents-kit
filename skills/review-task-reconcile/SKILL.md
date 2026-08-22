@@ -89,16 +89,19 @@ read both before editing; together they are the single source of truth and this 
 mechanics of its own. The shared file defines the shared mechanics (consent model, the external
 reference check, annotation formats, the append-only `## Reconciliation` record, the
 `## Current state` refresh, the sequence ending in the printed change list); the direction file
-defines the direction rules (write surface, weaken-never-strengthen), the shared repairs, and — in
-its `review-task-reconcile` mapping section — this pipeline's finding-type → edit mapping.
+defines the direction rules (write surface, repairs weaken while advances go through the shared
+engine), the shared repairs, and — in its `review-task-reconcile` mapping section — this pipeline's
+finding-type → edit mapping.
 
 The shared file's § *External reference check* runs in this phase, its `## References` block printed
 before any edit. It is this pipeline's only source of dead-link and reference-answered-question
 findings.
 
 The assessment's Questions are put to the engineer and folded back into the plan per the direction
-file's § *`review-task-reconcile` — assessment findings*, bounded by its § *Weaken, never
-strengthen* for what an engineer answer may move.
+file's § *`review-task-reconcile` — assessment findings*, bounded by its § *Repairs weaken; advances
+go through the shared engine* for what an engineer answer may move: an answer refines plan content,
+and any advance goes through `./references/workflow/reconciliation.md` § *Strengthen only on
+verified evidence*, re-verified in this run.
 
 Findings that need real work (a step that must be rethought, a goal the user has to rewrite, code
 changes) stay unfixed, listed under "Not reconciled" with the next skill named (`plan-task`,
@@ -134,6 +137,9 @@ Confirm the protocol invariants before finishing:
       review's Questions were put as one batched round with only answered items applied —
       `./references/workflow/reconciliation-docs-to-reality.md`
       § *`review-task-reconcile` — assessment findings*
+- [ ] Every box checked or `**Status:**` advanced went through
+      `./references/workflow/reconciliation.md` § *Strengthen only on verified evidence*,
+      re-verified in this run — an engineer's answer refines plan content, never state
 - [ ] The reference check ran in Phase 2 with its `## References` block printed before any edit —
       rendered even when nothing was in scope — and `observations.md` rewritten with the swept
       lines, or removed in that case — § *External reference check*

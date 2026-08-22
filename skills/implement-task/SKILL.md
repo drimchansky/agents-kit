@@ -100,7 +100,7 @@ Create `<task-dir>/result.md` when it doesn't already exist, with this header:
 ## Current state
 _Updated: YYYY-MM-DD_
 - **Status:** executing — <one line: where things stand>
-- **Pointers:** <branch `…`, PR #… (url), SHA …, ticket … — or "none yet">
+- **Pointers:** <branch `…`, PR #… (url), SHA …, ticket …, plus the `SHA <sha> (recorded YYYY-MM-DD)` watermark entry when one is present — or "none yet">
 - **Next:** <one line>
 
 ---
@@ -218,7 +218,7 @@ Merged parallel-batch steps are the exception on both counts: each keeps its own
 
 A failed checkpoint records the `**Asserted:**` and `**Health:**` results that ran (or `not run`), `**Outcome:** failed`, and the failure details, then follows Stop-the-Line. Do not move on.
 
-**After appending any section** — step, full-run, checkpoint, or health boundary — rewrite `## Current state` to match on its cited contract: `_Updated:_` refreshed, status gloss, `**Pointers:**` (the branch/PR/SHA/ticket currently in play), `**Next:**`, superseded detail dropped. **When a step records a decision**, append a dated one-liner to the result's `## Decision log`, creating it directly below `## Current state`'s closing `---` when absent, as the first section of the append-only log:
+**After appending any section** — step, full-run, checkpoint, or health boundary — rewrite `## Current state` to match on its cited contract: `_Updated:_` refreshed, status gloss, `**Pointers:**` (the branch/PR/SHA/ticket currently in play, plus any commit watermark entry carried forward untouched — `./references/workflow/reconciliation-commits.md` § *The watermark*), `**Next:**`, superseded detail dropped. **When a step records a decision**, append a dated one-liner to the result's `## Decision log`, creating it directly below `## Current state`'s closing `---` when absent, as the first section of the append-only log:
 
 ```markdown
 - YYYY-MM-DD — <decision> (→ <result anchor / CONTEXT section / plan step / DECISIONS.md #N>)
@@ -305,6 +305,7 @@ Confirm the protocol invariants before finishing:
 - [ ] All four core artifacts read before starting (plus `ticket.md` when present); a missing `goals.md` surfaced, never invented
 - [ ] Result file initialized and kept paired with the plan per `./references/workflow/task-lifecycle.md` — statuses flip together, `**Completed:**` line only at `done`
 - [ ] `## Current state` rewritten at every status flip, after every appended section, and at finalize — on its cited contract, never claiming a stronger state than `**Status:**`
+- [ ] Any `**Pointers:**` commit watermark entry carried forward unchanged at every one of those rewrites — never advanced, never dropped, and never created here; seeding one is a reconciler's act (`./references/workflow/task-authorship.md`)
 - [ ] Every completed step: its full unit-outcome tier actually run and passed — the plan-defined `Verify` criterion plus the per-unit checks the resolved domain's `verification.md` adds — checkbox flipped with a link to its result section
 - [ ] Integrated health established at every boundary the **Health boundaries** binding declares — with a checkpoint or tail batch sharing that one boundary, a later finalization freshly recorded, and current against the final unchanged tree
 - [ ] Every checkpoint ran its named assertions, recorded distinct `Asserted`, `Health`, and `Outcome` results, and passed before work continued

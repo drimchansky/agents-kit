@@ -14,7 +14,7 @@ This skill closes the gap a working or design session opens: things get decided,
 
 **CRITICAL**: This skill writes to the task docs by design. Consent — which fixes apply unprompted versus go to the batched round — is fixed by `./references/workflow/reconciliation.md` § *Consent model: obvious fixes only, ask for the rest*. It stays inside two guardrails and one boundary:
 
-- **Strengthen only on verified evidence** — progress is recorded only on evidence re-verified in this session, never on a chat claim (`./references/workflow/reconciliation-session-to-docs.md` § *Strengthen only on verified evidence*).
+- **Strengthen only on verified evidence** — progress is recorded only on evidence re-verified in this session, never on a chat claim (`./references/workflow/reconciliation.md` § *Strengthen only on verified evidence*).
 - **Grounding docs change by confirmation** — anything redefining scope or acceptance goes through the batched confirmation round, never an auto-apply (`./references/workflow/reconciliation-session-to-docs.md` § *Grounding docs change by confirmation, never silently*).
 - **Docs, not the world** — no source code is written, no git state is mutated, and no external system is updated (`./references/workflow/reconciliation.md` § *Docs, not the world*). Which files this direction may write, and which stay read-only, is `./references/workflow/reconciliation-session-to-docs.md` § *Write surface*; a `warn` or `block` on one of the read-only surfaces routes by `./references/workflow/reconciliation.md` § *External reference check*'s never-annotated rule. Output is those files plus a chat change list — no scratch artifact.
 
@@ -85,7 +85,9 @@ Its findings join Step 3's as one set — different provenance, same handling; S
 
 Any finding that would **advance state** — check a step, mark a goal `met`, flip a status upward — passes through the acceptance gate first: re-verify the step's full unit-outcome tier (its `**Verify:**` criterion plus the per-unit checks the resolved domain's `verification.md` adds) or the goal's acceptance behavior *now*, in this session, the way `implement-task` would, and surface anything you cannot verify rather than recording it. Any advance claiming the work complete — `executing → done`, `in-review → done`, or `executing → in-review` — also waits on that rule's integrated-health precondition.
 
-The rule is `./references/workflow/reconciliation-session-to-docs.md` § *Strengthen only on verified evidence*, its one sanctioned `(external)` exception included. Which findings the gate covers, and what each one writes when it passes or fails (the two-outcome shape, the skeleton-`result.md` / `to-do → executing` flow, the full-gate requirement for `done` and its `in-review` fallback), are the mapping rows in that file's § *`reconcile-task` — session findings*.
+The rule is `./references/workflow/reconciliation.md` § *Strengthen only on verified evidence*, its one sanctioned `(external)` exception included — the shared engine both directions advance through, not this direction's own.
+
+Which findings the gate covers, and what each one writes when it passes or fails (the two-outcome shape, the skeleton-`result.md` / `to-do → executing` flow, the full-gate requirement for `done` and its `in-review` fallback), are the mapping rows in `./references/workflow/reconciliation-session-to-docs.md` § *`reconcile-task` — session findings*.
 
 ### 6. Reconcile the Docs
 
@@ -163,6 +165,6 @@ Confirm the protocol invariants before finishing. Each item names the section of
 - [ ] A `skipped` plan handled per § *Skipped plans are exempt* — nothing swept, nothing written
 - [ ] The run followed § *Sequence and output*: findings report printed first from pre-reconcile state, every edit after it, closing change list printed
 - [ ] The reference sweep run before any edit and its results scoped, tagged, rendered under `## References`, and ledgered into `observations.md` per § *External reference check*
-- [ ] State advanced only per the direction file's § *Strengthen only on verified evidence* — Step 5's gate, its integrated-health precondition before any advance claiming the work complete, the evidence recorded in `result.md`; grounding docs (`goals.md`, `CONTEXT.md` prose, a step's scope) changed only per its § *Grounding docs change by confirmation, never silently*
+- [ ] State advanced only per the shared file's § *Strengthen only on verified evidence* — Step 5's gate, its integrated-health precondition before any advance claiming the work complete, the evidence recorded in `result.md`; grounding docs (`goals.md`, `CONTEXT.md` prose, a step's scope) changed only per the direction file's § *Grounding docs change by confirmation, never silently*
 - [ ] Every edit made falls inside the direction file's § *Write surface* and maps to a printed finding or an answer to one, with no code, git, or external-system mutation per § *Docs, not the world*; no scratch artifact written
 - [ ] `## Current state` refreshed at the end of the run per § *Current state refresh*, its `done`-result freeze included; the compaction proposal raised as an ask item when § *Compaction (size trigger)*'s trigger fired

@@ -60,8 +60,9 @@ sets.
 ## Phase 1 — Brief
 
 Execute `../resume-task/SKILL.md` end to end against the resolved task folder, and print its brief in
-full — every template section, including the always-rendered "Drift since plan" heading. The brief
-sweeps no citations of its own, per the **docs → reality** direction definition opening
+full — every template section, including the always-rendered "Drift since plan" heading and, wherever
+that section's two conditions hold, "Commits since watermark". The brief sweeps no citations of its
+own, per the **docs → reality** direction definition opening
 `./references/workflow/reconciliation.md`; the cited links are Phase 2's business.
 
 The brief is the pipeline's pre-reconcile snapshot and the evidence Phase 2 acts on — printed
@@ -77,8 +78,8 @@ both before editing; together they are the single source of truth and this phase
 its own. The shared file defines the shared mechanics (consent model, the external reference check,
 annotation formats, the append-only `## Reconciliation` record, the `## Current state` refresh, the
 sequence ending in the printed change list); the direction file defines the direction rules (write
-surface, weaken-never-strengthen), the shared repairs, and — in its `resume-task-reconcile` mapping
-section — this pipeline's finding-type → edit mapping.
+surface, repairs weaken while advances go through the shared engine), the shared repairs, and — in
+its `resume-task-reconcile` mapping section — this pipeline's finding-type → edit mapping.
 
 Run the contract's reference sweep here, per `./references/workflow/reconciliation.md`
 § *External reference check* — which owns it in full, down to why the sweep never substitutes for
@@ -116,7 +117,8 @@ Confirm the protocol invariants before finishing:
 - [ ] Phase 1 ran from `resume-task`'s skill file with its domain-pack step intact — not improvised
 - [ ] The brief printed in full from pre-reconcile state, before any edit, and was never regenerated
       after one, per `./references/workflow/reconciliation.md` § *Sequence and output*
-- [ ] Every edit traces to a brief finding, a reference finding, or an engineer answer, routed by
+- [ ] Every edit traces to a brief finding, a reference finding, or an engineer answer — or is the
+      scan's own watermark bookkeeping — routed by
       `./references/workflow/reconciliation-docs-to-reality.md`
       § *`resume-task-reconcile` — brief findings*
 - [ ] Judgment items went to the engineer as one batched round, and anything unanswered or declined
@@ -128,6 +130,11 @@ Confirm the protocol invariants before finishing:
 - [ ] Write surface held — every file written is one
       `./references/workflow/reconciliation-docs-to-reality.md` § *Write surface* allows, nothing
       outside it was touched, and no `BRIEF.md` or scratch briefing file was created
+- [ ] Watermark writes made per `./references/workflow/reconciliation-commits.md` — a missing
+      baseline seeded where a `result.md` exists to hold it, an orphan re-seeded, the scanned
+      commit list recorded, the `**Pointers:**` entry advanced to the scanned HEAD — and every box
+      checked or status advanced went through `./references/workflow/reconciliation.md`
+      § *Strengthen only on verified evidence*, re-verified in this run
 - [ ] The run closed with the change list `./references/workflow/reconciliation.md`
       § *Sequence and output* specs — real-work findings under "Not reconciled" with the next skill
       named, or `Nothing to reconcile.` when nothing was actionable

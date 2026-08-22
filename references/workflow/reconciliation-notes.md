@@ -10,9 +10,13 @@ Each entry names the contract section it annotates and records the reasoning beh
 
 The map deliberately says just which skills write in which direction and where each direction's rules live. Everything the old single file said *about* a direction — what a composite's two phases do, why the enriching direction always writes — belongs to that direction's own file or to nothing at all.
 
+## Why the invariant is evidence class, not direction
+
+`./reconciliation.md` § *Strengthen only on verified evidence*, and both direction files' citations of it. The rule it replaced lived in docs → reality and made *direction* the invariant: a write was licensed by moving downward and refused for moving upward. That bound together two things which only looked like one — which way a write moves state, and what backs it. Direction was the accident. The backing is the property worth keeping, and it holds the same whichever way the write moves, so the engine states it once and both directions cite it. That is also why the same section is where a nomination's worth is settled: a report's finding, a session's witnessed work, or an engineer's answer supplies the candidate, never the warrant. The cost is a hop out of a direction file to read the rule; the gain is that a new evidence source is admitted or refused in one place instead of being re-litigated once per direction.
+
 ## Why every edit needs a printed finding
 
-`./reconciliation.md` § *Docs, not the world*. A change with no finding behind it is invented detail: the run would be authoring content while claiming to be recording it.
+`./reconciliation.md` § *Docs, not the world*. A change with no finding behind it is invented detail: the run would be authoring content while claiming to be recording it. The rule's two registered exceptions are run-record writes rather than content — the sweep's `observations.md` rewrite and the commit watermark's seed, re-seed, and advance — each licensed where it is defined, and neither authoring anything a finding could have evidenced.
 
 ## Why a fact gets one home and a citation elsewhere
 
@@ -58,7 +62,7 @@ Only a `HEAD`-resolvable version makes the tombstone's "full text in git history
 
 ## Why `diagram.md` is never repaired
 
-`./reconciliation-docs-to-reality.md` § *Write surface*, and the diagram rows in both directions. Repainting a diagram is authoring: it is interpretive, so it fails the obvious-fixes bar of `./reconciliation.md` § *Consent model: obvious fixes only, ask for the rest*. And a picture has no weaker direction for `./reconciliation-docs-to-reality.md` § *Weaken, never strengthen* to move in — there is no partial repaint that overstates less. A doc task's deliverable is excluded for the same reason, which is why both directions flag rather than edit.
+`./reconciliation-docs-to-reality.md` § *Write surface*, and the diagram rows in both directions. Repainting a diagram is authoring: it is interpretive, so it fails the obvious-fixes bar of `./reconciliation.md` § *Consent model: obvious fixes only, ask for the rest*. Nor does the other route reach it: a picture carries no `**Verify:**` criterion to re-run, so `./reconciliation.md` § *Strengthen only on verified evidence* has nothing it could attest a repaint with. Both doors are shut, and shut in either direction — which is why a stale diagram is flagged, never edited. A doc task's deliverable is excluded for the same pair of reasons.
 
 ## Where a flag can and cannot reach
 
@@ -74,4 +78,6 @@ Only a `HEAD`-resolvable version makes the tombstone's "full text in git history
 
 ## What the session direction's two guardrails are for
 
-`./reconciliation-session-to-docs.md`, the opening paragraph, over §§ *Strengthen only on verified evidence* and *Grounding docs change by confirmation, never silently*. It may write all four core task files (the upstream `ticket.md` is read-only — a changed ask is surfaced, not written), under two guardrails that keep it from silently redefining what's built or what "done" means.
+`./reconciliation-session-to-docs.md`, the opening paragraph, over its own § *Grounding docs change by confirmation, never silently* and the shared verify-and-write engine that paragraph cites. It may write all four core task files (the upstream `ticket.md` is read-only — a changed ask is surfaced, not written), under two guardrails that keep it from silently redefining what's built or what "done" means.
+
+Only one of the two is the direction's own. The other, `./reconciliation.md` § *Strengthen only on verified evidence*, is shared with docs → reality, so the opening paragraph names the rule that binds this direction instead of keeping a copy of it.
