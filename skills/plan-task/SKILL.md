@@ -48,7 +48,7 @@ Restate the task to confirm understanding, separating explicit requirements from
 
 ### 2. Resolve the Task Folder and Read CONTEXT.md
 
-Resolve per the **resolve-or-create** discovery rules in `./references/workflow/task-layout.md`, including its *Destination paths* rule — cite it, don't restate it. Reuse an existing active folder a slug or path resolves to (typically from `refine-idea`); create one only when nothing matches. Several plausible matches → list them and ask. Confirm the slug only if it differs meaningfully from what the user typed.
+Resolve per the **resolve-or-create** discovery rules in `./references/workflow/task-layout.md`, placing a new folder by the precedence in `./references/workflow/task-destinations.md` — cite them, don't restate them. Reuse an existing active folder a slug or path resolves to (typically from `refine-idea`); create one only when nothing matches. Several plausible matches → list them and ask. Confirm the slug only if it differs meaningfully from what the user typed.
 
 The folder is this plan's authoritative home. Read its `CONTEXT.md`, and its `ticket.md` when present — Step 3 sharpens the ticket's criteria into goals. An existing `CONTEXT.md` is never rewritten; surface a missing `./ticket.md` citation in chat instead of editing it.
 
@@ -132,13 +132,13 @@ Flag only risks **specific to this task**, never a generic checklist. For each: 
 
 Surface assumptions that could invalidate the approach — a plan with known unknowns is more useful than one that hides them.
 
-`## Open Questions` holds only questions that **arose during planning** and aren't already tracked in CONTEXT's `## Open Questions`; cite those instead of copying them. If this pass answers one CONTEXT tracks, surface the answer in chat: this skill never annotates an existing `CONTEXT.md`, and the annotation lands there later via a reconciler (`./references/workflow/reconciliation.md`).
+`## Open Questions` holds only questions that **arose during planning** and aren't already tracked in CONTEXT's `## Open Questions`; cite those instead of copying them. If this pass answers one CONTEXT tracks, surface the answer in chat: this skill never annotates an existing `CONTEXT.md`, and the annotation lands there later via a reconciler (`./references/workflow/reconciliation.md` § *Annotation formats*) — a pointer to where that rule lives, never a file this skill reads. <!-- cold -->
 
 ## Scaling Plan Depth
 
 Match the plan's detail to the task's complexity. Depth scales, but every tier still satisfies the Verification checklist below, and Step 3 is required at every depth — even small tasks benefit from a few explicit goals.
 
-- **Medium** (small, clear pattern) — Steps 1–4, 5a, 6–10; skip approach comparison (Step 5); keep exploration, risks, and open questions light but real
+- **Medium** (small, clear pattern) — Steps 1–4, 5a, 6–10; skip approach comparison (Step 5); explore only the files the change touches, not the wider prior-art sweep; scope as the goal partition plus boundaries, no per-goal narrative; risks only where a step carries the mitigation; open questions only where one gates a step, the rest raised in chat
 - **Large** (bigger, some ambiguity) — all steps, moderate detail
 - **Complex** (cross-cutting, structural) — all steps, deep exploration, multiple approaches compared
 

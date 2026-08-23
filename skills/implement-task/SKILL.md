@@ -70,7 +70,7 @@ The activation offer for a folder resolving under `Backlog/` is `./references/wo
 - `ticket.md` when present — the product-facing ask, read-only; the gate runs against `goals.md`, not the ticket.
 - `diagram.md` when present — the target-state shape the plan builds toward; its absence is never a gap.
 - `result.md` when it exists — work may have been partly done in a prior session: pick up where it left off, never redoing completed steps. Then branch on the plan's `**Status:**` (`./references/workflow/task-lifecycle.md`):
-    - `blocked` → read the result's `**Blocked:**` section; resume only once the blocker has cleared, flipping both files back to `executing` first.
+    - `blocked` → read the result's `**Blocked:**` section; resume only once the blocker has cleared, flipping the plan back to `executing` first.
     - `in-review` → read the result's `**In review:**` section listing the pending `(external)` goals. Don't re-run the plan: take those goals alone through §7, against the external confirmation the user now provides, then §8, whose later-run finalization runs a fresh health boundary before `done`.
 
 ### 2. Decide Execution Mode
@@ -95,7 +95,6 @@ Create `<task-dir>/result.md` when it doesn't already exist, with this header:
 **Goals:** [./goals.md](./goals.md)
 **Context:** [./CONTEXT.md](./CONTEXT.md)
 **Started:** YYYY-MM-DD
-**Status:** executing
 
 ## Current state
 _Updated: YYYY-MM-DD_
@@ -106,7 +105,7 @@ _Updated: YYYY-MM-DD_
 ---
 ```
 
-`## Current state` is derived header metadata on the contract in `./references/workflow/task-authorship.md`: rewritten **in place**, never appended to. Everything below its closing `---` is the append-only log.
+`## Current state` is derived header metadata on the contract in `./references/workflow/task-authorship.md`: rewritten **in place**, never appended to. Everything below its closing `---` is the append-only log. The result file carries **no `**Status:**` header** — `plan.md` is the task's only lifecycle home — so the block's `**Status:**` gloss line restates the plan's state rather than declaring one of its own.
 
 Then point the plan's `**Result:**` line at `./result.md` and flip its `**Status:**` from `to-do` to `executing`.
 
@@ -129,8 +128,8 @@ Run the loop in `./references/workflow/execution-loop.md` — the five beats, it
     ```
 
 - **Pause or continue** — step-by-step: stop after each step and report progress. Full-plan: continue.
-- **Blocked** — a Stop-the-Line that can't clear this session: both files' `**Status:**` to `blocked`, a `**Blocked:**` section naming the cause (what failed, what was tried, what's needed — or what's awaited) and the last health boundary that passed with what it covered (or `none`, so a run that stops before its first boundary says so rather than leaving it unrecorded), `## Current state` rewritten naming the blocker, then stop — don't skip ahead (`./references/workflow/task-lifecycle.md`).
-- **Health boundaries** — every step-by-step pause before the user receives the tree; every authored checkpoint after its named assertions; each natural batch bound before dependent work; the full-plan tail before acceptance; and every later-run `in-review → done` finalization after the pending external goals are re-checked and before status advances. A batch bounded by a checkpoint shares that checkpoint's one health pass, and a tail batch shares the full-plan tail — neither adds another. At a step-by-step pause the boundary runs after the step's outcome proof and **before** its result section is appended, so the section records a result that exists — the order the **Integration assertions** binding below already gives a checkpoint. Between boundaries, a step proves its own outcome tier (`./references/workflow/execution-loop.md` § *Two verification tiers*) and no more; the integrated recipe (`./references/engineering/verification.md` for code) runs at these declared places rather than between them, so a full-plan run over a checkpoint-free plan establishes health once, at the tail. The later finalization is a fresh boundary under the shared loop's cross-run identity rule; record a successful result in §8's dated section. If it fails, take both files through the registered `in-review → executing` edge before this binding's existing **Blocked** behavior.
+- **Blocked** — a Stop-the-Line that can't clear this session: the plan's `**Status:**` to `blocked`, a `**Blocked:**` section in the result file naming the cause (what failed, what was tried, what's needed — or what's awaited) and the last health boundary that passed with what it covered (or `none`, so a run that stops before its first boundary says so rather than leaving it unrecorded), `## Current state` rewritten naming the blocker, then stop — don't skip ahead (`./references/workflow/task-lifecycle.md`).
+- **Health boundaries** — every step-by-step pause before the user receives the tree; every authored checkpoint after its named assertions; each natural batch bound before dependent work; the full-plan tail before acceptance; and every later-run `in-review → done` finalization after the pending external goals are re-checked and before status advances. A batch bounded by a checkpoint shares that checkpoint's one health pass, and a tail batch shares the full-plan tail — neither adds another. At a step-by-step pause the boundary runs after the step's outcome proof and **before** its result section is appended, so the section records a result that exists — the order the **Integration assertions** binding below already gives a checkpoint. Between boundaries, a step proves its own outcome tier (`./references/workflow/execution-loop.md` § *Two verification tiers*) and no more; the integrated recipe (`./references/engineering/verification.md` for code) runs at these declared places rather than between them, so a full-plan run over a checkpoint-free plan establishes health once, at the tail. The later finalization is a fresh boundary under the shared loop's cross-run identity rule; record a successful result in §8's dated section. If it fails, take the plan through the registered `in-review → executing` edge before this binding's existing **Blocked** behavior.
 - **Integration assertions** — the plan's `### Checkpoint after Step N` headings. Each is **mandatory** after marking step N done, not an optional summary; a checkpoint is not a step, carries no `- [ ]`, and is never flipped. Run its assertions per the shared loop, then its health boundary, append a checkpoint section (§5), and in step-by-step mode pause as at a step boundary. With a `diagram.md`, it also runs the re-check below.
 
 #### Diagram re-check (only when the task has a `diagram.md`)
@@ -139,7 +138,7 @@ No diagram → skip every re-check, absence unreported. With one, the three re-c
 
 #### Execution strategy: delegated by default
 
-Execute each step through an **executor** per `./references/workflow/executor-contract.md` and its `implement-task` binding — read both before the first step — on the native engine and adapter defaults in `./references/workflow/agent-fanout.md`.
+Execute each step through an **executor** per `./references/workflow/executor-contract.md` and its `implement-task` binding — read both before the first step — on the native engine and adapter defaults that same file's § *Write-mode engine registry* names.
 
 Default to **serial delegation**. This skill's packet-cost prior for the posture procedure in `./references/workflow/write-mode-posture.md`: a plan step arrives pre-specified in a durable artifact — its `What`, its `Verify` line, and its declared surface are already written — so its packet cost is low. Run that procedure — it sets its own cadence — and delegate the steps it comes out that way for. One executor per step, launched with the self-contained packet that contract's *Launch packet* requires — serially, in plan order and editing the shared tree, unless the steps qualify for the parallel batch below. While a serial executor is in flight the coordinator waits — no step of its own, no shared-tree edit — until it reports. Then the coordinator re-proves the step's full outcome tier on the tree (`./references/workflow/execution-loop.md` § *Two verification tiers*), the executor having run the criterion alone (its pass is advance evidence, never the gate), and records the step (§5); integrated health is not owed here, only at the boundaries the binding declares.
 
@@ -218,7 +217,7 @@ Merged parallel-batch steps are the exception on both counts: each keeps its own
 
 A failed checkpoint records the `**Asserted:**` and `**Health:**` results that ran (or `not run`), `**Outcome:** failed`, and the failure details, then follows Stop-the-Line. Do not move on.
 
-**After appending any section** — step, full-run, checkpoint, or health boundary — rewrite `## Current state` to match on its cited contract: `_Updated:_` refreshed, status gloss, `**Pointers:**` (the branch/PR/SHA/ticket currently in play, plus any commit watermark entry carried forward untouched — `./references/workflow/reconciliation-commits.md` § *The watermark*), `**Next:**`, superseded detail dropped. **When a step records a decision**, append a dated one-liner to the result's `## Decision log`, creating it directly below `## Current state`'s closing `---` when absent, as the first section of the append-only log:
+**At every plan `**Status:**` flip and at run end** — finalize included; a run dying mid-way leaves it stale, tolerated by the next run — rewrite `## Current state` on its cited contract: `_Updated:_` refreshed, status gloss, `**Pointers:**` (the branch/PR/SHA/ticket currently in play, plus any commit watermark entry carried forward untouched — `./references/workflow/reconciliation-commits.md` § *The watermark*), `**Next:**`, superseded detail dropped. **When a step records a decision**, append a dated one-liner to the result's `## Decision log`, creating it directly below `## Current state`'s closing `---` when absent, as the first section of the append-only log:
 
 ```markdown
 - YYYY-MM-DD — <decision> (→ <result anchor / CONTEXT section / plan step / DECISIONS.md #N>)
@@ -234,7 +233,7 @@ The binding — the in-place plan update, the `**Deviations from plan:**` record
 
 ### 7. Acceptance Gate
 
-After the last step is marked done but **before** flipping either file's `**Status:**` to `done`, run the acceptance gate against `goals.md`, applying the acceptance discipline in `./references/workflow/execution-acceptance.md`. Binding: the criteria are `goals.md`'s `G<n>` goals, and the verdict goes in an `## Acceptance` section of the result file.
+After the last step is marked done but **before** flipping the plan's `**Status:**` to `done`, run the acceptance gate against `goals.md`, applying the acceptance discipline in `./references/workflow/execution-acceptance.md`. Binding: the criteria are `goals.md`'s `G<n>` goals, and the verdict goes in an `## Acceptance` section of the result file.
 
 With a `diagram.md`, run the §4 re-check once more here. The gate is where the drawing stops being a target and becomes the **as-built record**, so it is verified against the real tree like any other criterion, and the run ends with `**Reflects:**` naming the acceptance gate and the date.
 
@@ -271,14 +270,14 @@ The gate produces one of two session-terminal outcomes. "Acknowledged" below mea
 
 **Park at `in-review`** when every agent-verifiable goal is `met` or acknowledged **but one or more `(external)` goals are `pending external`**:
 
-- Both the plan's and the result file's `**Status:**` to `in-review`
+- The plan's `**Status:**` to `in-review`
 - An `**In review:**` section in the result file listing each pending goal — `- G<n> — <what's awaited, who/what verifies it>` — and **no** `**Completed:**` line
 - The shared loop's *Before presenting* step (`./references/workflow/execution-acceptance.md` § *Before presenting*); its summary additionally names which agent-verifiable goals are `met`, and exactly what external verification is outstanding and how to confirm it
 
 **Finalize to `done`** only once every goal is `met` or acknowledged **and none is `pending external`**:
 
 - The plan's `**Status:**` to `done`
-- The result file's `**Status:**` to `done`, plus a closing `**Completed:** YYYY-MM-DD` line
+- A closing `**Completed:** YYYY-MM-DD` line in the result file
 - The shared loop's *Before presenting* step (`./references/workflow/execution-acceptance.md` § *Before presenting*)
 
 In **both** branches, rewrite `## Current state` last — at `in-review` its `**Next:**` names the awaited external verification; at `done` the block stays frozen as the final digest.
@@ -303,8 +302,8 @@ The shared loop's red flags apply in full. When the domain is code, also watch t
 Confirm the protocol invariants before finishing:
 
 - [ ] All four core artifacts read before starting (plus `ticket.md` when present); a missing `goals.md` surfaced, never invented
-- [ ] Result file initialized and kept paired with the plan per `./references/workflow/task-lifecycle.md` — statuses flip together, `**Completed:**` line only at `done`
-- [ ] `## Current state` rewritten at every status flip, after every appended section, and at finalize — on its cited contract, never claiming a stronger state than `**Status:**`
+- [ ] Result file initialized and carrying every section its plan's state owes per `./references/workflow/task-lifecycle.md` § *Companion result file* — no `**Status:**` header of its own, `**Completed:**` line only at `done`
+- [ ] `## Current state` rewritten at every plan status flip and once at run end (finalize included) — on its cited contract, never claiming a stronger state than the plan's `**Status:**`
 - [ ] Any `**Pointers:**` commit watermark entry carried forward unchanged at every one of those rewrites — never advanced, never dropped, and never created here; seeding one is a reconciler's act (`./references/workflow/task-authorship.md`)
 - [ ] Every completed step: its full unit-outcome tier actually run and passed — the plan-defined `Verify` criterion plus the per-unit checks the resolved domain's `verification.md` adds — checkbox flipped with a link to its result section
 - [ ] Integrated health established at every boundary the **Health boundaries** binding declares — with a checkpoint or tail batch sharing that one boundary, a later finalization freshly recorded, and current against the final unchanged tree

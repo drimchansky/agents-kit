@@ -3,61 +3,61 @@
     {
       "skill": "archive-task",
       "hot": {
-        "bytes": 45558,
-        "approxTokens": 11390
+        "bytes": 37697,
+        "approxTokens": 9424
       },
       "cold": {
-        "bytes": 0,
-        "approxTokens": 0
+        "bytes": 8934,
+        "approxTokens": 2234
       },
       "transitive": {
-        "bytes": 341226,
-        "approxTokens": 85307
+        "bytes": 347122,
+        "approxTokens": 86781
       }
     },
     {
       "skill": "backlog-task",
       "hot": {
-        "bytes": 51212,
-        "approxTokens": 12803
+        "bytes": 44058,
+        "approxTokens": 11015
       },
       "cold": {
-        "bytes": 0,
-        "approxTokens": 0
+        "bytes": 8934,
+        "approxTokens": 2234
       },
       "transitive": {
-        "bytes": 343099,
-        "approxTokens": 85775
+        "bytes": 349718,
+        "approxTokens": 87430
       }
     },
     {
       "skill": "challenge-task",
       "hot": {
-        "bytes": 96256,
-        "approxTokens": 24064
+        "bytes": 79082,
+        "approxTokens": 19771
       },
       "cold": {
         "bytes": 0,
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 359632,
-        "approxTokens": 89908
+        "bytes": 369687,
+        "approxTokens": 92422
       }
     },
     {
       "skill": "commit",
       "hot": {
-        "bytes": 29289,
-        "approxTokens": 7322
+        "bytes": 28194,
+        "approxTokens": 7049
       },
       "cold": {
         "bytes": 0,
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 344072,
-        "approxTokens": 86018
+        "bytes": 353744,
+        "approxTokens": 88436
       }
     },
     {
@@ -78,151 +78,151 @@
     {
       "skill": "decompose-task",
       "hot": {
-        "bytes": 67108,
-        "approxTokens": 16777
+        "bytes": 67618,
+        "approxTokens": 16905
       },
       "cold": {
         "bytes": 0,
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 341638,
-        "approxTokens": 85410
+        "bytes": 351393,
+        "approxTokens": 87848
       }
     },
     {
       "skill": "explore",
       "hot": {
-        "bytes": 23169,
-        "approxTokens": 5792
+        "bytes": 22074,
+        "approxTokens": 5519
       },
       "cold": {
         "bytes": 0,
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 341239,
-        "approxTokens": 85310
+        "bytes": 350911,
+        "approxTokens": 87728
       }
     },
     {
       "skill": "fix-findings",
       "hot": {
-        "bytes": 51957,
-        "approxTokens": 12989
+        "bytes": 50867,
+        "approxTokens": 12717
       },
       "cold": {
-        "bytes": 29095,
-        "approxTokens": 7274
+        "bytes": 32963,
+        "approxTokens": 8241
       },
       "transitive": {
-        "bytes": 348204,
-        "approxTokens": 87051
+        "bytes": 357876,
+        "approxTokens": 89469
       }
     },
     {
       "skill": "implement",
       "hot": {
-        "bytes": 74680,
-        "approxTokens": 18670
+        "bytes": 77474,
+        "approxTokens": 19369
       },
       "cold": {
-        "bytes": 6487,
-        "approxTokens": 1622
+        "bytes": 6479,
+        "approxTokens": 1620
       },
       "transitive": {
-        "bytes": 341103,
-        "approxTokens": 85276
+        "bytes": 350775,
+        "approxTokens": 87694
       }
     },
     {
       "skill": "implement-task",
       "hot": {
-        "bytes": 125661,
-        "approxTokens": 31415
+        "bytes": 115864,
+        "approxTokens": 28966
       },
       "cold": {
-        "bytes": 13113,
-        "approxTokens": 3278
+        "bytes": 13009,
+        "approxTokens": 3252
       },
       "transitive": {
-        "bytes": 363423,
-        "approxTokens": 90856
+        "bytes": 373257,
+        "approxTokens": 93314
       }
     },
     {
       "skill": "init-config",
       "hot": {
-        "bytes": 44437,
-        "approxTokens": 11109
+        "bytes": 42251,
+        "approxTokens": 10563
       },
       "cold": {
         "bytes": 0,
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 338286,
-        "approxTokens": 84572
+        "bytes": 347941,
+        "approxTokens": 86985
       }
     },
     {
       "skill": "maintain",
       "hot": {
-        "bytes": 131844,
-        "approxTokens": 32961
+        "bytes": 90926,
+        "approxTokens": 22732
       },
       "cold": {
         "bytes": 0,
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 366735,
-        "approxTokens": 91684
+        "bytes": 376890,
+        "approxTokens": 94223
       }
     },
     {
       "skill": "plan-task",
       "hot": {
-        "bytes": 143179,
-        "approxTokens": 35795
+        "bytes": 120168,
+        "approxTokens": 30042
       },
       "cold": {
-        "bytes": 0,
-        "approxTokens": 0
+        "bytes": 22444,
+        "approxTokens": 5611
       },
       "transitive": {
-        "bytes": 361777,
-        "approxTokens": 90444
+        "bytes": 371879,
+        "approxTokens": 92970
       }
     },
     {
       "skill": "prepare-diagram",
       "hot": {
-        "bytes": 51588,
-        "approxTokens": 12897
+        "bytes": 50493,
+        "approxTokens": 12623
       },
       "cold": {
         "bytes": 0,
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 354741,
-        "approxTokens": 88685
+        "bytes": 364413,
+        "approxTokens": 91103
       }
     },
     {
       "skill": "prepare-ticket",
       "hot": {
-        "bytes": 38797,
-        "approxTokens": 9699
+        "bytes": 39121,
+        "approxTokens": 9780
       },
       "cold": {
         "bytes": 0,
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 335282,
-        "approxTokens": 83821
+        "bytes": 345115,
+        "approxTokens": 86279
       }
     },
     {
@@ -243,121 +243,121 @@
     {
       "skill": "publish-pr-review",
       "hot": {
-        "bytes": 46715,
-        "approxTokens": 11679
+        "bytes": 35507,
+        "approxTokens": 8877
       },
       "cold": {
-        "bytes": 0,
-        "approxTokens": 0
+        "bytes": 2731,
+        "approxTokens": 683
       },
       "transitive": {
-        "bytes": 336863,
-        "approxTokens": 84216
+        "bytes": 346597,
+        "approxTokens": 86649
       }
     },
     {
       "skill": "reconcile-task",
       "hot": {
-        "bytes": 92401,
-        "approxTokens": 23100
+        "bytes": 91839,
+        "approxTokens": 22960
       },
       "cold": {
-        "bytes": 4188,
-        "approxTokens": 1047
+        "bytes": 6906,
+        "approxTokens": 1727
       },
       "transitive": {
-        "bytes": 343152,
-        "approxTokens": 85788
+        "bytes": 353146,
+        "approxTokens": 88287
       }
     },
     {
       "skill": "refine-idea",
       "hot": {
-        "bytes": 51035,
-        "approxTokens": 12759
+        "bytes": 51258,
+        "approxTokens": 12815
       },
       "cold": {
         "bytes": 0,
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 347787,
-        "approxTokens": 86947
+        "bytes": 357544,
+        "approxTokens": 89386
       }
     },
     {
       "skill": "resume-task",
       "hot": {
-        "bytes": 74199,
-        "approxTokens": 18550
+        "bytes": 70336,
+        "approxTokens": 17584
       },
       "cold": {
-        "bytes": 3646,
-        "approxTokens": 912
+        "bytes": 18127,
+        "approxTokens": 4532
       },
       "transitive": {
-        "bytes": 360265,
-        "approxTokens": 90066
+        "bytes": 370275,
+        "approxTokens": 92569
       }
     },
     {
       "skill": "resume-task-reconcile",
       "hot": {
-        "bytes": 65078,
-        "approxTokens": 16270
+        "bytes": 67128,
+        "approxTokens": 16782
       },
       "cold": {
         "bytes": 0,
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 336238,
-        "approxTokens": 84060
+        "bytes": 345871,
+        "approxTokens": 86468
       }
     },
     {
       "skill": "review-commit",
       "hot": {
-        "bytes": 33169,
-        "approxTokens": 8292
+        "bytes": 32315,
+        "approxTokens": 8079
       },
       "cold": {
-        "bytes": 26162,
-        "approxTokens": 6541
+        "bytes": 12729,
+        "approxTokens": 3182
       },
       "transitive": {
-        "bytes": 333492,
-        "approxTokens": 83373
+        "bytes": 343405,
+        "approxTokens": 85851
       }
     },
     {
       "skill": "review-commit-triage-verify",
       "hot": {
-        "bytes": 49686,
-        "approxTokens": 12422
+        "bytes": 37016,
+        "approxTokens": 9254
       },
       "cold": {
         "bytes": 0,
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 338307,
-        "approxTokens": 84577
+        "bytes": 350174,
+        "approxTokens": 87544
       }
     },
     {
       "skill": "review-docs",
       "hot": {
-        "bytes": 46036,
-        "approxTokens": 11509
+        "bytes": 47296,
+        "approxTokens": 11824
       },
       "cold": {
-        "bytes": 26162,
-        "approxTokens": 6541
+        "bytes": 12613,
+        "approxTokens": 3153
       },
       "transitive": {
-        "bytes": 341683,
-        "approxTokens": 85421
+        "bytes": 351589,
+        "approxTokens": 87897
       }
     },
     {
@@ -378,76 +378,76 @@
     {
       "skill": "review-pr",
       "hot": {
-        "bytes": 49866,
-        "approxTokens": 12467
+        "bytes": 38984,
+        "approxTokens": 9746
       },
       "cold": {
-        "bytes": 15987,
-        "approxTokens": 3997
+        "bytes": 16141,
+        "approxTokens": 4035
       },
       "transitive": {
-        "bytes": 340014,
-        "approxTokens": 85004
+        "bytes": 350074,
+        "approxTokens": 87519
       }
     },
     {
       "skill": "review-pr-triage-verify",
       "hot": {
-        "bytes": 51424,
-        "approxTokens": 12856
+        "bytes": 38749,
+        "approxTokens": 9687
       },
       "cold": {
         "bytes": 0,
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 340045,
-        "approxTokens": 85011
+        "bytes": 351907,
+        "approxTokens": 87977
       }
     },
     {
       "skill": "review-pr-triage-verify-reconcile",
       "hot": {
-        "bytes": 106471,
-        "approxTokens": 26618
+        "bytes": 100272,
+        "approxTokens": 25068
       },
       "cold": {
         "bytes": 0,
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 342358,
-        "approxTokens": 85590
+        "bytes": 352038,
+        "approxTokens": 88010
       }
     },
     {
       "skill": "review-task",
       "hot": {
-        "bytes": 95442,
-        "approxTokens": 23861
+        "bytes": 91591,
+        "approxTokens": 22898
       },
       "cold": {
-        "bytes": 26162,
-        "approxTokens": 6541
+        "bytes": 21547,
+        "approxTokens": 5387
       },
       "transitive": {
-        "bytes": 359732,
-        "approxTokens": 89933
+        "bytes": 369764,
+        "approxTokens": 92441
       }
     },
     {
       "skill": "review-task-reconcile",
       "hot": {
-        "bytes": 57800,
-        "approxTokens": 14450
+        "bytes": 59929,
+        "approxTokens": 14982
       },
       "cold": {
         "bytes": 0,
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 336717,
-        "approxTokens": 84179
+        "bytes": 346429,
+        "approxTokens": 86607
       }
     },
     {
@@ -468,61 +468,61 @@
     {
       "skill": "triage-findings",
       "hot": {
-        "bytes": 34195,
-        "approxTokens": 8549
+        "bytes": 33263,
+        "approxTokens": 8316
       },
       "cold": {
-        "bytes": 0,
-        "approxTokens": 0
+        "bytes": 8934,
+        "approxTokens": 2234
       },
       "transitive": {
-        "bytes": 334518,
-        "approxTokens": 83630
+        "bytes": 344353,
+        "approxTokens": 86088
       }
     },
     {
       "skill": "triage-findings-verify",
       "hot": {
-        "bytes": 49206,
-        "approxTokens": 12302
+        "bytes": 36824,
+        "approxTokens": 9206
       },
       "cold": {
         "bytes": 0,
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 337827,
-        "approxTokens": 84457
+        "bytes": 349982,
+        "approxTokens": 87496
       }
     },
     {
       "skill": "update-pr-description",
       "hot": {
-        "bytes": 15938,
-        "approxTokens": 3985
+        "bytes": 14843,
+        "approxTokens": 3711
       },
       "cold": {
         "bytes": 0,
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 330721,
-        "approxTokens": 82680
+        "bytes": 340393,
+        "approxTokens": 85098
       }
     },
     {
       "skill": "verify-issue",
       "hot": {
-        "bytes": 17726,
-        "approxTokens": 4432
+        "bytes": 16631,
+        "approxTokens": 4158
       },
       "cold": {
         "bytes": 0,
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 332509,
-        "approxTokens": 83127
+        "bytes": 342181,
+        "approxTokens": 85545
       }
     }
   ]

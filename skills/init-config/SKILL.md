@@ -61,7 +61,7 @@ Compare discovery against the file on disk and preview **only what changes**, ea
 
 With **no config present**, every discovered root is `new` and the preview is the whole proposed file.
 
-Print the complete proposed JSON, not a diff alone — the confirmation is to the file's final contents, so what the user approves is what lands. Then say plainly what the file does and does not do: it is read for discovery and, through the creation precedence in `task-layout.md` § *Destination paths*, as a possible creation destination; absent roots are skipped and reported once per run; and deleting the file restores canonical-root-only behavior exactly.
+Print the complete proposed JSON, not a diff alone — the confirmation is to the file's final contents, so what the user approves is what lands. Then say plainly what the file does and does not do: it is read for discovery and, through the creation precedence in `task-destinations.md`, as a possible creation destination; absent roots are skipped and reported once per run; and deleting the file restores canonical-root-only behavior exactly.
 
 ### 4. Gate the write
 

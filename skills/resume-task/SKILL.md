@@ -12,7 +12,9 @@ disable-model-invocation: true
 
 This skill loads an existing task folder (canonically under `.agents/tasks/`, though anywhere on disk works the same) and produces a chat-only briefing — to resume work after time away, hand off, review what was done, or answer questions about a task, whether in progress, blocked, or already shipped.
 
-**CRITICAL**: This skill is **read-only**, and it runs **no reference sweep** — task files, source code, and git state are never modified — save the user-confirmed activation `mv` of a backlogged folder, which relocates it untouched rather than editing anything in it (`./references/workflow/implement-task-edges.md` § *Activating a backlogged task*) — and the folder's cited links are never swept for freshness. Those links are the reconcilers' business (`references/workflow/reconciliation.md` § *External reference check*). When the folder carries an `observations.md`, quoting its dated lines is reading the folder, not sweeping — quote them with their dates, as cache, never as live state. Verifying a *claim* is not sweeping a *citation*, though: where a domain's own artifacts live behind a URL, the Step-4 drift check still reads them, read-only, per the domain's `verification.md`. Output is **chat only**: no `BRIEF.md` or scratch briefing file.
+**CRITICAL**: This skill is **read-only**, and it runs **no reference sweep** — task files, source code, and git state are never modified — save the user-confirmed activation `mv` of a backlogged folder, which relocates it untouched rather than editing anything in it (`./references/workflow/implement-task-edges.md` § *Activating a backlogged task*) — and the folder's cited links are never swept for freshness.
+Those links are the reconcilers' business (`./references/workflow/reconciliation-sweep.md` § *Scope*) — a boundary this skill states, never a file it reads on any path. <!-- cold -->
+When the folder carries an `observations.md`, quoting its dated lines is reading the folder, not sweeping — quote them with their dates, as cache, never as live state. Verifying a *claim* is not sweeping a *citation*, though: where a domain's own artifacts live behind a URL, the Step-4 drift check still reads them, read-only, per the domain's `verification.md`. Output is **chat only**: no `BRIEF.md` or scratch briefing file.
 
 ## When to Use
 
@@ -54,9 +56,9 @@ Read all four core artifacts — plus `ticket.md`, `diagram.md`, and `observatio
 - `plan.md` — note its `**Status:**` header and its `**Goals:**` link.
 - `diagram.md` (when present) — the target-state shape the plan builds toward; capture its dated `**Reflects:**` line. Absence is normal and is not a gap.
 - `observations.md` (when present) — the last sweep's dated observations of the folder's cited references (`./references/workflow/task-observations.md`); a cache to quote with its dates, never live truth. Absence is normal. <!-- cold -->
-- `result.md` — read `## Current state` first for orientation (derived metadata, never trusted ground truth); then note `**Status:**`, find the latest per-step or full-run section, capture every `**Blocked:**` and `**In review:**` block verbatim, and capture any `## Acceptance` section verbatim.
+- `result.md` — read `## Current state` first for orientation (derived metadata, never trusted ground truth); then find the latest per-step or full-run section, capture every `**Blocked:**` and `**In review:**` block verbatim, and capture any `## Acceptance` section verbatim. It carries no status of its own — the plan's is the task's.
 
-Status vocabulary and the **pairing rule** live in `./references/workflow/task-lifecycle.md` § *Status values* and § *Pairing rule* — flag mismatched pairs as drift. Deliberate pauses are not drift: a `skipped` plan is abandoned (a missing result file is expected), `blocked` + `**Blocked:**` is paused (name the cause), and `in-review` + `**In review:**` is parked awaiting the listed `(external)` goals.
+Status vocabulary and the **companion-result-file rule** live in `./references/workflow/task-lifecycle.md` § *Status values* and § *Companion result file* — flag a missing companion, or a missing section the plan's state owes, as drift. Deliberate pauses are not drift: a `skipped` plan is abandoned (a missing result file is expected), `blocked` + `**Blocked:**` is paused (name the cause), and `in-review` + `**In review:**` is parked awaiting the listed `(external)` goals.
 
 Flag in the brief:
 
@@ -65,15 +67,11 @@ Flag in the brief:
 
 ### 3. Reconstruct State from Checkboxes
 
-For the plan:
+Run `node <kit-root>/scripts/task-state.ts <task folder>` — `<kit-root>` per `./references/workflow/task-store.md` § *Resolving `<kit-root>`* <!-- cold --> — and read the state out of the JSON rather than re-deriving what the script decided; its file header owns the CLI form and the stdout contract. It reports every step in plan order with its checkbox, `nextPendingStep`, each `### Checkpoint after Step N` with its result section's `**Outcome:**` (`null` = not yet run), and whether each checked step's `([result](…))` anchor still resolves. Kit root, script, or `node` unavailable → say so and reconstruct the same facts from the plan by hand.
 
-- Count `- [x]` (done) vs `- [ ]` (pending) steps.
-- Identify the next pending step. Pull its **What**, **Verify**, **Depends on**, any **Due** / **Lead time**, and the file paths it touches.
-- For each `- [x]` step, follow the result anchor link to the matching section in the result file. **Match the anchor to the result file's actual shape:** a step-by-step run has `## Step N — <title>` headings (anchor `#step-n--<slug>`), but a full-plan run records a single `## Full Run — <date>` section (anchor `#full-run--<date>`) — there every step's `Done` link targets that one combined anchor.
-- If the plan contains `### Checkpoint after Step N` headers, note which checkpoints have a corresponding `## Checkpoint after Step N` entry in the result file with `**Outcome:** passed`.
-- Surface every `**Blocked:**` and `**In review:**` section from the result file verbatim.
+Then read the files for what the report doesn't carry: the `nextPendingStep` step's **Verify**, any **Due** / **Lead time**, and the paths it touches; and every `**Blocked:**` and `**In review:**` section from the result file, verbatim.
 
-If the prose and the checkboxes disagree, trust the checkboxes and note the disagreement.
+A checked step whose `anchorResolves` is false has lost the evidence its checkbox claims — drift, not done. If the plan's prose and its checkboxes disagree, trust the checkboxes and note the disagreement.
 
 ### 4. Drift Check Against Current Reality
 
@@ -87,7 +85,7 @@ Partition the claims by state, because they're checked differently:
 
 For each done/shipped claim, confirm it still holds and tag the finding. When the domain is code, follow the drift-verification recipe in `./references/engineering/exploration.md` § *Blast-radius / drift verification (used by review and resume)*. For other domains, verify each claim against the domain's own artifacts.
 
-**Goal sanity check (domain-neutral).** If the result file has an `## Acceptance` section, re-check the goals tagged `met` against current behavior: on a `done` plan re-check **every** `met` goal, never a sample; on a still-`executing` plan, spot-check the `met` ones you can reach. No `## Acceptance` section on a `done` plan is itself drift — the gate was skipped; flag it `block`. A `met` goal that no longer holds is `warn`. A goal tagged `pending external` is neither drift nor `unmet` — it's an `(external)` goal awaiting verification outside the session; surface it as outstanding (with what's awaited) rather than re-checking it against in-session behavior.
+**Goal sanity check (domain-neutral).** With an `## Acceptance` section, re-check the goals tagged `met` against current behavior: on a `done` plan **every** one — unless the scan below found a watermark with nothing after it, the tree clean, where re-running the cheapest `met` goal's verifying action stands in, the branch named; on a still-`executing` plan, spot-check the `met` ones you can reach. No `## Acceptance` section on a `done` plan is itself drift — the gate was skipped; flag it `block`. A `met` goal that no longer holds is `warn`. A goal tagged `pending external` is neither drift nor `unmet` — it's an `(external)` goal awaiting verification outside the session; surface it as outstanding (with what's awaited) rather than re-checking it against in-session behavior.
 
 Tag each finding `info` (FYI), `warn` (review before resuming), or `block` (plan needs update before execution can proceed).
 
@@ -110,7 +108,7 @@ Assemble per the output template below and print it to chat. This is the last st
 **Goals:** `goals.md`
 **Plan:** `plan.md` (Status: <status>)
 **Diagram:** `diagram.md` (Reflects: <the line verbatim>) — _omit this line entirely when the task has no diagram_
-**Result:** `result.md` (Status: <status>) — or "not yet started"
+**Result:** `result.md` — or "not yet started"
 
 ## Status
 
@@ -186,5 +184,5 @@ Confirm the protocol invariants before finishing:
 - [ ] Task folder resolved per `task-layout.md` (asked when ambiguous); all four core artifacts read (plus `ticket.md`, `diagram.md`, and `observations.md` when present); a missing `goals.md` flagged
 - [ ] Nothing written, edited, renamed, or deleted anywhere — save a user-confirmed activation `mv` of a backlogged folder; no git mutation, no watermark seeded or advanced, no candidate's `**Verify:**` re-run, no reference sweep run, no `BRIEF.md` or scratch briefing file
 - [ ] State reconstructed from checkbox markers, not prose; `**Blocked:**` / `**In review:**` sections surfaced verbatim; a `skipped` plan reported as abandoned, not drift
-- [ ] Drift check compared done/shipped claims against current reality — partitioned shipped vs. pending, `## Current state` claims included, every `met` goal re-checked on a `done` plan, a missing `## Acceptance` on a `done` plan flagged `block` — with "Drift since plan" rendered even when clean, and "Commits since watermark" reporting the commit list, the missing baseline, or the orphan wherever the repository resolves and a path a step names exists under it — omitted, scanning nothing, where either condition fails
+- [ ] Drift check compared done/shipped claims against current reality — partitioned shipped vs. pending, `## Current state` claims included, a `done` plan's `met` goals re-checked in full or spot-checked, the branch named, a missing `## Acceptance` on a `done` plan flagged `block` — with "Drift since plan" rendered even when clean, and "Commits since watermark" reporting the commit list, the missing baseline, or the orphan wherever the repository resolves and a path a step names exists under it — omitted, scanning nothing, where either condition fails
 - [ ] Brief printed to chat with the template sections and a concrete "Where to start" action

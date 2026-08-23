@@ -1,8 +1,6 @@
 # Fenced Current state fixture
 
-**Status:** executing
-
-This live result documents the block's shape without carrying one. The only `## Current state`
+This result documents the block's shape without carrying one. The only `## Current state`
 occurrence sits inside a fenced example, so it is illustrative markdown rather than the real
 section, and the liveness check must still report the block as missing.
 

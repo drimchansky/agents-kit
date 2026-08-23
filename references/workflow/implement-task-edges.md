@@ -6,7 +6,7 @@ The `implement-task` skill's non-default branches — reviving a `skipped` plan,
 
 **Check where the folder sits first.** A bare slug falls back to `Archive/<slug>/` (`./task-layout.md`) and skipped tasks are the ones that get archived, so a revive can land there — but a live task under `Archive/` is stranded outside every active listing `resume-task` and `review-task` build, and `archive-task` would refuse it as non-terminal. Resolved under `Archive/` → **stop**: have the user move it out (a manual `mv`; archiving is one-way), then re-run.
 
-Otherwise flip `skipped → executing` (the registered revive edge) and continue as a normal run. An existing result file — the record of why the work was dropped — must be `executing`, the pairing rule's value for a live plan; any other value pairs as drift. That record stays: the append-only rule holds, and this run's sections append after it (implement-task §5).
+Otherwise flip `skipped → executing` (the registered revive edge) and continue as a normal run. An existing result file — the record of why the work was dropped — simply stays: the append-only rule holds, and this run's sections append after it (implement-task §5).
 
 ## Activating a backlogged task
 
@@ -75,4 +75,4 @@ On success, append the fresh evidence before advancing status:
 ---
 ```
 
-Then finalize to `done` per implement-task §8 and add the `**Completed:**` line. If the fresh boundary fails, do not append the success section and do not finalize: flip both files through the registered `in-review → executing` edge, then apply implement-task §4's **Blocked** behavior, recording the failed finalization boundary and the last boundary that passed. If review instead surfaced problems, flip both files back to `executing` and resume — don't force `done`.
+Then finalize to `done` per implement-task §8 and add the `**Completed:**` line. If the fresh boundary fails, do not append the success section and do not finalize: flip the plan through the registered `in-review → executing` edge, then apply implement-task §4's **Blocked** behavior, recording the failed finalization boundary and the last boundary that passed. If review instead surfaced problems, flip the plan back to `executing` and resume — don't force `done`.

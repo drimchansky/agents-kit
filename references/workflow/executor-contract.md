@@ -2,6 +2,8 @@
 
 This is the host-neutral contract for a write-mode executor. An executor carries out exactly one coordinator-supplied unit of work and returns evidence to the coordinator. What a unit is, what the packet carries, and what the executor may edit are per-consumer — the `## Bindings` at the end name them. Host adapters select native model, effort, and permission defaults, then load their installed copy of this contract.
 
+This file carries the whole write-mode side of agent fan-out: the executor-facing contract below, then which consumers may launch an executor at all (§ *Write-mode routing*) and the one engine they launch it on (§ *Write-mode engine registry*). Read-only fan-out is not here — the probe contract and the merge contract are `./agent-fanout.md`.
+
 ## Launch packet
 
 Treat the coordinator's launch prompt as the source of truth. It supplies:
@@ -45,6 +47,32 @@ Return evidence, not a completion verdict. Include every heading, using `None` w
 - `Blockers or attempted scope escapes` — security denials, unavailable capabilities, host failures, or edits considered outside the allowed surface.
 
 Do not claim that the unit is done, update a status, or write this report anywhere but the reply to the coordinator.
+
+## Write-mode routing
+
+Write-mode fan-out is limited to the consumers registered here. The contract above governs executor behavior; each consumer's own skill owns how it frames a unit of work and what verdicts it reaches. Every other fan-out consumer uses the probe contract in `./agent-fanout.md`.
+
+**The posture procedure.** The one procedure for when delegation pays lives in `./write-mode-posture.md`, read by a consumer taking the decision. That file owns the cadence as well as the inputs, so no consumer states a cadence of its own.
+
+**The registry.** Three consumers launch write-mode executors: **`implement-task`**, **`implement`**, and **`fix-findings`**. Each one's unit, packet, edit surface, fallback, merge order, and any restriction on what it may delegate are its binding in § *Bindings* below — `fix-findings`'s delegation surface among them, under that binding's *Outside the delegation surface*. Each consumer's packet-cost prior and default posture live in its own skill.
+
+A consumer's departure from its own default — delegation where the default is inline, inline where the default is delegation — is **announced in chat and recorded in that skill's report**; that record is what keeps the default from drifting silently into always- or never-delegate. The exact record shape is each skill's own.
+
+**Judgment never delegates**, under any posture. The coordinator keeps unit framing, each unit's
+outcome re-proof on its own tree, the consumer-declared integrated-health boundary, the report
+buckets, and every status. Executor output is advance evidence, never the gate.
+
+The mechanics of running units concurrently — eligibility, worktree placement, the frozen shared tree, the merge gates, incorporation order, and cleanup — live in `./parallel-batch.md`; read it when a batch qualifies.
+
+## Write-mode engine registry
+
+- **`native`** — the only registered write-mode engine: Claude Code's native subagents on Claude, and Codex multi-agent on Codex. The coordinator launches the named `executor` adapter on both hosts and supplies its effective root: the shared tree for serial delegation or a coordinator-managed worktree for a parallel batch. The adapter then loads its installed copy of this contract.
+
+  **Adapter defaults.** Claude installs `~/.claude/agents/executor.md`, pinned to `claude-opus-5` at `xhigh` and inheriting the parent permission mode. Codex installs `~/.codex/agents/executor.toml`, pinned to `gpt-5.6-terra` at `xhigh` with `sandbox_mode = "workspace-write"`. These kit-owned defaults select the native model and effort; Codex additionally requests write capability, while the live parent sandbox, approval setting, or managed security policy remains authoritative. The full model pins preserve a stable tier relationship instead of floating with provider aliases; on a host where a pin does not resolve or the current coordinator is already at or below it, retune the installed definition and remove its sibling `.agents-kit-executor` marker, or the next `setup.ts` run restores the kit copy.
+
+  **Degradation.** If the named adapter, its configured model, or native subagent support is unavailable, report the failure. The coordinator-owned fallback above applies unchanged and symmetrically on either host; adapter availability never changes placement or scope.
+
+The `codex` and `claude` CLI entries in the cross-vendor probe engine registry (`./probe-engines-cross-vendor.md`) remain cross-vendor, read-only probe engines only. They are not registered for write mode.
 
 ## Bindings
 

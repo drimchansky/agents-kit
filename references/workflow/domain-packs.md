@@ -2,8 +2,9 @@
 
 > **Maintainer documentation — not loaded at run time.** Read it when changing the kit's
 > domain-pack interface, not when running a task. The rules it defines reach a run through their
-> runtime carriers: each skill's Core Rules domain-pack step and `../../CORE_RULES.md`
-> § *References*.
+> runtime carriers: each skill's Core Rules domain-pack step, which resolves the pack, and
+> `../../CORE_RULES.md`'s opening domain-rules line, which carries the layering and the missing-pack
+> fallback for work running under no skill at all.
 
 How the workflow separates a **domain-neutral methodology spine** from **domain-specific
 knowledge**, and how skills load the right knowledge for the task at hand. **This file is the

@@ -12,13 +12,7 @@ disable-model-invocation: true
 
 One command for the full review pipeline: review the current branch against its base (`review-pr`), batch the findings by concern (`triage-findings`), then verify each batch in an isolated read-only probe running the `verify-issue` protocol — cold eyes per batch, uncolored by the session that wrote the findings. The final display is the triage frame with one verdict per finding.
 
-Each phase executes its skill file — read the sibling `SKILL.md` and run its full protocol. Three overrides apply pipeline-wide, to every phase:
-
-- **Core Rules blocks** — the composite's own block above covers the pipeline; inner skills' AGENTS.md read is already satisfied and doesn't repeat.
-- **Chat display** — findings render once, in the final Output; phases print only what their section below allows.
-- **Next pointers** — inner skills' follow-up suggestions are dropped; the composite's Output owns **Next**.
-
-Past these three, a phase departs from its skill only where its own section below says so — never by improvisation.
+`./references/workflow/verify-pipeline.md` owns the mechanics this pipeline shares with the kit's other verify composites — the pipeline-wide overrides every phase runs under among them. Read it; the sections below carry only what is specific to this one.
 
 **CRITICAL**: The whole pipeline reads and displays. No phase edits code, posts to the PR, or writes to any source — the guarantee `triage-findings` and `verify-issue` each carry individually, held end to end.
 
@@ -50,22 +44,17 @@ Execute `../triage-findings/SKILL.md` with the source pinned to the phase-1 find
 
 First re-confirm the reviewed identity: `git rev-parse HEAD` still matches the reviewed head, the merge-base recomputed against Setup's base still matches the reviewed merge-base (both halves of the Reviewed line, the same re-check `publish-pr-review` runs), and Setup's working-tree check still passes. All three held when the review started, so a mismatch now is genuine drift — something moved under the pipeline. Any → stop and report: probes read the live tree, verdicts against a moved tree describe code the review didn't see, and a moved merge-base means the reviewed diff is no longer the branch's diff.
 
-Fan out per `./references/workflow/agent-fanout.md` — its probe contract and merge contract bind, with engines and prompt shapes per `./references/workflow/probe-engines.md` here; this skill is a registered consumer. One probe per batch on the **native** engine, launched in parallel — a zone's findings share one investigation context; merging two small zones into one probe is fine when their concerns overlap. Default to probing every finding, because a wrong minor finding still costs the author time; on a large review, scoping probes to Major/Critical is fair economy — scoped-out findings take the verdict `Unverified (out of probe scope)`.
+Fan out, merge, and degrade per `./references/workflow/verify-pipeline.md` § *Fan-out and probes* and § *Merge and degrade*, under the probe and merge contracts of `./references/workflow/agent-fanout.md`, with engines per `./references/workflow/probe-engines.md` and the verify shape in `./references/workflow/probe-shape-verify.md`; this skill is a registered consumer of each.
 
-Each probe prompt follows the **verify shape** in the Probe prompt skeleton of `./references/workflow/probe-engines.md`: self-contained, carrying the batch's findings verbatim, the reviewed diff (`<base>...HEAD`, on Setup's resolved base) as the review object, and the absolute path of this skill's sibling `../verify-issue/SKILL.md` for the probe to apply. Without the diff a probe judges a finding about the change — a dropped guard, a regressed default — against current contents that look correct in isolation.
-
-**Merge** per the fan-out merge contract, plus one turn specific to this composite: a probe's **Not an issue** contradicts the session's own review — re-check that spot before accepting it. Accepted → the finding is **Withdrawn**, displayed with the probe's evidence, out of scope for `publish-pr-review`. Rejected → the finding stands, with a note on what the probe missed. Never silently drop either way. A finding the probe surfaces on its own — `verify-issue`'s scope step routinely turns up the same pattern elsewhere — is a candidate per that contract, not a verdict: verify it against the reviewed diff, then adopt it into its batch's zone as an open finding, verdict and all, so **Batches**, **Findings** at Major/Critical, and the **Verified** count all carry it like any other.
-
-**Degrade**: a probe that has failed or died never blocks the pipeline — verify that batch inline by the same `verify-issue` protocol and mark its verdicts `verified inline (probe failed: <reason>)`. Slowness alone is not failure, per the probe contract: a probe still making progress is waited on with its status reported, and calling a stalled one off is the user's decision — a called-off batch verifies inline the same way, marked `verified inline (probe called off)`. Inline verdicts lose the cold-eyes property; the mark keeps that visible.
+The **review object** every probe prompt carries is the reviewed diff, `<base>...HEAD` on Setup's resolved base. Two additions to the merge: a **Withdrawn** finding is out of scope for `publish-pr-review`, and an adopted probe candidate enters **Findings** at Major/Critical besides **Batches** and the **Verified** count.
 
 ## Output
 
 Lists, never tables.
 
 - **Summary** — what changed, intent, and the overall assessment (approve / request changes / needs discussion) restated after verification — verdicts are evidence and may move it; the session owns the final call.
-- **Batches** — the triage frame: one section per concern zone, ordered by its most severe member. Each finding renders once: original text with its severity prefix, `file:line` (or the diff-wide scope when it has no anchor), then its verdict — **Confirmed** (root cause, plus fix options targeted → thorough), **Withdrawn** (the probe's evidence), **Inconclusive** (what's missing), or **Unverified** (reason: probe and fallback failed, or out of probe scope — in the `-p` case carrying the annotation the Flags section fixes) — or, for a finding triage landed outside open, its bucket in place of a verdict.
+- **Batches** and **Verified** — as `./references/workflow/verify-pipeline.md` § *Output: Batches and the Verified line* specs them, `Batches` here taking the diff-wide scope as its no-anchor locator; with `-p`, an out-of-probe-scope verdict carries the annotation the Flags section fixes.
 - **Findings** — the publishable list, in `review-pr`'s Findings format: every surviving Major/Critical finding — verdict Confirmed, Inconclusive, or Unverified — with its severity, `file:line`, and original text verbatim. A verdict other than Confirmed rides along as a closing note on the entry — `(Inconclusive: <what's missing>)` / `(Unverified: <reason>)` — and counts as part of the finding's text downstream, so `/publish-pr-review` posts the caveat with the claim instead of giving an unsettled finding a confirmed one's authority. Withdrawn findings are excluded here; their evidence lives in Batches. This is the section `/publish-pr-review` consumes; write `none` when nothing survives — that's what makes the follow-up post an approval.
-- **Verified** — one mandatory line: `Verified: <n> confirmed · <n> withdrawn · <n> inconclusive · <n> unverified — <k> native probes`. Two segments are conditional: ` · <n> triaged out` joins the counts only when triage landed findings outside open — the **addressed** and **verify** buckets both, since neither got a verdict here — and `, <m> inline fallbacks` joins the probe count only when a batch was verified inline (probe failed or called off). Mandatory so a skipped or failed verify phase is visible rather than ambiguous.
 - **Cross-check** (only with `-x`), **Lens probes** (only with `-p`), **Improvements**, **Inaccessible context** (only if any), **PR description** (only with `-d`) — forwarded from the review phase as `review-pr` specs them. Improvements are non-blocking suggestions, not findings — they pass through unverified.
 - **Reviewed** — the provenance line exactly as `review-pr` specs it, so `/publish-pr-review` can anchor: `Reviewed at <head-sha> (merge-base <base-sha>) by <model>`.
 
@@ -73,11 +62,7 @@ Lists, never tables.
 
 ## Verification
 
-Confirm the protocol invariants before finishing:
+Confirm `./references/workflow/verify-pipeline.md` § *Shared checklist* — its phases here are `review-pr`, `triage-findings`, and probes on `verify-issue`, and its read-only item covers posting to the PR — plus these:
 
-- [ ] Each phase ran from its skill file (`review-pr`, `triage-findings`, probes on `verify-issue`) — none improvised from memory
 - [ ] Setup's working-tree check ran before the review, and it plus the head and merge-base still held at the probes — or the pipeline stopped and said so
-- [ ] Every finding renders exactly once in Batches — open ones with exactly one verdict, non-open ones with their triage bucket; none dropped, Withdrawn ones included with evidence
-- [ ] Every batch covered by a probe (merged small zones count) or a flagged inline fallback; prompts carried the findings verbatim; probes read-only per the fan-out contract
-- [ ] Output carries the Reviewed line, the mandatory Verified line, and the Findings list (surviving Major/Critical only — Withdrawn excluded, non-Confirmed verdicts noted on their entries)
-- [ ] Nothing edited, nothing posted — the pipeline-wide read-only guarantee held
+- [ ] Output carries the Reviewed line and the Findings list (surviving Major/Critical only — Withdrawn excluded, non-Confirmed verdicts noted on their entries)

@@ -1,7 +1,7 @@
 // Covers scripts/size-check.ts: the context-size baseline ratchet and its 0/1/2 exit contract.
 // Zero dependencies; runs under Node type stripping — too old a Node fails as a parse error, not a
 // version message. Floor in AGENTS.md § The `.ts` sources are unchecked by design.
-// Run: node --test tests/<name>.test.ts   ·   all five: node --test "tests/*.test.ts"
+// Run: node --test tests/<name>.test.ts   ·   every suite: node --test "tests/*.test.ts"
 
 import assert from "node:assert";
 import { spawnSync } from "node:child_process";

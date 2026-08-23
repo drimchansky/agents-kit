@@ -5,11 +5,12 @@
 // Run: node scripts/health-check.ts [--stale-days N] [--result-max-kb N] <root> [<root>...]
 //  or: node scripts/health-check.ts --installs <kit-root> <home> [<home>...]
 // Emitted `check` values: the task walk reports `stale`, `done-unarchived`, `started-in-backlog`,
-// `unknown-status`, `dead-anchor`, `goal-id`, `no-current-state`, `oversized-result`, and
-// `duplicate-slug`; `--installs` walks no tasks and reports `install-drift` instead. Archived
-// folders are counted in `scanned` and exempt from every check but `duplicate-slug`, which sees
-// them because a bare slug falls back into `Archive/` (references/workflow/task-layout.md
-// § Discovery rules for skills), so an archived slug stays citable and must stay unique.
+// `unknown-status`, `legacy-result-status`, `dead-anchor`, `goal-id`, `no-current-state`,
+// `oversized-result`, and `duplicate-slug`; `--installs` walks no tasks and reports `install-drift`
+// instead. Archived folders are counted in `scanned` and exempt from every check but
+// `duplicate-slug`, which sees them because a bare slug falls back into `Archive/`
+// (references/workflow/task-layout.md § Discovery rules for skills), so an archived slug stays
+// citable and must stay unique.
 // Backlogged folders are exempt from `stale` alone — parked work is deliberately dormant
 // (references/workflow/task-backlog.md) — and stay in every other check, `duplicate-slug` included,
 // since the same slug fallback reaches `Backlog/` and a parked task's docs are future work a later
@@ -18,12 +19,19 @@
 // `Archive/`, and `started-in-backlog` fires for a plan past `to-do`, which no longer meets the
 // backlog's unstarted entry gate, and for a plan with no parseable status, which cannot be judged
 // against it — the stale exemption would otherwise leave that shape silent. A plan-less folder
-// fires it too when its `result.md` carries a live status — the stand-in the terminal check reads —
-// since a result file exists only once execution starts. `duplicate-slug` is also the one check that
-// spans roots: a slug must be unique across every root walked and within each one, since the walk
-// is recursive. It emits one finding per colliding folder, each keeping its own `root`, so every
-// finding still carries the single root its consumer attributes it by, and names its peers by
-// absolute directory rather than by the root-basename-prefixed display path.
+// fires it too once a `result.md` exists at all, since a result file exists only once execution
+// starts. `duplicate-slug` is also the one check that spans roots: a slug must be unique across
+// every root walked and within each one, since the walk is recursive. It emits one finding per
+// colliding folder, each keeping its own `root`, so every finding still carries the single root its
+// consumer attributes it by, and names its peers by absolute directory rather than by the
+// root-basename-prefixed display path.
+// `plan.md` is the sole lifecycle-status home (references/workflow/task-lifecycle.md § `result.md` —
+// no status field), so every status this walk reads is the plan's and `unknown-status` judges the
+// plan alone; a `result.md` still carrying a `**Status:**` header is the legacy shape that section
+// tolerates, reported once as `legacy-result-status` and never validated against a vocabulary that
+// no longer governs the file. Where a folder holds no plan at all the result stands in through its
+// content rather than a status of its own: the file existing means execution started, and its
+// closing `**Completed:**` line is the only finished-ness left to read.
 // Contract: stdout is exactly one JSON object,
 // {"findings":[…],"scanned":N,"unreadable":N,"unreadablePaths":[…]}. Task findings are
 // {check,path,detail,root}, with `root` the resolved absolute task root; `--installs` findings are
@@ -37,6 +45,7 @@
 import { lstatSync, readdirSync, readFileSync, readlinkSync, realpathSync, statSync } from "node:fs";
 import type { Dirent, Stats } from "node:fs";
 import { join, resolve, basename, sep } from "node:path";
+import { holdsRoleFile, LIVE_STATUSES, PLAN_VOCAB, RESULT_MAX_KB as DEFAULT_RESULT_MAX_KB, TERMINAL_STATUSES, UNSTARTED_STATUS } from "./lifecycle-constants.ts";
 
 // stdout is asynchronous on a macOS pipe, so the report is written and the module then ends: calling
 // process.exit after the write would discard whatever the pipe buffer could not take, truncating the
@@ -51,26 +60,8 @@ process.stdout.on("error", (err: NodeJS.ErrnoException) => {
 // a real task its scan, silently: `.git` and every other dotted name bar `.agents` are skipped by
 // the walk itself.
 const SKIP_DIRS = new Set<string>(["node_modules"]);
-// The recognition set defined in references/workflow/task-layout.md § One task, one flat folder —
-// this is its executable copy; the suffix forms are legacy names the format sweep renames, kept
-// here because only the kit's own canonical root is ever swept.
-const ROLE_FILES = ["CONTEXT.md", "goals.md", "plan.md", "result.md", "ticket.md"];
-const ROLE_SUFFIXES = [".plan.md", ".result.md", ".spec.md", ".ticket.md"];
-// Closed plan vocabulary defined by references/workflow/task-lifecycle.md § Status values; a value
-// outside it is "unknown" rather than a guess, so a typo never reads as a lifecycle state.
-const PLAN_VOCAB = new Set<string>(["to-do", "executing", "blocked", "in-review", "done", "skipped"]);
-// Closed result vocabulary from the same section; the result file has no `to-do` or `skipped` state.
-const RESULT_VOCAB = new Set<string>(["executing", "blocked", "in-review", "done"]);
-// Terminal (finished) plan states per references/workflow/status-transitions.md § Terminal vs. live
-// states. Read here rather than baked into the skill so a vocabulary change lands in one place.
-const TERMINAL_STATUSES = new Set<string | null>(["done", "skipped"]);
-// The non-terminal complement of the plan vocabulary, derived rather than spelled out so the two
-// cannot drift apart when a status is added to or removed from the vocabulary above.
-const LIVE_STATUSES = new Set<string>([...PLAN_VOCAB].filter((v) => !TERMINAL_STATUSES.has(v)));
-// The same complement over the result vocabulary: references/workflow/task-authorship.md § Files
-// expects a `## Current state` block on a live result, and carves out a legacy `done` one, which
-// keeps its last rewrite frozen and never gains a block retroactively.
-const LIVE_RESULT_STATUSES = new Set<string | null>([...RESULT_VOCAB].filter((v) => !TERMINAL_STATUSES.has(v)));
+// The recognition set and its membership test come from scripts/lifecycle-constants.ts, so this
+// walk and the move that refuses a non-task folder agree on what a task folder is.
 // references/workflow/task-archiving.md: new archives are created as
 // `Archive/`, but an existing one is recognized case-insensitively, so a pre-rename `archive/`
 // (or the same folder on a case-insensitive filesystem) still counts as archived.
@@ -80,12 +71,15 @@ const ARCHIVE_DIR = /^archive$/i;
 const BACKLOG_DIR = /^backlog$/i;
 const DEFAULT_STALE_DAYS = 30;
 const DAY_MS = 86_400_000;
-// The compaction trigger is owned by references/workflow/reconciliation.md § Compaction, which
-// `maintain` reads at run time and passes as --result-max-kb; this default only keeps a bare run
-// honest when no value is supplied.
-const DEFAULT_RESULT_MAX_KB = 20;
 
 const CURRENT_STATE = /^##[ \t]+Current state\b/im;
+// The closing line a `done` plan owes its result (references/workflow/task-lifecycle.md § Companion
+// result file). Scanned over the whole file rather than the header block, because it closes a result
+// rather than heading one, and it is the only finished-ness a plan-less folder still carries — which
+// is why the colon and the date are both required rather than the word alone: on a plan-less folder
+// this match *is* the lifecycle, so a prose header like `**Completed steps:** 3 of 7` reading as
+// `done` would file unfinished work under a status nothing else can contradict.
+const COMPLETED_LINE = /^[ \t]*(?:[-*+][ \t]+)?\*\*Completed:\*\*[ \t]*\d{4}-\d{2}-\d{2}\b/i;
 // references/workflow/task-goals.md: every `## Goals` bullet leads with a durable
 // `G<n>` ID (optionally followed by an `(external)` token) and the IDs are unique across the file.
 const GOALS_HEADING = /^##[ \t]+Goals\b/;
@@ -94,7 +88,13 @@ const GOAL_ID = /^G\d+$/;
 // step whose link is absent or unresolvable has lost the evidence that justifies the checkbox.
 const STEP_HEADING = /^#{2,6}[ \t]+Step\b/;
 const HEADING = /^#{1,6}[ \t]+(.+?)[ \t]*#*$/;
-const FENCE = /^[ \t]*(`{3,}|~{3,})/;
+// The markdown-reading constants and helpers below — this regex and `liveLines`, `HEADING`,
+// `RESULT_LINK`, `STATUS_PATTERNS` with its normalizer, and `slugify`/`headingSlugs` with
+// `COMPACTED_HEADING`/`TOMBSTONE_BULLET` — are mirrored in scripts/task-state.ts, and the fence and
+// status halves again in scripts/task-move.ts. Those readers must agree with this one: this walk's
+// dead-anchor check against task-state's `anchorResolves`, and its terminal read against task-move's
+// archive gate. Change a copy here and change every mirror in the same edit.
+const FENCE = /^([ \t]*)(`{3,}|~{3,})[ \t]*(.*)$/;
 const CHECKED_STEP = /^[ \t]*-[ \t]+\[[xX]\]/;
 // implement-task appends the evidence link at the end of the step line, but the step's own prose
 // may cite a literal `([result](…))` as an example — so the last match is the link, never the first.
@@ -123,6 +123,7 @@ type TaskCheck =
   | "done-unarchived"
   | "started-in-backlog"
   | "unknown-status"
+  | "legacy-result-status"
   | "dead-anchor"
   | "goal-id"
   | "no-current-state"
@@ -270,8 +271,7 @@ function clip(text: string, max = 60): string {
 }
 
 function isTaskDir(entries: readonly Dirent[]): boolean {
-  const files = entries.filter((e) => e.isFile()).map((e) => e.name);
-  return files.some((f) => ROLE_FILES.includes(f) || ROLE_SUFFIXES.some((s) => f.endsWith(s) && f !== s));
+  return holdsRoleFile(entries.filter((e) => e.isFile()).map((e) => e.name));
 }
 
 // Tolerant status extraction: canonical `**Status:** value`, parenthetical qualifiers
@@ -284,15 +284,24 @@ const STATUS_PATTERNS = [
 
 // Every scan over a task file skips fenced content, because a heading, a bullet, or a status line
 // inside a fence is illustrative markdown rather than the file's own. Closing a fence takes the
-// opener's marker at its own length or longer (CommonMark), so a shorter or different-marker run
-// inside an open block is content: a boolean flag would invert on it and hand back what it skipped.
+// opener's marker at its own length or longer, no further indented than the opener, and nothing after
+// it but whitespace, so a shorter run, a different marker, a deeper-indented run, or a run carrying an
+// info string is content inside an open block: a boolean flag would invert on it and hand back what it
+// skipped. All three halves matter as much as the length one — a doc that shows a fenced example opens
+// with ``` and carries ```md or an indented ``` inside it, and closing on either hands back the rest of
+// the example as the file's own lines. The indent test is relative to the opener rather than
+// CommonMark's flat 0–3 columns, because a fence nested in a list item is legitimately indented past
+// that and its content still has to be skipped.
 function* liveLines(text: string): Generator<string> {
-  let fence: { char: string; len: number } | null = null;
+  let fence: { indent: number; char: string; len: number } | null = null;
   for (const line of text.split("\n")) {
-    const marker = line.match(FENCE)?.[1];
+    const marker = line.match(FENCE);
     if (marker) {
-      if (!fence) fence = { char: marker[0], len: marker.length };
-      else if (marker[0] === fence.char && marker.length >= fence.len) fence = null;
+      const [, pad, run, rest] = marker;
+      if (!fence) fence = { indent: pad.length, char: run[0], len: run.length };
+      else if (pad.length <= fence.indent && run[0] === fence.char && run.length >= fence.len && rest === "") {
+        fence = null;
+      }
       continue;
     }
     if (!fence) yield line;
@@ -322,11 +331,11 @@ interface StatusFields {
   readonly raw: string | null;
 }
 
-function normalize(raw: string | null, vocab: ReadonlySet<string>): StatusFields {
+function normalize(raw: string | null): StatusFields {
   if (raw == null) return { value: null, raw: null };
   const cleaned = raw.replace(/[*_`]/g, "").trim();
   const token = (cleaned.split(/[\s,;.]+/)[0] ?? "").toLowerCase().replace(/[^a-z-]/g, "");
-  if (vocab.has(token)) return { value: token, raw: cleaned };
+  if (PLAN_VOCAB.has(token)) return { value: token, raw: cleaned };
   return { value: "unknown", raw: cleaned.length > 60 ? cleaned.slice(0, 57) + "…" : cleaned };
 }
 
@@ -361,12 +370,11 @@ function readStatusFrom(
   entries: readonly Dirent[],
   exactName: string,
   suffix: string | null,
-  vocab: ReadonlySet<string>,
 ): RoleStatus | null {
   const role = readRoleFile(dir, display, entries, exactName, suffix);
   if (!role) return null;
   if (role.text == null) return { ...role, value: "unknown", raw: "unreadable" };
-  return { ...role, ...normalize(rawStatus(role.text), vocab) };
+  return { ...role, ...normalize(rawStatus(role.text)) };
 }
 
 function lastModified(dir: string, entries: readonly Dirent[]): number {
@@ -389,7 +397,7 @@ interface Task {
   readonly archived: boolean;
   readonly backlogged: boolean;
   readonly plan: RoleStatus | null;
-  readonly result: RoleStatus | null;
+  readonly result: RoleFile | null;
   readonly goals: RoleFile | null;
   readonly updated: number;
 }
@@ -432,8 +440,8 @@ function collect(rootDir: string, rootDisplay: string): Task[] {
           path: childDisplay,
           archived,
           backlogged,
-          plan: readStatusFrom(child, childDisplay, childEntries, "plan.md", ".plan.md", PLAN_VOCAB),
-          result: readStatusFrom(child, childDisplay, childEntries, "result.md", ".result.md", RESULT_VOCAB),
+          plan: readStatusFrom(child, childDisplay, childEntries, "plan.md", ".plan.md"),
+          result: readRoleFile(child, childDisplay, childEntries, "result.md", ".result.md"),
           goals: readRoleFile(child, childDisplay, childEntries, "goals.md", null),
           updated: lastModified(child, childEntries),
         });
@@ -451,12 +459,13 @@ interface Lifecycle {
   readonly source: string | null;
 }
 
-// The plan owns the lifecycle, so it wins whenever it exists; the result file only stands in for a
-// folder that has no plan at all, where it is the sole remaining record of how the task ended.
+// The plan owns the lifecycle, so it wins whenever it exists. For a folder that has no plan at all
+// the result stands in through its content, since it carries no status: it exists only once
+// execution started, and only its closing `**Completed:**` line says that execution finished.
 function lifecycleStatus(task: Task): Lifecycle {
   if (task.plan) return { value: task.plan.value, source: task.plan.file };
-  if (task.result) return { value: task.result.value, source: task.result.file };
-  return { value: null, source: null };
+  if (task.result?.text == null) return { value: null, source: null };
+  return { value: hasCompletedLine(task.result.text) ? "done" : "executing", source: task.result.file };
 }
 
 interface SlugHolder {
@@ -516,37 +525,49 @@ function staleFinding(task: Task, now: number, staleDays: number): UnrootedFindi
   }
   const days = Math.floor((now - task.updated) / DAY_MS);
   if (days < staleDays) return null;
-  // Three distinct facts, and the label keeps them apart: no status-bearing file at all, a file
+  // Three distinct facts, and the label keeps them apart: no status-bearing file at all, a plan
   // whose `**Status:**` wouldn't parse, and a real status. The last names its file when the result
   // stood in for a missing plan, the way the done-unarchived detail does.
   const label = source == null ? "no-plan" : (value ?? "no-status");
-  const origin = value != null && !task.plan ? ` (status from ${source})` : "";
+  const origin = value != null && !task.plan ? ` (derived from ${source})` : "";
   return { check: "stale", path: task.path, detail: `${label}${origin}, ${days} days stale` };
 }
 
 // A value the vocabulary doesn't hold is not a lifecycle state, so the stale and archive checks below
 // both skip it — and a task no check reaches is exactly what this sweep exists to surface. Report the
-// value the file actually carries, per file, so a typo or a vocabulary renamed out from under
-// PLAN_VOCAB is visible rather than quietly unsupervised.
-function unknownStatusFindings(task: Task): UnrootedFinding[] {
-  if (task.archived) return [];
-  const out: UnrootedFinding[] = [];
-  for (const role of [task.plan, task.result]) {
-    if (role?.text == null || role.value !== "unknown") continue;
-    out.push({
-      check: "unknown-status",
-      path: task.path,
-      detail: `${role.file} carries an unrecognized status: ${role.raw}`,
-    });
-  }
-  return out;
+// value the plan actually carries, so a typo or a vocabulary renamed out from under PLAN_VOCAB is
+// visible rather than quietly unsupervised.
+function unknownStatusFinding(task: Task): UnrootedFinding | null {
+  if (task.archived) return null;
+  const plan = task.plan;
+  if (plan?.text == null || plan.value !== "unknown") return null;
+  return {
+    check: "unknown-status",
+    path: task.path,
+    detail: `${plan.file} carries an unrecognized status: ${plan.raw}`,
+  };
+}
+
+// A result written before the plan became the single status home may still carry a `**Status:**`
+// header. Nothing repairs it and no reader acts on it, so it is reported as the legacy shape it is
+// rather than judged: validating the value would resurrect the second lifecycle the contract
+// deleted, and any value it holds — vocabulary or not — is equally inert.
+function legacyResultStatusFinding(task: Task): UnrootedFinding | null {
+  if (task.archived || task.result?.text == null) return null;
+  const raw = rawStatus(task.result.text);
+  if (raw == null) return null;
+  return {
+    check: "legacy-result-status",
+    path: task.path,
+    detail: `${task.result.file} carries a legacy **Status:** header (${clip(raw)}); plan.md owns the lifecycle`,
+  };
 }
 
 function doneUnarchivedFinding(task: Task): UnrootedFinding | null {
   if (task.archived) return null;
   const { value, source } = lifecycleStatus(task);
   if (!TERMINAL_STATUSES.has(value)) return null;
-  const origin = task.plan ? "" : ` (status from ${source})`;
+  const origin = task.plan ? "" : ` (derived from ${source})`;
   // A terminal task under a `Backlog/` is misfiled rather than merely unarchived — the backlog holds
   // unstarted work only (references/workflow/task-backlog.md) — so the detail names where it sits.
   const place = task.backlogged ? "parked in Backlog/ — belongs in Archive/" : "outside Archive/";
@@ -559,8 +580,8 @@ function doneUnarchivedFinding(task: Task): UnrootedFinding | null {
 // plan that carries no parseable status can't be judged against the gate at all, and stale — the
 // check that reports that shape everywhere else — is the one check parking exempts, so it is
 // reported here rather than left silent. The gate is written on the plan, and an absent plan is the
-// parked-intended state — unless a `result.md` says otherwise: a result file exists only once
-// execution starts, so a live one fails the gate on the same stand-in the terminal check accepts.
+// parked-intended state — unless a `result.md` exists: the file is created only once execution
+// starts, so its presence alone fails the gate, whatever it does or does not say inside.
 function startedInBacklogFinding(task: Task): UnrootedFinding | null {
   if (task.archived || !task.backlogged) return null;
   const value = task.plan?.value;
@@ -572,15 +593,14 @@ function startedInBacklogFinding(task: Task): UnrootedFinding | null {
     };
   }
   if (task.plan == null) {
-    const result = task.result;
-    if (result == null || result.value == null || !LIVE_RESULT_STATUSES.has(result.value)) return null;
+    if (task.result == null) return null;
     return {
       check: "started-in-backlog",
       path: task.path,
-      detail: `${result.value} (status from ${result.file}), parked in Backlog/ — a parked task must be unstarted`,
+      detail: `no plan.md but ${task.result.file} exists, parked in Backlog/ — a parked task must be unstarted`,
     };
   }
-  if (value === "to-do" || !LIVE_STATUSES.has(value)) return null;
+  if (value === UNSTARTED_STATUS || !LIVE_STATUSES.has(value)) return null;
   return {
     check: "started-in-backlog",
     path: task.path,
@@ -597,7 +617,7 @@ function slugify(heading: string): string {
 }
 
 // Compaction removes a section but leaves its title as a tombstone bullet under a `## Compacted`
-// stub (references/workflow/reconciliation.md § Compaction), so a step link pointing at one is
+// stub (references/workflow/reconciliation-compaction.md § The procedure), so a step link pointing at one is
 // documented state, not a dead anchor.
 const COMPACTED_HEADING = /^Compacted\b/;
 const TOMBSTONE_BULLET = /^[ \t]*-[ \t]+(.+?)[ \t]*$/;
@@ -734,14 +754,26 @@ function hasCurrentState(text: string): boolean {
   return false;
 }
 
+function hasCompletedLine(text: string): boolean {
+  for (const line of liveLines(text)) {
+    if (COMPLETED_LINE.test(line)) return true;
+  }
+  return false;
+}
+
+// references/workflow/task-authorship.md § Files expects a `## Current state` block on the result of
+// a task whose plan is live, which is now the plan's state to declare. Terminal states are exempt —
+// a legacy `done` result keeps its last rewrite frozen and never gains a block retroactively — and so
+// is `to-do`, which owes no result file at all, so one found there is another check's drift.
 function currentStateFinding(task: Task): UnrootedFinding | null {
   if (!task.result?.text) return null;
-  if (!LIVE_RESULT_STATUSES.has(task.result.value)) return null;
+  const { value } = lifecycleStatus(task);
+  if (value == null || value === UNSTARTED_STATUS || !LIVE_STATUSES.has(value)) return null;
   if (hasCurrentState(task.result.text)) return null;
   return {
     check: "no-current-state",
     path: task.path,
-    detail: `${task.result.value} ${task.result.file} has no "## Current state" block`,
+    detail: `${value} ${task.result.file} has no "## Current state" block`,
   };
 }
 
@@ -1145,8 +1177,13 @@ if (installs) {
       // imperfections every run would be permanent noise. A backlogged folder is not frozen — it is
       // future work a later reconcile still repairs — so it stays in them.
       if (!task.archived) {
-        single.push(currentStateFinding(task), oversizedResultFinding(task, resultMaxKb));
-        rootFindings.push(...anchorFindings(task), ...goalIdFindings(task), ...unknownStatusFindings(task));
+        single.push(
+          currentStateFinding(task),
+          oversizedResultFinding(task, resultMaxKb),
+          unknownStatusFinding(task),
+          legacyResultStatusFinding(task),
+        );
+        rootFindings.push(...anchorFindings(task), ...goalIdFindings(task));
       }
       for (const finding of single) {
         if (finding) rootFindings.push(finding);

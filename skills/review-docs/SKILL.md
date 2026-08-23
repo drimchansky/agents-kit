@@ -19,7 +19,7 @@ For reviewing an implementation plan against the codebase (not a doc), use `revi
 
 ## Flags
 
-- `-x` — Cross-check: launch one independent grounding probe on the cross-vendor engine over the doc's verifiable claims and merge it before verdicts are assigned, per the shared contract in `./references/workflow/agent-fanout.md`, with the engine and its launch recipe in `./references/workflow/probe-engines.md`. Off by default. The probe is read-only; its outcome is recorded on the Doc Summary's `Cross-check:` line. <!-- cold -->
+- `-x` — Cross-check: launch one independent grounding probe on the cross-vendor engine over the doc's verifiable claims and merge it before verdicts are assigned, per `./references/workflow/probe-cross-check.md` on the grounding shape in `./references/workflow/probe-shape-grounding.md`, under the shared contract in `./references/workflow/agent-fanout.md`, with the engine and its launch recipe in `./references/workflow/probe-engines-cross-vendor.md`. Off by default. The probe is read-only; its outcome is recorded on the Doc Summary's `Cross-check:` line. <!-- cold -->
 
 ## When to Use
 
@@ -68,7 +68,7 @@ Skip soft claims (philosophy, intent, motivation) — those don't have a ground 
 
 Every claim about the codebase must be verified against the actual source — that's the whole job of this pass.
 
-**With `-x`, launch the grounding probe first.** Once the claims are extracted (Step 2), start one background probe on the **cross-vendor engine** per `./references/workflow/agent-fanout.md`, on the launch recipe in `./references/workflow/probe-engines.md`: a self-contained prompt carrying the extracted claims and the doc's path, with the repo root as working root, demanding per-claim `CONFIRMED` / `CONTRADICTED` / `NOT FOUND` verdicts with `file:line` evidence. Ground inline yourself as below while it runs; collect and merge per the contract before assigning verdicts — where the probe contradicts your grounding, re-check that spot first. Record the outcome on the Doc Summary's `Cross-check:` line — including `skipped (<reason>)` when the engine is unavailable, in which case proceed on your own pass. <!-- cold -->
+**With `-x`, launch the grounding probe first.** Once the claims are extracted (Step 2), start one background probe on the **cross-vendor engine** per `./references/workflow/probe-cross-check.md`, on the grounding shape in `./references/workflow/probe-shape-grounding.md` and the launch recipe in `./references/workflow/probe-engines-cross-vendor.md`: a self-contained prompt carrying the extracted claims and the doc's path, with the repo root as working root, demanding per-claim `CONFIRMED` / `CONTRADICTED` / `NOT FOUND` verdicts with `file:line` evidence. Ground inline yourself as below while it runs; collect and merge per the contract before assigning verdicts — where the probe contradicts your grounding, re-check that spot first. Record the outcome on the Doc Summary's `Cross-check:` line — including `skipped (<reason>)` when the engine is unavailable, in which case proceed on your own pass. <!-- cold -->
 
 For each claim:
 

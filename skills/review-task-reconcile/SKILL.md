@@ -86,15 +86,15 @@ pipeline.
 Apply the assessment's findings to the task docs per `./references/workflow/reconciliation.md` and
 its **docs → reality** direction file `./references/workflow/reconciliation-docs-to-reality.md` —
 read both before editing; together they are the single source of truth and this phase adds no
-mechanics of its own. The shared file defines the shared mechanics (consent model, the external
-reference check, annotation formats, the append-only `## Reconciliation` record, the
+mechanics of its own. The shared file defines the shared mechanics (consent model, who runs the
+reference sweep, annotation formats, the append-only `## Reconciliation` record, the
 `## Current state` refresh, the sequence ending in the printed change list); the direction file
 defines the direction rules (write surface, repairs weaken while advances go through the shared
 engine), the shared repairs, and — in its `review-task-reconcile` mapping section — this pipeline's
 finding-type → edit mapping.
 
-The shared file's § *External reference check* runs in this phase, its `## References` block printed
-before any edit. It is this pipeline's only source of dead-link and reference-answered-question
+The contract's reference sweep, `./references/workflow/reconciliation-sweep.md`, runs in this phase,
+its `## References` block printed before any edit. It is this pipeline's only source of dead-link and reference-answered-question
 findings.
 
 The assessment's Questions are put to the engineer and folded back into the plan per the direction
@@ -140,9 +140,9 @@ Confirm the protocol invariants before finishing:
 - [ ] Every box checked or `**Status:**` advanced went through
       `./references/workflow/reconciliation.md` § *Strengthen only on verified evidence*,
       re-verified in this run — an engineer's answer refines plan content, never state
-- [ ] The reference check ran in Phase 2 with its `## References` block printed before any edit —
-      rendered even when nothing was in scope — and `observations.md` rewritten with the swept
-      lines, or removed in that case — § *External reference check*
+- [ ] The reference check ran in Phase 2 — or its gate skipped it — with the `## References` block
+      printed before any edit, rendered even when nothing was in scope, and `observations.md`
+      rewritten with the swept lines or removed — `reconciliation-sweep.md`
 - [ ] Write surface held: nothing written outside the four files the direction fixes, and every file
       that section keeps off the surface untouched —
       `./references/workflow/reconciliation-docs-to-reality.md` § *Write surface*

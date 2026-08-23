@@ -16,7 +16,7 @@ This skill closes the gap a working or design session opens: things get decided,
 
 - **Strengthen only on verified evidence** — progress is recorded only on evidence re-verified in this session, never on a chat claim (`./references/workflow/reconciliation.md` § *Strengthen only on verified evidence*).
 - **Grounding docs change by confirmation** — anything redefining scope or acceptance goes through the batched confirmation round, never an auto-apply (`./references/workflow/reconciliation-session-to-docs.md` § *Grounding docs change by confirmation, never silently*).
-- **Docs, not the world** — no source code is written, no git state is mutated, and no external system is updated (`./references/workflow/reconciliation.md` § *Docs, not the world*). Which files this direction may write, and which stay read-only, is `./references/workflow/reconciliation-session-to-docs.md` § *Write surface*; a `warn` or `block` on one of the read-only surfaces routes by `./references/workflow/reconciliation.md` § *External reference check*'s never-annotated rule. Output is those files plus a chat change list — no scratch artifact.
+- **Docs, not the world** — no source code is written, no git state is mutated, and no external system is updated (`./references/workflow/reconciliation.md` § *Docs, not the world*). Which files this direction may write, and which stay read-only, is `./references/workflow/reconciliation-session-to-docs.md` § *Write surface*; a `warn` or `block` on one of the read-only surfaces routes by `./references/workflow/reconciliation.md` § *Never-annotated surfaces*. Output is those files plus a chat change list — no scratch artifact.
 
 ## When to Use
 
@@ -54,10 +54,10 @@ Read all four core artifacts — plus `ticket.md`, `diagram.md`, `observations.m
 - `goals.md` — capture the full `## Goals` list by `G<n>` ID, and the highest ID in use (a new goal takes the next free number).
 - `plan.md` — its `**Status:**`, its steps and their `- [ ]` / `- [x]` markers, each step's **What** / **Verify** / **Goal** / **Depends on**, and the `## Scope` partition.
 - `diagram.md` (when present) — the target-state shape and its dated `**Reflects:**` line; a read-only baseline — structure the session changed that it doesn't show becomes a flag-only finding, never a repaint.
-- `observations.md` (when present) — the previous sweep's dated ledger of the folder's cited references; read-only input to Step 4, which reads, diffs against, and rewrites it per `./references/workflow/reconciliation.md` § *External reference check*.
+- `observations.md` (when present) — the previous sweep's dated ledger of the folder's cited references; read-only input to Step 4, which — when the sweep runs — reads, diffs against, and rewrites it per `./references/workflow/reconciliation-sweep.md` § *Ledger*.
 - **The deliverable** (doc tasks only — `adr.md`, `rfc.md`, …; resolved per `./references/workflow/doc-task-files.md`, which fixes it without depending on the plan's optional `**Deliverable:**` header) — a read-only baseline: its content is the work product the session may have changed, and its `**Published:**` line is a swept citation Step 4 needs. <!-- cold -->
   Never written here: findings on it route by the mapping rows in `./references/workflow/reconciliation-session-to-docs.md` § *`reconcile-task` — session findings*.
-- `result.md` — read `## Current state` first for orientation (derived metadata, not ground truth); then its `**Status:**`, the latest per-step / full-run section, any `**Blocked:**` block, any `**In review:**` block, any `## Acceptance` section. If none exists, note it: work recorded this session may create it (per the pairing rule in `./references/workflow/task-lifecycle.md` § *Pairing rule*).
+- `result.md` — read `## Current state` first for orientation (derived metadata, not ground truth); then the latest per-step / full-run section, any `**Blocked:**` block, any `**In review:**` block, any `## Acceptance` section. It carries no status of its own — the plan's is the task's. If none exists, note it: work recorded this session may create it (per `./references/workflow/task-lifecycle.md` § *Companion result file*).
 
 A `skipped` plan is terminal — handle it per `./references/workflow/reconciliation.md` § *Skipped plans are exempt* and stop there. A plan with no sibling `goals.md` is a gap — surface it (`plan-task` is expected to produce one) rather than fabricating goals.
 
@@ -77,7 +77,7 @@ Group findings by target file (`CONTEXT.md` / `goals.md` / `plan.md` / `result.m
 
 ### 4. Check the Cited External References
 
-Run the **External reference check** in `./references/workflow/reconciliation.md` § *External reference check* — cite it, don't restate it. This skill is where it lands for a task you're actively working; the reporting skills sweep none.
+Run the **reference sweep** in `./references/workflow/reconciliation-sweep.md` — cite it, don't restate it. This skill is where it lands for a task you're actively working; the reporting skills sweep none, and a `warn` or `block` on one of the three never-annotated surfaces routes by `./references/workflow/reconciliation.md` § *Never-annotated surfaces*.
 
 Its findings join Step 3's as one set — different provenance, same handling; Step 6's mapping routes each tag.
 
@@ -91,9 +91,9 @@ Which findings the gate covers, and what each one writes when it passes or fails
 
 ### 6. Reconcile the Docs
 
-Apply the findings per `./references/workflow/reconciliation.md` and its session → docs direction file `./references/workflow/reconciliation-session-to-docs.md` — read both before editing: the shared file's mechanics, the append-only `## Reconciliation` record (§ *The record*) included, and the direction file's rules plus, in its § *`reconcile-task` — session findings*, this skill's finding-type → edit mapping with its three-way legend (**auto** / **verify** = only after Step 5's gate / **ask** = the batched confirmation round). Every edit maps to a finding from Step 3 or Step 4; anything the mapping routes to **verify** or **ask** is never auto-applied.
+Apply the findings per `./references/workflow/reconciliation.md` and its session → docs direction file `./references/workflow/reconciliation-session-to-docs.md` — read both before editing: the shared file's mechanics, the append-only `## Reconciliation` record (§ *The record*) included, and the direction file's rules plus, in its § *`reconcile-task` — session findings*, this skill's finding-type → edit mapping, whose route values are the shared file's § *The mapping legend* — **verify** meaning Step 5's gate here. Every edit maps to a finding from Step 3 or Step 4; anything the mapping routes to **verify** or **ask** is never auto-applied.
 
-End every run by refreshing the result's `## Current state` block per the shared file's § *Current state refresh*, and add its compaction proposal to the batched confirmation round when the size trigger fires, per that file's § *Compaction (size trigger)*.
+End every run by refreshing the result's `## Current state` block per the shared file's § *Current state refresh*, and add its compaction proposal to the batched confirmation round when the size trigger fires, per `./references/workflow/reconciliation-compaction.md` § *Compaction (size trigger)* — read that file only when the result is over the trigger. <!-- cold -->
 
 ## Output Template
 
@@ -104,7 +104,7 @@ Print the findings report **first** — a faithful snapshot of what the session 
 
 **Task dir:** `<resolved task folder path>`
 **Plan:** `plan.md` (Status: <status>)
-**Result:** `result.md` (Status: <status>) — or "not yet started"
+**Result:** `result.md` — or "not yet started"
 
 ## Session findings not yet in the docs
 
@@ -159,12 +159,12 @@ Then run Step 5 (verify) and Step 6 (auto-apply enrichments, then the batched co
 
 ## Verification
 
-Confirm the protocol invariants before finishing. Each item names the section of `./references/workflow/reconciliation.md`, or of its direction file `./references/workflow/reconciliation-session-to-docs.md`, that defines it — check the behavior against that section, not against this list:
+Confirm the protocol invariants before finishing. Each item names the file, or the section of `./references/workflow/reconciliation.md` or of its direction file `./references/workflow/reconciliation-session-to-docs.md`, that defines it — check the behavior against that text, not against this list:
 
 - [ ] Task folder resolved (in-session task, or asked — never guessed); all four core artifacts read (plus `ticket.md`, `diagram.md`, `observations.md`, and a doc task's deliverable when present)
 - [ ] A `skipped` plan handled per § *Skipped plans are exempt* — nothing swept, nothing written
 - [ ] The run followed § *Sequence and output*: findings report printed first from pre-reconcile state, every edit after it, closing change list printed
-- [ ] The reference sweep run before any edit and its results scoped, tagged, rendered under `## References`, and ledgered into `observations.md` per § *External reference check*
+- [ ] The reference sweep run before any edit — or gated out — its results scoped, tagged, rendered under `## References`, and ledgered per `reconciliation-sweep.md`, its flag-only findings routed by § *Never-annotated surfaces*
 - [ ] State advanced only per the shared file's § *Strengthen only on verified evidence* — Step 5's gate, its integrated-health precondition before any advance claiming the work complete, the evidence recorded in `result.md`; grounding docs (`goals.md`, `CONTEXT.md` prose, a step's scope) changed only per the direction file's § *Grounding docs change by confirmation, never silently*
 - [ ] Every edit made falls inside the direction file's § *Write surface* and maps to a printed finding or an answer to one, with no code, git, or external-system mutation per § *Docs, not the world*; no scratch artifact written
-- [ ] `## Current state` refreshed at the end of the run per § *Current state refresh*, its `done`-result freeze included; the compaction proposal raised as an ask item when § *Compaction (size trigger)*'s trigger fired
+- [ ] `## Current state` refreshed at the end of the run per § *Current state refresh*, its `done`-result freeze included; the compaction proposal raised as an ask item when `reconciliation-compaction.md` § *Compaction (size trigger)*'s trigger fired

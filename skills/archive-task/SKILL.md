@@ -9,18 +9,19 @@ disable-model-invocation: true
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 
-This skill operates on the **task-folder envelope** — it relocates a whole task folder on disk — not on a task's domain content. Like `maintain`, it deliberately does **not** resolve a `**Domain:**` pack: archiving is identical for every task regardless of its domain, so there is no domain-specific overlay to load. Its source of truth is `./references/workflow/task-archiving.md` (the archive location), `./references/workflow/task-layout.md` (the discovery rules), and `./references/workflow/status-transitions.md` (the **terminal-state set** that says which tasks are finished), read **at run time** — never a hardcoded status list.
+This skill operates on the **task-folder envelope** — it relocates a whole task folder on disk — not on a task's domain content. Like `maintain`, it deliberately does **not** resolve a `**Domain:**` pack: archiving is identical for every task regardless of its domain, so there is no domain-specific overlay to load. Its source of truth is `./references/workflow/task-archiving.md` (the archive location, its guards, and the backlog exception), `./references/workflow/task-layout.md` (the discovery rules), and `./references/workflow/status-transitions.md` (the **terminal-state set** that says which tasks are finished), read **at run time** — never a hardcoded status list.
 
-This skill moves a finished task folder into its own parent's `Archive/` — canonically from `.agents/tasks/` into `.agents/tasks/Archive/`, though a task folder anywhere on disk archives the same way — so the active list shows only live work. It is the **write** side of the archive boundary whose read side already exists: discovery rules already exclude `Archive/` from active scans and fall back into it for an explicit slug (`task-layout.md`); the location-relative move itself is the contract in `./references/workflow/task-archiving.md`, read at run time. Archiving is a one-way move — a plain `mv` of the whole folder, which preserves every internal `./` link. It never edits task content, never changes a `**Status:**`, and never touches git.
+Archiving moves a finished task folder into its own parent's `Archive/` — canonically from `.agents/tasks/` into `.agents/tasks/Archive/`, though a task folder anywhere on disk archives the same way — so the active list shows only live work. It is the **write** side of the archive boundary whose read side already exists: discovery rules exclude `Archive/` from active scans and fall back into it for an explicit slug (`task-layout.md`).
+
+**The move itself is `scripts/task-move.ts`**, which implements that contract in code: it reads the terminal set, derives the destination from the resolved folder's own location, guards it, and relocates the whole folder in one operation. This skill decides *which* task — asking when that is a real question — then runs the script and reports what it did. It never edits task content, never changes a `**Status:**`, and never touches git.
 
 **CRITICAL**:
 
-- **Terminal tasks only.** Archive a task only when its `plan.md` `**Status:**` is one of the **terminal states** that `status-transitions.md` defines — read them from there at run time; don't bake the names in here. A task in any non-terminal (live) state is refused and reported; never archive it, and never change its status to make it archivable.
-- **Operate only on the resolved folder.** Everything after Step 1 — the terminal check, the destination guard, and the move — acts on the *exact path resolved in Step 1*, never on a path rebuilt from the slug plus the current directory. A path can resolve to a folder in another project or anywhere else on disk; a cwd-relative `.agents/tasks/<slug>` would then validate one task but move a same-slug task somewhere else. Derive the archive destination from the resolved folder's own parent directory, not from cwd.
-- **Read-only on status and content.** This skill moves the folder; it does not edit `**Status:**`, goals, plan steps, or the result record. If a task should be abandoned, the user does that through the normal lifecycle (`task-lifecycle.md`) first, then re-runs.
-- **Never clobber.** If the destination `Archive/<slug>/` under the resolved task's own parent already exists, refuse — don't overwrite or merge into it.
-- **Never touch git.** No add, commit, checkout, stash, or `git mv`. The move is a plain working-tree `mv`; the user reviews with `git status` / `git diff` and commits.
-- **Whole folder, one move.** Move the entire folder in a single operation so its `./`-relative cross-links survive. Never copy or relocate files individually.
+- **Terminal tasks only.** A task archives only when its `plan.md` `**Status:**` is one of the **terminal states** `status-transitions.md` defines. The script enforces this and refuses everything else — a live task, an unknown status, a folder with no `plan.md`. Never change a status to make a task archivable, and never work around the refusal.
+- **Operate only on the resolved folder.** Hand the script the *exact absolute path resolved in Step 1* — never a bare slug, never a path rebuilt from the slug plus the current directory. A slug can name a folder in another project or anywhere else on disk, and a cwd-relative `.agents/tasks/<slug>` would then validate one task and move another. The script derives the archive from the path it is given.
+- **Read-only on status and content.** The move relocates the folder; it does not edit `**Status:**`, goals, plan steps, or the result record. If a task should be abandoned, the user does that through the normal lifecycle (`task-lifecycle.md`) first, then re-runs.
+- **Never touch git.** No add, commit, checkout, stash, or `git mv`. The move is working-tree only; the user reviews with `git status` / `git diff` and commits.
+- **A refusal is the answer.** When the script exits non-zero, report its line as the outcome and stop. Nothing moved, and nothing about the folder changed.
 
 ## When to Use
 
@@ -32,7 +33,7 @@ This skill moves a finished task folder into its own parent's `Archive/` — can
 **Skip when:**
 
 - The task is still live (any non-terminal state) — finish or abandon it first; this skill won't archive in-flight work.
-- You want to *un-archive* a task — that's a manual `mv` back out of `Archive/`; this skill is one-way (see `task-archiving.md`).
+- You want to *un-archive* a task — the way back out is the user's own move; this skill is one-way (see `task-archiving.md`).
 - There's no `.agents/tasks/` folder yet and no task was named by path — nothing to archive.
 
 ## Process
@@ -46,50 +47,35 @@ Two additions are this skill's own:
 - **Already archived** → when the slug matches only a folder inside an `Archive/`, report that it's already archived and stop. Nothing to do, and re-archiving would nest it.
 - **The nothing-named listing carries status** → show each active folder's `plan.md` `**Status:**` beside it, so the choice is made against what is actually terminal. Don't guess.
 
-If nothing matches, report the task wasn't found and list the active folders.
+Call the folder you resolve here `SRC` — canonically inside a `.agents/tasks/` directory, but any location on disk works the same, and it may lie outside the current working directory entirely. Resolve it to an **absolute path**; that path is the whole of what Step 2 acts on.
 
-Call the folder you resolve here `SRC`, and the directory that *contains* it `PARENT` — canonically a `.agents/tasks/` directory, but any parent on disk works the same, and it may live outside the current working directory entirely. Every step below operates on `SRC` and `PARENT`; never rebuild a path from the slug and the current directory.
+**Validate what `SRC` is before going further.** However it was produced — slug, folder path, or `plan.md` path — it must be a real, live task folder by **contents**, not by address shape: a directory holding a top-level `plan.md`. A folder that itself *contains* an `Archive/` or a `Backlog/` subdirectory (both matched case-insensitively, per `task-archiving.md` and `task-backlog.md`) is a task **parent**, not a task folder — **refuse**; moving it would drag its whole archive and backlog along.
 
-**Validate the resolved folder (every branch, before going further).** However `SRC` was produced — slug, folder path, or `plan.md` path — confirm it is a real, live task folder by **contents and position**, not by address shape:
-
-- `SRC` must be a task folder by contents: a real directory (not a symlink) holding a top-level `plan.md` — Step 2 reads its `**Status:**` and refuses when the file is missing or the status isn't in the lifecycle vocabulary, so a folder that merely "looks done" never passes. A folder that itself *contains* an `Archive/` or a `Backlog/` subdirectory (both matched case-insensitively, per `task-archiving.md` and `task-backlog.md`) is a task **parent**, not a task folder — **refuse**; moving it would drag its whole archive and backlog along.
-- If `SRC`'s **immediate parent directory is named `Archive`** (matched **case-insensitively**, per `task-archiving.md` — a lowercase `archive/` from an older layout, or the same folder on a case-insensitive filesystem such as macOS's APFS, still counts), the task is already archived — that is exactly where location-relative archiving puts one → report it and stop (a no-op). This is the case a bare `plan.md` path can otherwise slip past: never let `PARENT` resolve to an `Archive/` directory and re-archive into `Archive/Archive/<slug>`. A directory named `Archive` *higher* up the path (the user's own tree naming) does not count — only the immediate parent.
-- If `SRC`'s **immediate parent directory is named `Backlog`** (matched **case-insensitively**, per `task-backlog.md`), the task is parked — and a terminal task inside a backlog is misfiled there (`task-backlog.md`). It still archives, but **out of the backlog**, per the backlog exception in `task-archiving.md`: **rebind `PARENT` to the backlog container's own parent** before Step 3, so `DEST` derives as `<backlog's parent>/Archive/<slug>` and the one move both leaves the backlog and archives — never a nested `Backlog/Archive/<slug>`. As with the `Archive` check above, only the immediate parent counts.
-
-### 2. Confirm the task is terminal
-
-Read the resolved folder's `plan.md` `**Status:**`, then look it up in the plan-state vocabulary in `task-lifecycle.md` — don't compare against a list of names baked into this skill:
-
-- **A terminal state** (one of the terminal set `./references/workflow/status-transitions.md` defines) → proceed to step 3.
-- **A non-terminal (live) state** → **Refuse**: report the current status and tell the user to carry the task to a terminal state — finish it, or abandon it — through the normal lifecycle, then re-run. Change nothing on disk.
-- **No `plan.md`, or a `**Status:**` not in that vocabulary** → can't confirm the task is finished. Refuse and report; don't archive a folder of unknown state.
-
-### 3. Guard the destination
-
-Let `slug` be `SRC`'s own folder name and `DEST = PARENT/Archive/<slug>` — both anchored on the parent resolved in Step 1 (rebound to the backlog's own parent when Step 1 found `SRC` parked — the one case where `PARENT` is not `SRC`'s immediate parent), **never** on the current directory. Then:
-
-- If `DEST` already exists → **refuse**: something already holds that slug in this archive; report it rather than overwriting or merging.
-- If `PARENT/Archive` exists but is a **symlink** or **not a directory** → **refuse**: a symlinked `Archive/` sends the move through the link to an unexpected location, and a file named `Archive` can't hold the task. Require a real directory — or nothing — at `PARENT/Archive`. (Only `PARENT/Archive` itself matters; a symlinked *ancestor* — macOS's `/tmp` → `/private/tmp`, say — affects `SRC` and `DEST` identically and is fine.)
-- If `PARENT/Archive` already exists as a real directory with unrelated, non-task content (a user's own `~/notes/Archive/`) → **use it**: archiving adds `<slug>/` beside whatever is there; the only collision that matters is `DEST` itself.
-
-If the checks pass, create `PARENT/Archive/` as a real directory if it doesn't exist yet (`mkdir -p -- "$PARENT/Archive"`).
-
-### 4. Move the folder
-
-Move the resolved `SRC` — not a path rebuilt from the slug and cwd — into `DEST` in one operation:
+### 2. Run the move
 
 ```bash
-# SRC, PARENT, and DEST were all fixed in Steps 1 and 3.
-mv -- "$SRC" "$DEST"
+node <kit-root>/scripts/task-move.ts <SRC> --to archive
 ```
 
-A plain filesystem move — no git. The source is the exact folder resolved and validated above, and the destination sits in that folder's own `PARENT/Archive/`, so a `plan.md` path from another project can never validate one task and move another. Because every cross-reference inside the folder is `./`-relative, the move rewrites nothing inside it.
+`<kit-root>` resolves per `./references/workflow/task-store.md` § *Resolving `<kit-root>`* <!-- cold -->, which owns that rule. With no kit root available, say the move can't be performed here and stop — a guarded move has no by-hand equivalent worth offering; `task-archiving.md` states what the move is for anyone doing it themselves.
 
-### 5. Report
+The script's file header owns its CLI and its stdout contract. What it decides, so this skill doesn't:
 
-Confirm what moved (`<slug>` → the actual `DEST`), note that the folder's internal links are intact, and remind the user that the task is now excluded from active listings; when `SRC` was parked, say the move also took it out of `Backlog/`. To un-archive it, move it back out of `Archive/` — naming its slug only lets discovery find it there, it does not un-archive it. When the folder is inside a git repo, the change is working-tree-only — review with `git status` and commit; a task outside any repo has nothing to commit.
+- **The terminal check** — it reads the plan's status against the same terminal set, and refuses a live, unknown, or plan-less folder.
+- **The destination** — location-relative, derived from `SRC`'s own parent, including the **backlog exception** (a finished task parked in a `Backlog/` archives *out* of it, into the backlog's own parent, never into a nested `Backlog/Archive/`) and the **case-insensitive recognition** of an existing container (an `archive/` is moved into as it is spelled; normalizing a stray spelling is `maintain`'s format sweep, not this move).
+- **The guards** — a symlinked source, a symlinked or non-directory container, and an occupied `Archive/<slug>` are each refused rather than overwritten or followed.
 
-The move is the whole of this section's write surface: nothing is regenerated, refreshed, or recorded outside `PARENT` afterwards.
+Read the outcome from the exit status:
+
+- **0** → moved. Stdout is one line, `moved <src> -> <dest>`; the destination it names is what Step 3 reports.
+- **1** → refused. Stderr is one line giving the reason. Surface it **verbatim** and stop; nothing moved.
+- **2** → the run couldn't be carried out — a usage error, a bare slug that matched nothing or several things, or an unexpected failure. Where the line names one of the first two, fix the invocation (pass `SRC` as the absolute path Step 1 resolved) and re-run; where it reports a failure instead, report that and stop rather than re-running against it.
+
+### 3. Report
+
+Confirm what moved (`<slug>` → the `<dest>` the script printed), note that the folder's internal `./` links are intact, and remind the user that the task is now excluded from active listings; when the destination shows the task left a `Backlog/`, say so. To un-archive it, move it back out of `Archive/` — naming its slug only lets discovery find it there. When the folder is inside a git repo, the change is working-tree-only — review with `git status` and commit; a task outside any repo has nothing to commit.
+
+The move is the whole of this section's write surface: nothing is regenerated, refreshed, or recorded afterwards.
 
 ## Output Template
 
@@ -98,7 +84,7 @@ On success:
 ```markdown
 # archive-task — <slug>
 
-Archived `<slug>` → `<DEST>` (plan was `done`; canonically `.agents/tasks/Archive/<slug>/`).
+Archived `<slug>` → `<dest>` (plan was `done`; canonically `.agents/tasks/Archive/<slug>/`).
 Internal `./` links preserved; folder excluded from active listings.
 Working-tree only — review with `git status` and commit (if the folder is inside a git repo).
 ```
@@ -108,25 +94,22 @@ On refusal:
 ```markdown
 # archive-task — <slug>
 
-Not archived: plan `**Status:**` is `executing` (only tasks in a terminal state archive).
+Not archived: <the script's line, verbatim>
 Carry it to `done`, or mark the plan `skipped`, then re-run.
 ```
 
 ## Don't Rationalize
 
-- "This `plan.md` path has a `done` plan, good enough to move" — Check *what* it is first: a real task folder (top-level `plan.md`, no `Archive/` or `Backlog/` subdirectory inside it, its own parent not named `Archive/`). A tasks-parent directory would drag its whole archive and backlog along; an already-archived folder would nest `Archive/Archive/`. Refuse the former; no-op the latter.
-- "It's parked in `Backlog/`, so its own parent's `Archive/` is `Backlog/Archive/` — close enough" — No: frozen history never files inside the container that holds unstarted work (`task-backlog.md`). Rebind `PARENT` to the backlog's own parent per the backlog exception in `task-archiving.md`; the archive lands beside the backlog, not inside it.
-- "I'll just `mv .agents/tasks/<slug> …` from here" — That rebuilds the path from the current directory plus the slug, which can differ from the folder you resolved and validated. Move the exact resolved `SRC` into its own `PARENT/Archive/`; never assume the current directory is the resolved folder's project.
-- "`Archive/` is probably a normal directory" — Check. If `PARENT/Archive` is a symlink, `mv` follows it and relocates the task somewhere else entirely. Refuse a symlinked (or file) `PARENT/Archive`.
-- "`<parent>/Archive/` has the user's own files in it — I'll refuse or pick another spot" — No: an existing `Archive/` directory is fine at any location; archiving adds `<slug>/` beside whatever is there. The only refusals are a `DEST` collision or a symlink/non-directory at `PARENT/Archive`.
+- "This `plan.md` path has a `done` plan, good enough to move" — Check *what* it is first: a task folder by contents, holding no `Archive/` or `Backlog/` of its own. A tasks-parent would drag its whole archive and backlog along; refuse it rather than handing it to the script.
+- "I'll pass the slug and let the script find it" — Its slug resolution is a minimum, deliberately: ambiguity is *this* skill's question to ask, with the listing and the statuses in front of the user. Resolve first, then pass the absolute path.
+- "The script refused, but the task really is finished — I'll move it myself" — No. The refusal is the contract answering, and a hand-finished move would archive a folder whose state nothing verified. Report the line and let the user act on it.
+- "It refused because the destination is occupied, so I'll merge the two folders" — Never. Two folders holding one slug is a collision for the user to resolve; merging silently destroys one of them.
 
 ## Verification
 
 Confirm the protocol invariants before finishing:
 
-- [ ] Terminal vs. live decided by reading `./references/workflow/status-transitions.md`'s terminal set at run time; archive location read from `task-archiving.md`, discovery from `task-layout.md` — nothing baked in
-- [ ] `SRC` validated by contents and position (real non-symlink directory with a top-level `plan.md`; not a tasks-parent; immediate parent not named `Archive/` in any case); already-archived folders no-op'd, never nested into `Archive/Archive/`; a parked `SRC` (immediate parent named `Backlog/`, any case) archived out with `PARENT` rebound to the backlog's own parent — never into `Backlog/Archive/`
-- [ ] Non-terminal, unknown-status, or missing-`plan.md` folders refused with the path to proceed; status and content never edited
-- [ ] Destination guarded — `DEST` collision refused, symlink or non-directory at `PARENT/Archive` refused
-- [ ] The exact resolved `SRC` moved into its own `PARENT/Archive/` in one operation (never a path rebuilt from slug + cwd); internal `./` links intact
-- [ ] No git state mutated; nothing outside `PARENT` touched
+- [ ] `SRC` resolved per `task-layout.md` at run time and validated by contents (a task folder, not a tasks-parent); an already-archived folder reported, not re-archived
+- [ ] The script run once on that exact absolute path, with `--to archive` — no bare slug, no path rebuilt from slug + cwd
+- [ ] Exit 0 reported with the destination the script printed; a non-zero exit surfaced verbatim, with nothing moved by hand afterwards
+- [ ] No status or content edited, no git state mutated

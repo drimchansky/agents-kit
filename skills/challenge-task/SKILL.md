@@ -22,7 +22,7 @@ Resolve a task folder per the **resolve-or-ask** discovery rules in `./reference
 
 Once the folder is resolved, read its `CONTEXT.md`, `goals.md`, and `plan.md` in full, plus `ticket.md` when present. `CONTEXT.md` holds the problem the work exists to solve (its section names are the ones `./references/workflow/context-schema.md` registers), `goals.md` the testable contract for what "done" means, and `plan.md` the complexity committed to reach it — a proportionality judgment needs all three, since the question is only ever asked of one against the others. A folder without a `goals.md` halts the challenge up front — both bar tests are undefined without the goal contract — say so and route to `plan-task` to produce one.
 
-Those reads are also the cold re-derivation's inputs: with them in hand, launch that probe before the first pass when the plan meets its size bar and the inputs are direction-blind — § *The Cold Re-derivation* below.
+Those reads are also the cold re-derivation's inputs: with them in hand and the run past § *The Size Bar*, launch that probe before the first pass when the inputs are direction-blind — § *The Cold Re-derivation* below.
 
 The codebase is the fifth input: the two code-priced yardsticks (new dependencies or patterns, blast radius) are measurable only against what the repo already carries, so read the code the plan touches before pass 3.
 
@@ -38,8 +38,15 @@ The codebase is the fifth input: the two code-priced yardsticks (new dependencie
 
 - The question is whether the plan can be executed as written — feasibility, grounding of the plan's claims against reality, goal coverage, cross-file drift → `review-task`
 - The plan needs a different approach designed rather than a smaller one identified → `plan-task`
-- The plan is small enough that challenging it costs more than the challenge could save
 - There is no plan yet — this challenges committed work, not an intention
+
+## The Size Bar
+
+The plan has **eight or more steps**, or this skill does not run: no pass renders, no probe launches, and the whole output is one line.
+
+`Not challenged — plan.md carries <n> steps, below the size bar; the challenge would cost more than it could save.`
+
+The threshold is corpus-derived: across the six-plan calibration run (2026-08-10), the smallest plan that produced an actionable finding had eight steps. Below it the skill owes itself the proportionality test it applies to everything else. The user's explicit ask is the one override — asked to challenge a below-bar plan anyway, run in full.
 
 ## Challenge Process
 
@@ -77,21 +84,19 @@ Every yardstick is measured against what the surviving goals require, never agai
 
 ### The Cold Re-derivation
 
-A pass that has already read `plan.md` cannot un-read it. So a run whose plan meets the size bar also launches one **plan-blind** probe: it gets the problem and the goals, never the plan or the direction, and derives the simplest approach that meets those goals from the codebase itself. Where its derivation and the plan diverge is evidence passes 1 and 3 cannot produce on their own — a smaller shape proposed by something with no stake in the one that was written.
+A pass that has already read `plan.md` cannot un-read it. So a run also launches one **plan-blind** probe: it gets the problem and the goals, never the plan or the direction, and derives the simplest approach that meets those goals from the codebase itself. Where its derivation and the plan diverge is evidence passes 1 and 3 cannot produce on their own — a smaller shape proposed by something with no stake in the one that was written.
 
-**When it launches.** The plan has **eight or more steps**. That threshold is corpus-derived: across the six-plan calibration run (2026-08-10), the smallest plan that produced an actionable finding had eight steps. Below it no probe launches — the skill owes itself the proportionality test it applies to everything else — and the outcome line reads exactly `skipped (plan below bar)`.
+**Only when the inputs are direction-blind.** The inputs travel verbatim, so a chosen direction recorded inside any of them — the Problem Statement, the ticket, or a goal in `goals.md` — reaches the probe as an authorized input no matter what the folder withholds: the derivation would follow the direction it was handed, and its agreement would read as independent corroboration. Launch nothing there and record `skipped (direction embedded in inputs)`.
 
-**And only when the inputs are direction-blind.** The inputs travel verbatim, so a chosen direction recorded inside any of them — the Problem Statement, the ticket, or a goal in `goals.md` — reaches the probe as an authorized input no matter what the folder withholds: the derivation would follow the direction it was handed, and its agreement would read as independent corroboration. Launch nothing there and record `skipped (direction embedded in inputs)`.
-
-**Launch early, merge late.** Launch on `native` as soon as the folder's inputs are read (§ *Locate the Task*), run the three passes while it works, and collect before the output renders. The prompt is the **re-derivation shape** in `./references/workflow/probe-engines.md`, which owns what it carries, what it withholds, and how it degrades: a dead or unavailable probe is `skipped (<reason>)` and never a block, and slowness alone is not failure. That shape has the probe restate its inputs first — when the restatement names anything beyond the ones handed to it, the derivation was not blind; discard it whole and record `skipped (probe read the task folder)` rather than merging a corroboration that proves nothing.
+**Launch early, merge late.** Launch on `native` as soon as the folder's inputs are read and the bar is cleared (§ *Locate the Task*), run the three passes while it works, and collect before the output renders. The prompt is the **re-derivation shape** in `./references/workflow/probe-shape-re-derivation.md`, which owns what it carries, what it withholds, and how it degrades: a dead or unavailable probe is `skipped (<reason>)` and never a block, and slowness alone is not failure. That shape has the probe restate its inputs first — when the restatement names anything beyond the ones handed to it, the derivation was not blind; discard it whole and record `skipped (probe read the task folder)` rather than merging a corroboration that proves nothing.
 
 **The bar is the merge rule.** Diff the derivation against `plan.md` and put each divergence through § *The Bar* above, both tests unchanged: simpler on a named yardstick, and every surviving goal in `goals.md` still covered — the bar's own carve-outs included. One that passes both is printed as an ordinary `challenge:` finding in the pass it belongs to — framing for a different direction, steps for a smaller step set — naming its yardstick and citing `plan.md` like any other. Everything else is discarded silently, and a derivation that is merely different, or naive about a constraint the codebase imposes, is exactly what that discard is for. The derivation is evidence for the bar, never a second opinion that outranks it.
 
-**The outcome line.** Exactly one `Cold re-derivation:` line per run, in one of three forms:
+**The outcome line.** Exactly one `Cold re-derivation:` line per run past the bar, in one of three forms:
 
 - `merged: <what the derivation added or contested, and how it settled>` — a divergence cleared the bar and is printed above as a finding
 - `clean` — the derivation corroborates the plan's shape; nothing it diverged on survived the bar
-- `skipped (<reason>)` — no probe ran: `skipped (plan below bar)` for the size auto-skip, `skipped (direction embedded in inputs)` for the blindness auto-skip, and the engine's own reason otherwise
+- `skipped (<reason>)` — no probe ran: `skipped (direction embedded in inputs)` for the blindness auto-skip, and the engine's own reason otherwise
 
 The line is mandatory in every run, so a forgotten or failed probe is visible rather than ambiguous. It never names a discarded divergence: naming one is the hedge the bar forbids, and `clean` is what covers a derivation that diverged and lost.
 
@@ -145,16 +150,16 @@ One or two lines naming what was challenged: the task, and the size under test �
 
 One section per pass, in that order, each carrying its `challenge:` findings or its `No challenge` line — and, for framing only, its `Skipped` line when the skip rule fires.
 
-**Every pass renders, every run.** A run that finds nothing prints all three `No challenge` lines rather than collapsing to a summary. Silence is a regression, not a pass: a reader cannot tell an unchallenged plan from a pass that never ran, and the second is what this rule exists to catch.
+**Every pass renders, every run past the bar.** A run that finds nothing prints all three `No challenge` lines rather than collapsing to a summary. Silence is a regression, not a pass: a reader cannot tell an unchallenged plan from a pass that never ran, and the second is what this rule exists to catch.
 
 ### Cold re-derivation
 
-Last, one line, every run — the probe's outcome in one of the three forms § *The Cold Re-derivation* fixes. It closes the output rather than opening a fourth pass, because it records what fed the three above, and whatever it merged is already printed there as a finding.
+Last, one line, every run past the bar — the probe's outcome in one of the three forms § *The Cold Re-derivation* fixes. It closes the output rather than opening a fourth pass, because it records what fed the three above, and whatever it merged is already printed there as a finding.
 
 Example:
 
 ```
-Challenged: add-csv-export — 4 goals, 7 steps.
+Challenged: add-csv-export — 4 goals, 9 steps.
 
 Framing
 - No challenge — the direction adds one export route to an existing controller; nothing smaller covers the Problem Statement's "download without filing a support ticket" (CONTEXT.md:8).
@@ -167,7 +172,7 @@ Steps
 - challenge: Steps 5 and 6 exist only to serve G3, challenged above — both go with it; two fewer steps (plan.md:71, plan.md:79).
 - challenge: Steps 2 and 3 could collapse — both edit the same serializer and share one verify criterion, and the split buys no separate checkpoint since Step 2's verify can assert nothing until Step 3 lands; one fewer step (plan.md:52, plan.md:60).
 
-Cold re-derivation: skipped (plan below bar)
+Cold re-derivation: clean
 ```
 
 ## Don't Rationalize
@@ -180,14 +185,15 @@ Cold re-derivation: skipped (plan below bar)
 
 ## Verification
 
-Confirm the protocol invariants before finishing:
+Confirm the protocol invariants before finishing — below the size bar, only the first two apply:
 
 - [ ] `CONTEXT.md`, `goals.md`, and `plan.md` read in full (plus `ticket.md` when present) before any pass ran
+- [ ] The step count tested against § *The Size Bar* before the first pass; below it, the one `Not challenged` line was the whole output, unless the user asked for the challenge anyway
 - [ ] All three passes rendered in order, each carrying findings, its `No challenge` line, or — framing only — its `Skipped` line
 - [ ] Every finding names what could be dropped, collapsed, or deferred, what its absence would cost against the Problem Statement, and a `file:line` citation
 - [ ] Every printed finding cleared both bar tests and names the yardstick it won on; every candidate failing either test was discarded silently rather than hedged
 - [ ] Yardstick claims on new dependencies/patterns or blast radius carry repo-relative code citations
-- [ ] The cold re-derivation launched exactly when the plan met the size bar — and the travelling inputs recorded no chosen direction — on a prompt carrying the Problem Statement, `ticket.md` when present, and `goals.md` verbatim and nothing from `plan.md` or the Recommended Direction
+- [ ] The cold re-derivation launched exactly when the travelling inputs recorded no chosen direction, on a prompt carrying the Problem Statement, `ticket.md` when present, and `goals.md` verbatim and nothing from `plan.md` or the Recommended Direction
 - [ ] Every divergence it raised went through both bar tests, and those that failed are absent from the output — findings, hedges, and the outcome line alike
 - [ ] Exactly one `Cold re-derivation:` line, last in the output, in one of the three forms
 - [ ] Every finding is a necessity claim; gaps, vague goals, and pattern conflicts left to `review-task`

@@ -1,7 +1,7 @@
 // Covers scripts/health-check.ts: the task-lifecycle walk and the --installs deploy-drift check.
 // Zero dependencies; runs under Node type stripping — too old a Node fails as a parse error, not a
 // version message. Floor in AGENTS.md § The `.ts` sources are unchecked by design.
-// Run: node --test tests/<name>.test.ts   ·   all five: node --test "tests/*.test.ts"
+// Run: node --test tests/<name>.test.ts   ·   every suite: node --test "tests/*.test.ts"
 
 import assert from "node:assert";
 import { spawn, spawnSync } from "node:child_process";
@@ -86,7 +86,7 @@ const VOLUME_ARGS: readonly string[] = [VOLUME_STORE];
 const TO_DO_PLAN = "# t\n\n**Status:** to-do\n";
 const VOLUME_PLAN =
   "# t\n\n**Status:** executing\n\n## Step 1 — do\n\n- [x] d ([result](./result.md#absent))\n";
-const VOLUME_RESULT = "# r\n\n**Status:** executing\n\n## Current state\n\n_Updated:_ 2026-01-01\n";
+const VOLUME_RESULT = "# r\n\n## Current state\n\n_Updated:_ 2026-01-01\n";
 
 // A committed fixture cannot carry an old mtime, so each folder's age is stamped at run time.
 const FIXTURE_AGE_DAYS: readonly (readonly [string, number])[] = [
@@ -355,13 +355,13 @@ test("a readable store scans without warnings and exits 0", () => {
 
 test("scanned counts every task folder, archived and backlogged ones included", () => {
   const { report } = runCheck(STORE_ARGS);
-  assert.strictEqual(report.scanned, 11, "scanned task count");
+  assert.strictEqual(report.scanned, 13, "scanned task count");
   assert.strictEqual(report.unreadable, 0, "a readable store reports nothing unread");
 });
 
 // A value outside the vocabulary is not a lifecycle state, so the stale and archive checks both skip
 // it. Silence there would hide the task permanently — the folder needs a check of its own instead.
-test("a status outside the vocabulary is reported rather than silently exempted", () => {
+test("a plan status outside the vocabulary is reported rather than silently exempted", () => {
   const { report } = runCheck(STORE_ARGS);
   assert.strictEqual(findingCount(report, "unknown-status"), 1, "unknown-status finding count");
   assert.strictEqual(
@@ -373,6 +373,28 @@ test("a status outside the vocabulary is reported rather than silently exempted"
     findingDetail(report, "stale", "store/unknown-status"),
     "",
     "an unclassifiable status is reported once, under its own check",
+  );
+});
+
+// `plan.md` is the only lifecycle-status home, so a `**Status:**` surviving in a result file is a
+// legacy shape nothing repairs — reported as itself, and never judged against a vocabulary that no
+// longer governs the file, however far outside one its value sits.
+test("a legacy result status is reported as legacy and never as an unrecognized status", () => {
+  const { report } = runCheck(STORE_ARGS);
+  assert.strictEqual(
+    findingCount(report, "legacy-result-status"),
+    1,
+    "legacy-result-status finding count",
+  );
+  assert.strictEqual(
+    findingDetail(report, "legacy-result-status", "store/legacy-result-status"),
+    "result.md carries a legacy **Status:** header (shipped onwards); plan.md owns the lifecycle",
+    "the legacy finding names the file and the value it still carries",
+  );
+  assert.deepStrictEqual(
+    report.findings.filter((entry) => entry.path === "store/legacy-result-status").map((entry) => entry.check),
+    ["legacy-result-status"],
+    "a result-side status produces no unknown-status and no other finding",
   );
 });
 
@@ -416,6 +438,18 @@ test("a done task outside Archive/ is reported with its status", () => {
   );
 });
 
+test("a **Completed prose header on a plan-less result is not a done task", () => {
+  // The plan-less arm derives the lifecycle from the result's content alone, so nothing downstream can
+  // contradict a wrong read: `done-unarchived` here is what `maintain`'s gate archives on one
+  // confirmation, and the folder is then exempt from every content check that follows.
+  const { report } = runCheck(STORE_ARGS);
+  assert.deepStrictEqual(
+    report.findings.filter((entry) => entry.path === "store/completed-prose"),
+    [],
+    "a `**Completed steps:**` header is prose, not the closing line a done plan owes",
+  );
+});
+
 test("a done task parked in Backlog/ is reported as misfiled, not merely unarchived", () => {
   const { report } = runCheck(STORE_ARGS);
   assert.strictEqual(
@@ -453,12 +487,14 @@ test("a parked plan with no parseable status is reported as unjudgeable, not lef
   );
 });
 
-test("a plan-less parked folder with a live result.md is reported as started", () => {
+// The result carries no status to read, so the gate turns on the file existing at all: it is created
+// only once execution starts (references/workflow/task-lifecycle.md § Companion result file).
+test("a plan-less parked folder holding a result.md at all is reported as started", () => {
   const { report } = runCheck(STORE_ARGS);
   assert.strictEqual(
     findingDetail(report, "started-in-backlog", "store/Backlog/resultonly-parked"),
-    "executing (status from result.md), parked in Backlog/ — a parked task must be unstarted",
-    "the result-file stand-in must fail the entry gate for a plan-less parked folder",
+    "no plan.md but result.md exists, parked in Backlog/ — a parked task must be unstarted",
+    "an existing result file must fail the entry gate for a plan-less parked folder",
   );
 });
 
@@ -474,7 +510,7 @@ test("an archived task produces no findings", () => {
     "",
     "archived task must not be reported stale",
   );
-  assert.strictEqual(findingCount(report), 8, "total finding count");
+  assert.strictEqual(findingCount(report), 9, "total finding count");
 });
 
 // Findings alone would read clean over a task the run never opened, so incomplete coverage has to be
@@ -566,7 +602,7 @@ test("the canonical root is found from a project root, while every other dotted 
 
 test("findings from same-basename roots remain unambiguous through the root field", () => {
   const { report } = runCheck([STORE, SECOND_ROOT]);
-  assert.strictEqual(report.scanned, 12, "scanned count across two roots");
+  assert.strictEqual(report.scanned, 14, "scanned count across two roots");
   assert.strictEqual(
     findingCount(report, "done-unarchived"),
     3,
@@ -712,6 +748,11 @@ test("archived folders are exempt from the content checks", () => {
     findingDetail(report, "no-current-state", "anchors/Archive/archived-violations"),
     "",
     "an archived live result without ## Current state must stay silent",
+  );
+  assert.strictEqual(
+    findingCount(report, "legacy-result-status"),
+    0,
+    "the archived fixtures' legacy result statuses stay silent like every other archived shape",
   );
 });
 
@@ -1193,7 +1234,7 @@ test("two case-spellings of one root are one root", (t: TestContext) => {
 // see — the twin of the shape test tests/session-triage.test.ts runs.
 test("a rejected flag value re-enters the roots only when it names something on disk", () => {
   const { report: afterValuelessFlag } = runCheck(["--stale-days", STORE]);
-  assert.strictEqual(afterValuelessFlag.scanned, 11, "a root spelled after a valueless flag is still walked");
+  assert.strictEqual(afterValuelessFlag.scanned, 13, "a root spelled after a valueless flag is still walked");
   assert.strictEqual(
     afterValuelessFlag.unreadable,
     0,
@@ -1201,7 +1242,7 @@ test("a rejected flag value re-enters the roots only when it names something on 
   );
 
   const { report: afterJunkValue } = runCheck(["--stale-days", "20KB", STORE]);
-  assert.strictEqual(afterJunkValue.scanned, 11, "a malformed flag value leaves the roots after it alone");
+  assert.strictEqual(afterJunkValue.scanned, 13, "a malformed flag value leaves the roots after it alone");
   assert.strictEqual(
     afterJunkValue.unreadable,
     0,
@@ -1213,7 +1254,7 @@ test("a rejected flag value re-enters the roots only when it names something on 
   const { report: afterEmptyValue } = runCheck(["--result-max-kb", "", STORE]);
   assert.strictEqual(
     afterEmptyValue.scanned,
-    11,
+    13,
     "an empty flag value does not add the process directory as a root",
   );
   assert.strictEqual(afterEmptyValue.unreadable, 0, "an empty flag value is not a coverage gap");

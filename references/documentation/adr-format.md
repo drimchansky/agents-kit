@@ -14,7 +14,7 @@ this checklist stays org-free by design.
 `# ADR: <subject>` title, then a compact header block:
 
 - `**Status:**` — the **document's own lifecycle** (Draft / Proposed / Accepted / Superseded),
-  distinct from the task's plan/result statuses. The local copy carries acceptance provenance:
+  distinct from the task's plan status. The local copy carries acceptance provenance:
   date, who the gate was, where the sign-off is recorded.
 - `**Author:**` — with role in parentheses.
 - `**Reviewers:**` — only the people whose sign-off actually gates acceptance, each with a role in

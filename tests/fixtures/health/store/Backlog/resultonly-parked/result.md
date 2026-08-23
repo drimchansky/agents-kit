@@ -1,12 +1,10 @@
 # Result-only parked fixture — result
 
-**Status:** executing
-
 ## Current state
 
 _Updated: 2020-01-01_
 
-Synthetic fixture. There is no plan.md; the live result is what makes this folder started, so its only finding is started-in-backlog.
+Synthetic fixture. There is no plan.md; this file existing at all is what makes the folder started, so its only finding is started-in-backlog.
 
 **Pointers:** none
 **Next:** none

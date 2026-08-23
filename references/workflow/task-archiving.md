@@ -16,10 +16,10 @@ A completed (`done`) or `skipped` task is moved there to keep its parent's activ
 <grandparent>/Backlog/<slug>/  →  <grandparent>/Archive/<slug>/
 ```
 
-One move both takes the folder out of the backlog and archives it. `archive-task` derives its destination this way, and a hand `mv` follows the same line. Only the immediate parent takes the exception — a `Backlog` higher up the path is the user's own tree naming.
+One move both takes the folder out of the backlog and archives it. `scripts/task-move.ts` derives its destination this way, and a hand `mv` follows the same line. Only the immediate parent takes the exception — a `Backlog` higher up the path is the user's own tree naming.
 
 **Recognizing the directory is case-insensitive.** New archives are always *created* as `Archive/`, but wherever a skill *recognizes* an existing one — excluding it from an active scan, falling back into it for a bare slug, guarding a creation destination, or refusing to re-archive an already-archived folder — the name is matched **case-insensitively**. A lowercase `archive/` from a pre-rename layout, or the same folder on a case-insensitive filesystem (macOS's APFS), still counts as the archive. `maintain`'s format sweep normalizes a stray lowercase `archive/` container back to `Archive/`.
 
-The `archive-task` skill performs this move — it confirms the plan is `done` or `skipped`, then relocates the whole folder — or you can `mv` it by hand; the result is identical.
+The `archive-task` skill performs this move by running `scripts/task-move.ts`, which confirms the plan is `done` or `skipped`, guards the destination, then relocates the whole folder — or you can `mv` it by hand; the result is identical.
 
 Moving a whole task folder preserves its internal `./` links, since every cross-reference inside the folder is relative to the folder itself. Nothing else needs rewriting.

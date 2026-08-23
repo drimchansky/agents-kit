@@ -35,7 +35,7 @@ If the idea is already concrete enough to plan, say so and recommend `plan-task`
 
 ## Output File
 
-**Location:** `<task-folder>/CONTEXT.md` — the folder resolved per the **resolve-or-create** and *Destination paths* rules in `./references/workflow/task-layout.md`, whose precedence decides where a new one lands (cite it, don't restate it).
+**Location:** `<task-folder>/CONTEXT.md` — the folder resolved per the **resolve-or-create** rules in `./references/workflow/task-layout.md`, with `./references/workflow/task-destinations.md` deciding where a new one lands (cite them, don't restate them).
 
 - `<slug>` — derive from the idea: 2–5 lowercase kebab-case words capturing the gist (e.g. `weekly-digest-email`, `replace-cache-invalidation`, `internal-search-rebuild`). Don't ask the user — derive it. The slug names the **task folder** that will hold this `CONTEXT.md` plus the goals, plan, and result for the effort — the folder layout and discovery rules are defined in `./references/workflow/task-layout.md`.
 

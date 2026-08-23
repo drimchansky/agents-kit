@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 
-This skill writes a **product-facing ticket** — deliberately domain-neutral, and *upstream* of `CONTEXT.md`, so no `**Domain:**` marker exists yet to resolve. It reads the neutral core and resolves **no** pack. Its source of truth is `./references/workflow/ticket-format.md` (the ticket's shape and quality bar) and `./references/workflow/task-layout.md` (folder resolution and destination paths), read **at run time**.
+This skill writes a **product-facing ticket** — deliberately domain-neutral, and *upstream* of `CONTEXT.md`, so no `**Domain:**` marker exists yet to resolve. It reads the neutral core and resolves **no** pack. Its source of truth is `./references/workflow/ticket-format.md` (the ticket's shape and quality bar), `./references/workflow/task-layout.md` (folder resolution), and `./references/workflow/task-destinations.md` (where a new folder lands), read **at run time**.
 
 Turn a task the user describes into a **self-contained ticket** — a file someone can pick up cold, with no access to this session, and act on. The ticket names the **real functional output required** — what the product should do for its user — in product terms, not implementation. Its four parts (a title, minimal **Context**, a **Description** of the work, and testable **Acceptance Criteria**) and the quality bar they must meet are defined once in [`./references/workflow/ticket-format.md`](./references/workflow/ticket-format.md). Read it before drafting. The file is the deliverable.
 
@@ -29,7 +29,7 @@ If you can't write testable criteria from the description — scope is fuzzy, "d
 
 The ticket is always written to a file. Decide where:
 
-- **Seeding a task folder** (the workflow starting point) — when the user names a task folder or slug, or asks to start a task, the ticket is the folder's role-named `ticket.md`. Resolve or create the folder per the *resolve-or-create* and *Destination paths* rules in [`./references/workflow/task-layout.md`](./references/workflow/task-layout.md): use the task-folder path/slug the user supplied, or derive a 2–5-word kebab-case slug from the task and let that precedence place the new folder. Write `<task-folder>/ticket.md`. If a `ticket.md` already exists there, read it and ask whether to update it or pick a different slug — never silently overwrite.
+- **Seeding a task folder** (the workflow starting point) — when the user names a task folder or slug, or asks to start a task, the ticket is the folder's role-named `ticket.md`. Resolve or create the folder per the *resolve-or-create* rules in [`./references/workflow/task-layout.md`](./references/workflow/task-layout.md) and the *Destination paths* precedence in [`./references/workflow/task-destinations.md`](./references/workflow/task-destinations.md): use the task-folder path/slug the user supplied, or derive a 2–5-word kebab-case slug from the task and let that precedence place the new folder. Write `<task-folder>/ticket.md`. If a `ticket.md` already exists there, read it and ask whether to update it or pick a different slug — never silently overwrite.
 - **A target path in the arguments** (standalone) — that's the file. If it already exists, read it and ask whether to update it or write elsewhere.
 - **No path and no task intent** — suggest `<kebab-case-title>.md`, or offer to seed a task folder instead, and confirm before writing.
 

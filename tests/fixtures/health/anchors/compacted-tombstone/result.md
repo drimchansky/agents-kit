@@ -1,7 +1,5 @@
 # Result: compacted tombstone
 
-**Status:** executing
-
 ## Current state
 _Updated: 2026-07-01_
 - **Status:** executing

@@ -75,15 +75,15 @@ never lost to a dead pipeline.
 Apply the brief's findings to the task docs per `./references/workflow/reconciliation.md` and its
 **docs → reality** direction file `./references/workflow/reconciliation-docs-to-reality.md` — read
 both before editing; together they are the single source of truth and this phase adds no mechanics of
-its own. The shared file defines the shared mechanics (consent model, the external reference check,
+its own. The shared file defines the shared mechanics (consent model, who runs the reference sweep,
 annotation formats, the append-only `## Reconciliation` record, the `## Current state` refresh, the
 sequence ending in the printed change list); the direction file defines the direction rules (write
 surface, repairs weaken while advances go through the shared engine), the shared repairs, and — in
 its `resume-task-reconcile` mapping section — this pipeline's finding-type → edit mapping.
 
-Run the contract's reference sweep here, per `./references/workflow/reconciliation.md`
-§ *External reference check* — which owns it in full, down to why the sweep never substitutes for
-Phase 1's claim-level verification of what a finding names. It runs in this phase because the brief
+Run the contract's reference sweep here, per `./references/workflow/reconciliation-sweep.md` — which
+owns it in full, down to why the sweep never substitutes for Phase 1's claim-level verification of
+what a finding names. It runs in this phase because the brief
 sweeps nothing, so print its `## References` block after the brief and before any edit: it is this
 pipeline's only source of dead-link and reference-answered-question findings.
 
@@ -124,9 +124,9 @@ Confirm the protocol invariants before finishing:
 - [ ] Judgment items went to the engineer as one batched round, and anything unanswered or declined
       landed under "Not reconciled" with its reason, per `./references/workflow/reconciliation.md`
       § *Consent model: obvious fixes only, ask for the rest*
-- [ ] The reference check ran in Phase 2 with its `## References` block printed after the brief and
-      before any edit, and `observations.md` left as `./references/workflow/reconciliation.md`
-      § *External reference check* specs; Phase 1 swept no citations
+- [ ] The reference check ran in Phase 2 — or its gate skipped it — with the `## References` block
+      printed after the brief and before any edit, and `observations.md` left as
+      `reconciliation-sweep.md` specs; Phase 1 swept no citations
 - [ ] Write surface held — every file written is one
       `./references/workflow/reconciliation-docs-to-reality.md` § *Write surface* allows, nothing
       outside it was touched, and no `BRIEF.md` or scratch briefing file was created

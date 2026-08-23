@@ -2,7 +2,7 @@
 
 > **Priority**: Project consistency takes precedence. If the project already follows different patterns, match those first. These rules apply when no established pattern exists.
 
-These are the **domain-neutral core rules** — they hold for every task in every domain. Domain-specific rules (engineering and documentation today, any future domain later) live in that domain's pack at `./references/<domain>/rules.md` and load **on top of** these.
+These are the **domain-neutral core rules** — they hold for every task in every domain. Domain-specific rules (engineering and documentation today, any future domain later) live in that domain's pack at `./references/<domain>/rules.md` and load **on top of** these. If a task's domain has no pack, or a pack omits a file a phase asks for, run the neutral methodology and say so; never fabricate domain rules or silently borrow another domain's.
 
 - Match the scope of changes to the scope of the request; don't expand into adjacent work unless asked
 - When discovering issues outside the current task, use the NOTICED BUT NOT TOUCHING pattern below
@@ -55,7 +55,7 @@ Report an observation only when it would matter to someone acting on this work; 
 ## Workflow
 
 - Read the project's and task's context (its `CONTEXT.md`, project docs, `AGENTS.md` / `CLAUDE.md`) before starting work
-- Use parallel agents for independent subtasks: exploring multiple areas, searching for a pattern across the project, gathering one source while reading another — probe contracts in `./references/workflow/agent-fanout.md`, engines and prompt shapes in `./references/workflow/probe-engines.md`, batch mechanics in `./references/workflow/parallel-batch.md`; write-mode executor behavior, for the consumers registered there, in `./references/workflow/executor-contract.md`
+- Use parallel agents for independent subtasks: exploring multiple areas, searching for a pattern across the project, gathering one source while reading another. A skill that spawns agents carries its own citations to the fan-out contracts — probe contracts, engines and prompt shapes, batch mechanics, and write-mode executor behavior
 - Do not parallelize sequential edits to the same artifact, or changes that depend on each other's output
 - When spawning parallel tasks, define what each agent investigates and how results will be merged
 - Before presenting results from any changes, run the domain's verification (see the domain pack) and remove scratch artifacts left over from the work
@@ -71,12 +71,3 @@ Prefer the purpose-built tools over shell equivalents, and keep the shell comman
 - **Collapse repeated commands into one pattern rather than looping.** `grep -rnE "a|b|c"`.
 - **Put multi-line programs in a file and run the file** — in the host's scratch/temp area, removed per the scratch-artifact rule above.
 - **Deviate when the simple form is genuinely worse** — a variable used five times, or a loop over a list that would make an unreadable alternation, earns its complexity. A default, not an invariant.
-
-## References
-
-Reference material lives under `./references/`:
-
-- `./references/workflow/` — the **domain-neutral methodology**: `task-lifecycle.md` (statuses), `task-layout.md` (layout, discovery, the task files' roles), `one-home.md`, `task-store.md`, `acceptance-criteria.md`, `ticket-format.md`, `context-schema.md`, `decomposition.md`, `ideation.md`, `execution-loop.md`, `reconciliation.md`, `skill-conventions.md`, `agent-fanout.md`, and `executor-contract.md` — several with satellite files split out beside them. Consult the ones a task touches.
-- `./references/<domain>/` — **domain packs**: the rules, exploration/planning/execution/verification guidance, review lenses, and checklists for one domain. The active domain is resolved from `**Domain:**` in the task's `CONTEXT.md` (default `engineering`).
-
-Most skills load the applicable references as part of their workflow. For ad-hoc work outside a skill, consult them on your own — the same rule applies. If a task's domain has no pack (or a pack omits a file), run the neutral methodology and say so; never fabricate domain rules or silently borrow another domain's.

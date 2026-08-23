@@ -1,6 +1,6 @@
 # Write-Mode Posture: When Delegation Pays
 
-The one decision for the write-mode consumers registered in `./agent-fanout.md` § *Write-mode routing* — split out of that file, which keeps the consumer registry and the engine defaults. **This file is the single home for _when_ delegation pays, and for the cadence it is decided on.** Every input below is read per unit; what a consumer may pre-state is one term — its packet-cost prior — plus its default posture, and nothing else.
+The one decision for the write-mode consumers registered in `./executor-contract.md` § *Write-mode routing* — split out of that file, which keeps the consumer registry and the engine defaults. **This file is the single home for _when_ delegation pays, and for the cadence it is decided on.** Every input below is read per unit; what a consumer may pre-state is one term — its packet-cost prior — plus its default posture, and nothing else.
 
 **Take it per unit.** Run the steps below for each unit as it comes up, never once for a run: every step reads *this* unit — what it needs specified, how much of the coordinator's own context it would spend, and where it sits in the run — so a decision taken on the first unit's facts is not this unit's decision, and a run's last unit reads differently from its first.
 

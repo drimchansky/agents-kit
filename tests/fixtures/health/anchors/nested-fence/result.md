@@ -1,7 +1,5 @@
 # Nested fence fixture — result
 
-**Status:** executing
-
 An outer four-backtick fence wraps a three-backtick example. A boolean toggle flips back to "live" on
 the inner opener, so the heading inside would be read as this file's real section.
 

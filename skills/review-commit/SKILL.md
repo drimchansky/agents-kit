@@ -14,7 +14,7 @@ Review staged changes before committing — correctness, completeness, accidenta
 
 ## Flags
 
-- `-x` — Cross-check: launch one independent cold review of the reviewed object on the cross-vendor engine and merge it before findings are finalized, per the shared contract in `./references/workflow/agent-fanout.md`, with the engine and its launch recipe in `./references/workflow/probe-engines.md`. Off by default. The probe is read-only; its outcome is recorded on the output's `Cross-check:` line. <!-- cold -->
+- `-x` — Cross-check: launch one independent cold review of the reviewed object on the cross-vendor engine and merge it before findings are finalized, per `./references/workflow/probe-cross-check.md` on the cold-review shape in `./references/workflow/probe-shape-cold-review.md`, under the shared contract in `./references/workflow/agent-fanout.md`, with the engine and its launch recipe in `./references/workflow/probe-engines-cross-vendor.md`. Off by default. The probe is read-only; its outcome is recorded on the output's `Cross-check:` line. <!-- cold -->
 
 ## References
 
@@ -27,7 +27,7 @@ Before working, read `./references/engineering/review.md` — it carries the len
 - Record the reviewed-set identity for the follow-up: the digest `git diff --cached | git hash-object --stdin` and the reviewed paths `git diff --cached --name-only` — that digest covers the index *and* its base, so a HEAD that moves after the review reads as a changed set, which it is, since the commit would carry a different change. Every command here only reads — nothing writes the index or the object store.
 - Group changes by file and intent
 
-**Launch the cross-vendor probe** (only with `-x`): once the review object is confirmed non-empty, start one background probe per `./references/workflow/agent-fanout.md`, on the engine and launch recipe in `./references/workflow/probe-engines.md` — a cold second review of that same object, demanding findings with severity and `file:line` evidence. The probe assembles the object itself at the repo root, so the prompt must name it concretely: the staged diff, `git diff --cached`. A probe handed the wrong object reviews a different change than this pass did. Review inline while it runs; collect and merge per the contract before finalizing findings. <!-- cold -->
+**Launch the cross-vendor probe** (only with `-x`): once the review object is confirmed non-empty, start one background probe per `./references/workflow/probe-cross-check.md` on the cold-review shape in `./references/workflow/probe-shape-cold-review.md`, on the engine and launch recipe in `./references/workflow/probe-engines-cross-vendor.md` — a cold second review of that same object, demanding findings with severity and `file:line` evidence. The probe assembles the object itself at the repo root, so the prompt must name it concretely: the staged diff, `git diff --cached`. A probe handed the wrong object reviews a different change than this pass did. Review inline while it runs; collect and merge per the contract before finalizing findings. <!-- cold -->
 
 **Launch verification scripts** per "Verification Scripts" in `./references/engineering/review.md` — always: as soon as the review object is confirmed, launch the project's lint/typecheck/test scripts over its files and review while they run; their failures and warnings land as findings before output. That same section carries the reproduction bar a candidate must clear before it is adopted.
 

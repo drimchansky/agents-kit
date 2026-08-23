@@ -21,7 +21,7 @@ record formats.
   mode, one combined `## Full Run` section in full-plan mode, merged batch steps excepted), with the
   step's checkbox flipped and linked to it, and the result's `## Current state` block rewritten after
   each recorded unit (`./task-authorship.md`)
-- **Blocked** — the `blocked` status on both files, plus a `**Blocked:**` section naming the cause and
+- **Blocked** — the plan's `blocked` status, plus a `**Blocked:**` section in the result file naming the cause and
   the last health boundary that passed with what it covered, or `none` (`./task-lifecycle.md`)
 - **Acceptance** — `goals.md` by `G<n>` ID, tagged and written to the result file's `## Acceptance`
   section

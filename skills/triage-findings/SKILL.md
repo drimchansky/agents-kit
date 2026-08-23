@@ -30,34 +30,9 @@ Name the triaged source(s) in the Overview so the reader knows what was and wasn
 
 Fetch all comments from three sources:
 
-- **Review threads** (inline comments on code — the primary, resolvable target). Query them with GraphQL, which is the only way to get resolution status:
-
-    ```
-    gh api graphql -F owner=<owner> -F repo=<repo> -F number=<pr> -f query='
-    query($owner:String!, $repo:String!, $number:Int!) {
-      repository(owner:$owner, name:$repo) {
-        pullRequest(number:$number) {
-          reviewThreads(first:100) {
-            totalCount
-            pageInfo { hasNextPage endCursor }
-            nodes {
-              isResolved
-              isOutdated
-              path
-              line
-              comments(first:100) {
-                totalCount
-                pageInfo { hasNextPage endCursor }
-                nodes { author { login } body createdAt url }
-              }
-            }
-          }
-        }
-      }
-    }'
-    ```
-
-    Derive `<owner>`/`<repo>` from `gh repo view --json owner,name` (or parse the PR URL). If `reviewThreads.pageInfo.hasNextPage` is true, paginate with `after: <endCursor>`; likewise for any thread whose `comments.pageInfo.hasNextPage` is true. `totalCount` tells you upfront whether more than the first 100 exist.
+- **Review threads** (inline comments on code — the primary, resolvable target) — `node <kit-root>/scripts/pr-comments.ts <pr-number-or-url>`, with `<kit-root>` per `./references/workflow/task-store.md` § *Resolving `<kit-root>`* <!-- cold -->. Its file header owns the CLI form and the stdout contract: one JSON object whose `threads` each carry resolution, outdatedness, anchor, and comments in the order GitHub returned them. Read them out of that JSON rather than re-deriving what the script decided; resolution status has no other source, so if the kit root, the script, or `node`/`gh` is unavailable, say so with the reason and stop — there is no by-hand equivalent, since nothing but this query reports whether a thread is resolved.
+    - `paginationComplete: false` means the report is a prefix of the review: `threads.length` against `threadsTotal` measures the gap, and a thread's `commentsComplete: false` marks replies cut short. Report the shortfall under **Inaccessible context** — never as a clean fetch.
+    - `acknowledgmentCandidate: true` is mechanical — unresolved, last comment by the PR author. It marks a thread to *read*, not a verdict: whether that comment acknowledges the fix is your judgement, per **Classify** below.
 - **Review summary bodies** and **general PR comments** — `gh pr view <target> --json reviews,comments`. These carry no thread-resolution state; treat a non-empty review body or issue comment as **open** unless a later comment or reply clearly supersedes it.
 
 **Session findings.** Take each finding as the review emitted it — severity, `file:line`, recommendation. Don't re-review or re-rank; the triage batches existing judgement, it doesn't second-guess it.
@@ -91,7 +66,7 @@ Lists, never tables.
 Confirm the protocol invariants before finishing:
 
 - [ ] Source resolved per the order in **Sources** and named in the Overview
-- [ ] PR mode: all three comment sources fetched (review threads via GraphQL with pagination, review bodies, general comments)
+- [ ] PR mode: all three comment sources fetched (review threads via `scripts/pr-comments.ts`, review bodies, general comments), and an incomplete walk named as short rather than passed off as clean
 - [ ] Every finding classified into exactly one bucket (open / verify / addressed) — none dropped
 - [ ] Merged run: each entry cites every source that raised it
 - [ ] No code edited and nothing written to any source
