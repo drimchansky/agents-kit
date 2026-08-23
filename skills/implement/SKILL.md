@@ -1,7 +1,7 @@
 ---
 name: implement
 description: Use when asked to implement, build, fix, or change something directly — described in the session or pointing at a file, issue, or diff — with no task folder or plan.
-argument-hint: '[what to implement]'
+argument-hint: '[what to implement] [-x (cross-vendor executor)]'
 ---
 
 ## Core Rules
@@ -12,6 +12,10 @@ argument-hint: '[what to implement]'
 This skill carries out a change directly, with no task folder: you frame what's being built, run it through the shared execution loop, and report in chat. It is `implement-task`'s ad-hoc counterpart — the same loop, the same verification tiers, the same Stop-the-Line discipline, read from the same file (`./references/workflow/execution-loop.md`).
 
 **CRITICAL**: This skill writes no task-folder file and no status. The work itself is the only thing it changes on disk. Work that wants a durable record — a plan, a result file, an acceptance gate against written goals — belongs in `plan-task` → `implement-task`.
+
+## Flags
+
+- `-x` — Cross-vendor executor: run this skill's write-mode fan-out on the cross-vendor engine rather than the native one — a write-mode executor, not a probe — under the coordinator's unchanged gates, per `./references/workflow/executor-contract.md` § *Write-mode engine registry*, whose `cross` entry selects the engine and hands its rules — the worktree-always placement, the once-per-run statement of what leaves the machine, the cleanup, and the announced degrade ladder, whose last rung is this skill's binding **Fallback** — to `./references/workflow/executor-engines-cross-vendor.md` along with the launch recipes. Off by default, and it moves no posture step and no default: it reroutes exactly the items §3's posture procedure already comes out `delegate` for, which on this skill is every item clearing that procedure's first two steps with items still remaining — the inline default decides the last one, flagged or not. The engine a delegated item ran on goes in the §5 report's existing `Executed` bullet, never a new one. Two limits are worth knowing before typing it. **A single-item ask delegates nothing**: the inline default takes the last remaining item, so a one-item `/implement -x` run makes no cross launch, seeds no worktree, and never reaches the statement of what leaves the machine — owed only before a first cross launch — and with everything inline the `Executed` bullet is omitted too, leaving nothing in the report either. That is the flag behaving as specified on a skill whose default is inline, not a bug. **And a delegated item costs the coordinator more under `-x` than under `native`** — seed a worktree, snapshot a baseline, run the surface check, incorporate, remove, where a native serial delegate just runs on the shared tree. `-x` accepts that worse cost ratio in exchange for cross-vendor execution. <!-- cold -->
 
 ## References
 
@@ -68,15 +72,15 @@ When Stop-the-Line can't be cleared this session — the failure won't resolve, 
 
 Default to executing each framed item **inline**, in this session: this skill's packet-cost prior for the shared posture procedure is high — an item framed in session has no packet on disk, so one must be reconstructed from context. Run that procedure — `./references/workflow/write-mode-posture.md`, which sets its own cadence — and **delegate** the items it comes out that way for.
 
-A delegated item goes out under `./references/workflow/executor-contract.md`, whose `implement` binding (§ *Bindings*) governs what the packet carries, what the edit surface is, and what the fallback is — the executor sees that packet and nothing of this session. Announce the delegation in chat as it happens, naming which items go out and why the procedure came out delegate, and record it in the §5 report's `Executed` bullet; that record is what keeps the default from drifting silently into always- or never-delegate.
+A delegated item goes out under `./references/workflow/executor-contract.md`, whose `implement` binding (§ *Bindings*) governs what the packet carries, what the edit surface is, and what the fallback is — the executor sees that packet and nothing of this session. That contract's § *Write-mode engine registry* names the engine an item runs on: unflagged that is `native`, which puts a serially delegated item on the shared tree; with `-x` it is the registry's `cross` entry instead, for exactly the items the posture procedure above already came out `delegate` for — an item it came out `inline` for still runs here, flag or no flag. The worktree-always placement in the cross-run rules that entry points at covers **every** delegated item under `-x`, one that declared no §1 surface included: a declaration decides batch eligibility, never placement, so a serially delegated `-x` item runs in a coordinator-managed worktree rather than on the shared tree. Announce the delegation in chat as it happens, naming which items go out and why the procedure came out delegate, and record it in the §5 report's `Executed` bullet; that record is what keeps the default from drifting silently into always- or never-delegate.
 
 **Parallel batches.** Eligible independent items may run concurrently. Eligibility and every merge gate are `./references/workflow/parallel-batch.md` § *Coordinator-side parallel batch*'s — work from there, not from a copy. What's this skill's own: an item's declared surface is the optional per-item declaration in the §1 frame, an item with no declared surface runs inline or serially-delegated, and a batch merges in **frame order**, this skill's unit order. A run has one assertion gate — the ask's end-to-end outcome exercised whole at §4, before its acceptance verdict — so the end of the run is a tail batch's natural bound. A batch a later item depends on bounds before that item instead; after its ordered merges and integrated outcome re-proofs, run one boundary before the dependent. No full health runs per merged item. <!-- cold -->
 
 **Judgment stays here.** The §1 framing, both verification tiers, and the §5 report are the coordinator's whether or not an item was delegated. Re-prove the item's full outcome tier yourself on your own tree after an executor reports, the executor having run the criterion alone — its pass is advance evidence, never the gate — and run every health boundary yourself.
 
-**Fallback is inline execution.** A failed, hung, or unavailable executor is reported and its item run inline; a surface escape or a merge conflict discards that worktree per the cited merge gates, and the item re-runs inline or serially-delegated.
+**Fallback is inline execution.** A failed, hung, or unavailable executor is reported and its item run inline — but under `-x` the registry's ladder comes first (`./references/workflow/executor-contract.md` § *Write-mode engine registry*): the item degrades to `native`, and only a `native` failure reaches this binding's inline **Fallback**. A surface escape or a merge conflict discards that worktree per the cited merge gates, and the item re-runs inline or serially-delegated.
 
-Coordinator-managed worktrees don't dent the **CRITICAL** invariant above. They're transient scratch — created for a batch, merged, removed — so the work in the shared tree stays the only durable on-disk change: still no task-folder file, still no status, and no record written by an executor.
+Coordinator-managed worktrees don't dent the **CRITICAL** invariant above. They're transient scratch — created for a batch or for a serial `-x` item, merged, removed — so the work in the shared tree stays the only durable on-disk change: still no task-folder file, still no status, and no record written by an executor.
 
 ### 4. Confirm the Ask Is Met
 
@@ -92,7 +96,7 @@ Lists, never tables. Chat only — nothing written to disk beyond the work itsel
 - **Verified** — how each framed item was proven: command output, test name, behavior observed
 - **Asserted** — the ask's end-to-end outcome exercised whole at §4's gate, and how it was exercised; recorded separately from **Health** below, which never substitutes for it
 - **Health** — the end-of-run boundary's integrated recipe result on the final tree, plus any mid-run boundary that ran; the end-of-run boundary runs at §4's assertion gate, before the acceptance verdict
-- **Executed** — deviations from the inline default only: which items were delegated and why the procedure came out delegate, and for a batched item that it ran in a parallel batch merged in frame order; omit when everything ran inline
+- **Executed** — deviations from the inline default only: which items were delegated, why the procedure came out delegate, and which executor engine each one actually ran on, and for a batched item that it ran in a parallel batch merged in frame order; omit when everything ran inline
 - **Sources** — official-doc URLs grounding any framework-specific work, plus any pattern shipped without an authoritative source and why; omit when none
 - **Deviations** — anything that differs from the §1 frame, and why; omit when none
 - **Follow-ups** — what's left or worth watching; omit when none
@@ -107,7 +111,7 @@ Confirm the protocol invariants before finishing:
 - [ ] Every framed item: its full unit-outcome tier actually run and passed — the criterion named when it was framed plus the per-unit checks the resolved domain's `verification.md` adds (touched-comment validation for code) — nothing reported done over a failing outcome
 - [ ] Integrated health established at every boundary the binding declares — the end-of-run assertion gate, each inspection pause, and once after each batch before dependent work — with a tail batch sharing the end-of-run boundary, and current against the final unchanged tree
 - [ ] Acceptance ran against the §1 frame and live behavior, not against the report; no gap downgraded to a caveat
-- [ ] Any delegation announced in chat and recorded in the report's `Executed` bullet; batched items ran only over declared pairwise-disjoint surfaces and came back through the cited merge gates, merged in frame order
+- [ ] Any delegation announced in chat and recorded in the report's `Executed` bullet, naming the engine it ran on; batched items ran only over declared pairwise-disjoint surfaces and came back through the cited merge gates, merged in frame order
 - [ ] Framing, both verification tiers, and the report stayed with the coordinator; no executor wrote a record of any kind
-- [ ] No task-folder file and no status written; the work itself is the only durable on-disk change, any batch worktree removed after merge
+- [ ] No task-folder file and no status written; the work itself is the only durable on-disk change, every coordinator-managed worktree removed after merge — a serial `-x` item's included
 - [ ] Domain pre-presentation checks run over the full changed surface — for code, the consumer grep when exports or shared code changed; framework work grounded in cited sources, any ungrounded pattern stopped or recorded. Health is consumed from the final current boundary rather than re-run for presentation's sake

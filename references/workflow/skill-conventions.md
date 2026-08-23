@@ -68,8 +68,19 @@ where they are rather than being re-implemented at the pipeline level.
 
 ### Modal flags — interleaved behavior
 
-- `-x` cross-vendor probe (`review-pr`, `review-commit`, `review-docs`, `review-task`) — the probe
-  merges into the pass *before* its verdicts finalize, so it has no seam to run after.
+- `-x` cross-vendor engine (`review-pr`, `review-commit`, `review-docs`, `review-task`,
+  `implement-task`, `implement`, `fix-findings`) — one meaning kit-wide: use the cross-vendor engine
+  for this skill's fan-out, a read-only probe where the skill fans out read-only
+  (`./probe-cross-check.md`) and a write-mode executor where it fans out write-mode
+  (`./executor-contract.md` § *Write-mode engine registry*); the role follows the skill's fan-out
+  mode, not the letter — and by the pass-through rule above, a composite's `-x` is its review
+  phase's and never makes a writing phase cross-vendor. A flag on both halves: read-only, the
+  probe merges into the pass *before* its verdicts finalize, so it has no seam to run after;
+  write-mode, it chooses how one phase executes — which engine a unit the write-mode posture
+  procedure already delegates runs on — and changes nothing about *which* units delegate, so no
+  consumer's posture or default moves. Its own documentation is one `Flags` entry, one engine
+  line, and one record field per skill; the placement, degrade, and cleanup conditionals that
+  follow it into a consumer are the engine registry's, not the flag's.
 - `-p` lens-probe fan-out (`review-pr`) — the probes merge into the pass *before* findings
   finalize, the same seamlessness as `-x`, and both halves of the lens set — the triggered
   per-surface checklists and the derived correctness angles — come from the change map the review

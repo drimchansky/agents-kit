@@ -1,7 +1,7 @@
 ---
 name: implement-task
 description: Use when asked to implement, execute, run, or carry out a task's plan from a task folder (canonically under `.agents/tasks/`) — by task folder path, or the current task if one is already in context.
-argument-hint: '[task folder path]'
+argument-hint: '[task folder path] [-x (cross-vendor executor)]'
 disable-model-invocation: true
 ---
 
@@ -13,6 +13,10 @@ disable-model-invocation: true
 Executes a plan written by `plan-task` — or any same-format `plan.md` in a task folder, canonically under `.agents/tasks/` though a folder anywhere on disk works the same. It implements the work, records it in a companion **result file** as it goes, marks each step done in the plan with a link to that record, and runs an **acceptance gate** against the goals before flipping the plan to `done`.
 
 Plan = the contract for **how**. Goals = the contract for **what done means**. Result file = the **record**: a rewritable `## Current state` digest above an append-only log. `CONTEXT.md` = static grounding context. `ticket.md` = the product-facing ask the goals derive from.
+
+## Flags
+
+- `-x` — Cross-vendor executor: run this skill's write-mode fan-out on the cross-vendor engine rather than the native one — a write-mode executor, not a probe — under the coordinator's unchanged gates, per `./references/workflow/executor-contract.md` § *Write-mode engine registry*, whose `cross` entry selects the engine and hands its rules — the worktree-always placement, the once-per-run statement of what leaves the machine, the cleanup, and the announced degrade ladder, whose last rung is this skill's binding **Fallback** — to `./references/workflow/executor-engines-cross-vendor.md` along with the launch recipes. Off by default. It reroutes only the steps §4's posture procedure already delegates — no posture step and no default moves — and the engine that ran a step is recorded in the existing `**Executed:**` field (§5), never a new one. <!-- cold -->
 
 ## Inputs
 
@@ -138,11 +142,11 @@ No diagram → skip every re-check, absence unreported. With one, the three re-c
 
 #### Execution strategy: delegated by default
 
-Execute each step through an **executor** per `./references/workflow/executor-contract.md` and its `implement-task` binding — read both before the first step — on the native engine and adapter defaults that same file's § *Write-mode engine registry* names.
+Execute each step through an **executor** per `./references/workflow/executor-contract.md` and its `implement-task` binding — read both before the first step — on the engine and defaults that same file's § *Write-mode engine registry* names; unflagged that engine is `native`, which places a serially delegated step on the shared tree. With `-x` that engine is the registry's `cross` entry instead, in both step-by-step and full-plan mode — the flag selects an engine and knows nothing about modes — for exactly the steps the posture procedure below already comes out `delegate` for: a step it comes out `inline` for still runs on the coordinator, flag or no flag. The worktree-always placement in the cross-run rules that entry points at covers **every** delegated step under `-x`, a serially delegated one included: a step's declared surface decides batch eligibility, never placement, so a serial `-x` step runs in a coordinator-managed worktree rather than on the shared tree.
 
-Default to **serial delegation**. This skill's packet-cost prior for the posture procedure in `./references/workflow/write-mode-posture.md`: a plan step arrives pre-specified in a durable artifact — its `What`, its `Verify` line, and its declared surface are already written — so its packet cost is low. Run that procedure — it sets its own cadence — and delegate the steps it comes out that way for. One executor per step, launched with the self-contained packet that contract's *Launch packet* requires — serially, in plan order and editing the shared tree, unless the steps qualify for the parallel batch below. While a serial executor is in flight the coordinator waits — no step of its own, no shared-tree edit — until it reports. Then the coordinator re-proves the step's full outcome tier on the tree (`./references/workflow/execution-loop.md` § *Two verification tiers*), the executor having run the criterion alone (its pass is advance evidence, never the gate), and records the step (§5); integrated health is not owed here, only at the boundaries the binding declares.
+Default to **serial delegation**. This skill's packet-cost prior for the posture procedure in `./references/workflow/write-mode-posture.md`: a plan step arrives pre-specified in a durable artifact — its `What`, its `Verify` line, and its declared surface are already written — so its packet cost is low. Run that procedure — it sets its own cadence — and delegate the steps it comes out that way for. One executor per step, launched with the self-contained packet that contract's *Launch packet* requires — serially, in plan order, editing the shared tree on the unflagged path and a coordinator-managed worktree under `-x`, unless the steps qualify for the parallel batch below. **Deviation is measured against this default — serial delegation on `native` — never against whichever engine the run selected**, which is what the `**Executed:**` fields (§5) record and the checklist re-asserts. While a serial executor is in flight the coordinator waits — no step of its own, no shared-tree edit — until it reports. Then the coordinator re-proves the step's full outcome tier on the tree (`./references/workflow/execution-loop.md` § *Two verification tiers*), the executor having run the criterion alone (its pass is advance evidence, never the gate), and records the step (§5); integrated health is not owed here, only at the boundaries the binding declares.
 
-**Inline fallback** when the procedure comes out inline for a step: announce it in chat and record it in `**Executed:**`. A failed or hung executor degrades the same way per that binding's **Fallback**: report it, run the step inline, continue.
+**Inline fallback** when the procedure comes out inline for a step: announce it in chat and record it in `**Executed:**`. A failed or hung executor degrades per the registry's ladder (`./references/workflow/executor-contract.md` § *Write-mode engine registry*): under `-x` the unit degrades to `native` first, and only a `native` failure takes this binding's **Fallback** — inline for a serial step, serial re-execution for a parallel-batch step — after which continue.
 
 #### Automatic parallel batch (full-plan mode)
 
@@ -164,7 +168,7 @@ Eligible independent steps run concurrently through the same contract and bindin
 
 **Sources:** <official-doc URLs / deep links grounding any framework-specific code in this step, plus any pattern shipped without an authoritative source and why; otherwise omit>
 
-**Executed:** <only when execution deviated from the default serial delegation — "parallel batch (<executor engine>), merged in plan order at/before <the §4 merge point>", or "inline (<reason>)"; omit for serially-delegated steps>
+**Executed:** <omit for a step serially delegated on `native`; otherwise "parallel batch (<executor engine>), merged in plan order at/before <the §4 merge point>", "serial delegation (<executor engine>)", "serial delegation (native, degraded from cross)", or "inline (<reason>)">
 
 **Deviations from plan:** <if any — what differed and why; otherwise omit>
 
@@ -188,7 +192,7 @@ For full-plan mode, write **one combined section** instead — no per-step block
 
 **Sources:** <as above, across all steps; otherwise omit>
 
-**Executed:** <only when a folded step deviated from serial delegation — "Step N inline (<reason>)" per such step; omit otherwise>
+**Executed:** <one entry per deviating step, omitting the field when none deviates: "Step N inline (<reason>)", "Step N serial delegation (<executor engine>)", or "Step N serial delegation (native, degraded from cross)">
 
 **Deviations from plan:** <if any>
 
@@ -312,6 +316,6 @@ Confirm the protocol invariants before finishing:
 - [ ] With a `diagram.md`: re-checked at every checkpoint, every structural revision, and the gate — each re-check naming what was compared, each repaint render-checked, `**Reflects:**` re-anchored and re-dated
 - [ ] Deviations and plan revisions recorded in the result file; `goals.md` and `CONTEXT.md` never edited from this skill
 - [ ] Domain pre-presentation checks run over the full changed surface; framework code grounded in `**Sources:**`, any ungrounded pattern stopped or recorded there. Health is consumed from the final current boundary rather than re-run for presentation's sake
-- [ ] Every step executed through the delegation default — a serial executor with the coordinator's re-proved outcome, an announced parallel batch, or an announced inline fallback recorded in its `**Executed:**` field
+- [ ] Every step executed through the delegation default — a serial executor with the coordinator's re-proved outcome, an announced parallel batch, or an announced inline fallback — and its `**Executed:**` field recording whatever deviated from serial delegation on `native`, every `-x` step that ran on `cross` included
 - [ ] Every parallel-batch step merged only through §4's cited merge gates, conflicts and surface escapes falling back to serial delegation; no per-merge health run
-- [ ] Executors wrote no task-folder file and no status; batches recorded (`**Executed:**` fields, checkpoint `**Merged:**` lines) and worktrees removed after merge
+- [ ] Executors wrote no task-folder file and no status; batches recorded (`**Executed:**` fields, checkpoint `**Merged:**` lines) and every coordinator-managed worktree removed after merge — a serial `-x` step's included

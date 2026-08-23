@@ -1,7 +1,7 @@
 ---
 name: fix-findings
 description: Use when asked to fix, apply, or address a set of findings — from a review in this session, a PR's review comments, or a pasted or saved list. Applies the fixes (a Confirmed finding automatically when the targeted fix is clear and low-blast-radius; anything unverified only through one batched ask showing the change as a diff) and reports the rest untouched. Edits code only; never stages, never commits, never writes back to the findings' source.
-argument-hint: '[source: PR number/URL, file path, pasted findings, or a named subset — defaults to the latest session findings]'
+argument-hint: '[source: PR number/URL, file path, pasted findings, or a named subset — defaults to the latest session findings] [-x (cross-vendor executor)]'
 ---
 
 ## Core Rules
@@ -14,6 +14,10 @@ The write-mode follow-up to every code-review skill and source that produces fin
 **CRITICAL**: Nothing is fixed on this skill's own judgment alone. A fix needs one of exactly two authorities — a **Confirmed** verdict, or the user's approval in the ask batch. **Withdrawn and Inconclusive findings are never edited**: a probe looked and either found no issue or couldn't establish a root cause, and that evidence outranks any later impulse to fix anyway. Findings nobody verified — a plain review's, an external list's, or one a verify phase marked **Unverified** — carry no such evidence either way, so they take the ask and never the auto path.
 
 The write surface is **working-tree code and nothing else**: never stages, never commits, never otherwise mutates Git state — staging the fixes is the user's call, per the Git-discipline rule. Reading findings from a PR adds nothing to that surface: they are fixed locally, never answered with a reply, a resolved thread, or a push.
+
+## Flags
+
+- `-x` — Cross-vendor executor: run this skill's write-mode fan-out on the cross-vendor engine rather than the native one — a write-mode executor, not a probe — under the coordinator's unchanged gates, per `./references/workflow/executor-contract.md` § *Write-mode engine registry*, whose `cross` entry selects the engine and hands its rules — the worktree-always placement, the once-per-run statement of what leaves the machine, the cleanup, and the announced degrade ladder, whose last rung is this skill's binding **Fallback** — to `./references/workflow/executor-engines-cross-vendor.md` along with the launch recipes. Off by default. It reroutes only the fixes the posture procedure in § *Execution strategy: inline by default* already delegates, within that section's unchanged Confirmed auto-path surface — ask-routed fixes stay with the coordinator, and Withdrawn or Inconclusive findings are never edited, flag or no flag — and the engine that ran a fix is named in its existing `Fixed` / `Fix failed` entry, never a new bucket. The limit worth knowing before typing it: **a run with a single Confirmed auto-path fix delegates nothing at all**, since the inline default takes the last remaining unit — no unit leaves the machine, and the statement of what leaves it is never reached. A single auto-path fix is the common case here, so `-x` earns its keep only on a findings set with several of them. <!-- cold -->
 
 ## Source
 
@@ -130,10 +134,10 @@ all final-integrated outcomes, the health boundary, recovery, and the report buc
 
 Lists, never tables. Omit empty buckets.
 
-- **Fixed** — every applied fix, per finding: the original text with severity, what changed (`file:line`), its final-integrated outcome evidence, and the current final-tree health boundary. Mark an entry that had no Confirmed verdict as fixed on the user's approval, so the report never lends a verified finding's authority to one that had none. A delegated fix's entry notes the delegation and its batch where it ran in one.
+- **Fixed** — every applied fix, per finding: the original text with severity, what changed (`file:line`), its final-integrated outcome evidence, and the current final-tree health boundary. Mark an entry that had no Confirmed verdict as fixed on the user's approval, so the report never lends a verified finding's authority to one that had none. A delegated fix's entry notes the delegation, the engine that ran it, and its batch where it ran in one.
 - **Health uncertifiable** — survivors retained after a red boundary whose failed command was already red at the immutable baseline: per finding, the original text with severity, what changed (`file:line`), its final-integrated outcome evidence, and the baseline-failing command nothing can certify against. Not Fixed — the certifying re-review **Next** points at is what resolves these.
 - **Decided** — ask-routed findings that produced no fix: the user's decision and why nothing was applied — skipped, deferred, or the finding rejected. An ask-routed fix that was applied belongs in **Fixed**, not here.
-- **Fix failed** — fixes that were reverted, and fixes never attempted because a dependency of theirs failed, each with the reason and what would unblock them: the named prerequisite for one skipped as a cascade; the reason the baseline comparison could not run, after collection-level rollback on an unestablished control; the unresolved-health reason after an unconverged recovery; or whether one fix, a dependency group, or an interaction group was implicated. A never-attempted entry says so rather than reporting `(reverted)`, which would assert an edit that never happened. A delegated one notes the delegation and its batch here too.
+- **Fix failed** — fixes that were reverted, and fixes never attempted because a dependency of theirs failed, each with the reason and what would unblock them: the named prerequisite for one skipped as a cascade; the reason the baseline comparison could not run, after collection-level rollback on an unestablished control; the unresolved-health reason after an unconverged recovery; or whether one fix, a dependency group, or an interaction group was implicated. A never-attempted entry says so rather than reporting `(reverted)`, which would assert an edit that never happened. A delegated one notes the delegation, its engine, and its batch here too.
 - **Untouched** — Withdrawn and Inconclusive findings with their verdict as the reason, findings triage landed outside **open** with their bucket, external findings dropped as `anchor moved` or `not actionable`, and any finding the user's subset excluded.
 
 **Next:** the fixes are unreviewed and unstaged — certify them with a review of the changed code. For a staged-diff flow that means staging the fixes first, then `/review-commit` (or `/review-commit-triage-verify`), then `/commit`. Findings that came from a PR or a saved list are answered in the working tree only: replying to the source, resolving its threads, and pushing all stay with you.
@@ -161,6 +165,6 @@ Confirm the protocol invariants before finishing:
 - [ ] Every failed fix or group was restored without changing pre-run bytes, index, staging, or commits; an unconverged health recovery restored the exact baseline and left no changed-code survivor
 - [ ] Every selected finding in exactly one output bucket
 - [ ] Batched fixes ran only over blast-radius-declared, pairwise-disjoint surfaces and came back through `./references/workflow/parallel-batch.md` § *Coordinator-side parallel batch*'s ordered gates, in this skill's processing order <!-- cold -->
-- [ ] Delegation confined to Confirmed auto-path fixes — no ask-routed, Withdrawn, or Inconclusive finding sent to an executor — and every delegation announced and noted in its `Fixed` / `Fix failed` entry
+- [ ] Delegation confined to Confirmed auto-path fixes — no ask-routed, Withdrawn, or Inconclusive finding sent to an executor — and every delegation announced and noted with its engine in its `Fixed` / `Fix failed` entry
 - [ ] The gate, the batched ask, final-integrated outcome checks, health recovery, and the report buckets stayed with the coordinator
-- [ ] Nothing staged, nothing committed, no Git state mutated (transient coordinator-managed batch worktrees excepted — created scratch, removed after merge)
+- [ ] Nothing staged, nothing committed, no Git state mutated (transient coordinator-managed worktrees excepted — a batch's and a serial `-x` fix's alike, created scratch, removed after merge)
