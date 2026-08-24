@@ -77,8 +77,8 @@ where they are rather than being re-implemented at the pipeline level.
   phase's and never makes a writing phase cross-vendor. A flag on both halves: read-only, the
   probe merges into the pass *before* its verdicts finalize, so it has no seam to run after;
   write-mode, it chooses how one phase executes — which engine a unit the write-mode posture
-  procedure already delegates runs on — and changes nothing about *which* units delegate, so no
-  consumer's posture or default moves. Its own documentation is one `Flags` entry, one engine
+  already delegates runs on — and changes nothing about *which* units delegate, so no consumer's
+  posture and none of its exceptions move. Its own documentation is one `Flags` entry, one engine
   line, and one record field per skill; the placement, degrade, and cleanup conditionals that
   follow it into a consumer are the engine registry's, not the flag's.
 - `-p` lens-probe fan-out (`review-pr`) — the probes merge into the pass *before* findings

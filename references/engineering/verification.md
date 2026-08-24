@@ -21,6 +21,19 @@ Both are required, but they run on different cadences — they answer different 
   commands, and CI configuration; every project-exposed full command runs. Record an unavailable
   command category explicitly; never replace an exposed command with a narrower check.
 
+  **Run independent recipe commands concurrently.** The recipe's commands don't consume one another's
+  results, so their default relationship is independence: launch them together — parallel tool calls, or
+  background processes collected before judging — and let the boundary's wall-clock be the slowest
+  command, not the sum. Serialize only where one command consumes another's output (a build artifact a
+  test suite loads, a codegen step a typecheck reads), where commands contend on the same outputs or
+  caches — build artifacts, coverage output, snapshot or incremental state; a command's verdict being
+  read-only does not make its execution so — or where the project's own runner documents a required
+  order; a runner that coordinates its own concurrency (one `nx run-many` across several targets) is
+  the simplest safe form. Concurrency changes evaluation not at all: the boundary passes only when **every**
+  command has completed and passed, a failure is judged after all have finished (their outputs are
+  independent evidence, and a second failure surfaced now is one less rerun later), and Stop-the-Line
+  applies unchanged.
+
 Integrated-health evidence is state-specific: any work-product edit after the boundary invalidates
 it, including a rollback. Do not report it current until the complete recipe has passed again on the
 state that remains. A unit criterion that happens to invoke one health command does not exempt the
