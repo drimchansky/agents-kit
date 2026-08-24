@@ -158,6 +158,16 @@ When the domain is code, also check the engineering-specific gaps in `./referenc
 
 Compare the plan's implied approach against the established patterns of the project or effort: does it match how similar work is structured, follow the same conventions, and respect the boundaries the effort enforces? Would it require something new (a dependency, a pattern, a one-off exception), and is that justified? When the domain is code, follow `./references/engineering/exploration.md`'s pattern-consistency checks (structure, data-flow patterns, naming, dependencies, module boundaries).
 
+### 9. Research the Questions
+
+Collect every candidate question the assessment has accumulated — Step 3's needs-clarification verdicts and its vague or untestable `Verify` criteria, Step 4's lifted goal-quality findings, Step 5's `_(unresolved: ...)_` goals, uncovered goals, orphan steps, and stale goal citations (its `unknownGoalCitations`), Step 6's drift questions, Step 7's gaps. Dedupe as you collect — Steps 4 and 5 both lift an `_(unresolved: ...)_` goal, and one goal is one candidate. No candidates → skip this step and render no outcome line.
+
+**Launch as soon as Step 7 closes.** Every source above is complete there, so the fan-out runs while Step 8 does — the answers are collected where they were, at the Questions section, and the batching below still sees the whole candidate set at once.
+
+When candidates exist, launch one read-only probe per question on the native engine (`./references/workflow/probe-engines.md`) per the shape in `./references/workflow/probe-shape-options-research.md`, under the contract in `./references/workflow/agent-fanout.md` — all of them in parallel, collected before the Questions section renders; trivially related questions batch into one probe per the shape. Merge per that contract: a probe's answer is a candidate, never a verdict. Re-check every classification before adopting it — an ANSWERED citation must settle the question, every OPTIONS citation and trade-off must hold, and a NO-EVIDENCE result requires repeating the named source-and-location search far enough to support the absence. A classification the re-check rejects is not adopted at all: that question falls to the inline research below, and it counts under whichever bucket that research lands it in. After the re-check passes, ANSWERED moves the question into the output's **Answered by research** list, and the originating section's verdict changes only through that same re-check, never on probe authority. An answer clears its originating finding only when the re-check disproves that finding; when it merely supplies content a still-defective plan or goal needs, the finding remains in its originating section and cites the answered entry as its proposed repair evidence. OPTIONS attach to the surviving question: 2–3 grounded options, one-line trade-offs, a recommendation. NO-EVIDENCE marks it a genuine preference question; never fabricate options for it. A candidate that arose outside the Questions section — a Step 3 needs-clarification verdict or vague `Verify` criterion, a Step 6 drift ask, a Step 7 gap — is **promoted** into the numbered Questions list once it survives research, its originating section keeping its own finding and citing the question number; that promoted entry is where its options render and what the counts below cover.
+
+A question whose probe never ran — no engine available — or whose probe died is researched inline instead: the research still happens, only the fan-out degrades. It counts as researched and joins the outcome line's skipped segment. A question whose classification the re-check above rejected is also researched inline, but its probe did run, so it joins the rejected-classification segment instead; both segments' grammar is the shape's. A candidate raised after the fan-out launched — Step 8's pattern-justification questions among them — takes that same inline research and the skipped segment, its reason being that it arrived after the launch. The assessment never blocks on a probe.
+
 ## Output Structure
 
 ### Plan Summary
@@ -225,11 +235,15 @@ Missing details that the plan needs to address before implementation, grouped by
 
 ### Questions
 
-Numbered list of targeted questions. Each question should:
+When Step 9's research answered any candidate, open with an **Answered by research** list — each entry finding-shaped: the question, the verified answer, its evidence locator. An originating finding that the answer did not eliminate cites this entry from its own section, so the answer remains attached to the repair it informs.
+
+Then the numbered list of open questions. Each question should:
 
 - Reference the specific part of the plan it relates to
 - Explain why the answer matters (what implementation decision depends on it)
-- Suggest options when possible (not open-ended "what should I do?" but "should it be A or B? A matches the existing pattern, B gives more flexibility")
+- Carry its researched options — 2–3 grounded options with one-line trade-offs and a recommendation (not open-ended "what should I do?" but "should it be A or B? A matches the existing pattern, B gives more flexibility") — or the explicit marker that nothing the plan leans on bears on it (genuine preference)
+
+Close the section with the `Question research:` outcome line per `./references/workflow/probe-shape-options-research.md`, whenever candidate questions existed; it is absent only when the review surfaced no candidates at all.
 
 ### Confirmed
 
@@ -252,4 +266,5 @@ Confirm the protocol invariants before finishing:
 - [ ] Goals audited per `./references/workflow/acceptance-criteria.md`, and coverage mapped from `task-state.ts`'s `goalCoverage` — uncovered goals, orphan steps, an incomplete `## Scope` partition, and `_(unresolved: ...)_` goals lifted into Questions
 - [ ] Cross-file drift checked pairwise, including the `ticket.md` pairs when a ticket exists and the companion-result-file rule per `./references/workflow/task-lifecycle.md`; Goal Quality, Acceptance Coverage, and Cross-File Drift sections rendered even when clean
 - [ ] Review only — nothing written; no implementation, no redesign; steps needing rethinking routed to `plan-task`
+- [ ] Every candidate question researched — answered with session-verified evidence, optioned with a recommendation, or marked a genuine preference question — and, when the review surfaced any, the Questions section closed with its `Question research:` line
 - [ ] (`-x`) Probe merged before verdicts and the Plan Summary carries its `Cross-check:` line

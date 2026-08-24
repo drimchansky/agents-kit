@@ -97,11 +97,14 @@ The contract's reference sweep, `./references/workflow/reconciliation-sweep.md`,
 its `## References` block printed before any edit. It is this pipeline's only source of dead-link and reference-answered-question
 findings.
 
-The assessment's Questions are put to the engineer and folded back into the plan per the direction
-file's § *`review-task-reconcile` — assessment findings*, bounded by its § *Repairs weaken; advances
-go through the shared engine* for what an engineer answer may move: an answer refines plan content,
-and any advance goes through `./references/workflow/reconciliation.md` § *Strengthen only on
-verified evidence*, re-verified in this run.
+The assessment's **numbered open questions** are put to the engineer and folded back into the plan per
+the direction file's § *`review-task-reconcile` — assessment findings*, bounded by its § *Repairs
+weaken; advances go through the shared engine* for what an engineer answer may move: an answer refines
+plan content, and any advance goes through `./references/workflow/reconciliation.md` § *Strengthen
+only on verified evidence*, re-verified in this run. The assessment's **Answered by research** list
+stays out of that standalone question round. Its originating findings still follow the direction's
+mapping: a disproved finding needs no Phase 2 action, while one the answer merely supplied repair
+content for carries that answer into its existing **ask** row as the proposed edit.
 
 Findings that need real work (a step that must be rethought, a goal the user has to rewrite, code
 changes) stay unfixed, listed under "Not reconciled" with the next skill named (`plan-task`,
@@ -133,8 +136,10 @@ Confirm the protocol invariants before finishing:
       through unchanged — not improvised
 - [ ] The assessment printed in full from pre-reconcile state, before any edit, and was never
       regenerated after one — § *Sequence and output*
-- [ ] Every edit maps to an assessment finding, a reference finding, or an engineer answer, and the
-      review's Questions were put as one batched round with only answered items applied —
+- [ ] Every edit maps to an assessment finding, a reference finding, or an engineer answer; the
+      review's numbered open questions were put as one batched round with only answered items
+      applied; and research-answered evidence was not re-asked, while any surviving originating
+      finding carried it through its registered route —
       `./references/workflow/reconciliation-docs-to-reality.md`
       § *`review-task-reconcile` — assessment findings*
 - [ ] Every box checked or `**Status:**` advanced went through
