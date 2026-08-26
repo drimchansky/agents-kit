@@ -2,7 +2,6 @@
 name: implement-task
 description: Use when asked to implement, execute, run, or carry out a task's plan from a task folder (canonically under `.agents/tasks/`) — by task folder path, or the current task if one is already in context.
 argument-hint: '[task folder path] [-x (cross-vendor executor)]'
-disable-model-invocation: true
 ---
 
 ## Core Rules

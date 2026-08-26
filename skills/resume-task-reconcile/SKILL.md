@@ -2,7 +2,6 @@
 name: resume-task-reconcile
 description: Use when asked to catch up on a task and also write the findings back — one command that prints the resume briefing from pre-reconcile state, then reconciles the task docs to reality; obvious fixes applied, judgment items asked as one batched round. Also re-checks the folder's cited links against their live state. Writes the task docs only; never code, never git.
 argument-hint: '[task folder path]'
-disable-model-invocation: true
 ---
 
 ## Core Rules
@@ -34,9 +33,9 @@ reconcile may re-run or execute. It fixes the **docs**, not the world
 (`./references/workflow/reconciliation.md` § *Docs, not the world*), and creates no `BRIEF.md` or
 scratch briefing file.
 
-Invoking this skill is this direction's consent, on the terms
+A user invoking this skill is this direction's consent, on the terms
 `./references/workflow/reconciliation.md` § *Consent model: obvious fixes only, ask for the rest*
-sets.
+sets; a model-invoked run carries no such consent and asks for every fix.
 
 ## When to Use
 

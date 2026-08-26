@@ -2,7 +2,6 @@
 name: review-commit-triage-verify
 description: Use when asked for a verified review of staged changes — one command that reviews the staged diff, batches the findings by concern, verifies each batch in an isolated read-only probe, and displays one verdict per finding plus the drafted commit message. Reads and displays only; never edits code, never stages, never commits.
 argument-hint: '[-x (cross-vendor second review)] — passed through to the review phase'
-disable-model-invocation: true
 ---
 
 ## Core Rules

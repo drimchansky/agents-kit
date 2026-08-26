@@ -2,7 +2,6 @@
 name: verify-issue
 description: Use when asked to verify, confirm, check, validate, or investigate a reported bug, issue, or problem.
 argument-hint: '[issue description]'
-disable-model-invocation: true
 ---
 
 ## Core Rules

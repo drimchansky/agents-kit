@@ -2,7 +2,6 @@
 name: review-task
 description: Use when asked to review, validate, or sanity-check a task's plan — confirms the direction is right and still in sync with CONTEXT.md, the goals, and current reality, and surfaces any drift between task artifacts (ticket, CONTEXT, goals, plan, result) and the work itself. Read-only.
 argument-hint: '[task folder path] [-x (cross-vendor grounding probe)]'
-disable-model-invocation: true
 ---
 
 ## Core Rules

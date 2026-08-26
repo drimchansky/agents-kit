@@ -2,7 +2,6 @@
 name: triage-findings
 description: Use when asked to triage, sort, or batch findings — from a review in this session, a PR's review comments, or a pasted/saved list — surfaces which are still unaddressed and groups them by concern. Reads and displays only; does not edit code or post anywhere.
 argument-hint: '[source: PR number/URL, file path, or pasted findings — defaults to session findings]'
-disable-model-invocation: true
 ---
 
 ## Core Rules

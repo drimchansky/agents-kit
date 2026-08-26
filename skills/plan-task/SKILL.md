@@ -2,7 +2,6 @@
 name: plan-task
 description: Use when asked to plan, design, architect, scope, or break down a feature or change before implementation.
 argument-hint: '[task or feature description, task folder or destination path]'
-disable-model-invocation: true
 ---
 
 ## Core Rules
@@ -148,7 +147,7 @@ For code, `./references/engineering/planning.md` gives file-count proxies for th
 
 - "I already know what's there well enough" — Check anyway. Memory drifts; the current reality is the truth.
 - "There's only one way to do this" — If you haven't explored alternatives, you don't know that.
-- "This is too simple to plan" — If the user asked for a plan, the task warranted one.
+- "This is too simple to plan" — Simple is a conclusion the plan reaches, not a reason to skip it.
 - "I'll figure out the scope during implementation" — Undefined scope produces undefined work. Bound it now.
 - "The goals are obvious" — If they're obvious, they cost nothing to write down. If they're not, that's exactly when you needed them.
 - "The user gave a vague task, I'll just guess what they want" — Ask. Clarifying questions during the goals step are cheaper than reworking the plan after implementation.

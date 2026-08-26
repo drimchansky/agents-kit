@@ -2,7 +2,6 @@
 name: review-pr
 description: Use when asked to review or give feedback on a PR or branch diff against its base.
 argument-hint: '[-x (cross-vendor second review)] [-p (parallel lens probes + gap sweep)] [-d (draft PR description)]'
-disable-model-invocation: true
 ---
 
 ## Core Rules

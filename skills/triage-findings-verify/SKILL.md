@@ -2,7 +2,6 @@
 name: triage-findings-verify
 description: Use when asked for a verified triage of findings you already have — one command that gathers findings from a source (a PR's review comments, a saved or pasted list, or this session's review), batches them by concern, verifies each open batch in an isolated read-only probe, and displays one verdict per finding. Reads and displays only; never edits code or posts anywhere.
 argument-hint: '[source: PR number/URL, file path, or pasted findings — defaults to session findings; passed to the triage phase]'
-disable-model-invocation: true
 ---
 
 ## Core Rules

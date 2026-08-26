@@ -2,7 +2,6 @@
 name: resume-task
 description: Use when asked to resume, catch up on, brief, hand off, status of, or check progress on a task folder (canonically under `.agents/tasks/`) — produces a chat-only briefing. Read-only.
 argument-hint: '[task folder path]'
-disable-model-invocation: true
 ---
 
 ## Core Rules

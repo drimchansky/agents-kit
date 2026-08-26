@@ -7,7 +7,7 @@ Some skills write a task folder's docs back into agreement with reality after th
 
 ## Consent model: obvious fixes only, ask for the rest
 
-A reconciler applies **obvious** fixes without mid-run confirmation. A fix is obvious when the finding dictates exactly one edit: mechanical, evidence-backed, needing no interpretation of intent, no choice among alternatives, and no wording beyond the documented annotation formats. (Invoking the composite is that consent in docs → reality; invoking `reconcile-task` is it in the session direction. `review-pr-triage-verify-reconcile` has no obvious-fix path to consent to — appending a plan step is a scope act, never a mechanical one — so every write it makes goes through the batched round below: invoking it buys the review, never the append.)
+A reconciler applies **obvious** fixes without mid-run confirmation. A fix is obvious when the finding dictates exactly one edit: mechanical, evidence-backed, needing no interpretation of intent, no choice among alternatives, and no wording beyond the documented annotation formats. (A *user's* invocation is that consent in docs → reality, and for `reconcile-task` in the session direction. These skills are model-invocable, so a run the user did not ask for carries no such consent: it asks before applying even an obvious fix, reading which door it came through per `./skill-conventions.md` § *The invocation gate*. `review-pr-triage-verify-reconcile` has no obvious-fix path to consent to — appending a plan step is a scope act, never a mechanical one — so every write it makes goes through the batched round below: invoking it buys the review, never the append.)
 
 Everything else needs the engineer:
 

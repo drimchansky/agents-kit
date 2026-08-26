@@ -1,7 +1,6 @@
 ---
 name: publish-pr-review
 description: Use when asked to publish review-pr's findings to the PR on GitHub — posts Major/Critical findings as inline comments, or a short approval if none. Follow-up to /review-pr or /review-pr-triage-verify; the user provides no findings.
-disable-model-invocation: true
 ---
 
 ## Core Rules
@@ -9,7 +8,7 @@ disable-model-invocation: true
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core.
 
-Publish the review that `/review-pr` produced to the PR on GitHub. This skill deliberately mutates the PR — invoking it *is* the explicit permission for that outward-facing change. It posts exactly one review: Major and Critical findings as inline comments (a neutral **Comment** review), or a short **Approve** when there are none. It posts nothing else — no code edits, no title/state/merge changes, and no Minor findings, improvements, summary, or other terminal-only detail. The review body names the model(s) that performed the review.
+Publish the review that `/review-pr` produced to the PR on GitHub. This skill deliberately mutates the PR, and it is model-invocable, so its own invocation is not the permission for that outward-facing change — step 4's preview-and-confirm gate is, and nothing reaches GitHub until the user confirms there. It posts exactly one review: Major and Critical findings as inline comments (a neutral **Comment** review), or a short **Approve** when there are none. It posts nothing else — no code edits, no title/state/merge changes, and no Minor findings, improvements, summary, or other terminal-only detail. The review body names the model(s) that performed the review.
 
 ## Preconditions — stop if unmet
 

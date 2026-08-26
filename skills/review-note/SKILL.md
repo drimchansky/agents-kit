@@ -2,7 +2,6 @@
 name: review-note
 description: Use when asked to review, validate, check, expand, or improve a personal knowledge base note on any subject. Surfaces inaccuracies, gaps, and clarifications that deepen the author's understanding of the topic. Proposes fixes; does not edit the note.
 argument-hint: '[note file path or pasted text]'
-disable-model-invocation: true
 ---
 
 # Review Note

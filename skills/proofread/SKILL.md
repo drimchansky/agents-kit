@@ -2,7 +2,6 @@
 name: proofread
 description: Use when asked to proofread, check, review, or polish a message, email, or piece of writing.
 argument-hint: '[-f (fact verification)] [message or file path]'
-disable-model-invocation: true
 ---
 
 # Proofread

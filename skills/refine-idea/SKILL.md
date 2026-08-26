@@ -2,7 +2,6 @@
 name: refine-idea
 description: Use when asked to refine, ideate, sharpen, or stress-test a vague idea or rough concept before planning.
 argument-hint: '[idea or concept] [destination path]'
-disable-model-invocation: true
 ---
 
 ## Core Rules
@@ -87,7 +86,7 @@ The "Not Doing" list is the most valuable part — focus is about saying no to g
 
 ## Don't Rationalize
 
-- "This idea is clear enough already" — If the user invoked `refine-idea`, it wasn't.
+- "This idea is clear enough already" — Clarity is what the phases test, not what you assume before running them.
 - "Three phases is overkill" — The phases each do one thing. Skipping them collapses the artifact into a plan that hasn't earned its assumptions.
 - "I'll surface assumptions later" — Untested assumptions kill ideas. Surface them before committing to a direction.
 - "More variations is better" — 5–8 considered variations beat 20 shallow ones.

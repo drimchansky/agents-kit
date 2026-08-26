@@ -2,7 +2,6 @@
 name: decompose-task
 description: Use when an approved design doc (ADR, accepted RFC, epic-scale ask) should become several tickets and task folders — proposes the decomposition into ordered sibling parts (cut-line alternatives, Jira mapping), and on the user's confirmation materializes each part's ticket.md plus a seeded CONTEXT.md via prepare-ticket. Proposes first; writes nothing before confirmation.
 argument-hint: '[source: task-folder doc path, file path, URL, or pasted text] [optional: parent dir, existing Jira keys]'
-disable-model-invocation: true
 ---
 
 ## Core Rules

@@ -2,7 +2,6 @@
 name: prepare-ticket
 description: Use when asked to prepare, draft, or write up a ticket or issue from a described task — turns it into a self-contained ticket file describing the real functional output required, with a title, minimal context, a description, and testable acceptance criteria. Can seed a task folder's ticket.md as the workflow's starting point. Captures the scope as described; does not invent requirements.
 argument-hint: '[task description] [optional task folder, slug, or target file path]'
-disable-model-invocation: true
 ---
 
 ## Core Rules

@@ -2,7 +2,6 @@
 name: reconcile-task
 description: Use when asked to reconcile, sync, capture, or write back into a task folder the important information that emerged in the current session — decisions, constraints, references, answered questions, and verified progress — that never made it into `CONTEXT.md`, `goals.md`, `plan.md`, or `result.md`. Also re-checks the folder's cited tickets, PRs, and docs against their live state.
 argument-hint: '[task folder path]'
-disable-model-invocation: true
 ---
 
 ## Core Rules

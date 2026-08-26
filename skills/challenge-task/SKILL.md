@@ -2,7 +2,6 @@
 name: challenge-task
 description: Use when asked to challenge a task's plan for proportionality — whether the complexity it commits to is justified by what the task actually has to achieve, or whether it is overengineered; names what could be dropped, collapsed, or deferred, and never designs an alternative. Read-only.
 argument-hint: '[task folder path]'
-disable-model-invocation: true
 ---
 
 ## Core Rules

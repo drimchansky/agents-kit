@@ -2,7 +2,6 @@
 name: review-pr-triage-verify
 description: Use when asked for a verified review of a PR or branch — one command that reviews the diff against its base, batches the findings by concern, verifies each batch in an isolated read-only probe, and displays one verdict per finding. Reads and displays only; never edits code or posts anywhere.
 argument-hint: '[-x (cross-vendor second review)] [-p (parallel lens probes + gap sweep)] [-d (draft PR description)] — passed through to the review phase'
-disable-model-invocation: true
 ---
 
 ## Core Rules

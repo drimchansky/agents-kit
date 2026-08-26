@@ -2,7 +2,6 @@
 name: review-commit
 description: Use when asked to review staged changes before committing.
 argument-hint: '[-x (cross-vendor second review)]'
-disable-model-invocation: true
 ---
 
 ## Core Rules

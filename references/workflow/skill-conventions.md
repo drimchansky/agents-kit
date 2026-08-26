@@ -6,9 +6,10 @@ given behavior takes.** When a new behavior is added, or an existing one is recl
 here first and propagate to the skills. Everything else about a skill — its protocol, its output, its
 write surface — lives in the skill file; this file only rules on the *shape* the variation takes.
 
-The file carries one convention that is not a variation at all: the **cold-citation marker** in the
-last section, which rules on *when* a file a skill cites is loaded rather than on how the skill
-behaves. It sits here for the same reason — decided once, then propagated to the skills.
+The file carries two conventions that are not variations at all: the **invocation gate** and the
+**cold-citation marker**, which rule on *who may start a skill* and on *when* a file a skill cites
+is loaded, rather than on how the skill behaves. Both sit here for the same reason — decided once,
+then propagated to the skills.
 
 The rule covers variations of **one skill's** behavior. Sibling skills that share a method but own
 different deliverables — `implement-task` and `implement` (the same execution loop against a task
@@ -100,6 +101,59 @@ where they are rather than being re-implemented at the pipeline level.
    existing composites carry (one Core Rules block, one Output, the composite owning **Next**).
    Flag → document it in the host skill's `Flags` section and its `argument-hint`.
 3. Record it under **Current members** here.
+
+## The invocation gate
+
+A skill is reachable two ways: the user names it (`/<name>`), or the model reaches for it from the
+description. **A skill closes the second door when it is a terminal filing or publishing step — the
+act that takes finished work out of the session and puts it somewhere permanent — and carries no
+confirmation gate of its own.** Where the skill already previews the act and waits for a yes, that
+gate is the consent, and closing invocation would only withhold a tool the model can use safely.
+
+**A skill also closes it when its run reaches past the current project** — across every registered
+root, or into installed state — because the premise the open door rests on, that the work still
+sits in front of the user where a `git diff` shows it, does not hold there. A per-change gate does
+not reopen the door in that case: the gate covers what the run writes, never the sweep an unasked
+run performs to decide what to write.
+
+Closing it takes both host mechanisms together, since `setup.ts` deploys every skill to both homes:
+`disable-model-invocation: true` in the SKILL.md frontmatter (Claude Code) and an
+`agents/openai.yaml` carrying `policy.allow_implicit_invocation: false` beside it (Codex). One
+without the other leaves the skill open on the other host.
+
+**Gated skills:**
+
+- `commit` — writes a commit.
+- `update-pr-description` — replaces a live PR body.
+- `archive-task` — files a task into `Archive/`.
+- `backlog-task` — files a task into `Backlog/`.
+- `maintain` — sweeps and rewrites installed state across every registered root.
+- `init-config` — walks the home project parents and writes the machine's root registry.
+
+Opening or closing a door is recorded in this list in the same change that flips the frontmatter
+and the policy file; the entry, or its removal, is what keeps this list and the two host mechanisms in step.
+
+Two skills write past the session and are deliberately **not** members. `publish-pr-review` mutates
+a PR, but its step 4 previews the exact review and posts nothing until the user confirms.
+`create-notion-page` has no such gate — it drafts and creates in one pass — but the page lands
+parentless in the user's Private section, visible to them alone and cheap to delete, and the skill
+never shares it or changes its permissions, so an unasked run publishes to nobody. Every other skill
+either authors or changes work that still sits in front of the user — working-tree code a `git diff`
+shows, task docs, a chat report — or previews and confirms its own write, as `decompose-task` does.
+Resolving a named task across the registered roots is not the reach above either: the reach is a run
+that ranges over them to decide what to act on.
+
+**Which door a run came through is read, never inferred.** A user's invocation arrives as the typed
+command in the turn that opens the run — Claude Code renders it as a `<command-name>` block ahead of
+the skill body. A run carrying no such marker, or running on a host that leaves the two
+indistinguishable, counts as **model-invoked**: the split exists to withhold a write nobody asked
+for, so an unreadable signal resolves the way that asks rather than the way that writes.
+
+**An open skill that reads its own invocation as consent states the user/model split where it makes
+that claim**, not here — `./reconciliation.md` § *Consent model* for the reconcilers,
+`./executor-contract.md` § *Write-mode routing* for the write-mode consumers. Each states what the
+answer buys; the test above is where they get it. This section rules on which door is closed and on
+how a run tells which one it came through.
 
 ## Cold citations
 

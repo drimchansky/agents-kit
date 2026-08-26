@@ -2,7 +2,6 @@
 name: explore
 description: Use when asked to explore, explain, walk through, describe, teach, or analyze a topic — code, a library or API, a protocol, a system, a concept, or a domain question.
 argument-hint: '[topic, file path, or any other source of information]'
-disable-model-invocation: true
 ---
 
 ## Core Rules
@@ -72,7 +71,7 @@ If the user will use this output to make a decision (design, refactor, or implem
 ## Don't Rationalize
 
 - "I know how this library works" — Check the docs. APIs change between versions. Web search is free.
-- "The code is self-explanatory" — If the user asked for an explanation, it wasn't self-explanatory to them.
+- "The code is self-explanatory" — Self-explanatory to you is not the test; the reader who needs the explanation is.
 - "This is probably how it works" — Inference without flagging it as inference is misleading. Cite sources or say you're guessing.
 - "That's too much detail" — Match depth to the question. A question about internals needs internals.
 - "Here's the code" — Code without narration is not an explanation. Explain what it does and why.

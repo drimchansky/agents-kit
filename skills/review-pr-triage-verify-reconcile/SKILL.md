@@ -2,7 +2,6 @@
 name: review-pr-triage-verify-reconcile
 description: Use when asked for a verified review of a PR or branch and to act on it in the same sitting — one command that runs the review → triage → verify pipeline, prints its verdicts in full, then appends one plan step per Confirmed finding you accept to a task folder's `plan.md` and records the append in `result.md`. Writes those two task files only; never code, never git, never the PR.
 argument-hint: '[task folder path or slug] [-x (cross-vendor second review)] [-p (parallel lens probes + gap sweep)] [-d (draft PR description)] — flags passed through to the review phase'
-disable-model-invocation: true
 ---
 
 ## Core Rules

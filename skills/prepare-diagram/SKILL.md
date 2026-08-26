@@ -2,7 +2,6 @@
 name: prepare-diagram
 description: Use when asked to generate a Mermaid diagram for a provided subject — a code flow or architecture in a repo, a figure for a doc, or any described process or system.
 argument-hint: '[subject] [optional: diagram type, destination file]'
-disable-model-invocation: true
 ---
 
 ## Core Rules

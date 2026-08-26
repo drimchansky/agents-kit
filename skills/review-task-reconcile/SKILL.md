@@ -2,7 +2,6 @@
 name: review-task-reconcile
 description: Use when asked to sanity-check a task's plan and also act on the findings — one command that prints the feasibility assessment from pre-reconcile state, then reconciles obvious findings into the task docs and folds your answers to the review's Questions into the plan. Also re-checks the folder's cited tickets, PRs, and docs against their live state. Writes the task docs only; never code, never git.
 argument-hint: '[task folder path] [-x (cross-vendor grounding probe)] — passed through to the review phase'
-disable-model-invocation: true
 ---
 
 ## Core Rules
@@ -37,8 +36,9 @@ implement and does not redesign: a step that needs
 rethinking is flag-only and goes back to `plan-task`, per the mapping's *Infeasible or
 conflicts-with-existing steps* row.
 
-Invoking this skill is the consent the contract's § *Consent model: obvious fixes only, ask for the
-rest* defines; everything past that bar is asked first, as one batched round.
+A user invoking this skill is the consent the contract's § *Consent model: obvious fixes only, ask
+for the rest* defines; a model-invoked run carries no such consent and asks for every fix. Anything
+past that bar is asked first either way, as one batched round.
 
 ## Flags
 
