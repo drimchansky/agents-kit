@@ -72,7 +72,7 @@ A finding routed **flag only** — every finding on the three surfaces above, an
 ## Reconciliation — YYYY-MM-DD
 
 **Trigger:** `<skill>`; report printed this session from pre-reconcile state.
-**Health:** <the domain's integrated-health recipe result, when this run's advance required a boundary; omit otherwise>
+**Health:** <the boundary this run's advance required, recorded to the shape the resolved domain fixes (`../engineering/verification.md` § *What a boundary records* for code); omit when no advance required one>
 **Commits:** <the scan's dated commit list, one line per commit, when a scan ran; `./reconciliation-commits.md` § *The record* fixes the line content and the cap>
 
 - plan.md — Step 3 unchecked; shipped claim gone (`src/auth/handler.ts` no longer defines `validateToken`) — finding: Drift since plan [warn]. Prior record: `#step-3--add-token-validation`

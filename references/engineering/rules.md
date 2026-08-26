@@ -12,10 +12,13 @@ The **engineering domain pack's rules overlay** — loaded on top of the neutral
 
 Before presenting results from any code change:
 
-- Have current integrated health for the final changed surface — the full typecheck, lint, test,
-  and build recipe `./verification.md` § *Two verification tiers* names, run at the consumer's
-  declared health boundary (`../workflow/execution-loop.md` § *Health boundaries*), or, for work
-  under no such consumer, at presentation itself. Never substitute a narrower changed-files check.
+- Have current integrated health for the final changed surface — the typecheck, lint, test, and
+  build recipe `./verification.md` § *Two verification tiers* names, run at the scope that section
+  resolves for the boundary, at the consumer's declared health boundary
+  (`../workflow/execution-loop.md` § *Health boundaries*), or, for work under no such consumer, at
+  presentation itself. That scope is the final delta's closure where the boundary's reference
+  carries a verdict and the whole surface where it does not; never narrower than it either way,
+  since a narrower scope can miss a consumer.
 - If changing exports or shared code, grep for all consumers and verify compatibility
 - Remove debug artifacts (console.log, commented-out code, temporary variables)
 
@@ -41,7 +44,7 @@ loads by phase:
 - `exploration.md` — how to explore a codebase before planning or reviewing (read code, trace callers/callees, map blast radius, check versions, ground in prior art)
 - `planning.md` — engineering planning specifics: vertical slicing, step-size caps, checkpoint shape, when-to-plan heuristics, and the task-diagram guidance (when a code change warrants a `diagram.md`, what it depicts, and its notation sources)
 - `execution.md` — stack/version detection, authoritative doc-sourcing, the Prove-It bug pattern, the verification cadence, unresolved-source handling, red flags
-- `verification.md` — engineering's mapping for the neutral unit-outcome and integrated-health tiers, with the satellites `acceptance-gate.md` (the acceptance-gate recipe) and `batched-fixes.md` (batched `fix-findings` boundaries)
+- `verification.md` — engineering's mapping for the neutral unit-outcome and integrated-health tiers, with the satellites `boundary-scope.md` (how a health boundary's scope is computed and what it records), `acceptance-gate.md` (the acceptance-gate recipe) and `batched-fixes.md` (batched `fix-findings` boundaries)
 - `review.md` — code-review lenses, complexity signals, severity calibration
 
 Per-surface checklists — consult the ones a change touches:

@@ -16,35 +16,47 @@ Both are required, but they run on different cadences — they answer different 
   audit — and fix what that section prohibits before recording the outcome. This proves the new
   behavior and its touched comments; it is not integrated-health evidence.
 - **Integrated health** — at every consumer-declared health boundary, run every exposed typecheck,
-  lint, test, and distinct build command against the current shared tree, not only the changed area.
-  Discover the full command set from the project's authoritative manifests, documented verification
-  commands, and CI configuration; every project-exposed full command runs. Record an unavailable
-  command category explicitly; never replace an exposed command with a narrower check.
+  lint, test, and distinct build command over the **dependency closure of the delta** since a recorded
+  reference: this run's last green boundary. Outside the closure a file keeps that boundary's verdict,
+  so re-running it proves nothing — the whole warrant for narrowing, and why it holds only where the
+  reference carries a verdict. **A boundary whose reference carries no in-session green
+  result runs the whole relevant surface instead.** Discovery is unchanged — the project's
+  authoritative manifests, documented verification commands, and CI configuration — and every
+  discovered command still runs; only its scope narrows. Record as unavailable a check class the
+  project exposes no command for.
 
-  **Run independent recipe commands concurrently.** The recipe's commands don't consume one another's
-  results, so their default relationship is independence: launch them together — parallel tool calls, or
-  background processes collected before judging — and let the boundary's wall-clock be the slowest
-  command, not the sum. Serialize only where one command consumes another's output (a build artifact a
-  test suite loads, a codegen step a typecheck reads), where commands contend on the same outputs or
-  caches — build artifacts, coverage output, snapshot or incremental state; a command's verdict being
-  read-only does not make its execution so — or where the project's own runner documents a required
-  order; a runner that coordinates its own concurrency (one `nx run-many` across several targets) is
-  the simplest safe form. Concurrency changes evaluation not at all: the boundary passes only when **every**
-  command has completed and passed, a failure is judged after all have finished (their outputs are
-  independent evidence, and a second failure surfaced now is one less rerun later), and Stop-the-Line
-  applies unchanged.
+  How that scope is computed — per-class scopes, reference and delta, widening triggers, infra-bound
+  commands, concurrency — is `./boundary-scope.md`, read at a boundary and not between them.
 
 Integrated-health evidence is state-specific: any work-product edit after the boundary invalidates
-it, including a rollback. Do not report it current until the complete recipe has passed again on the
-state that remains. A unit criterion that happens to invoke one health command does not exempt the
-next health boundary from running the full recipe.
+it, including a rollback. Do not report it current until the recipe has passed again on the state that
+remains. A unit criterion that happens to invoke one health command does not exempt the next boundary,
+which re-runs the closure of what changed since the last green one, so boundary count stops
+mattering.
 
 Never start the next unit while its outcome proof is failing, and never proceed past a health
-boundary while its integrated-health recipe is failing.
+boundary while its recipe is failing.
 
 How `fix-findings` pays these tiers across a batch, and what a red boundary reruns:
 `./batched-fixes.md` — read at a `fix-findings` health boundary, and above all when that boundary is
 red.
+
+## What a boundary records
+
+**The one home for the shape of a recorded code-domain boundary**, cited by every consumer's
+`**Health:**` field rather than restated. That field stays domain-neutral: the same skills run
+documentation tasks, whose boundary is `../documentation/verification.md` § *Integrated health —
+declared boundaries*, defining none of these. In order:
+
+- **The reference** — the `worktree-merge.ts` manifest the delta was taken against and the tree it
+  captured. A boundary that took none records why instead, and no delta: `whole surface: reference
+  carries no in-session green result`, `reference skipped: no narrowing class exposed`, `reference
+  skipped: no kit root`.
+- **The delta** — its size in paths.
+- **Per command** — its scope (delta, closure, or whole tree) and its result. A widened scope names
+  the `./boundary-scope.md` § *Widening* trigger; a class reaching its closure as a cached whole-tree
+  run says so. An infra-bound command records that file's `not run in-session: needs <X>; carried by
+  CI required check <name>` / `uncovered` form instead of a result, leaving the boundary green.
 
 ## Stop-the-Line (when either tier fails)
 
@@ -73,7 +85,7 @@ status with a `**Blocked:**` section naming what failed, what was tried, and wha
 At each consumer-declared integration-assertion gate, run every named assertion and exercise every
 named end-to-end flow **end to end**, never assuming it holds because unit tests pass. Integration
 assertions and health boundaries may be adjacent, but their evidence remains distinct: an assertion
-does not narrow or replace the full health recipe, and health does not replace a named assertion. If
+does not narrow or replace the boundary's recipe, and health does not replace a named assertion. If
 an assertion fails, apply Stop-the-Line; if its recovery changes the work product, run a fresh health
 boundary before presenting the run as complete.
 

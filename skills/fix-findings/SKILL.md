@@ -71,7 +71,7 @@ Run each fix through the loop in `./references/workflow/execution-loop.md` — r
 - **Blocked** — a fix that cannot pass its **immediate** outcome is restored from its pre-fix content state and reported `fix failed (reverted): <reason>`. A failed health boundary follows § *Integrated health boundary*: isolate from a green baseline control when one exists; retain the survivors as **Health uncertifiable** when the same command was already red at the baseline; restore the complete pre-run content baseline when the comparison is inconclusive. Findings are independent, so an isolated failure does not strand independent survivors.
     A failed **final-integrated** outcome uses the dependency-safe recovery in `./references/workflow/fix-findings-recovery.md` § *Dependency-safe recovery* instead. <!-- cold -->
 - **Acceptance** — every selected finding lands in exactly one report bucket, each bucket entry re-read against the live tree before reporting.
-- **Health boundaries** — no up-front health run and no per-batch health run. After all selected serial and batched fixes' immediate outcomes have settled and all retained fixes' final-integrated outcomes pass, run one full engineering-health boundary for the retained fixes. Every tree-changing recovery earns one fresh full boundary before any survivor is Fixed. The certifying re-review of the whole set remains a separate run.
+- **Health boundaries** — no up-front health run and no per-batch health run. After all selected serial and batched fixes' immediate outcomes have settled and all retained fixes' final-integrated outcomes pass, run one engineering-health boundary for the retained fixes, at the scope § *Integrated health boundary* resolves. Every tree-changing recovery earns one fresh boundary before any survivor is Fixed. The certifying re-review of the whole set remains a separate run.
     A red boundary follows the recovery procedure in `./references/workflow/fix-findings-recovery.md`. <!-- cold -->
 - **Integration assertions** — none within the fix run; the certifying re-review is a separate review run over the changed code.
 
@@ -111,9 +111,15 @@ Resolve a failed final outcome through the dependency-safe recovery in `./refere
 
 ### Integrated health boundary
 
-When retained fixes remain, run one complete engineering health boundary over their final integrated
-tree (`./references/engineering/verification.md`). If it is green, that unchanged-tree result supplies
-pre-presentation health evidence and the survivors can be reported Fixed.
+When retained fixes remain, run one engineering health boundary over their final integrated tree,
+scoped by `./references/engineering/verification.md` § *Two verification tiers*. Its reference is the
+immutable pre-run content baseline — this skill's at every boundary, a recovery rebuild's fresh one
+included — and since this skill takes no up-front health run, that baseline never carries an
+in-session green result, so the boundary runs the whole relevant surface rather than a closure. That
+is what keeps **Health uncertifiable** below reachable: a failure the tree already carried has to
+surface in the boundary before the baseline comparison can attribute it. If it is green, that
+unchanged-tree result supplies pre-presentation health evidence and the survivors can be reported
+Fixed.
 
 If it is red, the comparison against the baseline, the three dispositions, and the recovery procedure
 are `./references/workflow/fix-findings-recovery.md` § *Red boundary: comparison, disposition, recovery* — read it when the boundary is red. <!-- cold -->
@@ -134,8 +140,8 @@ all final-integrated outcomes, the health boundary, recovery, and the report buc
 
 Lists, never tables. Omit empty buckets.
 
-- **Fixed** — every applied fix, per finding: the original text with severity, what changed (`file:line`), its final-integrated outcome evidence, and the current final-tree health boundary. Mark an entry that had no Confirmed verdict as fixed on the user's approval, so the report never lends a verified finding's authority to one that had none. A delegated fix's entry notes the delegation, the engine that ran it, and its batch where it ran in one; one applied by the coordinator instead notes which posture exception kept it here, or that it was ask-routed.
-- **Health uncertifiable** — survivors retained after a red boundary whose failed command was already red at the immutable baseline: per finding, the original text with severity, what changed (`file:line`), its final-integrated outcome evidence, and the baseline-failing command nothing can certify against. Not Fixed — the certifying re-review **Next** points at is what resolves these.
+- **Fixed** — every applied fix, per finding: the original text with severity, what changed (`file:line`), its final-integrated outcome evidence, and the current final-tree health boundary, recorded to the shape `./references/engineering/verification.md` § *What a boundary records* fixes. Mark an entry that had no Confirmed verdict as fixed on the user's approval, so the report never lends a verified finding's authority to one that had none. A delegated fix's entry notes the delegation, the engine that ran it, and its batch where it ran in one; one applied by the coordinator instead notes which posture exception kept it here, or that it was ask-routed.
+- **Health uncertifiable** — survivors retained after a red boundary whose failed command was already red at the immutable baseline over the boundary's own resolved targets, named rather than reselected and minus any the baseline does not carry (`./references/workflow/execution-recovery.md` § *Evidence lifecycle*): per finding, the original text with severity, what changed (`file:line`), its final-integrated outcome evidence, and that baseline-failing command with those targets, which nothing can certify against. Not Fixed — the certifying re-review **Next** points at is what resolves these.
 - **Decided** — ask-routed findings that produced no fix: the user's decision and why nothing was applied — skipped, deferred, or the finding rejected. An ask-routed fix that was applied belongs in **Fixed**, not here.
 - **Fix failed** — fixes that were reverted, and fixes never attempted because a dependency of theirs failed, each with the reason and what would unblock them: the named prerequisite for one skipped as a cascade; the reason the baseline comparison could not run, after collection-level rollback on an unestablished control; the unresolved-health reason after an unconverged recovery; or whether one fix, a dependency group, or an interaction group was implicated. A never-attempted entry says so rather than reporting `(reverted)`, which would assert an edit that never happened. A delegated one notes the delegation, its engine, and its batch here too; one applied by the coordinator notes its posture exception or its ask routing, as in **Fixed**.
 - **Untouched** — Withdrawn and Inconclusive findings with their verdict as the reason, findings triage landed outside **open** with their bucket, external findings dropped as `anchor moved` or `not actionable`, and any finding the user's subset excluded.
@@ -148,7 +154,7 @@ Lists, never tables. Omit empty buckets.
 - "This Inconclusive one looks easy, I'll fix it while I'm here" — A probe investigated and couldn't establish the root cause; that verdict is the contract, and "looks easy" is not new evidence. Ask for another verify pass instead.
 - "The user will obviously pick the targeted option, I'll skip the ask" — The gate routed it because judgment was needed. Obvious-to-you is the thing being checked.
 - "I wrote this finding myself an hour ago and I'm sure of it — the ask is a formality" — Confidence in your own unverified finding is the least reliable input available, and it is precisely what the ask exists to check. Sureness is not a verdict.
-- "The executor reported the fix verified, so it's Fixed" — That is only immediate evidence. Fixed means the criterion holds on the final integrated tree and its current full health boundary is green.
+- "The executor reported the fix verified, so it's Fixed" — That is only immediate evidence. Fixed means the criterion holds on the final integrated tree and its current health boundary is green.
 - "The newest fix made health red, so undo it" — Overlap and interactions make recency unreliable. Isolate dependency-closed groups from the immutable baseline and revert only what the evidence implicates.
 
 ## Verification
@@ -160,8 +166,8 @@ Confirm the protocol invariants before finishing:
 - [ ] Every ask-routed finding decided in one batched interaction
 - [ ] External findings anchor-checked before fixing; nothing written back to a PR or findings file
 - [ ] Immutable pre-run content baseline captured before any edit; every attempt has an exact pre-fix capture and an ordered run-owned change set or an exact restoration, and every batched entry records the incorporated content/presence delta from the immediately preceding shared state with its dependencies
-- [ ] Every retained finding's full outcome tier re-proved on the final integrated tree; every Fixed entry has that evidence and a current final-tree health boundary
-- [ ] One full health recipe ran on the happy path after all selected serial and batched fixes; a red command was compared with the baseline alone, a matching baseline failure retained its survivors as Health uncertifiable, an inconclusive comparison restored the pre-run baseline with no changed-code survivor, and a green control used dependency-safe scratch isolation before another full recipe
+- [ ] Every retained finding's full outcome tier re-proved on the final integrated tree; every Fixed entry has that evidence and a current final-tree health boundary recorded to the shape **Fixed** requires
+- [ ] One health boundary ran on the happy path after all selected serial and batched fixes, referenced to the immutable pre-run baseline; a red command was compared with the baseline alone over its resolved targets, excluding any the baseline does not carry and calling the comparison inconclusive where that empties the set, a matching baseline failure retained its survivors as Health uncertifiable, an inconclusive comparison restored the pre-run baseline with no changed-code survivor, and a green control used dependency-safe scratch isolation before another boundary against that baseline
 - [ ] Every failed fix or group was restored without changing pre-run bytes, index, staging, or commits; an unconverged health recovery restored the exact baseline and left no changed-code survivor
 - [ ] Every selected finding in exactly one output bucket
 - [ ] Batched fixes ran only over blast-radius-declared, pairwise-disjoint surfaces and came back through `./references/workflow/parallel-batch.md` § *Coordinator-side parallel batch*'s ordered gates, in this skill's processing order <!-- cold -->

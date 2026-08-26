@@ -17,7 +17,10 @@ controls, and using the wrong one implicates work that was never at fault.
 
 - **A failed health command** — the control is the immutable baseline, already proven green by the
   comparison the boundary section runs first. Isolate with only the failed command or commands, never
-  the whole recipe.
+  the whole recipe, each named over its resolved targets minus those the replayed state does not
+  carry (`./execution-recovery.md` § *Evidence lifecycle*) — a group replayed without the change set
+  that added a target must not be handed that target, or it is implicated by the omission rather than
+  by its own work.
 - **A failed final-integrated outcome** — the control is the baseline **plus that finding's own change
   set**, never the bare baseline, which predates the fix and so reproduces the finding's problem by
   definition. Every replayed group carries that change set and its dependency closure, and that
@@ -54,17 +57,25 @@ never mutate Git state.
 
 ## Red boundary: comparison, disposition, recovery
 
-If it is red, rerun only the failed command or commands against the immutable baseline first — in a
-coordinator-managed scratch copy seeded from it and materialized with the dependency and build state
-that command needs, so an exposed command can execute there at all; never by moving the shared tree
-back to the baseline to observe it, and never a second full recipe merely to compare. **Reuse or link
-that state from the shared tree only where no retained change set affects it**, and re-derive it from
-baseline sources otherwise: a fix that touched a manifest, a lockfile, a codegen input, or a build
-input leaves the shared tree's derived state downstream of this run's own edits, and baseline sources
-under it are a hybrid rather than the baseline — which is exactly the control this comparison exists
-to establish. A command that cannot execute in that copy, or whose state cannot be re-derived from
-the baseline, yields an **inconclusive comparison** — neither matching nor green, and never grounds
-for selectively implicating one fix.
+If it is red, rerun only the failed command or commands against the immutable baseline first — each
+over the **targets the boundary's invocation resolved on the shared tree**, named explicitly so that
+only the tree changes, never the selecting command re-evaluated on the baseline, where it recomputes
+against pre-change bytes and passes vacuously (`./execution-recovery.md` § *Evidence lifecycle*).
+**A named target the baseline does not carry is excluded from that rerun**, per the same section: a
+fix that adds a file — the ordinary shape of a missing-regression-test fix — resolves targets the
+baseline never had, and naming one there exits on a missing path, a red the comparison itself caused
+and would otherwise read as the matching baseline failure below. Where the exclusion empties a
+command's target set, that command's comparison is **inconclusive**.
+Rerun it in a coordinator-managed scratch copy seeded from the baseline and materialized with the
+dependency and build state that command needs, so an exposed command can execute there at all; never
+by moving the shared tree back to the baseline to observe it, and never a second boundary recipe
+merely to compare. **Reuse or link that state from the shared tree only where no retained change set
+affects it**, and re-derive it from baseline sources otherwise: a fix that touched a manifest, a
+lockfile, a codegen input, or a build input leaves the shared tree's derived state downstream of
+this run's own edits, and baseline sources under it are a hybrid rather than the baseline — which is
+exactly the control this comparison exists to establish. A command that cannot execute in that copy,
+or whose state cannot be re-derived from the baseline, yields an **inconclusive comparison** —
+neither matching nor green, and never grounds for selectively implicating one fix.
 
 Neither a matching baseline failure nor an inconclusive comparison attributes the failed boundary to
 a particular fix, but they differ in what they prove, and the disposition follows that difference.
@@ -85,12 +96,14 @@ This is collection-level rollback on an unestablished control, not selective fau
 
 If the failed command is green at baseline, use dependency-safe recovery with those failed commands
 as the predicate. Rebuild from baseline plus survivors, re-prove every survivor's final-integrated
-outcome, then run one fresh full health boundary. Repeat when that boundary is still red. If
-recovery cannot converge to a green complete boundary in this session, restore the pre-run baseline
-within that same attribution bound and place every still-retained attempted fix in Fix failed with
-the unresolved-health reason. Preserve Decided, Untouched, and earlier immediate-failure buckets; no
-changed-code survivor remains or is reported Fixed. A fresh full-health run is only for this failure
-recovery; otherwise the successful boundary remains the run's one complete recipe.
+outcome, then run one fresh health boundary over that candidate, **referenced to the immutable
+pre-run baseline** — a rebuilt candidate is that baseline plus a subset of change sets, so it has no
+green boundary of its own to reference. Repeat when that boundary is still red. If recovery cannot
+converge to a green complete boundary in this session, restore the pre-run baseline within that same
+attribution bound and place every still-retained attempted fix in Fix failed with the
+unresolved-health reason. Preserve Decided, Untouched, and earlier immediate-failure buckets; no
+changed-code survivor remains or is reported Fixed. A fresh boundary is only for this failure
+recovery; otherwise the successful boundary remains the run's one health boundary.
 
 ## Delegation mechanics
 

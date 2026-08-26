@@ -62,7 +62,7 @@ When the batch directly reaches its bounding checkpoint, run that checkpoint's a
 
 ## Reaching done from in-review
 
-**Reaching `done` from `in-review` (a later re-run).** When the user reports the external verification happened — a confirmation, a receipt, the observed live state — re-run the gate on each `pending external` goal against that **best-available proxy** (`./acceptance-criteria.md`): the user-reported confirmation *is* the sanctioned evidence for an `(external)` goal. Update its `## Acceptance` line to `met`, noting the proxy. Then run a fresh full domain health boundary on the current work product — never reuse the earlier tail result, because this record carries no exact boundary identity across runs (`./execution-loop.md` § *Health boundaries*).
+**Reaching `done` from `in-review` (a later re-run).** When the user reports the external verification happened — a confirmation, a receipt, the observed live state — re-run the gate on each `pending external` goal against that **best-available proxy** (`./acceptance-criteria.md`): the user-reported confirmation *is* the sanctioned evidence for an `(external)` goal. Update its `## Acceptance` line to `met`, noting the proxy. Then run a fresh domain health boundary on the current work product — never reuse the earlier tail result, because this record carries no exact boundary identity across runs (`./execution-loop.md` § *Health boundaries*).
 
 On success, append the fresh evidence before advancing status:
 
@@ -70,7 +70,7 @@ On success, append the fresh evidence before advancing status:
 ## Health boundary — YYYY-MM-DD
 
 **Trigger:** later-run `in-review → done` finalization
-**Health:** <the full domain health recipe result on the current work product>
+**Health:** <the boundary on the current work product, recorded to the shape the resolved domain fixes (`../engineering/verification.md` § *What a boundary records* for code)>
 
 ---
 ```

@@ -9,16 +9,16 @@ work reveals the unit or plan is wrong.
 
 - **Serial success** — implement a unit, prove its outcome immediately, and continue while health is
   pending; run a required integration assertion at its own cadence, and at the declared boundary let
-  the full recipe pass on the accumulated tree so health becomes current.
+  the boundary's recipe pass on the accumulated tree so health becomes current.
 - **Parallel batch success** — in consumer order, incorporate each unit or run its declared serial
   fallback, re-prove only that unit's outcome on the integrated tree, and record its incorporated
-  change set. After all executor worktrees are removed, run one full recipe where the consumer's
-  declared boundary places it; no unit merge runs the recipe on its own.
+  change set. After all executor worktrees are removed, run the boundary's recipe once where the
+  consumer's declared boundary places it; no unit merge runs the recipe on its own.
 - **Unit-outcome failure** — Stop-the-Line before recording that outcome or starting another unit;
   repair it, then re-prove the outcome before it can continue toward a boundary.
 - **Health-boundary failure** — Stop-the-Line with all earlier outcome evidence still distinct from
   the failed integrated-health claim; repair the shared tree, re-prove affected outcomes, and rerun
-  the full boundary recipe.
+  the boundary's recipe at its resolved scope.
 - **Integration-assertion failure** — Stop-the-Line with the assertion failure distinct from health;
   repair the named end-to-end outcome, rerun the assertion, and run a fresh boundary if the recovery
   changed the work product.
@@ -34,8 +34,20 @@ on the control state the replay starts from**. A predicate already red on that c
 reason the replay did not cause, and then every subset reads as implicated: a unit's own outcome
 criterion tested against a baseline that predates that unit's change set is red by construction, so
 isolating with it implicates work that was never at fault. Establish the control first — for a
-health command, the baseline itself; for a unit's outcome, the baseline plus that unit's own change
-set — and only then does "fails alone" name a culprit.
+health command, the concrete set of targets its invocation resolved on the tree it ran on, rerun at
+the baseline with those targets named explicitly so that only the tree changes, never the selecting
+command re-evaluated there, which recomputes against a tree predating the change and so selects
+nothing or something else; for a unit's outcome, the baseline plus that unit's own change set — and
+only then does "fails alone" name a culprit.
+
+**A named target the control tree does not carry is excluded from the rerun.** This is the same
+invariant read the other way: the replay changes the tree and nothing else, so a target the work
+*added* is not an argument the control can take, and naming it there makes the runner exit on a
+missing path — an exit that is red for a reason the control never had, which is precisely the
+false-red this section exists to prevent. Exclude such targets, and where the exclusion empties the
+target set the comparison is **inconclusive** rather than matching or green: nothing was tested, so
+nothing is established either way. Every replay site inherits this — the health-command control
+above, and each dependency-closed group replayed under it.
 
 ## Scope changes mid-execution
 

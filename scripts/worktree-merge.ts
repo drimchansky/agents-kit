@@ -35,9 +35,19 @@
 // script gives a restore instead is exactness about what happened — the applied set, and on a
 // verification failure the precise split between the paths that landed and the paths that did not.
 //
-// A `baseline` manifest serves both roles the cited file needs: the batch baseline every unit's
-// change set is measured against, and the exact pre-unit capture of the shared tree taken at a unit's
-// ordered position. They are the same operation on a different tree at a different moment.
+// A `baseline` manifest serves three roles: the two the cited file needs — the batch baseline every
+// unit's change set is measured against, and the exact pre-unit capture of the shared tree taken at a
+// unit's ordered position — and the health-boundary reference of
+// references/engineering/boundary-scope.md § Reference and delta, whose delta a later `check`
+// against that manifest computes. They are the same operation on a different tree at a different
+// moment, so a change to what `baseline` captures or what `--prune` hides reaches all three.
+//
+// Prunes and tracked content: a `--prune` filters the baseline as well as the current walk, so a
+// pruned path can never appear in a change set at all. That is what makes it right for tool state and
+// wrong for anything the project tracks — a committed bundle, a checked-in generated client, a
+// zero-installs cache. Callers name only untracked paths; the caller-facing rule and its consequences
+// live with each role (references/engineering/boundary-scope.md § Reference and delta,
+// references/workflow/parallel-batch.md § Coordinator-side parallel batch).
 
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";

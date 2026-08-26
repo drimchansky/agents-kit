@@ -74,9 +74,10 @@ Both tiers are required, but on different cadences — they answer different que
   criterion comes from is the consumer's **Source** binding; either way it is stated *before* the
   unit is implemented, never written afterwards to match what was built.
 - **Integrated health** — at the consumer's next **Health boundary**, confirm the accumulated work has
-  not regressed the integrated whole. The domain recipe runs against the full relevant surface — for
-  code, the shared tree. When the domain is code, the recipe is in
-  `../engineering/verification.md`.
+  not regressed the integrated whole. The domain recipe runs over the closure of the delta since the
+  reference that domain's `verification.md` defines — or the whole relevant surface, both where the
+  domain defines no reference and where this particular boundary's reference carries no in-session
+  green result. When the domain is code, the recipe is in `../engineering/verification.md`.
 
 Every change that could affect the health recipe invalidates prior integrated-health evidence. Never
 present a run whose work product changed as complete on stale health evidence.
@@ -119,13 +120,23 @@ evidence and requires a fresh health boundary before the run is presented as com
 A consumer declares the cadence in its binding, and a boundary is mandatory when that cadence
 reaches it:
 
-1. Run the full domain health recipe against the current shared tree. For code, see
+1. Run the domain health recipe over the closure of the delta since the reference that domain's
+   `verification.md` defines — or the whole relevant surface, both where the domain defines no
+   reference and where this boundary's reference carries no in-session green result. For code, see
    `../engineering/verification.md`.
 2. If any part of the recipe fails, apply Stop-the-Line. Don't proceed past the boundary.
-3. If all pass, record current integrated-health evidence per the **Record** binding and continue.
+3. If every command the boundary launched passes, record integrated-health evidence per the **Record**
+   binding and continue, to the shape the resolved domain fixes — for code,
+   `../engineering/verification.md` § *What a boundary records*; a domain fixing none records the
+   result as it states. A command the domain licenses the boundary not to launch (for code,
+   `../engineering/boundary-scope.md` § *Infra-bound commands*) is recorded rather than run and leaves
+   the boundary green and referenceable; only a launched command's failure is step 2's.
 
 Do not reuse a previous boundary after any code change, including a rollback: re-run the recipe on the
-state that remains. A boundary is not a unit and does not invent a new outcome criterion.
+state that remains, at the scope step 1 resolves for it. A rollback that restores the reference bytes
+exactly leaves an empty delta, and the recipe then legitimately re-runs only what does not narrow —
+that is the reference's verdict still holding, not a boundary skipped. A boundary is not a unit and
+does not invent a new outcome criterion.
 
 Across runs, unchanged state is not enough by assertion: reuse requires durable evidence that names
 the exact work-product identity the boundary evaluated and a current identity that matches it. No
@@ -161,7 +172,7 @@ The acceptance gate's discipline and what has to hold before a finished run is p
 - "I know what the bug is, I'll just patch it" — Maybe. The other times it costs hours. Reproduce →
   localize → reduce → root-cause before patching.
 - "The last health run passed, so this changed tree is fine" — Health evidence is invalid after a
-  change. Run the full recipe at the next declared boundary and before presenting if it is still
+  change. Run the boundary's recipe at the next declared boundary and before presenting if it is still
   pending.
 
 ## Red flags

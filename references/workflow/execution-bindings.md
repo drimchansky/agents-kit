@@ -74,7 +74,7 @@ saved or pasted list — one fix per unit. Its *Applying Fixes* section holds th
   § *Integrated health boundary*)
 - **Acceptance** — every selected finding in exactly one report bucket, re-read against the live
   tree
-- **Health boundaries** — no up-front health run and no per-batch health run. One full recipe on the
+- **Health boundaries** — no up-front health run and no per-batch health run. One boundary recipe on the
   retained-fix tree, after every selected fix's immediate outcome has settled and every retained fix's
   final-integrated outcome passes; every tree-changing recovery earns one fresh boundary before any
   survivor is Fixed. A changed-code run is never complete before that boundary is green, and the

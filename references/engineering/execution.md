@@ -45,11 +45,13 @@ added or edited. That evidence says the unit's behavior holds; it does not say t
 is healthy.
 
 The consumer's `../workflow/execution-bindings.md` binding chooses health boundaries. At each boundary,
-the engineering verification recipe runs every project-exposed full typecheck, lint, test, and
-distinct build command on the current shared tree. Any subsequent work-product edit makes that
-integrated-health evidence pending again, so the final shared tree must pass a boundary before a
-changed-code run is presented as complete. Named integration assertions have their own cadence and
-evidence; neither substitutes for integrated health.
+the engineering verification recipe runs every exposed typecheck, lint, test, and distinct build
+command at the scope `verification.md` § *Two verification tiers* sets and `./boundary-scope.md`
+computes for that boundary — the closure of its delta, or the whole surface where its reference
+carries no in-session green result or no narrowing class is exposed. Any subsequent work-product
+edit makes that integrated-health evidence pending again, so the final shared tree must pass a
+boundary before a changed-code run is presented as complete. Named integration assertions have their
+own cadence and evidence; neither substitutes for integrated health.
 
 ## Prove-It pattern (bug-fix steps)
 

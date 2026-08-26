@@ -6,10 +6,10 @@ all when that boundary is red.
 
 ## Batched finding fixes
 
-`fix-findings` applies the unit-outcome tier immediately but pays the full recipe once for the
-retained collection at its declared health boundary; it never starts with a health run or runs the
-recipe once per finding. A red boundary reruns only its failed command or commands, never a second
-full recipe merely to compare, and a rebuilt candidate earns one fresh complete recipe. What that
+`fix-findings` applies the unit-outcome tier immediately but pays its boundary's recipe once
+for the retained collection at its declared health boundary; it never starts with a health run or
+runs the recipe once per finding. A red boundary reruns only its failed command or commands, never a
+second full boundary merely to compare, and a rebuilt candidate earns one fresh boundary. What that
 comparison establishes, what it implicates, and what it restores is that skill's own procedure —
 `skills/fix-findings/SKILL.md` § *Integrated health boundary* owns it.
 
