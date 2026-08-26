@@ -25,8 +25,9 @@ Both are required, but they run on different cadences — they answer different 
   discovered command still runs; only its scope narrows. Record as unavailable a check class the
   project exposes no command for.
 
-  How that scope is computed — per-class scopes, reference and delta, widening triggers, infra-bound
-  commands, concurrency — is `./boundary-scope.md`, read at a boundary and not between them.
+  How that scope is computed — per-class scopes, runner caches, reference and delta, widening
+  triggers, infra-bound commands, concurrency — is `./boundary-scope.md`, read at a boundary and not
+  between them.
 
 Integrated-health evidence is state-specific: any work-product edit after the boundary invalidates
 it, including a rollback. Do not report it current until the recipe has passed again on the state that
