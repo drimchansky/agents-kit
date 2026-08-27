@@ -89,7 +89,7 @@ Lists, never tables.
 
 Neither phase renders a `## References` block: this pipeline sweeps nothing (Phase 2 above).
 
-**Next:** `/implement-task <slug>` executes the appended steps — the plan is live work again where the run reopened it. `/publish-pr-review` still posts Phase 1's **Findings** list, which the append did not change; with `-d`, `/update-pr-description` applies the drafted **PR description**. `/fix-findings` for a Confirmed finding you would rather fix now than schedule, and `/plan-task <slug>` for one the round declined as outside the plan's scope.
+**Next:** `/implement-task <slug>` executes the appended steps — the plan is live work again where the run reopened it. `/publish-pr-review` still offers Phase 1's **Findings** and **Minor findings** lists, and its **Improvements**, as severity tiers and posts the one you select — the append changed none of them; with `-d`, `/update-pr-description` applies the drafted **PR description**. `/fix-findings` for a Confirmed finding you would rather fix now than schedule, and `/plan-task <slug>` for one the round declined as outside the plan's scope.
 
 ## Verification
 

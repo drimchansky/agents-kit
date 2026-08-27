@@ -110,6 +110,17 @@ act that takes finished work out of the session and puts it somewhere permanent 
 confirmation gate of its own.** Where the skill already previews the act and waits for a yes, that
 gate is the consent, and closing invocation would only withhold a tool the model can use safely.
 
+**A counted choice is the second sanctioned gate form**, alongside preview-and-confirm. Where a skill
+presents the act itself as a choice whose options each name the exact payload they would write and
+how much of it there is, and where writing nothing is one of those options, selecting one is both the
+preview and the yes — the label carries what a preview would have shown, at the granularity the
+decision turns on. The enumeration is what makes it a gate, not the mechanism: a numbered list in
+chat qualifies exactly as a host's structured question tool does. A choice that names options without
+their payload, or payloads without their size, or that leaves no way to write nothing, is not one —
+it collects a preference about a write the user has not agreed to, which is the agreement a closed
+door exists to obtain. Nor is a choice of *target* — which task to file, which of several candidates
+to act on: the act was settled before the question, and the answer only aims it.
+
 **A skill also closes it when its run reaches past the current project** — across every registered
 root, or into installed state — because the premise the open door rests on, that the work still
 sits in front of the user where a `git diff` shows it, does not hold there. A per-change gate does
@@ -134,12 +145,14 @@ Opening or closing a door is recorded in this list in the same change that flips
 and the policy file; the entry, or its removal, is what keeps this list and the two host mechanisms in step.
 
 Two skills write past the session and are deliberately **not** members. `publish-pr-review` mutates
-a PR, but its step 4 previews the exact review and posts nothing until the user confirms.
-`create-notion-page` has no such gate — it drafts and creates in one pass — but the page lands
-parentless in the user's Private section, visible to them alone and cheap to delete, and the skill
-never shares it or changes its permissions, so an unasked run publishes to nobody. Every other skill
-either authors or changes work that still sits in front of the user — working-tree code a `git diff`
-shows, task docs, a chat report — or previews and confirms its own write, as `decompose-task` does.
+a PR, but its step 4 is a counted choice: each severity tier it could post is offered with the
+number of comments that selection would write, posting nothing is one of the options, and nothing
+reaches the PR but the selection. `create-notion-page` has no such gate — it drafts and creates in
+one pass — but the page lands parentless in the user's Private section, visible to them alone and
+cheap to delete, and the skill never shares it or changes its permissions, so an unasked run
+publishes to nobody. Every other skill either authors or changes work that still sits in front of
+the user — working-tree code a `git diff` shows, task docs, a chat report — or previews and confirms
+its own write, as `decompose-task` does.
 Resolving a named task across the registered roots is not the reach above either: the reach is a run
 that ranges over them to decide what to act on.
 

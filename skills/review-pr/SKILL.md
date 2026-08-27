@@ -60,7 +60,7 @@ Apply the full review process from `./references/engineering/review.md` — its 
 ## Output
 
 - **Summary** — What changed, intent, overall assessment (approve / request changes / needs discussion)
-- **Findings** — in the shape `./references/engineering/review.md` § *Findings output shape* defines: one entry per issue with its severity, `file:line`, recommendation, and impact, Minors in that same shape and the list never capped. That shape changes nothing about what `/publish-pr-review` posts, which stays Major/Critical.
+- **Findings** — in the shape `./references/engineering/review.md` § *Findings output shape* defines: one entry per issue with its severity, `file:line`, recommendation, and impact, Minors in that same shape and the list never capped. That shape is not the publish step's selection rule: `/publish-pr-review` offers the Critical/Major findings, the Minor ones, and **Improvements** as severity tiers and posts whichever you select.
 - **Reviewed** — a provenance line recording the reviewed head commit and its merge-base (the `git rev-parse HEAD` and `git merge-base` from Setup) and the model that produced this review, e.g. `Reviewed at <head-sha> (merge-base <base-sha>) by <model>`. `/publish-pr-review` reads it to anchor the posted review to the head commit, re-check the diff hasn't moved, and attribute it — so attribution survives the model changing between review and publish.
 - **Cross-check** (only with `-x`) — the probe's `Cross-check:` outcome line per `./references/workflow/agent-fanout.md` <!-- cold -->
 - **Lens probes** (only with `-p`) — the `Lens probes:` outcome line per the lens-review shape in `./references/workflow/probe-shape-lens-review.md`, naming each lens and the gap sweep, each with its outcome, and any candidate its settling left unsettled <!-- cold -->
@@ -68,7 +68,7 @@ Apply the full review process from `./references/engineering/review.md` — its 
 - **Inaccessible context** (only if any) — Links from the PR that couldn't be fetched, with URL and reason (auth required, private, 404, tool unavailable). Note which findings might shift if that context were available.
 - **PR description** (only with `-d`) — A ready-to-paste description (body only); drafted per the **PR description** section below.
 
-**Next:** to post this review to the PR, run `/publish-pr-review` — it publishes Major/Critical findings as inline comments, or a short approval if there are none.
+**Next:** to post this review to the PR, run `/publish-pr-review` — it offers this review's Critical/Major findings, its Minor ones, and its **Improvements** as severity tiers and posts the one you select as inline comments, or a short approval if all three are empty.
 
 ## PR description
 
