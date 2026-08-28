@@ -156,7 +156,7 @@ For large diffs (20+ files): review types and interfaces first to understand the
 Diff reviews (`review-commit`, `review-pr`) always run the project's verification scripts, launched early rather than after the review:
 
 - **Launch as soon as the reviewed set is known** — for `review-commit` the staged set; for `review-pr` the diff against the base. Identify what the project exposes — lint, typecheck, and test scripts (check `package.json` scripts, a `Makefile`, or the stack's conventional commands) — and start them on the changed/staged files where they exist; what the project doesn't expose is skipped, not simulated.
-- **Run them in the background where the host supports it**, reviewing inline while they run; where it doesn't, run them in the foreground at that same early point.
+- **Run them in the background where the host supports it**, reviewing inline while they run and waiting on them per `../workflow/delegated-waiting.md` § *How to wait*; where it doesn't, run them in the foreground at that same early point.
 - **Collect before output** — merge failures and warnings into the findings, each with file location and severity.
 
 Beyond these scripts and the reproduction below, a review executes nothing: everything else stays analysis — read the code, reason about it. Read-only probes run neither (`../workflow/agent-fanout.md`).

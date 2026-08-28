@@ -146,21 +146,23 @@ independence, and the launch shape follows that in a fixed order of preference. 
 several targets at once, **one invocation of it is the whole launch for the targets it covers** —
 `nx run-many -t lint typecheck test` builds a single task graph and coordinates its own concurrency,
 so nothing outside it has to. Launch whatever it does not cover together: parallel tool calls, or
-background processes collected before judging. Either way the boundary's wall-clock is the slowest
-command, not the sum. **Chaining recipe commands with `;` or `&&` inside one shell call is not
-launching them together** — it serializes them behind a single tool result while reading as
-compliance, which is why it is named here rather than left to be inferred. Each operator fails its own
-way: `&&` short-circuits, so the first failure suppresses every later command and the boundary
-forfeits the independent evidence the evaluation rule below is judged on; `;` runs them all but exits
-with the *last* command's status, so a mid-chain failure returns 0 and the boundary reads green when a
-command it launched failed. Serialize deliberately only where one command consumes another's output (a
-build artifact a test suite loads, a codegen step a typecheck reads), where commands contend on the
-same outputs or caches — build artifacts, coverage output, snapshot or incremental state; a command's
-verdict being read-only does not make its execution so — or where the project's own runner documents a
-required order. Where the reason is that dependency, `&&` is the right operator, for the same
-short-circuit that disqualifies it above: a command must not run on a failed producer. Where it is
-contention or a documented order instead, the later command is still safe to run and its status still
-worth reading on its own, so give it its own call rather than chaining.
+background processes waited on and collected before judging per
+`../workflow/delegated-waiting.md` § *How to wait*. Either way the boundary's wall-clock is the
+slowest command, not the sum. **Chaining recipe commands with `;` or `&&` inside one shell call is
+not launching them together** — it serializes them behind a single tool result while reading as
+compliance, which is why it is named here rather than left to be inferred. Each operator fails its
+own way: `&&` short-circuits, so the first failure suppresses every later command and the boundary
+forfeits the independent evidence the evaluation rule below is judged on; `;` runs them all but
+exits with the *last* command's status, so a mid-chain failure returns 0 and the boundary reads
+green when a command it launched failed. Serialize deliberately only where one command consumes
+another's output (a build artifact a test suite loads, a codegen step a typecheck reads), where
+commands contend on the same outputs or caches — build artifacts, coverage output, snapshot or
+incremental state; a command's verdict being read-only does not make its execution so — or where the
+project's own runner documents a required order. Where the reason is that dependency, `&&` is the
+right operator, for the same short-circuit that disqualifies it above: a command must not run on a
+failed producer. Where it is contention or a documented order instead, the later command is still
+safe to run and its status still worth reading on its own, so give it its own call rather than
+chaining.
 
 Concurrency changes evaluation not at all: the boundary passes only when **every command it launched**
 has completed and passed — an infra-bound command recorded not-run is not among them, per the section

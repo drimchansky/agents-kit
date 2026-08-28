@@ -4,6 +4,8 @@ The cross-vendor engines the opt-in `-x` cross-check runs on — each one's laun
 
 **These are the read-only recipes.** The write-mode twin is `./executor-engines-cross-vendor.md`, a near-homographic filename whose recipes differ from the ones below in several places — the model pin, the effective root, the scratch layout, and Claude's generated hard-fail sandbox settings among them — of which the permission-and-sandbox pair for each engine is security-critical: `--sandbox read-only` here against `--sandbox workspace-write` there, and `--permission-mode plan` here against `--permission-mode acceptEdits` plus those settings there. The wrong pull in this direction is the silent one: a read-only token taken into write mode fails loudly when the executor cannot write, while a write-mode token or settings file taken here still returns a plausible probe from an engine that was free to edit the tree. So take a recipe from the path the skill in hand cites — a read-only fan-out never takes one from the write-mode twin.
 
+Waiting and status reporting are `./delegated-waiting.md` § *How to wait* on either engine; when `skipped` is legitimate is the degrade rule in `./agent-fanout.md` § *Probe contract (every engine)*.
+
 - **`codex`** — OpenAI Codex CLI, headless. The cross-vendor engine when the host is Claude Code. Requires `codex` on PATH and an active login — `command -v codex` checks presence; a failed login surfaces at run time and degrades to `skipped`.
 
   ```bash
@@ -11,7 +13,7 @@ The cross-vendor engines the opt-in `-x` cross-check runs on — each one's laun
     -C <working-root> -o <scratch>/probe.md - < <scratch>/probe-prompt.md
   ```
 
-  The prompt goes in on stdin, never as a command-line argument: the invoking agent writes the filled skeleton (findings verbatim) to `<scratch>/probe-prompt.md` with its file tool, and the trailing `-` makes `codex exec` read it from stdin — so a `$`, backtick, or apostrophe in a finding is data, not shell syntax to expand or execute (`<scratch>` is an absolute path). `--sandbox read-only` is the engine-side enforcement of the read-only promise; `-o` captures just the final message for merging; `--ephemeral` leaves no session files. Parallel probes are plain shell jobs (`&` + `wait`), one prompt file and one `-o` file each. Launch early and run in the background where the host supports it; collect at the merge point. Waiting, status reporting, and when `skipped` is legitimate are the degrade rule in `./agent-fanout.md` § *Probe contract (every engine)*.
+  The prompt goes in on stdin, never as a command-line argument: the invoking agent writes the filled skeleton (findings verbatim) to `<scratch>/probe-prompt.md` with its file tool, and the trailing `-` makes `codex exec` read it from stdin — so a `$`, backtick, or apostrophe in a finding is data, not shell syntax to expand or execute (`<scratch>` is an absolute path). `--sandbox read-only` is the engine-side enforcement of the read-only promise; `-o` captures just the final message for merging; `--ephemeral` leaves no session files. Parallel probes are plain shell jobs (`&` + `wait`), one prompt file and one `-o` file each. Launch early and run in the background where the host supports it; collect at the merge point.
 
 - **`claude`** — Claude Code, headless. The cross-vendor engine when the host is Codex — the mirror of the above:
 
