@@ -1,8 +1,3 @@
-// Covers scripts/health-check.ts: the task-lifecycle walk and the --installs deploy-drift check.
-// Zero dependencies; runs under Node type stripping — too old a Node fails as a parse error, not a
-// version message. Floor in AGENTS.md § The `.ts` sources are unchecked by design.
-// Run: node --test tests/<name>.test.ts   ·   every suite: node --test "tests/*.test.ts"
-
 import assert from "node:assert";
 import { spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
@@ -31,19 +26,15 @@ const TESTS_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_DIR = resolve(TESTS_DIR, "..");
 const SCRIPT = join(REPO_DIR, "scripts", "health-check.ts");
 const FIXTURES = join(TESTS_DIR, "fixtures", "health");
-
 const DAY_MS = 86_400_000;
 const PIPE_BUFFER_BYTES = 65536;
 const EARLY_READER_BYTES = 64;
 const MAX_BUFFER_BYTES = 64 * 1024 * 1024;
 const VOLUME_TASKS = 250;
 const VOLUME_NAME_PADDING = 180;
-
-// Ownership markers written by setup.ts, and the staging prefix it marks a half-copied skill with.
 const MARKER = ".agents-kit";
 const CORE_RULES_MARKER = ".agents-kit-core-rules";
 const STAGING_PREFIX = ".agents-kit-staging.";
-
 const TEST_ROOT = mkdtempSync(join(tmpdir(), "agents-kit-health-check-"));
 const STORE = join(TEST_ROOT, "store");
 const UNREADABLE_STORE = join(TEST_ROOT, "unreadable-store");
@@ -76,33 +67,28 @@ const DUP_C = join(TEST_ROOT, "dup-c");
 const DUP_C_RESPELLED = join(TEST_ROOT, "DUP-C");
 const CASE_PROBE = join(TEST_ROOT, "case-probe");
 const CASE_PROBE_RESPELLED = join(TEST_ROOT, "CASE-PROBE");
-
 const STORE_ARGS: readonly string[] = [STORE];
 const ANCHORS_ARGS: readonly string[] = [ANCHORS];
 const INSTALLS_ARGS: readonly string[] = ["--installs", KIT, CLAUDE_HOME, CODEX_HOME];
 const DUP_ARGS: readonly string[] = [DUP_A, DUP_B];
 const VOLUME_ARGS: readonly string[] = [VOLUME_STORE];
-
 const TO_DO_PLAN = "# t\n\n**Status:** to-do\n";
 const VOLUME_PLAN =
   "# t\n\n**Status:** executing\n\n## Step 1 — do\n\n- [x] d ([result](./result.md#absent))\n";
 const VOLUME_RESULT = "# r\n\n## Current state\n\n_Updated:_ 2026-01-01\n";
 
-// A committed fixture cannot carry an old mtime, so each folder's age is stamped at run time.
+const DAYS_PAST_STALE = 70;
+const DAYS_WITHIN_STALE = 2;
+
 const FIXTURE_AGE_DAYS: readonly (readonly [string, number])[] = [
   [join(STORE, "stale-executing"), 62],
-  [join(STORE, "fresh-executing"), 2],
-  // Past the 30-day default on purpose: the only thing keeping it out of `stale` is then the
-  // terminal-status exclusion, so a `done` leaking into LIVE_STATUSES fails the counts below.
-  [join(STORE, "done-unarchived"), 70],
-  [join(STORE, "no-status-plan"), 70],
-  [join(STORE, "unknown-status"), 70],
+  [join(STORE, "fresh-executing"), DAYS_WITHIN_STALE],
+  [join(STORE, "done-unarchived"), DAYS_PAST_STALE],
+  [join(STORE, "no-status-plan"), DAYS_PAST_STALE],
+  [join(STORE, "unknown-status"), DAYS_PAST_STALE],
   [join(STORE, "Archive", "done-archived"), 400],
-  // Aged past the 30-day default on purpose: the only thing keeping it out of `stale` is then the
-  // backlog exemption, so a regression there fails the stale counts below.
-  [join(STORE, "Backlog", "parked-todo"), 70],
-  // This root exercises the durability checks, so every folder stays fresh and the age check is quiet.
-  [ANCHORS, 1],
+  [join(STORE, "Backlog", "parked-todo"), DAYS_PAST_STALE],
+  [ANCHORS, DAYS_WITHIN_STALE],
 ];
 
 interface Finding {
@@ -124,8 +110,6 @@ interface CheckRun {
   readonly stderr: string;
 }
 
-// The exit status is always 0 — a partly unreadable store still has to parse — so every run asserts
-// it, and stdout has to be exactly one JSON object rather than a report with a warning printed into it.
 function runCheck(args: readonly string[]): CheckRun {
   const run = spawnSync(process.execPath, [SCRIPT, ...args], {
     encoding: "utf8",
@@ -180,11 +164,6 @@ function isDirectory(path: string): boolean {
   }
 }
 
-// Unless path resolution is skipped, cpSync rewrites each relative symlink target to an absolute
-// path under the tree it was copied from. The kit's `AGENTS.md` and `references` links would then
-// resolve back into the committed fixtures rather than into each copy, and — since each side is
-// rewritten against its own source — the two sides would no longer hold equal targets, reporting
-// drift for the symlink pair the install checks require to be silent.
 function copyFixture(from: string, to: string): void {
   cpSync(from, to, { recursive: true, verbatimSymlinks: true });
 }
@@ -210,8 +189,6 @@ function deleteFinderDroppings(root: string): void {
   }
 }
 
-// The long folder names get the payload past the 64 KB pipe buffer in a few hundred findings rather
-// than a few thousand: each folder's checked step links an anchor its result file does not hold.
 function writeVolumeStore(root: string): void {
   const padding = "x".repeat(VOLUME_NAME_PADDING);
   for (let index = 0; index < VOLUME_TASKS; index++) {
@@ -225,24 +202,16 @@ function writeVolumeStore(root: string): void {
 function writeInstallFixtures(): void {
   mkdirSync(INSTALLS, { recursive: true });
   copyFixture(join(FIXTURES, "installs", "kit"), KIT);
-  // A home's own directory name selects the agent format setup.ts installs, so each lands under its
-  // host name. Finder droppings would read as real drift, so only the committed states remain.
+
   copyFixture(join(FIXTURES, "installs", "claude-home"), CLAUDE_HOME);
   copyFixture(join(FIXTURES, "installs", "codex-home"), CODEX_HOME);
   deleteFinderDroppings(INSTALLS);
 
-  // .DS_Store is gitignored, so the OS-artifact pair is written here rather than committed: differing
-  // on both sides, which is the state setup.ts's recursive copy plus a later Finder visit produces.
-  // The dotfile beside it differs the same way and must still be reported — the check skips OS
-  // artifacts by name, and a rule that skipped every dotted name would drop real kit content.
   writeFileSync(join(KIT, "references", ".DS_Store"), "kit-side finder state\n");
   writeFileSync(join(CLAUDE_HOME, "references", ".DS_Store"), "install-side finder state\n");
   writeFileSync(join(KIT, "references", ".keeprc"), "kit\n");
   writeFileSync(join(CLAUDE_HOME, "references", ".keeprc"), "install\n");
 
-  // A skill and an agent added to the kit but never deployed. Neither carries a marker anywhere, so
-  // only the kit-side pass can see them — and it must stay off the categories a home doesn't take,
-  // which is why the agents-only codex home reports nothing for either.
   mkdirSync(join(KIT, "skills", "never-deployed"), { recursive: true });
   writeFileSync(join(KIT, "skills", "never-deployed", "SKILL.md"), "new\n");
   writeFileSync(join(KIT, "agents", "never-deployed.md"), "new\n");
@@ -273,8 +242,7 @@ function writeInstallFixtures(): void {
     join(KIT, "skills", "kept-skill", "SKILL.md"),
     join(MATERIALIZED_HOME, "skills", "kept-skill", "SKILL.md"),
   );
-  // This side must end up a regular file holding the link's bytes, not a link of its own: link-ness
-  // is the only difference the case below has left to detect.
+
   copyFileSync(
     join(KIT, "skills", "kept-skill", "AGENTS.md"),
     join(MATERIALIZED_HOME, "skills", "kept-skill", "AGENTS.md"),
@@ -291,7 +259,6 @@ function writeInstallFixtures(): void {
 }
 
 before(() => {
-  // Fixtures are copied so the ages and the chmod locks below land outside the repository.
   copyFixture(join(FIXTURES, "store"), STORE);
   copyFixture(join(FIXTURES, "anchors"), ANCHORS);
   for (const [folder, days] of FIXTURE_AGE_DAYS) ageFolder(folder, days);
@@ -321,10 +288,6 @@ before(() => {
 
   writeInstallFixtures();
 
-  // duplicate-slug spans roots and is the only check that sees archived folders, so it needs a
-  // two-root fixture: one active/active collision, one active/archived, one active/backlogged, and a
-  // slug unique to each root that must stay silent. Peers are named by absolute directory — a compact display path is
-  // prefixed by its root's basename alone, which two roots can share.
   writeTaskFolder(join(DUP_A, "add-csv-export"));
   writeTaskFolder(join(DUP_B, "add-csv-export"));
   writeTaskFolder(join(DUP_A, "only-here"));
@@ -341,8 +304,6 @@ before(() => {
 });
 
 after(() => {
-  // A directory left at mode 000 cannot be listed, so the recursive remove below would fail on it
-  // while the unreadable-directory and unreadable-marker locks are still in place.
   chmodSync(LOCKED_TASK_DIR, 0o755);
   chmodSync(LOCKED_SKILL, 0o755);
   rmSync(TEST_ROOT, { recursive: true, force: true });
@@ -359,8 +320,6 @@ test("scanned counts every task folder, archived and backlogged ones included", 
   assert.strictEqual(report.unreadable, 0, "a readable store reports nothing unread");
 });
 
-// A value outside the vocabulary is not a lifecycle state, so the stale and archive checks both skip
-// it. Silence there would hide the task permanently — the folder needs a check of its own instead.
 test("a plan status outside the vocabulary is reported rather than silently exempted", () => {
   const { report } = runCheck(STORE_ARGS);
   assert.strictEqual(findingCount(report, "unknown-status"), 1, "unknown-status finding count");
@@ -376,9 +335,6 @@ test("a plan status outside the vocabulary is reported rather than silently exem
   );
 });
 
-// `plan.md` is the only lifecycle-status home, so a `**Status:**` surviving in a result file is a
-// legacy shape nothing repairs — reported as itself, and never judged against a vocabulary that no
-// longer governs the file, however far outside one its value sits.
 test("a legacy result status is reported as legacy and never as an unrecognized status", () => {
   const { report } = runCheck(STORE_ARGS);
   assert.strictEqual(
@@ -417,8 +373,6 @@ test("a 2-day-old executing task is not reported stale", () => {
   );
 });
 
-// A plan file with no parseable `**Status:**` is a different fact from a folder holding no plan,
-// so the detail must name it rather than rendering the absent value.
 test("a plan with no parseable status is reported stale under a named label, not an empty value", () => {
   const { report } = runCheck(STORE_ARGS);
   assert.strictEqual(
@@ -439,9 +393,6 @@ test("a done task outside Archive/ is reported with its status", () => {
 });
 
 test("a **Completed prose header on a plan-less result is not a done task", () => {
-  // The plan-less arm derives the lifecycle from the result's content alone, so nothing downstream can
-  // contradict a wrong read: `done-unarchived` here is what `maintain`'s gate archives on one
-  // confirmation, and the folder is then exempt from every content check that follows.
   const { report } = runCheck(STORE_ARGS);
   assert.deepStrictEqual(
     report.findings.filter((entry) => entry.path === "store/completed-prose"),
@@ -487,8 +438,6 @@ test("a parked plan with no parseable status is reported as unjudgeable, not lef
   );
 });
 
-// The result carries no status to read, so the gate turns on the file existing at all: it is created
-// only once execution starts (references/workflow/task-lifecycle.md § Companion result file).
 test("a plan-less parked folder holding a result.md at all is reported as started", () => {
   const { report } = runCheck(STORE_ARGS);
   assert.strictEqual(
@@ -513,8 +462,6 @@ test("an archived task produces no findings", () => {
   assert.strictEqual(findingCount(report), 9, "total finding count");
 });
 
-// Findings alone would read clean over a task the run never opened, so incomplete coverage has to be
-// a fact in the contract rather than a line on stderr the caller is never told to look at.
 test("an unreadable task file reaches the contract, not only stderr", (t: TestContext) => {
   if (isReadable(UNREADABLE_FILE)) {
     t.skip("the unreadable-file case needs a user that chmod 000 actually stops");
@@ -522,9 +469,7 @@ test("an unreadable task file reaches the contract, not only stderr", (t: TestCo
   }
   const { report } = runCheck([UNREADABLE_STORE]);
   assert.strictEqual(report.unreadable, 1, "a task file that cannot be read is counted");
-  // The field is the caller's coverage list, and it holds the absolute path rather than the
-  // basename-prefixed display shape a finding's `path` carries: findings are attributed by their
-  // absolute `root`, so a gap has to be attributable the same way once two roots share a basename.
+
   assert.deepStrictEqual(
     report.unreadablePaths,
     [UNREADABLE_FILE],
@@ -537,9 +482,6 @@ test("an unreadable task file reaches the contract, not only stderr", (t: TestCo
   );
 });
 
-// A directory the walk cannot list hides every task beneath it, so it belongs in the contract — once.
-// The listing that classifies a folder is the one the recursion reuses; listing it a second time
-// would report a single gap twice and inflate the count the caller reads as coverage.
 test("an unlistable directory reaches the contract exactly once", (t: TestContext) => {
   if (isReadable(LOCKED_TASK_DIR)) {
     t.skip("the unreadable-directory case needs a user that chmod 000 actually stops");
@@ -558,9 +500,6 @@ test("an unlistable directory reaches the contract exactly once", (t: TestContex
   );
 });
 
-// A root argument that exists but is not a directory contributed nothing to the walk. Reported only
-// on stderr it would read as a clean root, since the caller treats `scanned` as a floor solely while
-// `unreadable` is non-zero — the same failure `unreadablePaths` was added to close.
 test("a root that exists but is not a directory reaches the contract, not only stderr", () => {
   const { report } = runCheck([NOT_A_DIR]);
   assert.strictEqual(report.scanned, 0, "a root that is not a directory walks nothing");
@@ -592,9 +531,6 @@ test("a directory's name no longer decides whether the task inside it exists", (
   assert.strictEqual(report.scanned, 1, "a task folder named scripts is scanned like any other");
 });
 
-// `.agents` is the one dotted directory the walk enters: the canonical root sits inside it, so
-// pruning it by the general dotted rule cost a registered project root every task it holds —
-// silently, since an unwalked root and an empty one report identically.
 test("the canonical root is found from a project root, while every other dotted name stays pruned", () => {
   const { report } = runCheck([PROJECT_ROOT]);
   assert.strictEqual(report.scanned, 1, "a project root reaches the tasks under its .agents/tasks");
@@ -664,8 +600,6 @@ test("checked-step evidence must name both the result file and a concrete result
   );
 });
 
-// CommonMark accepts `-`, `*` and `+` as list markers, so a goals file written with asterisks is a
-// goals file: the ID lint has to see those bullets rather than skipping them into silence.
 test("a duplicate and malformed G-IDs are reported across bullet markers; a valid ID and an (external) token are not", () => {
   const { report } = runCheck(ANCHORS_ARGS);
   assert.strictEqual(findingCount(report, "goal-id"), 3, "goal-id finding count");
@@ -690,8 +624,6 @@ test("a live result with no ## Current state block is reported", () => {
   );
 });
 
-// A heading inside a fenced block is illustrative markdown, not the section — the same rule the
-// anchor scan already applies, so the liveness check must not be satisfied by an example.
 test("a ## Current state heading inside a code fence does not satisfy the liveness check", () => {
   const { report } = runCheck(ANCHORS_ARGS);
   assert.strictEqual(
@@ -701,8 +633,6 @@ test("a ## Current state heading inside a code fence does not satisfy the livene
   );
 });
 
-// A boolean fence flag inverts on the inner opener of a nested block, handing the scan back the
-// illustrative heading it was meant to skip. Closing a fence takes the opener's own marker and length.
 test("a three-backtick example inside a four-backtick fence does not toggle scanning back on", () => {
   const { report } = runCheck(ANCHORS_ARGS);
   assert.strictEqual(
@@ -712,8 +642,6 @@ test("a three-backtick example inside a four-backtick fence does not toggle scan
   );
 });
 
-// The status scan reads the same file as the anchor and liveness scans, so it owes them the same rule:
-// doc-task-files.md puts the status header outside fenced or quoted content.
 test("a fenced status example is illustrative markdown, not a lifecycle state", () => {
   const { report } = runCheck(ANCHORS_ARGS);
   assert.strictEqual(
@@ -904,9 +832,6 @@ test("never-deployed kit payloads are reported in every home setup.ts has partia
   );
 });
 
-// Every installed skill resolves ./AGENTS.md and ./references into the two install-root shared
-// payloads, so an unmarked one is not a private file the way an unmarked skill is — it is what all of
-// them load, and setup.ts refuses the whole home over it.
 test("an unmarked shared payload is a conflict, not a clean home", () => {
   const { report } = runCheck(["--installs", KIT, CONFLICT_HOME]);
   assert.strictEqual(
@@ -921,9 +846,6 @@ test("an unmarked shared payload is a conflict, not a clean home", () => {
   );
 });
 
-// An ownership marker the run cannot stat is not evidence the item is the user's: read as unowned it
-// drops a kit-managed skill from the comparison while `unreadable` stays zero, reporting a deploy as
-// clean over an item nothing compared.
 test("an unreadable ownership marker is a coverage gap, not proof the item is the user's", (t: TestContext) => {
   if (isReadable(LOCKED_SKILL)) {
     t.skip("the unreadable-marker case needs a user that chmod 000 actually stops");
@@ -945,9 +867,6 @@ test("an unreadable ownership marker is a coverage gap, not proof the item is th
   );
 });
 
-// setup.ts marks a staging dir before it finishes copying into it, so an interrupted install leaves
-// one behind: comparing it reports phantom paths the next setup.ts run deletes on its own, and its
-// item count suppresses the single never-installed line a first interrupted install should get.
 test("a leftover staging dir is an interrupted install, not drift to reconcile", () => {
   const { report } = runCheck(["--installs", KIT, STAGING_HOME]);
   assert.strictEqual(report.scanned, 0, "a leftover staging dir is not counted as an installed item");
@@ -963,9 +882,6 @@ test("a leftover staging dir is an interrupted install, not drift to reconcile",
   );
 });
 
-// skills/ is copied link-preserving so each skill's AGENTS.md and references resolve to the
-// install-root originals. A copy that materialized them holds identical bytes, so only the link-ness
-// difference itself shows the loss — ~1,500 duplicated files per home otherwise reporting clean.
 test("the two sides disagreeing on link-ness is reported rather than compared through the link", () => {
   const { report } = runCheck(["--installs", KIT, MATERIALIZED_HOME]);
   assert.strictEqual(
@@ -1009,9 +925,6 @@ test("a home setup.ts never installed into is reported once rather than flooding
   assert.strictEqual(report.scanned, 0, "scanned count for a never-installed home");
 });
 
-// The unmarked shared payload is why setup.ts refuses this home, so it rides on the never-installed
-// line instead of stacking a second finding beside it: two lines would break the one-fact-per-home
-// rendering the caller keys on, and dropping it would leave the refusal with no reason attached.
 test("the conflict that blocks a never-installed home rides on its one line", () => {
   const { report } = runCheck(["--installs", KIT, BLOCKED_FRESH_HOME]);
   assert.strictEqual(
@@ -1042,8 +955,6 @@ test("a missing install home reports the documented uninstalled state", () => {
   assert.strictEqual(report.unreadable, 0, "an absent install home is not an unreadable coverage gap");
 });
 
-// Every case above reads stdout through spawnSync's own drained pipe or a file, so none of them can
-// see a report truncated at the pipe buffer. This one reads through a real pipe.
 test("a report over 64 KB parses when read through a pipe, not only from a file", () => {
   const target = openSync(VOLUME_REPORT, "w");
   try {
@@ -1077,9 +988,7 @@ test("a report over 64 KB parses when read through a pipe, not only from a file"
 test("an early-closing reader does not turn into a non-zero exit", async () => {
   const reader = spawn("head", ["-c", String(EARLY_READER_BYTES)], { stdio: ["pipe", "ignore", "ignore"] });
   assert.ok(reader.stdin, "the early-closing reader must expose a piped stdin");
-  // The reader's read end is the subject's only one, and it closes while a report this far over the
-  // pipe buffer still has bytes to write — point this at a store the reader can drain and the
-  // subject finishes before any EPIPE, leaving the always-zero exit contract unexercised.
+
   const subject = spawn(process.execPath, [SCRIPT, ...VOLUME_ARGS], {
     stdio: ["ignore", reader.stdin, "ignore"],
   });
@@ -1162,8 +1071,6 @@ test("a root whose slugs are all distinct stays silent, with no cross-root state
   );
 });
 
-// Uniqueness is global, not per-parent: the walk is recursive, so one root can hold the same slug
-// under two area directories (references/workflow/task-store.md § The root registry).
 test("two area directories of one root collide — uniqueness is global, not per-parent", () => {
   const { report } = runCheck([DUP_C]);
   assert.strictEqual(
@@ -1196,8 +1103,6 @@ test("an overlapping root argument is skipped rather than reported as a folder c
   );
 });
 
-// Containment is tested one way only by the case above: the guard asks whether a root sits inside
-// one already walked, so passing the inner root first would leave the outer one to walk it again.
 test("overlap detection is order-independent", () => {
   const { report } = runCheck([join(DUP_C, "area-a"), DUP_C]);
   assert.strictEqual(report.scanned, 2, "a root containing one already walked is skipped too");
@@ -1208,11 +1113,6 @@ test("overlap detection is order-independent", () => {
   );
 });
 
-// canonicalRoot resolves with realpathSync.native, which returns the spelling the filesystem holds;
-// the JS implementation returns the caller's own, so two case-spellings of one root canonicalize
-// differently and the containment guard above misses — both are walked, `scanned` doubles, and every
-// folder reports itself as its own collision peer. The divergence exists only on a case-insensitive
-// volume, so the case is probed for rather than assumed, like the chmod cases above.
 test("two case-spellings of one root are one root", (t: TestContext) => {
   if (!isDirectory(CASE_PROBE_RESPELLED)) {
     t.skip("the root case-collision case needs a case-insensitive volume");
@@ -1228,10 +1128,6 @@ test("two case-spellings of one root are one root", (t: TestContext) => {
   assert.strictEqual(report.unreadable, 0, "both spellings resolve, so neither is a coverage gap");
 });
 
-// parseArgs peeks a flag's separate value and consumes it only once it validates, so a root spelled
-// after a dateless flag is not swallowed. The other half of that trade: a rejected value re-enters
-// the roots only when it names something on disk, or a typo would report as store the sweep did not
-// see — the twin of the shape test tests/session-triage.test.ts runs.
 test("a rejected flag value re-enters the roots only when it names something on disk", () => {
   const { report: afterValuelessFlag } = runCheck(["--stale-days", STORE]);
   assert.strictEqual(afterValuelessFlag.scanned, 13, "a root spelled after a valueless flag is still walked");
@@ -1249,8 +1145,6 @@ test("a rejected flag value re-enters the roots only when it names something on 
     "a malformed flag value is not reported as store the sweep did not see",
   );
 
-  // `resolve("")` is the process directory, so an empty value re-entering the roots would walk the
-  // caller's own checkout as a task store.
   const { report: afterEmptyValue } = runCheck(["--result-max-kb", "", STORE]);
   assert.strictEqual(
     afterEmptyValue.scanned,
@@ -1260,10 +1154,6 @@ test("a rejected flag value re-enters the roots only when it names something on 
   assert.strictEqual(afterEmptyValue.unreadable, 0, "an empty flag value is not a coverage gap");
 });
 
-// A `-`-prefixed argument is the one value neither numeric flag can ever take, and it can never
-// become a root either — the option, `--`, and unknown-option branches all intercept it first. So
-// consuming one only ever loses a flag: swallowing `--installs` turns the install comparison into a
-// task walk over the kit and the home, with nothing in the JSON to say the probe never ran.
 test("a value that can never be a value is never consumed", () => {
   const { report } = runCheck(["--stale-days", "--installs", KIT, FRESH_HOME]);
   assert.strictEqual(

@@ -1,8 +1,3 @@
-// Covers scripts/size-check.ts: the context-size baseline ratchet and its 0/1/2 exit contract.
-// Zero dependencies; runs under Node type stripping — too old a Node fails as a parse error, not a
-// version message. Floor in AGENTS.md § The `.ts` sources are unchecked by design.
-// Run: node --test tests/<name>.test.ts   ·   every suite: node --test "tests/*.test.ts"
-
 import assert from "node:assert";
 import { spawnSync } from "node:child_process";
 import {
@@ -24,9 +19,7 @@ const TESTS_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_DIR = resolve(TESTS_DIR, "..");
 const SCRIPT = join(REPO_DIR, "scripts", "size-check.ts");
 const FIXTURES = join(TESTS_DIR, "fixtures", "size-report");
-
 const MAX_BUFFER_BYTES = 64 * 1024 * 1024;
-
 const TEST_ROOT = mkdtempSync(join(tmpdir(), "agents-kit-size-check-"));
 const KIT = join(TEST_ROOT, "kit");
 const BASELINE = join(TEST_ROOT, "baseline.json");
@@ -38,7 +31,6 @@ const REFERENCES_DIR = join(KIT, "references", "workflow");
 const CITED_REFERENCE = join(REFERENCES_DIR, "alpha.md");
 const CORE_RULES_FILE = join(KIT, "CORE_RULES.md");
 const ONE_SKILL_FILE = join(ONE_SKILL, "SKILL.md");
-
 const CITATION_LINE = "Read `./AGENTS.md`, then `./references/workflow/alpha.md`.";
 const HOT_SKILL = `# one-skill\n\n${CITATION_LINE}\n`;
 const COLD_SKILL = `# one-skill\n\n${CITATION_LINE} <!-- cold -->\n`;
@@ -64,8 +56,6 @@ interface Baseline {
   readonly skills: readonly BaselineEntry[];
 }
 
-// The exit status is this script's whole contract surface — 0 clean or baseline written, 1 drift,
-// 2 could not run — so every run asserts it rather than trusting the message it printed.
 function runCheck(expectedStatus: number, args: readonly string[]): CheckRun {
   const run = spawnSync(process.execPath, [SCRIPT, ...args], {
     encoding: "utf8",
@@ -84,8 +74,6 @@ function assertIncludes(haystack: string, needle: string, message: string): void
   assert.ok(haystack.includes(needle), `${message} (expected to contain "${needle}", got "${haystack}")`);
 }
 
-// A clean miniature of its own: the shared size-report fixture carries deliberately unresolved
-// citations, which this checker refuses — that refusal is its own case against the fixture below.
 function writeCleanKit(): void {
   mkdirSync(ONE_SKILL, { recursive: true });
   mkdirSync(REFERENCES_DIR, { recursive: true });
@@ -153,7 +141,6 @@ test("re-capturing after intended growth returns the check to clean", () => {
 });
 
 test("a skill the baseline has never seen is reported, not silently admitted", (t: TestContext) => {
-  // The cases below measure the kit this one leaves behind, so the added skill goes even on failure.
   t.after(() => rmSync(EXTRA_SKILL, { recursive: true, force: true }));
   mkdirSync(EXTRA_SKILL, { recursive: true });
   writeFileSync(join(EXTRA_SKILL, "SKILL.md"), "# extra-skill\n");
@@ -162,7 +149,6 @@ test("a skill the baseline has never seen is reported, not silently admitted", (
 });
 
 test("a citation marked cold moves its bytes out of the hot set, which is drift", (t: TestContext) => {
-  // The cases below measure the kit this one leaves behind, so the marker comes out even on failure.
   t.after(() => writeFileSync(ONE_SKILL_FILE, HOT_SKILL));
   const referenceBytes = statSync(CITED_REFERENCE).size;
   const coreBytes = statSync(CORE_RULES_FILE).size;
@@ -182,9 +168,6 @@ test("a citation marked cold moves its bytes out of the hot set, which is drift"
   );
 });
 
-// A baseline captured before a set was renamed carries no entry under the new name. The tolerance
-// for that is real (BaselineEntry's sets are optional), so the reported line has to name the missing
-// set rather than do arithmetic on `undefined`.
 test("a baseline missing a set names it rather than reporting NaN", (t: TestContext) => {
   const stale = join(TEST_ROOT, "stale-baseline.json");
   t.after(() => rmSync(stale, { force: true }));

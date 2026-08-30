@@ -66,7 +66,7 @@ Flag in the brief:
 
 ### 3. Reconstruct State from Checkboxes
 
-Run `node <kit-root>/scripts/task-state.ts <task folder>` — `<kit-root>` per `./references/workflow/task-store.md` § *Resolving `<kit-root>`* <!-- cold --> — and read the state out of the JSON rather than re-deriving what the script decided; its file header owns the CLI form and the stdout contract. It reports every step in plan order with its checkbox, `nextPendingStep`, each `### Checkpoint after Step N` with its result section's `**Outcome:**` (`null` = not yet run), and whether each checked step's `([result](…))` anchor still resolves. Kit root, script, or `node` unavailable → say so and reconstruct the same facts from the plan by hand.
+Run `node <kit-root>/scripts/task-state.ts <task folder>` — `<kit-root>` per `./references/workflow/task-store.md` § *Resolving `<kit-root>`* <!-- cold --> — and read the state out of the JSON rather than re-deriving what the script decided; `<kit-root>/SCRIPTS.md` § *`scripts/task-state.ts`* owns the CLI form and the stdout contract — read that section, not the whole file. It reports every step in plan order with its checkbox, `nextPendingStep`, each `### Checkpoint after Step N` with its result section's `**Outcome:**` (`null` = not yet run), and whether each checked step's `([result](…))` anchor still resolves. Kit root, script, or `node` unavailable → say so and reconstruct the same facts from the plan by hand.
 
 Then read the files for what the report doesn't carry: the `nextPendingStep` step's **Verify**, any **Due** / **Lead time**, and the paths it touches; and every `**Blocked:**` and `**In review:**` section from the result file, verbatim.
 

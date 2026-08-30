@@ -1,35 +1,10 @@
 #!/usr/bin/env node
-// Compares the kit's measured context loads against a committed baseline, so growth in what a skill
-// loads is a conscious, reviewed choice rather than silent drift. The measurement itself is
-// scripts/size-report.ts, run as a child process; this script only compares and records.
-// Zero dependencies; runs under Node type stripping — too old a Node fails as a parse error, not a
-// version message. Floor in AGENTS.md § The `.ts` sources are unchecked by design.
-// Run: node scripts/size-check.ts [--update] [--baseline FILE] <kit-root>
-//
-// Modes. Without --update, each skill's hot, cold, and transitive byte totals are compared against the
-// baseline (default: <kit-root>/tests/size-baseline.json): any difference — a grown or shrunk total, a
-// skill missing from the baseline, a baseline entry no longer in the kit — prints one line to stdout
-// and the run exits 1 with a re-capture hint. --update rewrites the baseline from the current
-// measurement instead. Shrinkage fails the check on purpose: the baseline stays current only if every
-// change that moves a total re-captures it in the same change, which is what keeps the diff — and the
-// growth it would reveal — reviewable.
-//
-// Hot and cold are ratcheted apart because moving a citation between them leaves the transitive total
-// where it was: recorded as one number, the very change this ratchet exists to expose — what a skill
-// pays on every invocation — would be the change it could not see.
-//
-// The baseline holds totals only ({skill, hot/cold/transitive {bytes, approxTokens}}, sorted as the
-// report emits them): per-file lists would churn on every edit without making the ratchet stricter.
-//
-// Exit status: 0 = clean (or baseline written), 1 = drift, 2 = the check could not run — no kit root,
-// no baseline to check against, an unreadable measurement, or a measurement whose `unresolved` list is
-// non-empty (a partly measured kit would anchor a baseline below the truth).
-
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+const REPORT_MAX_BUFFER_BYTES = 64 * 1024 * 1024;
 const BYTES_PER_TOKEN = 4;
 
 interface Totals {
@@ -61,12 +36,8 @@ interface BaselineEntry {
   readonly transitive?: Totals;
 }
 
-// A measured set arrives carrying its file list; copying the two totals out is what keeps that list
-// from reaching the baseline, where it would churn on every edit.
 const totals = (set: Totals): Totals => ({ bytes: set.bytes, approxTokens: set.approxTokens });
 
-// Everything printed here is far below the pipe buffer, so `process.exitCode` plus a natural return
-// (never process.exit) is enough to keep the output intact.
 function refuse(message: string): void {
   console.error(`[size-check] ${message}`);
   process.exitCode = 2;
@@ -104,7 +75,7 @@ function main(): void {
       execFileSync(process.execPath, [reportScript, root], {
         encoding: "utf8",
         stdio: ["ignore", "pipe", "ignore"],
-        maxBuffer: 64 * 1024 * 1024,
+        maxBuffer: REPORT_MAX_BUFFER_BYTES,
       }),
     );
   } catch (err) {
@@ -113,8 +84,7 @@ function main(): void {
   if (report.root == null || report.skills.length === 0) {
     return refuse(`not a measurable kit root: ${root}`);
   }
-  // An unresolved citation means bytes the load path would reach were never measured; both checking
-  // and re-capturing over that hole would let real weight hide behind a broken link.
+
   if (report.unresolved.length > 0) {
     return refuse(
       `the measurement is incomplete — ${report.unresolved.length} unresolved citation(s), ` +
@@ -122,11 +92,11 @@ function main(): void {
     );
   }
 
-  const measured: SkillTotals[] = report.skills.map((s) => ({
-    skill: s.skill,
-    hot: totals(s.hot),
-    cold: totals(s.cold),
-    transitive: totals(s.transitive),
+  const measured: SkillTotals[] = report.skills.map((skill) => ({
+    skill: skill.skill,
+    hot: totals(skill.hot),
+    cold: totals(skill.cold),
+    transitive: totals(skill.transitive),
   }));
 
   if (update) {
@@ -149,8 +119,8 @@ function main(): void {
     return refuse(`${baselinePath} is not a size baseline (no skills array); re-capture with --update`);
   }
 
-  const baseByName = new Map(baseline.skills.map((s) => [s.skill, s]));
-  const nowByName = new Map(measured.map((s) => [s.skill, s]));
+  const baseByName = new Map(baseline.skills.map((entry) => [entry.skill, entry]));
+  const nowByName = new Map(measured.map((entry) => [entry.skill, entry]));
   const names = [...new Set([...baseByName.keys(), ...nowByName.keys()])].sort((a, b) =>
     a.localeCompare(b, "en"),
   );
@@ -170,9 +140,7 @@ function main(): void {
       const from = base[set]?.bytes;
       const to = now[set].bytes;
       if (from === to) continue;
-      // A baseline predating a set rename carries no entry for the new name. Subtracting from
-      // `undefined` would report the drift as `undefined -> N bytes (NaN, ~NaN tokens)`, so the
-      // missing set is named instead; the exit status and re-capture hint are unchanged either way.
+
       if (from === undefined) {
         drift.push(`${name}: ${set} not in the baseline (${to} bytes)`);
         continue;

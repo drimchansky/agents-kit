@@ -1,9 +1,3 @@
-// Covers scripts/worktree-merge.ts: the baseline manifest, the returned-worktree surface check, the
-// verified incorporation and its verification, the receipt gate on removal, and the 0/1/2 exit contract.
-// Zero dependencies; runs under Node type stripping — too old a Node fails as a parse error, not a
-// version message. Floor in AGENTS.md § The `.ts` sources are unchecked by design.
-// Run: node --test tests/<name>.test.ts   ·   every suite: node --test "tests/*.test.ts"
-
 import assert from "node:assert";
 import { spawnSync } from "node:child_process";
 import {
@@ -29,9 +23,6 @@ import { fileURLToPath } from "node:url";
 const TESTS_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_DIR = resolve(TESTS_DIR, "..");
 const SCRIPT = join(REPO_DIR, "scripts", "worktree-merge.ts");
-
-// Realpath-normalized because the script resolves every path it is handed and echoes the resolved
-// form; on macOS the tmpdir reaches it through /private, and the assertions have to name that tree.
 const TEST_ROOT = realpathSync(mkdtempSync(join(tmpdir(), "agents-kit-worktree-merge-")));
 
 after(() => rmSync(TEST_ROOT, { recursive: true, force: true }));
@@ -41,9 +32,6 @@ interface Run {
   readonly stderr: string;
 }
 
-// The exit status is the contract's outcome channel — 0 did the job, 1 an outcome the script
-// decided, 2 a run that could not be carried out — so every run asserts it rather than trusting the
-// message that came with it.
 function run(expectedStatus: number, args: readonly string[], env?: NodeJS.ProcessEnv): Run {
   const result = spawnSync(process.execPath, [SCRIPT, ...args], { encoding: "utf8", env: env ?? process.env });
   assert.strictEqual(
@@ -55,8 +43,6 @@ function run(expectedStatus: number, args: readonly string[], env?: NodeJS.Proce
   return { stdout: result.stdout ?? "", stderr: result.stderr ?? "" };
 }
 
-// The linked-worktree cases need a real repository: `.git` is a file there, and `remove` reaches
-// `git worktree remove` only for a worktree Git registered.
 function git(cwd: string, ...args: readonly string[]): string {
   const result = spawnSync("git", args, { cwd, encoding: "utf8" });
   assert.strictEqual(result.status, 0, `git ${args.join(" ")} failed:\n${result.stderr ?? ""}`);
@@ -65,7 +51,6 @@ function git(cwd: string, ...args: readonly string[]): string {
 
 let caseCounter = 0;
 
-// Each case gets its own tree so a failing assertion never leaves state for the next one to read.
 function newCase(): { readonly dir: string; readonly path: (name: string) => string } {
   caseCounter += 1;
   const dir = join(TEST_ROOT, `case-${caseCounter}`);
@@ -78,7 +63,6 @@ function write(file: string, body: string): void {
   writeFileSync(file, body);
 }
 
-// A shared tree and a worktree seeded from it — the shape every gate below operates on.
 function seededPair(dir: string): { readonly shared: string; readonly worktree: string } {
   const shared = join(dir, "shared");
   const worktree = join(dir, "worktree");
@@ -104,7 +88,7 @@ test("baseline manifests every path and prunes the tool trees", () => {
   write(join(tree, "node_modules", "dep", "index.js"), "x\n");
   write(join(tree, ".nx", "workspace-data", "cache"), "y\n");
   write(join(tree, "cache", "state"), "z\n");
-  // A prune is a root-relative path: `cache` at the root, not every directory of that name.
+
   write(join(tree, "src", "cache", "x.ts"), "c\n");
   write(join(tree, "src", "node_modules", "nested", "index.js"), "n\n");
 
@@ -125,8 +109,6 @@ test("prune takes an absolute path inside the root and refuses one outside it or
   write(join(tree, "src", "app.ts"), "a\n");
   write(join(tree, ".nx", "workspace-data", "cache"), "y\n");
 
-  // A pinned tool-state directory reaches the coordinator as an absolute path, so an absolute prune
-  // has to hide it rather than match nothing and leave it measured, escaping every unit's surface.
   const manifest = join(dir, "m.json");
   run(0, ["baseline", tree, "--out", manifest, "--prune", join(tree, ".nx")]);
   assert.deepStrictEqual(Object.keys(JSON.parse(readFileSync(manifest, "utf8")).entries), ["src/app.ts"]);
@@ -299,7 +281,6 @@ test("apply mirrors a symlink rather than the tree behind it", () => {
   assert.ok(lstatSync(join(shared, "src", "alias.ts")).isSymbolicLink(), "the link is a link, not a copy");
   assert.strictEqual(readFileSync(join(shared, "src", "alias.ts"), "utf8"), "export const app = 1;\n");
 
-  // An absolute target inside the worktree is re-pointed at the shared tree, so the link outlives it.
   run(0, ["remove", worktree, "--receipt", receipt]);
   assert.ok(!existsSync(worktree));
   assert.strictEqual(readlinkSync(join(shared, "src", "alias.ts")), join(realpathSync(shared), "src", "app.ts"));
@@ -388,10 +369,6 @@ test("usage errors exit 2", () => {
     /cannot read manifest/,
   );
 
-  // Every shape clause readManifest checks, one at a time. A dropped clause reads a missing field as
-  // an empty one — an absent `prunes` measures the tool trees a run pinned, an absent `gitignore`
-  // walks a checkout unfiltered against a baseline that was filtered, an absent `entries` calls every
-  // path an addition — so each is asserted rather than left to the parse that already passed.
   for (const [field, value] of [
     ["version", 1],
     ["root", 42],
@@ -423,7 +400,7 @@ test("check prunes .git and node_modules whatever their type, and remove takes a
   git(shared, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "seed");
   const worktree = path("worktree");
   git(shared, "worktree", "add", "-q", worktree, "HEAD");
-  // A linked worktree's `.git` is a file; seeding links `node_modules` rather than copying it.
+
   assert.ok(lstatSync(join(worktree, ".git")).isFile());
   symlinkSync(join(shared, "node_modules"), join(worktree, "node_modules"));
   write(join(worktree, "src", "app.ts"), "export const app = 2;\n");
@@ -439,9 +416,6 @@ test("check prunes .git and node_modules whatever their type, and remove takes a
   assert.strictEqual(git(shared, "worktree", "list").trim().split("\n").length, 1, "Git no longer lists it");
 });
 
-// `git worktree add` carries no git-ignored file into the worktree it creates, and a build makes its
-// own there, so a walk measuring them reads each of the shared tree's as a deletion and each of the
-// worktree's as an addition — every one of them an escape from the unit's declared surface.
 test("check measures no git-ignored file on either side, and still measures a force-tracked one", () => {
   const { dir, path } = newCase();
   const shared = path("shared");
@@ -453,8 +427,7 @@ test("check measures no git-ignored file on either side, and still measures a fo
   git(shared, "add", "-A");
   git(shared, "add", "-f", "local.json");
   git(shared, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "seed");
-  // The case turns on local.json being a path Git ignores by pattern and tracks anyway; were the
-  // pattern not matching it, the assertions below would pass on an ordinary tracked file.
+
   assert.strictEqual(git(shared, "check-ignore", "--no-index", "local.json").trim(), "local.json");
 
   const worktree = path("worktree");
@@ -472,9 +445,6 @@ test("check measures no git-ignored file on either side, and still measures a fo
   assert.match(checked.stdout, /^delta 1 · escapes 0$/m);
 });
 
-// Measuring the two sides under different rules is the failure being prevented: a tree that cannot
-// reproduce the baseline's git-ignore filter reads every ignored path the baseline excluded as an
-// addition the unit never made, so both walk-consuming subcommands refuse rather than compare.
 test("check and apply refuse a tree that cannot reproduce the baseline's git-ignore filter", () => {
   const { dir, path } = newCase();
   const shared = path("shared");
@@ -506,9 +476,6 @@ test("check and apply refuse a tree that cannot reproduce the baseline's git-ign
   assert.ok(!existsSync(receipt), "no receipt for a run that was never carried out");
 });
 
-// check-ignore answers one line per ignored path, and a pnpm store or a framework cache alone runs
-// past Node's default 1 MiB reply buffer — the walk reads the whole answer or fails on exactly the
-// trees the filter exists to drop.
 test("baseline reads a git-ignore answer longer than the default reply buffer", () => {
   const { dir, path } = newCase();
   const shared = path("shared");
@@ -525,9 +492,6 @@ test("baseline reads a git-ignore answer longer than the default reply buffer", 
   assert.deepStrictEqual(Object.keys(parsed.entries), [".gitignore", "src/app.ts"]);
 });
 
-// Each side asks its own index, and a worktree's index is HEAD: a path force-added to the shared
-// index but not yet committed is tracked on one side and an ignored untracked file on the other, so
-// a filter applied alike to both reads it as deleted — and apply would carry that deletion out.
 test("check keeps measuring a staged force-added ignored path the worktree holds untracked", () => {
   const { dir, path } = newCase();
   const shared = path("shared");
@@ -561,10 +525,6 @@ test("check keeps measuring a staged force-added ignored path the worktree holds
   assert.strictEqual(readFileSync(join(shared, "local.json"), "utf8"), '{ "edited": true }\n');
 });
 
-// The filter drops an ignored path on both sides, so a unit told to write one would have that work
-// read as no change at all: `apply` would report `verified` over the loss and `remove` would then take
-// the worktree holding the only copy. Inside the declared surface the difference is reported and
-// refused instead; outside it a worktree's own build output stays unmeasured.
 test("check reports and apply refuses a git-ignored path that differs inside the declared surface", () => {
   const { dir, path } = newCase();
   const shared = path("shared");
@@ -602,9 +562,6 @@ test("check reports and apply refuses a git-ignored path that differs inside the
   );
 });
 
-// The walk descends before it filters, so an ignored directory it cannot read used to abort the whole
-// run at exit 2 — on exactly the trees the filter exists to drop, and with no `--prune` left to reach
-// for once callers are told an ignored path needs none. One the filter does not cover still refuses.
 test("baseline tolerates an unreadable directory the repository ignores, and refuses one it does not", { skip: process.getuid?.() === 0 && "root ignores directory modes" }, () => {
   const { dir, path } = newCase();
   const shared = path("shared");
@@ -621,7 +578,6 @@ test("baseline tolerates an unreadable directory the repository ignores, and ref
     const parsed = JSON.parse(readFileSync(baseline(dir, shared), "utf8"));
     assert.deepStrictEqual(Object.keys(parsed.entries), [".gitignore", "src/app.ts", "vendor/blocked/y"]);
 
-    // The same directory outside the ignore rules is still a run that could not be carried out.
     chmodSync(join(shared, "vendor", "blocked"), 0o000);
     assert.match(run(2, ["baseline", shared, "--out", join(dir, "m2.json")]).stderr, /cannot read .*vendor\/blocked/);
   } finally {
@@ -630,8 +586,6 @@ test("baseline tolerates an unreadable directory the repository ignores, and ref
   }
 });
 
-// A same-tree comparison — the boundary role — reads every ignored path against itself, so the
-// divergence check can never fire there and the two-segment trailer stays exactly as it was.
 test("check on the baseline's own tree never reports a divergent ignored path", () => {
   const { dir, path } = newCase();
   const shared = path("shared");
@@ -678,8 +632,6 @@ test("apply replaces a directory the worktree turned into a file", () => {
   assert.strictEqual(readFileSync(join(shared, "src", "zoo"), "utf8"), "now a file\n");
 });
 
-// The failure is a directory mode the copy cannot write past; root ignores modes, so under a
-// privileged runner the copy would succeed and the case would assert a failure that never came.
 test("apply reports the landed/missed split and writes no receipt when a copy fails part-way", { skip: process.getuid?.() === 0 && "root ignores directory modes" }, () => {
   const { dir } = newCase();
   const { shared, worktree } = seededPair(dir);
@@ -701,7 +653,6 @@ test("apply reports the landed/missed split and writes no receipt when a copy fa
   }
 });
 
-// Same directory-mode trick as the split case above, and the same reason root has to sit it out.
 test("apply writes no landed list when nothing landed at all", { skip: process.getuid?.() === 0 && "root ignores directory modes" }, () => {
   const { dir } = newCase();
   const { shared, worktree } = seededPair(dir);
@@ -719,13 +670,6 @@ test("apply writes no landed list when nothing landed at all", { skip: process.g
   }
 });
 
-// Past the copy the split is measured, never assumed: a verification walk that throws leaves `apply`
-// unable to say what landed, so the refusal names the split uncomputable rather than reporting a zero
-// it never measured, and the coordinator's restore is unconditional from there. `apply` asks git
-// exactly twice on a checkout-backed pair, both `check-ignore` on the worktree: once for the surface
-// check before the copy, once for this verification after it. The shim passes the first through and
-// fails the second with an answer that is neither a listing nor "not a git repository" — dubious
-// ownership, the shape a container gives — so the throw lands past the copy and nowhere else.
 test("apply names the split uncomputable when the post-copy verification cannot walk", () => {
   const { dir, path } = newCase();
   const shared = path("shared");
@@ -823,8 +767,7 @@ test("apply refuses a shared tree that is not the baseline's root or overlaps th
     run(2, ["apply", worktree, "--baseline", manifest, "--into", other, "--surface", "src", "--receipt", receipt]).stderr,
     /is not the baseline's root/,
   );
-  // A misdirected run stays exit 2 even when the worktree also escapes its surface: exit 1 would
-  // report an outcome for a run that was never carried out.
+
   write(join(worktree, "docs", "readme.md"), "escaped\n");
   assert.match(
     run(2, ["apply", worktree, "--baseline", manifest, "--into", other, "--surface", "src", "--receipt", receipt]).stderr,
@@ -866,10 +809,6 @@ test("remove and discard refuse repository content that carries no worktree poin
   assert.ok(existsSync(join(inside, "app.ts")), "repository content survives both");
 });
 
-// A git that answers neither a toplevel nor "not a git repository" leaves the guard unable to read the
-// tree — the shape dubious ownership takes in a container, and an absent git too. The refusal above is
-// what stands between a mistaken path and a recursive delete, so it must not fall through when the
-// answer it depends on never arrives.
 test("remove and discard refuse when git cannot say whether the path is repository content", () => {
   const { dir, path } = newCase();
   const checkout = path("checkout");
@@ -949,7 +888,7 @@ test("a prune given at check time filters the baseline too", () => {
     run(0, ["check", worktree, "--baseline", manifest, "--surface", ".", "--prune", "src"]).stdout,
     /^delta 0 · escapes 0$/m,
   );
-  // An absolute prune resolves against the baseline's root, the same root a surface resolves against.
+
   assert.match(
     run(0, ["check", worktree, "--baseline", manifest, "--surface", ".", "--prune", join(shared, "src")]).stdout,
     /^delta 0 · escapes 0$/m,
@@ -1006,9 +945,7 @@ test("apply refuses an added path the shared tree now holds a directory at", () 
   const manifest = baseline(dir, shared);
   const receipt = join(dir, "receipt.json");
   write(join(worktree, "src", "gen"), "generated\n");
-  // A directory the baseline never recorded, sitting where the unit adds a file. leafAt does not see
-  // one, so without the occupant check it reads as absent, the copy clears it recursively, and the
-  // run still writes a verified receipt.
+
   write(join(shared, "src", "gen", "keep.txt"), "unrelated\n");
 
   const refused = run(1, ["apply", worktree, "--baseline", manifest, "--into", shared, "--surface", "src", "--receipt", receipt]);
@@ -1017,7 +954,6 @@ test("apply refuses an added path the shared tree now holds a directory at", () 
   assert.strictEqual(readFileSync(join(shared, "src", "gen", "keep.txt"), "utf8"), "unrelated\n");
   assert.ok(!existsSync(receipt), "no receipt for a refused apply");
 
-  // An empty directory holds nothing the change set has to account for, so it is not a conflict.
   rmSync(join(shared, "src", "gen"), { recursive: true });
   mkdirSync(join(shared, "src", "gen"));
   run(0, ["apply", worktree, "--baseline", manifest, "--into", shared, "--surface", "src", "--receipt", receipt]);

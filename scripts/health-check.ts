@@ -1,120 +1,33 @@
 #!/usr/bin/env node
-// Walks task roots and reports lifecycle health findings for the `maintain` skill.
-// Zero dependencies; runs under Node type stripping — too old a Node fails as a parse error, not a
-// version message. Floor in AGENTS.md § The `.ts` sources are unchecked by design.
-// Run: node scripts/health-check.ts [--stale-days N] [--result-max-kb N] <root> [<root>...]
-//  or: node scripts/health-check.ts --installs <kit-root> <home> [<home>...]
-// Emitted `check` values: the task walk reports `stale`, `done-unarchived`, `started-in-backlog`,
-// `unknown-status`, `legacy-result-status`, `dead-anchor`, `goal-id`, `no-current-state`,
-// `oversized-result`, and `duplicate-slug`; `--installs` walks no tasks and reports `install-drift`
-// instead. Archived folders are counted in `scanned` and exempt from every check but
-// `duplicate-slug`, which sees them because a bare slug falls back into `Archive/`
-// (references/workflow/task-layout.md § Discovery rules for skills), so an archived slug stays
-// citable and must stay unique.
-// Backlogged folders are exempt from `stale` alone — parked work is deliberately dormant
-// (references/workflow/task-backlog.md) — and stay in every other check, `duplicate-slug` included,
-// since the same slug fallback reaches `Backlog/` and a parked task's docs are future work a later
-// reconcile repairs rather than the frozen history an archived folder holds. Two checks read the
-// location itself: `done-unarchived` names the backlog for a terminal task, which belongs in
-// `Archive/`, and `started-in-backlog` fires for a plan past `to-do`, which no longer meets the
-// backlog's unstarted entry gate, and for a plan with no parseable status, which cannot be judged
-// against it — the stale exemption would otherwise leave that shape silent. A plan-less folder
-// fires it too once a `result.md` exists at all, since a result file exists only once execution
-// starts. `duplicate-slug` is also the one check that spans roots: a slug must be unique across
-// every root walked and within each one, since the walk is recursive. It emits one finding per
-// colliding folder, each keeping its own `root`, so every finding still carries the single root its
-// consumer attributes it by, and names its peers by absolute directory rather than by the
-// root-basename-prefixed display path.
-// `plan.md` is the sole lifecycle-status home (references/workflow/task-lifecycle.md § `result.md` —
-// no status field), so every status this walk reads is the plan's and `unknown-status` judges the
-// plan alone; a `result.md` still carrying a `**Status:**` header is the legacy shape that section
-// tolerates, reported once as `legacy-result-status` and never validated against a vocabulary that
-// no longer governs the file. Where a folder holds no plan at all the result stands in through its
-// content rather than a status of its own: the file existing means execution started, and its
-// closing `**Completed:**` line is the only finished-ness left to read.
-// Contract: stdout is exactly one JSON object,
-// {"findings":[…],"scanned":N,"unreadable":N,"unreadablePaths":[…]}. Task findings are
-// {check,path,detail,root}, with `root` the resolved absolute task root; `--installs` findings are
-// {check,path,detail}. `scanned` counts the task folders walked — or, under `--installs`, the
-// marker-owned items compared — and `unreadablePaths` names everything this run could not open, by
-// absolute path, so a coverage gap is attributable to its root the way a finding is and two roots
-// sharing a basename stay distinct; findings alone are never read as coverage (`scanned` is a floor
-// while it is non-empty). Warnings go to stderr and the exit status is always 0, so a partly
-// unreadable store still parses.
-
 import { lstatSync, readdirSync, readFileSync, readlinkSync, realpathSync, statSync } from "node:fs";
 import type { Dirent, Stats } from "node:fs";
 import { join, resolve, basename, sep } from "node:path";
 import { holdsRoleFile, LIVE_STATUSES, PLAN_VOCAB, RESULT_MAX_KB as DEFAULT_RESULT_MAX_KB, TERMINAL_STATUSES, UNSTARTED_STATUS } from "./lifecycle-constants.ts";
 
-// stdout is asynchronous on a macOS pipe, so the report is written and the module then ends: calling
-// process.exit after the write would discard whatever the pipe buffer could not take, truncating the
-// JSON above 64 KB. A reader that closes early then raises EPIPE on a stream nothing awaits, and
-// swallowing that is what keeps the always-zero exit status the contract above promises.
 process.stdout.on("error", (err: NodeJS.ErrnoException) => {
   if (err.code !== "EPIPE") throw err;
 });
 
-// Pruned at every depth because the walk would never finish otherwise. A helper directory needs no
-// entry here — isTaskDir already rejects a folder holding no role file — and a name-based prune costs
-// a real task its scan, silently: `.git` and every other dotted name bar `.agents` are skipped by
-// the walk itself.
 const SKIP_DIRS = new Set<string>(["node_modules"]);
-// The recognition set and its membership test come from scripts/lifecycle-constants.ts, so this
-// walk and the move that refuses a non-task folder agree on what a task folder is.
-// references/workflow/task-archiving.md: new archives are created as
-// `Archive/`, but an existing one is recognized case-insensitively, so a pre-rename `archive/`
-// (or the same folder on a case-insensitive filesystem) still counts as archived.
+const TASK_STORE_DIR = ".agents";
 const ARCHIVE_DIR = /^archive$/i;
-// references/workflow/task-backlog.md: the parked counterpart of the archive, and recognized by the
-// same rule — new backlogs are created as `Backlog/`, an existing one is matched case-insensitively.
 const BACKLOG_DIR = /^backlog$/i;
 const DEFAULT_STALE_DAYS = 30;
 const DAY_MS = 86_400_000;
-
 const CURRENT_STATE = /^##[ \t]+Current state\b/im;
-// The closing line a `done` plan owes its result (references/workflow/task-lifecycle.md § Companion
-// result file). Scanned over the whole file rather than the header block, because it closes a result
-// rather than heading one, and it is the only finished-ness a plan-less folder still carries — which
-// is why the colon and the date are both required rather than the word alone: on a plan-less folder
-// this match *is* the lifecycle, so a prose header like `**Completed steps:** 3 of 7` reading as
-// `done` would file unfinished work under a status nothing else can contradict.
 const COMPLETED_LINE = /^[ \t]*(?:[-*+][ \t]+)?\*\*Completed:\*\*[ \t]*\d{4}-\d{2}-\d{2}\b/i;
-// references/workflow/task-goals.md: every `## Goals` bullet leads with a durable
-// `G<n>` ID (optionally followed by an `(external)` token) and the IDs are unique across the file.
 const GOALS_HEADING = /^##[ \t]+Goals\b/;
 const GOAL_ID = /^G\d+$/;
-// implement-task appends `([result](<file>#<anchor>))` to each step it checks off, so a `- [x]`
-// step whose link is absent or unresolvable has lost the evidence that justifies the checkbox.
 const STEP_HEADING = /^#{2,6}[ \t]+Step\b/;
 const HEADING = /^#{1,6}[ \t]+(.+?)[ \t]*#*$/;
-// The markdown-reading constants and helpers below — this regex and `liveLines`, `HEADING`,
-// `RESULT_LINK`, `STATUS_PATTERNS` with its normalizer, and `slugify`/`headingSlugs` with
-// `COMPACTED_HEADING`/`TOMBSTONE_BULLET` — are mirrored in scripts/task-state.ts, and the fence and
-// status halves again in scripts/task-move.ts. Those readers must agree with this one: this walk's
-// dead-anchor check against task-state's `anchorResolves`, and its terminal read against task-move's
-// archive gate. Change a copy here and change every mirror in the same edit.
 const FENCE = /^([ \t]*)(`{3,}|~{3,})[ \t]*(.*)$/;
 const CHECKED_STEP = /^[ \t]*-[ \t]+\[[xX]\]/;
-// implement-task appends the evidence link at the end of the step line, but the step's own prose
-// may cite a literal `([result](…))` as an example — so the last match is the link, never the first.
 const RESULT_LINK = /\(\[result\]\(([^()]*)\)\)/g;
-
-// Ownership markers written by setup.ts; only a marked item is kit-managed and comparable.
 const MARKER = ".agents-kit";
 const CORE_RULES_MARKER = ".agents-kit-core-rules";
 const AGENT_MARKER_PREFIX = ".agents-kit-";
-// setup.ts installs each host's native agent format only, keyed by the home's own directory name.
 const AGENT_EXTENSIONS = new Map([[".claude", "md"], [".codex", "toml"]]);
-// setup.ts's recursive copies carry OS-generated files into the homes, where each side is then
-// rewritten independently — drift no redeploy can durably clear. Matched by name rather than by a
-// dotfile rule, because a skill may legitimately ship one (a template's `.gitignore`) and it stays
-// comparable.
 const OS_ARTIFACTS = new Set<string>([".DS_Store", ".localized", "Thumbs.db"]);
-// setup.ts builds each skill under `skills/.agents-kit-staging.<pid>-<name>` and marks it before
-// copying into it, so a marked entry with this prefix is an interrupted install rather than a
-// payload. Comparing one reports phantom drift for files the next setup.ts run sweeps on its own,
-// and counting it as an item defeats the never-installed line below.
 const STAGING_PREFIX = ".agents-kit-staging.";
 const skipInInstalls = (name: string): boolean => name === MARKER || OS_ARTIFACTS.has(name) || name.startsWith("._");
 
@@ -155,9 +68,6 @@ interface Report {
 }
 
 const warnings: string[] = [];
-// What this run could not read, reported in the contract rather than only on stderr: a caller reading
-// findings alone would take a store it never opened for a clean one. `scanned` is a floor while this
-// is non-empty. Warnings that are not coverage gaps — an ignored flag value, a usage error — stay stderr-only.
 const unreadablePaths: string[] = [];
 
 interface ErrorLike {
@@ -165,10 +75,6 @@ interface ErrorLike {
   readonly message?: string;
 }
 
-// What kind of thing could not be read rides on the warning, which keeps the compact display path.
-// `unreadablePaths` carries the absolute one: every finding is attributed by its absolute `root`,
-// and a display path prefixed with a root's basename alone cannot be lined up against them once two
-// roots share that basename.
 function unreachable(kind: string, abs: string, display: string, err: ErrorLike): void {
   warnings.push(`unreadable ${kind} ${display}: ${err.code ?? err.message}`);
   unreadablePaths.push(abs);
@@ -191,9 +97,6 @@ function isFile(path: string): boolean {
   }
 }
 
-// Presence alone, of anything: used to tell a rejected flag value that names a real path (a root the
-// flag would otherwise swallow) from one that names nothing (a typed value). Deliberately not
-// `isDirectory` — a root pointing at a file must still reach the coverage list through that check.
 function pathExists(path: string): boolean {
   try {
     statSync(resolve(path));
@@ -205,11 +108,6 @@ function pathExists(path: string): boolean {
 
 type MarkerState = "owned" | "unowned" | "unreadable";
 
-// Whether setup.ts owns a path, by the marker beside it. A marker that cannot be read is not the
-// user's: answering "unowned" there would drop a kit-managed item from the comparison, leaving
-// `scanned` short and `unreadable` at zero — a clean-looking report over an item never compared.
-// It is recorded as a coverage gap and compared anyway, where each unreadable path reports on its
-// own. Only ENOENT means the marker is genuinely absent.
 function markerState(markerPath: string, display: string): MarkerState {
   try {
     return statSync(markerPath).isFile() ? "owned" : "unowned";
@@ -220,12 +118,6 @@ function markerState(markerPath: string, display: string): MarkerState {
   }
 }
 
-// Collapses symlinked, repeated, and nested root arguments to one identity. `.native` returns the
-// spelling the filesystem holds, where the JS implementation returns the caller's own: on a
-// case-insensitive volume two roots differing only in case are one directory, and only the on-disk
-// spelling makes the overlap comparison below see that. A path that vanishes between the directory
-// check and this call falls back to its resolved form rather than throwing: the contract above is
-// one JSON object on stdout and exit 0, so no step of the walk may raise.
 function canonicalRoot(rootDir: string): string {
   try {
     return realpathSync.native(rootDir);
@@ -237,9 +129,7 @@ function canonicalRoot(rootDir: string): string {
 function isDirectory(pathArg: string, label: string): boolean {
   try {
     if (statSync(resolve(pathArg)).isDirectory()) return true;
-    // The same fact for a caller as a path that could not be opened at all: this argument
-    // contributed nothing to the walk. Left on stderr it would let a registry entry pointing at a
-    // file report as a clean root, which is what the other arm of this function already prevents.
+
     unreachable(label, resolve(pathArg), pathArg, { code: "not a directory" });
   } catch (err) {
     unreachable(label, resolve(pathArg), pathArg, err);
@@ -271,27 +161,15 @@ function clip(text: string, max = 60): string {
 }
 
 function isTaskDir(entries: readonly Dirent[]): boolean {
-  return holdsRoleFile(entries.filter((e) => e.isFile()).map((e) => e.name));
+  return holdsRoleFile(entries.filter((entry) => entry.isFile()).map((entry) => entry.name));
 }
 
-// Tolerant status extraction: canonical `**Status:** value`, parenthetical qualifiers
-// (`**Status (2026-05-11):** …`), colon-inside-bold (`**Status: done…**`), unterminated bold.
 const STATUS_PATTERNS = [
   /^\*\*Status\b[^:*\n]*:?\*\*:?[ \t]*(.+)$/im,
   /^\*\*Status\b[^:\n]*:[ \t]*(.+)$/im,
   /^Status:[ \t]*(.+)$/im,
 ];
 
-// Every scan over a task file skips fenced content, because a heading, a bullet, or a status line
-// inside a fence is illustrative markdown rather than the file's own. Closing a fence takes the
-// opener's marker at its own length or longer, no further indented than the opener, and nothing after
-// it but whitespace, so a shorter run, a different marker, a deeper-indented run, or a run carrying an
-// info string is content inside an open block: a boolean flag would invert on it and hand back what it
-// skipped. All three halves matter as much as the length one — a doc that shows a fenced example opens
-// with ``` and carries ```md or an indented ``` inside it, and closing on either hands back the rest of
-// the example as the file's own lines. The indent test is relative to the opener rather than
-// CommonMark's flat 0–3 columns, because a fence nested in a list item is legitimately indented past
-// that and its content still has to be skipped.
 function* liveLines(text: string): Generator<string> {
   let fence: { indent: number; char: string; len: number } | null = null;
   for (const line of text.split("\n")) {
@@ -308,10 +186,6 @@ function* liveLines(text: string): Generator<string> {
   }
 }
 
-// references/workflow/doc-task-files.md bounds a status header to the file's header
-// block — under the `#` title, above the first `##` section, never inside fenced or quoted content —
-// so the scan stops at the first `##`-or-deeper heading and a status-shaped body line (a log entry,
-// a quoted example) is not a candidate.
 function rawStatus(text: string): string | null {
   const header: string[] = [];
   for (const line of liveLines(text)) {
@@ -319,9 +193,9 @@ function rawStatus(text: string): string | null {
     header.push(line);
   }
   const live = header.join("\n");
-  for (const re of STATUS_PATTERNS) {
-    const m = live.match(re);
-    if (m && m[1].trim()) return m[1].trim();
+  for (const pattern of STATUS_PATTERNS) {
+    const matched = live.match(pattern);
+    if (matched && matched[1].trim()) return matched[1].trim();
   }
   return null;
 }
@@ -347,9 +221,9 @@ interface RoleFile {
 type RoleStatus = RoleFile & StatusFields;
 
 function roleFileName(entries: readonly Dirent[], exactName: string, suffix: string | null): string | undefined {
-  const files = entries.filter((e) => e.isFile()).map((e) => e.name);
+  const files = entries.filter((entry) => entry.isFile()).map((entry) => entry.name);
   if (files.includes(exactName)) return exactName;
-  return suffix ? files.find((f) => f.endsWith(suffix) && f !== suffix) : undefined;
+  return suffix ? files.find((name) => name.endsWith(suffix) && name !== suffix) : undefined;
 }
 
 function readRoleFile(
@@ -377,18 +251,22 @@ function readStatusFrom(
   return { ...role, ...normalize(rawStatus(role.text)) };
 }
 
-function lastModified(dir: string, entries: readonly Dirent[]): number {
-  let max = 0;
-  for (const e of entries) {
-    if (!e.isFile() || !e.name.endsWith(".md")) continue;
-    try {
-      const t = statSync(join(dir, e.name)).mtimeMs;
-      if (t > max) max = t;
-    } catch {
-      /* an unreadable entry only lowers the observed age — skip it */
-    }
+function modifiedTimeOrZero(path: string): number {
+  try {
+    return statSync(path).mtimeMs;
+  } catch {
+    return 0;
   }
-  return max;
+}
+
+function lastModified(dir: string, entries: readonly Dirent[]): number {
+  let newest = 0;
+  for (const entry of entries) {
+    if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+    const modified = modifiedTimeOrZero(join(dir, entry.name));
+    if (modified > newest) newest = modified;
+  }
+  return newest;
 }
 
 interface Task {
@@ -404,9 +282,7 @@ interface Task {
 
 function collect(rootDir: string, rootDisplay: string): Task[] {
   const tasks: Task[] = [];
-  // Every directory is listed exactly once and its entries handed down: the listing that decides
-  // whether a folder is a task is the same one the recursion walks. Listing it a second time would
-  // report an unreadable directory as two coverage gaps, one per pass.
+
   const walk = (
     dir: string,
     display: string,
@@ -414,23 +290,17 @@ function collect(rootDir: string, rootDisplay: string): Task[] {
     archived: boolean,
     backlogged: boolean,
   ): void => {
-    for (const e of entries) {
-      if (!e.isDirectory() || SKIP_DIRS.has(e.name)) continue;
-      // `.agents` is the one dotted name entered: the canonical root `<project>/.agents/tasks` sits
-      // inside it, so pruning it costs a root registered as a project directory every task it
-      // holds — silently, since an unwalked root and an empty one report the same zero.
-      if (e.name.startsWith(".") && e.name !== ".agents") continue;
-      const child = join(dir, e.name);
-      const childDisplay = join(display, e.name);
+    for (const entry of entries) {
+      if (!entry.isDirectory() || SKIP_DIRS.has(entry.name)) continue;
+      if (entry.name.startsWith(".") && entry.name !== TASK_STORE_DIR) continue;
+      const child = join(dir, entry.name);
+      const childDisplay = join(display, entry.name);
       const childEntries = listEntries(child, childDisplay);
-      // Neither container clears the other's flag, so a `Backlog/` under an `Archive/` stays
-      // archived: the archived exemptions are the wider set, and every check reading `backlogged`
-      // honors `archived` first.
-      if (ARCHIVE_DIR.test(e.name)) {
+      if (ARCHIVE_DIR.test(entry.name)) {
         walk(child, childDisplay, childEntries, true, backlogged);
         continue;
       }
-      if (BACKLOG_DIR.test(e.name)) {
+      if (BACKLOG_DIR.test(entry.name)) {
         walk(child, childDisplay, childEntries, archived, true);
         continue;
       }
@@ -459,9 +329,6 @@ interface Lifecycle {
   readonly source: string | null;
 }
 
-// The plan owns the lifecycle, so it wins whenever it exists. For a folder that has no plan at all
-// the result stands in through its content, since it carries no status: it exists only once
-// execution started, and only its closing `**Completed:**` line says that execution finished.
 function lifecycleStatus(task: Task): Lifecycle {
   if (task.plan) return { value: task.plan.value, source: task.plan.file };
   if (task.result?.text == null) return { value: null, source: null };
@@ -476,20 +343,11 @@ interface SlugHolder {
   readonly root: string;
 }
 
-// Which container a colliding folder sits in, since neither is in the active listing a reader looks
-// through first. A folder inside both is named archived alone — the wider fact, matching the
-// exemptions it gets.
 function containerNote(holder: SlugHolder): string {
   if (holder.archived) return " (archived)";
   return holder.backlogged ? " (backlogged)" : "";
 }
 
-// One finding per colliding folder rather than one per collision: each keeps its own `root`, which is
-// what consumers attribute a finding by, and naming the peers in `detail` is what makes the pair
-// actionable from either side. Peers are named by absolute directory, not by the compact display
-// path the other findings use: that path is prefixed by its root's basename alone, and two roots
-// sharing a basename would leave the peer unresolvable in the one check whose payload is which
-// other folder.
 function duplicateSlugFindings(bySlug: ReadonlyMap<string, readonly SlugHolder[]>): TaskFinding[] {
   const out: TaskFinding[] = [];
   for (const [slug, holders] of bySlug) {
@@ -510,12 +368,8 @@ function duplicateSlugFindings(bySlug: ReadonlyMap<string, readonly SlugHolder[]
   return out;
 }
 
-// A folder with no status-bearing file at all (context- or ticket-only) counts as live rather than
-// being skipped, so a task abandoned before it ever got a plan still surfaces once it ages.
 function staleFinding(task: Task, now: number, staleDays: number): UnrootedFinding | null {
   if (task.archived) return null;
-  // Parked work is dormant by intent (references/workflow/task-backlog.md), so age says nothing
-  // about a backlogged folder — this is the only check parking exempts.
   if (task.backlogged) return null;
   const { value, source } = lifecycleStatus(task);
   if (value != null && !LIVE_STATUSES.has(value)) return null;
@@ -525,18 +379,12 @@ function staleFinding(task: Task, now: number, staleDays: number): UnrootedFindi
   }
   const days = Math.floor((now - task.updated) / DAY_MS);
   if (days < staleDays) return null;
-  // Three distinct facts, and the label keeps them apart: no status-bearing file at all, a plan
-  // whose `**Status:**` wouldn't parse, and a real status. The last names its file when the result
-  // stood in for a missing plan, the way the done-unarchived detail does.
+
   const label = source == null ? "no-plan" : (value ?? "no-status");
   const origin = value != null && !task.plan ? ` (derived from ${source})` : "";
   return { check: "stale", path: task.path, detail: `${label}${origin}, ${days} days stale` };
 }
 
-// A value the vocabulary doesn't hold is not a lifecycle state, so the stale and archive checks below
-// both skip it — and a task no check reaches is exactly what this sweep exists to surface. Report the
-// value the plan actually carries, so a typo or a vocabulary renamed out from under PLAN_VOCAB is
-// visible rather than quietly unsupervised.
 function unknownStatusFinding(task: Task): UnrootedFinding | null {
   if (task.archived) return null;
   const plan = task.plan;
@@ -548,10 +396,6 @@ function unknownStatusFinding(task: Task): UnrootedFinding | null {
   };
 }
 
-// A result written before the plan became the single status home may still carry a `**Status:**`
-// header. Nothing repairs it and no reader acts on it, so it is reported as the legacy shape it is
-// rather than judged: validating the value would resurrect the second lifecycle the contract
-// deleted, and any value it holds — vocabulary or not — is equally inert.
 function legacyResultStatusFinding(task: Task): UnrootedFinding | null {
   if (task.archived || task.result?.text == null) return null;
   const raw = rawStatus(task.result.text);
@@ -568,20 +412,11 @@ function doneUnarchivedFinding(task: Task): UnrootedFinding | null {
   const { value, source } = lifecycleStatus(task);
   if (!TERMINAL_STATUSES.has(value)) return null;
   const origin = task.plan ? "" : ` (derived from ${source})`;
-  // A terminal task under a `Backlog/` is misfiled rather than merely unarchived — the backlog holds
-  // unstarted work only (references/workflow/task-backlog.md) — so the detail names where it sits.
+
   const place = task.backlogged ? "parked in Backlog/ — belongs in Archive/" : "outside Archive/";
   return { check: "done-unarchived", path: task.path, detail: `${value}${origin}, ${place}` };
 }
 
-// The backlog's entry gate is *unstarted*: no `plan.md`, or a plan at `to-do`
-// (references/workflow/task-backlog.md). Any other live status means work began where the folder
-// lies, which parking cannot express — a live task pauses through `blocked` instead of moving. A
-// plan that carries no parseable status can't be judged against the gate at all, and stale — the
-// check that reports that shape everywhere else — is the one check parking exempts, so it is
-// reported here rather than left silent. The gate is written on the plan, and an absent plan is the
-// parked-intended state — unless a `result.md` exists: the file is created only once execution
-// starts, so its presence alone fails the gate, whatever it does or does not say inside.
 function startedInBacklogFinding(task: Task): UnrootedFinding | null {
   if (task.archived || !task.backlogged) return null;
   const value = task.plan?.value;
@@ -608,37 +443,24 @@ function startedInBacklogFinding(task: Task): UnrootedFinding | null {
   };
 }
 
-// GitHub's heading-anchor rule: lowercase, drop every character that is not a letter, digit,
-// hyphen, underscore, or space, then map each space to a hyphen — so an em-dash vanishes and
-// leaves the double hyphen the kit's own step anchors carry, while a `FLAG_LIKE_THIS` token keeps
-// its underscores.
 function slugify(heading: string): string {
   return heading.trim().toLowerCase().replace(/[^\p{L}\p{N} _-]/gu, "").replace(/ /g, "-");
 }
 
-// Compaction removes a section but leaves its title as a tombstone bullet under a `## Compacted`
-// stub (references/workflow/reconciliation-compaction.md § The procedure), so a step link pointing at one is
-// documented state, not a dead anchor.
 const COMPACTED_HEADING = /^Compacted\b/;
 const TOMBSTONE_BULLET = /^[ \t]*-[ \t]+(.+?)[ \t]*$/;
 
-// A repeated heading takes GitHub's `-1`, `-2`, … suffix, so occurrences are counted rather than
-// deduplicated; a result file with two `## Acceptance` sections really does have two anchors. GitHub
-// also walks a candidate past every slug already assigned — `Foo`, `Foo-1`, `Foo` yields `foo-2` for
-// the third — so allocation advances to an unclaimed slug rather than trusting the per-base count.
-// Headings inside a fenced block are illustrative markdown, not anchors, so fences are tracked.
 function headingSlugs(text: string): Set<string> {
   const seen = new Map<string, number>();
   const slugs = new Set<string>();
-  // Heading-assigned slugs only: a tombstone bullet's slug resolves links but reserves nothing,
-  // since compaction removed its rendered heading.
+
   const taken = new Set<string>();
   let inCompacted = false;
   for (const line of liveLines(text)) {
-    const m = line.match(HEADING);
-    if (m) {
-      inCompacted = COMPACTED_HEADING.test(m[1]);
-      const base = slugify(m[1]);
+    const heading = line.match(HEADING);
+    if (heading) {
+      inCompacted = COMPACTED_HEADING.test(heading[1]);
+      const base = slugify(heading[1]);
       if (!base) continue;
       let count = seen.get(base) ?? 0;
       let slug = count === 0 ? base : `${base}-${count}`;
@@ -662,8 +484,8 @@ function headingSlugs(text: string): Set<string> {
 }
 
 function stepLabel(heading: string): string {
-  const m = heading.match(/^Step[ \t]+(\d+)/);
-  return m ? `Step ${m[1]}` : clip(heading, 40);
+  const step = heading.match(/^Step[ \t]+(\d+)/);
+  return step ? `Step ${step[1]}` : clip(heading, 40);
 }
 
 function anchorFindings(task: Task): UnrootedFinding[] {
@@ -730,8 +552,7 @@ function goalIdFindings(task: Task): UnrootedFinding[] {
       continue;
     }
     if (!inGoals) continue;
-    // Any CommonMark list marker opens a goal bullet. The column-0 anchor is deliberate: a goal's
-    // indented child bullet is prose, and reading it as a goal would report it as a malformed ID.
+
     const bullet = line.match(/^[-*+][ \t]+(\S+)/);
     if (!bullet) continue;
     const id = bullet[1];
@@ -761,10 +582,6 @@ function hasCompletedLine(text: string): boolean {
   return false;
 }
 
-// references/workflow/task-authorship.md § Files expects a `## Current state` block on the result of
-// a task whose plan is live, which is now the plan's state to declare. Terminal states are exempt —
-// a legacy `done` result keeps its last rewrite frozen and never gains a block retroactively — and so
-// is `to-do`, which owes no result file at all, so one found there is another check's drift.
 function currentStateFinding(task: Task): UnrootedFinding | null {
   if (!task.result?.text) return null;
   const { value } = lifecycleStatus(task);
@@ -823,31 +640,23 @@ function bytesOf(path: string, display: string): Buffer | null {
   }
 }
 
-// Every file under a one-sided item, so a whole missing or unmanaged subtree reports per path
-// rather than as a single opaque line. A Dirent reflects lstat, so a symlink counts as a file.
 function filesUnder(path: string, display: string, kind: PathKind): string[] {
   if (kind !== "dir") return [display];
   const files: string[] = [];
-  for (const e of listEntries(path, display)) {
-    if (skipInInstalls(e.name)) continue;
-    files.push(...filesUnder(join(path, e.name), join(display, e.name), e.isDirectory() ? "dir" : "file"));
+  for (const entry of listEntries(path, display)) {
+    if (skipInInstalls(entry.name)) continue;
+    files.push(...filesUnder(join(path, entry.name), join(display, entry.name), entry.isDirectory() ? "dir" : "file"));
   }
   return files;
 }
 
 function unionNames(kitPath: string, installPath: string, display: string): string[] {
   const names = new Set<string>();
-  for (const e of listEntries(kitPath, kitPath)) names.add(e.name);
-  for (const e of listEntries(installPath, display)) names.add(e.name);
+  for (const entry of listEntries(kitPath, kitPath)) names.add(entry.name);
+  for (const entry of listEntries(installPath, display)) names.add(entry.name);
   return [...names].sort((a, b) => a.localeCompare(b, "en"));
 }
 
-// setup.ts copies skills with `verbatimSymlinks` (symlinks preserved) and references with
-// `dereference` (symlinks materialized), so two links are compared by their targets. One side being
-// a link and the other not is drift rather than a copy-mode difference: `dereference` reaches only
-// references/, which carries no symlinks, while skills/ is copied link-preserving precisely so each
-// skill's AGENTS.md and references resolve to the install-root originals. A materialized link holds
-// the same bytes, so no comparison below would see the loss.
 function comparePath(kitPath: string, installPath: string, display: string, out: InstallFinding[]): void {
   const drift = (path: string, detail: string) => out.push({ check: "install-drift", path, detail });
   const kitKind = kindOf(kitPath, kitPath);
@@ -890,13 +699,6 @@ function comparePath(kitPath: string, installPath: string, display: string, out:
   drift(display, "differs from kit source");
 }
 
-// The two install-root shared payloads are unlike a skill or an agent file: every installed skill's
-// own `AGENTS.md` and `references` symlinks resolve into them, so an unmarked one is not a private
-// file this check should ignore — it is what all of them now load, and setup.ts refuses the whole
-// home over it. Reported with the remedy setup.ts names, because the usual answer to install-drift,
-// rerunning setup.ts, exits 1 on this state instead of repairing it.
-// Returned rather than filed, because where it lands depends on whether anything else was compared:
-// in a home with no markers at all it is folded into the single never-installed line below.
 function sharedPayloadConflict(home: string, display: string, rel: string): InstallFinding | null {
   if (kindOf(join(home, rel), join(display, rel)) === "missing") return null;
   return {
@@ -911,19 +713,12 @@ interface InstallResult {
   readonly items: number;
 }
 
-// Only the items setup.ts marked as its own are compared; an unmarked same-named skill or agent
-// file belongs to the user, so its content is none of this check's business — the two shared
-// payloads above are the exception, and say why. The kit-side pass at the end covers what
-// marker-scoping structurally cannot see: an item that was never installed carries no marker to be
-// found.
 function installFindings(kitRoot: string, homeArg: string): InstallResult {
   const home = resolve(homeArg);
   const display = basename(home) || homeArg;
   const findings: InstallFinding[] = [];
   let items = 0;
-  // Paths the marker-owned pass compared, so the kit-side sweep below never walks them again: a
-  // payload deleted out from under its surviving sibling marker (CORE_RULES.md, an agent file)
-  // would otherwise report "missing in install" once per pass.
+
   const compared = new Set<string>();
   const conflicts: InstallFinding[] = [];
 
@@ -955,7 +750,7 @@ function installFindings(kitRoot: string, homeArg: string): InstallResult {
   }
 
   const markers = listEntries(join(home, "agents"), join(display, "agents"), true)
-    .filter((e) => e.isFile() && e.name.startsWith(AGENT_MARKER_PREFIX));
+    .filter((entry) => entry.isFile() && entry.name.startsWith(AGENT_MARKER_PREFIX));
   const extension = AGENT_EXTENSIONS.get(basename(home));
   if (markers.length > 0 && !extension) {
     warnings.push(`${display}: kit agent markers found but the home name matches no known agent format; skipping agents/`);
@@ -968,10 +763,6 @@ function installFindings(kitRoot: string, homeArg: string): InstallResult {
     }
   }
 
-  // A home setup.ts never installed into would otherwise report every kit file one by one; no marker
-  // of any kind is a single fact about the home, so it reports as a single line. A shared-payload
-  // conflict folds into that line rather than stacking beside it: it is why setup.ts refuses this
-  // home, so dropping it would leave the never-installed state with no reason attached.
   if (items === 0) {
     const named = conflicts.map((conflict) => basename(conflict.path)).join(" and ");
     findings.push({
@@ -985,11 +776,6 @@ function installFindings(kitRoot: string, homeArg: string): InstallResult {
   }
   findings.push(...conflicts);
 
-  // Absence is tested against the home path itself rather than its marker: a path that does not
-  // exist cannot be a user's, so naming it claims no ownership the marker scheme withholds. Once
-  // any marker proves setup.ts installed this home, every payload setup.ts would copy is expected;
-  // an existing unmarked same-named path remains user-owned and is neither compared nor missing.
-  // A path the marker pass compared is excluded — its verdict, missing included, is already filed.
   const absent = (rel: string) => !compared.has(rel) && kindOf(join(home, rel), join(display, rel)) === "missing";
   const kitOnly: string[] = [];
   if (absent("CORE_RULES.md")) kitOnly.push("CORE_RULES.md");
@@ -1039,26 +825,17 @@ function parseArgs(argv: readonly string[]): Options {
       installs = true;
       continue;
     }
-    const option = NUMERIC_OPTIONS.find((o) => arg === o.flag || arg.startsWith(`${o.flag}=`));
+    const option = NUMERIC_OPTIONS.find((candidate) => arg === candidate.flag || arg.startsWith(`${candidate.flag}=`));
     if (option) {
       const inline = arg.includes("=");
-      // A separate value is peeked and consumed only once it validates: `argv[++i]` would take the
-      // next argument whatever it is, and a swallowed task root leaves the walk short with nothing
-      // in the JSON to say so.
+
       const raw = inline ? arg.slice(arg.indexOf("=") + 1) : argv[i + 1];
       if (/^\d+$/.test(String(raw ?? "").trim())) {
         values[option.key] = Number(raw);
         if (!inline) i++;
       } else {
         warnings.push(`ignoring ${option.flag} "${raw ?? ""}" (want a non-negative integer); using ${option.fallback}`);
-        // A rejected value falls through to the positional branch only when it names something on
-        // disk — that swallowed root is the case this peek exists for — or when it is itself a flag:
-        // no numeric value can start with `-`, and the branches above intercept such a token before
-        // it could reach the roots, so consuming one loses a flag and gains nothing. Anything else
-        // was a typed flag value, so consume it: as a root it would be named in `unreadablePaths` as
-        // store the sweep did not see, or, under `--installs`, take the kit-root slot and skip the
-        // whole probe. An empty value is consumed for the same reason — `resolve("")` is the process
-        // directory, which would walk the caller's own checkout as a store.
+
         const fallsThrough =
           !inline && typeof raw === "string" && raw !== "" && (raw.startsWith("-") || pathExists(raw));
         if (!inline && !fallsThrough) i++;
@@ -1109,28 +886,16 @@ if (installs) {
   if (roots.length === 0) {
     warnings.push("no task root given; usage: node scripts/health-check.ts [--stale-days N] [--result-max-kb N] <root> [<root>...]");
   }
-  // Slug → every folder carrying it, across all roots. A slug is globally unique by contract, so
-  // this stays empty on a healthy set; it is filled during the per-root walk and judged after it,
-  // because a collision can span roots and no root can be ruled out until every one is walked.
+
   const bySlug = new Map<string, SlugHolder[]>();
   const candidates: RootCandidate[] = roots
     .filter((rootArg) => isDirectory(rootArg, "root"))
     .map((rootArg) => {
       const rootDir = resolve(rootArg);
-      // Canonicalize for the overlap comparison alone — findings keep the caller's own resolved
-      // path, which is what a consumer matches them against.
+
       return { rootArg, rootDir, canonical: canonicalRoot(rootDir) };
     });
-  // A root repeated, reached through a symlink, or overlapping another walks the same folders
-  // twice: `scanned` overcounts, every finding doubles, and duplicate-slug reports a folder as
-  // colliding with itself. Which roots to walk is therefore settled before any of them is
-  // walked: the containment test only catches a root nested inside one already kept, so deciding
-  // it in argument order would let the caller's ordering of an overlapping pair determine
-  // whether the overlap is caught at all. An ancestor is a strict path prefix of its
-  // descendants, so a pass over the candidates sorted by canonical path always reaches the outer
-  // root first, and the sort is stable, so of two spellings of one root the caller's first
-  // survives. The walk below then runs in argument order, which is the order findings are
-  // emitted in.
+
   const walked: string[] = [];
   const kept = new Set<RootCandidate>();
   const byDepth = [...candidates].sort((a, b) =>
@@ -1147,12 +912,11 @@ if (installs) {
       continue;
     }
     const { rootArg, rootDir } = candidate;
-    // The display path stays compact, while the resolved root keeps same-basename roots distinct.
+
     const tasks = collect(rootDir, basename(rootDir) || rootArg);
     for (const task of tasks) {
       const slug = basename(task.dir);
-      // Only the fields the collision report reads: a whole-task copy would pin every parsed
-      // plan.md, goals.md, and result.md body in memory until the process exits.
+
       const holder = {
         path: task.path,
         dir: task.dir,
@@ -1172,10 +936,7 @@ if (installs) {
         doneUnarchivedFinding(task),
         startedInBacklogFinding(task),
       ];
-      // The content checks skip archived folders: they are frozen history no reconciler repairs
-      // (references/workflow/task-archiving.md), so re-reporting their
-      // imperfections every run would be permanent noise. A backlogged folder is not frozen — it is
-      // future work a later reconcile still repairs — so it stays in them.
+
       if (!task.archived) {
         single.push(
           currentStateFinding(task),

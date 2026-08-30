@@ -59,7 +59,7 @@ node <kit-root>/scripts/task-move.ts <SRC> --to archive
 
 `<kit-root>` resolves per `./references/workflow/task-store.md` § *Resolving `<kit-root>`* <!-- cold -->, which owns that rule. With no kit root available, say the move can't be performed here and stop — a guarded move has no by-hand equivalent worth offering; `task-archiving.md` states what the move is for anyone doing it themselves.
 
-The script's file header owns its CLI and its stdout contract. What it decides, so this skill doesn't:
+`<kit-root>/SCRIPTS.md` § *`scripts/task-move.ts`* owns its CLI and its stdout contract — read that section, not the whole file. What it decides, so this skill doesn't:
 
 - **The terminal check** — it reads the plan's status against the same terminal set, and refuses a live, unknown, or plan-less folder.
 - **The destination** — location-relative, derived from `SRC`'s own parent, including the **backlog exception** (a finished task parked in a `Backlog/` archives *out* of it, into the backlog's own parent, never into a nested `Backlog/Archive/`) and the **case-insensitive recognition** of an existing container (an `archive/` is moved into as it is spelled; normalizing a stray spelling is `maintain`'s format sweep, not this move).

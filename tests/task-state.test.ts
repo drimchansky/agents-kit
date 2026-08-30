@@ -1,11 +1,3 @@
-// Covers scripts/task-state.ts: the plan-state report — checkbox state, next pending step,
-// checkpoint outcomes, result-anchor resolution, goal coverage — and its 0/1/2 exit contract. The
-// CLI cases run fixture task folders end to end; the parsing variants call the exported pure layer
-// directly, which needs no folder on disk.
-// Zero dependencies; runs under Node type stripping — too old a Node fails as a parse error, not a
-// version message. Floor in AGENTS.md § The `.ts` sources are unchecked by design.
-// Run: node --test tests/<name>.test.ts   ·   every suite: node --test "tests/*.test.ts"
-
 import assert from "node:assert";
 import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
@@ -19,8 +11,6 @@ const TESTS_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_DIR = resolve(TESTS_DIR, "..");
 const SCRIPT = join(REPO_DIR, "scripts", "task-state.ts");
 const TEST_ROOT = mkdtempSync(join(tmpdir(), "agents-kit-task-state-"));
-// A fence opener written as a value, so a fixture can carry fenced markdown without escaping every
-// backtick of it inside the template literal that holds it.
 const FENCE = "```";
 
 after(() => rmSync(TEST_ROOT, { recursive: true, force: true }));
@@ -58,7 +48,6 @@ function report(dir: string): TaskState {
   return JSON.parse(child.stdout) as TaskState;
 }
 
-// The pure layer's inputs, so a parsing case can vary one file without writing three.
 function parse(planText: string, resultText: string | null = null, goalsText: string | null = null): TaskState {
   return taskState({ taskDir: "/fixture", planText, resultText, goalsText });
 }
@@ -231,7 +220,7 @@ test("checkpoints carry the result outcome, or null until they run", () => {
     { afterStep: "2", outcome: "failed" },
     { afterStep: "3", outcome: null },
   ]);
-  // A checkpoint heading carries no checkbox, so it is never a step.
+
   assert.deepStrictEqual(state.steps.map((step) => step.number), ["1", "2", "3"]);
   assert.deepStrictEqual(state.goalCoverage.orphanSteps, []);
 });
@@ -350,9 +339,6 @@ test("orphan steps, the infra escape, and citations of unknown goal IDs are sepa
 });
 
 test("only the escape's own spelling clears a step out of orphanSteps", () => {
-  // `none` on its own is a malformed goal line, not the escape task-goals.md defines, and review-task
-  // reads orphanSteps as the whole answer to which steps deliver nothing — so a near miss that
-  // silently qualified would hide exactly the scope creep this list exists to surface.
   const plan = `# Plan: near misses
 
 **Status:** to-do
@@ -380,9 +366,6 @@ test("only the escape's own spelling clears a step out of orphanSteps", () => {
 });
 
 test("a fence closer carrying an info string does not end the block", () => {
-  // CommonMark allows an info string on an opener and nothing but whitespace on a closer. Closing on
-  // the inner opener would hand the rest of the example back as the plan's own lines — and the
-  // `**Status:** done` written there as illustration would then read as the plan's status.
   const plan = `# Plan: fenced example
 
 **Status:** executing
@@ -511,9 +494,6 @@ ${FENCE}
   ]);
 });
 
-// `plan.md` is the task's only lifecycle home, so a `**Status:**` surviving in a result file is
-// reported as the legacy field it is: verbatim, judged against no vocabulary, and never a second
-// lifecycle for a reader to weigh against the plan's.
 test("a legacy result status is reported verbatim, and a conformant result carries none", () => {
   const legacy = parse(
     MIXED_PLAN,

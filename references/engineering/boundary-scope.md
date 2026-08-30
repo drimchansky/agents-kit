@@ -90,8 +90,8 @@ boundary run, so a reference taken without pruning them reads as a delta at ever
 silently restoring the cost this scoping removes. But a prune filters the baseline as well as the
 current walk, so pruning a *tracked* output directory — a committed bundle, a checked-in generated
 client — drops a real change out of the delta before § *Widening* can ever see it. Tracked output is
-measured, not pruned, whatever churn it costs; `scripts/worktree-merge.ts` § *Git-ignored content* and
-§ *Prunes and tracked content* own both guards for all three of the manifest's roles. The ignore drop
+measured, not pruned, whatever churn it costs; `<kit-root>/SCRIPTS.md`
+§ *`scripts/worktree-merge.ts`* owns both guards for all three of the manifest's roles. The ignore drop
 has a consequence of its own, and it is the mirror of the prune one: a git-ignored path is not in the
 delta, so work done at one is never incorporated. In this role that costs nothing — a boundary compares
 a tree against its own earlier state, where an ignored path reads against itself and the delta is a

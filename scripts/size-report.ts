@@ -1,57 +1,7 @@
 #!/usr/bin/env node
-// Reports the runtime context each skill loads, in bytes and approximate tokens, so a
-// contract-slimming change can be measured against a captured baseline.
-// Zero dependencies; runs under Node type stripping — too old a Node fails as a parse error, not a
-// version message. Floor in AGENTS.md § The `.ts` sources are unchecked by design.
-// Run: node scripts/size-report.ts [--skill NAME]... <kit-root>
-//
-// Three sets per skill. The direct closure is what the skill itself pulls in: its own SKILL.md plus
-// every distinct `./references/<path>.md` and `./AGENTS.md` the file cites, resolved against
-// <kit-root> — the installed layout resolves a skill's `./AGENTS.md` to its copy of CORE_RULES.md, so
-// that is the file counted, never this repository's maintainer-facing AGENTS.md. A SKILL.md whose Core
-// Rules step cites the domain pack as the literal template `./references/<domain>/rules.md` loads a
-// real pack at run time, so the direct scan resolves the template against the kit's default pack
-// (`engineering`, the default the template's own sentence names) and counts each phase file the same
-// line names in backticks (`execution.md`, …) beside it — without this the template's unconditional
-// loads would be invisible to the byte totals. The template is counted only in a SKILL.md; a reference
-// file's prose mention of `<domain>` stays unexpanded.
-//
-// That closure is reported split in two, as `hot` and `cold`. A citation is cold when the HTML comment
-// `<!-- cold -->` sits on its line — one marker gates the whole line, the template's expanded pack
-// files included — and a cited file lands in `cold` only when every one of its citations carries the
-// marker, because a single unmarked citation loads it unconditionally. The skill's own SKILL.md and its
-// `./AGENTS.md` are hot whatever a marker says. The marker classifies and nothing more: the condition a
-// cold file loads on is named in the SKILL.md prose beside the citation
-// (references/workflow/skill-conventions.md § Cold citations).
-//
-// The `transitive` set is an upper bound: the whole direct closure, hot and cold together, plus,
-// recursively, every `./<path>.md` or `../<path>.md` a counted reference file cites, resolved against
-// the citing file's own directory. Cycles terminate and each file is counted once per set. Reference
-// files expand; a SKILL.md never does, so a composite skill's sibling-skill loads are outside every
-// set. Citations are matched wherever they appear in the text, fenced examples included — the
-// transitive number is a bound, so over-counting is the safe direction. Section anchors are ignored:
-// the unit of loading is the file.
-//
-// approxTokens is round(bytes / 4) — the flat approximation, applied to a set's total bytes rather than
-// summed from its per-file values.
-//
-// Contract: stdout is exactly one JSON object,
-// {"root":<absolute kit root, or null>,"skills":[…],"warnings":N,"unresolved":[…]}. Each skill is
-// {skill,hot:{files,bytes,approxTokens},cold:{…},transitive:{…}}, and each `files` entry is
-// {path,bytes,approxTokens} with `path` relative to the kit root — hot and cold in citation order,
-// transitive in breadth-first order. `unresolved` names every citation that reached no readable file
-// as "<citing file> -> <citation>", and a file whose own contents could not be read as
-// "<file> -> (contents)", so a byte total is never read as complete coverage while it is
-// non-empty. Warnings go to stderr and the exit status is always 0, so a partly unreadable kit still
-// parses.
-
 import { lstatSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 
-// stdout is asynchronous on a macOS pipe, so the report is written and the module then ends: calling
-// process.exit after the write would discard whatever the pipe buffer could not take, truncating the
-// JSON above 64 KB. A reader that closes early then raises EPIPE on a stream nothing awaits, and
-// swallowing that is what keeps the always-zero exit status the contract above promises.
 process.stdout.on("error", (err: NodeJS.ErrnoException) => {
   if (err.code !== "EPIPE") throw err;
 });
@@ -60,27 +10,13 @@ const BYTES_PER_TOKEN = 4;
 const CORE_RULES = "CORE_RULES.md";
 const AGENTS_CITATION = "./AGENTS.md";
 const SKILL_FILE = "SKILL.md";
-
-// What a SKILL.md pulls in at run time. All three forms are rooted at the kit root rather than at the
-// skill directory, which is why the direct scan resolves them there and not against the citing file.
 const SKILL_CITATION = /\.\/(?:references\/(?:[A-Za-z0-9._/-]+|<domain>\/rules)\.md|AGENTS\.md)/g;
 const DOMAIN_TEMPLATE = "./references/<domain>/rules.md";
 const DEFAULT_PACK = "references/engineering";
-// A phase file named in backticks on the template's own line (`execution.md`, `verification.md`, …).
-// Lowercase-only on purpose: the same line names task artifacts like `CONTEXT.md`, which are not pack
-// files and must stay uncounted.
 const PHASE_FILE = /`([a-z][a-z-]*\.md)`/g;
-// What a reference file pulls in: any relative Markdown citation, resolved against its own directory.
 const REFERENCE_CITATION = /\.\.?\/[A-Za-z0-9._/-]*\.md/g;
-// Gates every citation on its line as cold. Written `<!-- cold -->`; the inner spacing is tolerated so
-// a hand-typed variant is classified rather than silently counted as an unconditional load.
 const COLD_MARKER = /<!--\s*cold\s*-->/;
 
-// The task folder's role-named files, plus the two named deliverable roles
-// (references/workflow/task-layout.md § One task, one flat folder and references/workflow/doc-task-files.md). A reference
-// file cites these to describe the user's task folder, so a citation to one that resolves to nothing is
-// not a broken kit citation and reporting it would give every healthy run a permanent false warning.
-// The suppression is warning-only: a path that resolves is counted whatever its name.
 const TASK_ARTIFACTS = new Set([
   "CONTEXT.md",
   "goals.md",
@@ -115,7 +51,6 @@ interface DirectCitation {
 }
 
 interface DirectClosure {
-  // Citation order, hot and cold together: the seed the transitive closure expands from.
   readonly files: readonly CountedFile[];
   readonly coldPaths: ReadonlySet<string>;
 }
@@ -134,18 +69,13 @@ interface Report {
   readonly unresolved: readonly string[];
 }
 
-// `bytes` when the path is a regular file, `error` for every other outcome — which is what the
-// callers below branch on, and why the union keeps the two exclusive.
 type Measurement =
   | { readonly bytes: number; readonly error?: undefined }
   | { readonly bytes?: undefined; readonly error: string };
 
 const warnings: string[] = [];
-// Citations that reached no readable file, in the contract rather than only on stderr: a caller reading
-// byte totals alone would take a path whose references it never opened for a fully measured one.
 const unresolved: string[] = [];
 const unresolvedSeen = new Set<string>();
-
 const approxTokens = (bytes: number): number => Math.round(bytes / BYTES_PER_TOKEN);
 const display = (root: string, abs: string): string => relative(root, abs).split(sep).join("/");
 const withinRoot = (abs: string, root: string): boolean => abs === root || abs.startsWith(root + sep);
@@ -160,8 +90,8 @@ function noteUnresolved(citation: string, from: string, reason: string): void {
 
 function measure(abs: string): Measurement {
   try {
-    const st = statSync(abs);
-    return st.isFile() ? { bytes: st.size } : { error: "not a regular file" };
+    const stat = statSync(abs);
+    return stat.isFile() ? { bytes: stat.size } : { error: "not a regular file" };
   } catch (err) {
     return { error: err.code === "ENOENT" ? "no such file" : (err.code ?? err.message) };
   }
@@ -171,10 +101,6 @@ function readText(abs: string, from: string): string | null {
   try {
     return readFileSync(abs, "utf8");
   } catch (err) {
-    // Its citations go unread, so everything they would have reached is missing from the closure
-    // while its own bytes still count. Recorded in `unresolved`, which is what the contract ties
-    // completeness to — a stat-level failure already lands there through `measure`, and only the
-    // read-level one, the likelier of the two, escaped.
     noteUnresolved("(contents)", from, err.code ?? err.message);
     return null;
   }
@@ -187,7 +113,6 @@ function fileEntry(root: string, abs: string, bytes: number): CountedFile {
 const citationTarget = (citation: string, fromDir: string, root: string): string =>
   citation === AGENTS_CITATION ? join(root, CORE_RULES) : resolve(fromDir, citation);
 
-// `seen` carries the per-set dedup, which is also what terminates citation cycles.
 function countCitation(
   citation: string,
   fromDir: string,
@@ -198,8 +123,7 @@ function countCitation(
 ): string | null {
   const abs = citationTarget(citation, fromDir, root);
   if (seen.has(abs)) return null;
-  // A citation climbing out of the kit root names something no installed home carries, so it is
-  // reported rather than measured: counting it would put a file outside the kit in a kit load path.
+
   if (!withinRoot(abs, root)) {
     noteUnresolved(citation, from, "outside the kit root");
     return null;
@@ -220,8 +144,6 @@ function lineAround(text: string, index: number): string {
   return text.slice(start, end === -1 ? text.length : end);
 }
 
-// Every citation a SKILL.md loads, in citation order, each carrying the gating of the line it sits on.
-// The domain template expands here so the pack files it stands for inherit that same line's gating.
 function skillCitations(text: string): DirectCitation[] {
   const citations: DirectCitation[] = [];
   for (const match of text.matchAll(SKILL_CITATION)) {
@@ -249,16 +171,13 @@ function directSet(root: string, skill: string): DirectClosure | null {
   }
   const seen = new Set([skillFile]);
   const files = [fileEntry(root, skillFile, result.bytes)];
-  // Per cited file, whether every citation of it so far was marked. The SKILL.md itself is absent from
-  // the map and so stays hot.
+
   const gating = new Map<string, boolean>();
   const text = readText(skillFile, from);
   if (text != null) {
     for (const { citation, cold } of skillCitations(text)) {
       countCitation(citation, root, from, root, seen, files);
-      // The core rules load with the skill whatever a marker says, and one unmarked citation of any
-      // other file means that file loads unconditionally too — so a marker only holds while it is
-      // unanimous.
+
       const marked = cold && citation !== AGENTS_CITATION;
       const abs = citationTarget(citation, root, root);
       gating.set(abs, marked && (gating.get(abs) ?? true));
@@ -302,6 +221,14 @@ function summarize(files: readonly CountedFile[]): MeasuredSet {
   };
 }
 
+function isDanglingSymlink(path: string): boolean {
+  try {
+    return lstatSync(path).isSymbolicLink();
+  } catch {
+    return false;
+  }
+}
+
 function skillNames(root: string): string[] {
   const skillsDir = join(root, "skills");
   let entries;
@@ -321,19 +248,9 @@ function skillNames(root: string): string[] {
       names.push(entry.name);
       continue;
     }
-    // Only a genuinely absent SKILL.md marks a non-skill directory. Every other miss — EACCES, a
-    // SKILL.md that is itself a directory, a dangling symlink (stat fails while lstat succeeds) —
-    // is a skill the report would otherwise omit with no trace, and `unresolved` is what
-    // size-check.ts's incomplete-measurement refusal keys on.
+
     let reason = result.error === "no such file" ? null : result.error;
-    if (reason == null) {
-      try {
-        lstatSync(skillFile);
-        reason = "dangling symlink";
-      } catch {
-        // truly absent — a directory that simply isn't a skill
-      }
-    }
+    if (reason == null && isDanglingSymlink(skillFile)) reason = "dangling symlink";
     if (reason != null) noteUnresolved("(unmeasurable)", display(root, skillFile), reason);
   }
   return names.sort((a, b) => a.localeCompare(b, "en"));
@@ -380,8 +297,7 @@ if (roots.length === 0) {
   if (isDir) {
     root = candidate;
     const available = skillNames(root);
-    // A name that matches nothing is reported rather than silently narrowing the report to nothing,
-    // so a typo in the filter never reads as a skill that loads no context.
+
     for (const name of only) {
       if (!available.includes(name)) warnings.push(`no such skill: ${name}`);
     }

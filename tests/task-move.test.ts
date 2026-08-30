@@ -1,9 +1,3 @@
-// Covers scripts/task-move.ts: the guarded archive and backlog moves, their preconditions, and the
-// 0/1/2 exit contract.
-// Zero dependencies; runs under Node type stripping — too old a Node fails as a parse error, not a
-// version message. Floor in AGENTS.md § The `.ts` sources are unchecked by design.
-// Run: node --test tests/<name>.test.ts   ·   every suite: node --test "tests/*.test.ts"
-
 import assert from "node:assert";
 import { spawnSync } from "node:child_process";
 import {
@@ -26,9 +20,6 @@ import { fileURLToPath } from "node:url";
 const TESTS_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_DIR = resolve(TESTS_DIR, "..");
 const SCRIPT = join(REPO_DIR, "scripts", "task-move.ts");
-
-// Realpath-normalized because a bare slug resolves against the child's own process directory, which
-// macOS reports through /private — the tree the assertions name has to be the tree the script sees.
 const TEST_ROOT = realpathSync(mkdtempSync(join(tmpdir(), "agents-kit-task-move-")));
 const PLAN = "plan.md";
 const NOTE = "notes.md";
@@ -39,8 +30,6 @@ interface Run {
   readonly stderr: string;
 }
 
-// The exit status is the contract's outcome channel — 0 moved, 1 refused, 2 could not be run — so
-// every run asserts it rather than trusting the message that came with it.
 function runMove(expectedStatus: number, args: readonly string[], options: object = {}): Run {
   const run = spawnSync(process.execPath, [SCRIPT, ...args], { encoding: "utf8", ...options });
   assert.strictEqual(
@@ -61,11 +50,8 @@ function plan(status: string): string {
 }
 
 const RESULT = "# a result\n\n## Current state\n\n_Updated:_ 2026-01-01\n";
-// A result written before `plan.md` became the single status home. Its header is inert, so every gate
-// below has to decide the same way it does for RESULT.
 const LEGACY_RESULT = "# a result\n\n**Status:** done\n\n## Current state\n\n_Updated:_ 2026-01-01\n";
 
-/** Creates `<TEST_ROOT>/<area>/` empty and returns it, so each case owns an independent tree. */
 function area(name: string): string {
   const dir = join(TEST_ROOT, name);
   rmSync(dir, { recursive: true, force: true });
@@ -73,7 +59,6 @@ function area(name: string): string {
   return dir;
 }
 
-/** Creates a task folder at `dir` holding `files`, plus the note every move has to carry along. */
 function writeTask(dir: string, files: Record<string, string> = { [PLAN]: plan("done") }): string {
   mkdirSync(dir, { recursive: true });
   for (const [name, body] of Object.entries(files)) writeFileSync(join(dir, name), body);
@@ -108,7 +93,6 @@ function assertUnmoved(src: string): void {
   );
 }
 
-/** The archive-ish and backlog-ish entries of `dir`, which must never grow to two spellings. */
 function containers(dir: string): string[] {
   return readdirSync(dir).filter((name) => /^(archive|backlog)$/i.test(name));
 }
@@ -142,12 +126,7 @@ test("a live plan is refused for archiving and nothing moves", () => {
   assert.deepStrictEqual(containers(parent), [], "a refused move creates no container");
 });
 
-// The archive precondition reads the plan and nothing else, so a legacy `**Status:** done` left in a
-// result file cannot stand in for the plan that would confirm the task finished.
 test("a folder with no plan.md is refused for archiving, legacy result status included", () => {
-  // The two cases fail different gates, and the messages say which: a folder holding no role file at
-  // all is not a task folder and never reaches the terminal check, while one holding only a result
-  // does reach it and is refused for having no status to confirm.
   for (const [name, files, reason] of [
     ["bare", {}, "holds no task file"],
     ["legacy-status", { "result.md": LEGACY_RESULT }, "no plan.md"],
@@ -161,9 +140,6 @@ test("a folder with no plan.md is refused for archiving, legacy result status in
 });
 
 test("a directory holding no task file is refused rather than moved", () => {
-  // The project-area shape: a directory that groups task folders holds no role file of its own, and
-  // both forms of argument have to refuse it — verbatim path and bare slug alike — or parking one
-  // relocates every task beneath it.
   const project = area("not-a-task");
   const root = join(project, ".agents", "tasks");
   const projectArea = writeTask(join(root, "treasury"), {});
@@ -179,8 +155,6 @@ test("a directory holding no task file is refused rather than moved", () => {
 });
 
 test("the store directory itself is never reached by a relative slug", () => {
-  // `..` normalizes to the store root under the canonical root, which holds no role file either — the
-  // same refusal, reached by an argument that looks like a slug rather than a path.
   const project = area("dotdot-slug");
   writeTask(join(project, ".agents", "tasks", "real"), { [PLAN]: plan("to-do") });
   const { stderr } = runMove(2, ["..", "--to", "backlog"], { cwd: project });
@@ -205,9 +179,6 @@ test("a status inside a fenced block is not read as the plan's own", () => {
   assertUnmoved(src);
 });
 
-// A fence closes on a marker run that is no further indented than the one that opened it. An
-// indented run inside the block is content, so a plan whose only `**Status:**` line sits in a fenced
-// example carries no status at all — and a folder with no readable status never archives.
 test("an indented marker run inside a fence does not close it", () => {
   const parent = area("archive-fence-indent");
   const body = "# a task\n\nAn example:\n\n```markdown\n    ```\n**Status:** done\n```\n\n## Steps\n";
@@ -261,11 +232,6 @@ test("an occupied destination is refused rather than overwritten or merged into"
   assert.deepStrictEqual(readdirSync(occupant), [PLAN], "the folder already in the archive is untouched");
 });
 
-// A rename that fails after this run created the container is still a refusal: the gates all passed,
-// so the exit-1 reason is the rename's, not the generic exit 2 reserved for a run that never got as
-// far as deciding — and the container this run created goes with it, restoring "changed nothing on
-// disk". A read-only source folder is the cheapest reliable trigger: renaming it into a sibling
-// container rewrites its `..`, which needs write permission on the folder itself.
 test("a rename that fails takes the container this run created with it", { skip: process.getuid?.() === 0 && "root bypasses the permission bits this case turns on" }, () => {
   const parent = area("archive-rename-fails");
   const src = writeTask(join(parent, "finished"));
@@ -306,8 +272,6 @@ test("an occupied destination inside a differently-cased container is still refu
 
 test("an already-archived folder is refused under either spelling of its container", () => {
   for (const [index, spelling] of ["Archive", "archive"].entries()) {
-    // The area names cannot differ by case alone: on a case-insensitive filesystem the second pass
-    // would reuse — and this helper would delete — the tree the first pass just proved.
     const parent = area(`archive-already-${index}`);
     const src = writeTask(join(parent, spelling, "finished"));
     const { stderr } = runMove(1, [src, "--to", "archive"]);
@@ -360,10 +324,6 @@ test("a finished plan is refused for parking and pointed at archiving", () => {
   assertUnmoved(src);
 });
 
-// The result carries no status of its own, so the gate turns on the file existing at all: it is
-// created only once execution starts (task-lifecycle.md § Companion result file). A legacy
-// `**Status:**` surviving in one decides nothing — the plan is the only authority, and a plan-less
-// folder has none to consult, so even a legacy `done` cannot point this move at archiving.
 test("a plan-less folder holding a result.md at all is refused for parking", () => {
   for (const [name, body] of [["conformant", RESULT], ["legacy-status", LEGACY_RESULT]] as const) {
     const parent = area(`backlog-result-${name}`);
@@ -378,10 +338,6 @@ test("a plan-less folder holding a result.md at all is refused for parking", () 
   }
 });
 
-// The recognition set admits the legacy suffix forms (task-layout.md § One task, one flat folder),
-// and only the kit's own canonical root is ever swept, so any other registered root can hold them
-// indefinitely. Both gates therefore have to read them: a folder whose plan is named `<x>.plan.md`
-// is not a plan-less folder, and one holding an `<x>.result.md` has started work.
 test("the gates read a legacy-suffix plan and result, not just the exact names", () => {
   for (const [name, files, reason] of [
     ["live-plan", { "feature.plan.md": plan("executing") }, "Only an unstarted task parks"],
@@ -457,8 +413,6 @@ test("a task round-trips: parked, activated by hand, then archived", () => {
   const parked = join(parent, "Backlog", "travels");
   assertMoved(runMove(0, [src, "--to", "backlog"]).stdout, src, parked);
 
-  // Activation is a plain `mv` back out by contract (task-backlog.md), not a mode of this script, so
-  // the return leg is the rename the user or an activating skill would make.
   renameSync(parked, src);
   writeFileSync(join(src, PLAN), plan("done"));
 

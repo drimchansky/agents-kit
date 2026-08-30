@@ -1,8 +1,3 @@
-// Covers scripts/session-triage.ts: transcript triage, its six signal classes, and its ranking.
-// Zero dependencies; runs under Node type stripping — too old a Node fails as a parse error, not a
-// version message. Floor in AGENTS.md § The `.ts` sources are unchecked by design.
-// Run: node --test tests/<name>.test.ts   ·   every suite: node --test "tests/*.test.ts"
-
 import assert from "node:assert";
 import { spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
@@ -30,13 +25,11 @@ const TESTS_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_DIR = resolve(TESTS_DIR, "..");
 const SCRIPT = join(REPO_DIR, "scripts", "session-triage.ts");
 const FIXTURES = join(TESTS_DIR, "fixtures", "sessions");
-
 const PIPE_BUFFER_BYTES = 65536;
 const EARLY_READER_BYTES = 64;
 const MAX_BUFFER_BYTES = 64 * 1024 * 1024;
 const VOLUME_SESSIONS = 300;
 const VOLUME_NAME_PADDING = 180;
-
 const TEST_ROOT = mkdtempSync(join(tmpdir(), "agents-kit-session-triage-"));
 const CORPUS = join(TEST_ROOT, "corpus");
 const CLAUDE_CORPUS = join(CORPUS, "claude");
@@ -77,9 +70,6 @@ const LOCKED_DIR_ARGS: readonly string[] = ["--since", "2026-03-10", LOCKED_DIR]
 const LOCKED_FILE_ARGS: readonly string[] = ["--since", "2026-03-10", LOCKED_CORPUS];
 const VOLUME_ARGS: readonly string[] = ["--since", "2020-01-01", "--top", "1", VOLUME_CORPUS];
 
-// `--since 2026-03-10` splits these: every file below is inside the window except the stale one.
-// The stamps are local times, because the script parses `--since` to local midnight — reading them
-// as UTC would shift files across that boundary and change which ones the window selects.
 const FIXTURE_MTIMES: readonly (readonly [string, string])[] = [
   [join(CLAUDE_CORPUS, "multi-signal.jsonl"), "2026-03-12T09:00:00"],
   [join(CLAUDE_CORPUS, "benign-errors.jsonl"), "2026-03-12T10:00:00"],
@@ -169,8 +159,6 @@ function isReadable(path: string): boolean {
   }
 }
 
-// remainderPaths names every flagged session beyond --top, so a low --top over long paths is what
-// pushes the payload past the 64 KB pipe buffer the two cases at the end measure against.
 function writeVolumeCorpus(root: string): void {
   const padding = "x".repeat(VOLUME_NAME_PADDING);
   const line = JSON.stringify({
@@ -193,7 +181,6 @@ function writeVolumeCorpus(root: string): void {
 }
 
 before(() => {
-  // Fixtures are copied so the mtimes above can be set without touching the repository.
   cpSync(FIXTURES, CORPUS, { recursive: true });
   for (const [path, stamp] of FIXTURE_MTIMES) {
     const when = new Date(stamp);
@@ -209,8 +196,6 @@ before(() => {
 });
 
 after(() => {
-  // A directory left at mode 000 cannot be listed, so the recursive remove below would fail on it
-  // while the unlistable-directory case's lock is still in place.
   chmodSync(LOCKED_INNER, 0o755);
   rmSync(TEST_ROOT, { recursive: true, force: true });
 });
@@ -253,8 +238,6 @@ test("a fully readable corpus reports nothing unread", () => {
   assert.strictEqual(report.unreadable, 0, "nothing in the fixture corpus goes unread");
 });
 
-// A file the run could not interpret is as unread as one it could not open, and the caller advances
-// its since-marker past both — so a stderr warning alone leaves it stepped over for good.
 test("a jsonl whose host cannot be sniffed is counted, not only warned about", () => {
   const { report } = runTriage(MAIN_ARGS);
   assert.strictEqual(report.skippedUnrecognized, 1, "the malformed corpus contributes one skipped file");
@@ -370,8 +353,6 @@ test("user-abort needs more than one interrupt in a session", () => {
   );
 });
 
-// One unknown Codex record type, one unparsable line, and a bare `null` on each host — a valid JSON
-// value that survives the parse, so only the classifiers' own guard keeps it off a dereference.
 test("unknown record types, unparsable lines, and null records are counted", () => {
   const { report } = runTriage(MAIN_ARGS);
   assert.strictEqual(report.skippedUnknownRecords, 4, "every uninterpretable record is tallied");
@@ -406,8 +387,6 @@ test("--since= and --top= inline forms are accepted", () => {
   assert.strictEqual(report.flagged.length, 2, "the inline forms carry the same values as the separated ones");
 });
 
-// `parseInt` would stop at the first non-digit and silently accept the leading run, so `2junk` would
-// truncate the list to 2 rather than warning. A count is only trustworthy if the flag that set it was.
 test("a --top carrying trailing garbage falls back to the default", () => {
   const { report } = runTriage(TOP_GARBAGE_ARGS);
   assert.strictEqual(report.flagged.length, 5, "the default --top 10 covers all five flagged sessions");
@@ -438,9 +417,6 @@ test("a missing --since warns on stderr and still exits 0", () => {
   assertIncludes(stderr, "--since must be YYYY-MM-DD", "the missing window is reported on stderr");
 });
 
-// Without a window nothing is walked, and the payload is otherwise byte-identical to a window that
-// was walked in full and found clean. The caller gates its since-marker on `unreadable`, so leaving
-// the two indistinguishable would advance the marker over transcripts nothing ever read.
 test("a directory left unwalked by a missing --since is counted as unread", () => {
   const { report } = runTriage(NO_SINCE_ARGS);
   assert.strictEqual(report.unreadable, 1, "the unwalked directory counts as unread");
@@ -467,9 +443,6 @@ test("an unparsable --since is reported in the contract, not only on stderr", ()
   assertIncludes(stderr, "--since must be YYYY-MM-DD", "stderr carries the warning as well");
 });
 
-// A `--since` given no date would otherwise consume the session directory as its value, emptying
-// `dirs` — so the guard above would have nothing left to report and the run would read as a clean
-// walk. A value is taken only when it has the shape of a date.
 test("a --since missing its date scans nothing", () => {
   const { report } = runTriage(DATELESS_SINCE_ARGS);
   assert.strictEqual(report.scanned, 0, "there is still no window to walk");
@@ -494,9 +467,6 @@ test("a flag value is consumed only when it has the shape the flag wants", () =>
   );
 });
 
-// Three identical genuine failures are a retry loop; three outputs that merely quote the phrase
-// mid-line — a grep hit over Codex's own sources, a diff of the classifier itself — are not. The
-// corpus is kept out of the main run so its counts stay independent of these two files.
 test("both retry-corpus transcripts are scanned", () => {
   const { report } = runTriage(RETRY_ARGS);
   assert.strictEqual(report.scanned, 2, "both transcripts fall inside the window");
@@ -533,8 +503,6 @@ test("a missing directory scans nothing", () => {
   assert.strictEqual(report.scanned, 0, "there is nothing behind the path to walk");
 });
 
-// ENOENT is an uninstalled host, not an unread one: counting it would pin the caller's since-marker
-// forever on any machine running only one of the two agents.
 test("a missing directory is not counted as unread", () => {
   const { report } = runTriage(ABSENT_ARGS);
   assert.strictEqual(report.unreadable, 0, "an absent corpus is not work that went undone");
@@ -545,8 +513,6 @@ test("a missing directory warns and does not abort the run", () => {
   assertIncludes(stderr, "unreadable dir", "the absent directory is reported on stderr");
 });
 
-// A directory the run could not list hides a whole subtree. The caller gates its marker advance on
-// `unreadable`, so a readdir failure that never reaches the contract loses those transcripts for good.
 test("a directory that cannot be listed counts as unread", (t: TestContext) => {
   if (isReadable(LOCKED_INNER)) {
     t.skip("the unlistable-directory case needs a user that chmod 000 actually stops");
@@ -575,8 +541,6 @@ test("an unlistable directory reaches the contract, not only stderr", (t: TestCo
   assert.strictEqual(report.scanned, 0, "the subtree behind the failed listing was never reached");
 });
 
-// A transcript the run could not read must be named, not silently dropped: the caller advances its
-// since-marker past this window, so an unread file would otherwise never be looked at again.
 test("a transcript that cannot be read is counted", (t: TestContext) => {
   if (isReadable(LOCKED_FILE)) {
     t.skip("the unreadable-file case needs a user that chmod 000 actually stops");
@@ -622,8 +586,6 @@ test("an unreadable transcript is reported in the contract, not only on stderr",
   assertIncludes(stderr, "unreadable file", "stderr carries the warning as well");
 });
 
-// Every case above reads stdout through spawnSync's own drained pipe or a file, so none of them can
-// see a report truncated at the pipe buffer.
 test("a report over 64 KB parses when read through a pipe, not only from a file", () => {
   const target = openSync(VOLUME_REPORT, "w");
   try {
@@ -657,9 +619,7 @@ test("a report over 64 KB parses when read through a pipe, not only from a file"
 test("an early-closing reader does not turn into a non-zero exit", async () => {
   const reader = spawn("head", ["-c", String(EARLY_READER_BYTES)], { stdio: ["pipe", "ignore", "ignore"] });
   assert.ok(reader.stdin, "the early-closing reader must expose a piped stdin");
-  // The reader's read end is the subject's only one, and it closes while a report this far over the
-  // pipe buffer still has bytes to write — point this at a corpus the reader can drain and the
-  // subject finishes before any EPIPE, leaving the always-zero exit contract unexercised.
+
   const subject = spawn(process.execPath, [SCRIPT, ...VOLUME_ARGS], {
     stdio: ["ignore", reader.stdin, "ignore"],
   });

@@ -1,8 +1,3 @@
-// Covers scripts/size-report.ts: the per-skill context-load measurement and its JSON contract.
-// Zero dependencies; runs under Node type stripping — too old a Node fails as a parse error, not a
-// version message. Floor in AGENTS.md § The `.ts` sources are unchecked by design.
-// Run: node --test tests/<name>.test.ts   ·   every suite: node --test "tests/*.test.ts"
-
 import assert from "node:assert";
 import { spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
@@ -30,14 +25,12 @@ const TESTS_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_DIR = resolve(TESTS_DIR, "..");
 const SCRIPT = join(REPO_DIR, "scripts", "size-report.ts");
 const FIXTURES = join(TESTS_DIR, "fixtures", "size-report");
-
 const PIPE_BUFFER_BYTES = 65536;
 const EARLY_READER_BYTES = 64;
 const MAX_BUFFER_BYTES = 64 * 1024 * 1024;
 const VOLUME_SKILLS = 60;
 const VOLUME_REFERENCES = 8;
 const VOLUME_NAME_PADDING = 60;
-
 const TEST_ROOT = mkdtempSync(join(tmpdir(), "agents-kit-size-report-"));
 const KIT = join(TEST_ROOT, "kit");
 const LOCKED_KIT = join(TEST_ROOT, "locked-kit");
@@ -185,12 +178,6 @@ test("the hot set holds the SKILL.md, its CORE_RULES.md, and each cited referenc
   );
 });
 
-// The marker is unanimous or it does not hold: one unmarked citation loads the file on every
-// invocation, whatever any marked citation of it said (references/workflow/skill-conventions.md
-// § Cold citations). Both citation orders are fixtured on purpose — alpha unmarked-then-marked,
-// gamma marked-then-unmarked — because a fold that simply keeps the last write agrees with the
-// unanimous answer on one order and contradicts it on the other. Asserted on membership rather
-// than bytes so the fixture stays editable.
 test("a file cited both marked and unmarked stays hot in either order; one cited only marked goes cold", () => {
   const { report } = runReport([KIT]);
   const { hot, cold } = skillRow(report, "mixed-skill");
@@ -211,8 +198,6 @@ test("a file cited both marked and unmarked stays hot in either order; one cited
   );
 });
 
-// The core rules load with the skill whatever a marker says, and mixed-skill marks the very line its
-// ./AGENTS.md citation sits on — so this pins the exemption rather than the line's gating.
 test("a marked line's ./AGENTS.md citation is still hot", () => {
   const { report } = runReport([KIT]);
   const { hot } = skillRow(report, "mixed-skill");
@@ -411,9 +396,7 @@ test("a report over 64 KB parses when read through a pipe, not only from a file"
 test("an early-closing reader does not turn into a non-zero exit", async () => {
   const reader = spawn("head", ["-c", String(EARLY_READER_BYTES)], { stdio: ["pipe", "ignore", "ignore"] });
   assert.ok(reader.stdin, "the early-closing reader must expose a piped stdin");
-  // The reader's read end is the subject's only one, and it closes while a report this far over the
-  // pipe buffer still has bytes to write — point this at a fixture the reader can drain and the
-  // subject finishes before any EPIPE, leaving the always-zero exit contract unexercised.
+
   const subject = spawn(process.execPath, [SCRIPT, VOLUME_KIT], {
     stdio: ["ignore", reader.stdin, "ignore"],
   });

@@ -1,8 +1,3 @@
-// Covers setup.ts: what the installer deploys, what it reclaims, and what it refuses to touch.
-// Zero dependencies; runs under Node type stripping — too old a Node fails as a parse error, not a
-// version message. Floor in AGENTS.md § The `.ts` sources are unchecked by design.
-// Run: node --test tests/<name>.test.ts   ·   every suite: node --test "tests/*.test.ts"
-
 import assert from "node:assert";
 import { spawnSync } from "node:child_process";
 import {
@@ -24,14 +19,10 @@ import { fileURLToPath } from "node:url";
 const TESTS_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_DIR = resolve(TESTS_DIR, "..");
 const SETUP = join(REPO_DIR, "setup.ts");
-
 const MAX_BUFFER_BYTES = 64 * 1024 * 1024;
-
-// Ownership markers setup.ts writes beside each payload it owns; an item without one is the user's.
 const MARKER = ".agents-kit";
 const CORE_RULES_MARKER = ".agents-kit-core-rules";
 const EXECUTOR_MARKER = ".agents-kit-executor";
-
 const EXECUTOR_SKIP = "skipped (not kit-managed): agents/executor";
 const CONFIG_VERDICT = /[✓⚠] config/;
 const WARNED_CONFIG = "⚠ config";
@@ -44,25 +35,19 @@ const TOML_INTERPRETERS: readonly string[] = [
   "python3.11",
 ];
 
-// setup.ts installs into paths derived from $HOME, so every run below is pointed at a throwaway home
-// inside this root. Nothing may invoke it against a path these guards have not proven temp-scoped:
-// a run against the operator's own home would rewrite their live ~/.claude and ~/.codex.
 const TEST_ROOT_PREFIX = join(tmpdir(), "agents-kit-setup-install.");
 const TEST_ROOT = mkdtempSync(TEST_ROOT_PREFIX);
 const OPERATOR_HOME = resolve(homedir());
-
 const PRIMARY_HOME = join(TEST_ROOT, "primary-home");
 const CLAUDE_HOME = join(PRIMARY_HOME, ".claude");
 const CODEX_HOME = join(PRIMARY_HOME, ".codex");
 const HOMES: readonly string[] = [CLAUDE_HOME, CODEX_HOME];
-
 const CLAUDE_EXECUTOR = join(CLAUDE_HOME, "agents", "executor.md");
 const CODEX_EXECUTOR = join(CODEX_HOME, "agents", "executor.toml");
 const CLAUDE_EXECUTOR_MARKER = join(CLAUDE_HOME, "agents", EXECUTOR_MARKER);
 const CODEX_EXECUTOR_MARKER = join(CODEX_HOME, "agents", EXECUTOR_MARKER);
 const CLAUDE_REVIEWER = join(CLAUDE_HOME, "agents", "reviewer.md");
 const CODEX_REVIEWER = join(CODEX_HOME, "agents", "reviewer.toml");
-
 const CONFLICT_HOME = join(TEST_ROOT, "conflict-home");
 const CONFLICT_CLAUDE = join(CONFLICT_HOME, ".claude");
 const CONFLICT_CODEX = join(CONFLICT_HOME, ".codex");
@@ -76,20 +61,18 @@ const CONFLICT_ENTRIES: readonly string[] = [
   join(".codex", "CORE_RULES.md"),
 ];
 
-// The symlinked-skills gate decides per home whether a linked skills/ is kit-owned and reclaimable
-// or the user's and refusable, so each of its four outcomes needs a home of its own: a reclaimed one
-// is a real directory afterwards and would no longer exercise the gate.
 const REPO_LINK_HOME = join(TEST_ROOT, "repo-link-home");
 const DANGLING_LINK_HOME = join(TEST_ROOT, "dangling-link-home");
 const FOREIGN_KIT_HOME = join(TEST_ROOT, "foreign-kit-home");
 const USER_LINK_HOME = join(TEST_ROOT, "user-link-home");
 const FOREIGN_KIT = join(TEST_ROOT, "foreign-kit");
 const DANGLING_TARGET = join(TEST_ROOT, "never-created", "skills");
-// Named `skills` on purpose: a differing basename fails the kit-clone probe on its first term, which
-// would leave the interesting case — a real `.../skills` whose parent is no checkout — unexercised.
 const USER_LINK_TARGET = join(TEST_ROOT, "user-owned", "skills");
 const USER_LINK_SKILL = "user-owned linked skill\n";
-
+const LINKED_ENTRY_HOME = join(TEST_ROOT, "linked-entry-home");
+const LINKED_ENTRY_NAME = "linked-fixture";
+const LINKED_ENTRY_TARGET = join(TEST_ROOT, "user-owned-marked", LINKED_ENTRY_NAME);
+const LINKED_ENTRY_SKILL = "user-owned skill reached through a link\n";
 const RETIRED_SKILL = "retired-fixture";
 const USER_RETIRED_SKILL = "user-owned retired-name skill\n";
 const USER_LIVE_SKILL = "user-owned live-name skill\n";
@@ -99,7 +82,6 @@ const UNRELATED_CLAUDE_AGENT = "unrelated Claude agent\n";
 const UNRELATED_CODEX_AGENT = "unrelated Codex agent\n";
 const USER_CLAUDE_REFERENCE = "user-owned Claude references\n";
 const USER_CODEX_CORE_RULES = "user-owned Codex core rules\n";
-
 type PathKind = "absent" | "directory" | "file" | "symlink" | "other";
 
 interface SetupRun {
@@ -189,6 +171,7 @@ interface SymlinkGate {
   readonly dangling: readonly string[];
   readonly foreignKit: readonly string[];
   readonly userLink: RefusedLink;
+  readonly linkedEntry: readonly string[];
 }
 
 function pathKind(path: string): PathKind {
@@ -235,9 +218,6 @@ function treeProblems(source: string, target: string): string[] {
   const targetKind = pathKind(target);
   if (sourceKind !== targetKind) return [`${target} is ${targetKind} where ${source} is ${sourceKind}`];
   switch (sourceKind) {
-    // Link targets are compared rather than what they resolve to: each kit skill reaches the
-    // install-root CORE_RULES.md and references/ through relative links, and a copy that
-    // materialized them into private duplicates would hold identical bytes on both sides.
     case "symlink":
       return readlinkSync(source) === readlinkSync(target)
         ? []
@@ -291,9 +271,6 @@ function sharedPayloadProblems(hostHome: string): string[] {
     ...markerProblems(join(hostHome, CORE_RULES_MARKER)),
     ...copyProblems(join(REPO_DIR, "CORE_RULES.md"), join(hostHome, "CORE_RULES.md")),
     ...markerProblems(join(hostHome, "references", MARKER)),
-    // setup.ts installs references/ with `dereference`, which materializes any symlink it finds, while
-    // health-check.ts reports a one-sided link as drift. A symlink added under references/ would
-    // therefore report as permanent, unfixable drift in every installed home.
     ...symlinksUnder(join(REPO_DIR, "references")).map((path) => `references/ must stay symlink-free: ${path}`),
     ...treeProblems(join(REPO_DIR, "references"), join(hostHome, "references")),
   ];
@@ -394,8 +371,6 @@ function runDoctor(args: readonly string[]): SetupRun {
   };
 }
 
-// codex doctor prints its configuration verdict under a `Configuration` heading, and the exit status
-// folds in unrelated environmental diagnostics — so the verdict line, not the status, is the signal.
 function doctorConfigLine(log: string): string {
   const lines = log.split("\n");
   const heading = lines.indexOf("Configuration");
@@ -553,9 +528,6 @@ function linkedHome(home: string, target: string): void {
   symlinkSync(target, join(home, ".claude", "skills"));
 }
 
-// A reclaimed link is gone and skills/ is a real directory carrying the marked payload — the ../../
-// links every kit skill holds resolve only then, which is the whole reason the gate refuses the
-// alternative rather than installing through it.
 function reclaimedProblems(home: string): string[] {
   const skills = join(home, ".claude", "skills");
   const kind = pathKind(skills);
@@ -563,9 +535,6 @@ function reclaimedProblems(home: string): string[] {
   return skillNames().flatMap((name) => markerProblems(join(skills, name, MARKER)));
 }
 
-// The reclaim is `rmSync` on the link itself, never a recursive remove through it, so a link's
-// target keeps its contents in every reclaimed case. Asserted because the failure would be silent
-// and destructive: the repository's own skills/ is one of the targets exercised below.
 function preservedTargetProblems(target: string): string[] {
   return pathKind(target) === "directory" ? [] : [`a link target was removed through the symlink: ${target}`];
 }
@@ -593,6 +562,24 @@ function observeSymlinkGate(): SymlinkGate {
     ...preservedTargetProblems(join(FOREIGN_KIT, "skills")),
   ];
 
+  mkdirSync(LINKED_ENTRY_TARGET, { recursive: true });
+  writeFileSync(join(LINKED_ENTRY_TARGET, MARKER), "");
+  writeFileSync(join(LINKED_ENTRY_TARGET, "SKILL.md"), LINKED_ENTRY_SKILL);
+  for (const home of [".claude", ".codex"]) {
+    mkdirSync(join(LINKED_ENTRY_HOME, home, "skills"), { recursive: true });
+    symlinkSync(LINKED_ENTRY_TARGET, join(LINKED_ENTRY_HOME, home, "skills", LINKED_ENTRY_NAME));
+  }
+  runSetup(LINKED_ENTRY_HOME);
+  const linkedEntry = [
+    ...[".claude", ".codex"].flatMap((home) => {
+      const link = join(LINKED_ENTRY_HOME, home, "skills", LINKED_ENTRY_NAME);
+      const kind = pathKind(link);
+      return kind === "symlink" ? [] : [`the sweep removed a linked entry whose target holds a marker: ${link} (found ${kind})`];
+    }),
+    ...preservedTargetProblems(LINKED_ENTRY_TARGET),
+    ...contentProblems(join(LINKED_ENTRY_TARGET, "SKILL.md"), LINKED_ENTRY_SKILL),
+  ];
+
   mkdirSync(USER_LINK_TARGET, { recursive: true });
   writeFileSync(join(USER_LINK_TARGET, "SKILL.md"), USER_LINK_SKILL);
   linkedHome(USER_LINK_HOME, USER_LINK_TARGET);
@@ -601,6 +588,7 @@ function observeSymlinkGate(): SymlinkGate {
     repoLink,
     dangling,
     foreignKit,
+    linkedEntry,
     userLink: {
       status: run.status,
       log: run.log,
@@ -609,8 +597,6 @@ function observeSymlinkGate(): SymlinkGate {
           ? []
           : ["the user's skills symlink was reclaimed rather than refused"],
         contentProblems(join(USER_LINK_TARGET, "SKILL.md"), USER_LINK_SKILL),
-        // The refusal is scoped to the home that carries the link: the loop still installs the
-        // other host, which is what makes the exit status the only signal that anything was skipped.
         markerProblems(join(USER_LINK_HOME, ".codex", CORE_RULES_MARKER)),
       ].flat(),
     },
@@ -623,9 +609,6 @@ function assertNoProblems(problems: readonly string[], message: string): void {
 
 let observed: Observations;
 
-// Each case's starting state is the previous case's finished home, exactly as the installer meets a
-// real one, so the runs happen here in order and each records what held at its own point. Asserting
-// against the live tree instead would read the state a later run has already overwritten.
 before(() => {
   assertTestRootIsolated();
   const collidingSkill = skillNames()[0];
@@ -785,6 +768,13 @@ test("a dangling skills symlink is reclaimed", () => {
 
 test("a skills symlink to another kit checkout is reclaimed", () => {
   assertNoProblems(observed.symlinkGate.foreignKit, "a link into a second checkout is kit-owned and reclaimable");
+});
+
+test("the reclaim sweep skips a linked entry even when its target holds a marker", () => {
+  assertNoProblems(
+    observed.symlinkGate.linkedEntry,
+    "the marker probe follows a link, so only the entry-level symlink skip keeps a user's link off the reclaim list",
+  );
 });
 
 test("a skills symlink the kit does not own is refused, leaving the home uninstalled", () => {

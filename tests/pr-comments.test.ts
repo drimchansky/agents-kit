@@ -1,13 +1,3 @@
-// Covers scripts/pr-comments.ts: the two-level page merge, the normalized JSON contract it emits,
-// the argument forms, and the `gh` invocations the fetch walks build.
-// Every case either feeds fixture pages to the pure layer, exercises an argument the script rejects
-// before it fetches, or runs the script against a fake `gh` placed first on PATH — so the suite never
-// reaches the real CLI or the network. Keep it that way: a case that would need either belongs
-// nowhere in this file.
-// Zero dependencies; runs under Node type stripping — too old a Node fails as a parse error, not a
-// version message. Floor in AGENTS.md § The `.ts` sources are unchecked by design.
-// Run: node --test tests/<name>.test.ts   ·   every suite: node --test "tests/*.test.ts"
-
 import assert from "node:assert";
 import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -20,7 +10,6 @@ import { normalize, parseTarget, type CommentPage, type ThreadPage } from "../sc
 const TESTS_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_DIR = resolve(TESTS_DIR, "..");
 const SCRIPT = join(REPO_DIR, "scripts", "pr-comments.ts");
-
 const PR_NUMBER = 7;
 const PR_URL = "https://github.com/acme/kit/pull/7";
 const AUTHOR = "pr-author";
@@ -187,8 +176,6 @@ test("a completed two-page walk reports itself complete", () => {
   assert.strictEqual(report.paginationComplete, true, "the last page fetched had no next page");
 });
 
-// Cursor pagination hands back a node twice when threads change between requests, and a thread
-// listed twice would double-count the finding it holds.
 test("a thread repeated across pages is listed once", () => {
   const report = normalize(
     [threadPage([thread("T1")], { hasNextPage: true, totalCount: 2 }), threadPage([thread("T1"), thread("T2")])],
@@ -221,7 +208,6 @@ test("file and line anchor each thread", () => {
   assert.strictEqual(report.threads[0].line, 88, "the thread's line");
 });
 
-// A field GitHub stopped sending must never file a finding away as addressed.
 test("an absent resolution flag reads as unresolved rather than resolved", () => {
   const page: ThreadPage = {
     data: {
@@ -314,7 +300,6 @@ test("no pages at all is not a complete walk", () => {
   assert.strictEqual(report.pullRequest.number, null, "no page carried the pull request");
 });
 
-// The comments were fetched, so the thread they belong to is one the thread pages never carried.
 test("a comment page for a thread that was never listed leaves the walk incomplete", () => {
   const report = normalize([threadPage([thread("T1")])], [commentPage("T-absent", [comment(AUTHOR, "orphan")])]);
   assert.strictEqual(report.paginationComplete, false, "the thread walk itself came up short");
@@ -358,9 +343,6 @@ test("a candidate is decided on the merged comment list, not the first page alon
 });
 
 test("a thread left mid-pagination is never a candidate, whoever spoke last in the prefix", () => {
-  // The prefix ends with the author, but the tail never arrived — a reviewer's answer may sit after
-  // it. triage routes a candidate to Verify rather than open, so guessing here would file a still-open
-  // finding as likely handled; false routes it to open, which is the recoverable direction.
   const report = normalize(
     [threadPage([thread("T1", { comments: [comment(REVIEWER, "Major: unhandled error."), comment(AUTHOR, "fixed")], hasMoreComments: true })])],
     [],
@@ -431,20 +413,11 @@ test("a run with a second argument exits 2", () => {
   assert.strictEqual(runScript(["7", "8"]).status, 2, "the script takes exactly one target");
 });
 
-// The rejection happens before any fetch, which is what keeps this case — and this suite — offline.
 test("an unparsable target exits 2 naming what was rejected", () => {
   const run = runScript(["main"]);
   assert.strictEqual(run.status, 2, "usage failures exit 2");
   assert.ok(run.stderr.includes("main is neither"), `the rejected argument is named, got "${run.stderr}"`);
 });
-
-// --- The fetch walks, against a fake `gh` --------------------------------------------------------
-//
-// The cases above stop before the script shells out, so nothing there covers the half that decides
-// what `gh` is actually asked: the `-F`/`-f` split that placeholder expansion turns on, the host a URL
-// carries, the two cursor loops, and what a failing call does. A stub named `gh`, first on PATH,
-// covers all of it offline: it appends its own argv to a log and prints the next scripted response, so
-// a case asserts both what was sent and what the script made of what came back.
 
 const FAKE_ROOT = mkdtempSync(join(tmpdir(), "agents-kit-pr-comments-"));
 
@@ -452,21 +425,14 @@ after(() => {
   rmSync(FAKE_ROOT, { recursive: true, force: true });
 });
 
-/** One scripted `gh` invocation: a page to print, or a failure to write to stderr and exit 1 on. */
 type Reply = { readonly page: unknown } | { readonly fails: string };
 
 interface FakeGh {
-  /** Every invocation's argv, one array per call, in call order. */
   readonly calls: () => string[][];
-  /** Runs the script with this stub first on PATH. */
+
   readonly run: (args: readonly string[]) => { status: number | null; stdout: string; stderr: string };
 }
 
-/**
- * Writes a `gh` stub that replies with `replies` in order, and returns handles to run against it.
- * The stub is a POSIX shell script rather than a Node one so that PATH lookup, argv passing, and the
- * exit status are the shell's own — the same path the real `gh` is found and run through.
- */
 function fakeGh(name: string, replies: readonly Reply[]): FakeGh {
   const dir = join(FAKE_ROOT, name);
   mkdirSync(dir, { recursive: true });
@@ -482,8 +448,6 @@ function fakeGh(name: string, replies: readonly Reply[]): FakeGh {
     [
       "#!/bin/sh",
       `DIR="${dir}"`,
-      // One argument per line with a terminator between calls, so an argument holding a space or a
-      // newline-free query body still reads back as exactly one entry.
       'for a in "$@"; do printf \'%s\\n\' "$a" >> "$DIR/argv.log"; done',
       "printf '=== end of call ===\\n' >> \"$DIR/argv.log\"",
       'N=$(cat "$DIR/index")',
@@ -510,7 +474,6 @@ function fakeGh(name: string, replies: readonly Reply[]): FakeGh {
   };
 }
 
-/** The one page a case needs when it is asserting the request rather than the merge. */
 function onePage(): ThreadPage {
   return threadPage([thread("T1")]);
 }
@@ -521,8 +484,7 @@ test("a bare number leaves owner and repo to gh's placeholder expansion", () => 
   assert.strictEqual(run.status, 0, `a served fetch exits 0, got "${run.stderr}"`);
   const [argv] = gh.calls();
   assert.deepStrictEqual(argv.slice(0, 2), ["api", "graphql"], "the GraphQL endpoint is the subcommand");
-  // `-F` is what expands {owner}/{repo} from the current directory's repository; `-f` would send the
-  // braces through as a literal and the query would resolve against a repository named "{repo}".
+
   assert.ok(argv.includes("-F") && argv.includes("owner={owner}"), `owner goes through -F, got ${argv.join(" ")}`);
   assert.ok(argv.includes("repo={repo}"), `repo goes through the same expansion, got ${argv.join(" ")}`);
   assert.ok(argv.includes(`number=${PR_NUMBER}`), "the number rides along as a typed field");
@@ -533,8 +495,7 @@ test("a pull request URL sends its own owner and repo as literals, not placehold
   const gh = fakeGh("url-literals", [{ page: onePage() }]);
   assert.strictEqual(gh.run([PR_URL]).status, 0, "a served fetch exits 0");
   const [argv] = gh.calls();
-  // Literals go through `-f`: `-F` would convert an all-digit owner or repo to a JSON number, which
-  // the query's `String!` variables reject.
+
   assert.ok(argv.includes("owner=acme"), `the URL's owner is sent literally, got ${argv.join(" ")}`);
   assert.ok(argv.includes("repo=kit"), `the URL's repo is sent literally, got ${argv.join(" ")}`);
   assert.ok(!argv.includes("owner={owner}"), "a URL never falls back to placeholder expansion");

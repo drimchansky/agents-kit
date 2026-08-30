@@ -62,7 +62,7 @@ node <kit-root>/scripts/task-move.ts <SRC> --to backlog
 
 `<kit-root>` resolves per `./references/workflow/task-store.md` § *Resolving `<kit-root>`* <!-- cold -->, which owns that rule. With no kit root available, say the move can't be performed here and stop — a guarded move has no by-hand equivalent worth offering; `task-backlog.md` states what the move is for anyone doing it themselves.
 
-The script's file header owns its CLI and its stdout contract. What it decides, so this skill doesn't:
+`<kit-root>/SCRIPTS.md` § *`scripts/task-move.ts`* owns its CLI and its stdout contract — read that section, not the whole file. What it decides, so this skill doesn't:
 
 - **The entry gate** — a plan-less folder is admitted unless it holds a `result.md` at all (a result file exists only once execution starts, and carries no status of its own to read); a plan is admitted only in the not-yet-started state, and a live, finished, or unplaceable status is refused, the finished one pointing at archiving.
 - **The destination** — location-relative, derived from `SRC`'s own parent, with **case-insensitive recognition** of an existing container (a `backlog/` is moved into as it is spelled; normalizing a stray spelling is `maintain`'s format sweep, not this move).
