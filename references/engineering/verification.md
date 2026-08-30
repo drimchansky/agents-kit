@@ -13,8 +13,11 @@ Both are required, but they run on different cadences — they answer different 
 - **Unit outcome** — immediately run the unit's stated verify criterion (see the consumer's
   **Source** binding in `../workflow/execution-bindings.md`). Then validate every comment the unit added
   or edited against `code-style.md` → Comments — that unit's comments only, never a repo-wide comment
-  audit — and fix what that section prohibits before recording the outcome. This proves the new
-  behavior and its touched comments; it is not integrated-health evidence.
+  audit — and fix what that section prohibits before recording the outcome. Then, where the project
+  exposes a formatter, run it over the files that unit touched — those files only, never a repo-wide
+  format run — and fix the drift it reports before the outcome is recorded, so no later boundary's
+  delta carries formatting churn this unit left behind. This proves the new behavior, its touched comments,
+  and their formatting; it is not integrated-health evidence.
 - **Integrated health** — at every consumer-declared health boundary, run every exposed typecheck,
   lint, test, and distinct build command over the **dependency closure of the delta** since a recorded
   reference: this run's last green boundary. Outside the closure a file keeps that boundary's verdict,

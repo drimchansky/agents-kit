@@ -1,6 +1,6 @@
 # implement-task: Non-Default Branches
 
-The `implement-task` skill's non-default branches — reviving a `skipped` plan, activating a backlogged task, the diagram re-check, the automatic parallel batch, mid-execution plan revisions, and the later-run `in-review` → `done` finalization — split out of that skill's SKILL.md, which keeps the loop, the templates, and the gates. Read the section a branch names when its condition fires. An `implement-task §N` reference names that SKILL.md's process step.
+The `implement-task` skill's non-default branches — reviving a `skipped` plan, activating a backlogged task, the diagram re-check, the automatic parallel batch, mid-execution plan revisions, a criterion leg left open for someone else to verify, and the later-run `in-review` → `done` finalization — split out of that skill's SKILL.md, which keeps the loop, the templates, and the gates. Read the section a branch names when its condition fires. An `implement-task §N` reference names that SKILL.md's process step.
 
 ## Reviving a skipped plan
 
@@ -59,6 +59,14 @@ When the batch directly reaches its bounding checkpoint, run that checkpoint's a
 - **Repaint the diagram when the revision changes structure** (only when the task has one), at the revision rather than deferred to the next checkpoint — the revision is the causal event, and in step-by-step mode it is where the user inspects. Same in both modes; run it per § *Diagram re-check* above.
 - In step-by-step mode, pause and confirm the revision with the user before continuing.
 - **If the right call is to abandon the task** rather than revise it, surface that and get explicit confirmation first — this skill never sets `skipped` on its own (`./task-lifecycle.md`). On confirmation set the plan's `**Status:**` to `skipped`, record why in the result file, and stop — don't delete the plan or leave it dangling in `executing`.
+
+## An open criterion leg
+
+A step's `Verify` sometimes carries a leg nothing in the session can execute — a browser check, a device, a person's eyes. Keeping that leg whole is `./executor-engines-cross-vendor.md` § *Cross-run rules* → **The verify criterion is retargeted, not rewritten**: it is named before launch, carried as an **explicitly open leg**, and never split off to leave a smaller criterion the run can pass. What it costs this skill is here.
+
+**The step is parked, not recorded.** Proving the executable half proves that half and no more, so the checkbox stays unflipped and the step's result section names the open leg, what it asserts, and who is to verify it. A step recorded done on half its criterion puts every later step on an unproved base, which is the failure this branch exists to stop. When the open leg gates a goal, the task lands at `in-review` with that goal's `## Acceptance` line `pending external`, and § *Reaching done from in-review* below is the path out once the user reports the verification happened.
+
+**The offered option's described behavior is the behavior.** Where the run offered the leg to the user and the user took it — they will check it and report back — the run stays open on that leg and closes out only after they do; announcing a hand-off and then closing out as if verified is worse than never having offered.
 
 ## Reaching done from in-review
 

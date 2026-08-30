@@ -13,10 +13,11 @@ error, not a version message. The floor is stated once, in
 change made there.
 
 **The 0/1/2 exit convention** is shared by `scripts/task-move.ts`, `scripts/task-state.ts`,
-`scripts/pr-comments.ts`, `scripts/size-check.ts`, and `scripts/worktree-merge.ts`: 0 did the job, 1
+`scripts/pr-comments.ts`, `scripts/size-check.ts`, `scripts/worktree-merge.ts`, and
+`scripts/cross-capability.ts`: 0 did the job, 1
 is an outcome the script decided, 2 is a run that never got that far. The reporting scripts beside
-them — `health-check.ts`, `session-triage.ts`, `size-report.ts` — always exit 0 instead, so a partly
-unreadable corpus still parses.
+them — `health-check.ts`, `session-triage.ts`, `size-report.ts`, and `cross-capability.ts`'s `check` —
+always exit 0 instead, so a partly unreadable corpus still parses.
 
 **stdout is asynchronous on a pipe**, so a script that emits a JSON report writes it and lets the
 module end rather than calling `process.exit` after the write, which would discard whatever the pipe
@@ -27,9 +28,9 @@ EPIPE on a stream nothing awaits, and swallowing that is what keeps the promised
 non-zero status before it assigns `process.exitCode`. An inline exit would set the status first and
 discard whatever the stream had not yet flushed, so a refused run would report a code with nothing
 saying why. `task-move.ts`, `task-state.ts`,
-`pr-comments.ts`, and `worktree-merge.ts` reach that by throwing — an `Exit` carrying its code in the
-first three, `Refused`/`Unrunnable` in the last — which one handler at the module's end catches, so
-every refusal leaves through one place. `size-check.ts` assigns the status directly at each of its two
+`pr-comments.ts`, `cross-capability.ts`, and `worktree-merge.ts` reach that by throwing — an `Exit`
+carrying its code in the first four, `Refused`/`Unrunnable` in the last — which one handler at the
+module's end catches, so every refusal leaves through one place. `size-check.ts` assigns the status directly at each of its two
 sites instead.
 
 ## `setup.ts`
@@ -90,6 +91,171 @@ payload is never present-but-unmarked.
 each native agent definition together with its marker: an install interrupted between the two is
 reclaimed on the next run, while an unmarked same-named file stays the user's and is skipped by the
 copy loop after it.
+
+## `scripts/cross-capability.ts`
+
+Owns the cross-vendor capability cache that
+`references/workflow/executor-engines-cross-vendor.md` § *Cross-run rules* defines: what the other
+vendor's sandbox allowed, denied, or hung on in one repository, and the fingerprints that decide
+whether that answer may still be believed. `record` writes one probe answer into it; `check` reads the
+repository's entry against the engine facts in hand and reports what may still be believed; `sweep`
+retires the per-engine files that predate the cache.
+
+```
+node scripts/cross-capability.ts check <repo> [--engine <e>] [--cli-version <v>] [--model <m>]
+                                 [--effort <ef>] [--network-access true|false]
+                                 [--network-proxy true|false] [--command "<pkg dir>: <cmd>"]...
+node scripts/cross-capability.ts record <repo> --engine <e> --cli-version <v> --model <m>
+                                 --effort <ef> --network-access true|false --network-proxy true|false
+                                 --command "<pkg dir>: <cmd>" --answer allowed|denied|hung
+                                 --classes <class> [--classes <class>]... [--binary <path>]
+                                 [--state-pins <pin>]... [--config-files <repo-relative path>]...
+                                 [--note <text>]
+node scripts/cross-capability.ts sweep
+```
+
+`--classes`, `--state-pins`, `--config-files`, and `--command` each take one value and may repeat;
+`record` takes exactly one `--command`, and a second is bad usage rather than a silently dropped
+answer. `<repo>` is resolved to an absolute path and is the entry key.
+
+**Where the cache lives.** `AGENTS_KIT_STATE_DIR` when it is set, otherwise
+`~/.local/state/agents-kit` — per-machine run state, never config
+(`references/workflow/task-store.md` § *The root registry*). The cache is that directory's
+`cross-capability.json`, and `capabilities/*.json` beside it are the per-engine files that predate it.
+The environment override is what lets the suite run against a fixture directory instead of the
+machine's own state.
+
+**The entry shape** is the cited file's, plus a per-answer `configFiles` list and the fingerprint over
+it:
+
+```json
+{
+  "<absolute repository path>": {
+    "engine": "codex",
+    "cliVersion": "codex-cli 0.149.1",
+    "pin": { "model": "gpt-5.6-sol", "effort": "xhigh" },
+    "lockfileSha256Prefixes": ["<one prefix per lockfile, in sorted path order>"],
+    "configSha256Prefix": "<prefix over every answer's config files>",
+    "sandbox": { "mode": "workspace-write", "networkAccess": true, "networkProxy": true },
+    "probed": "2026-08-30",
+    "answers": {
+      "apps/web: ./node_modules/.bin/vitest run": {
+        "classes": ["tool state outside the invocation root"],
+        "answer": "allowed",
+        "binary": "apps/web/node_modules/.bin/vitest",
+        "statePins": ["<the pin that made the answer allowed>"],
+        "configFiles": ["apps/web/vitest.config.ts"],
+        "configSha256Prefix": "<prefix over this answer's config files alone>",
+        "note": "<free text>"
+      }
+    }
+  }
+}
+```
+
+Everything above `answers` is required, as is each answer's `classes` (non-empty) and `answer` — one
+of `allowed`, `denied`, `hung`; `binary`, `statePins`, `configFiles`, `configSha256Prefix`, and `note`
+are optional. An entry missing any of that **reads as absent**, which is the cited file's own rule and
+what makes trusting the rest of an entry safe.
+
+**Why config files are recorded per answer.** The entry-level `configSha256Prefix` says the
+configuration some answer read has moved; it cannot say whose, since a hash over a union does not
+decompose. Recording each answer's own files, and the prefix over them at the moment that answer was
+probed, is what lets a reader leave an answer whose configuration has not moved believable while the
+entry as a whole is stale. A sibling answer keeps the prefix it was probed under and is never
+re-fingerprinted by someone else's write: it is a snapshot of that probe, not a claim about the tree
+now.
+
+**`check` answers two questions at once**, because a caller has two: may this entry be believed at
+all, and may *this* criterion's answer be believed. The entry verdict is `absent` — no cache file, no
+entry for the repository, a cache that will not parse, or an entry failing the shape check — or
+`stale` carrying the reasons that moved, or `match`. The reasons are `engine`, `cliVersion`, `pin`,
+`sandbox`, `lockfiles`, and `config`; the first four are compared only where the run passed the fact
+as a flag, since a fact nobody stated is not a fact this run knows, while the last two are recomputed
+from the tree every time. Each `--command` gets its own verdict beside them: `absent` where the entry
+holds no answer under that key, `stale` naming what moved, `match` otherwise, and the stored
+`answer`, `binary`, and `statePins` are carried through so a caller that is going to seed a run does
+not read the cache file itself.
+
+**Why a command can match under a stale entry.** Everything but `config` is a fact about the engine,
+so it moves every answer the entry holds and every command verdict inherits it. `config` is a fact
+about the repository, and the answers do not all read the same configuration: an answer carrying its
+own `configFiles` is compared against its own recorded prefix, so the answer whose configuration moved
+goes `stale` and its siblings stay `match` while the entry above them says `stale (config)`. An answer
+listing no config files, or one recorded before per-answer prefixes existed, inherits the entry's
+`config` verdict instead — attribution is impossible there, and the safe direction is the one that
+re-probes. A listed file that is no longer on disk is reported as `config file missing: <path>` on
+that answer, which says which file to look for rather than only that something moved.
+
+**Legacy files are named, never read.** Every `<state dir>/capabilities/*.json` is listed in `legacy`,
+in sorted order and by absolute path, so a caller can see what is left to retire; nothing in them
+contributes a verdict, which is what keeps a repository recorded only in a pre-cache file reading
+`absent` and re-probing rather than trusting a shape this script cannot check.
+
+**Contract.** `check` writes exactly one JSON object to stdout,
+`{"repo":…,"entry":"match|stale|absent","reasons":[…],"legacy":[…],"commands":{…},"summary":…}`, each
+command `{verdict,reasons?,answer?,binary?,statePins?}`, and always exits 0 once a report is written —
+a caller reads the verdict, never a status. `summary` is that report in one line for a close-out to
+quote: `entry stale (lockfiles); commands: 2 match, 3 stale, 1 absent`, with `commands: none` where no
+`--command` was passed and a trailing `legacy: N` where any legacy file is still there. Bad usage
+exits 2.
+
+**`record` merges one answer into the repository's entry.** Sibling answers are carried over whole and
+keep their order, the named key is the only one replaced, and other repositories' entries in the same
+file are preserved exactly as parsed — valid or not, since a shape this script does not recognize is
+still somebody's record. Where the target repository's own entry fails the shape check it is replaced
+wholesale rather than patched, which is the same call as reading it absent.
+
+**What `record` refuses** — exit 1, one line on stderr, nothing written: a `<repo>` that is not a
+directory on this machine, because a mistyped repository path would file the answer under a key no
+`check` will ever match while the intended repository silently keeps none; an answer carrying no
+`--classes`, because a class nobody probed must re-probe and an answer naming none answers for
+nothing; an `--answer` outside the three values; and `package-manager wrapper egress` on a command
+recorded with `--binary`, because a criterion that runs the resolved binary makes no wrapper call, and
+recording the class there files a denial the next run cannot reproduce. A `--config-files` path with
+no file under `<repo>` is refused for the same reason — a fingerprint over a file that is not there
+would say the configuration is unchanged forever. A cache file holding no JSON object is refused
+rather than replaced: other repositories' entries live in it.
+
+**Fingerprints are recomputed on every write**, never carried forward, both sha256 truncated to the
+first 16 hex characters. `lockfileSha256Prefixes` takes one prefix per dependency lockfile —
+`pnpm-lock.yaml`, `package-lock.json`, `yarn.lock`, `bun.lock`, `bun.lockb`, `npm-shrinkwrap.json` —
+discovered with `git ls-files` across the whole checkout and hashed in sorted path order; where git
+will not run, or the repository is not a checkout, only the repository root is scanned, which is the
+one place a lockfile can be without something tracking it. `configSha256Prefix` hashes
+`<path>\0<content>\0` per file over the sorted unique union of every answer's `configFiles`, so a file
+two answers both read counts once, and an entry whose answers list none hashes the empty input.
+
+**Engine facts arrive as flags, by design.** The script reads no engine configuration: codex's TOML
+and Claude's settings are the caller's to read, and a fact an engine adds later becomes one more flag
+rather than a parser this file has to keep current. `sandbox.mode` has no flag because nothing
+compares it — a merge carries the entry's existing mode forward, and a fresh entry takes
+`workspace-write`, the mode the cited file's own example records.
+
+**`probed` is when the answers last changed**, not when they were last confirmed: every write stamps
+today's UTC date. Staleness is the fingerprints' job, so a re-probe that confirms an unchanged answer
+is not what that date is for.
+
+**The write is one rename.** The merged cache goes to `<cache>.tmp` beside the file and is renamed
+over it, so a reader never sees half a cache and a failed write leaves the previous one whole. The
+temp name is fixed rather than randomized, which makes the failure path reachable from a test and
+costs only what concurrent writers would cost anyway: two runs racing on a single-user state file lose
+one update, and a lost update re-probes — the cache is never the authority.
+
+**Contract.** A completed `record` writes one line to stdout, `recorded <key> (<answer>) for <repo>`,
+and exits 0. A refused one writes its one-line reason to stderr and exits 1, having changed nothing.
+Exit 2 is a run that never got that far — bad usage, or a write that failed.
+
+**`sweep` retires the legacy files** `check` can only name: it removes every
+`<state dir>/capabilities/*.json`, writes `removed <absolute path>` per file in the same sorted order
+`check` lists them — as each removal happens, so a removal that fails midway still reports the files
+already gone — and removes the directory once nothing is left in it. Anything else there — a
+file that is not a `.json`, a subdirectory — is left alone, and the directory then stays with it,
+since the sweep's business is the answers this cache replaced and not the directory itself. It takes
+no arguments and touches no other path: not `cross-capability.json`, and nothing outside the state
+directory. Nothing to remove is the ordinary case, and it prints nothing and exits 0 rather than
+reporting an empty sweep as a failure. Exit 2 is a removal that could not be carried out — bad usage,
+or an unexpected failure; `sweep` reaches no outcome it would report as 1.
 
 ## `scripts/health-check.ts`
 
@@ -657,6 +823,12 @@ node --test "tests/*.test.ts"           # every suite — quoted, because the ru
 
 - **`setup-install.test.ts`** — `setup.ts`: what the installer deploys, what it reclaims, and what
   it refuses to touch.
+- **`cross-capability.test.ts`** — `scripts/cross-capability.ts`: the cross-vendor capability cache —
+  `record`'s merge, its refusals, the two fingerprints, `check`'s entry and per-command verdicts,
+  `sweep`'s bounded removal, and the 0/1/2 exit contract. Every case runs
+  the script against a fixture state directory through `AGENTS_KIT_STATE_DIR`, so no case can reach
+  `~/.local/state`; the lockfile-discovery cases fixture a real `git init` checkout beside a plain
+  directory, because the two discovery paths are what the fingerprint depends on.
 - **`health-check.test.ts`** — `scripts/health-check.ts`: the task-lifecycle walk and the
   `--installs` deploy-drift check.
 - **`task-move.test.ts`** — `scripts/task-move.ts`: the guarded archive and backlog moves, their
