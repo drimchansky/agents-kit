@@ -79,22 +79,32 @@ script's `check <tree> --baseline <manifest> --surface .`; `--surface .` is the 
 ever an escape and the delta is the **path column of its change lines**, the `delta N · escapes N`
 trailer dropped. That path list is the argument the path-taking runners above take.
 
-**The prune set** is the project's build, coverage, and cache output directories, **restricted to
-paths the project does not track**. `dist/`, `coverage/`, `.nx/`, `.turbo/`, `.eslintcache`,
-`playwright-report/`, and `test-results/` change on every boundary run, so a reference taken without
-pruning them reads as a delta at every later boundary, silently restoring the cost this scoping
-removes. But a prune filters the baseline as well as the current walk, so pruning a *tracked* output
-directory — a committed bundle, a checked-in generated client — drops a real change out of the delta
-before § *Widening* can ever see it. Tracked output is measured, not pruned, whatever churn it costs;
-`scripts/worktree-merge.ts` § *Prunes and tracked content* owns that guard for all three of the
-manifest's roles.
+**The prune set** is the project's build, coverage, and cache output directories — `dist/`,
+`coverage/`, `.nx/`, `.turbo/`, `.eslintcache`, `playwright-report/`, `test-results/` — **restricted
+to paths the project does not track**, and needed only for the ones it does not git-ignore either: on
+a Git checkout the walk drops every untracked path the repository ignores, on both sides of the
+comparison, so an output directory the project ignores is out of the delta already and the set is
+usually empty. Name what remains — output a project neither tracks nor ignores, and every one of them
+on a tree outside a checkout, where there are no ignore rules to ask. Left in, they change on every
+boundary run, so a reference taken without pruning them reads as a delta at every later boundary,
+silently restoring the cost this scoping removes. But a prune filters the baseline as well as the
+current walk, so pruning a *tracked* output directory — a committed bundle, a checked-in generated
+client — drops a real change out of the delta before § *Widening* can ever see it. Tracked output is
+measured, not pruned, whatever churn it costs; `scripts/worktree-merge.ts` § *Git-ignored content* and
+§ *Prunes and tracked content* own both guards for all three of the manifest's roles. The ignore drop
+has a consequence of its own, and it is the mirror of the prune one: a git-ignored path is not in the
+delta, so work done at one is never incorporated. In this role that costs nothing — a boundary compares
+a tree against its own earlier state, where an ignored path reads against itself and the delta is a
+scoping input rather than something to carry — but the merge role loses the work, which is why the
+script reports and refuses it there rather than here.
 
 **With no kit root there is no in-session reference.** The boundary takes none and runs the whole
 relevant surface, recording `reference skipped: no kit root`. A git-shaped hand equivalent is
-deliberately not offered, and this is what it would give up: `git status --porcelain` omits ignored
-paths the manifest walk covers, `git diff` covers tracked files only, and neither sees a file that was
-dirty at the green boundary and has since been restored to `HEAD` content — so both under-select, the
-one direction in which a narrowed boundary becomes unsound rather than merely wasteful.
+deliberately not offered, and this is what it would give up: `git diff` covers tracked files only, and
+neither it nor `git status --porcelain` sees a file that was dirty at the green boundary and has since
+been restored to `HEAD` content — both measure against `HEAD` rather than against the tree the last
+boundary was green on, so both under-select, the one direction in which a narrowed boundary becomes
+unsound rather than merely wasteful.
 
 The manifest lives in session scratch; nothing persists it across runs, which keeps
 `../workflow/execution-loop.md` § *Health boundaries* true as written.

@@ -17,9 +17,12 @@
 // did the job. Exit 1 is an outcome the script decided — a surface escape, a conflict, an
 // incorporation that did not verify, a removal with no verified receipt or of repository content —
 // reported on stderr with nothing further attempted. Exit 2 is a run that could not be carried out at
-// all: bad usage, an unreadable tree, a manifest that will not parse. Those three statuses are the
-// convention this script shares with scripts/task-move.ts, scripts/task-state.ts, and
-// scripts/pr-comments.ts.
+// all: bad usage, an unreadable tree, a manifest that will not parse, a tree that cannot be measured
+// the way the manifest was — all of them before anything is written, since once `apply` has copied,
+// a measurement that will not run is an incorporation that did not verify and takes exit 1, naming
+// the landed/did-not-land split as uncomputable rather than reporting one it never measured. Those
+// three statuses are the convention this script shares with scripts/task-move.ts,
+// scripts/task-state.ts, and scripts/pr-comments.ts.
 //
 // Why a script and not shell: the gates are ordered, and the ordering is the whole protection. Shell
 // re-authored per run is where a worktree gets removed before the copy that was supposed to precede
@@ -33,7 +36,8 @@
 // reconstructs**. The `restore that exact capture` step the cited file names on a conflicting
 // incorporation is deliberately not here: it needs the bytes, and the coordinator owns it. What the
 // script gives a restore instead is exactness about what happened — the applied set, and on a
-// verification failure the precise split between the paths that landed and the paths that did not.
+// verification failure either the precise split between the paths that landed and the paths that did
+// not, or, where the measurement itself could not run, the statement that there is no split to give.
 //
 // A `baseline` manifest serves three roles: the two the cited file needs — the batch baseline every
 // unit's change set is measured against, and the exact pre-unit capture of the shared tree taken at a
@@ -42,11 +46,43 @@
 // against that manifest computes. They are the same operation on a different tree at a different
 // moment, so a change to what `baseline` captures or what `--prune` hides reaches all three.
 //
+// Git-ignored content: on a Git checkout every walk drops the untracked paths the repository ignores,
+// and the manifest records `gitignore` so both sides of a comparison measure alike — a tree that
+// cannot reproduce a `gitignore: true` measure is refused rather than compared against one. Seeding a
+// worktree with `git worktree add` carries no ignored file across, so measuring them reads each of
+// the shared tree's own (.DS_Store, editor and agent settings) as a deletion escaping the unit's
+// surface, and each of the worktree's build output as an addition. Tracked content is unaffected:
+// `check-ignore` lists ignored *untracked* paths only, so a force-added file matching an ignore
+// pattern stays measured — Git enforcing the same guard the prune note below states. Each side asks
+// its own index, and a worktree's index is HEAD, so a path the baseline measured stays measured on
+// the other side whatever that index says: a force-add staged but not yet committed is tracked in
+// the shared tree and an ignored untracked file in its worktree, and filtering both alike would read
+// it as a deletion that `apply` then carries out.
+//
+// What the filter must never do is drop a path quietly enough that work goes missing under a verified
+// receipt. A path this walk dropped — one the worktree holds and the ignore filter removed — that sits
+// inside the unit's **declared surface** and whose content differs from the shared tree's is reported
+// as `ignored <path> NOT MEASURED`, counted in the `ignored-divergent` trailer, and refused by `apply`
+// before it writes anything — the unit was told to write there, so the difference is its own output,
+// and incorporating around it would report `verified` over the loss and clear `remove` to take the
+// worktree holding the only copy. The reverse direction needs no check: `git worktree add` carries no
+// ignored file across, so an ignored path the shared tree holds and the worktree does not is a seeded
+// worktree's steady state, not the unit's lost work. Outside the surface nothing is examined, so a
+// worktree's build output stays as unmeasured as it should be; a same-tree comparison reads every path
+// against itself and never diverges. This is the only place a path the ignore filter dropped is
+// hashed; one `keep` holds is hashed by the walk itself, ignored or not.
+//
 // Prunes and tracked content: a `--prune` filters the baseline as well as the current walk, so a
 // pruned path can never appear in a change set at all. That is what makes it right for tool state and
 // wrong for anything the project tracks — a committed bundle, a checked-in generated client, a
-// zero-installs cache. Callers name only untracked paths; the caller-facing rule and its consequences
-// live with each role (references/engineering/boundary-scope.md § Reference and delta,
+// zero-installs cache. Callers name only untracked paths, and only those the ignore rules do not
+// already cover *outside every declared surface*. Inside one, an ignored path the worktree holds and
+// the shared tree does not is `ignored-divergent` and refuses the `apply` (§ Git-ignored content
+// above), and a `--prune` is the remedy: it skips the path before the walk makes it a leaf, so it
+// never reaches that report at all. What remains to name: output a project neither tracks nor
+// ignores, and any tree outside a checkout, where there is nothing to ask. The caller-facing rule and
+// its consequences live with each role
+// (references/engineering/boundary-scope.md § Reference and delta,
 // references/workflow/parallel-batch.md § Coordinator-side parallel batch).
 
 import { execFileSync } from "node:child_process";
@@ -75,7 +111,7 @@ import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 // A `--prune` is different: a root-relative path hiding that path alone, so `--prune cache` for a
 // tool-state directory at the root cannot also hide a unit's edits under `src/cache`.
 const ALWAYS_PRUNED = new Set([".git", "node_modules"]);
-const MANIFEST_VERSION = 1;
+const MANIFEST_VERSION = 2;
 const EXEC_MASK = 0o111;
 
 const USAGE = [
@@ -93,6 +129,7 @@ type Entry = FileEntry | LinkEntry;
 interface Manifest {
   readonly version: number;
   readonly root: string;
+  readonly gitignore: boolean;
   readonly prunes: readonly string[];
   readonly entries: Record<string, Entry>;
 }
@@ -206,19 +243,72 @@ function isPruned(path: string, prunes: readonly string[]): boolean {
   );
 }
 
+// The untracked paths of `root` the repository ignores, or undefined when `root` is not a Git
+// checkout. One call carries the whole list, streamed over stdin because a few hundred paths would
+// overflow argv, and read back unbounded because a pnpm store or a framework cache alone runs past
+// Node's default 1 MiB reply buffer, failing the walk on exactly the trees the filter exists to
+// drop. Exit 1 is success with nothing matched; the "not a git repository" stderr is what tells a
+// missing checkout from a failure, the same discrimination checkoutHolding makes and for the same
+// reason — a guard that could not read the tree refuses rather than reporting it unfiltered.
+function gitIgnored(root: string, paths: readonly string[]): Set<string> | undefined {
+  try {
+    const listed = execFileSync("git", ["-C", root, "check-ignore", "-z", "--stdin"], {
+      input: paths.join("\0"),
+      stdio: "pipe",
+      encoding: "utf8",
+      maxBuffer: Infinity,
+    });
+    return new Set(listed.split("\0").filter((path) => path !== ""));
+  } catch (error) {
+    if ((error as { status?: number }).status === 1) return new Set();
+    const stderr = String((error as { stderr?: Buffer }).stderr ?? "").trim();
+    if (/not a git repository/i.test(stderr)) return undefined;
+    unrunnable(`cannot list the git-ignored paths of ${root}: ${stderr || (error as Error).message}`);
+  }
+}
+
+interface Walked {
+  readonly entries: Record<string, Entry>;
+  readonly gitignore: boolean;
+  readonly ignoredDropped: readonly string[];
+}
+
 // Symlinks are recorded by their target and never followed: seeding links `node_modules` and the
 // pinned tool-state directories into a worktree, and following one would walk an installed tree or
 // escape the root entirely. A directory is not itself an entry — the contract measures paths whose
 // content, presence, or absence differs, and an empty directory carries none of the three.
-function walk(root: string, prunes: readonly string[]): Record<string, Entry> {
-  const entries: Record<string, Entry> = {};
+//
+// `gitignore` is the manifest's own value, and omitting it makes this the walk that decides one —
+// `baseline`'s. A later walk obeys what the baseline recorded instead of re-deciding it, so a
+// `gitignore: false` baseline keeps measuring ignored paths even against a checkout and the two sides
+// of a comparison can never be measured differently. `keep` is the set of paths the comparison has
+// already decided to measure — the baseline's entries under `check`, the change set under `apply`'s
+// verification — and they stay measured whatever this tree's index says (the header's note on the
+// staged force-add).
+function walk(
+  root: string,
+  prunes: readonly string[],
+  gitignore?: boolean,
+  keep: ReadonlySet<string> = new Set(),
+): Walked {
+  // Leaves are collected first and hashed after the ignore filter: an ignored cache is the largest
+  // tree a walk meets, and hashing it only to drop every entry is the cost the filter removes.
+  const leaves: { path: string; full: string; stat: ReturnType<typeof lstatSync> }[] = [];
+  const unreadable: { path: string; dir: string; reason: string }[] = [];
 
   const visit = (dir: string): void => {
     let names: string[];
     try {
       names = readdirSync(dir).sort();
     } catch (error) {
-      unrunnable(`cannot read ${dir}: ${(error as Error).message}`);
+      // Deferred, not fatal. The ignore filter has not run yet, and a directory the repository
+      // ignores is content this walk was going to drop entirely — refusing here would fail the run on
+      // exactly the trees the filter exists to remove, and a caller told an ignored path needs no
+      // `--prune` has nothing left to reach for. The refusal below fires for whatever the filter does
+      // not cover. The root itself is exempt: it has no path relative to itself to ask about.
+      if (dir === root) unrunnable(`cannot read ${dir}: ${(error as Error).message}`);
+      unreadable.push({ path: relative(root, dir).split(sep).join("/"), dir, reason: (error as Error).message });
+      return;
     }
     for (const name of names) {
       const full = join(dir, name);
@@ -230,14 +320,30 @@ function walk(root: string, prunes: readonly string[]): Record<string, Entry> {
         visit(full);
         continue;
       }
-      if (stat.isSymbolicLink() || stat.isFile()) entries[path] = entryFor(full, stat);
+      if (stat.isSymbolicLink() || stat.isFile()) leaves.push({ path, full, stat });
     }
   };
 
   const stat = statSync(root, { throwIfNoEntry: false });
   if (!stat?.isDirectory()) unrunnable(`not a directory: ${root}`);
   visit(root);
-  return entries;
+  const ignored =
+    gitignore === false
+      ? undefined
+      : gitIgnored(root, [...leaves.map((leaf) => leaf.path), ...unreadable.map((entry) => entry.path)]);
+  if (ignored === undefined && gitignore) {
+    unrunnable(`${root} is not a Git checkout, and the baseline it is measured against excluded git-ignored paths`);
+  }
+  for (const entry of unreadable) {
+    if (!ignored?.has(entry.path)) unrunnable(`cannot read ${entry.dir}: ${entry.reason}`);
+  }
+  const entries: Record<string, Entry> = {};
+  const ignoredDropped: string[] = [];
+  for (const { path, full, stat } of leaves) {
+    if (keep.has(path) || !ignored?.has(path)) entries[path] = entryFor(full, stat);
+    else ignoredDropped.push(path);
+  }
+  return { entries, gitignore: ignored !== undefined, ignoredDropped };
 }
 
 function sameEntry(a: Entry, b: Entry): boolean {
@@ -246,7 +352,8 @@ function sameEntry(a: Entry, b: Entry): boolean {
 }
 
 // The change set: every path whose content, presence, or absence differs from the seed, tracked or
-// not. Sorted, so a delta reads the same on every run and a diff of two runs is a diff of substance.
+// untracked, never git-ignored. Sorted, so a delta reads the same on every run and a diff of two runs
+// is a diff of substance.
 function delta(baseline: Record<string, Entry>, current: Record<string, Entry>): Change[] {
   const changes: Change[] = [];
   for (const [path, entry] of Object.entries(current)) {
@@ -292,6 +399,7 @@ function readManifest(file: string): Manifest {
   if (
     manifest?.version !== MANIFEST_VERSION ||
     typeof manifest.root !== "string" ||
+    typeof manifest.gitignore !== "boolean" ||
     !Array.isArray(manifest.prunes) ||
     !manifest.entries
   ) {
@@ -310,18 +418,45 @@ function writeJson(file: string, value: unknown): void {
 function cmdBaseline(tree: string, out: string, rawPrunes: readonly string[]): string[] {
   const root = canonical(tree);
   const prunes = rawPrunes.map((prune) => normalizePrune(prune, root));
-  const entries = walk(root, prunes);
-  const manifest: Manifest = { version: MANIFEST_VERSION, root, prunes: [...prunes], entries };
+  const { entries, gitignore } = walk(root, prunes);
+  const manifest: Manifest = { version: MANIFEST_VERSION, root, gitignore, prunes: [...prunes], entries };
   writeJson(resolve(out), manifest);
   return [`baseline ${root} -> ${resolve(out)}`, `paths ${Object.keys(entries).length}`];
 }
 
 interface Checked {
   readonly changes: readonly Change[];
+  readonly divergentIgnored: readonly string[];
   readonly escapes: readonly Change[];
+  readonly gitignore: boolean;
   readonly lines: readonly string[];
   readonly prunes: readonly string[];
   readonly surfaces: readonly string[];
+}
+
+// The git-ignore filter drops a path from both sides silently, and a path inside the unit's declared
+// surface is the one place that silence costs work: the unit was told to write there, so a path this
+// walk dropped whose content differs from the baseline tree's is the unit's own output going nowhere —
+// never incorporated, and `apply` would otherwise report `verified` over the loss. Only the surface is
+// examined, so a worktree's build output stays as unmeasured as it should be, and only here is a
+// dropped one ever hashed. The baseline's own drops need no such check: `git worktree add` seeds no
+// ignored file into a worktree, so an ignored path only the baseline holds is that worktree's steady
+// state, not lost work. A same-tree comparison — the boundary role, where the walked tree is the
+// baseline's own root — reads every path against itself and so can never diverge.
+function divergentIgnored(
+  root: string,
+  manifest: Manifest,
+  dropped: readonly string[],
+  surfaces: readonly string[],
+): string[] {
+  if (root === manifest.root) return [];
+  return dropped.filter((path) => {
+    if (!inSurface(path, surfaces)) return false;
+    const here = treeEntryAt(root, path);
+    const there = treeEntryAt(manifest.root, path);
+    if (here === undefined || there === undefined) return here !== there;
+    return !sameEntry(here, there);
+  });
 }
 
 function checkWorktree(
@@ -337,18 +472,33 @@ function checkWorktree(
   // A prune given now is root-relative to the baseline's root, the same root the surfaces below
   // resolve against; the manifest's own were normalized when it was written.
   const allPrunes = [...manifest.prunes, ...prunes.map((prune) => normalizePrune(prune, manifest.root))];
-  const current = walk(root, allPrunes);
+  const { entries: current, ignoredDropped } = walk(
+    root,
+    allPrunes,
+    manifest.gitignore,
+    new Set(Object.keys(manifest.entries)),
+  );
   const baseline = Object.fromEntries(
     Object.entries(manifest.entries).filter(([path]) => !isPruned(path, allPrunes)),
   );
   const changes = delta(baseline, current);
   const normalized = surfaces.map((s) => normalizeSurface(s, manifest.root));
+  const divergent = divergentIgnored(root, manifest, ignoredDropped, normalized);
   const escapes = changes.filter((c) => !inSurface(c.path, normalized));
   const lines = changes.map((c) => `${c.op.padEnd(8)} ${c.path}${inSurface(c.path, normalized) ? "" : "  ESCAPE"}`);
   return {
     changes,
+    divergentIgnored: divergent,
     escapes,
-    lines: [...lines, `delta ${changes.length} · escapes ${escapes.length}`],
+    gitignore: manifest.gitignore,
+    // The trailer's third segment joins only when something diverged, so the two-segment form the
+    // boundary role documents stays exactly as it was and the segment's presence is itself the signal.
+    lines: [
+      ...lines,
+      ...divergent.map((path) => `ignored  ${path}  NOT MEASURED`),
+      `delta ${changes.length} · escapes ${escapes.length}` +
+        (divergent.length > 0 ? ` · ignored-divergent ${divergent.length}` : ""),
+    ],
     prunes: allPrunes,
     surfaces: normalized,
   };
@@ -545,7 +695,12 @@ function incorporate(from: string, shared: string, checked: Checked): string | u
 function splitVerified(from: string, shared: string, checked: Checked): { landed: Change[]; missed: Change[] } {
   const landed: Change[] = [];
   const missed: Change[] = [];
-  const worktreeEntries = walk(from, checked.prunes);
+  const { entries: worktreeEntries } = walk(
+    from,
+    checked.prunes,
+    checked.gitignore,
+    new Set(checked.changes.map((change) => change.path)),
+  );
   for (const change of checked.changes) {
     const actual = treeEntryAt(shared, change.path);
     if (change.op === "deleted") {
@@ -579,11 +734,42 @@ function cmdApply(
     process.stdout.write(`${checked.lines.join("\n")}\n`);
     decided(`surface escape, nothing applied: ${checked.escapes.map((c) => c.path).join(", ")}`);
   }
+  // Before anything is written: a divergent ignored path inside the surface is work this run cannot
+  // carry, and applying around it would report `verified` over the loss and clear `remove` to take
+  // the worktree holding the only copy. Refusing here leaves both trees and the worktree intact.
+  if (checked.divergentIgnored.length > 0) {
+    process.stdout.write(`${checked.lines.join("\n")}\n`);
+    decided(
+      "git-ignored paths inside the surface differ between the trees and cannot be incorporated, " +
+        `nothing applied: ${checked.divergentIgnored.join(", ")}` +
+        " — a unit's own build output under its surface takes --prune <path> at the baseline",
+    );
+  }
   assertBaselineIntact(shared, manifest, checked);
   assertContained(shared, checked.changes);
 
   const copyFailure = incorporate(from, shared, checked);
-  const { landed, missed } = splitVerified(from, shared, checked);
+  // Past the copy the shared tree has already changed, so a verification that cannot run owes the
+  // caller exit 1 — never the exit 2 that means a run was not carried out at all. What it cannot owe
+  // is the split: that needs the walk, and calling every change did-not-land would state as fact the
+  // one thing this branch cannot know, at the one moment a restore depends on knowing it. It names
+  // the split uncomputable instead, and the restore from the pre-unit capture is unconditional.
+  let split: { landed: Change[]; missed: Change[] } | undefined;
+  let verifyFailure: string | undefined;
+  try {
+    split = splitVerified(from, shared, checked);
+  } catch (error) {
+    verifyFailure = `cannot verify the incorporation: ${(error as Error).message}`;
+  }
+  if (split === undefined) {
+    process.stdout.write(`${checked.lines.join("\n")}\n`);
+    decided(
+      `incorporation did not verify (${[copyFailure, verifyFailure].filter((r) => r !== undefined).join("; ")}), ` +
+        "no receipt written; which paths landed cannot be computed — " +
+        "restore the shared tree from the pre-unit capture in full",
+    );
+  }
+  const { landed, missed } = split;
   if (missed.length > 0 || copyFailure !== undefined) {
     process.stdout.write(`${checked.lines.join("\n")}\n`);
     if (landed.length > 0) process.stdout.write(`${landed.map((c) => `landed   ${c.path}`).join("\n")}\n`);
