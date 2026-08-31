@@ -1,6 +1,6 @@
 # Reconciliation: The Reference Sweep
 
-The mechanics of the external reference check — split out of `./reconciliation.md`, which keeps § *The reference sweep* (who runs one, and the exemption for a finding set pinned to a producing phase), § *Never-annotated surfaces* (the never-annotated rule the flag-only findings below route by), and § *Flag-only findings are re-reported* (how far re-reporting one reaches). Read this file on a run that sweeps; where the sweep sits in that run is `./reconciliation.md` § *Sequence and output*.
+The mechanics of the external reference check — split out of `./reconciliation.md`, which keeps § *The reference sweep* (who runs one), § *Never-annotated surfaces* (the never-annotated rule the flag-only findings below route by), and § *Flag-only findings are re-reported* (how far re-reporting one reaches). Read this file on a run that sweeps; where the sweep sits in that run is `./reconciliation.md` § *Sequence and output*.
 
 ## Ledger
 

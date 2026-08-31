@@ -1,7 +1,7 @@
 ---
 name: fix-findings
 description: Use when asked to fix, apply, or address a set of findings — from a review in this session, a PR's review comments, or a pasted or saved list. Applies the fixes (a Confirmed finding automatically when the targeted fix is clear and low-blast-radius; anything unverified only through one batched ask showing the change as a diff) and reports the rest untouched. Edits code only; never stages, never commits, never writes back to the findings' source.
-argument-hint: '[source: PR number/URL, file path, pasted findings, or a named subset — defaults to the latest session findings] [-x (cross-vendor executor)]'
+argument-hint: '[source]'
 ---
 
 ## Core Rules
@@ -14,10 +14,6 @@ The write-mode follow-up to every code-review skill and source that produces fin
 **CRITICAL**: Nothing is fixed on this skill's own judgment alone. A fix needs one of exactly two authorities — a **Confirmed** verdict, or the user's approval in the ask batch. **Withdrawn and Inconclusive findings are never edited**: a probe looked and either found no issue or couldn't establish a root cause, and that evidence outranks any later impulse to fix anyway. Findings nobody verified — a plain review's, an external list's, or one a verify phase marked **Unverified** — carry no such evidence either way, so they take the ask and never the auto path.
 
 The write surface is **working-tree code and nothing else**: never stages, never commits, never otherwise mutates Git state — staging the fixes is the user's call, per the Git-discipline rule. Reading findings from a PR adds nothing to that surface: they are fixed locally, never answered with a reply, a resolved thread, or a push.
-
-## Flags
-
-- `-x` — Cross-vendor executor: run this skill's write-mode fan-out on the cross-vendor engine rather than the native one — a write-mode executor, not a probe — under the coordinator's unchanged gates, per `./references/workflow/executor-routing.md` § *Write-mode engine registry*, whose `cross` entry selects the engine and hands its rules — the worktree-always placement, the once-per-run statement of what leaves the machine, the cleanup, and the announced degrade ladder, whose last rung is this skill's binding **Fallback** — to `./references/workflow/executor-engines-cross-vendor.md` along with the launch recipes. Off by default. It reroutes every fix § *Execution strategy: every auto-path fix delegates* delegates — which is every Confirmed auto-path fix no posture exception keeps inline, within that section's unchanged surface — ask-routed fixes stay with the coordinator, and Withdrawn or Inconclusive findings are never edited, flag or no flag — and the engine that ran a fix is named in its existing `Fixed` / `Fix failed` entry, never a new bucket. The limit worth knowing before typing it: **a delegated fix costs the coordinator more under `-x` than under `native`** — seed a worktree, snapshot a baseline, run the surface check, incorporate, remove, where a native serial delegate applies the fix on the shared tree. A single-fix run pays that whole cost for one unit, so `-x` earns its keep best on a findings set with several auto-path fixes. <!-- cold -->
 
 ## Source
 
@@ -173,4 +169,4 @@ Confirm the protocol invariants before finishing:
 - [ ] Batched fixes ran only over blast-radius-declared, pairwise-disjoint surfaces and came back through `./references/workflow/parallel-batch.md` § *Coordinator-side parallel batch*'s ordered gates, in this skill's processing order <!-- cold -->
 - [ ] Every Confirmed auto-path fix delegated, any that stayed with the coordinator naming its posture exception; delegation confined to that surface — no ask-routed, Withdrawn, or Inconclusive finding sent to an executor — and every delegation announced and noted with its engine in its `Fixed` / `Fix failed` entry
 - [ ] The gate, the batched ask, final-integrated outcome checks, health recovery, and the report buckets stayed with the coordinator
-- [ ] Nothing staged, nothing committed, no Git state mutated (transient coordinator-managed worktrees excepted — a batch's and a serial `-x` fix's alike, created scratch, removed after merge)
+- [ ] Nothing staged, nothing committed, no Git state mutated (transient coordinator-managed worktrees excepted — created scratch, removed after merge)

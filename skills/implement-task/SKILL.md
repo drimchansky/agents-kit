@@ -1,7 +1,7 @@
 ---
 name: implement-task
 description: Use when asked to implement, execute, run, or carry out a task's plan from a task folder (canonically under `.agents/tasks/`) — by task folder path, or the current task if one is already in context.
-argument-hint: '[task folder path] [-x (cross-vendor executor)]'
+argument-hint: '[task folder path]'
 ---
 
 ## Core Rules
@@ -12,10 +12,6 @@ argument-hint: '[task folder path] [-x (cross-vendor executor)]'
 Executes a plan written by `plan-task` — or any same-format `plan.md` in a task folder, canonically under `.agents/tasks/` though a folder anywhere on disk works the same. It implements the work, records it in a companion **result file** as it goes, marks each step done in the plan with a link to that record, and runs an **acceptance gate** against the goals before flipping the plan to `done`.
 
 Plan = the contract for **how**. Goals = the contract for **what done means**. Result file = the **record**: a rewritable `## Current state` digest above an append-only log. `CONTEXT.md` = static grounding context. `ticket.md` = the product-facing ask the goals derive from.
-
-## Flags
-
-- `-x` — Cross-vendor executor: under the coordinator's unchanged gates, every step §4 delegates runs on the `cross` engine of `./references/workflow/executor-routing.md` § *Write-mode engine registry*, which owns that run's rules and hands its launch recipes to `./references/workflow/executor-engines-cross-vendor.md`. Off by default. The flag selects an engine and moves no posture exception, so a step an exception keeps inline stays inline; the engine a step ran on is recorded in the existing `**Executed:**` field (§5), never a new one. <!-- cold -->
 
 ## Inputs
 
@@ -145,11 +141,11 @@ No diagram → skip every re-check, absence unreported. With one, the three re-c
 
 #### Execution strategy: every step delegates
 
-Execute each step through an **executor** per `./references/workflow/executor-contract.md` and its `implement-task` binding — read both before the first step — on the unflagged default engine `native`, which places a serially delegated step or segment on the shared tree. Under `-x` the `cross` entry's worktree-always placement covers **every** delegated step, a serially delegated one included: a step's declared surface decides batch eligibility, never placement.
+Execute each step through an **executor** per `./references/workflow/executor-contract.md` and its `implement-task` binding — read both before the first step — on the engine `native`, which places a serially delegated step or segment on the shared tree.
 
 Delegation is the standing posture, not a judgment call: **every step goes to an executor**, and `./references/workflow/write-mode-posture.md` — read it before the first step — owns that rule and the only three exceptions that keep a step here. The launch shape follows the mode. **Step-by-step: one executor per step**, launched in plan order with the packet that contract's *Launch packet* requires. **Full-plan: one executor per checkpoint-bounded segment** — the binding's **Segment bound** and the contract's § *Segment launches* govern — carrying the segment's steps in plan order in one packet, per-step `What`/`Verify` and surfaces intact; a lone step between checkpoints is a segment of one, and steps qualifying for the parallel batch below batch instead. Confirm every packet item is filled before launching — a gap you can close by reading the task folder, the tree, or the user is closed, never a reason to keep a step. **Deviation is measured against the mode's default launch on `native`**, never against whichever engine the run selected — which is what the `**Executed:**` fields (§5) record. While an executor is in flight the coordinator waits — no step of its own, no shared-tree edit — until it reports, on the mechanism in `./references/workflow/delegated-waiting.md` § *How to wait*. Then the coordinator takes the report through the intake that contract's § *Write-mode routing* requires, re-proves each step's full outcome tier on the tree (`./references/workflow/execution-loop.md` § *Two verification tiers*), the executor having run the criterion alone (its pass is advance evidence, never the gate), and records the step (§5); a step failing its re-proof is Stop-the-Line there — later steps in the report are not recorded or marked done past it; their edits, already on the tree, are triaged forward per the loop, never unwound by a Git operation.
 
-**Inline is an exception, announced and recorded.** A step runs here only on one of the posture file's three exceptions — it cannot be specified before it runs, delegation is unavailable in this environment, or the executor failed — announced in chat as it happens and recorded in `**Executed:**` with which exception applied. A standing session instruction against spawning agents is weighed against the standing authorization in `./references/workflow/executor-routing.md` § *The registry and its authorization* before it counts as unavailability. A failed or hung executor degrades per the registry's ladder (that file's § *Write-mode engine registry*): only a `native` failure takes this binding's **Fallback**, after which continue. On a segment, completed steps that pass re-proof stand; the failing step and the unreached remainder relaunch as a fresh segment per the contract's § *Segment launches*. <!-- cold -->
+**Inline is an exception, announced and recorded.** A step runs here only on one of the posture file's three exceptions — it cannot be specified before it runs, delegation is unavailable in this environment, or the executor failed — announced in chat as it happens and recorded in `**Executed:**` with which exception applied. A standing session instruction against spawning agents is weighed against the standing authorization in `./references/workflow/executor-routing.md` § *The registry and its authorization* before it counts as unavailability. A failed or hung executor is reported and takes this binding's **Fallback**, after which continue. On a segment, completed steps that pass re-proof stand; the failing step and the unreached remainder relaunch as a fresh segment per the contract's § *Segment launches*. <!-- cold -->
 
 #### Automatic parallel batch (full-plan mode)
 
@@ -171,7 +167,7 @@ Eligible independent steps run concurrently through the same contract and bindin
 
 **Sources:** <official-doc URLs / deep links grounding any framework-specific code in this step, plus any pattern shipped without an authoritative source and why; otherwise omit>
 
-**Executed:** <omit for a step that ran the mode's default launch on `native` — per-step serial in step-by-step, its checkpoint-bounded segment in full-plan; otherwise "parallel batch (<executor engine>), merged in plan order at/before <the §4 merge point>", "serial delegation (<executor engine>)", "serial delegation (native, degraded from cross)", or "inline (<which posture exception: not specifiable / delegation unavailable / executor failed> — <detail>)">
+**Executed:** <omit for a step that ran the mode's default launch on `native` — per-step serial in step-by-step, its checkpoint-bounded segment in full-plan; otherwise "parallel batch (<executor engine>), merged in plan order at/before <the §4 merge point>", "serial delegation (<executor engine>)", or "inline (<which posture exception: not specifiable / delegation unavailable / executor failed> — <detail>)">
 
 **Deviations from plan:** <if any — what differed and why; otherwise omit>
 
@@ -195,7 +191,7 @@ For full-plan mode, write **one combined section** instead — no per-step block
 
 **Sources:** <as above, across all steps; otherwise omit>
 
-**Executed:** <one entry per step deviating from its checkpoint-bounded segment on `native`, omitting the field when none deviates: "Step N inline (<which posture exception> — <detail>)", "Step N serial delegation (<reason it left its segment>, <executor engine>)", "Steps M–N segment (<executor engine>)" for a segment rerouted by `-x` or reshaped by a relaunch, or "Step N serial delegation (native, degraded from cross)">
+**Executed:** <one entry per step deviating from its checkpoint-bounded segment on `native`, omitting the field when none deviates: "Step N inline (<which posture exception> — <detail>)", "Step N serial delegation (<reason it left its segment>, <executor engine>)", or "Steps M–N segment (<executor engine>)" for a segment reshaped by a relaunch>
 
 **Deviations from plan:** <if any>
 
@@ -319,6 +315,6 @@ Confirm the protocol invariants before finishing:
 - [ ] With a `diagram.md`: re-checked at every checkpoint, every structural revision, and the gate — each re-check naming what was compared, each repaint render-checked, `**Reflects:**` re-anchored and re-dated
 - [ ] Deviations and plan revisions recorded in the result file; `goals.md` and `CONTEXT.md` never edited from this skill
 - [ ] Domain pre-presentation checks run over the full changed surface; framework code grounded in `**Sources:**`, any ungrounded pattern stopped or recorded there. Health is consumed from the final current boundary rather than re-run for presentation's sake
-- [ ] Every step delegated — through the mode's default launch (per-step serial in step-by-step, checkpoint-bounded segment in full-plan) with the coordinator's per-step re-proved outcome, or an announced parallel batch — with any inline step naming which of the three posture exceptions applied, and its `**Executed:**` field recording whatever deviated from that default on `native`, every `-x` step that ran on `cross` included
+- [ ] Every step delegated — through the mode's default launch (per-step serial in step-by-step, checkpoint-bounded segment in full-plan) with the coordinator's per-step re-proved outcome, or an announced parallel batch — with any inline step naming which of the three posture exceptions applied, and its `**Executed:**` field recording whatever deviated from that default on `native`
 - [ ] Every parallel-batch step merged only through §4's cited merge gates, conflicts and surface escapes falling back to serial delegation; no per-merge health run
-- [ ] Executors wrote no task-folder file and no status; batches recorded (`**Executed:**` fields, checkpoint `**Merged:**` lines) and every coordinator-managed worktree removed after merge — a serial `-x` step's included
+- [ ] Executors wrote no task-folder file and no status; batches recorded (`**Executed:**` fields, checkpoint `**Merged:**` lines) and every coordinator-managed worktree removed after merge

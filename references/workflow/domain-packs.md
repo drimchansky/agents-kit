@@ -82,20 +82,14 @@ just under `**Status:**`:
   exists — infers the effort's domain from the source doc and stamps each materialized part's own
   `**Domain:**` in its seeded `CONTEXT.md`.
 - **Engineering-only skills** — `review-commit`, `commit`, `review-pr`, `update-pr-description`, `publish-pr-review`, `triage-findings`,
-  `verify-issue`, `fix-findings`, `challenge-task`, `review-commit-triage-verify`, `review-pr-triage-verify`, `triage-findings-verify`,
-  `review-pr-triage-verify-reconcile` — operate on a codebase
+  `verify-issue`, `fix-findings`, `review-commit-triage-verify`, `review-pr-triage-verify`,
+  `triage-findings-verify` — operate on a codebase
   or diff, not a task folder, and load `references/engineering/` unconditionally. They are, in
   effect, skills contributed by the engineering pack; other domains contribute skills the same way
   (the documentation bullet below). `commit` is the lone exception to the load: it belongs to the pack but reads only
   the neutral core, because it writes no code and the single overlay rule that governs it (Git state
-  is mutated only when explicitly asked) is quoted inline in its SKILL.md. Two are exceptions to the
-  surface, and they differ on what reading a task folder buys them. `challenge-task` reads one, but its
-  passes are calibrated for engineering only, so it loads the pack unconditionally rather than resolving
-  `**Domain:**`, and says so before running on a task in another domain (its SKILL.md § Core Rules).
-  `review-pr-triage-verify-reconcile` reads one too and *does* resolve `**Domain:**` — but only to
-  announce a domain mismatch before running, as `challenge-task` does, never to swap its own overlay,
-  which stays engineering unconditionally. Pack membership is about which domain contributes a skill,
-  not about which files it must read.
+  is mutated only when explicitly asked) is quoted inline in its SKILL.md. Pack membership is about
+  which domain contributes a skill, not about which files it must read.
 - **Documentation-contributed skills** — `review-docs` (existing docs' accuracy against the
   codebase, plus the whole-doc quality pass) and `prepare-diagram` (a Mermaid diagram for a
   provided subject) — load `references/documentation/` unconditionally: the same shape as the
@@ -140,10 +134,6 @@ skills (`archive-task`, `backlog-task`, `maintain`, `prepare-ticket`, `resume-ta
 of their own. A composite's delegated skills still run their own steps 2–3: the reconcile
 composites' Phase 1 does. `maintain` delegates to no skill — only Phase 5's read-only probes, which
 resolve no pack of their own — so its run resolves no pack at any depth.
-`review-pr-triage-verify-reconcile` skips step 2 for its own overlay like any engineering-only skill,
-and its Phase 1 delegate is engineering-only too, so nothing in its run resolves a pack — yet its
-Setup still reads `**Domain:**`, which is step 2's *read* put to a different use: announcing a domain
-mismatch before an engineering-calibrated pipeline runs, rather than selecting what this skill loads.
 
 ## Missing-pack fallback
 

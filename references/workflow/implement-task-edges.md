@@ -75,7 +75,7 @@ When the batch directly reaches its bounding checkpoint, run that checkpoint's a
 
 ## An open criterion leg
 
-A step's `Verify` sometimes carries a leg nothing in the session can execute — a browser check, a device, a person's eyes. Keeping that leg whole is `./executor-engines-cross-vendor.md` § *Cross-run rules* → **The verify criterion is retargeted, not rewritten**: it is named before launch, carried as an **explicitly open leg**, and never split off to leave a smaller criterion the run can pass. What it costs this skill is here.
+A step's `Verify` sometimes carries a leg nothing in the session can execute — a browser check, a device, a person's eyes. Keeping that leg whole is `./parallel-batch.md` § *Coordinator-side parallel batch* → **An unexecutable leg is carried open, at any placement**: it is named before launch, carried as an **explicitly open leg**, and never split off to leave a smaller criterion the run can pass. What it costs this skill is here.
 
 **The step is parked, not recorded.** Proving the executable half proves that half and no more, so the checkbox stays unflipped and the step's result section names the open leg, what it asserts, and who is to verify it. A step recorded done on half its criterion puts every later step on an unproved base, which is the failure this branch exists to stop. When the open leg gates a goal, the task lands at `in-review` with that goal's `## Acceptance` line `pending external`, and § *Reaching done from in-review* below is the path out once the user reports the verification happened.
 

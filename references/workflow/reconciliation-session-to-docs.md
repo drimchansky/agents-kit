@@ -1,14 +1,14 @@
 # Reconciliation: Session → Docs
 
-The direction `reconcile-task` and the composite `review-pr-triage-verify-reconcile` write in. It runs on the shared mechanics in `./reconciliation.md`, which this file does not restate — consent model, who runs the reference sweep, record and annotation formats, `plan.md` openings, run sequence, and § *Strengthen only on verified evidence*, the verify-and-write engine every advance this direction makes goes through.
+The direction `reconcile-task` writes in. It runs on the shared mechanics in `./reconciliation.md`, which this file does not restate — consent model, who runs the reference sweep, record and annotation formats, `plan.md` openings, run sequence, and § *Strengthen only on verified evidence*, the verify-and-write engine every advance this direction makes goes through.
 
-Findings come from reviewing the current session against the docs — or, in the composite, from the Confirmed findings its review phase produced — so this direction *enriches*: it writes information the docs are missing.
+Findings come from reviewing the current session against the docs, so this direction *enriches*: it writes information the docs are missing.
 
 ## Write surface
 
-All four core task files, plus the sweep's `observations.md` rewrite — `reconcile-task`'s surface, and the direction's maximum; `review-pr-triage-verify-reconcile` writes a strict subset, `plan.md` and `result.md` only, and sweeps nothing (its section below). Never the upstream `ticket.md`, read-only (a changed ask is surfaced for the user), and never `diagram.md` or a doc task's deliverable (`./reconciliation.md` § *Authored surfaces are never written*). `result.md` per `./reconciliation.md` § *The record*. `plan.md` — the five shared openings, plus **two additions**:
+All four core task files, plus the sweep's `observations.md` rewrite — `reconcile-task`'s surface, and so the direction's. Never the upstream `ticket.md`, read-only (a changed ask is surfaced for the user), and never `diagram.md` or a doc task's deliverable (`./reconciliation.md` § *Authored surfaces are never written*). `result.md` per `./reconciliation.md` § *The record*. `plan.md` — the five shared openings, plus **two additions**:
 
-- a **new step**, only through a confirmed judgment item (docs → reality closes against this because redesign is out of scope there; here, enriching the plan is the point), inserted without renumbering per the step-stability rule. This is the opening `review-pr-triage-verify-reconcile` writes through, one step per accepted finding — its section below is that member's whole mapping;
+- a **new step**, only through a confirmed judgment item (docs → reality closes against this because redesign is out of scope there; here, enriching the plan is the point), inserted without renumbering per the step-stability rule;
 - a **new open-question line** appended to `## Open Questions` — auto, pure enrichment, distinct from the answered-question *annotation* the five already cover.
 
 `CONTEXT.md` prose sections (not annotation-only) and `goals.md` are writable too, but only through a **confirmed** judgment item. Pure enrichment auto-applies: a new external reference into `## References`, an answered open question annotated in `## Open Questions`, a new open question appended there, session narrative appended to `result.md`. Each enrichment lands in the fact's **home file only** (`./reconciliation.md` § *One home per fact*): a session decision goes to `CONTEXT.md` *or* the affected plan step, whichever the homes rule names, and an answer is annotated where its question lives, never mirrored into both.
@@ -44,5 +44,3 @@ Findings come from diffing the session against the docs, plus the reference swee
 - **Structure changed this session in a way `diagram.md` doesn't show** (the session nominates) → **flag only** per `./reconciliation.md` § *Authored surfaces are never written*; while the divergence stands, finalization is held at `executing` by that file's § *Strengthen only on verified evidence*. Deciding a diagram is now *warranted* is a `plan-task` call, not a reconciliation one.
 - **Deliverable content decided this session but absent from the file** (doc tasks) → **flag only** on that same exclusion; "Not reconciled" names `implement-task`. A stale *published copy* is the `**Published:**` row above, not this one.
 - **Work discussed but not done** → flag only: it isn't verified, so it isn't recorded; "Not reconciled" names `implement-task`.
-
-The direction's second member, `review-pr-triage-verify-reconcile`, has its own finding-type → edit mapping in `./reconciliation-verified-findings.md`; read it when running that composite's reconcile phase.

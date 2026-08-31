@@ -2,7 +2,7 @@
 
 This is the host-neutral contract for a write-mode executor. An executor carries out exactly one coordinator-supplied unit of work — or, on a **segment launch** (§ *Segment launches*), one packet-supplied ordered list of units — and returns evidence to the coordinator. What a unit is, what the packet carries, and what the executor may edit are per-consumer — the `## Bindings` at the end name them. Host adapters select native model, effort, and permission defaults, then load their installed copy of this contract.
 
-This file carries the whole write-mode side of agent fan-out: the executor-facing contract below, then the routing its satellite `./executor-routing.md` owns — which consumers may launch an executor at all, and the engines they may launch it on. Read-only fan-out is not here — the probe contract and the merge contract are `./agent-fanout.md`.
+This file carries the whole write-mode side of agent fan-out: the executor-facing contract below, then the routing its satellite `./executor-routing.md` owns — which consumers may launch an executor at all, and the engine they may launch it on. Read-only fan-out is not here — the probe contract and the merge contract are `./agent-fanout.md`.
 
 ## Launch packet
 
@@ -52,9 +52,9 @@ Do not claim that the unit is done, update a status, or write this report anywhe
 
 A **segment launch** hands one executor an ordered list of units in a single packet — consecutive units that share context, so one warm executor replaces several cold ones re-reading the same files and re-receiving the same guidance. Whether a consumer may launch segments, and what bounds one, is its binding's call (§ *Bindings*); a binding that names no segment bound launches units one at a time.
 
-The launch changes nothing about what a unit is. The packet carries every § *Launch packet* item **per unit** — each unit's text and criterion, each declared surface — with the shared items (domain guidance, effective root, consumer label) stated once. The executor executes the units strictly in packet order, proves each unit's criterion before starting the next, and returns one evidence report per unit; a mid-segment failure ends the segment at the failing unit with the remainder reported not started. Placement is the engine's, unchanged: one launch, one effective root — the shared tree for a `native` serial segment, one coordinator-managed worktree under `cross`.
+The launch changes nothing about what a unit is. The packet carries every § *Launch packet* item **per unit** — each unit's text and criterion, each declared surface — with the shared items (domain guidance, effective root, consumer label) stated once. The executor executes the units strictly in packet order, proves each unit's criterion before starting the next, and returns one evidence report per unit; a mid-segment failure ends the segment at the failing unit with the remainder reported not started. Placement is the engine's, unchanged: one launch, one effective root — the shared tree for a serial segment.
 
-Coordinator intake is per unit, in packet order, exactly as § *Write-mode routing* requires for any report — but on the segment-final tree: a native segment's edits are already on the shared tree in full, and a worktree-placed segment incorporates first as one gate, its whole-segment delta surface-checked against the union of the units' declared surfaces and brought over atomically. Within the segment the executor's per-unit criterion pass is what licenses starting the next unit; the coordinator's fuller tier is owed at intake, and its per-unit order is a recording order, not a tree state. A unit failing its re-proof is Stop-the-Line at that unit: later units in the same report are not recorded or marked done past it, their edits — already present — are triaged forward under the loop's Stop-the-Line, and nothing is unwound by a Git operation or a blind restore. On an executor failure mid-segment, completed units that pass re-proof stand; the failing unit and the unreached remainder relaunch as a fresh segment on the engine the degrade ladder (`./executor-routing.md` § *Write-mode engine registry*) leaves them on, and only after the ladder does the consumer's **Fallback** take the failing unit.
+Coordinator intake is per unit, in packet order, exactly as § *Write-mode routing* requires for any report — but on the segment-final tree, where the segment's edits are already present in full. Within the segment the executor's per-unit criterion pass is what licenses starting the next unit; the coordinator's fuller tier is owed at intake, and its per-unit order is a recording order, not a tree state. A unit failing its re-proof is Stop-the-Line at that unit: later units in the same report are not recorded or marked done past it, their edits — already present — are triaged forward under the loop's Stop-the-Line, and nothing is unwound by a Git operation or a blind restore. On an executor failure mid-segment, completed units that pass re-proof stand; the failing unit and the unreached remainder relaunch as a fresh segment on `native`, and only if that relaunch fails does the consumer's **Fallback** take the failing unit.
 
 ## Write-mode routing
 
@@ -62,7 +62,7 @@ Write-mode fan-out is limited to the consumers registered in `./executor-routing
 
 **The posture.** Delegation is the standing posture for every consumer registered in `./executor-routing.md`: each unit goes to an executor, and `./write-mode-posture.md` owns that rule together with the closed set of three exceptions that keep one unit inline. No consumer states a posture, a packet-cost prior, or a cadence of its own.
 
-**The registry, the authorization, and the engines** are the satellite `./executor-routing.md`: which consumers may launch at all, what a user's invocation authorizes and what an unrequested one does not, the `native` adapter defaults and their degradation, and the `cross` entry `-x` selects. The default needs none of it — `native`, the coordinator launching the `executor` adapter with the effective root this contract fixes, the adapter then loading its own installed copy — so read that file when a run is unregistered, unrequested, running `-x`, or looking at a failed adapter.
+**The registry, the authorization, and the engine** are the satellite `./executor-routing.md`: which consumers may launch at all, what a user's invocation authorizes and what an unrequested one does not, and the `native` adapter defaults and their degradation. The default needs none of it — `native`, the coordinator launching the `executor` adapter with the effective root this contract fixes, the adapter then loading its own installed copy — so read that file when a run is unregistered, unrequested, or looking at a failed adapter.
 
 Every unit that runs inline is **announced in chat and recorded in that skill's report**, naming which of the posture file's three exceptions applied; that record is what keeps the standing posture from decaying silently into always-inline. The exact record shape is each skill's own.
 
@@ -84,7 +84,7 @@ omit the engine when it is the mode's default launch; the deviations are what th
 report lists under `Comments added or edited` is validated as part of that tier where the domain's
 per-unit checks require it.
 
-The mechanics of running units concurrently — eligibility, worktree placement, the frozen shared tree, the merge gates, incorporation order, and cleanup — live in `./parallel-batch.md`; read it when a batch qualifies, and whenever a unit runs on `cross`, whose worktree-always placement routes even a serially delegated unit's seeding, surface check, and removal through that same file.
+The mechanics of running units concurrently — eligibility, worktree placement, the frozen shared tree, the merge gates, incorporation order, and cleanup — live in `./parallel-batch.md`; read it when a batch qualifies.
 
 ## Bindings
 
@@ -121,9 +121,8 @@ One **Confirmed** finding's immediate fix application, applied to working-tree c
 - **Outside the delegation surface** — ask-routed fixes stay with the coordinator, which authored the approved diff and applies it inline; Withdrawn and Inconclusive findings are never edited at all.
 - **Fallback** — serial re-execution for a batch fix, inline execution for a serial delegate; a failed
   executor is reported, its worktree discarded, and the fix re-executed whether the executor was
-  unavailable, hung, surface-escaping, or conflicting. This is the ladder's **last rung**: the engine a
-  failure degrades to before reaching it, and the placement that engine defines for the re-execution,
-  are `./executor-routing.md` § *Write-mode engine registry*'s. The coordinator-side machinery around it — the immutable run
+  unavailable, hung, surface-escaping, or conflicting. The re-execution runs on the integrated tree,
+  the placement `native` defines (`./executor-routing.md` § *Write-mode engine registry*). The coordinator-side machinery around it — the immutable run
   baseline, each fix's exact pre-fix capture and its attribution-bounded restoration, the ordered
   incorporated change sets, and the dependency-safe rebuild that never uses a Git reset, checkout, or
   reverse patch — is `./fix-findings-recovery.md` with `fix-findings` § *Content baseline and immediate
