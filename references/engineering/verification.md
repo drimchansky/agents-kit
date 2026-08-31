@@ -75,7 +75,22 @@ don't bandage the symptom. Work the triage in order:
    cause. Deduplicating in the UI when the API returns duplicates is a symptom fix; fixing the JOIN
    is a root-cause fix.
 5. **Guard against recurrence** — add a regression test that fails without the fix and passes with
-   it.
+   it. Prove the red half before the fix lands wherever that order is yours (`./execution.md`
+   § *Prove-It pattern*, the planned bug-fix step); once it is live, the only thing left to un-fix is
+   working code. Never edit the shared tree back to the broken state to get that red — an
+   interruption then leaves the defect reintroduced in tracked code with only an unversioned copy to
+   restore from — and `git stash` is no substitute, since `./rules.md` forbids mutating Git state
+   unasked. Use a throwaway `git worktree` at the pre-fix state and remove it after: transient
+   scratch that commits nothing and makes no branch sits inside that rule rather than against it
+   (`../workflow/parallel-batch.md`). That pre-fix state is the shared tree with only the fix
+   withheld, not the commit under it: `git worktree add` checks out a commit, and under the
+   no-commit rule the tree carries earlier units and the new test itself uncommitted — so seed the
+   worktree from the shared tree as that file's batches do, withhold the fix, and carry the test in.
+   A red from an absent test or a missing module is not the red half. Where even that is
+   unavailable, record the guard as proved forward-only — a gap the unit's report surfaces, not a
+   cleared step, since a test written after the fix tests the implementation rather than the bug
+   (`../workflow/execution-loop.md` § *Don't Rationalize*) — rather than asserting a red half that
+   was never run.
 6. **Re-prove the failed unit outcome, rerun the failed integration assertion, or rerun the failed
    health boundary.** Only then continue.
 
