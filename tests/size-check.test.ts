@@ -8,6 +8,7 @@ import {
   readFileSync,
   rmSync,
   statSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -54,7 +55,11 @@ interface BaselineEntry {
 
 interface Baseline {
   readonly skills: readonly BaselineEntry[];
+  readonly corpus: Totals;
+  readonly hotCapBytes: number;
 }
+
+const LINKED_SKILL = join(KIT, "skills", "linked-skill");
 
 function runCheck(expectedStatus: number, args: readonly string[]): CheckRun {
   const run = spawnSync(process.execPath, [SCRIPT, ...args], {
@@ -82,6 +87,25 @@ function writeCleanKit(): void {
   writeFileSync(CITED_REFERENCE, "# alpha\n");
 }
 
+function corpusBytes(): number {
+  return [CORE_RULES_FILE, ONE_SKILL_FILE, CITED_REFERENCE].reduce(
+    (total, path) => total + statSync(path).size,
+    0,
+  );
+}
+
+function hotBytes(): number {
+  return [ONE_SKILL_FILE, CORE_RULES_FILE, CITED_REFERENCE].reduce(
+    (total, path) => total + statSync(path).size,
+    0,
+  );
+}
+
+function capOf(baselinePath: string): number {
+  const baseline: Baseline = JSON.parse(readFileSync(baselinePath, "utf8"));
+  return baseline.hotCapBytes;
+}
+
 before(() => {
   writeCleanKit();
 });
@@ -93,6 +117,32 @@ after(() => {
 test("a check with no baseline refuses with the capture hint rather than passing vacuously", () => {
   const { stderr } = runCheck(2, ["--baseline", BASELINE, KIT]);
   assertIncludes(stderr, "--update", "a missing baseline names the way to capture one");
+});
+
+test("a baseline that will not parse is refused as unreadable, and its reset is announced", (t: TestContext) => {
+  const corrupt = join(TEST_ROOT, "corrupt-baseline.json");
+  t.after(() => rmSync(corrupt, { force: true }));
+  writeFileSync(corrupt, "{ not json\n");
+
+  const check = runCheck(2, ["--baseline", corrupt, KIT]);
+  assertIncludes(check.stderr, "is not readable", "a file that exists is refused as unreadable");
+  assert.ok(
+    !check.stderr.includes("no baseline at"),
+    `a baseline that exists is never reported as missing, got "${check.stderr}"`,
+  );
+
+  const update = runCheck(0, ["--update", "--baseline", corrupt, KIT]);
+  assertIncludes(
+    update.stderr,
+    "carry nothing forward",
+    "a capture over garbage says both ratchets reset rather than resetting them in silence",
+  );
+  const captured: Baseline = JSON.parse(readFileSync(corrupt, "utf8"));
+  assert.strictEqual(
+    captured.corpus.bytes,
+    corpusBytes(),
+    "and it still captures, because an unreadable file offers nothing to ratchet against",
+  );
 });
 
 test("--update writes a parseable baseline holding the measured skills", () => {
@@ -119,6 +169,11 @@ test("--update writes a parseable baseline holding the measured skills", () => {
     { bytes: 0, approxTokens: 0 },
     "a kit marking no citation cold baselines an empty cold set rather than omitting it",
   );
+  assert.strictEqual(
+    baseline.hotCapBytes,
+    entry.hot.bytes,
+    "a first capture has no cap to carry forward, so it records the measured maximum hot set",
+  );
 });
 
 test("an unchanged kit passes against its captured baseline", () => {
@@ -127,17 +182,168 @@ test("an unchanged kit passes against its captured baseline", () => {
 });
 
 test("a grown reference fails the check, naming each moved total", () => {
+  const corpusBefore = corpusBytes();
   appendFileSync(CITED_REFERENCE, "grown by a sentence the baseline never measured\n");
   const { stdout } = runCheck(1, ["--baseline", BASELINE, KIT]);
   assertIncludes(stdout, "one-skill: hot", "growth in an unmarked citation names the hot set");
   assertIncludes(stdout, "one-skill: transitive", "growth names the transitive set too");
+  assertIncludes(
+    stdout,
+    `corpus: ${corpusBefore} -> ${corpusBytes()} bytes`,
+    "the kit-wide corpus moves with the same file, on its own drift line",
+  );
   assertIncludes(stdout, "--update", "the drift summary carries the re-capture hint");
+  assertIncludes(
+    stdout,
+    "--allow-corpus-growth",
+    "and the hint carries the flag a grown corpus now needs, rather than naming a refused command",
+  );
 });
 
-test("re-capturing after intended growth returns the check to clean", () => {
+test("--update refuses to absorb corpus growth and leaves the baseline byte-identical", () => {
+  const before = readFileSync(BASELINE);
+  const { stderr } = runCheck(2, ["--update", "--baseline", BASELINE, KIT]);
+  assertIncludes(stderr, "--allow-corpus-growth", "the refusal names the flag that would allow it");
+  assert.deepStrictEqual(
+    readFileSync(BASELINE),
+    before,
+    "a refused capture rewrites nothing, so the ratchet still holds the reviewed total",
+  );
+});
+
+test("--allow-corpus-growth re-captures the grown corpus, leaving only the cap it carried forward", () => {
+  runCheck(0, ["--update", "--allow-corpus-growth", "--baseline", BASELINE, KIT]);
+  const baseline: Baseline = JSON.parse(readFileSync(BASELINE, "utf8"));
+  assert.deepStrictEqual(
+    Object.keys(baseline),
+    ["skills", "corpus", "hotCapBytes"],
+    "the baseline records the corpus and the hot cap beside the per-skill totals",
+  );
+  assert.deepStrictEqual(
+    Object.keys(baseline.corpus),
+    ["bytes", "approxTokens"],
+    "the corpus is recorded as totals only, like every ratcheted set",
+  );
+  assert.strictEqual(baseline.corpus.bytes, corpusBytes(), "the flagged capture records the higher total");
+  const { stdout } = runCheck(1, ["--baseline", BASELINE, KIT]);
+  assert.deepStrictEqual(
+    stdout.split("\n").filter((line) => line.length > 0 && !line.startsWith("[size-check]")),
+    [`one-skill: hot ${hotBytes()} bytes over the cap of ${baseline.hotCapBytes}`],
+    "every measured total re-captured, so the carried-forward cap is the one line a capture cannot clear",
+  );
+});
+
+test("a shrunken corpus re-captures without the growth flag", () => {
+  writeFileSync(CITED_REFERENCE, "# alpha\n");
   runCheck(0, ["--update", "--baseline", BASELINE, KIT]);
-  const { stdout } = runCheck(0, ["--baseline", BASELINE, KIT]);
-  assertIncludes(stdout, "clean", "the re-captured baseline matches the grown kit");
+  const baseline: Baseline = JSON.parse(readFileSync(BASELINE, "utf8"));
+  assert.strictEqual(
+    baseline.corpus.bytes,
+    corpusBytes(),
+    "the ratchet resists growth only — a corpus that shrank is recorded, not refused",
+  );
+});
+
+test("a baseline holding no corpus total names it, then first-captures without the flag", (t: TestContext) => {
+  const corpusless = join(TEST_ROOT, "corpusless-baseline.json");
+  t.after(() => {
+    rmSync(corpusless, { force: true });
+    writeFileSync(CITED_REFERENCE, "# alpha\n");
+  });
+  runCheck(0, ["--update", "--baseline", corpusless, KIT]);
+  const captured: Baseline = JSON.parse(readFileSync(corpusless, "utf8"));
+  writeFileSync(corpusless, JSON.stringify({ skills: captured.skills }, null, 2) + "\n");
+  appendFileSync(CITED_REFERENCE, "growth a corpus-less baseline holds no total to refuse\n");
+  const { stdout } = runCheck(1, ["--baseline", corpusless, KIT]);
+  assertIncludes(
+    stdout,
+    `corpus: not in the baseline (${corpusBytes()} bytes)`,
+    "a baseline predating the corpus key names it rather than passing the kit silently",
+  );
+  runCheck(0, ["--update", "--baseline", corpusless, KIT]);
+  const recaptured: Baseline = JSON.parse(readFileSync(corpusless, "utf8"));
+  assert.strictEqual(
+    recaptured.corpus.bytes,
+    corpusBytes(),
+    "a baseline with no total to ratchet against has nothing to refuse, so the first capture needs no flag",
+  );
+});
+
+test("a skill grown past the cap is named over it, beside the hot drift the growth caused", (t: TestContext) => {
+  t.after(() => writeFileSync(ONE_SKILL_FILE, HOT_SKILL));
+  const cap = capOf(BASELINE);
+  const hotBefore = hotBytes();
+  appendFileSync(ONE_SKILL_FILE, "a sentence that pushes the hot set past the recorded cap\n");
+  const { stdout } = runCheck(1, ["--baseline", BASELINE, KIT]);
+  assertIncludes(
+    stdout,
+    `one-skill: hot ${hotBefore} -> ${hotBytes()} bytes`,
+    "the growth is drift against the recorded totals",
+  );
+  assertIncludes(
+    stdout,
+    `one-skill: hot ${hotBytes()} bytes over the cap of ${cap}`,
+    "and crossing the cap is its own line, because re-capturing clears the drift but not the cap",
+  );
+});
+
+test("--hot-cap lowers the recorded cap, which a plain re-capture then carries forward", (t: TestContext) => {
+  const capped = join(TEST_ROOT, "capped-baseline.json");
+  t.after(() => rmSync(capped, { force: true }));
+  runCheck(0, ["--update", "--baseline", capped, KIT]);
+  const measured = capOf(capped);
+  runCheck(0, ["--update", "--hot-cap", String(measured - 1), "--baseline", capped, KIT]);
+  assert.strictEqual(capOf(capped), measured - 1, "a value below the recorded cap tightens the ratchet");
+  runCheck(0, ["--update", "--baseline", capped, KIT]);
+  assert.strictEqual(
+    capOf(capped),
+    measured - 1,
+    "an unflagged capture carries the tightened cap forward rather than raising it back to the measurement",
+  );
+});
+
+test("--update refuses to raise the cap and leaves the baseline byte-identical", (t: TestContext) => {
+  const capped = join(TEST_ROOT, "raised-baseline.json");
+  t.after(() => rmSync(capped, { force: true }));
+  runCheck(0, ["--update", "--baseline", capped, KIT]);
+  const before = readFileSync(capped);
+  const { stderr } = runCheck(2, [
+    "--update",
+    "--hot-cap",
+    String(capOf(capped) + 1),
+    "--baseline",
+    capped,
+    KIT,
+  ]);
+  assertIncludes(stderr, "ratchets down only", "the refusal says which direction the cap moves");
+  assert.deepStrictEqual(
+    readFileSync(capped),
+    before,
+    "a refused raise rewrites nothing, so the ratchet still holds the reviewed cap",
+  );
+});
+
+test("a baseline holding no cap names it, then first-captures the measured maximum", (t: TestContext) => {
+  const capless = join(TEST_ROOT, "capless-baseline.json");
+  t.after(() => rmSync(capless, { force: true }));
+  runCheck(0, ["--update", "--baseline", capless, KIT]);
+  const captured: Baseline = JSON.parse(readFileSync(capless, "utf8"));
+  writeFileSync(
+    capless,
+    JSON.stringify({ skills: captured.skills, corpus: captured.corpus }, null, 2) + "\n",
+  );
+  const { stdout } = runCheck(1, ["--baseline", capless, KIT]);
+  assertIncludes(
+    stdout,
+    `hotCapBytes: not in the baseline (max hot ${hotBytes()} bytes)`,
+    "a baseline predating the cap names it rather than passing every skill silently",
+  );
+  runCheck(0, ["--update", "--baseline", capless, KIT]);
+  assert.strictEqual(
+    capOf(capless),
+    hotBytes(),
+    "a baseline with no cap to ratchet against has nothing to refuse, so the first capture needs no flag",
+  );
 });
 
 test("a skill the baseline has never seen is reported, not silently admitted", (t: TestContext) => {
@@ -197,6 +403,37 @@ test("a baseline entry with no skill behind it is reported", () => {
     "one-skill: in the baseline but not in the kit",
     "a removed skill is drift, not a silent shrink",
   );
+});
+
+test("a corpus the walk could not measure in full is refused for both check and capture", (t: TestContext) => {
+  const missBaseline = join(TEST_ROOT, "miss-baseline.json");
+  const linkTarget = join(TEST_ROOT, "linked-target.md");
+  t.after(() => {
+    rmSync(LINKED_SKILL, { recursive: true, force: true });
+    rmSync(linkTarget, { force: true });
+    rmSync(missBaseline, { force: true });
+  });
+  writeFileSync(linkTarget, "# linked-skill\n");
+  mkdirSync(LINKED_SKILL, { recursive: true });
+  symlinkSync(linkTarget, join(LINKED_SKILL, "SKILL.md"));
+
+  const { stderr } = runCheck(2, ["--update", "--baseline", missBaseline, KIT]);
+  assertIncludes(stderr, "the corpus walk missed", "the refusal names the walk, not the citations");
+  assert.ok(
+    !existsSync(missBaseline),
+    "a refused update writes no baseline, which would anchor the corpus below the truth",
+  );
+  runCheck(2, ["--baseline", BASELINE, KIT]);
+});
+
+test("a malformed --hot-cap is refused before anything is measured, so no null cap is recorded", (t: TestContext) => {
+  const malformed = join(TEST_ROOT, "malformed-baseline.json");
+  t.after(() => rmSync(malformed, { force: true }));
+  runCheck(0, ["--update", "--baseline", malformed, KIT]);
+  const before = readFileSync(malformed);
+  const { stderr } = runCheck(2, ["--update", "--hot-cap", "12.5", "--baseline", malformed, KIT]);
+  assertIncludes(stderr, "whole number of bytes", "the refusal names what the value has to be");
+  assert.deepStrictEqual(readFileSync(malformed), before, "a refused capture rewrites nothing");
 });
 
 test("an incompletely measured kit is refused for both check and capture", () => {

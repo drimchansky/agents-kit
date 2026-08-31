@@ -48,6 +48,7 @@ type SignalCounts = Partial<Record<SignalClass, number>>;
 
 interface TranscriptRecord {
   readonly type?: string;
+  readonly cwd?: string;
   readonly payload?: CodexPayload;
   readonly isApiErrorMessage?: boolean;
   readonly preventedContinuation?: boolean;
@@ -57,6 +58,7 @@ interface TranscriptRecord {
 
 interface CodexPayload {
   readonly type?: string;
+  readonly cwd?: string;
   readonly reason?: string;
   readonly success?: boolean;
   readonly stderr?: unknown;
@@ -93,11 +95,22 @@ interface SessionScore extends FlaggedSession {
   readonly unknown: number;
 }
 
+interface TriagedFile {
+  readonly project: string | null;
+  readonly session: SessionScore | null;
+}
+
+interface ProjectSessions {
+  readonly project: string | null;
+  readonly count: number;
+}
+
 interface Report {
   readonly flagged: readonly FlaggedSession[];
   readonly remainder: number;
   readonly remainderPaths: readonly string[];
   readonly scanned: number;
+  readonly sessions: readonly ProjectSessions[];
   readonly skippedUnknownRecords: number;
   readonly skippedUnrecognized: number;
   readonly skippedUnrecognizedPaths: readonly string[];
@@ -210,6 +223,24 @@ function sniffHost(records: readonly TranscriptRecord[]): Host | null {
   return null;
 }
 
+function firstProject(records: readonly TranscriptRecord[], host: Host): string | null {
+  for (const record of records) {
+    if (!record || typeof record !== "object") continue;
+    if (host === "claude") {
+      if (typeof record.cwd === "string") return record.cwd;
+      continue;
+    }
+    if (record.type === "session_meta" && typeof record.payload?.cwd === "string") return record.payload.cwd;
+  }
+  return null;
+}
+
+function compareProjects(a: string | null, b: string | null): number {
+  if (a == null) return b == null ? 0 : 1;
+  if (b == null) return -1;
+  return a.localeCompare(b, "en");
+}
+
 function classifyClaude(
   records: readonly TranscriptRecord[],
   bump: (cls: SignalClass) => void,
@@ -308,14 +339,14 @@ function classifyCodex(
   }
 }
 
-function triage(file: SessionFile): SessionScore | null {
+function triage(file: SessionFile): TriagedFile {
   let text;
   try {
     text = readFileSync(file.path, "utf8");
   } catch (err) {
     warnings.push(`unreadable file ${file.path}: ${err.code ?? err.message}`);
     unreadablePaths.push(file.path);
-    return null;
+    return { project: null, session: null };
   }
   const records: TranscriptRecord[] = [];
   let unknown = 0;
@@ -331,7 +362,7 @@ function triage(file: SessionFile): SessionScore | null {
   if (host == null) {
     warnings.push(`unrecognized session format, skipped: ${file.path}`);
     skippedUnrecognizedPaths.push(file.path);
-    return null;
+    return { project: null, session: null };
   }
   const counts = new Map<SignalClass, number>();
   const bump = (cls: SignalClass) => counts.set(cls, (counts.get(cls) ?? 0) + 1);
@@ -344,7 +375,10 @@ function triage(file: SessionFile): SessionScore | null {
     if (n >= (MIN_EVENTS[cls] ?? 1)) classes[cls] = n;
   }
   const score = Object.keys(classes).length;
-  return { path: file.path, host, mtime: isoDate(file.mtimeMs), mtimeMs: file.mtimeMs, classes, score, unknown };
+  return {
+    project: firstProject(records, host),
+    session: { path: file.path, host, mtime: isoDate(file.mtimeMs), mtimeMs: file.mtimeMs, classes, score, unknown },
+  };
 }
 
 const { dirs, sinceMs, topN } = parseArgs(process.argv.slice(2));
@@ -354,13 +388,19 @@ if (sinceMs == null) for (const dir of dirs) noteUnwalked(dir);
 else for (const dir of dirs) collectFiles(dir, sinceMs, files);
 
 const results: SessionScore[] = [];
+const projectCounts = new Map<string | null, number>();
 let skippedUnknownRecords = 0;
 for (const file of files) {
-  const result = triage(file);
-  if (!result) continue;
-  skippedUnknownRecords += result.unknown;
-  if (result.score > 0) results.push(result);
+  const { project, session } = triage(file);
+  projectCounts.set(project, (projectCounts.get(project) ?? 0) + 1);
+  if (!session) continue;
+  skippedUnknownRecords += session.unknown;
+  if (session.score > 0) results.push(session);
 }
+
+const sessions = [...projectCounts]
+  .map(([project, count]) => ({ project, count }))
+  .sort((a, b) => b.count - a.count || compareProjects(a.project, b.project));
 
 results.sort((a, b) => b.score - a.score || b.mtimeMs - a.mtimeMs || a.path.localeCompare(b.path, "en"));
 const flagged = results.slice(0, topN).map(({ path, host, mtime, classes, score }) => ({ path, host, mtime, classes, score }));
@@ -370,6 +410,7 @@ process.stdout.write(JSON.stringify({
   remainder: Math.max(0, results.length - flagged.length),
   remainderPaths: results.slice(flagged.length).map((result) => result.path),
   scanned: files.length,
+  sessions,
   skippedUnknownRecords,
   skippedUnrecognized: skippedUnrecognizedPaths.length,
   skippedUnrecognizedPaths,

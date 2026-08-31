@@ -452,13 +452,25 @@ Triages Claude and Codex session transcripts for agent-misbehavior signals.
 node scripts/session-triage.ts --since YYYY-MM-DD [--top N] <dir> [<dir>...]
 ```
 
-**Contract.** stdout is one JSON object `{flagged, remainder, remainderPaths, scanned,
+**Contract.** stdout is one JSON object `{flagged, remainder, remainderPaths, scanned, sessions,
 skippedUnknownRecords, skippedUnrecognized, skippedUnrecognizedPaths, unreadable, unreadableDirs,
 unreadablePaths}` — `flagged` is the ranked top slice, `remainderPaths` names every flagged session
 beyond it, and `unreadable` counts every in-window transcript and directory this run could not read
 (`unreadablePaths` and `unreadableDirs` name them), so a caller advancing a since-marker can tell that
 work was missed rather than cleared. `skippedUnrecognizedPaths` names the files whose host could not
 be sniffed — reported, but outside that gate, since they would not sniff on a later run either.
+
+`sessions` is the same in-window files grouped by where they ran: `{project, count}` sorted by count
+descending, then by project with a `null` project last, since `null` carries no `localeCompare` order
+among the paths. `project` is the first `cwd` the transcript's records carry — a Claude record's
+top-level `cwd`, a Codex `session_meta`'s `payload.cwd` — found by walking the records in order rather
+than reading the first one, which is routinely a summary or snapshot carrying none; it is `null` for a
+file this run could not read, could not sniff, or that carries no `cwd` at all. **The counts sum to
+`scanned`**, which is why the bucket is filled in the driving loop, once per file, rather than derived
+from what triage returns: a readable, sniffable transcript that scores nothing never reaches the
+ranked results, and an unreadable or unsniffable one is never classified at all, so a tally built
+downstream of classification would silently describe less than the window it names.
+
 Warnings go to stderr; the exit code is always 0.
 
 Sessions are scored by their count of *distinct* signal classes and ordered by that then recency.
@@ -486,27 +498,84 @@ loads is a conscious, reviewed choice rather than silent drift. The measurement 
 `scripts/size-report.ts`, run as a child process; this script only compares and records.
 
 ```
-node scripts/size-check.ts [--update] [--baseline FILE] <kit-root>
+node scripts/size-check.ts [--update] [--allow-corpus-growth] [--hot-cap N] [--baseline FILE] <kit-root>
 ```
 
-**Modes.** Without `--update`, each skill's hot, cold, and transitive byte totals are compared against
-the baseline (default: `<kit-root>/tests/size-baseline.json`): any difference — a grown or shrunk
-total, a skill missing from the baseline, a baseline entry no longer in the kit — prints one line to
-stdout and the run exits 1 with a re-capture hint. `--update` rewrites the baseline from the current
-measurement instead. Shrinkage fails the check on purpose: the baseline stays current only if every
-change that moves a total re-captures it in the same change, which is what keeps the diff — and the
-growth it would reveal — reviewable.
+**Modes.** Without `--update`, the kit-wide `corpus` total and each skill's hot, cold, and transitive
+byte totals are compared against the baseline (default: `<kit-root>/tests/size-baseline.json`): any
+difference — a grown or shrunk total, a skill missing from the baseline, a baseline entry no longer in
+the kit, a baseline carrying no `corpus` total, a skill whose hot total sits above the baseline's
+`hotCapBytes`, a baseline carrying no `hotCapBytes` — prints one line to stdout and the run exits 1
+with a re-capture hint, which names `--allow-corpus-growth` itself when the corpus is what grew, so
+the hint is never a command the next run would refuse. `--update` rewrites the baseline from the
+current measurement instead — except that a measured corpus above the total the baseline already
+records exits 2 and writes nothing unless `--allow-corpus-growth` is passed. Shrinkage fails the check on purpose:
+the baseline stays current only if every change that moves a total re-captures it in the same change,
+which is what keeps the diff — and the growth it would reveal — reviewable.
 
 Hot and cold are ratcheted apart because moving a citation between them leaves the transitive total
 where it was: recorded as one number, the very change this ratchet exists to expose — what a skill
 pays on every invocation — would be the change it could not see.
 
-The baseline holds totals only (`{skill, hot/cold/transitive {bytes, approxTokens}}`, sorted as the
-report emits them): per-file lists would churn on every edit without making the ratchet stricter.
+**Corpus growth is refused rather than recorded.** Every other total re-captures silently, because a
+skill's closure moves for reasons a reviewer reads in the same diff. The corpus moves for one reason
+only — the kit carries more prose — and a `--update` that absorbed it would let the total climb one
+intended change at a time with nothing marking the moment. Spending `--allow-corpus-growth` puts that
+decision in the command and in the diff of the change that made it. The refusal fires only against a
+total the baseline **already holds**: a baseline with no `corpus` key, or one that cannot be read at
+all, offers nothing to ratchet against, so `--update` records the measurement with no flag. That
+first-capture rule is what lets a baseline captured before the corpus existed be brought forward by a
+plain `--update`. The two cases are told apart on the way through, because they are not equally
+benign: a missing key is a baseline predating the ratchet, while a file that exists and will not parse
+is a baseline that *had* both values and lost them, so `--update` names it on stderr before capturing
+and a check run refuses it as unreadable rather than as absent. Recording fresh over an unreadable
+file is still the only thing a capture can do — but it happens out loud, since a ratchet that resets
+silently is the one failure the whole mechanism exists to prevent. A corpus that shrank, or that did
+not move, likewise needs no flag — the ratchet resists growth and nothing else. The flag bears on
+`--update` alone; a check run ignores it.
+
+**One hot cap the whole kit is held to.** `hotCapBytes` is a single ceiling on the worst case: every
+skill's hot total must sit at or below it, and one that does not gets a line of its own
+(`<skill>: hot N bytes over the cap of C`) beside whatever byte drift the same growth caused. The two
+lines answer different questions — the drift line asks whether a total moved since it was reviewed,
+the cap line asks whether the most expensive invocation in the kit is still affordable — so a
+re-capture clears the first and never the second, and the drift summary appends that fact whenever a
+cap line is present, since the hint above it would otherwise read as the remedy. The remedy is to
+shrink the skill.
+
+**The cap ratchets down only.** A plain `--update` carries the recorded cap forward unchanged. A
+capture is how an *intended* byte change is recorded, so a capture that also raised the ceiling would
+let the worst-case load climb one intended change at a time — the exact failure the cap exists to
+prevent — and would make the number unfalsifiable, since it could never be exceeded. `--hot-cap N`
+lowers it, and only lowers it: an N at or above the recorded value exits 2 and writes nothing, because
+the flag exists to tighten a budget and a value that tightens nothing is a mistake worth naming rather
+than a no-op worth absorbing. The asymmetry with `--allow-corpus-growth` is deliberate: the corpus
+ratchet refuses growth in a *measurement*, which a flag then lets through because the growth is real
+and has to be recordable; the cap ratchet refuses a raise of a *recorded limit*, which no flag lets
+through, because a limit that a command can raise is a limit the command will raise. Raising it is a
+hand edit to the baseline — rarely right, and when it is, the loosening arrives as a line a reviewer
+reads in the diff of the change that needed it, which is the whole point of recording the number.
+
+That first-capture rule holds here too: the ratchet bites only against a value the baseline **already
+holds**. A baseline with no `hotCapBytes` — one captured before the key existed, or one that cannot be
+read — offers nothing to carry forward, so `--update` records the measured maximum hot total across
+the kit's skills, with no flag, announcing an unreadable file on stderr as above. On such a baseline
+`--hot-cap N` records N instead: with nothing to lower there is nothing to refuse. The flag bears on
+`--update` alone; a check run ignores it. An N that is not a whole, non-negative number is refused
+before anything is measured, so a malformed value can never reach the baseline as a `null`.
+
+The baseline holds totals only (`{skills:[{skill, hot/cold/transitive {bytes, approxTokens}}…],
+corpus:{bytes, approxTokens}, hotCapBytes:N}`, the skill entries sorted as the report emits them):
+per-file lists would churn on every edit without making the ratchet stricter. The report's corpus file
+count is left out for the same reason it is not ratcheted — it moves for a file added and a file
+removed alike, so it says less than the bytes beside it.
 
 **Exit status.** 0 = clean (or baseline written), 1 = drift, 2 = the check could not run — no kit
-root, no baseline to check against, an unreadable measurement, or a measurement whose `unresolved`
-list is non-empty (a partly measured kit would anchor a baseline below the truth).
+root, no baseline to check against, a baseline that exists but will not parse, an unreadable
+measurement, a measurement whose `unresolved` list is non-empty or whose `corpusMisses` list is (both
+mean a partly measured kit, which would anchor a baseline below the truth), a `--update` whose corpus
+grew past the recorded total without `--allow-corpus-growth`, or a `--update` whose `--hot-cap` value
+does not lower the recorded cap.
 
 ## `scripts/size-report.ts`
 
@@ -547,21 +616,57 @@ counting it would put a file outside the kit in a kit load path.
 `approxTokens` is `round(bytes / 4)` — the flat approximation, applied to a set's total bytes rather
 than summed from its per-file values.
 
+**One kit-wide corpus beside the per-skill sets.** `corpus` counts every `.md` under `references/`
+(recursively), every `skills/*/SKILL.md`, and `CORE_RULES.md`. The per-skill sets measure what a skill
+pays to run, which only reaches a file some skill cites; the corpus measures what the repository
+carries, so prose that grows in a file nothing cites yet is still a number someone can ratchet. It is
+counted, never listed — `files` is a count, and a per-file list would repeat what the per-skill sets
+already carry. `--skill` does not narrow it either: the corpus is a property of the kit, not of the
+selected rows.
+
+Every entry the walk meets is `lstat`ed, and a symlink met *inside* `references/` — to a file or to a
+directory — is skipped with a stderr warning rather than followed. This repository symlinks
+`skills/*/references` and `skills/*/AGENTS.md` at their real targets; those sit beside the walk rather
+than inside it, but a link planted under `references/` would otherwise count the same bytes twice and
+move the total with no prose having changed. A symlink at one of the two *named* paths — a
+`skills/*/SKILL.md` or `CORE_RULES.md` — is the opposite case and is reported as a miss below, not
+skipped: nothing else in the corpus counts that file, so following it would double nothing and
+skipping it drops real bytes. It is a miss rather than a silent count because the per-skill walk
+resolves the same path with `stat`, which *does* follow the link, so the two measurements would
+disagree about a file the kit demonstrably has.
+
+**A short walk is reported, never inferred from the total.** Every path the corpus walk could not
+measure — a `references/` subtree it could not list, a named file it could not `lstat`, one that is
+not a regular file, one of the symlinks above — is recorded in `corpusMisses` as
+`"<path> -> (<reason>)"` and warned on stderr. Without that list the failure is indistinguishable from
+prose that was deleted: a shrunken total reads as ordinary drift, `--update` records it, and the
+kit-wide budget is anchored below the truth by a transient permission problem. The gap is widest for a
+subtree of references nothing cites yet, which is exactly what the corpus measures and the citation
+walk never reaches, so `unresolved` cannot stand in for it.
+
 **Contract.** stdout is exactly one JSON object,
-`{"root":<absolute kit root, or null>,"skills":[…],"warnings":N,"unresolved":[…]}`. Each skill is
-`{skill,hot:{files,bytes,approxTokens},cold:{…},transitive:{…}}`, and each `files` entry is
+`{"root":<absolute kit root, or null>,"skills":[…],"corpus":{…},"warnings":N,"unresolved":[…],"corpusMisses":[…]}`.
+Each skill is `{skill,hot:{files,bytes,approxTokens},cold:{…},transitive:{…}}`, and each `files` entry is
 `{path,bytes,approxTokens}` with `path` relative to the kit root — hot and cold in citation order,
-transitive in breadth-first order. `unresolved` names every citation that reached no readable file as
+transitive in breadth-first order. `corpus` is `{files,bytes,approxTokens}`, whose `files` is a count
+rather than a list; a run with no measurable kit root reports it as three zeros beside the empty skill
+list, so the shape never varies. `unresolved` names every citation that reached no readable file as
 `"<citing file> -> <citation>"`, and a file whose own contents could not be read as
 `"<file> -> (contents)"`, so a byte total is never read as complete coverage while it is non-empty.
+`corpusMisses` does the same job for the corpus walk in `"<path> -> (<reason>)"` form, deduped. The two
+stay separate lists because they fail for different reasons and a reader needs to know which: a
+citation that resolves to nothing is a broken reference in the kit's prose, while a corpus miss is a
+path the filesystem would not yield. Both are non-empty only over a kit that cannot be measured in
+full, and `scripts/size-check.ts` refuses on either.
 
 **Which directories are skills.** Only a genuinely absent `SKILL.md` marks a directory as not a
 skill. Every other miss — `EACCES`, a `SKILL.md` that is itself a directory, a dangling symlink, where
 the stat fails while `lstat` still sees the link — is a skill the report would otherwise omit
-with no trace, so it is recorded as `unresolved` instead of silently narrowing the walk. That is what
-`scripts/size-check.ts` keys its incomplete-measurement refusal on: fold those misses into the
-non-skill case and `unresolved` stays empty, the refusal never fires, and a baseline is captured over
-a kit whose unreadable skills were dropped. A `--skill` name matching nothing is likewise reported as
+with no trace, so it is recorded as `unresolved` instead of silently narrowing the walk. That list is
+one of the two `scripts/size-check.ts` keys its incomplete-measurement refusal on — `corpusMisses`,
+above, is the other — and this is the half that catches a dropped skill: fold those misses into the
+non-skill case and `unresolved` stays empty, the refusal never fires on them, and a baseline is
+captured over a kit whose unreadable skills were dropped. A `--skill` name matching nothing is likewise reported as
 a warning rather than narrowing the report to nothing, so a typo never reads as a skill that loads no
 context.
 Warnings go to stderr and the exit status is always 0, so a partly unreadable kit still parses.

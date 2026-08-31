@@ -168,16 +168,16 @@
     {
       "skill": "maintain",
       "hot": {
-        "bytes": 92218,
-        "approxTokens": 23055
+        "bytes": 93320,
+        "approxTokens": 23330
       },
       "cold": {
         "bytes": 0,
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 493932,
-        "approxTokens": 123483
+        "bytes": 495034,
+        "approxTokens": 123759
       }
     },
     {
@@ -555,5 +555,10 @@
         "approxTokens": 118964
       }
     }
-  ]
+  ],
+  "corpus": {
+    "bytes": 1076737,
+    "approxTokens": 269184
+  },
+  "hotCapBytes": 138957
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { lstatSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { lstatSync, readFileSync, readdirSync, statSync, type Stats } from "node:fs";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 
 process.stdout.on("error", (err: NodeJS.ErrnoException) => {
@@ -10,6 +10,7 @@ const BYTES_PER_TOKEN = 4;
 const CORE_RULES = "CORE_RULES.md";
 const AGENTS_CITATION = "./AGENTS.md";
 const SKILL_FILE = "SKILL.md";
+const MARKDOWN_SUFFIX = ".md";
 const SKILL_CITATION = /\.\/(?:references\/(?:[A-Za-z0-9._/-]+|<domain>\/rules)\.md|AGENTS\.md)/g;
 const DOMAIN_TEMPLATE = "./references/<domain>/rules.md";
 const DEFAULT_PACK = "references/engineering";
@@ -62,11 +63,19 @@ interface SkillReport {
   readonly transitive: MeasuredSet;
 }
 
+interface CorpusTotals {
+  readonly files: number;
+  readonly bytes: number;
+  readonly approxTokens: number;
+}
+
 interface Report {
   readonly root: string | null;
   readonly skills: readonly SkillReport[];
+  readonly corpus: CorpusTotals;
   readonly warnings: number;
   readonly unresolved: readonly string[];
+  readonly corpusMisses: readonly string[];
 }
 
 type Measurement =
@@ -76,6 +85,8 @@ type Measurement =
 const warnings: string[] = [];
 const unresolved: string[] = [];
 const unresolvedSeen = new Set<string>();
+const corpusMisses: string[] = [];
+const corpusMissesSeen = new Set<string>();
 const approxTokens = (bytes: number): number => Math.round(bytes / BYTES_PER_TOKEN);
 const display = (root: string, abs: string): string => relative(root, abs).split(sep).join("/");
 const withinRoot = (abs: string, root: string): boolean => abs === root || abs.startsWith(root + sep);
@@ -86,6 +97,14 @@ function noteUnresolved(citation: string, from: string, reason: string): void {
   unresolvedSeen.add(entry);
   unresolved.push(entry);
   warnings.push(`unresolved citation in ${from}: ${citation} (${reason})`);
+}
+
+function noteCorpusMiss(where: string, reason: string): void {
+  const entry = `${where} -> (${reason})`;
+  if (corpusMissesSeen.has(entry)) return;
+  corpusMissesSeen.add(entry);
+  corpusMisses.push(entry);
+  warnings.push(`corpus: cannot measure ${where}: ${reason}`);
 }
 
 function measure(abs: string): Measurement {
@@ -229,6 +248,64 @@ function isDanglingSymlink(path: string): boolean {
   }
 }
 
+function corpusEntry(root: string, abs: string): Stats | null {
+  try {
+    return lstatSync(abs);
+  } catch (err) {
+    noteCorpusMiss(display(root, abs), err.code ?? err.message);
+    return null;
+  }
+}
+
+function corpusSet(root: string, skills: readonly string[]): CorpusTotals {
+  let files = 0;
+  let bytes = 0;
+
+  const countFile = (abs: string): void => {
+    const stat = corpusEntry(root, abs);
+    if (stat == null) return;
+    if (!stat.isFile()) {
+      noteCorpusMiss(display(root, abs), stat.isSymbolicLink() ? "symlink" : "not a regular file");
+      return;
+    }
+    files++;
+    bytes += stat.size;
+  };
+
+  const walk = (dir: string): void => {
+    let names: string[];
+    try {
+      names = readdirSync(dir);
+    } catch (err) {
+      noteCorpusMiss(display(root, dir), err.code === "ENOENT" ? "no such directory" : (err.code ?? err.message));
+      return;
+    }
+    for (const name of names) {
+      const abs = join(dir, name);
+      const stat = corpusEntry(root, abs);
+      if (stat == null) continue;
+      if (stat.isSymbolicLink()) {
+        warnings.push(`corpus: skipping symlink ${display(root, abs)}`);
+        continue;
+      }
+      if (stat.isDirectory()) {
+        walk(abs);
+        continue;
+      }
+      if (stat.isFile() && name.endsWith(MARKDOWN_SUFFIX)) {
+        files++;
+        bytes += stat.size;
+      }
+    }
+  };
+
+  walk(join(root, "references"));
+  for (const skill of skills) countFile(join(root, "skills", skill, SKILL_FILE));
+  countFile(join(root, CORE_RULES));
+
+  return { files, bytes, approxTokens: approxTokens(bytes) };
+}
+
 function skillNames(root: string): string[] {
   const skillsDir = join(root, "skills");
   let entries;
@@ -280,6 +357,7 @@ function parseArgs(argv: readonly string[]): { roots: string[]; only: string[] }
 const { roots, only } = parseArgs(process.argv.slice(2));
 
 let root: string | null = null;
+let corpus: CorpusTotals = { files: 0, bytes: 0, approxTokens: 0 };
 const skills: SkillReport[] = [];
 
 if (roots.length === 0) {
@@ -297,6 +375,7 @@ if (roots.length === 0) {
   if (isDir) {
     root = candidate;
     const available = skillNames(root);
+    corpus = corpusSet(root, available);
 
     for (const name of only) {
       if (!available.includes(name)) warnings.push(`no such skill: ${name}`);
@@ -319,7 +398,9 @@ if (roots.length === 0) {
 process.stdout.write(JSON.stringify({
   root,
   skills,
+  corpus,
   warnings: warnings.length,
   unresolved,
+  corpusMisses,
 } satisfies Report) + "\n");
 for (const warning of warnings) console.error(`[size-report] ${warning}`);

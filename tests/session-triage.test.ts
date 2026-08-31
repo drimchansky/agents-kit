@@ -91,11 +91,17 @@ interface FlaggedSession {
   readonly score: number;
 }
 
+interface ProjectSessions {
+  readonly project: string | null;
+  readonly count: number;
+}
+
 interface Report {
   readonly flagged: readonly FlaggedSession[];
   readonly remainder: number;
   readonly remainderPaths: readonly string[];
   readonly scanned: number;
+  readonly sessions: readonly ProjectSessions[];
   readonly skippedUnknownRecords: number;
   readonly skippedUnrecognized: number;
   readonly skippedUnrecognizedPaths: readonly string[];
@@ -222,6 +228,7 @@ test("report carries exactly the contract keys", () => {
       "remainder",
       "remainderPaths",
       "scanned",
+      "sessions",
       "skippedUnknownRecords",
       "skippedUnrecognized",
       "skippedUnrecognizedPaths",
@@ -256,6 +263,28 @@ test("skippedUnrecognizedPaths names it by path", () => {
 test("only files with mtime >= --since are scanned", () => {
   const { report } = runTriage(MAIN_ARGS);
   assert.strictEqual(report.scanned, 7, "the stale file is excluded by mtime; the other seven are scanned");
+});
+
+test("the sessions array counts the scanned transcripts of each project", () => {
+  const { report } = runTriage(MAIN_ARGS);
+  assert.deepStrictEqual(
+    report.sessions,
+    [
+      { project: null, count: 4 },
+      { project: "/fixture", count: 2 },
+      { project: "/fixture/claude-project", count: 1 },
+    ],
+    "both Codex transcripts carry /fixture, one Claude transcript carries its own cwd, and the rest — the cwd-less Claude transcripts and the unsniffable file — fall to null",
+  );
+});
+
+test("the session counts sum to scanned", () => {
+  const { report } = runTriage(MAIN_ARGS);
+  assert.strictEqual(
+    report.sessions.reduce((total, entry) => total + entry.count, 0),
+    report.scanned,
+    "every scanned transcript lands in exactly one project bucket, scored or not",
+  );
 });
 
 test("sessions rank by distinct-class count, then recency", () => {
@@ -575,6 +604,19 @@ test("an unreadable transcript is not flagged", (t: TestContext) => {
   }
   const { report } = runTriage(LOCKED_FILE_ARGS);
   assert.strictEqual(report.flagged.length, 0, "nothing was classified out of a file that never opened");
+});
+
+test("an unreadable transcript counts against the null project", (t: TestContext) => {
+  if (isReadable(LOCKED_FILE)) {
+    t.skip("the unreadable-file case needs a user that chmod 000 actually stops");
+    return;
+  }
+  const { report } = runTriage(LOCKED_FILE_ARGS);
+  assert.deepStrictEqual(
+    report.sessions,
+    [{ project: null, count: 1 }],
+    "a file that never opened still occupies its place in the window",
+  );
 });
 
 test("an unreadable transcript is reported in the contract, not only on stderr", (t: TestContext) => {

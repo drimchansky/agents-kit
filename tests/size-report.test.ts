@@ -14,6 +14,7 @@ import {
   readdirSync,
   rmSync,
   statSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -34,6 +35,7 @@ const VOLUME_NAME_PADDING = 60;
 const TEST_ROOT = mkdtempSync(join(tmpdir(), "agents-kit-size-report-"));
 const KIT = join(TEST_ROOT, "kit");
 const LOCKED_KIT = join(TEST_ROOT, "locked-kit");
+const LINKED_KIT = join(TEST_ROOT, "linked-kit");
 const EMPTY_KIT = join(TEST_ROOT, "empty-kit");
 const VOLUME_KIT = join(TEST_ROOT, "volume-kit");
 const VOLUME_REPORT = join(TEST_ROOT, "volume-kit.json");
@@ -57,11 +59,19 @@ interface SkillReport {
   readonly transitive: MeasuredSet;
 }
 
+interface CorpusTotals {
+  readonly files: number;
+  readonly bytes: number;
+  readonly approxTokens: number;
+}
+
 interface Report {
   readonly root: string | null;
   readonly skills: readonly SkillReport[];
+  readonly corpus: CorpusTotals;
   readonly warnings: number;
   readonly unresolved: readonly string[];
+  readonly corpusMisses: readonly string[];
 }
 
 interface ReportRun {
@@ -138,6 +148,7 @@ function writeVolumeKit(root: string): void {
 before(() => {
   cpSync(FIXTURES, KIT, { recursive: true });
   cpSync(FIXTURES, LOCKED_KIT, { recursive: true });
+  cpSync(FIXTURES, LINKED_KIT, { recursive: true });
   mkdirSync(EMPTY_KIT);
   writeVolumeKit(VOLUME_KIT);
 });
@@ -268,6 +279,73 @@ test("the domain-pack template counts the default pack's rules.md and same-line 
   );
   assert.strictEqual(hot.bytes, 1000, "hot bytes for template-skill");
   assert.strictEqual(transitive.bytes, 1000, "the template's resolved pack files cite nothing further");
+});
+
+test("the corpus totals every reference .md, every SKILL.md, and CORE_RULES.md in the kit", () => {
+  const { report } = runReport([KIT]);
+  assert.deepStrictEqual(
+    report.corpus,
+    { files: 13, bytes: 3717, approxTokens: 929 },
+    "the fixture kit's 8 reference files, 4 SKILL.md files, and CORE_RULES.md, counted not listed",
+  );
+});
+
+test("a symlinked directory under references/ is skipped rather than followed into the corpus", () => {
+  const { report: unlinked } = runReport([LINKED_KIT]);
+  symlinkSync(join(LINKED_KIT, "references", "workflow"), join(LINKED_KIT, "references", "linked"));
+  const { report, stderr } = runReport([LINKED_KIT]);
+  assert.deepStrictEqual(
+    report.corpus,
+    unlinked.corpus,
+    "following the link would count references/workflow's files a second time",
+  );
+  assertIncludes(
+    stderr,
+    "corpus: skipping symlink references/linked",
+    "a skipped symlink warns on stderr rather than vanishing from the walk",
+  );
+  assert.deepStrictEqual(
+    report.corpusMisses,
+    [],
+    "the skip is deliberate, so it is a warning and not a measurement miss",
+  );
+});
+
+test("a symlinked file under references/ is skipped on the same terms as a linked directory", () => {
+  const { report: before } = runReport([LINKED_KIT]);
+  symlinkSync(
+    join(LINKED_KIT, "references", "workflow", "alpha.md"),
+    join(LINKED_KIT, "references", "linked-alpha.md"),
+  );
+  const { report, stderr } = runReport([LINKED_KIT]);
+  assert.deepStrictEqual(report.corpus, before.corpus, "counting the link would count alpha.md twice");
+  assertIncludes(
+    stderr,
+    "corpus: skipping symlink references/linked-alpha.md",
+    "the file half of the skip warns exactly as the directory half does",
+  );
+  assert.deepStrictEqual(report.corpusMisses, [], "a deliberate skip is not a miss, whatever the link points at");
+});
+
+test("a references subtree the walk cannot list is a contract entry, not a stderr-only warning", (t: TestContext) => {
+  const locked = join(LOCKED_KIT, "references", "domain");
+  chmodSync(locked, 0o000);
+  t.after(() => chmodSync(locked, 0o755));
+  if (isReadable(locked)) {
+    t.skip("the unreadable-directory case needs a user that chmod 000 actually stops");
+    return;
+  }
+  const { report } = runReport([LOCKED_KIT]);
+  assert.deepStrictEqual(
+    report.corpusMisses,
+    ["references/domain -> (EACCES)"],
+    "an unwalkable subtree is named in the contract, so a consumer can refuse rather than baseline a short total",
+  );
+  assert.strictEqual(
+    report.corpus.files,
+    12,
+    "gamma.md is missing from the count, which is exactly why the miss has to be reported",
+  );
 });
 
 test("a dangling citation is a stderr warning and a contract entry, never a crash", () => {
