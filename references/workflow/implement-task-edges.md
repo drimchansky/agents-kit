@@ -1,6 +1,6 @@
 # implement-task: Non-Default Branches
 
-The `implement-task` skill's non-default branches — reviving a `skipped` plan, activating a backlogged task, the diagram re-check, the automatic parallel batch, mid-execution plan revisions, a criterion leg left open for someone else to verify, and the later-run `in-review` → `done` finalization — split out of that skill's SKILL.md, which keeps the loop, the templates, and the gates. Read the section a branch names when its condition fires. An `implement-task §N` reference names that SKILL.md's process step.
+The `implement-task` skill's non-default branches — reviving a `skipped` plan, activating a backlogged task, the task worktree's creation and re-entry, the diagram re-check, the automatic parallel batch, mid-execution plan revisions, a criterion leg left open for someone else to verify, and the later-run `in-review` → `done` finalization — split out of that skill's SKILL.md, which keeps the loop, the templates, and the gates. Read the section a branch names when its condition fires. An `implement-task §N` reference names that SKILL.md's process step.
 
 ## Reviving a skipped plan
 
@@ -19,6 +19,19 @@ Such a task is parked, and execution does not run on it in place (`./task-backlo
 - **`<container-parent>/<slug>` already exists** → **stop** and surface it; never clobber it.
 
 The asymmetry with § *Reviving a skipped plan* above is deliberate: an archived task is finished, so getting it back out is the user's own `mv`; a backlogged one is exactly the work this run is about to start, so the move is offered here.
+
+## Task worktree
+
+Placement, naming, the sanction, and the degrade are `./task-delivery.md`; re-entry and removal are its satellite `./task-delivery-edges.md`. Read the one this branch reaches. What either costs this skill is here.
+
+**Creation runs once, at implement-task §3**, before the plan flips to `executing` — so every step of the run lands on the task's own branch and the result header's `**Pointers:**` carries it from the first write. That file's § *Branch and worktree creation* owns the gate, and its two skips differ. The skip is **silent** for a documentation or bureaucratic task, and for one whose repository — resolved by that section's **Which repository**, never read off the task folder's own location — is absent: no worktree and no note about not having one, since a run narrating that skip would train the user to read an ordinary doc task as a degraded one. The skip is **announced** where the repository resolves but holds none of the plan's paths — the run names that root and says none of the plan's paths exist in it yet, so a greenfield engineering task's missing branch is visible rather than silent. Neither skip records anything. **The degrade does** — announce it, record it in the run's `**Notes:**` (implement-task §5), and continue on the current checkout, where the shared tree is the checkout exactly as it was before this contract.
+
+**Re-entry runs at implement-task §1**, on `./task-delivery-edges.md` § *Re-entry on resume*, whenever `**Pointers:**` carries a branch. Two of its outcomes bear on the shape of the run:
+
+- **branch merged or gone** → the run does **not** start work. Report it and ask which reading holds — a fresh branch for follow-up, or a task already delivered — because a silent recreate forks a second line of work off a stale base under one name, and the plan's remaining steps would land there.
+- **no branch recorded** → for delivery purposes this is a first run whatever the result file says, so §3's creation applies unchanged. A prior run that degraded, and any run predating this contract, is exactly this case.
+
+A re-entered or recreated worktree is announced the way a created one is — the run says where it is working — and the recorded branch is never rewritten to match a worktree found somewhere else: the branch is the identity, and `./task-delivery-edges.md` § *Re-entry on resume* matches on it precisely so a moved or renamed directory stays adoptable.
 
 ## Diagram re-check
 
@@ -84,3 +97,8 @@ On success, append the fresh evidence before advancing status:
 ```
 
 Then finalize to `done` per implement-task §8 and add the `**Completed:**` line. If the fresh boundary fails, do not append the success section and do not finalize: flip the plan through the registered `in-review → executing` edge, then apply implement-task §4's **Blocked** behavior, recording the failed finalization boundary and the last boundary that passed. If review instead surfaced problems, flip the plan back to `executing` and resume — don't force `done`.
+
+**Worktree removal comes last**, on either path to `done` — this one and implement-task §8's direct `executing → done`. The boundary above runs on the current work product, which *is* the task worktree where the run has one, so removal follows the boundary and the finalize rather than preceding either: a worktree removed first takes with it the tree the boundary was to run on. Then run `./task-delivery-edges.md` § *Removal*:
+
+- **PR observed merged and the worktree clean** → remove the worktree and the local branch, and record both — in the dated section above on this path, in the run's own result section on the direct one.
+- **Dirty, unpushed, or the PR not merged** → **refuse, record the reason in the same place, and finalize anyway.** The refusal never holds the task open: the task is done on its goals, the leftovers belong to the backstop that section names, and forcing the removal to tidy the record would destroy the only copy of whatever made the tree dirty.

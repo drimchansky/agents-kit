@@ -6,7 +6,7 @@ The **engineering domain pack's rules overlay** — loaded on top of the neutral
 
 - Don't introduce new dependencies without justification
 - Don't remove or rename public APIs without checking all consumers
-- Don't commit, stage changes, or otherwise mutate Git state unless explicitly asked
+- Don't commit, stage changes, or otherwise mutate Git state unless explicitly asked — invoking a skill whose contract sanctions the task's own branch-and-worktree lifecycle (`../workflow/task-delivery.md`) *is* that ask, for that lifecycle and nothing wider
 
 ## Before presenting changes
 

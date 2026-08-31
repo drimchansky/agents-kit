@@ -75,7 +75,7 @@ where they are rather than being re-implemented at the pipeline level.
   `implement-task`, `implement`, `fix-findings`) — one meaning kit-wide: use the cross-vendor engine
   for this skill's fan-out, a read-only probe where the skill fans out read-only
   (`./probe-cross-check.md`) and a write-mode executor where it fans out write-mode
-  (`./executor-contract.md` § *Write-mode engine registry*); the role follows the skill's fan-out
+  (`./executor-routing.md` § *Write-mode engine registry*); the role follows the skill's fan-out
   mode, not the letter — and by the pass-through rule above, a composite's `-x` is its review
   phase's and never makes a writing phase cross-vendor. A flag on both halves: read-only, the
   probe merges into the pass *before* its verdicts finalize, so it has no seam to run after;
@@ -166,9 +166,9 @@ for, so an unreadable signal resolves the way that asks rather than the way that
 
 **An open skill that reads its own invocation as consent states the user/model split where it makes
 that claim**, not here — `./reconciliation.md` § *Consent model* for the reconcilers,
-`./executor-contract.md` § *Write-mode routing* for the write-mode consumers. Each states what the
-answer buys; the test above is where they get it. This section rules on which door is closed and on
-how a run tells which one it came through.
+`./executor-routing.md` § *The registry and its authorization* for the write-mode consumers. Each
+states what the answer buys; the test above is where they get it. This section rules on which door
+is closed and on how a run tells which one it came through.
 
 ## Cold citations
 

@@ -90,7 +90,7 @@ Tag each finding `info` (FYI), `warn` (review before resuming), or `block` (plan
 
 **Always render the "Drift since plan" heading** — print `No drift detected.` when clean; the absence line is the verification statement.
 
-**Commits since watermark.** When the task acts on a resolvable git repository holding a path some plan step names, scan for work that reached the repo outside this folder's gates. `./references/workflow/reconciliation-commits.md` owns the mechanics — the watermark entry on `**Pointers:**`, the `<sha>..HEAD` enumeration, the path set a step names, pending → candidate against checked-only → `[info]`, and the two degenerate cases — so run the scan from there rather than restating it here. Report each kept commit with the step(s) it nominates; a nomination is a lead for the next reconcile run, never a done claim.
+**Commits since watermark.** When the task acts on a resolvable git repository holding a path some plan step names, scan for work that reached the repo outside this folder's gates. `./references/workflow/reconciliation-commits.md` owns the mechanics — the watermark entry on `**Pointers:**`, the `<sha>..<ref>` enumeration and the ref it resolves, the path set a step names, pending → candidate against checked-only → `[info]`, and the two degenerate cases — so run the scan from there rather than restating it here. Report each kept commit with the step(s) it nominates; a nomination is a lead for the next reconcile run, never a done claim.
 
 The brief only **reads** — `git log`, `git merge-base`. It never seeds, re-seeds, or advances the watermark, and never re-runs a candidate's `**Verify:**`; both are reconcile-phase writes (that file § *Read/write split*). Render the section whenever that file's two conditions hold — printing the commit list, the missing-baseline line, or the orphaned line — and omit it entirely when the repository does not resolve, or no path a step names exists under it; an omitted section scans nothing and leaves nothing for the reconcile phase to seed.
 
@@ -154,7 +154,7 @@ Assemble per the output template below and print it to chat. This is the last st
 - `abc1234` (2026-08-20) — `src/auth/handler.ts` — nominates Step 3 (pending; verifying it is the reconcile phase's act)
 - `def5678` (2026-08-21) — `src/cache/ttl.ts` — [info] touches only checked steps' paths (Step 1)
 
-(or: `No commits since <sha> touch a step's paths.` / `No watermark recorded — baseline missing; nothing scanned. A reconcile run seeds it.` / `Watermark <sha> is no longer an ancestor of HEAD — orphaned; nothing scanned. A reconcile run re-seeds it.` — omit the whole section when the repository does not resolve, or when no path a step names exists under the one that did)
+(or: `No commits since <sha> touch a step's paths.` / `No watermark recorded — baseline missing; nothing scanned. A reconcile run seeds it.` / `Watermark <sha> is no longer an ancestor of <ref> — orphaned; nothing scanned. A reconcile run re-seeds it.` — omit the whole section when the repository does not resolve, or when no path a step names exists under the one that did)
 
 ## Open questions
 
