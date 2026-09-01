@@ -94,8 +94,12 @@ engine), the shared repairs, and — in its `review-task-reconcile` mapping sect
 finding-type → edit mapping.
 
 The contract's reference sweep, `./references/workflow/reconciliation-sweep.md`, runs in this phase,
-its `## References` block printed before any edit. It is this pipeline's only source of dead-link and reference-answered-question
-findings.
+its `## References` block printed before any edit. Enumerate its scope with
+`node <kit-root>/scripts/sweep-scope.ts <task folder>` before fetching anything, and fetch that set
+rather than one enumerated by hand; its contract is `<kit-root>/SCRIPTS.md`
+§ *`scripts/sweep-scope.ts`*, and `<kit-root>` resolves per `./references/workflow/task-store.md` § *Resolving `<kit-root>`*. <!-- cold -->
+Unavailable, the scope goes unenumerated and the sweep is reported skipped rather than hand-scoped.
+It is this pipeline's only source of dead-link and reference-answered-question findings.
 
 The assessment's **numbered open questions** are put to the engineer and folded back into the plan per
 the direction file's § *`review-task-reconcile` — assessment findings*, bounded by its § *Repairs
@@ -145,9 +149,10 @@ Confirm the protocol invariants before finishing:
 - [ ] Every box checked or `**Status:**` advanced went through
       `./references/workflow/reconciliation.md` § *Strengthen only on verified evidence*,
       re-verified in this run — an engineer's answer refines plan content, never state
-- [ ] The reference check ran in Phase 2 — or its gate skipped it — with the `## References` block
-      printed before any edit, rendered even when nothing was in scope, and `observations.md`
-      rewritten with the swept lines or removed — `reconciliation-sweep.md`
+- [ ] The reference check ran in Phase 2 — or its gate skipped it — its scope enumerated by
+      `sweep-scope.ts` rather than by hand, with the `## References` block printed before any edit,
+      rendered even when nothing was in scope, and `observations.md` rewritten with the swept lines
+      or removed — `reconciliation-sweep.md`
 - [ ] Write surface held: nothing written outside the four files the direction fixes, and every file
       that section keeps off the surface untouched —
       `./references/workflow/reconciliation-docs-to-reality.md` § *Write surface*

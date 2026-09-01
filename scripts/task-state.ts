@@ -1,13 +1,18 @@
 #!/usr/bin/env node
+import { execFileSync } from "node:child_process";
 import { readFileSync, realpathSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { PLAN_VOCAB } from "./lifecycle-constants.ts";
+import { PLAN_VOCAB, RESULT_MAX_KB } from "./lifecycle-constants.ts";
 
 const PLAN_FILE = "plan.md";
 const RESULT_FILE = "result.md";
 const GOALS_FILE = "goals.md";
-const USAGE = "usage: node scripts/task-state.ts <task-dir>";
+const COMPACTION_FLAG = "--compaction-plan";
+const USAGE = [
+  "usage: node scripts/task-state.ts <task-dir>",
+  "       node scripts/task-state.ts --compaction-plan <task-dir>",
+].join("\n");
 const FENCE = /^([ \t]*)(`{3,}|~{3,})[ \t]*(.*)$/;
 const HEADING = /^#{1,6}[ \t]+(.+?)[ \t]*#*$/;
 const STEP_TITLE = /^Step[ \t]+(\d+[a-z]*)\b[ \t]*[—–:-]?[ \t]*(.*)$/i;
@@ -27,6 +32,11 @@ const BARE_STEP_REF = /\b(\d+[a-z]*)\b/g;
 const RESULT_LINK = /\(\[result\]\(([^()]*)\)\)/g;
 const COMPACTED_HEADING = /^Compacted\b/;
 const TOMBSTONE_BULLET = /^[ \t]*-[ \t]+(.+?)[ \t]*$/;
+const HEADING_LEVEL = /^(#{1,6})[ \t]/;
+const PAUSE_KINDS: readonly { readonly status: string; readonly heading: RegExp; readonly label: RegExp }[] = [
+  { status: "blocked", heading: /^blocked\b/i, label: /^[ \t]*\*\*blocked:?\*\*/i },
+  { status: "in-review", heading: /^in[ \t]+review\b/i, label: /^[ \t]*\*\*in[ \t]+review:?\*\*/i },
+];
 
 const STATUS_PATTERNS = [
   /^\*\*Status\b[^:*\n]*:?\*\*:?[ \t]*(.+)$/im,
@@ -160,26 +170,34 @@ function slugify(heading: string): string {
   return heading.trim().toLowerCase().replace(/[^\p{L}\p{N} _-]/gu, "").replace(/ /g, "-");
 }
 
-function headingSlugs(text: string): Set<string> {
+function slugAllocator(): (heading: string) => string | null {
   const seen = new Map<string, number>();
-  const slugs = new Set<string>();
   const taken = new Set<string>();
+  return (heading) => {
+    const base = slugify(heading);
+    if (!base) return null;
+    let count = seen.get(base) ?? 0;
+    let slug = count === 0 ? base : `${base}-${count}`;
+    while (taken.has(slug)) {
+      count++;
+      slug = `${base}-${count}`;
+    }
+    seen.set(base, count + 1);
+    taken.add(slug);
+    return slug;
+  };
+}
+
+function headingSlugs(text: string): Set<string> {
+  const allocate = slugAllocator();
+  const slugs = new Set<string>();
   let inCompacted = false;
   for (const line of liveLines(text)) {
     const heading = headingText(line);
     if (heading !== null) {
       inCompacted = COMPACTED_HEADING.test(heading);
-      const base = slugify(heading);
-      if (!base) continue;
-      let count = seen.get(base) ?? 0;
-      let slug = count === 0 ? base : `${base}-${count}`;
-      while (taken.has(slug)) {
-        count++;
-        slug = `${base}-${count}`;
-      }
-      seen.set(base, count + 1);
-      taken.add(slug);
-      slugs.add(slug);
+      const slug = allocate(heading);
+      if (slug !== null) slugs.add(slug);
       continue;
     }
     if (!inCompacted) continue;
@@ -410,6 +428,102 @@ export function taskState(input: TaskStateInput): TaskState {
   };
 }
 
+export interface ResultSize {
+  readonly bytes: number;
+  readonly kb: number;
+  readonly over: boolean;
+}
+
+export function resultSize(text: string, maxKb: number): ResultSize {
+  const bytes = Buffer.byteLength(text, "utf8");
+  return { bytes, kb: bytes / 1024, over: bytes > maxKb * 1024 };
+}
+
+export type KeepRule =
+  | "current-state"
+  | "decision-log"
+  | "acceptance"
+  | "health-boundary"
+  | "reconciliation"
+  | "compacted"
+  | "pause";
+
+export interface ResultSection {
+  readonly heading: string;
+  readonly anchor: string | null;
+}
+
+export interface KeptSection extends ResultSection {
+  readonly rule: KeepRule;
+}
+
+export interface CompactionSections {
+  readonly keep: readonly KeptSection[];
+  readonly removable: readonly ResultSection[];
+}
+
+const KEEP_SECTIONS: readonly { readonly rule: KeepRule; readonly match: RegExp }[] = [
+  { rule: "current-state", match: /^current state\b/i },
+  { rule: "decision-log", match: /^decision log\b/i },
+  { rule: "acceptance", match: /^acceptance\b/i },
+  { rule: "health-boundary", match: /^health boundar(?:y|ies)\b/i },
+  { rule: "reconciliation", match: /^reconciliation\b/i },
+  { rule: "compacted", match: COMPACTED_HEADING },
+];
+
+interface DraftSection {
+  readonly heading: string;
+  readonly anchor: string | null;
+  rule: KeepRule | null;
+  pause: string | null;
+}
+
+function pauseKind(text: string, field: "heading" | "label"): string | null {
+  return PAUSE_KINDS.find((kind) => kind[field].test(text))?.status ?? null;
+}
+
+export function compactionSections(resultText: string, planStatus: string | null): CompactionSections {
+  const allocate = slugAllocator();
+  const sections: DraftSection[] = [];
+  let current: DraftSection | null = null;
+  for (const line of liveLines(resultText)) {
+    const heading = headingText(line);
+    if (heading !== null) {
+      const anchor = allocate(heading);
+      const level = line.match(HEADING_LEVEL)?.[1].length ?? 0;
+      if (level < 2) current = null;
+      if (level !== 2) continue;
+      current = {
+        heading,
+        anchor,
+        rule: KEEP_SECTIONS.find((candidate) => candidate.match.test(heading))?.rule ?? null,
+        pause: pauseKind(heading, "heading"),
+      };
+      sections.push(current);
+      continue;
+    }
+    if (current !== null && current.pause === null) current.pause = pauseKind(line, "label");
+  }
+
+  const reconciliations = sections.filter((section) => section.rule === "reconciliation");
+  for (const superseded of reconciliations.slice(0, -1)) superseded.rule = null;
+
+  if (planStatus !== null) {
+    const pauses = sections.filter((section) => section.pause === planStatus && section.rule === null);
+    const active = pauses[pauses.length - 1];
+    if (active !== undefined) active.rule = "pause";
+  }
+
+  return {
+    keep: sections
+      .filter((section) => section.rule !== null)
+      .map((section) => ({ heading: section.heading, anchor: section.anchor, rule: section.rule as KeepRule })),
+    removable: sections
+      .filter((section) => section.rule === null)
+      .map((section) => ({ heading: section.heading, anchor: section.anchor })),
+  };
+}
+
 class Exit extends Error {
   readonly code: number;
 
@@ -430,24 +544,92 @@ function readOptional(path: string): string | null {
   }
 }
 
+export interface Precondition {
+  readonly state: "ok" | "fails";
+  readonly detail: string | null;
+  readonly uncommitted: boolean | null;
+}
+
+export interface CompactionPlan {
+  readonly taskDir: string;
+  readonly resultFile: string;
+  readonly bytes: number;
+  readonly maxKb: number;
+  readonly due: boolean;
+  readonly precondition: Precondition;
+  readonly keep: readonly KeptSection[];
+  readonly removable: readonly ResultSection[];
+}
+
+interface GitRun {
+  readonly ok: boolean;
+  readonly stdout: string;
+  readonly stderr: string;
+}
+
+function git(cwd: string, args: readonly string[]): GitRun {
+  try {
+    return { ok: true, stdout: execFileSync("git", ["-C", cwd, ...args], { stdio: "pipe", encoding: "utf8" }), stderr: "" };
+  } catch (err) {
+    const failure = err as NodeJS.ErrnoException & { stdout?: string; stderr?: string };
+    if (failure.code === "ENOENT") throw new Exit(2, `git is not available: ${failure.message}`);
+    return { ok: false, stdout: failure.stdout ?? "", stderr: (failure.stderr ?? "").trim() };
+  }
+}
+
+function resultAtHead(taskDir: string): Precondition {
+  const target = `HEAD:./${RESULT_FILE}`;
+  const resolved = git(taskDir, ["cat-file", "-e", target]);
+  if (!resolved.ok) {
+    return { state: "fails", detail: resolved.stderr || `${target} does not resolve`, uncommitted: null };
+  }
+  const pending = git(taskDir, ["status", "--porcelain", "--", `./${RESULT_FILE}`]);
+  return { state: "ok", detail: null, uncommitted: pending.ok ? pending.stdout.trim() !== "" : null };
+}
+
+function compactionPlan(taskDir: string): CompactionPlan {
+  const resultText = readOptional(join(taskDir, RESULT_FILE));
+  if (resultText === null) throw new Exit(1, `${taskDir} has no readable ${RESULT_FILE}.`);
+  const planText = readOptional(join(taskDir, PLAN_FILE));
+  const size = resultSize(resultText, RESULT_MAX_KB);
+  const sections = compactionSections(resultText, planText === null ? null : readPlanStatus(planText).status);
+  return {
+    taskDir,
+    resultFile: RESULT_FILE,
+    bytes: size.bytes,
+    maxKb: RESULT_MAX_KB,
+    due: size.over,
+    precondition: resultAtHead(taskDir),
+    keep: sections.keep,
+    removable: sections.removable,
+  };
+}
+
 function main(): void {
   process.stdout.on("error", (err: NodeJS.ErrnoException) => {
     if (err.code !== "EPIPE") throw err;
   });
 
   const args = process.argv.slice(2);
-  if (args.length !== 1) throw new Exit(2, USAGE);
-  const taskDir = resolve(args[0]);
-  const planText = readOptional(join(taskDir, PLAN_FILE));
-  if (planText === null) throw new Exit(1, `${taskDir} has no readable ${PLAN_FILE}.`);
+  const compacting = args[0] === COMPACTION_FLAG;
+  const positional = compacting ? args.slice(1) : args;
+  if (positional.length !== 1) throw new Exit(2, USAGE);
+  const taskDir = resolve(positional[0]);
 
-  const state = taskState({
-    taskDir,
-    planText,
-    resultText: readOptional(join(taskDir, RESULT_FILE)),
-    goalsText: readOptional(join(taskDir, GOALS_FILE)),
-  });
-  process.stdout.write(JSON.stringify(state) + "\n");
+  if (compacting) {
+    process.stdout.write(JSON.stringify(compactionPlan(taskDir)) + "\n");
+  } else {
+    const planText = readOptional(join(taskDir, PLAN_FILE));
+    if (planText === null) throw new Exit(1, `${taskDir} has no readable ${PLAN_FILE}.`);
+
+    const state = taskState({
+      taskDir,
+      planText,
+      resultText: readOptional(join(taskDir, RESULT_FILE)),
+      goalsText: readOptional(join(taskDir, GOALS_FILE)),
+    });
+    process.stdout.write(JSON.stringify(state) + "\n");
+  }
   for (const warning of warnings) console.error(`[task-state] ${warning}`);
 }
 

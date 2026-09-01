@@ -90,6 +90,105 @@ each native agent definition together with its marker: an install interrupted be
 reclaimed on the next run, while an unmarked same-named file stays the user's and is skipped by the
 copy loop after it.
 
+## `scripts/commit-scan.ts`
+
+Enumerates one task's commits since its watermark — the commits-since-watermark step
+`references/workflow/reconciliation-commits.md` owns, read by `resume-task`'s drift check and written
+into a reconciliation entry by a reconcile phase. One enumeration serves both consumer modes, so
+neither skill re-derives the range. **The script only reports.** It runs `git rev-parse`,
+`git for-each-ref`, `git merge-base`, and `git log`, and writes nothing anywhere: every watermark seed,
+re-seed, and advance stays a reconcile-phase edit under that direction's write surface.
+
+```
+node scripts/commit-scan.ts <task-dir>
+```
+
+**Contract.** stdout is exactly one JSON object,
+`{taskDir,repo,pathsInRepo,watermark,branch,ref,refFallback,state,commits,total,steps}`.
+
+`repo` is the git root holding `<task-dir>`, null when the folder sits inside no checkout. It is
+resolved **from the folder**, never from the process directory, and there is no flag to override it:
+scanning a root the shell happened to be in is the wrong-root failure the whole gate below exists to
+prevent. A folder in a task store or a registered root elsewhere therefore reports no repository rather
+than the session's — the script cannot scan a repository that does not hold the folder, so the
+caller renders that section unscanned, naming the repository the resolution rule points at
+(`reconciliation-commits.md` § *The scan*), rather than omitting it.
+
+`pathsInRepo` is the existence gate: true when at least one path some plan step names **exists on disk**
+under `repo`. Existence, not containment — a repo-relative path lies inside any root, so a containment
+test would never discriminate a wrong one.
+
+`watermark` is the `SHA <sha> (recorded YYYY-MM-DD)` entry read off the result's `## Current state`
+`**Pointers:**` line, lowercased, null when none is recorded; `branch` is the `` branch `<name>` ``
+entry on that same line, null when none. That line is free prose, so both are found inside it rather
+than parsed as the whole of it, and only the first `**Pointers:**` line of the `## Current state` block
+is read — a result carrying no such block falls back to the first `**Pointers:**` line in the file, so
+a legacy result still yields its floor. Mis-parsing either entry walks the wrong ref and
+under-nominates, which is the failure that matters here; over-nominating costs nothing, since the
+caller re-verifies every candidate before it writes.
+
+`ref` is the ref that was enumerated and `refFallback` says why it is not the recorded branch. A
+recorded branch is used as-is; a task's commits land there while the resolved root's `HEAD` stays on
+the default branch, so enumerating `HEAD` would walk a ref the work is not on and return an empty range
+for work that is committed. No branch recorded → `HEAD`. A recorded branch that no longer resolves, or
+one the `**Pointers:**` entry marks `(removed …)` (`references/workflow/task-delivery-edges.md`
+§ *Removal*), falls back to `HEAD` — where a merged branch's work now sits — with `refFallback` naming
+the fallback so a brief can print it. Branch existence is tested with `git for-each-ref` and an exact
+refname comparison rather than `rev-parse --verify --quiet`, which reports a missing branch and a
+broken repository with the same silent non-zero status; the pattern is prefix-matching, so
+`refs/heads/feat` would otherwise be satisfied by `refs/heads/feat/x`.
+
+`state` is one of:
+
+- **`ok`** — a range was enumerated. `commits` holds `{sha,date,subject,paths}` per commit, newest
+  first, capped at 20, with `total` carrying the full count so a cut is stated rather than silent.
+- **`no-watermark`** — nothing reconstructs a range, and a guessed one is worse than none.
+- **`orphaned`** — `git merge-base --is-ancestor <sha> <ref>` exited non-zero, so the recorded commit is
+  no longer in the resolved ref's history (rebase, amend, force-push, history rewrite). A watermark
+  naming an object the repository no longer holds lands here too, which is the same finding.
+- **`no-checkout`** — there is no repository this task acts on, so nothing was scanned and no ref was
+  resolved. `repo` and `pathsInRepo` name which of the two omission conditions produced it: a null
+  `repo` is a folder outside any checkout, and a non-null `repo` with `pathsInRepo` false is a
+  checkout holding none of the plan's paths. Both are emitted as fields and as a state that stops the
+  caller, **never as a silently empty `ok` range**: an empty range reads as "no commits since the
+  watermark" and would seed a foreign `HEAD` onto `**Pointers:**`, leaving every later scan in the
+  right repository orphaned against it.
+
+`steps` follows plan order: `{number,checked,paths,pathExists,classification,commits}`. `paths` is the
+union of the step's `**Touches:**` paths and the paths its `**What:**` line names — `Touches:` is a
+parallelism declaration, so its absence never disqualifies a step. `commits` lists the shas of every
+commit in the **full** enumeration touching that step, so a step over the 20-commit cap still names its
+nominators; `classification` is `candidate` for a pending step a commit touched, `info` for a checked
+one, and null for a step no commit touched. The scan nominates; it never weakens — a step whose work
+vanished is the caller's unbacked-step repair, not this report's.
+
+**The two path tests are distinct.** *Name-match* decides which commits touch a step: a commit path
+equal to a named path, or under it at a `/` boundary, so a step naming a directory catches the files
+below it and a sibling with a longer name does not. *Existence under `repo`* is `pathExists`, and a
+pending step none of whose named paths exists on disk never becomes a candidate, whatever moved in the
+repo — such a step reports `classification: null` with its nominating commits still listed. Paths are
+read out of inline-code spans and kept when they look like a path (a `/`, a trailing `/`, or a file
+extension), which deliberately over-collects: a bare filename a `**What:**` mentions in passing joins
+the set, matches no commit path under the name-match rule above, and costs nothing.
+
+**Exit status.** 0 in every state — each one is a report a caller acts on. 2 is the run that never got
+that far: bad usage, an unreadable argument, a folder holding none of the role files
+`scripts/lifecycle-constants.ts` recognizes, or a `git` that is absent or failed for a reason other
+than the folder sitting outside a checkout. There is no 1 here, unlike the scripts beside it: an
+omitted scan is a state with fields explaining it, not an outcome the exit code has to carry.
+
+**Why the commit log carries a NUL record separator.** `--pretty=format:%x00%h %ad %s` prefixes each
+commit header, so the reader splits records on a byte no path can hold instead of guessing which lines
+under `--name-only` are headers. The log runs with `-c core.quotepath=false`, since git's default
+C-quotes non-ASCII path bytes under `--name-only` and a quoted path would never name-match a step's,
+and closes with `--` so the range is never read as a path. The command is otherwise the one
+`references/workflow/reconciliation-commits.md` names.
+
+The checkout discrimination — separating "not a git repository", which is a reportable `no-checkout`,
+from any other `git` failure, which is a refused run — is mirrored from `scripts/worktree-merge.ts`'s
+`checkoutHolding`. **Change either copy and change the other in the same edit.** The markdown-reading
+layer mirrors `scripts/health-check.ts`; see the mirror note in that section.
+
 ## `scripts/health-check.ts`
 
 Walks task roots and reports lifecycle health findings for the `maintain` skill.
@@ -172,10 +271,21 @@ heading taking the `-1`, `-2`, … suffix and allocation advancing past every sl
 step link pointing at a tombstone bullet under a `## Compacted` stub
 (`references/workflow/reconciliation-compaction.md`) is documented state, not a dead anchor.
 
-These markdown-reading constants and helpers are mirrored in `scripts/task-state.ts`, and the fence
-and status halves again in `scripts/task-move.ts`. Those readers must agree with this one: this
-walk's dead-anchor check against task-state's `anchorResolves`, and its terminal read against
-task-move's archive gate. **Change a copy here and change every mirror in the same edit.**
+**The size trigger has one measure.** `oversized-result` calls `scripts/task-state.ts`'s exported
+`resultSize`, the same function that script's `--compaction-plan` mode reads for `due`, so a result
+cannot be over the trigger in this walk and under it in the compaction plan those findings send a
+caller to. The import runs that way round because this script's CLI runs at module scope: importing
+*it* would run a whole walk as a side effect, while `task-state.ts` guards its CLI behind a direct-run
+check and can be imported for its pure layer.
+
+These markdown-reading constants and helpers are mirrored in `scripts/task-state.ts`, the fence and
+status halves again in `scripts/task-move.ts`, the fence, heading, step-title, and checkbox halves
+again in `scripts/commit-scan.ts`, and the fence and heading halves again in
+`scripts/sweep-scope.ts`. Those readers must agree with this one: this walk's dead-anchor check
+against task-state's `anchorResolves`, its terminal read against task-move's archive gate, its step
+reading against commit-scan's path sets, which nominate steps this walk's plan reading also
+enumerates, and its section bounds against sweep-scope's, which decide what a sweep may fetch from.
+**Change a copy here and change every mirror in the same edit.**
 
 **`--installs` mode** compares what `setup.ts` deployed against the kit. Only a marked item is
 kit-managed and comparable; a marker that cannot be read is not the user's, so it is recorded as a
@@ -200,7 +310,7 @@ stale, done-unarchived, started-in-backlog — go quiet on every task holding it
 - **`PLAN_VOCAB`** — `references/workflow/task-lifecycle.md` § *Status values* — a closed
   vocabulary; a value outside it is `unknown` rather than a guess, so a typo never reads as a
   lifecycle state.
-- **`UNSTARTED_STATUS`** — the backlog entry gate (`references/workflow/task-backlog.md`) and the
+- **`UNSTARTED_STATUS`** — the backlog entry gate (§ *`scripts/task-move.ts`*) and the
   archive checks. Exported so a rename lands here rather than in each consumer's own literal.
 - **`TERMINAL_STATUSES`** — `references/workflow/status-transitions.md` § *Terminal vs. live states*.
 - **`LIVE_STATUSES`** — the non-terminal complement, derived rather than spelled out so the two
@@ -504,12 +614,87 @@ a warning rather than narrowing the report to nothing, so a typo never reads as 
 context.
 Warnings go to stderr and the exit status is always 0, so a partly unreadable kit still parses.
 
+## `scripts/sweep-scope.ts`
+
+Enumerates the citations a reference sweep may fetch — the scope
+`references/workflow/reconciliation-sweep.md` § *Scope* defines — for the reconcilers that run one.
+**It fetches nothing and writes nothing**: the fetch, the material-change judgment, and the ledger
+rewrite stay with the run, and this report is only the set they work through.
+
+```
+node scripts/sweep-scope.ts <task-dir>
+```
+
+**Contract.** stdout is exactly one JSON object,
+`{taskDir,planStatus,deliverable,deliverableCandidates,ledger,citations}`.
+
+`citations` holds one entry per distinct URL, in first-cited order: `{url,tag,occurrences}`.
+`occurrences` is `{surface,file,section,text}` per citing site, in scan order — `CONTEXT.md`,
+`plan.md`, `ticket.md`, `result.md`, then the deliverable — with `text` the citing line trimmed, which
+is the description a fetch is compared against where the ledger carries no prior line. Deduplication is
+on the URL as written, once a trailing bracket or sentence punctuation is trimmed off it, so two
+spellings of one page stay two entries: over-fetching costs a request, while collapsing them would drop
+a citing surface's own finding.
+
+`tag` is the strongest tag `observations.md` records for that URL — `block` over `warn` over `info` —
+and null where the ledger has no line for it or the folder has none. Strongest rather than last,
+because `block` is a state tag a later `warn` line does not supersede.
+
+`surface` says which in-scope surface the occurrence sits on: `context-references`,
+`context-open-questions`, `plan-step`, `plan-open-questions`, `ticket-references`, `result-pointers`,
+`result-pause`, `deliverable-published`. It is what routes an occurrence's finding, three of them
+being surfaces a run never writes into (`references/workflow/reconciliation.md`
+§ *Never-annotated surfaces*). A section opens at its heading and closes at the next heading of the
+same level or shallower, so a `####` block inside a plan step stays inside that step. Every surface
+but `plan-step` opens only at a `##` heading — a deeper `### Current state` inside a historic
+section is that section's content, not the live block — while a step heading opens at its own
+level, `###` being canonical. In `result.md`
+only the `## Current state` block's `**Pointers:**` lines are read — its gloss and `**Next:**` line
+are not, and neither is anything below it but the active pause section.
+
+`planStatus` is the plan's own status, read through `scripts/task-state.ts`'s exported report rather
+than a fourth copy of the status patterns. It gates that pause section: the active pause is the one
+`task-state.ts`'s `compactionSections` marks `pause` — the most recent `**Blocked:**` section under a
+`blocked` plan, the most recent `**In review:**` section under `in-review`, and none at all in any
+other state — read from there rather than re-derived, so the compaction plan and the sweep cannot
+disagree about which pause is active.
+
+`deliverable` is the doc-task deliverable, resolved per
+`references/workflow/doc-task-files.md` without the plan's optional `**Deliverable:**` header: the
+folder's `.md` that is neither a role file nor one of the two derived roles beside them
+(`diagram.md`, `observations.md`) and that carries a `**Status:**` line in its own header block —
+above the first `##` heading, never inside a fence or a blockquote, which is what keeps a doc quoting
+another file's header out. `deliverableCandidates` names every file passing that test; two is a
+layout error to surface rather than guess between, so `deliverable` is null, both are named, and the
+count is warned on stderr. Only a resolved deliverable's `**Published:**` lines are swept.
+
+**The skip rules.** A citation is in scope only when it names a scheme with an authority
+(`<scheme>://`), which drops `mailto:`, anchors-only targets, and relative links in one test rather
+than three; `file://` and a loopback host (`localhost`, `127.0.0.1`, `[::1]`, `0.0.0.0`) are then
+excluded by name. Both markdown link targets and
+bare URLs are read out of every line and deduplicated within it, so a link whose text repeats its own
+URL is one occurrence rather than two.
+
+**Exit status.** 0 whenever a report was written — an empty `citations` list is the no-sweep state the
+caller reports, not a failure. 2 is the run that never got that far: bad usage, an unreadable argument,
+or a folder holding none of the role files `scripts/lifecycle-constants.ts` recognizes. There is no 1:
+an empty scope is a report, not an outcome the exit code has to carry. Warnings go to stderr.
+
+The markdown-reading layer mirrors `scripts/health-check.ts`; see the mirror note in that section.
+
 ## `scripts/task-move.ts`
 
 Performs one guarded task-folder move for the `archive-task` and `backlog-task` skills: the
 location-relative relocation into a sibling `Archive/` or `Backlog/` container defined by
-`references/workflow/task-archiving.md` and `references/workflow/task-backlog.md`, with the
-preconditions those files state — a terminal plan to archive, the unstarted entry gate to park.
+`references/workflow/task-archiving.md` and `references/workflow/task-backlog.md`. The archive
+precondition — a terminal plan — stays with `task-archiving.md`; the park precondition, the
+**unstarted entry gate**, is this script's own contract, stated here: a folder with no `plan.md`
+is admitted provided it holds no `result.md` either (a result file exists only once execution
+starts); a plan at `to-do` is admitted; `executing`, `blocked`, or `in-review` is refused (a live
+task pauses through the `blocked` status, never by being moved); `done` or `skipped` is refused,
+pointing at archiving; a status outside the vocabulary is refused as unplaceable. The status
+values are read from `scripts/lifecycle-constants.ts`, the sanctioned copy of
+`references/workflow/task-lifecycle.md` § *Status values*.
 
 ```
 node scripts/task-move.ts <slug-or-path> --to archive|backlog
@@ -553,9 +738,12 @@ Reports one task folder's mechanical plan state for the `resume-task` and `revie
 checkbox state, the next pending step, checkpoint outcomes, result-anchor resolution, and the
 goal-coverage map. Those skills keep the judgment that reads this report — whether a claim still
 holds, whether a citing step delivers all of its goal — and stop hand-enumerating the facts under it.
+Its second mode, `--compaction-plan`, reports the same kind of mechanical fact for a compaction
+proposal (`references/workflow/reconciliation-compaction.md`). **Neither mode writes anything.**
 
 ```
 node scripts/task-state.ts <task-dir>
+node scripts/task-state.ts --compaction-plan <task-dir>
 ```
 
 **Contract.** stdout is exactly one JSON object,
@@ -592,10 +780,54 @@ that expected rather than a gap. `orphanSteps` are steps citing no goal and carr
 `{delivered,deferred,missingFromPartition,inBoth}` over `goals.md`'s IDs, read from the plan's
 `## Scope`; the partition is total exactly when the last two lists are empty.
 
+**`--compaction-plan` mode** answers the mechanical half of a compaction proposal — is one due, may it
+run at all, and what would it collapse — for the skills that propose one. stdout is exactly one JSON
+object, `{taskDir,resultFile,bytes,maxKb,due,precondition,keep,removable}`. The mode is about
+`result.md`, so that file is the one it requires; `plan.md` is optional here and supplies only the
+status the active pause section is judged against.
+
+`due` is `bytes` **strictly over** `maxKb * 1024`, `bytes` being the UTF-8 length of the decoded
+file. `maxKb` is `RESULT_MAX_KB` from `scripts/lifecycle-constants.ts` with no flag to override it:
+`maintain` overrides the health walk's trigger because it reads the prose value at run time, while a
+proposal for one folder has no such second source to reconcile against.
+
+`precondition` is `{state,detail,uncommitted}` over `git -C <task-dir> cat-file -e HEAD:./result.md`.
+`state` is `ok` when the result resolves at `HEAD` and `fails` otherwise, `detail` carrying git's own
+reason on a failure and null on success. Compaction deletes text recoverable only from version
+history, so nothing weaker qualifies: an ignored folder sits inside a repository while holding nothing
+in history, and a staged-but-never-committed file has no commit holding its text — both report
+`fails`. `uncommitted` is whether `git status --porcelain` still reports pending changes to the file,
+which is what refuses a proposal until the user commits — uncommitted text is recoverable nowhere,
+so only a clean, `HEAD`-resolvable result may be proposed for compaction
+(`references/workflow/reconciliation-compaction.md`); it is null when the precondition failed or
+the status call did not run.
+
+`keep` and `removable` partition the result's `##` sections in file order — `{heading,anchor,rule}`
+and `{heading,anchor}`. The header block above the first `##` heading is not a section and is never
+eligible, and a `###`-or-deeper heading belongs to the `##` section above it rather than opening one.
+Anchors are allocated by the same slug rule the anchor check above uses, so a `removable` entry
+carries both halves a tombstone needs: its `heading` is the bullet's whole text — nothing else, or the
+step link that resolves through it stops resolving — and its `anchor` is the link that was pointing at
+it.
+
+`rule` names why a section is kept: `current-state`, `decision-log`, `acceptance`,
+`health-boundary`, `reconciliation` — the last such section in the file, every earlier one being
+narrative a later entry superseded — `compacted` for a prior `## Compacted` stub, whose tombstone
+bullets are the anchors an earlier compaction left resolvable and which the next stub is appended to
+rather than replacing, and `pause` for the most recent section the plan's **own status** owes:
+`**Blocked:**` under `blocked`, `**In review:**` under `in-review`, recognized from the section's
+heading or from a bold label on a line of its own inside it. A pause section the current status does
+not owe is a closed pause, and reports as removable like any other prior log section; so does every
+pause section when the plan is missing, unparseable, or in any other state.
+
+**The two lists are eligibility, never a decision.** `removable` is everything the keep-list does not
+protect; which of those sections are actually superseded narrative, and whether to propose the
+collapse at all, stays with the caller and the consent rule that file owns.
+
 **Exit status.** 0 = a report was written; 1 = nothing to report, because the argument names no
-readable `plan.md`; 2 = the run could not be carried out — bad usage, or an unexpected failure. A
-crash must not land on 1, which would report a readable plan folder as having none. Warnings go to
-stderr.
+readable `plan.md` — or, under `--compaction-plan`, no readable `result.md`; 2 = the run could not be
+carried out — bad usage, a `git` that is absent, or an unexpected failure. A crash must not land on 1,
+which would report a readable plan folder as having none. Warnings go to stderr.
 
 The markdown-reading layer mirrors `scripts/health-check.ts`; see the mirror note in that section.
 
@@ -749,6 +981,11 @@ The worktree a receipt names is stored and re-compared through `realpath`, so a 
 merely-resolved form. Without that normalization the gate refuses on the macOS symlinked temp roots
 alone, which is the one place it would be noticed.
 
+`checkoutHolding`'s discrimination — "not a git repository" read off stderr, every other `git` failure
+refused rather than swallowed — is mirrored in `scripts/commit-scan.ts`, where the same test separates
+a reportable `no-checkout` from a run that could not be carried out. **Change a copy here and change
+the mirror in the same edit.**
+
 ## `tests/`
 
 Every suite is zero-dependency and runs under Node type stripping, like the sources it covers.
@@ -766,9 +1003,23 @@ node --test "tests/*.test.ts"           # every suite — quoted, because the ru
 - **`task-move.test.ts`** — `scripts/task-move.ts`: the guarded archive and backlog moves, their
   preconditions, and the 0/1/2 exit contract.
 - **`task-state.test.ts`** — `scripts/task-state.ts`: the plan-state report — checkbox state, next
-  pending step, checkpoint outcomes, result-anchor resolution, goal coverage — and its 0/1/2 exit
-  contract. The CLI cases run fixture task folders end to end; the parsing variants call the exported
-  pure layer directly, which needs no folder on disk.
+  pending step, checkpoint outcomes, result-anchor resolution, goal coverage — the
+  `--compaction-plan` mode's size trigger, `HEAD` precondition, and keep/removable split, and its
+  0/1/2 exit contract. The CLI cases run fixture task folders end to end; the parsing variants call
+  the exported pure layer directly, which needs no folder on disk. Its precondition cases build real
+  checkouts on the same terms as the `commit-scan` suite below, since resolving at `HEAD` is a
+  property of a repository rather than of text. One case runs `scripts/health-check.ts` over a fixture
+  root holding a result of exactly `RESULT_MAX_KB * 1024` bytes and one of a byte more, and that
+  cross-script case is what pins the walk's `oversized-result` verdict and this mode's `due` to a
+  single measure — nothing else fails if they drift apart.
+- **`commit-scan.test.ts`** — `scripts/commit-scan.ts`: the commits-since-watermark scan — the four
+  states, the recorded-branch ref resolution and its `HEAD` fallbacks, the candidate/info
+  classification, the 20-commit cap — and its 0/2 exit contract.
+- **`sweep-scope.test.ts`** — `scripts/sweep-scope.ts`: the in-scope surfaces, the URL deduplication
+  that keeps every citing surface, the ledger tag precedence, the plan-status condition on the pause
+  section, and the skip rules. Every fixture URL is under `.invalid`, which resolves nowhere: a case
+  that reached the network would hang or fail rather than pass quietly, which is how the suite pins a
+  report built without a fetch.
 - **`session-triage.test.ts`** — `scripts/session-triage.ts`: transcript triage, its six signal
   classes, and its ranking.
 - **`pr-comments.test.ts`** — `scripts/pr-comments.ts`: the two-level page merge, the normalized JSON
@@ -797,6 +1048,14 @@ belongs nowhere in that file.
 `scripts/health-check.ts`'s `--installs` pass reports a one-sided link as drift. A symlink added
 under `references/` would therefore report as permanent, unfixable drift in every installed home —
 so nothing in that tree may become one.
+
+**The `commit-scan` suite builds real checkouts.** Each case runs `git init` in a temp directory and
+commits into it, because the states under test — a branch that resolves, one that does not, a
+watermark outside the resolved ref's history — are properties of a repository rather than of text a
+fixture could hold. Every checkout sets `user.email`, `user.name`, and `commit.gpgsign` locally and
+stages with `git add -f`, so a contributor's global config, signing key, or ignore file cannot decide
+whether the suite passes. The task folder is never staged: it lives inside the checkout, as a
+project-local one does, and staying untracked keeps it out of the ranges the cases assert on.
 
 **The `size-check` suite's cases share one kit.** It is written once and then mutated in place, so a
 case that adds a skill or a marker removes it again even on failure: the cases after it measure the

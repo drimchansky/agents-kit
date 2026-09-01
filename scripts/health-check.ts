@@ -3,6 +3,7 @@ import { lstatSync, readdirSync, readFileSync, readlinkSync, realpathSync, statS
 import type { Dirent, Stats } from "node:fs";
 import { join, resolve, basename, sep } from "node:path";
 import { holdsRoleFile, LIVE_STATUSES, PLAN_VOCAB, RESULT_MAX_KB as DEFAULT_RESULT_MAX_KB, TERMINAL_STATUSES, UNSTARTED_STATUS } from "./lifecycle-constants.ts";
+import { resultSize } from "./task-state.ts";
 
 process.stdout.on("error", (err: NodeJS.ErrnoException) => {
   if (err.code !== "EPIPE") throw err;
@@ -596,12 +597,12 @@ function currentStateFinding(task: Task): UnrootedFinding | null {
 
 function oversizedResultFinding(task: Task, resultMaxKb: number): UnrootedFinding | null {
   if (!task.result?.text) return null;
-  const kb = Buffer.byteLength(task.result.text, "utf8") / 1024;
-  if (kb <= resultMaxKb) return null;
+  const size = resultSize(task.result.text, resultMaxKb);
+  if (!size.over) return null;
   return {
     check: "oversized-result",
     path: task.path,
-    detail: `${task.result.file} is ${kb.toFixed(1)} KB, over the ${resultMaxKb} KB compaction trigger`,
+    detail: `${task.result.file} is ${size.kb.toFixed(1)} KB, over the ${resultMaxKb} KB compaction trigger`,
   };
 }
 

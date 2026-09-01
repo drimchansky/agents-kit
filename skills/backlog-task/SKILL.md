@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 
-This skill operates on the **task-folder envelope** — it relocates a whole task folder on disk — not on a task's domain content. Like `archive-task`, it deliberately does **not** resolve a `**Domain:**` pack: backlogging is identical for every task regardless of its domain, so there is no domain-specific overlay to load. Its source of truth is `./references/workflow/task-backlog.md` (the backlog location **and** the unstarted entry gate), `./references/workflow/task-layout.md` (the discovery rules and the recognition set that says what a task folder is), and `./references/workflow/task-lifecycle.md` (the status vocabulary that gate reads against), read **at run time** — never a hardcoded status list.
+This skill operates on the **task-folder envelope** — it relocates a whole task folder on disk — not on a task's domain content. Like `archive-task`, it deliberately does **not** resolve a `**Domain:**` pack: backlogging is identical for every task regardless of its domain, so there is no domain-specific overlay to load. Its source of truth is `./references/workflow/task-backlog.md` (the backlog location), `<kit-root>/SCRIPTS.md` § *`scripts/task-move.ts`* (the unstarted entry gate, the script's own contract), `./references/workflow/task-layout.md` (the discovery rules and the recognition set that says what a task folder is), and `./references/workflow/task-lifecycle.md` (the status vocabulary that gate reads against), read **at run time** — never a hardcoded status list.
 
 Parking moves an unstarted task folder into its own parent's `Backlog/` — canonically from `.agents/tasks/` into `.agents/tasks/Backlog/`, though a task folder anywhere on disk parks the same way — so the active list shows only work in flight. It is the **inbound** side of the backlog boundary whose read side already exists: discovery rules exclude `Backlog/` from active scans and fall back into it for an explicit slug (`task-layout.md`). Parking is carried by **location alone** — there is no `**Status:**` value for it — and its one exit is activation, the user's own move back out.
 
@@ -17,7 +17,7 @@ Parking moves an unstarted task folder into its own parent's `Backlog/` — cano
 
 **CRITICAL**:
 
-- **Unstarted tasks only.** A task parks only when it passes the **entry gate** `task-backlog.md` defines. It is archiving's gate inverted: a folder with **no `plan.md` at all is eligible**, the normal state of a task before planning, exactly where `archive-task` refuses. The script enforces the gate and refuses everything past it — a live plan, a finished one, an unknown status, a plan-less folder that already holds a `result.md`. Never edit a `**Status:**` to make a task eligible, and never work around the refusal.
+- **Unstarted tasks only.** A task parks only when it passes the **entry gate**, which the script applies and `<kit-root>/SCRIPTS.md` § *`scripts/task-move.ts`* states. It is archiving's gate inverted, so don't carry `archive-task`'s reflexes into it — hand the folder over and let the gate answer. Never edit a `**Status:**` to make a task eligible, and never work around the refusal.
 - **Eligible still means a *task folder*.** The gate says nothing about whether the thing being moved is a task; Step 1 does, via the **recognition set** in `task-layout.md` § *One task, one flat folder*. A stray directory holding no role file is never parked.
 - **Operate only on the resolved folder.** Hand the script the *exact absolute path resolved in Step 1* — never a bare slug, never a path rebuilt from the slug plus the current directory. A slug can name a folder in another project or anywhere else on disk, and a cwd-relative `.agents/tasks/<slug>` would then validate one task and move another. The script derives the backlog from the path it is given.
 - **Read-only on status and content.** The move relocates the folder; it does not edit `**Status:**`, goals, plan steps, or a result record. Parking is location, not a status: a live task that needs to pause does so through the `blocked` status (`task-lifecycle.md`), never by being moved.
@@ -64,7 +64,7 @@ node <kit-root>/scripts/task-move.ts <SRC> --to backlog
 
 `<kit-root>/SCRIPTS.md` § *`scripts/task-move.ts`* owns its CLI and its stdout contract — read that section, not the whole file. What it decides, so this skill doesn't:
 
-- **The entry gate** — a plan-less folder is admitted unless it holds a `result.md` at all (a result file exists only once execution starts, and carries no status of its own to read); a plan is admitted only in the not-yet-started state, and a live, finished, or unplaceable status is refused, the finished one pointing at archiving.
+- **The entry gate** — which folder states park, which are refused, and where each refusal points instead.
 - **The destination** — location-relative, derived from `SRC`'s own parent, with **case-insensitive recognition** of an existing container (a `backlog/` is moved into as it is spelled; normalizing a stray spelling is `maintain`'s format sweep, not this move).
 - **The guards** — a symlinked source, a symlinked or non-directory container, and an occupied `Backlog/<slug>` are each refused rather than overwritten or followed.
 
@@ -104,7 +104,7 @@ Pause it with `blocked` if it's waiting on something, or carry it to completion 
 
 ## Don't Rationalize
 
-- "This folder has no `plan.md`, so I can't judge it" — no plan is the *eligible* state here, not an unknown one: it's the young task the backlog exists for, and the one place this gate is the inverse of archiving's. What still has to hold is that the folder qualifies by the **recognition set** (`task-layout.md`) — a directory holding no role file is not a task and doesn't park.
+- "This folder has no `plan.md`, so I can't judge it" — you don't judge it: the young unplanned task is what the backlog exists for, so hand the folder to the script and let the gate answer. What still has to hold is that the folder qualifies by the **recognition set** (`task-layout.md`) — a directory holding no role file is not a task and doesn't park.
 - "It's `executing`, but the user wants it parked" — parking live work is what the `blocked` status is for (`task-lifecycle.md`). The script will refuse it; report the status it names and point there. A move is not a pause, and location carries no lifecycle state.
 - "It's sitting in `Archive/` and was never really finished — I'll move it across" — Un-archiving is the user's own move back out (`task-archiving.md`), taken first. Refuse the archived folder; never shuttle one from the archive into the backlog. (Backlog-to-archive is not this move's mirror: that is archiving's own sanctioned exit for a misfiled terminal task.)
 - "I'll pass the slug and let the script find it" — Its slug resolution is a minimum, deliberately: ambiguity is *this* skill's question to ask, with the listing and the statuses in front of the user. Resolve first, then pass the absolute path.

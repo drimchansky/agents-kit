@@ -5,13 +5,16 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { after, test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { taskState, type TaskState } from "../scripts/task-state.ts";
+import { RESULT_MAX_KB } from "../scripts/lifecycle-constants.ts";
+import { compactionSections, taskState, type CompactionPlan, type TaskState } from "../scripts/task-state.ts";
 
 const TESTS_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_DIR = resolve(TESTS_DIR, "..");
 const SCRIPT = join(REPO_DIR, "scripts", "task-state.ts");
+const HEALTH_CHECK = join(REPO_DIR, "scripts", "health-check.ts");
 const TEST_ROOT = mkdtempSync(join(tmpdir(), "agents-kit-task-state-"));
 const FENCE = "```";
+const TRIGGER_BYTES = RESULT_MAX_KB * 1024;
 
 after(() => rmSync(TEST_ROOT, { recursive: true, force: true }));
 
@@ -523,6 +526,14 @@ test("a folder with no plan.md reports nothing and exits 1", () => {
   assert.match(child.stderr, /has no readable plan\.md/);
 });
 
+test("--compaction-plan on a folder with no result.md reports nothing and exits 1", () => {
+  const dir = folder("plan-only", { plan: MIXED_PLAN });
+  const child = run(["--compaction-plan", dir]);
+  assert.strictEqual(child.status, 1, `expected exit 1, got ${child.status}`);
+  assert.strictEqual(child.stdout, "");
+  assert.match(child.stderr, /has no readable result\.md/);
+});
+
 test("a missing directory is the same nothing-to-report exit", () => {
   const child = run([join(TEST_ROOT, "nowhere")]);
   assert.strictEqual(child.status, 1, `expected exit 1, got ${child.status}`);
@@ -535,4 +546,222 @@ test("a wrong argument count is a usage error", () => {
     assert.strictEqual(child.status, 2, `expected exit 2 for ${args.length} arguments, got ${child.status}`);
     assert.match(child.stderr, /usage: node scripts\/task-state\.ts <task-dir>/);
   }
+});
+
+const COMPACTION_PLAN = `# Plan: compaction fixture
+
+**Status:** executing
+
+## Steps
+
+### Step 1 — First thing
+
+- [x] **What:** do the first thing ([result](./result.md#step-1--first-thing))
+- **Goal:** none (infra/refactor)
+`;
+
+const COMPACTION_RESULT = `# Result: compaction fixture
+
+**Plan:** [./plan.md](./plan.md)
+
+## Current state
+
+_Updated:_ 2026-01-04
+
+---
+
+## Compacted — 2025-12-01
+
+- Step 0 — An older step
+
+full text in git history (pre-compaction state).
+
+---
+
+## Step 1 — First thing
+
+**Verified:** it happened
+
+### Evidence
+
+the transcript this collapse exists for
+
+---
+
+## Reconciliation — 2025-12-20
+
+- superseded by the entry below
+
+---
+
+## Blocked — 2026-01-01
+
+**Blocked:** waiting on the vendor
+
+---
+
+## Review — 2026-01-03
+
+**In review:** awaiting the client's sign-off
+
+---
+
+## Reconciliation — 2026-01-04
+
+- the latest entry
+
+---
+
+## Decision log
+
+- chose the smaller cut
+
+---
+
+## Acceptance
+
+- G1 — met
+
+---
+
+## Health boundary — 2026-01-04
+
+**Trigger:** tail
+
+---
+`;
+
+function git(cwd: string, args: readonly string[]): string {
+  const child = spawnSync("git", ["-C", cwd, ...args], { encoding: "utf8" });
+  assert.strictEqual(child.status, 0, `git ${args.join(" ")} failed: ${child.stderr}`);
+  return child.stdout;
+}
+
+function checkout(name: string): string {
+  const dir = join(TEST_ROOT, name);
+  rmSync(dir, { recursive: true, force: true });
+  mkdirSync(dir, { recursive: true });
+  const init = spawnSync("git", ["init", "-q", dir], { encoding: "utf8" });
+  assert.strictEqual(init.status, 0, `git init failed: ${init.stderr}`);
+  git(dir, ["symbolic-ref", "HEAD", "refs/heads/main"]);
+  git(dir, ["config", "user.email", "test@example.invalid"]);
+  git(dir, ["config", "user.name", "agents-kit test"]);
+  git(dir, ["config", "commit.gpgsign", "false"]);
+  return dir;
+}
+
+function sized(base: string, bytes: number): string {
+  const padding = bytes - Buffer.byteLength(base, "utf8");
+  assert.ok(padding >= 0, `${bytes} bytes is smaller than the fixture itself`);
+  return base + "x".repeat(padding);
+}
+
+function plan(dir: string): CompactionPlan {
+  const child = run(["--compaction-plan", dir]);
+  assert.strictEqual(child.status, 0, `expected exit 0, got ${child.status}: ${child.stderr}`);
+  return JSON.parse(child.stdout) as CompactionPlan;
+}
+
+test("a result under the trigger is not due for compaction", () => {
+  const dir = folder("compaction-small", { plan: COMPACTION_PLAN, result: COMPACTION_RESULT });
+  const report = plan(dir);
+  assert.strictEqual(report.due, false);
+  assert.strictEqual(report.maxKb, RESULT_MAX_KB);
+  assert.ok(report.bytes < TRIGGER_BYTES, `expected under ${TRIGGER_BYTES} bytes, got ${report.bytes}`);
+});
+
+test("an oversized result committed at HEAD passes the precondition and lists both section sets", () => {
+  const repo = checkout("compaction-committed");
+  const dir = join(repo, "task");
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, "plan.md"), COMPACTION_PLAN);
+  writeFileSync(join(dir, "result.md"), sized(COMPACTION_RESULT, TRIGGER_BYTES + 1));
+  git(repo, ["add", "-f", "--", "task/plan.md", "task/result.md"]);
+  git(repo, ["commit", "-q", "-m", "the pre-compaction state"]);
+
+  const report = plan(dir);
+  assert.strictEqual(report.due, true);
+  assert.strictEqual(report.bytes, TRIGGER_BYTES + 1);
+  assert.deepStrictEqual(report.precondition, { state: "ok", detail: null, uncommitted: false });
+  assert.deepStrictEqual(report.keep, [
+    { heading: "Current state", anchor: "current-state", rule: "current-state" },
+    { heading: "Compacted — 2025-12-01", anchor: "compacted--2025-12-01", rule: "compacted" },
+    { heading: "Reconciliation — 2026-01-04", anchor: "reconciliation--2026-01-04", rule: "reconciliation" },
+    { heading: "Decision log", anchor: "decision-log", rule: "decision-log" },
+    { heading: "Acceptance", anchor: "acceptance", rule: "acceptance" },
+    { heading: "Health boundary — 2026-01-04", anchor: "health-boundary--2026-01-04", rule: "health-boundary" },
+  ]);
+  assert.deepStrictEqual(report.removable, [
+    { heading: "Step 1 — First thing", anchor: "step-1--first-thing" },
+    { heading: "Reconciliation — 2025-12-20", anchor: "reconciliation--2025-12-20" },
+    { heading: "Blocked — 2026-01-01", anchor: "blocked--2026-01-01" },
+    { heading: "Review — 2026-01-03", anchor: "review--2026-01-03" },
+  ]);
+
+  writeFileSync(join(dir, "result.md"), sized(COMPACTION_RESULT, TRIGGER_BYTES + 2));
+  assert.strictEqual(plan(dir).precondition.uncommitted, true);
+});
+
+test("a result that does not resolve at HEAD fails the precondition", () => {
+  const repo = checkout("compaction-untracked");
+  const dir = join(repo, "task");
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(repo, "seed.md"), "the checkout needs a HEAD\n");
+  git(repo, ["add", "-f", "--", "seed.md"]);
+  git(repo, ["commit", "-q", "-m", "seed"]);
+  writeFileSync(join(dir, "plan.md"), COMPACTION_PLAN);
+  writeFileSync(join(dir, "result.md"), sized(COMPACTION_RESULT, TRIGGER_BYTES + 1));
+
+  const report = plan(dir);
+  assert.strictEqual(report.due, true);
+  assert.strictEqual(report.precondition.state, "fails");
+  assert.strictEqual(report.precondition.uncommitted, null);
+  assert.match(report.precondition.detail ?? "", /result\.md/);
+});
+
+test("the active pause section is the one the plan's status owes, and only the most recent", () => {
+  const blocked = compactionSections(COMPACTION_RESULT, "blocked");
+  assert.deepStrictEqual(
+    blocked.keep.filter((section) => section.rule === "pause").map((section) => section.heading),
+    ["Blocked — 2026-01-01"],
+  );
+  assert.ok(blocked.removable.some((section) => section.heading === "Review — 2026-01-03"));
+
+  const inReview = compactionSections(COMPACTION_RESULT, "in-review");
+  assert.deepStrictEqual(
+    inReview.keep.filter((section) => section.rule === "pause").map((section) => section.heading),
+    ["Review — 2026-01-03"],
+  );
+  assert.ok(inReview.removable.some((section) => section.heading === "Blocked — 2026-01-01"));
+
+  const older = COMPACTION_RESULT.replace(
+    "## Review — 2026-01-03\n\n**In review:** awaiting the client's sign-off",
+    "## Blocked — 2026-01-03\n\n**Blocked:** waiting on the vendor again",
+  );
+  assert.deepStrictEqual(
+    compactionSections(older, "blocked").keep.filter((section) => section.rule === "pause").map((section) => section.heading),
+    ["Blocked — 2026-01-03"],
+  );
+});
+
+test("the compaction trigger reads the same bytes health-check's oversized-result verdict does", () => {
+  const root = join(TEST_ROOT, "measure");
+  rmSync(root, { recursive: true, force: true });
+  const sizes = { "at-trigger": TRIGGER_BYTES, "over-trigger": TRIGGER_BYTES + 1 };
+  for (const [name, bytes] of Object.entries(sizes)) {
+    const dir = join(root, name);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, "plan.md"), COMPACTION_PLAN);
+    writeFileSync(join(dir, "result.md"), sized(COMPACTION_RESULT, bytes));
+  }
+
+  const walk = spawnSync(process.execPath, [HEALTH_CHECK, root], { encoding: "utf8" });
+  assert.strictEqual(walk.status, 0, `health-check failed: ${walk.stderr}`);
+  const oversized = (JSON.parse(walk.stdout).findings as { check: string; path: string }[])
+    .filter((finding) => finding.check === "oversized-result")
+    .map((finding) => finding.path);
+
+  assert.deepStrictEqual(oversized, ["measure/over-trigger"]);
+  assert.strictEqual(plan(join(root, "at-trigger")).due, false);
+  assert.strictEqual(plan(join(root, "over-trigger")).due, true);
 });
