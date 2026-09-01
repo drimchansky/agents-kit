@@ -33,7 +33,7 @@ Before working, read `./references/engineering/review.md` — it carries the len
 
 - the review object named concretely — the staged diff, `git diff --cached`, never pasted diff text — with its identity, the digest Setup recorded;
 - the absolute effective working root, the tree the staged set lives on, which may be a worktree rather than the main checkout;
-- the kind, `commit`, and its ask: the drafted commit message for the reviewed set;
+- the kind, `commit`;
 - the absolute installed paths of the review pack and of the rules the review runs under — the install home's `references/engineering/review.md` (`~/.claude/` on Claude, `~/.codex/` on Codex), the per-surface checklist directory beside it, the engineering overlay `references/engineering/rules.md` in that same directory, and the install home's `CORE_RULES.md`;
 - any context and constraints the user gave with the invocation — the why behind the change, a focus to take, a constraint to honour — verbatim, or `none`: the session holds them and the reviewer sees no session context;
 - this skill's § *Review Focus*, verbatim — the review pack does not carry it;
@@ -45,13 +45,13 @@ A packet item that is missing or ambiguous is completed by reading or asking; a 
 
 **Settle.** Per `./references/workflow/reviewer-contract.md` § *The settle*, read cold at this point. Its two intake checks run first, in order, before anything else: the `Identity` echo against the digest Setup recorded — a mismatch means the reviewer resolved a different object: stop and report, settle nothing — then every return heading present, a malformed return taking the inline fallback below with reason `reviewer failed`. Then adopt, spot-check, assign the final verdicts, and merge the `-x` probe as that section orders.
 
-A composite driving this skill suppresses the steps after the intake checks — where it does, its own text governs, and every returned finding reaches its verify phase as a candidate. Adopted findings render in the shape Output cites. The returned commit message is taken as drafted and checked against Output's message rules, corrected there if it misses one.
+A composite driving this skill suppresses the steps after the intake checks — where it does, its own text governs, and every returned finding reaches its verify phase as a candidate. Adopted findings render in the shape Output cites. The commit message is the session's own, drafted per Output's message rules from the return's `Change map` — not one of the suppressed steps, so a composite forwards it unchanged.
 
 **Inline fallback.** Where the reviewer cannot launch or a launched one failed — the reasons `./references/workflow/reviewer-contract.md` § *Degrade rule* closes — announce which and why, then run the pass here:
 
 - Group changes by file and intent.
 - **Launch verification scripts** per "Verification Scripts" in `./references/engineering/review.md`: as soon as the review object is confirmed, launch the project's lint/typecheck/test scripts over its files and review while they run; their failures and warnings land as findings before output. That same section carries the reproduction bar a candidate must clear before it is adopted.
-- Apply § *Review Focus*, and draft the commit message from the staged set.
+- Apply § *Review Focus*.
 
 The review object, the digest, and everything Output owes are unchanged here — only the runner is.
 
@@ -82,7 +82,7 @@ Apply the full review process from `./references/engineering/review.md` — the 
 
 **Divergence** — the diverging reviewed paths the runner recorded per "Verification Scripts" in `./references/engineering/review.md` — the return's `Divergence` heading on a delegated pass, the session's own record on the inline fallback — each with the context reported at it; `None` when the tree carries the object.
 
-**Commit message** — the message for the staged changes: on a delegated pass the reviewer's return, settled above; on the inline fallback the session's own draft. Either way it follows:
+**Commit message** — the message for the staged changes, **drafted by the session on either pass**: from the return's `Change map` on a delegated pass, from the session's own grouping on the inline fallback. The reviewer drafts none and is never asked for one, because these rules are this skill's and it never sees them. Where the map leaves an intent unclear, read the staged diff for it: the tree is the session's again once the reviewer has returned. It follows:
 
 - First line: imperative mood, max 72 chars, describe _what_ and _why_ (not _how_)
 - Body (if needed): additional context for non-obvious changes, separated by blank line
@@ -103,6 +103,6 @@ to always read the latest value inside the interval.
 ## Verification
 
 Apply the Standard Verification Checklist in `./references/engineering/review.md`. The output carries the **Reviewed** provenance line (reviewed-set digest + file count + the reviewing model and effort) and the `Review pass:` line, and **Next** points at `/commit`.
-On a delegated pass: the packet named the same review object and digest Setup resolved, both intake checks passed — the `Identity` echo matched that digest and every return heading was present — before any settle step, the settle re-read every Critical and Major anchor before rendering it, the session ran no command against the tree while the reviewer was in flight, the commit message came from the return, and the line reads `delegated (<model>)`.
+On a delegated pass: the packet named the same review object and digest Setup resolved, both intake checks passed — the `Identity` echo matched that digest and every return heading was present — before any settle step, the settle re-read every Critical and Major anchor before rendering it, the session ran no command against the tree while the reviewer was in flight, the session drafted the commit message itself from the return's `Change map`, and the line reads `delegated (<model>)`.
 On the inline fallback: the reason was announced and the line reads `inline (<reason>)`.
 With `-x`: the probe was merged per `./references/workflow/agent-fanout.md`, its prompt named the same review object Setup resolved, and the output carries its `Cross-check:` line. <!-- cold -->

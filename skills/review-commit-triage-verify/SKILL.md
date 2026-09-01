@@ -56,7 +56,7 @@ Lists, never tables.
 - **Reviewed** — the provenance line exactly as `review-commit` specs it, so `/commit` can confirm the set it commits is still the set reviewed: `Reviewed <digest> (<n> files) by <model> <effort>`.
 - **Review pass** — the line phase 1 forwards, exactly as `review-commit` specs it: `Review pass: delegated (<model>)` or `Review pass: inline (<reason>)`. Owed on either path — a pipeline output that dropped it would read like a delegated pass whatever ran.
 - **Divergence** — forwarded from the review phase as `review-commit` specs it; `None` when the tree carried the object, and any non-`None` entry is an anomaly Setup's precondition should have prevented — surfaced, never dropped.
-- **Commit message** — the drafted message exactly as `review-commit` specs it (imperative first line, project conventions, no AI attribution): on a delegated pass the reviewer's returned message, on the inline fallback the session's own draft. It describes the change, not the findings, so either way it passes through unverified.
+- **Commit message** — the drafted message exactly as `review-commit` specs it (imperative first line, project conventions, no AI attribution): the session's own draft on either pass, since that skill owns the drafting whatever ran the review pass. It describes the change, not the findings, so it passes through unverified.
 
 **Next:** once the surviving findings are addressed — Withdrawn ones don't block — run `/commit` to create the commit with this message.
 
