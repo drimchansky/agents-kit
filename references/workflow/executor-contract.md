@@ -58,7 +58,7 @@ Coordinator intake is per unit, in packet order, exactly as § *Write-mode routi
 
 ## Write-mode routing
 
-Write-mode fan-out is limited to the consumers registered in `./executor-routing.md`. The contract above governs executor behavior; each consumer's own skill owns how it frames a unit of work and what verdicts it reaches. Every other fan-out consumer uses the probe contract in `./agent-fanout.md`.
+Write-mode fan-out is limited to the consumers registered in `./executor-routing.md`. The contract above governs executor behavior; each consumer's own skill owns how it frames a unit of work and what verdicts it reaches. Every other fan-out consumer uses the probe contract in `./agent-fanout.md` — except the review skills' delegated pass, which is neither write-mode nor a probe and runs under `./reviewer-contract.md`.
 
 **The posture.** Delegation is the standing posture for every consumer registered in `./executor-routing.md`: each unit goes to an executor, and `./write-mode-posture.md` owns that rule together with the closed set of three exceptions that keep one unit inline. No consumer states a posture, a packet-cost prior, or a cadence of its own.
 

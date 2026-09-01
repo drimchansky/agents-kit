@@ -12,7 +12,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { homedir, tmpdir } from "node:os";
-import { dirname, join, resolve, sep } from "node:path";
+import { basename, dirname, join, resolve, sep } from "node:path";
 import { after, before, test, type TestContext } from "node:test";
 import { fileURLToPath } from "node:url";
 
@@ -22,7 +22,8 @@ const SETUP = join(REPO_DIR, "setup.ts");
 const MAX_BUFFER_BYTES = 64 * 1024 * 1024;
 const MARKER = ".agents-kit";
 const CORE_RULES_MARKER = ".agents-kit-core-rules";
-const EXECUTOR_MARKER = ".agents-kit-executor";
+const AGENT_MARKER_PREFIX = ".agents-kit-";
+const EXECUTOR_MARKER = `${AGENT_MARKER_PREFIX}executor`;
 const EXECUTOR_SKIP = "skipped (not kit-managed): agents/executor";
 const CONFIG_VERDICT = /[✓⚠] config/;
 const WARNED_CONFIG = "⚠ config";
@@ -46,8 +47,8 @@ const CLAUDE_EXECUTOR = join(CLAUDE_HOME, "agents", "executor.md");
 const CODEX_EXECUTOR = join(CODEX_HOME, "agents", "executor.toml");
 const CLAUDE_EXECUTOR_MARKER = join(CLAUDE_HOME, "agents", EXECUTOR_MARKER);
 const CODEX_EXECUTOR_MARKER = join(CODEX_HOME, "agents", EXECUTOR_MARKER);
-const CLAUDE_REVIEWER = join(CLAUDE_HOME, "agents", "reviewer.md");
-const CODEX_REVIEWER = join(CODEX_HOME, "agents", "reviewer.toml");
+const CLAUDE_BYSTANDER = join(CLAUDE_HOME, "agents", "bystander.md");
+const CODEX_BYSTANDER = join(CODEX_HOME, "agents", "bystander.toml");
 const CONFLICT_HOME = join(TEST_ROOT, "conflict-home");
 const CONFLICT_CLAUDE = join(CONFLICT_HOME, ".claude");
 const CONFLICT_CODEX = join(CONFLICT_HOME, ".codex");
@@ -256,13 +257,25 @@ function symlinksUnder(root: string): string[] {
     .filter((path) => pathKind(path) === "symlink");
 }
 
+function agentSources(extension: string): string[] {
+  return readdirSync(join(REPO_DIR, "agents"))
+    .filter((name) => !name.startsWith(".") && name.endsWith(`.${extension}`))
+    .sort();
+}
+
 function agentProblems(hostHome: string, extension: string): string[] {
+  const sources = agentSources(extension);
+  if (sources.length === 0) return [`the kit ships no agents/*.${extension} definition to install`];
+  return sources.flatMap((sourceName) => [
+    ...markerProblems(join(hostHome, "agents", `${AGENT_MARKER_PREFIX}${basename(sourceName, `.${extension}`)}`)),
+    ...copyProblems(join(REPO_DIR, "agents", sourceName), join(hostHome, "agents", sourceName)),
+  ]);
+}
+
+function foreignFormatProblems(): string[] {
   return [
-    ...markerProblems(join(hostHome, "agents", EXECUTOR_MARKER)),
-    ...copyProblems(
-      join(REPO_DIR, "agents", `executor.${extension}`),
-      join(hostHome, "agents", `executor.${extension}`),
-    ),
+    ...agentSources("toml").flatMap((name) => absenceProblems(join(CLAUDE_HOME, "agents", name))),
+    ...agentSources("md").flatMap((name) => absenceProblems(join(CODEX_HOME, "agents", name))),
   ];
 }
 
@@ -336,10 +349,7 @@ function observeCleanInstall(): CleanInstall {
   return {
     claudeAgent: agentProblems(CLAUDE_HOME, "md"),
     codexAgent: agentProblems(CODEX_HOME, "toml"),
-    foreignFormats: [
-      ...absenceProblems(join(CLAUDE_HOME, "agents", "executor.toml")),
-      ...absenceProblems(join(CODEX_HOME, "agents", "executor.md")),
-    ],
+    foreignFormats: foreignFormatProblems(),
     claudePayload: sharedPayloadProblems(CLAUDE_HOME),
     codexPayload: sharedPayloadProblems(CODEX_HOME),
   };
@@ -351,7 +361,11 @@ function observeTomlParse(): TomlProbe {
     if (available.error !== undefined || available.status !== 0) continue;
     const run = spawnSync(
       interpreter,
-      ["-c", 'import sys, tomllib; tomllib.load(open(sys.argv[1], "rb"))', CODEX_EXECUTOR],
+      [
+        "-c",
+        'import sys, tomllib\nfor path in sys.argv[1:]:\n    tomllib.load(open(path, "rb"))',
+        ...agentSources("toml").map((name) => join(CODEX_HOME, "agents", name)),
+      ],
       { encoding: "utf8", maxBuffer: MAX_BUFFER_BYTES },
     );
     return { interpreter, status: run.status, output: `${run.stdout ?? ""}\n${run.stderr ?? ""}` };
@@ -387,8 +401,8 @@ function observeDoctor(): DoctorProbe {
 }
 
 function observeManagedReinstall(): ManagedReinstall {
-  writeFileSync(CLAUDE_EXECUTOR, "stale managed Claude definition\n");
-  writeFileSync(CODEX_EXECUTOR, "stale managed Codex definition\n");
+  for (const name of agentSources("md")) writeFileSync(join(CLAUDE_HOME, "agents", name), "stale managed Claude definition\n");
+  for (const name of agentSources("toml")) writeFileSync(join(CODEX_HOME, "agents", name), "stale managed Codex definition\n");
   for (const home of HOMES) {
     writeFileSync(join(home, "skills", "translate", "SKILL.md"), "stale managed skill\n");
     writeFileSync(join(home, "references", "workflow", "executor-contract.md"), "stale managed reference\n");
@@ -463,8 +477,8 @@ function preservedExecutorProblems(): string[] {
 
 function preservedUnrelatedProblems(): string[] {
   return [
-    ...contentProblems(CLAUDE_REVIEWER, UNRELATED_CLAUDE_AGENT),
-    ...contentProblems(CODEX_REVIEWER, UNRELATED_CODEX_AGENT),
+    ...contentProblems(CLAUDE_BYSTANDER, UNRELATED_CLAUDE_AGENT),
+    ...contentProblems(CODEX_BYSTANDER, UNRELATED_CODEX_AGENT),
   ];
 }
 
@@ -473,15 +487,15 @@ function observeExecutorCollision(): ExecutorCollision {
   rmSync(CODEX_EXECUTOR_MARKER);
   writeFileSync(CLAUDE_EXECUTOR, USER_CLAUDE_EXECUTOR);
   writeFileSync(CODEX_EXECUTOR, USER_CODEX_EXECUTOR);
-  writeFileSync(CLAUDE_REVIEWER, UNRELATED_CLAUDE_AGENT);
-  writeFileSync(CODEX_REVIEWER, UNRELATED_CODEX_AGENT);
+  writeFileSync(CLAUDE_BYSTANDER, UNRELATED_CLAUDE_AGENT);
+  writeFileSync(CODEX_BYSTANDER, UNRELATED_CODEX_AGENT);
   const log = runSetup(PRIMARY_HOME);
   return {
     skips: countMatchingLines(log, EXECUTOR_SKIP),
     claude: [...contentProblems(CLAUDE_EXECUTOR, USER_CLAUDE_EXECUTOR), ...absenceProblems(CLAUDE_EXECUTOR_MARKER)],
     codex: [...contentProblems(CODEX_EXECUTOR, USER_CODEX_EXECUTOR), ...absenceProblems(CODEX_EXECUTOR_MARKER)],
-    unrelatedClaude: contentProblems(CLAUDE_REVIEWER, UNRELATED_CLAUDE_AGENT),
-    unrelatedCodex: contentProblems(CODEX_REVIEWER, UNRELATED_CODEX_AGENT),
+    unrelatedClaude: contentProblems(CLAUDE_BYSTANDER, UNRELATED_CLAUDE_AGENT),
+    unrelatedCodex: contentProblems(CODEX_BYSTANDER, UNRELATED_CODEX_AGENT),
   };
 }
 
@@ -493,11 +507,16 @@ function observeExecutorReinstall(): CollisionRun {
   };
 }
 
+function orphanAgents(hostHome: string, extension: string): void {
+  for (const name of agentSources(extension)) {
+    rmSync(join(hostHome, "agents", name));
+    writeFileSync(join(hostHome, "agents", `${AGENT_MARKER_PREFIX}${basename(name, `.${extension}`)}`), "");
+  }
+}
+
 function observeOrphanRecovery(): OrphanRecovery {
-  rmSync(CLAUDE_EXECUTOR);
-  rmSync(CODEX_EXECUTOR);
-  writeFileSync(CLAUDE_EXECUTOR_MARKER, "");
-  writeFileSync(CODEX_EXECUTOR_MARKER, "");
+  orphanAgents(CLAUDE_HOME, "md");
+  orphanAgents(CODEX_HOME, "toml");
   runSetup(PRIMARY_HOME);
   return {
     claudeAgent: agentProblems(CLAUDE_HOME, "md"),
@@ -636,12 +655,12 @@ after(() => {
   rmSync(TEST_ROOT, { recursive: true, force: true });
 });
 
-test("Claude clean install executor definition matches its source", () => {
-  assertNoProblems(observed.clean.claudeAgent, "a clean install must deploy the Claude executor under its marker");
+test("Claude clean install agent definitions match their sources", () => {
+  assertNoProblems(observed.clean.claudeAgent, "a clean install must deploy every Claude agent under its marker");
 });
 
-test("Codex clean install executor definition matches its source", () => {
-  assertNoProblems(observed.clean.codexAgent, "a clean install must deploy the Codex executor under its marker");
+test("Codex clean install agent definitions match their sources", () => {
+  assertNoProblems(observed.clean.codexAgent, "a clean install must deploy every Codex agent under its marker");
 });
 
 test("clean install excludes foreign native agent formats", () => {
@@ -656,7 +675,7 @@ test("Codex shared skills, references, and CORE_RULES.md install unchanged", () 
   assertNoProblems(observed.clean.codexPayload, "the Codex home must hold the kit payload byte for byte");
 });
 
-test("installed Codex executor TOML parses", (t: TestContext) => {
+test("installed Codex agent TOML definitions parse", (t: TestContext) => {
   const probe = observed.toml;
   if (probe.interpreter === null) {
     t.skip("no Python carrying tomllib is installed, so the deployed TOML was not parsed");
@@ -665,7 +684,7 @@ test("installed Codex executor TOML parses", (t: TestContext) => {
   assert.strictEqual(
     probe.status,
     0,
-    `${probe.interpreter} could not parse the installed ${CODEX_EXECUTOR}:\n${probe.output}`,
+    `${probe.interpreter} could not parse an installed Codex agent TOML:\n${probe.output}`,
   );
 });
 
@@ -681,12 +700,12 @@ test("Codex strict-config doctor reports a valid configuration (its exit status 
   }
 });
 
-test("Claude managed reinstall executor definition matches its source", () => {
-  assertNoProblems(observed.managed.claudeAgent, "a reinstall must restore an edited Claude executor");
+test("Claude managed reinstall agent definitions match their sources", () => {
+  assertNoProblems(observed.managed.claudeAgent, "a reinstall must restore every edited Claude agent");
 });
 
-test("Codex managed reinstall executor definition matches its source", () => {
-  assertNoProblems(observed.managed.codexAgent, "a reinstall must restore an edited Codex executor");
+test("Codex managed reinstall agent definitions match their sources", () => {
+  assertNoProblems(observed.managed.codexAgent, "a reinstall must restore every edited Codex agent");
 });
 
 test("managed reinstall refreshes the unchanged shared payload", () => {
@@ -737,12 +756,12 @@ test("native collisions and unrelated agents remain byte-preserved on reinstall"
   assertNoProblems(observed.executorReinstall.problems, "a rerun must not reclaim what the first run refused");
 });
 
-test("Claude orphan-marker recovery executor definition matches its source", () => {
-  assertNoProblems(observed.orphan.claudeAgent, "a marker without its payload must reinstall the Claude executor");
+test("Claude orphan-marker recovery agent definitions match their sources", () => {
+  assertNoProblems(observed.orphan.claudeAgent, "a marker without its payload must reinstall every Claude agent");
 });
 
-test("Codex orphan-marker recovery executor definition matches its source", () => {
-  assertNoProblems(observed.orphan.codexAgent, "a marker without its payload must reinstall the Codex executor");
+test("Codex orphan-marker recovery agent definitions match their sources", () => {
+  assertNoProblems(observed.orphan.codexAgent, "a marker without its payload must reinstall every Codex agent");
 });
 
 test("orphan recovery leaves unrelated native agents unchanged", () => {

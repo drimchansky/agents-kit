@@ -1,6 +1,6 @@
 ---
 name: executor
-description: Write-mode executor for agents-kit's registered write-mode consumers. Carries out one coordinator-supplied unit of work — or one packet-supplied ordered segment of units — and returns evidence under the shared executor contract. Launched only by a registered consumer under a coordinator packet; all other fan-out uses read-only probes.
+description: Write-mode executor for agents-kit's registered write-mode consumers. Carries out one coordinator-supplied unit of work — or one packet-supplied ordered segment of units — and returns evidence under the shared executor contract. Launched only by a registered consumer under a coordinator packet; other fan-out is a read-only probe or the delegated reviewer.
 model: claude-opus-5
 effort: xhigh
 ---

@@ -73,7 +73,11 @@ where they are rather than being re-implemented at the pipeline level.
   probe (`./probe-cross-check.md`) — and by the pass-through rule above, a composite's `-x` is its
   review phase's. The probe merges into the pass *before* its verdicts finalize, so it has no seam
   to run after. Its own documentation is one `Flags` entry, one launch line, and one `Cross-check:`
-  output line per skill.
+  output line per skill. Both triage-verify composites depart from the pass-through rule here, as
+  `review-pr-triage-verify` does for `-p` below: they suppress the review phase's standalone settle
+  of the delegated reviewer's return, and with `-x` the probe's verify-before-adopt step with it,
+  since their own phase 3 verifies every candidate the review hands forward and would pay twice for
+  one verdict (`./reviewer-contract.md` § *The settle*).
 - `-p` lens-probe fan-out (`review-pr`) — the probes merge into the pass *before* findings
   finalize, the same seamlessness as `-x`, and both halves of the lens set — the triggered
   per-surface checklists and the derived correctness angles — come from the change map the review
