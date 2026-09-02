@@ -121,8 +121,9 @@ under `repo`. Existence, not containment — a repo-relative path lies inside an
 test would never discriminate a wrong one.
 
 `watermark` is the `SHA <sha> (recorded YYYY-MM-DD)` entry read off the result's `## Current state`
-`**Pointers:**` line, lowercased, null when none is recorded; `branch` is the `` branch `<name>` ``
-entry on that same line, null when none. That line is free prose, so both are found inside it rather
+`**Pointers:**` line, lowercased, null when none is recorded; `branch` is the `` branch `<branch>` ``
+entry on that same line — the shape `references/workflow/task-delivery.md` § *Branch and worktree
+creation* owns — null when none. That line is free prose, so both are found inside it rather
 than parsed as the whole of it, and only the first `**Pointers:**` line of the `## Current state` block
 is read — a result carrying no such block falls back to the first `**Pointers:**` line in the file, so
 a legacy result still yields its floor. Mis-parsing either entry walks the wrong ref and

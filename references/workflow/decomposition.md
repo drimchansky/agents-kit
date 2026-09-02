@@ -36,7 +36,7 @@ Test every candidate part before it enters the proposal:
 
 Ordering lives in folder names, and only there (`task-siblings.md`):
 
-- `NN-` prefixes **only when the parts have a blocking order**; unordered parts get plain slugs.
+- `NN-` prefixes — two digits and a hyphen — **only when the parts have a blocking order**; unordered parts get plain slugs.
 - **Continue an existing sequence** — when the parent directory already carries numbered siblings of the same effort, new parts take the next free numbers (`01-`/`02-` present → new parts start at `03-`).
 - **A fresh parent starts at `01-`.**
 - All parts of one effort belong in **one parent directory** — the prefix is only visible where the folders sort together.
