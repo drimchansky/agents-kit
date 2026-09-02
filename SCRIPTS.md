@@ -979,8 +979,10 @@ section.
 
 Performs the coordinator-side worktree merge gates defined by
 `references/workflow/parallel-batch.md` § *Coordinator-side parallel batch* — the raw delta against
-the batch baseline, the surface check that bounds it, the verified incorporation, and the removal that
-refuses until the incorporation has been proved to land.
+the batch baseline, the surface check that bounds it, the verified incorporation, and the removal
+that refuses until the incorporation has been proved to land. Its `baseline` and `check` also serve
+the intake's surface check for a serially delegated shared-tree unit
+(`references/workflow/executor-contract.md` § *Write-mode routing*).
 
 ```
 node scripts/worktree-merge.ts baseline <tree> --out <manifest> [--prune <path>]...
@@ -1028,12 +1030,14 @@ script gives a restore instead is exactness about what happened — the applied 
 verification failure either the precise split between the paths that landed and the paths that did
 not, or, where the measurement itself could not run, the statement that there is no split to give.
 
-**A `baseline` manifest serves three roles**: the two the cited file needs — the batch baseline every
+**A `baseline` manifest serves four roles**: the two the cited file needs — the batch baseline every
 unit's change set is measured against, and the exact pre-unit capture of the shared tree taken at a
-unit's ordered position — and the health-boundary reference of
-`references/engineering/boundary-scope.md` § *Reference and delta*, whose delta a later `check` against
-that manifest computes. They are the same operation on a different tree at a different moment, so a
-change to what `baseline` captures or what `--prune` hides reaches all three.
+unit's ordered position — the pre-launch capture the intake's surface check compares a serially
+delegated unit's return against (`references/workflow/executor-contract.md` § *Write-mode routing*),
+and the health-boundary reference of `references/engineering/boundary-scope.md` § *Reference and
+delta*, whose delta a later `check` against that manifest computes. They are the same operation on a
+different tree at a different moment, so a change to what `baseline` captures or what `--prune`
+hides reaches all three.
 
 **Git-ignored content.** On a Git checkout every walk drops the untracked paths the repository
 ignores, and the manifest records `gitignore` so both sides of a comparison measure alike — a tree

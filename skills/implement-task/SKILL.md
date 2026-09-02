@@ -28,10 +28,7 @@ Read `./references/workflow/execution-loop.md` before working — the loop, its 
 
 **CRITICAL**: This skill mutates the plan, the result file, and `diagram.md` when the task has one — never `CONTEXT.md`, `goals.md`, or `ticket.md`. Its only Git writes are the task's own branch and worktree (§1, §3, §8), plus the branch-scoped `git fetch origin <default-branch>` the **merged** predicate runs wherever it is invoked — §8's removal, §1's re-entry — which moves the default branch's remote-tracking ref and no other — nothing staged, committed, or pushed.
 
-- The **plan** is mutated *only* to flip step checkboxes (`- [ ]` → `- [x]`), append result links, update `**Status:**`, and revise scope or steps (§6). Everything else about it stays as written.
-- The **diagram** is mutated *only* by the §4 re-check at its three gates (§4, §6, §7) — repainted to match what shipped, never the plan's prose instead of reality — with `**Reflects:**` re-anchored and re-dated.
-- The **result file** is the place for narrative: what shipped, what surprised you, what diverged.
-- The **goals** are the user's contract. A goal that turns out wrong or missing is surfaced for the user to edit; a changed product ask is theirs to update in `ticket.md`. Never edit either from here.
+Per-file authorship is `./references/workflow/task-authorship.md` § *Files*; this skill adds only that the plan changes by checkbox flips, appended result links, `**Status:**`, and §6 revisions, and the diagram only by the §4 re-check.
 
 ## When to Use
 
@@ -108,7 +105,7 @@ _Updated: YYYY-MM-DD_
 ---
 ```
 
-`## Current state` is derived header metadata on the contract in `./references/workflow/task-authorship.md`: rewritten **in place**, never appended to. Everything below its closing `---` is the append-only log. The result file carries **no `**Status:**` header** — `plan.md` is the task's only lifecycle home — so the block's `**Status:**` gloss line restates the plan's state rather than declaring one of its own.
+`## Current state` is derived header metadata on the contract in `./references/workflow/task-authorship.md`: rewritten **in place**, with everything below its closing `---` the append-only log.
 
 Then point the plan's `**Result:**` line at `./result.md` and flip its `**Status:**` from `to-do` to `executing`.
 
@@ -141,11 +138,11 @@ No diagram → skip every re-check, absence unreported. With one, the three re-c
 
 #### Execution strategy: every step delegates
 
-Execute each step through an **executor** per `./references/workflow/executor-contract.md` and its `implement-task` binding — read both before the first step — on the engine `native`, which places a serially delegated step or segment on the shared tree.
+Execute each step through an **executor** per `./references/workflow/executor-contract.md` and its `implement-task` binding — read both before the first step — whose **Segment bound** fixes the launch shape and whose engine `native` places a serially delegated step or segment on the shared tree; steps eligible for the parallel batch below leave that shape.
 
-Delegation is the standing posture, not a judgment call: **every step goes to an executor**, and `./references/workflow/write-mode-posture.md` — read it before the first step — owns that rule and the only three exceptions that keep a step here. The launch shape follows the mode. **Step-by-step: one executor per step**, launched in plan order with the packet that contract's *Launch packet* requires. **Full-plan: one executor per checkpoint-bounded segment** — the binding's **Segment bound** and the contract's § *Segment launches* govern — carrying the segment's steps in plan order in one packet, per-step `What`/`Verify` and surfaces intact; a lone step between checkpoints is a segment of one, and steps qualifying for the parallel batch below batch instead. Confirm every packet item is filled before launching — a gap you can close by reading the task folder, the tree, or the user is closed, never a reason to keep a step. **Deviation is measured against the mode's default launch on `native`**, never against whichever engine the run selected — which is what the `**Executed:**` fields (§5) record. While an executor is in flight the coordinator waits — no step of its own, no shared-tree edit — until it reports, on the mechanism in `./references/workflow/delegated-waiting.md` § *How to wait*. Then the coordinator takes the report through the intake that contract's § *Write-mode routing* requires, re-proves each step's full outcome tier on the tree (`./references/workflow/execution-loop.md` § *Two verification tiers*), the executor having run the criterion alone (its pass is advance evidence, never the gate), and records the step (§5); a step failing its re-proof is Stop-the-Line there — later steps in the report are not recorded or marked done past it; their edits, already on the tree, are triaged forward per the loop, never unwound by a Git operation.
+**Every step goes to an executor**: `./references/workflow/write-mode-posture.md` owns that posture, what a launch packet owes, and the three exceptions that keep a step here — read it before the first step. Capture the shared tree before launching — the `baseline` manifest the intake's surface check needs, one per segment, checked over its steps' edit surfaces. **Deviation is measured against the mode's default launch on `native`**, never against whichever engine the run selected — which is what the `**Executed:**` fields (§5) record. While an executor is in flight the coordinator waits — no step of its own, no shared-tree edit — per `./references/workflow/delegated-waiting.md` § *How to wait*. Then take each report through that contract's § *Write-mode routing* intake, which decides whether the step's outcome tier is re-proved here, and record the step (§5); a failure there is Stop-the-Line at that step, on the contract's § *Segment launches* terms.
 
-**Inline is an exception, announced and recorded.** A step runs here only on one of the three exceptions `./references/workflow/write-mode-posture.md` § *The exceptions* closes, announced in chat as it happens and recorded in `**Executed:**` with which one applied — that field is this skill's shape for the record the posture file requires. A standing session instruction against spawning agents is weighed against the standing authorization in `./references/workflow/executor-routing.md` § *The registry and its authorization* before it counts as unavailability. A failed or hung executor is reported and takes this binding's **Fallback**, after which continue. On a segment, completed steps that pass re-proof stand; the failing step and the unreached remainder relaunch as a fresh segment per the contract's § *Segment launches*. <!-- cold -->
+**Inline is an exception, announced and recorded.** A step runs here only on one of the three exceptions `./references/workflow/write-mode-posture.md` § *The exceptions* closes, on the announce-and-record terms that file sets — `**Executed:**` (§5) is this skill's shape for them. A failed or hung executor is reported and takes this binding's **Fallback**, after which continue. On a segment, the contract's § *Segment launches* governs what stands and what relaunches. <!-- cold -->
 
 #### Automatic parallel batch (full-plan mode)
 
@@ -156,7 +153,7 @@ Eligible independent steps run concurrently through the same contract and bindin
 ```markdown
 ## Step N — <step title>
 
-**Verified:** <how the step's full outcome tier was satisfied — the `Verify` criterion's evidence (command output, test that passed, behavior observed) plus the per-unit checks the domain adds>
+**Verified:** <`executor`, or `coordinator` with the re-run case where one fired, then how the step's full outcome tier was satisfied — the `Verify` criterion's evidence (command output, test that passed, behavior observed) plus the per-unit checks the domain adds>
 
 **Health:** <the boundary this step ended on, recorded to the resolved domain's boundary shape (`./references/engineering/verification.md` § *What a boundary records* for code). Omit for a merged parallel-batch step and for one that ended at an authored checkpoint, whose section carries it instead>
 
@@ -181,7 +178,7 @@ For full-plan mode, write **one combined section** instead — no per-step block
 ```markdown
 ## Full Run — <date>
 
-**Verified:** <summary of every step's outcome tier, or "every step's outcome tier passed" — never the criteria alone>
+**Verified:** <per step, `Step N — executor` or `Step N — coordinator (<re-run case, where one fired>)`, then that step's outcome-tier evidence — never the criteria alone>
 
 **Health:** <the full-plan tail boundary on the final tree, recorded to the resolved domain's boundary shape (`./references/engineering/verification.md` § *What a boundary records* for code); plus any mid-run boundary that ran, named with the point it bounded>
 
@@ -220,7 +217,7 @@ Merged parallel-batch steps are the exception on both counts: each keeps its own
 
 A failed checkpoint records the `**Asserted:**` and `**Health:**` results that ran (or `not run`), `**Outcome:** failed`, and the failure details, then follows Stop-the-Line. Do not move on.
 
-**At every plan `**Status:**` flip and at run end** — finalize included; a run dying mid-way leaves it stale, tolerated by the next run — rewrite `## Current state` on its cited contract: `_Updated:_` refreshed, status gloss, `**Pointers:**` (the branch/PR/SHA/ticket currently in play, plus any commit watermark entry carried forward untouched — `./references/workflow/reconciliation-commits.md` § *The watermark*), `**Next:**`, superseded detail dropped. **When a step records a decision**, append a dated one-liner to the result's `## Decision log`, creating it directly below `## Current state`'s closing `---` when absent, as the first section of the append-only log:
+**At every plan `**Status:**` flip and at run end** — finalize included; a run dying mid-way leaves it stale, tolerated by the next run — rewrite `## Current state` on its cited contract, carrying any commit watermark entry forward untouched (`./references/workflow/reconciliation-commits.md` § *The watermark*). **When a step records a decision**, append a dated one-liner to the result's `## Decision log`, creating it directly below `## Current state`'s closing `---` when absent, as the first section of the append-only log:
 
 ```markdown
 - YYYY-MM-DD — <decision> (→ <result anchor / CONTEXT section / plan step / DECISIONS.md #N>)
@@ -291,9 +288,8 @@ In **both** branches, rewrite `## Current state` last of all — after the remov
 The shared loop's *Don't Rationalize* list applies in full (`./references/workflow/execution-loop.md`). These are this skill's own:
 
 - "I'll update the result file at the end" — Update it as you go. End-of-task batching loses the surprises and reasoning that are worth recording.
-- "The worktree verify passed, merging is a formality" — The executor's pass is provisional by contract. Integration is where parallel work breaks; the merge gates are the ones that count.
+- "The worktree verify passed, merging is a formality" — A worktree executor's pass is provisional by contract. Integration is where parallel work breaks; the merge gates are the ones that count.
 - "These steps look independent, I'll parallelize them without declarations" — Undeclared means serial. The `Touches:` declaration is the eligibility evidence, not paperwork.
-- "Delegating this step is overhead, I'll just do it myself" — Every step delegates; a plan step arrives pre-specified, so there is nothing to weigh. Inline needs one of three named exceptions — announced and recorded — not a quiet drift back to doing everything in-session.
 
 ### Red flags
 
@@ -308,13 +304,13 @@ Confirm the protocol invariants before finishing:
 - [ ] `## Current state` rewritten at every plan status flip and once at run end (finalize included) — on its cited contract, never claiming a stronger state than the plan's `**Status:**`
 - [ ] Any `**Pointers:**` commit watermark entry carried forward unchanged at every one of those rewrites — never advanced, never dropped, and never created here; seeding one is a reconciler's act (`./references/workflow/task-authorship.md`)
 - [ ] Task branch and worktree created once at §3 — engineering task in a checkout only, skipped silently for a doc task or no resolved repository and skipped with an announcement where the resolved repository holds none of the plan's paths, degrade announced, a branch two folders resolve to asked about, never guessed — or re-entered from the recorded branch, which sits in `**Pointers:**` while its path sits nowhere; both removed at §8 on a merged PR and a clean tree, refused with the reason otherwise, never forced
-- [ ] Every completed step: its full unit-outcome tier actually run and passed — the plan-defined `Verify` criterion plus the per-unit checks the resolved domain's `verification.md` adds — checkbox flipped with a link to its result section
+- [ ] Every completed step: its full unit-outcome tier passed on the evidence the intake accepted or re-proved (`./references/workflow/executor-contract.md` § *Write-mode routing*), that source named in its `**Verified:**` record, checkbox flipped with a link to its result section
 - [ ] Integrated health established at every boundary the **Health boundaries** binding declares — each at the scope the domain recipe resolves, with a checkpoint or tail batch sharing that one boundary, a later finalization freshly recorded, and current against the final unchanged tree
 - [ ] Every checkpoint ran its named assertions, recorded distinct `Asserted`, `Health`, and `Outcome` results, and passed before work continued
 - [ ] The gate ran every goal by `G<n>` ID against live behavior and wrote `## Acceptance` — nothing left `unmet` at finalize, `pending external` only on `(external)` goals (parking the task at `in-review`)
 - [ ] With a `diagram.md`: re-checked at every checkpoint, every structural revision, and the gate — each re-check naming what was compared, each repaint render-checked, `**Reflects:**` re-anchored and re-dated
 - [ ] Deviations and plan revisions recorded in the result file; `goals.md` and `CONTEXT.md` never edited from this skill
 - [ ] Domain pre-presentation checks run over the full changed surface; framework code grounded in `**Sources:**`, any ungrounded pattern stopped or recorded there. Presentation consumed health as `./references/workflow/execution-acceptance.md` § *Before presenting* fixes
-- [ ] Every step delegated — through the mode's default launch (per-step serial in step-by-step, checkpoint-bounded segment in full-plan) with the coordinator's per-step re-proved outcome, or an announced parallel batch — with any inline step naming which of the three posture exceptions applied, and its `**Executed:**` field recording whatever deviated from that default on `native`
+- [ ] Every step delegated — through the mode's default launch (per-step serial in step-by-step, checkpoint-bounded segment in full-plan) or an announced parallel batch — with any inline step naming which of the three posture exceptions applied, and its `**Executed:**` field recording whatever deviated from that default on `native`
 - [ ] Every parallel-batch step merged only through §4's cited merge gates, conflicts and surface escapes falling back to serial delegation; no per-merge health run
 - [ ] Executors wrote no task-folder file and no status; batches recorded (`**Executed:**` fields, checkpoint `**Merged:**` lines) and every coordinator-managed worktree removed after merge

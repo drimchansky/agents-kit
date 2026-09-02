@@ -5,9 +5,9 @@ verification tiers, and what happens when either tier fails. **This file is the 
 truth for the loop.** Three skills run it: `implement-task` against a task folder's `plan.md`,
 `implement` against an ask framed in the session, and `fix-findings` against the fixable members of
 a findings set. The sections below hold for all three; the satellite `./execution-bindings.md`
-indexes what each one substitutes for the loop's six parameters. When a beat, a verification tier,
-the triage order, or the failure discipline changes, update it here first and propagate to the
-skills that cite it.
+indexes what each one substitutes for the loop's six parameters — an index, not the authority, cited
+where only one named binding is needed. When a beat, a verification tier, the triage order, or the
+failure discipline changes, update it here first and propagate to the skills that cite it.
 
 The loop owns *that* you verify and gate, never *what to run*. The domain pack owns the recipes —
 `<domain>/execution.md` for how to carry out a unit of work, `<domain>/verification.md` for what the
@@ -16,7 +16,7 @@ tiers run, plus any per-surface checklists.
 ## The six parameters
 
 Every consumer answers the same six questions before running the loop, in its own skill's bindings
-section — indexed together in `./execution-bindings.md`:
+section:
 
 1. **Source** — where a unit of work comes from, and what its verify criterion is.
 2. **Record** — how a finished unit is recorded, and how it is marked done.
@@ -30,15 +30,10 @@ section — indexed together in `./execution-bindings.md`:
 ## Ground truth before work
 
 Before doing the work, identify what you're acting on and where the authoritative information lives —
-don't work from memory on anything that could be wrong or out of date.
-
-Follow the resolved domain's `execution.md` for the recipe. When the domain is code that's
-`../engineering/execution.md` § *Detect stack and sources*: read the dependency manifest and state
-versions explicitly, fetch the matching version's official docs before writing framework code,
-follow the source hierarchy, and default to stopping to ask before shipping a pattern you can't
-ground. For other domains, confirm the equivalent ground truth before committing to it (current
-prices, the counterparty's actual position, the venue's real availability). If versions or facts are
-missing or ambiguous, ask — don't guess.
+don't work from memory on anything that could be wrong or out of date. The recipe is the resolved
+domain's `execution.md`; for code that is `../engineering/execution.md` § *Detect stack and sources*,
+and for other domains the equivalent ground truth (current prices, the counterparty's actual position,
+the venue's real availability). If versions or facts are missing or ambiguous, ask — don't guess.
 
 Record the sources you ground the work on — and any uncertainty you couldn't resolve — per the
 consumer's **Record** binding, not in code comments.
@@ -143,9 +138,10 @@ the exact work-product identity the boundary evaluated and a current identity th
 current consumer's **Record** binding persists such an identity, so a later run reaching a completion
 claim always runs a fresh boundary even when the work product appears unchanged.
 
-A parallel merge is not a health boundary by itself. Its coordinator re-proves each incorporated unit
-outcome and records it first; once all units and declared serial fallbacks have settled and all executor
-worktrees are removed, the consumer's binding chooses the one boundary that covers the accumulated tree.
+A parallel merge is not a health boundary by itself. Each incorporated unit is proved and recorded
+first (`./executor-contract.md` § *Write-mode routing*); once all units and declared serial fallbacks
+have settled and all executor worktrees are removed, the consumer's binding chooses the one boundary
+that covers the accumulated tree.
 
 Evidence reuse across failures, the green control an isolation needs, and mid-run scope changes:
 `./execution-recovery.md` — read when isolating or reusing evidence across a failure, rollback, or
@@ -184,10 +180,3 @@ The acceptance gate's discipline and what has to hold before a finished run is p
 - Multiple unrelated changes accumulating while debugging a single failure
 
 When the domain is code, also watch the engineering red flags in `../engineering/execution.md`.
-
-## Bindings
-
-What each consumer substitutes for the six parameters is the satellite `./execution-bindings.md` —
-an index, not the authority, since each consumer states its own bindings in full in its own skill
-file. A file that needs only "the consumer's **Record** binding" or "the consumer's **Blocked**
-binding" cites that satellite rather than this loop.

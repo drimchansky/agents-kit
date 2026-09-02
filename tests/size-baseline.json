@@ -11,8 +11,8 @@
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 451977,
-        "approxTokens": 112994
+        "bytes": 454797,
+        "approxTokens": 113699
       }
     },
     {
@@ -26,8 +26,8 @@
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 455202,
-        "approxTokens": 113801
+        "bytes": 458022,
+        "approxTokens": 114506
       }
     },
     {
@@ -41,8 +41,8 @@
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 456384,
-        "approxTokens": 114096
+        "bytes": 459204,
+        "approxTokens": 114801
       }
     },
     {
@@ -71,8 +71,8 @@
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 448531,
-        "approxTokens": 112133
+        "bytes": 451351,
+        "approxTokens": 112838
       }
     },
     {
@@ -86,53 +86,53 @@
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 453528,
-        "approxTokens": 113382
+        "bytes": 456348,
+        "approxTokens": 114087
       }
     },
     {
       "skill": "fix-findings",
       "hot": {
-        "bytes": 62662,
-        "approxTokens": 15666
+        "bytes": 83124,
+        "approxTokens": 20781
       },
       "cold": {
-        "bytes": 46194,
-        "approxTokens": 11549
+        "bytes": 29003,
+        "approxTokens": 7251
       },
       "transitive": {
-        "bytes": 462441,
-        "approxTokens": 115610
+        "bytes": 465882,
+        "approxTokens": 116471
       }
     },
     {
       "skill": "implement",
       "hot": {
-        "bytes": 91506,
-        "approxTokens": 22877
+        "bytes": 94048,
+        "approxTokens": 23512
       },
       "cold": {
-        "bytes": 14591,
-        "approxTokens": 3648
+        "bytes": 14693,
+        "approxTokens": 3673
       },
       "transitive": {
-        "bytes": 454691,
-        "approxTokens": 113673
+        "bytes": 457659,
+        "approxTokens": 114415
       }
     },
     {
       "skill": "implement-task",
       "hot": {
-        "bytes": 128621,
-        "approxTokens": 32155
+        "bytes": 128607,
+        "approxTokens": 32152
       },
       "cold": {
-        "bytes": 47924,
-        "approxTokens": 11981
+        "bytes": 44907,
+        "approxTokens": 11227
       },
       "transitive": {
-        "bytes": 471135,
-        "approxTokens": 117784
+        "bytes": 471767,
+        "approxTokens": 117942
       }
     },
     {
@@ -146,8 +146,8 @@
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 450581,
-        "approxTokens": 112645
+        "bytes": 453401,
+        "approxTokens": 113350
       }
     },
     {
@@ -161,8 +161,8 @@
         "approxTokens": 3351
       },
       "transitive": {
-        "bytes": 489674,
-        "approxTokens": 122419
+        "bytes": 492494,
+        "approxTokens": 123124
       }
     },
     {
@@ -176,8 +176,8 @@
         "approxTokens": 12789
       },
       "transitive": {
-        "bytes": 469964,
-        "approxTokens": 117491
+        "bytes": 472784,
+        "approxTokens": 118196
       }
     },
     {
@@ -191,8 +191,8 @@
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 467022,
-        "approxTokens": 116756
+        "bytes": 469842,
+        "approxTokens": 117461
       }
     },
     {
@@ -206,8 +206,8 @@
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 447724,
-        "approxTokens": 111931
+        "bytes": 450544,
+        "approxTokens": 112636
       }
     },
     {
@@ -236,8 +236,8 @@
         "approxTokens": 763
       },
       "transitive": {
-        "bytes": 458581,
-        "approxTokens": 114645
+        "bytes": 461401,
+        "approxTokens": 115350
       }
     },
     {
@@ -251,8 +251,8 @@
         "approxTokens": 4063
       },
       "transitive": {
-        "bytes": 456432,
-        "approxTokens": 114108
+        "bytes": 459252,
+        "approxTokens": 114813
       }
     },
     {
@@ -266,23 +266,23 @@
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 454710,
-        "approxTokens": 113678
+        "bytes": 457530,
+        "approxTokens": 114383
       }
     },
     {
       "skill": "resume-task",
       "hot": {
-        "bytes": 73915,
-        "approxTokens": 18479
+        "bytes": 74085,
+        "approxTokens": 18521
       },
       "cold": {
         "bytes": 17681,
         "approxTokens": 4420
       },
       "transitive": {
-        "bytes": 464951,
-        "approxTokens": 116238
+        "bytes": 467771,
+        "approxTokens": 116943
       }
     },
     {
@@ -296,8 +296,8 @@
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 448292,
-        "approxTokens": 112073
+        "bytes": 451112,
+        "approxTokens": 112778
       }
     },
     {
@@ -311,8 +311,8 @@
         "approxTokens": 6222
       },
       "transitive": {
-        "bytes": 462605,
-        "approxTokens": 115651
+        "bytes": 465425,
+        "approxTokens": 116356
       }
     },
     {
@@ -326,8 +326,8 @@
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 457842,
-        "approxTokens": 114461
+        "bytes": 460662,
+        "approxTokens": 115166
       }
     },
     {
@@ -341,8 +341,8 @@
         "approxTokens": 3418
       },
       "transitive": {
-        "bytes": 454235,
-        "approxTokens": 113559
+        "bytes": 457055,
+        "approxTokens": 114264
       }
     },
     {
@@ -371,8 +371,8 @@
         "approxTokens": 7075
       },
       "transitive": {
-        "bytes": 471140,
-        "approxTokens": 117785
+        "bytes": 473960,
+        "approxTokens": 118490
       }
     },
     {
@@ -386,8 +386,8 @@
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 461007,
-        "approxTokens": 115252
+        "bytes": 463827,
+        "approxTokens": 115957
       }
     },
     {
@@ -401,8 +401,8 @@
         "approxTokens": 3893
       },
       "transitive": {
-        "bytes": 476637,
-        "approxTokens": 119159
+        "bytes": 479457,
+        "approxTokens": 119864
       }
     },
     {
@@ -416,8 +416,8 @@
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 449574,
-        "approxTokens": 112394
+        "bytes": 452394,
+        "approxTokens": 113099
       }
     },
     {
@@ -446,8 +446,8 @@
         "approxTokens": 2346
       },
       "transitive": {
-        "bytes": 447040,
-        "approxTokens": 111760
+        "bytes": 449860,
+        "approxTokens": 112465
       }
     },
     {
@@ -461,8 +461,8 @@
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 457875,
-        "approxTokens": 114469
+        "bytes": 460695,
+        "approxTokens": 115174
       }
     },
     {
@@ -476,8 +476,8 @@
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 443850,
-        "approxTokens": 110963
+        "bytes": 446670,
+        "approxTokens": 111668
       }
     },
     {
@@ -491,14 +491,14 @@
         "approxTokens": 0
       },
       "transitive": {
-        "bytes": 444790,
-        "approxTokens": 111198
+        "bytes": 447610,
+        "approxTokens": 111903
       }
     }
   ],
   "corpus": {
-    "bytes": 1022910,
-    "approxTokens": 255728
+    "bytes": 1024311,
+    "approxTokens": 256078
   },
   "hotCapBytes": 128662
 }

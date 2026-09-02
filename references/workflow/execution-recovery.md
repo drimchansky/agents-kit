@@ -11,11 +11,14 @@ work reveals the unit or plan is wrong.
   pending; run a required integration assertion at its own cadence, and at the declared boundary let
   the boundary's recipe pass on the accumulated tree so health becomes current.
 - **Parallel batch success** — in consumer order, incorporate each unit or run its declared serial
-  fallback, re-prove only that unit's outcome on the integrated tree, and record its incorporated
-  change set. After all executor worktrees are removed, run the boundary's recipe once where the
-  consumer's declared boundary places it; no unit merge runs the recipe on its own.
+  fallback, prove only that unit's outcome on the integrated tree as the intake requires
+  (`./executor-contract.md` § *Write-mode routing*), and record its incorporated change set. After
+  all executor worktrees are removed, run the boundary's recipe once where the consumer's declared
+  boundary places it; no unit merge runs the recipe on its own.
 - **Unit-outcome failure** — Stop-the-Line before recording that outcome or starting another unit;
-  repair it, then re-prove the outcome before it can continue toward a boundary.
+  repair it, then prove the outcome on the coordinator's own tree — a report of failure is never
+  evidence the intake accepts (`./executor-contract.md` § *Write-mode routing*) — before it can
+  continue toward a boundary.
 - **Health-boundary failure** — Stop-the-Line with all earlier outcome evidence still distinct from
   the failed integrated-health claim; repair the shared tree, re-prove affected outcomes, and rerun
   the boundary's recipe at its resolved scope.

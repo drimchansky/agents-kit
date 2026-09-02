@@ -12,6 +12,7 @@ Treat the coordinator's launch prompt as the source of truth. It supplies:
 - the exact edit surface: the paths the unit declares when it declares them, otherwise the scope the unit itself states;
 - the context the unit depends on and the executor cannot see for itself, with absolute paths for everything it names. Paths and derived facts, not pre-read file contents: the executor reads the effective root itself, so a file under that root travels as its path plus whatever non-obvious fact the coordinator established about it, and verbatim content is reserved for what the executor cannot reach — session-established decisions, user answers, content outside the effective root;
 - the domain guidance governing the unit, delivered two ways: any section the domain applies to every unit of this kind — such as engineering's `code-style.md` → Comments for a code-writing unit — travels verbatim in the packet, its full section text, so what always applies costs the executor no read hop; the active domain's rules overlay and the pack guidance the unit's work triggers travel as absolute paths to the same copies the coordinator loaded. Each binding names how its consumer resolves the domain; a domain with no pack, or none of whose files apply, is named with an explicit `none` — less guidance, never substituted guidance;
+- the resolved domain's **per-unit checks** — the rest of the unit-outcome tier beside the criterion (`./execution-loop.md` § *Two verification tiers*) — as commands or procedures the executor runs and reports under `Verification`, or an explicit `none`. For code: validating the comments the unit touched against the packet's `code-style.md` → Comments text, then the project's formatter over the files it touched where one is exposed (`../engineering/verification.md` § *Two verification tiers*);
 - one absolute effective working root and the placement the coordinator states for it — placement follows the unit's engine and its batching, which `./executor-routing.md` § *Write-mode engine registry* defines; the executor reads the value the packet names rather than deriving one from how the unit was delegated;
 - the consumer the packet is issued under, named explicitly — it selects which binding below governs the packet. The name is a **label**, not a path to read: the packet is self-contained, so an executor fetches nothing of its own — no skill file, no consumer definition — to interpret it.
 
@@ -31,7 +32,7 @@ Do not assume access to the coordinator's conversation or infer a repository loc
 
 ## Verification and fallback
 
-Run only the unit's stated verify criterion — its command or procedure — in the effective root after editing. Preserve the relevant output. On a segment launch, run each unit's criterion as that unit completes and before starting the next: a failing criterion ends the segment there — report the completed units' evidence and the failure, and do not start a later unit on top of a failing one. This is local advance evidence only: after incorporation the coordinator re-proves the full unit-outcome tier (`./execution-loop.md` § *Two verification tiers*) on the integrated tree, then runs the integrated-health recipe only at the owning consumer's declared boundary.
+Run the unit's stated verify criterion and each per-unit check the packet carries, and nothing else, in the effective root after editing; a check the unit can satisfy inside its edit surface is fixed and re-run. On a segment launch, run each unit's criterion and checks as that unit completes and before starting the next: a failing criterion or unsatisfied check ends the segment there — report the completed units' evidence and the failure; never start a later unit on a failing one. Whose proof counts is § *Write-mode routing*'s call; the integrated-health recipe is the coordinator's either way, at the owning consumer's declared boundary.
 
 If execution cannot proceed because the executor is unavailable, hangs, encounters a host failure, lacks required capability, or is blocked by placement, scope, or security constraints, report the condition without changing placement or scope. The coordinator owns graceful fallback — each binding names its consumer's — and the coordinator-side mechanics of placement, batching, and merge live in `./parallel-batch.md`.
 
@@ -42,7 +43,7 @@ Return evidence, not a completion verdict. On a segment launch, return one repor
 - `Commands run` — each command or tool action that materially read, changed, or verified the unit.
 - `Changes` — every changed `file:line` and what changed there.
 - `Comments added or edited` — each comment the unit added or edited, with the non-obvious invariant it preserves.
-- `Verification` — the command or procedure and its relevant output, including failures.
+- `Verification` — for the unit's criterion and each per-unit check the packet carried: the exact command or procedure, its unmodified output, its exit status, and the absolute root it ran in. All four, per check: any missing, paraphrased, or unreported makes the report non-evidence, and the coordinator proves the tier itself (§ *Write-mode routing*).
 - `Sources consulted` — documentation or other external sources used, with links when available.
 - `Blockers or attempted scope escapes` — security denials, unavailable capabilities, host failures, or edits considered outside the allowed surface.
 
@@ -52,9 +53,9 @@ Do not claim that the unit is done, update a status, or write this report anywhe
 
 A **segment launch** hands one executor an ordered list of units in a single packet — consecutive units that share context, so one warm executor replaces several cold ones re-reading the same files and re-receiving the same guidance. Whether a consumer may launch segments, and what bounds one, is its binding's call (§ *Bindings*); a binding that names no segment bound launches units one at a time.
 
-The launch changes nothing about what a unit is. The packet carries every § *Launch packet* item **per unit** — each unit's text and criterion, each declared surface — with the shared items (domain guidance, effective root, consumer label) stated once. The executor executes the units strictly in packet order, proves each unit's criterion before starting the next, and returns one evidence report per unit; a mid-segment failure ends the segment at the failing unit with the remainder reported not started. Placement is the engine's, unchanged: one launch, one effective root — the shared tree for a serial segment.
+The launch changes nothing about what a unit is. The packet carries every § *Launch packet* item **per unit** — each unit's text and criterion, each declared surface — with the shared items (domain guidance, effective root, consumer label) stated once. The executor executes the units in packet order, proves each unit's criterion and checks before starting the next, and returns one evidence report per unit; a mid-segment failure ends the segment at the failing unit with the remainder reported not started. Placement is the engine's, unchanged: one launch, one effective root — the shared tree for a serial segment.
 
-Coordinator intake is per unit, in packet order, exactly as § *Write-mode routing* requires for any report — but on the segment-final tree, where the segment's edits are already present in full. Within the segment the executor's per-unit criterion pass is what licenses starting the next unit; the coordinator's fuller tier is owed at intake, and its per-unit order is a recording order, not a tree state. A unit failing its re-proof is Stop-the-Line at that unit: later units in the same report are not recorded or marked done past it, their edits — already present — are triaged forward under the loop's Stop-the-Line, and nothing is unwound by a Git operation or a blind restore. On an executor failure mid-segment, completed units that pass re-proof stand; the failing unit and the unreached remainder relaunch as a fresh segment on `native`, and only if that relaunch fails does the consumer's **Fallback** take the failing unit.
+Coordinator intake is per unit, in packet order, exactly as § *Write-mode routing* requires for any report — but on the segment-final tree, where the segment's edits are already present in full. Within the segment the executor's per-unit pass licenses starting the next unit; intake's per-unit order is a recording order, not a tree state. A unit that fails at intake is Stop-the-Line at that unit: later units in the same report are not recorded or marked done past it, their edits — already present — are triaged forward under the loop's Stop-the-Line, and nothing is unwound by a Git operation or a blind restore. On an executor failure mid-segment, completed units that pass intake stand; the failing unit and the unreached remainder relaunch as a fresh segment on `native`, and only if that relaunch fails does the consumer's **Fallback** take the failing unit.
 
 ## Write-mode routing
 
@@ -66,23 +67,51 @@ Write-mode fan-out is limited to the consumers registered in `./executor-routing
 
 A unit that runs inline is announced and recorded as `./write-mode-posture.md` § *The exceptions* requires, in the shape each skill defines for its own report.
 
-**Judgment never delegates**, under any posture. The coordinator keeps unit framing, each unit's
-outcome re-proof on its own tree, the consumer-declared integrated-health boundary, the report
-buckets, and every status. Executor output is advance evidence, never the gate.
+**Judgment never delegates**, under any posture. The coordinator keeps unit framing, the
+consumer-declared integrated-health boundary, the report buckets, every status, and the intake below,
+which decides whether an executor's evidence proves the unit or is advance evidence a re-proof gates.
 
-**Intake of an executor's report.** A returned report is read before the unit is treated as advanced.
-Every § *Evidence report* heading must be present; a heading a unit's work should have filled but that
-came back `None`, a `Verification` section whose output does not show the criterion passing, and any
-entry under `Blockers or attempted scope escapes` each mean the unit has not advanced — take the
-consumer's failure path (its **Fallback** for an execution failure, Stop-the-Line for a failed
-criterion, and never a silent retry of a scope escape). Then re-prove the unit's full outcome tier
-(`./execution-loop.md` § *Two verification tiers*) on the coordinator's own tree — the executor's
-`Verification` output is never that proof, and a unit whose changes the coordinator cannot see on the
-tree has not landed. Record the coordinator's own evidence, not the report's, plus the changed
-`file:line` set and the engine the unit ran on, per the consumer's **Record** binding — whose report shape may
-omit the engine when it is the mode's default launch; the deviations are what the binding owes. Any comment the
-report lists under `Comments added or edited` is validated as part of that tier where the domain's
-per-unit checks require it.
+**Intake of an executor's report.** Read a returned report before treating the unit as advanced.
+Every § *Evidence report* heading must be present; a heading a unit's work should have filled but
+that came back `None`, a `Verification` whose output shows the criterion or a packet-carried check
+failing, and any entry under `Blockers or attempted scope escapes` each mean the unit has not
+advanced — take the consumer's failure path (its **Fallback** for an execution failure,
+Stop-the-Line for a failed criterion, and never a silent retry of a scope escape). A report of
+failure is never evidence to accept.
+
+**Placement decides whose proof counts.** A **shared-tree** unit — serial or segment on `native` —
+verified bytes the coordinator's tree carries, so its `Verification` *is* that unit's outcome tier,
+criterion and checks alike: accept it, re-running nothing, once it carries § *Evidence report*'s
+four items per check, its root is the shared tree, and the surface check below passes. An earlier
+segment unit's pass predates its successors' edits; the checkpoint boundary and acceptance gate
+catch one they invalidated. A **worktree-placed** unit is never accepted — its pass predates
+incorporation — so its full tier is re-proved at step 3 of `./parallel-batch.md`'s gates.
+
+**Re-prove a shared-tree unit's outcome tier here in exactly these cases and no other:** any of
+those four items missing for a check; a non-zero exit status under passing-looking output; a root
+other than the shared tree; a surface check that could not run; or the run's **first delegated
+unit** — the first unit of the run's first report — whose pass calibrates the rest. Then run that
+tier (`./execution-loop.md` § *Two verification tiers*) here and record that evidence, not the
+report's. A worktree-placed first delegated unit is re-proved as one, and the run's first
+shared-tree unit is then accepted. Either way, a unit whose changes the coordinator cannot see has
+not landed.
+
+**The surface check** bounds a unit's delta to its edit surface as paths: those it declares, else
+those the coordinator resolves its stated scope to before launch; none resolvable leaves the check
+unrunnable. Capture the shared tree before launching — `node <kit-root>/scripts/worktree-merge.ts
+baseline <shared-tree> --out <scratch>/unit-<n>.json` (`./task-store.md` § *Resolving
+`<kit-root>`*), one capture per segment, checked over the union of its units' surfaces — then on
+return run `check <shared-tree> --baseline <that manifest> --surface <each of those paths>`,
+attributing the delta per unit by the reports' `Changes` — the check bounds a segment whole, and
+`Changes` is its only per-unit bound. Exit 0 passes; exit 1 is a detected escape and takes the
+failure path above; exit 2, or no kit root, is a re-run case above (`<kit-root>/SCRIPTS.md` §
+*`scripts/worktree-merge.ts`*). Read the report first: a `Changes` entry outside the surface takes
+that failure path before the script runs. A serially re-executed unit owes the same check against
+its own pre-unit capture.
+
+Record per the consumer's **Record** binding: whose evidence proved the outcome, the changed
+`file:line` set, and the engine the unit ran on — a report shape may omit the engine when it is the
+mode's default launch, the deviations being what the binding owes.
 
 The mechanics of running units concurrently — eligibility, worktree placement, the frozen shared tree, the merge gates, incorporation order, and cleanup — live in `./parallel-batch.md`; read it when a batch qualifies.
 
@@ -94,7 +123,7 @@ Each consumer binds the body above to its own unit: what the unit is, what its p
 
 One plan step from a task folder.
 
-- **Unit** — one plan step, its verify criterion the step's plan-defined `Verify` line. The executor proves that criterion only; the coordinator re-proves the full unit-outcome tier on the integrated tree and owns the health boundary.
+- **Unit** — one plan step, its verify criterion the step's plan-defined `Verify` line. § *Write-mode routing* decides whose evidence proves the step's tier; the coordinator owns the health boundary.
 - **Segment bound** — in full-plan mode, the consecutive steps between two checkpoints (or a plan edge and its nearest checkpoint) form one segment launch (§ *Segment launches*), respecting `Depends on:` ordering; that is the mode's default launch shape, a single step between checkpoints being a segment of one. Steps eligible for the parallel batch leave the segment and batch instead. Step-by-step mode launches per step — a segment would collapse the pauses the mode exists for.
 - **Packet** — the step's `What` and `Verify` text, the full text of every cited goal, the edit surface below, and the relevant task context with the absolute task-folder path. Domain guidance resolves from the task's `**Domain:**` header, default `engineering`.
 - **Edit surface** — the step's declared `**Touches:**` paths when present, otherwise the scope stated by `What`. Never edit the task folder or its records, including `plan.md`, `goals.md`, `CONTEXT.md`, `diagram.md`, and `result.md` — the evidence report goes back to the coordinator, never into the folder.
@@ -105,7 +134,7 @@ One plan step from a task folder.
 
 One item of an ask framed in the session. There is no task folder, so the work is the whole write surface.
 
-- **Unit** — one framed item, its verify criterion the one named for that item when it was framed (`implement` §1). The executor proves that criterion only; the coordinator re-proves the full unit-outcome tier on the integrated tree and owns the health boundary.
+- **Unit** — one framed item, its verify criterion the one named for that item when it was framed (`implement` §1). § *Write-mode routing* decides whose evidence proves the item's tier; the coordinator owns the health boundary.
 - **Packet** — the framed item's text and its criterion, the edit surface below, and the session-established context the executor cannot see: the ask as the user gave it, plus the grounding facts already established. Domain guidance follows the domain the session inferred from the request.
 - **Edit surface** — the item's declared surface when the frame declares one, otherwise the scope the item states. The work itself is the only thing that changes on disk: the executor writes no record of any kind, because this consumer's only record is the coordinator's chat report.
 - **Fallback** — inline execution.
@@ -115,7 +144,7 @@ One item of an ask framed in the session. There is no task folder, so the work i
 
 One **Confirmed** finding's immediate fix application, applied to working-tree code.
 
-- **Unit** — one Confirmed finding's fix application, its verify criterion the problem the finding names no longer reproducing. The executor proves that criterion only; the coordinator re-checks the full unit-outcome tier on the integrated tree and owns the retained-collection health boundary.
+- **Unit** — one Confirmed finding's fix application, its verify criterion the problem the finding names no longer reproducing. § *Write-mode routing* decides whose evidence proves that immediate tier; the coordinator re-checks every retained finding on the final integrated tree and owns the retained-collection health boundary.
 - **Packet** — the finding verbatim, with its severity and `file:line` as its source left them; its root cause; the chosen fix option; the expected edit surface derived from that option's stated blast radius; and its processing order plus any known dependencies. Domain guidance is `engineering` unconditionally — the pack this consumer's skill loads.
 - **Edit surface** — working-tree code and nothing else, bounded by the packet's expected surface. Never stage, never commit, never otherwise mutate Git state, and never write back to the findings' source — no PR reply, no resolved thread, no push. The executor writes no record; the coordinator's chat report is the run's only one.
 - **Outside the delegation surface** — ask-routed fixes stay with the coordinator, which authored the approved diff and applies it inline; Withdrawn and Inconclusive findings are never edited at all.

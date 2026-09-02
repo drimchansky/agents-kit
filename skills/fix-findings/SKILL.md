@@ -92,17 +92,19 @@ rule; the restore steps here cite it rather than restating it, and so do those i
 
 Process attempted fixes in the established order. Immediately before each serial fix — or before a
 batch unit's eventual shared incorporation — capture its exact pre-fix content state, not merely the
-declared edit surface. A serial immediate-outcome pass records its ordered, run-owned change set: the
-content and presence delta from the state immediately before that fix. The change set is evidence and
-recovery input only; it is never staging or commit state. If the immediate outcome fails, restore that
-pre-fix content state within the attribution bound above, bucket the finding Fix failed, and continue. A
-not-yet-attempted fix whose known dependency is the fix that just failed is **not attempted**: bucket it
-Fix failed naming that prerequisite. Do not let a partial or failed attempt become part of a later
-change set.
+declared edit surface, and beside it the `worktree-merge.ts baseline` manifest the intake's surface
+check compares the executor's return against. A serial immediate-outcome pass records its ordered,
+run-owned change set: the content and presence delta from the state immediately before that fix. The
+change set is evidence and recovery input only; it is never staging or commit state. If the
+immediate outcome fails, restore that pre-fix content state within the attribution bound above,
+bucket the finding Fix failed, and continue. A not-yet-attempted fix whose known dependency is the
+fix that just failed is **not attempted**: bucket it Fix failed naming that prerequisite. Do not let
+a partial or failed attempt become part of a later change set.
 
 After every immediate outcome has settled, re-prove every retained finding's full outcome tier on the
-final integrated shared tree. Earlier local proof is not enough for Fixed. Re-check all retained
-outcomes again after each rebuild.
+final integrated shared tree, whatever proved the immediate one
+(`./references/workflow/executor-contract.md` § *Write-mode routing*). That earlier proof is never
+enough for Fixed. Re-check all retained outcomes again after each rebuild.
 Resolve a failed final outcome through the dependency-safe recovery in `./references/workflow/fix-findings-recovery.md` § *Dependency-safe recovery*, using that outcome as the failure predicate, before running project health. <!-- cold -->
 
 ### Integrated health boundary
@@ -130,16 +132,18 @@ The executor-contract binding, the write-surface restatement, the announce-and-r
 mechanics, and the failure fallbacks are `./references/workflow/fix-findings-recovery.md` § *Delegation mechanics* — read it before the first delegation. <!-- cold -->
 
 **Judgment stays with the coordinator** under every posture: the auto-vs-ask gate, the one batched ask,
-all final-integrated outcomes, the health boundary, recovery, and the report buckets.
+the intake that decides each immediate outcome's proof
+(`./references/workflow/executor-contract.md` § *Write-mode routing*), all final-integrated outcomes,
+the health boundary, recovery, and the report buckets.
 
 ## Output
 
 Lists, never tables. Omit empty buckets.
 
-- **Fixed** — every applied fix, per finding: the original text with severity, what changed (`file:line`), its final-integrated outcome evidence, and the current final-tree health boundary, recorded to the shape `./references/engineering/verification.md` § *What a boundary records* fixes. Mark an entry that had no Confirmed verdict as fixed on the user's approval, so the report never lends a verified finding's authority to one that had none. A delegated fix's entry notes the delegation, the engine that ran it, and its batch where it ran in one; one applied by the coordinator instead notes which posture exception kept it here, or that it was ask-routed.
-- **Health uncertifiable** — survivors retained after a red boundary whose failed command was already red at the immutable baseline over the boundary's own resolved targets, named rather than reselected and minus any the baseline does not carry (`./references/workflow/execution-recovery.md` § *Evidence lifecycle*): per finding, the original text with severity, what changed (`file:line`), its final-integrated outcome evidence, and that baseline-failing command with those targets, which nothing can certify against. Not Fixed — the certifying re-review **Next** points at is what resolves these.
+- **Fixed** — every applied fix, per finding: the original text with severity, what changed (`file:line`), whose evidence proved its immediate outcome (`executor`, or `coordinator` with the re-run case where one fired), its final-integrated outcome evidence, and the current final-tree health boundary, recorded to the shape `./references/engineering/verification.md` § *What a boundary records* fixes. Mark an entry that had no Confirmed verdict as fixed on the user's approval, so the report never lends a verified finding's authority to one that had none. A delegated fix's entry notes the delegation, the engine that ran it, and its batch where it ran in one; one applied by the coordinator instead notes which posture exception kept it here, or that it was ask-routed.
+- **Health uncertifiable** — survivors retained after a red boundary whose failed command was already red at the immutable baseline over the boundary's own resolved targets, named rather than reselected and minus any the baseline does not carry (`./references/workflow/execution-recovery.md` § *Evidence lifecycle*): per finding, the original text with severity, what changed (`file:line`), the same `executor` / `coordinator` immediate-outcome evidence source and final-integrated outcome evidence, and that baseline-failing command with those targets, which nothing can certify against. Not Fixed — the certifying re-review **Next** points at is what resolves these.
 - **Decided** — ask-routed findings that produced no fix: the user's decision and why nothing was applied — skipped, deferred, or the finding rejected. An ask-routed fix that was applied belongs in **Fixed**, not here.
-- **Fix failed** — fixes that were reverted, and fixes never attempted because a dependency of theirs failed, each with the reason and what would unblock them: the named prerequisite for one skipped as a cascade; the reason the baseline comparison could not run, after collection-level rollback on an unestablished control; the unresolved-health reason after an unconverged recovery; or whether one fix, a dependency group, or an interaction group was implicated. A never-attempted entry says so rather than reporting `(reverted)`, which would assert an edit that never happened. A delegated one notes the delegation, its engine, and its batch here too; one applied by the coordinator notes its posture exception or its ask routing, as in **Fixed**.
+- **Fix failed** — fixes that were reverted, and fixes never attempted because a dependency of theirs failed, each with the reason and what would unblock them: the named prerequisite for one skipped as a cascade; the reason the baseline comparison could not run, after collection-level rollback on an unestablished control; the unresolved-health reason after an unconverged recovery; or whether one fix, a dependency group, or an interaction group was implicated. A never-attempted entry says so rather than reporting `(reverted)`, which would assert an edit that never happened. A delegated one notes the delegation, its engine, its batch, and its immediate-outcome evidence source here too; one applied by the coordinator notes its posture exception or its ask routing, as in **Fixed**.
 - **Untouched** — Withdrawn and Inconclusive findings with their verdict as the reason, findings triage landed outside **open** with their bucket, external findings dropped as `anchor moved` or `not actionable`, and any finding the user's subset excluded.
 
 **Next:** the fixes are unreviewed and unstaged — certify them with a review of the changed code. For a staged-diff flow that means staging the fixes first, then `/review-commit` (or `/review-commit-triage-verify`), then `/commit`. Findings that came from a PR or a saved list are answered in the working tree only: replying to the source, resolving its threads, and pushing all stay with you.
@@ -167,6 +171,6 @@ Confirm the protocol invariants before finishing:
 - [ ] Every failed fix or group was restored without changing pre-run bytes, index, staging, or commits; an unconverged health recovery restored the exact baseline and left no changed-code survivor
 - [ ] Every selected finding in exactly one output bucket
 - [ ] Batched fixes ran only over blast-radius-declared, pairwise-disjoint surfaces and came back through `./references/workflow/parallel-batch.md` § *Coordinator-side parallel batch*'s ordered gates, in this skill's processing order <!-- cold -->
-- [ ] Every Confirmed auto-path fix delegated, any that stayed with the coordinator naming its posture exception; delegation confined to that surface — no ask-routed, Withdrawn, or Inconclusive finding sent to an executor — and every delegation announced and noted with its engine in its `Fixed` / `Fix failed` entry
+- [ ] Every Confirmed auto-path fix delegated, any that stayed with the coordinator naming its posture exception; delegation confined to that surface — no ask-routed, Withdrawn, or Inconclusive finding sent to an executor — and every delegation announced and noted with its engine and its immediate-outcome evidence source in its `Fixed` / `Fix failed` entry
 - [ ] The gate, the batched ask, final-integrated outcome checks, health recovery, and the report buckets stayed with the coordinator
 - [ ] Nothing staged, nothing committed, no Git state mutated (transient coordinator-managed worktrees excepted — created scratch, removed after merge)
