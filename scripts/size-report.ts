@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { lstatSync, readFileSync, readdirSync, statSync, type Stats } from "node:fs";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
+import { corpusFiles } from "./corpus.ts";
 
 process.stdout.on("error", (err: NodeJS.ErrnoException) => {
   if (err.code !== "EPIPE") throw err;
@@ -10,7 +11,6 @@ const BYTES_PER_TOKEN = 4;
 const CORE_RULES = "CORE_RULES.md";
 const AGENTS_CITATION = "./AGENTS.md";
 const SKILL_FILE = "SKILL.md";
-const MARKDOWN_SUFFIX = ".md";
 const SKILL_CITATION = /\.\/(?:references\/(?:[A-Za-z0-9._/-]+|<domain>\/rules)\.md|AGENTS\.md)/g;
 const DOMAIN_TEMPLATE = "./references/<domain>/rules.md";
 const DEFAULT_PACK = "references/engineering";
@@ -257,51 +257,23 @@ function corpusEntry(root: string, abs: string): Stats | null {
   }
 }
 
-function corpusSet(root: string, skills: readonly string[]): CorpusTotals {
+function corpusSet(root: string): CorpusTotals {
   let files = 0;
   let bytes = 0;
 
-  const countFile = (abs: string): void => {
+  for (const abs of corpusFiles(root, {
+    onSymlink: (abs, kind) =>
+      kind === "required"
+        ? noteCorpusMiss(display(root, abs), "symlink")
+        : warnings.push(`corpus: skipping symlink ${display(root, abs)}`),
+    onUnreadable: (abs, code) => noteCorpusMiss(display(root, abs), code === "ENOENT" ? "no such directory" : code),
+    onMissing: (abs, reason) => noteCorpusMiss(display(root, abs), reason),
+  })) {
     const stat = corpusEntry(root, abs);
-    if (stat == null) return;
-    if (!stat.isFile()) {
-      noteCorpusMiss(display(root, abs), stat.isSymbolicLink() ? "symlink" : "not a regular file");
-      return;
-    }
+    if (stat == null) continue;
     files++;
     bytes += stat.size;
-  };
-
-  const walk = (dir: string): void => {
-    let names: string[];
-    try {
-      names = readdirSync(dir);
-    } catch (err) {
-      noteCorpusMiss(display(root, dir), err.code === "ENOENT" ? "no such directory" : (err.code ?? err.message));
-      return;
-    }
-    for (const name of names) {
-      const abs = join(dir, name);
-      const stat = corpusEntry(root, abs);
-      if (stat == null) continue;
-      if (stat.isSymbolicLink()) {
-        warnings.push(`corpus: skipping symlink ${display(root, abs)}`);
-        continue;
-      }
-      if (stat.isDirectory()) {
-        walk(abs);
-        continue;
-      }
-      if (stat.isFile() && name.endsWith(MARKDOWN_SUFFIX)) {
-        files++;
-        bytes += stat.size;
-      }
-    }
-  };
-
-  walk(join(root, "references"));
-  for (const skill of skills) countFile(join(root, "skills", skill, SKILL_FILE));
-  countFile(join(root, CORE_RULES));
+  }
 
   return { files, bytes, approxTokens: approxTokens(bytes) };
 }
@@ -375,7 +347,7 @@ if (roots.length === 0) {
   if (isDir) {
     root = candidate;
     const available = skillNames(root);
-    corpus = corpusSet(root, available);
+    corpus = corpusSet(root);
 
     for (const name of only) {
       if (!available.includes(name)) warnings.push(`no such skill: ${name}`);

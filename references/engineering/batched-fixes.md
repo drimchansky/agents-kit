@@ -14,8 +14,7 @@ comparison establishes, what it implicates, and what it restores is that skill's
 `skills/fix-findings/SKILL.md` § *Integrated health boundary* owns it.
 
 Both isolations obey the green-control rule in `../workflow/execution-recovery.md` § *Evidence
-lifecycle*: replaying a subset only implicates it when the predicate under test is green on the state
-the replay starts from. A failed health command qualifies once it is green at the baseline, which is
+lifecycle*. A failed health command qualifies once it is green at the baseline, which is
 why the comparison above runs first. A finding's own outcome tier never qualifies against the
 bare baseline — the baseline predates that finding's fix, so the tier is red there by
 construction — so isolate it from the baseline plus that finding's own change set, never from the

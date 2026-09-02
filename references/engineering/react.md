@@ -6,7 +6,7 @@ Check the project's installed React version — APIs change between major versio
 - **React 18** — Standard hooks patterns apply as written below
 - **React 19+** — The React Compiler (auto-memoization) is a separate opt-in build plugin (`babel-plugin-react-compiler`), not enabled by installing React 19; unless the project wires it into the build, hand-write `memo`/`useMemo`/`useCallback` as usual (see Performance), and only skip them when the compiler is enabled. Check for new APIs (`use`, `useActionState`, `useOptimistic`) before reaching for older patterns
 
-When uncertain about version-specific API availability, verify against the official docs online.
+Which of the three the project is on decides every pattern below, so settle a React API's availability against that major's official docs before writing it — the sourcing rule is `./execution.md` § *Detect stack and sources*.
 
 ## Components
 

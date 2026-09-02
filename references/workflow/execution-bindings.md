@@ -10,6 +10,10 @@ loop's beats.
 **These are the index, not the authority.** Each consumer states its own bindings in full in its own
 skill file; when a binding changes, it changes there and this index follows.
 
+The one rule crossing all three — that presentation consumes the final current boundary rather than
+re-running health for the report — is `./execution-acceptance.md` § *Before presenting*'s, so no
+consumer states it; each consumer's **Health boundaries** binding below fixes which boundary that is.
+
 ## implement-task
 
 Runs the loop against a task folder's `plan.md`, with `goals.md` as the acceptance contract. Its §4

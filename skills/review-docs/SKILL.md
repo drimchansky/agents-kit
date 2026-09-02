@@ -121,7 +121,7 @@ The audit is the deliverable. Print it to chat and stop — do **not** edit the 
 
 ### Doc Summary
 
-Brief statement of what the doc covers and the date / commit it appears to reflect (if discoverable from git history). With `-x`, end this section with the probe's `Cross-check:` outcome line per `./references/workflow/agent-fanout.md`; without the flag, no such line appears. <!-- cold -->
+Brief statement of what the doc covers and the date / commit it appears to reflect (if discoverable from git history). This section is where the grounding probe's `Cross-check:` line lands when `-x` was passed, on the terms `./references/workflow/probe-cross-check.md` fixes for it. <!-- cold -->
 
 ### Accuracy Assessment
 

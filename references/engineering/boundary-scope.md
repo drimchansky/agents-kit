@@ -87,9 +87,8 @@ comparison, so an output directory the project ignores is out of the delta alrea
 usually empty. Name what remains — output a project neither tracks nor ignores, and every one of them
 on a tree outside a checkout, where there are no ignore rules to ask. Left in, they change on every
 boundary run, so a reference taken without pruning them reads as a delta at every later boundary,
-silently restoring the cost this scoping removes. But a prune filters the baseline as well as the
-current walk, so pruning a *tracked* output directory — a committed bundle, a checked-in generated
-client — drops a real change out of the delta before § *Widening* can ever see it. Tracked output is
+silently restoring the cost this scoping removes. But pruning a *tracked* output directory would drop
+a real change out of the delta before § *Widening* could ever see it, so tracked output is
 measured, not pruned, whatever churn it costs; `<kit-root>/SCRIPTS.md`
 § *`scripts/worktree-merge.ts`* owns both guards for all three of the manifest's roles. The ignore drop
 has a consequence of its own, and it is the mirror of the prune one: a git-ignored path is not in the

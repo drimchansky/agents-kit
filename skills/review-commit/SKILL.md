@@ -29,7 +29,7 @@ Before working, read `./references/engineering/review.md` — it carries the len
 
 ## Review pass
 
-**Launch.** Spawn the native `reviewer` subagent — the kit-installed adapter `./references/workflow/reviewer-contract.md` § *Adapter defaults* describes; a host with no adapter, or one that cannot launch it, takes the inline fallback below under that file's § *Degrade rule*. The launch prompt is a review packet per its § *Launch packet* — the reviewer loads the contract's reviewer-facing sections in its own sidechain; the session hands the packet over, then settles the return by the contract's session-facing sections, read cold at that point. The session puts in it:
+**Launch.** `./references/workflow/reviewer-contract.md` § *The launch* owns the spawn, the no-adapter drop to the inline fallback below, and the hand-over of a `commit`-kind packet. The session puts in it:
 
 - the review object named concretely — the staged diff, `git diff --cached`, never pasted diff text — with its identity, the digest Setup recorded;
 - the absolute effective working root, the tree the staged set lives on, which may be a worktree rather than the main checkout;
@@ -45,12 +45,12 @@ A packet item that is missing or ambiguous is completed by reading or asking; a 
 
 **Settle.** Per `./references/workflow/reviewer-contract.md` § *The settle*, read cold at this point. Its two intake checks run first, in order, before anything else: the `Identity` echo against the digest Setup recorded — a mismatch means the reviewer resolved a different object: stop and report, settle nothing — then every return heading present, a malformed return taking the inline fallback below with reason `reviewer failed`. Then adopt, spot-check, assign the final verdicts, and merge the `-x` probe as that section orders.
 
-A composite driving this skill suppresses the steps after the intake checks — where it does, its own text governs, and every returned finding reaches its verify phase as a candidate. Adopted findings render in the shape Output cites. The commit message is the session's own, drafted per Output's message rules from the return's `Change map` — not one of the suppressed steps, so a composite forwards it unchanged.
+Under a composite this settle stops after the intake checks, on the terms `./references/workflow/verify-pipeline.md` § *The review phase* fixes. <!-- cold --> Adopted findings render in the shape Output cites. The commit message is the session's own, drafted per Output's message rules from the return's `Change map` — not one of the suppressed steps, so a composite forwards it unchanged.
 
 **Inline fallback.** Where the reviewer cannot launch or a launched one failed — the reasons `./references/workflow/reviewer-contract.md` § *Degrade rule* closes — announce which and why, then run the pass here:
 
 - Group changes by file and intent.
-- **Launch verification scripts** per "Verification Scripts" in `./references/engineering/review.md`: as soon as the review object is confirmed, launch the project's lint/typecheck/test scripts over its files and review while they run; their failures and warnings land as findings before output. That same section carries the reproduction bar a candidate must clear before it is adopted.
+- **Launch verification scripts** per "Verification Scripts" in `./references/engineering/review.md`: as soon as the review object is confirmed, launch the project's lint/typecheck/test scripts over its files and review while they run; their failures and warnings land as findings before output. Any candidate those runs raise is adopted only through the settle route `./references/workflow/agent-fanout.md` fixes, that same section's reproduction bar included. <!-- cold -->
 - Apply § *Review Focus*.
 
 The review object, the digest, and everything Output owes are unchanged here — only the runner is.
@@ -104,5 +104,5 @@ to always read the latest value inside the interval.
 
 Apply the Standard Verification Checklist in `./references/engineering/review.md`. The output carries the **Reviewed** provenance line (reviewed-set digest + file count + the reviewing model and effort) and the `Review pass:` line, and **Next** points at `/commit`.
 On a delegated pass: the packet named the same review object and digest Setup resolved, both intake checks passed — the `Identity` echo matched that digest and every return heading was present — before any settle step, the settle re-read every Critical and Major anchor before rendering it, the session ran no command against the tree while the reviewer was in flight, the session drafted the commit message itself from the return's `Change map`, and the line reads `delegated (<model>)`.
-On the inline fallback: the reason was announced and the line reads `inline (<reason>)`.
+On the inline fallback: `./references/workflow/reviewer-contract.md` § *Degrade rule* was satisfied — the degrade announced, its reason on the line.
 With `-x`: the probe was merged per `./references/workflow/agent-fanout.md`, its prompt named the same review object Setup resolved, and the output carries its `Cross-check:` line. <!-- cold -->

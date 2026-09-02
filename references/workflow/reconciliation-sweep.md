@@ -10,7 +10,9 @@ The mechanics of the external reference check, split out of `./reconciliation.md
 
 **The scope is a script.** `node <kit-root>/scripts/sweep-scope.ts <task-dir>` enumerates every fetchable citation on an actionable surface, deduplicated by URL, each entry carrying every citing surface and the tag `observations.md` last recorded for it, as JSON, fetching and writing nothing. `<kit-root>` resolves per `./task-store.md` § *Resolving `<kit-root>`*; `<kit-root>/SCRIPTS.md` § *`scripts/sweep-scope.ts`* owns its CLI form, stdout contract, surfaces, and skipped links. Run it before fetching and sweep what it returns, not an enumeration of your own — which pause section counts as *active* included, decided there from the plan's own status.
 
-Three surfaces it reads — `ticket.md`, a deliverable's `**Published:**` line, and the active pause section — are swept but **never written into**, and the inclusion test they pass is what every surface the report leaves out fails: `./reconciliation.md` § *Never-annotated surfaces* owns both.
+Three of the surfaces it reads are swept but **never written into**, and the inclusion test they pass is what every surface the report leaves out fails: `./reconciliation.md` § *Never-annotated surfaces* names the three and owns both.
+
+**The script unavailable** — no kit root, no `node`, or the script itself missing → the scope goes unenumerated and the sweep is **reported skipped** rather than hand-scoped; a hand enumeration is exactly what this section replaces.
 
 **No citation in scope → no sweep**: enumeration is the whole run — nothing fetched, no ledger touched past deleting a stale one.
 

@@ -5,7 +5,7 @@ Check the project's installed `@tanstack/react-query` version — APIs change be
 - **v4** — `useQuery({ queryKey, queryFn })` object syntax; `cacheTime` for GC; `onSuccess`/`onError`/`onSettled` callbacks on `useQuery` are supported
 - **v5** — `cacheTime` renamed to `gcTime`; `useQuery` callbacks (`onSuccess`/`onError`/`onSettled`) removed — use `useEffect` or mutation callbacks instead; `queryOptions()` factory fully supported
 
-When uncertain about version-specific API availability, verify against the official docs online.
+The v4 → v5 renames above are the ones that bite, so confirm a hook option against the installed major's own docs before using it — the sourcing rule is `./execution.md` § *Detect stack and sources*.
 
 ## Custom Hooks
 

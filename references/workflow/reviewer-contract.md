@@ -2,7 +2,7 @@
 
 This is the host-neutral contract for a delegated **reviewer** — the kit's second delegate kind, between the read-only probe of `./agent-fanout.md` and the write-mode executor of `./executor-contract.md`. A reviewer takes one named review object, reviews it, runs verification over it, and returns evidence to the session that launched it; this file owns that posture, its packet, its return, and the settle. The review itself — lenses, severity calibration, findings shape — stays in `../engineering/review.md`; base resolution, the verdicts, the drafted PR description and commit message, and the rendered output stay with the host skill. Host adapters select native model, effort, and tool defaults, then load their installed copy of this contract.
 
-Two audiences read this file. § *Posture*, § *Launch packet*, and § *The return* address the **reviewer**, which loads the file in its own sidechain. § *The settle*, § *Consumers*, § *Adapter defaults*, and § *Degrade rule* address the **session** that launched it, which reads them cold at the settle and on the fallback rather than restating them in the host skill — a reviewer that cannot launch never reads this file, so what the session owes on that path has to reach the session.
+Two audiences read this file. § *Posture*, § *Launch packet*, and § *The return* address the **reviewer**, which loads the file in its own sidechain. § *The launch*, § *The settle*, § *Consumers*, § *Adapter defaults*, and § *Degrade rule* address the **session** that launched it, which reads them cold at the launch, the settle, and the fallback rather than restating them in the host skill — a reviewer that cannot launch never reads this file, so what the session owes on that path has to reach the session.
 
 ## Posture
 
@@ -40,6 +40,10 @@ Return evidence, not a verdict — and never an audience-facing artifact: the PR
 - `Divergence` — every reviewed path where the effective root's on-disk content diverges from the review object, under the bar `../engineering/review.md` § *Verification Scripts* sets: a script failure or reproduction at such a path is reported here as context, never merged into `Findings`. `None` when the tree carries the object.
 - `Inaccessible context` — every link the reviewer could not fetch, each with its URL and the reason (auth-walled, private workspace, 404, tool unavailable). Never fabricate what sits behind one.
 - `Change map` — the reviewed set grouped by file and intent, compact enough to read at a glance and complete enough for the session to draft from and to derive its lens set from. Returned on every pass, both kinds.
+
+## The launch
+
+Session-facing. How the session starts a pass, and the one home for it: the host skills cite this section rather than restating it. Spawn the native `reviewer` subagent — the kit-installed adapter § *Adapter defaults* describes; a host with no adapter, or one that cannot launch it, takes the host skill's inline fallback under § *Degrade rule*. The launch prompt is a review packet per § *Launch packet*, whose items the host skill composes from what its own Setup resolved; the reviewer loads this file's reviewer-facing sections in its own sidechain, while the session hands the packet over and then settles the return by the session-facing ones, read cold at that point.
 
 ## The settle
 

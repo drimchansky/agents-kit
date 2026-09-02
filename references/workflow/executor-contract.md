@@ -60,11 +60,11 @@ Coordinator intake is per unit, in packet order, exactly as § *Write-mode routi
 
 Write-mode fan-out is limited to the consumers registered in `./executor-routing.md`. The contract above governs executor behavior; each consumer's own skill owns how it frames a unit of work and what verdicts it reaches. Every other fan-out consumer uses the probe contract in `./agent-fanout.md` — except the review skills' delegated pass, which is neither write-mode nor a probe and runs under `./reviewer-contract.md`.
 
-**The posture.** Delegation is the standing posture for every consumer registered in `./executor-routing.md`: each unit goes to an executor, and `./write-mode-posture.md` owns that rule together with the closed set of three exceptions that keep one unit inline. No consumer states a posture, a packet-cost prior, or a cadence of its own.
+**The posture.** Delegation is the standing posture for every consumer registered in `./executor-routing.md`: each unit goes to an executor. `./write-mode-posture.md` is its single home — that rule, the closed set of three exceptions that keep one unit inline, and what no consumer may state for itself.
 
 **The registry, the authorization, and the engine** are the satellite `./executor-routing.md`: which consumers may launch at all, what a user's invocation authorizes and what an unrequested one does not, and the `native` adapter defaults and their degradation. The default needs none of it — `native`, the coordinator launching the `executor` adapter with the effective root this contract fixes, the adapter then loading its own installed copy — so read that file when a run is unregistered, unrequested, or looking at a failed adapter.
 
-Every unit that runs inline is **announced in chat and recorded in that skill's report**, naming which of the posture file's three exceptions applied; that record is what keeps the standing posture from decaying silently into always-inline. The exact record shape is each skill's own.
+A unit that runs inline is announced and recorded as `./write-mode-posture.md` § *The exceptions* requires, in the shape each skill defines for its own report.
 
 **Judgment never delegates**, under any posture. The coordinator keeps unit framing, each unit's
 outcome re-proof on its own tree, the consumer-declared integrated-health boundary, the report

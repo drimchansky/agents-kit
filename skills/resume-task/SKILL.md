@@ -39,7 +39,7 @@ When the folder carries an `observations.md`, quoting its dated lines is reading
 
 ### 1. Resolve the Task Folder
 
-Resolve a task folder per the **resolve-current-or-ask** discovery rules in `./references/workflow/task-layout.md` § *Discovery rules for skills* — cite it, don't restate it; a full `plan.md` path is taken directly.
+Resolve the task folder to brief on per the **resolve-current-or-ask** discovery rules in `./references/workflow/task-layout.md` § *Discovery rules for skills*, which owns every branch of it; a full `plan.md` path is taken directly.
 
 The activation offer for a folder resolving under `Backlog/` is `./references/workflow/implement-task-edges.md` § *Activating a backlogged task* — read it when resolution lands there; the confirmed `mv` it asks for is the one exception to this skill's read-only rule. <!-- cold -->
 
@@ -55,7 +55,7 @@ Read all four core artifacts — plus `ticket.md`, `diagram.md`, and `observatio
 - `plan.md` — note its `**Status:**` header and its `**Goals:**` link.
 - `diagram.md` (when present) — the target-state shape the plan builds toward; capture its dated `**Reflects:**` line. Absence is normal and is not a gap.
 - `observations.md` (when present) — the last sweep's dated observations of the folder's cited references (`./references/workflow/task-observations.md`); a cache to quote with its dates, never live truth. Absence is normal. <!-- cold -->
-- `result.md` — read `## Current state` first for orientation (derived metadata, never trusted ground truth); then find the latest per-step or full-run section, capture every `**Blocked:**` and `**In review:**` block verbatim, and capture any `## Acceptance` section verbatim. It carries no status of its own — the plan's is the task's.
+- `result.md` — read `## Current state` first for orientation (derived metadata, never trusted ground truth); then find the latest per-step or full-run section, capture every `**Blocked:**` and `**In review:**` block verbatim, and capture any `## Acceptance` section verbatim. A `**Status:**` line found here is legacy and read as none — the plan holds the task's only lifecycle status (`./references/workflow/task-lifecycle.md` § *`result.md` — no status field*).
 
 Status vocabulary and the **companion-result-file rule** live in `./references/workflow/task-lifecycle.md` § *Status values* and § *Companion result file* — flag a missing companion, or a missing section the plan's state owes, as drift. Deliberate pauses are not drift: a `skipped` plan is abandoned (a missing result file is expected), `blocked` + `**Blocked:**` is paused (name the cause), and `in-review` + `**In review:**` is parked awaiting the listed `(external)` goals.
 
@@ -66,7 +66,7 @@ Flag in the brief:
 
 ### 3. Reconstruct State from Checkboxes
 
-Run `node <kit-root>/scripts/task-state.ts <task folder>` — `<kit-root>` per `./references/workflow/task-store.md` § *Resolving `<kit-root>`* <!-- cold --> — and read the state out of the JSON rather than re-deriving what the script decided; `<kit-root>/SCRIPTS.md` § *`scripts/task-state.ts`* owns the CLI form and the stdout contract — read that section, not the whole file. It reports every step in plan order with its checkbox, `nextPendingStep`, each `### Checkpoint after Step N` with its result section's `**Outcome:**` (`null` = not yet run), and whether each checked step's `([result](…))` anchor still resolves. Kit root, script, or `node` unavailable → say so and reconstruct the same facts from the plan by hand.
+Run `node <kit-root>/scripts/task-state.ts <task folder>` — `<kit-root>` and the script's own `SCRIPTS.md` contract section both per `./references/workflow/task-store.md` § *Resolving `<kit-root>`* <!-- cold --> — and read the state out of the JSON rather than re-deriving what the script decided. It reports every step in plan order with its checkbox, `nextPendingStep`, each `### Checkpoint after Step N` with its result section's `**Outcome:**` (`null` = not yet run), and whether each checked step's `([result](…))` anchor still resolves. Kit root, script, or `node` unavailable → say so and reconstruct the same facts from the plan by hand.
 
 Then read the files for what the report doesn't carry: the `nextPendingStep` step's **Verify**, any **Due** / **Lead time**, and the paths it touches; and every `**Blocked:**` and `**In review:**` section from the result file, verbatim.
 

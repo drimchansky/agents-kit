@@ -15,7 +15,7 @@ Update the PR body that `/review-pr -d` prepared. This skill deliberately mutate
 
 - **A review-pr `-d` description must exist in this conversation.** Find the PR description `/review-pr -d` drafted earlier in this session (the fenced, body-only block) — or the one `/review-pr-triage-verify -d` forwarded, whose **PR description** Output carries it in review-pr's own format because its review phase *is* a `/review-pr` run. Either satisfies this precondition. If there is none, stop and tell the user to run `/review-pr -d` first, then `/update-pr-description`. Do not draft a description yourself.
 - **The draft must be complete.** If it still contains any unfilled `<…>` placeholder anywhere (e.g. `Task: <add ticket link>`), stop and ask the user to supply the value — don't write a placeholder to a live PR, and don't delete the line, invent a value, or infer it from the branch yourself.
-- **An open PR must exist for the current branch.** Find it with `gh pr view --json number,title,url,state` (requires `gh` CLI; no positional argument targets the current branch's PR). If the command fails because `gh` is missing or the repo has no GitHub remote, or there is no open PR for the branch (the command errors, or the PR's state is not `OPEN`), note that and stop.
+- **An open PR must exist for the current branch.** Find it per `./references/workflow/pr-lookup.md`, which owns the lookup, every way it comes up short, and the stop each earns; this skill needs no field beyond the four every follow-up reads.
 
 ## Process
 

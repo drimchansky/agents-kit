@@ -11,9 +11,8 @@ overlapping or ordering-sensitive change sets; never replay a later overlapping 
 embeds or relies on earlier bytes.
 
 **Establish the control before isolating**, per the green-control rule in
-`./execution-recovery.md` § *Evidence lifecycle*: a subset only implicates itself when
-the predicate is green on the state each replay starts from. The two predicates need different
-controls, and using the wrong one implicates work that was never at fault.
+`./execution-recovery.md` § *Evidence lifecycle*. The two predicates below need different controls,
+and using the wrong one implicates work that was never at fault.
 
 - **A failed health command** — the control is the immutable baseline, already proven green by the
   comparison the boundary section runs first. Isolate with only the failed command or commands, never
@@ -111,7 +110,7 @@ A delegated fix runs through an **executor** per the `fix-findings` binding in `
 
 **The write surface binds the executor exactly as it binds you**: working-tree code and nothing else, never staged, never committed, no other Git state mutated, and nothing written back to the findings' source — no reply, no resolved thread, no push. The binding restates it for the executor. Delegation is not an escape hatch from the Git-discipline rule.
 
-**Announce and record.** Delegation is the standing posture inside that surface (`./write-mode-posture.md`), so what chat announces is any fix that stays with the coordinator and which of the three exceptions kept it there. Note the delegation and the engine that ran it inside the affected `Fixed` / `Fix failed` entry — no new bucket — and note an exception fix's exception in the same place. That record is what keeps the standing posture from decaying silently into always-inline.
+**Announce and record.** Delegation is the standing posture inside that surface (`./write-mode-posture.md`), so what chat announces is any fix that stays with the coordinator and which of the three exceptions kept it there. Note the delegation and the engine that ran it inside the affected `Fixed` / `Fix failed` entry — no new bucket — and note an exception fix's exception in the same place. That entry is this skill's shape for the record the posture file requires.
 
 **Parallel batches.** Confirmed auto-path fixes may batch only under `./parallel-batch.md` § *Coordinator-side parallel batch*; its worktree placement, frozen shared tree, complete content/presence surface checks, ordered incorporation, and cleanup bind here. The order is this skill's processing order (`fix-findings` § *The Gate: Auto vs Ask*), and each expected surface is the chosen option's stated blast radius. After every merge or declared serial fallback, re-prove that finding's full outcome tier on the integrated tree — never the criterion alone — before appending its incorporated content/presence change set — relative to the shared state immediately before it, with known dependencies — to the immutable run-baseline recovery ledger. Executor proof is advance evidence only. After all selected fixes, these ledger entries feed the final-integrated outcome sweep and the one retained-collection health boundary; a batch adds no health pass of its own.
 

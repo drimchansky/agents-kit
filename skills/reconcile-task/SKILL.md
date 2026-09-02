@@ -40,7 +40,7 @@ This skill closes the gap a working or design session opens: things get decided,
 
 ### 1. Resolve the Task Folder
 
-Resolve a task folder per the **resolve-current-or-ask** discovery rules in `./references/workflow/task-layout.md` § *Discovery rules for skills* — cite it, don't restate it; a full `plan.md` path is taken directly.
+Resolve the task folder to write back into per the **resolve-current-or-ask** discovery rules in `./references/workflow/task-layout.md` § *Discovery rules for skills* — cite it, don't restate it; a full `plan.md` path is taken directly.
 
 ### 2. Load Artifacts
 
@@ -54,7 +54,7 @@ Read all four core artifacts — plus `ticket.md`, `diagram.md`, `observations.m
 - `observations.md` (when present) — the previous sweep's dated ledger of the folder's cited references; read-only input to Step 4, which — when the sweep runs — reads, diffs against, and rewrites it per `./references/workflow/reconciliation-sweep.md` § *Ledger*.
 - **The deliverable** (doc tasks only — `adr.md`, `rfc.md`, …; resolved per `./references/workflow/doc-task-files.md`, which fixes it without the plan's optional `**Deliverable:**` header) — a read-only baseline: its content is the work product the session may have changed, and its `**Published:**` line is a swept citation Step 4 needs. <!-- cold -->
   Never written here: findings on it route by the mapping rows in `./references/workflow/reconciliation-session-to-docs.md` § *`reconcile-task` — session findings*.
-- `result.md` — read `## Current state` first for orientation (derived metadata, not ground truth); then the latest per-step / full-run section, any `**Blocked:**` or `**In review:**` block, any `## Acceptance` section. It carries no status of its own — the plan's is the task's. If none exists, note it: work recorded this session may create it (per `./references/workflow/task-lifecycle.md` § *Companion result file*).
+- `result.md` — read `## Current state` first for orientation (derived metadata, not ground truth); then the latest per-step / full-run section, any `**Blocked:**` or `**In review:**` block, any `## Acceptance` section. The plan holds the task's only lifecycle status (`./references/workflow/task-lifecycle.md` § *`result.md` — no status field*). If none exists, note it: work recorded this session may create it (per that file's § *Companion result file*).
 
 A `skipped` plan is terminal — handle it per `./references/workflow/reconciliation.md` § *Skipped plans are exempt* and stop there. A plan with no sibling `goals.md` is a gap — surface it (`plan-task` is expected to produce one) rather than fabricating goals.
 
@@ -74,8 +74,7 @@ Group findings by target file (`CONTEXT.md` / `goals.md` / `plan.md` / `result.m
 
 ### 4. Check the Cited External References
 
-Enumerate the sweep's scope first with `node <kit-root>/scripts/sweep-scope.ts <task folder>`, and fetch that set rather than one enumerated by hand; its contract is `<kit-root>/SCRIPTS.md` § *`scripts/sweep-scope.ts`*, and `<kit-root>` resolves per `./references/workflow/task-store.md` § *Resolving `<kit-root>`*. <!-- cold -->
-Then run the **reference sweep** in `./references/workflow/reconciliation-sweep.md` — cite it, don't restate it — over that set. This skill is where it lands for a task you're actively working; the reporting skills sweep none, and a `warn` or `block` on one of the three never-annotated surfaces routes by `./references/workflow/reconciliation.md` § *Never-annotated surfaces*. Unavailable, the scope goes unenumerated and nothing is swept rather than hand-scoped.
+Run the **reference sweep** in `./references/workflow/reconciliation-sweep.md` — cite it, don't restate it — its scope script, that script's contract, and the unavailable-script fallback included. This skill is where it lands for a task you're actively working; the reporting skills sweep none, and a `warn` or `block` on one of the three never-annotated surfaces routes by `./references/workflow/reconciliation.md` § *Never-annotated surfaces*.
 
 Its findings join Step 3's as one set — different provenance, same handling; Step 6's mapping routes each tag.
 

@@ -67,22 +67,16 @@ integration assertion. Run `review-docs` at checkpoints and before publishing
 
 ## Stop-the-Line (when a verification tier or assertion fails)
 
-Stop. Don't start the next step, don't mark the current step done, don't bandage the wording. Work
-the triage in order:
+`../workflow/execution-loop.md` § *Stop-the-Line* owns the rule, the triage order, and the stop when
+a session cannot resolve the failure. What a document deliverable does inside that triage: localize
+by naming which side fails — the doc, the source, or the map between them — and then **fix the claim
+or the source, not the wording**. A failed check is usually a substance error (wrong fact, missed
+comment, stale citation), and rewording a sentence into vagueness until the check "passes" hides it.
+Correct the fact, re-open the source, or repair the mapping.
 
-1. **Localize** — which section, claim, or mapping fails, and on which side: the doc, the source,
-   or the map between them.
-2. **Fix the claim or the source, not the wording** — a failed check is usually a substance error
-   (wrong fact, missed comment, stale citation), and rewording a sentence into vagueness until the
-   check "passes" hides it. Correct the fact, re-open the source, or repair the mapping.
-3. **Record the correction dated, never silently** — a corrected claim in an already-reviewed doc
-   is itself information. Record what changed and why per the consumer's **Record** binding, and in
-   the doc's own annotation convention when it has one (a dated inline note, a changelog line).
-4. **Re-prove the failed unit outcome, rerun the failed integrated-health boundary, or rerun the
-   failed integration assertion.** Only then continue.
-
-If it can't be resolved this session, stop — don't skip ahead — and record the pause per the
-consumer's **Blocked** binding in `../workflow/execution-bindings.md`.
+**Record the correction dated, never silently** — a corrected claim in an already-reviewed doc is
+itself information. Record what changed and why per the consumer's **Record** binding, and in the
+doc's own annotation convention when it has one (a dated inline note, a changelog line).
 
 ## Integration assertions
 

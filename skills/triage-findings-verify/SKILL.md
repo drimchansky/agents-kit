@@ -31,7 +31,7 @@ Execute `../triage-findings/SKILL.md` end to end, with its full source resolutio
 
 ## Phase 2 — Verify
 
-Fan out, merge, and degrade per `./references/workflow/verify-pipeline.md` § *Fan-out and probes* and § *Merge and degrade*, under the probe and merge contracts of `./references/workflow/agent-fanout.md`, with engines per `./references/workflow/probe-engines.md` and the verify shape in `./references/workflow/probe-shape-verify.md`; this skill is a registered consumer of each. The merge's session-review contradiction turn binds only where the source resolved to this session's own review; findings from a PR or a saved list have no session pass to contradict, so a probe's **Not an issue** withdraws them directly.
+This skill fans out under `./references/workflow/agent-fanout.md`, `./references/workflow/probe-engines.md`, and `./references/workflow/probe-shape-verify.md`. Fan out, merge, and degrade per `./references/workflow/verify-pipeline.md`, over the batches phase 1 held. The merge's session-review contradiction turn binds only where the source resolved to this session's own review; findings from a PR or a saved list have no session pass to contradict, so a probe's **Not an issue** withdraws them directly.
 
 Alone among the members, this one's **review object** varies — it depends on the source triage resolved:
 

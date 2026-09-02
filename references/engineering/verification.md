@@ -8,7 +8,8 @@ Stop-the-Line, health boundaries, and the acceptance gate, whose recipe sits in 
 
 ## Two verification tiers
 
-Both are required, but they run on different cadences — they answer different questions:
+`../workflow/execution-loop.md` § *Two verification tiers* is the one definition of the tiers and of
+what each proves; this section is the code-domain recipe for running them:
 
 - **Unit outcome** — immediately run the unit's stated verify criterion (see the consumer's
   **Source** binding in `../workflow/execution-bindings.md`). Then validate every comment the unit added
@@ -32,14 +33,10 @@ Both are required, but they run on different cadences — they answer different 
   triggers, infra-bound commands, concurrency — is `./boundary-scope.md`, read at a boundary and not
   between them.
 
-Integrated-health evidence is state-specific: any work-product edit after the boundary invalidates
-it, including a rollback. Do not report it current until the recipe has passed again on the state that
-remains. A unit criterion that happens to invoke one health command does not exempt the next boundary,
-which re-runs the closure of what changed since the last green one, so boundary count stops
-mattering.
-
-Never start the next unit while its outcome proof is failing, and never proceed past a health
-boundary while its recipe is failing.
+Invalidation is the home's rule (`../workflow/execution-loop.md` § *Two verification tiers*), and a
+rollback is a work-product edit like any other. What it adds here: a unit criterion that happens to
+invoke one health command does not exempt the next boundary, which re-runs the closure of what changed
+since the last green one, so boundary count stops mattering.
 
 How `fix-findings` pays these tiers across a batch, and what a red boundary reruns:
 `./batched-fixes.md` — read at a `fix-findings` health boundary, and above all when that boundary is
@@ -64,40 +61,28 @@ declared boundaries*, defining none of these. In order:
 
 ## Stop-the-Line (when either tier fails)
 
-Stop. Don't start the next unit, don't call the current shared tree healthy or the run complete, and
-don't bandage the symptom. Work the triage in order:
+Read `../workflow/execution-loop.md` § *Stop-the-Line* for the rule itself, its triage order, and the
+blocked stop. Below is what each of those triage steps means when the deliverable is code: localize
+with `git bisect` where the failure is a regression, and **fix the root cause, not the symptom** —
+deduplicating in the UI when the API returns duplicates is a symptom fix; fixing the JOIN is a
+root-cause fix.
 
-1. **Reproduce** — make the failure happen reliably; note conditions if intermittent.
-2. **Localize** — narrow which layer fails (UI, API, DB, build, the test itself). `git bisect` is
-   fair game for regressions.
-3. **Reduce** — strip the failing case to the minimum that triggers it.
-4. **Fix the root cause, not the symptom** — ask "why does this happen?" until you reach the actual
-   cause. Deduplicating in the UI when the API returns duplicates is a symptom fix; fixing the JOIN
-   is a root-cause fix.
-5. **Guard against recurrence** — add a regression test that fails without the fix and passes with
-   it. Prove the red half before the fix lands wherever that order is yours (`./execution.md`
-   § *Prove-It pattern*, the planned bug-fix step); once it is live, the only thing left to un-fix is
-   working code. Never edit the shared tree back to the broken state to get that red — an
-   interruption then leaves the defect reintroduced in tracked code with only an unversioned copy to
-   restore from — and `git stash` is no substitute, since `./rules.md` forbids mutating Git state
-   unasked. Use a throwaway `git worktree` at the pre-fix state and remove it after: transient
-   scratch that commits nothing and makes no branch sits inside that rule rather than against it
-   (`../workflow/parallel-batch.md`). That pre-fix state is the shared tree with only the fix
-   withheld, not the commit under it: `git worktree add` checks out a commit, and under the
-   no-commit rule the tree carries earlier units and the new test itself uncommitted — so seed the
-   worktree from the shared tree as that file's batches do, withhold the fix, and carry the test in.
-   A red from an absent test or a missing module is not the red half. Where even that is
-   unavailable, record the guard as proved forward-only — a gap the unit's report surfaces, not a
-   cleared step, since a test written after the fix tests the implementation rather than the bug
-   (`../workflow/execution-loop.md` § *Don't Rationalize*) — rather than asserting a red half that
-   was never run.
-6. **Re-prove the failed unit outcome, rerun the failed integration assertion, or rerun the failed
-   health boundary.** Only then continue.
-
-If it can't be resolved this session, stop — don't skip ahead — and record the pause per the
-consumer's **Blocked** binding in `../workflow/execution-bindings.md` (for `implement-task`, a `blocked`
-status with a `**Blocked:**` section naming what failed, what was tried, and what's needed, per
-`../workflow/task-lifecycle.md`).
+**Guarding against recurrence is where code has a discipline of its own.** Add a regression test that
+fails without the fix and passes with it. Prove the red half before the fix lands wherever that order
+is yours (`./execution.md` § *Prove-It pattern*, the planned bug-fix step); once it is live, the only
+thing left to un-fix is working code. Never edit the shared tree back to the broken state to get that
+red — an interruption then leaves the defect reintroduced in tracked code with only an unversioned
+copy to restore from — and `git stash` is no substitute, since `./rules.md` forbids mutating Git state
+unasked. Use a throwaway `git worktree` at the pre-fix state and remove it after: transient scratch
+that commits nothing and makes no branch sits inside that rule rather than against it
+(`../workflow/parallel-batch.md`). That pre-fix state is the shared tree with only the fix withheld,
+not the commit under it: `git worktree add` checks out a commit, and under the no-commit rule the tree
+carries earlier units and the new test itself uncommitted — so seed the worktree from the shared tree
+as that file's batches do, withhold the fix, and carry the test in. A red from an absent test or a
+missing module is not the red half. Where even that is unavailable, record the guard as proved
+forward-only — a gap the unit's report surfaces, not a cleared step, since a test written after the
+fix tests the implementation rather than the bug (`../workflow/execution-loop.md` § *Don't
+Rationalize*) — rather than asserting a red half that was never run.
 
 ## Integration assertions
 

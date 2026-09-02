@@ -13,10 +13,10 @@ error, not a version message. The floor is stated once, in
 change made there.
 
 **The 0/1/2 exit convention** is shared by `scripts/task-move.ts`, `scripts/task-state.ts`,
-`scripts/pr-comments.ts`, `scripts/size-check.ts`, and `scripts/worktree-merge.ts`: 0 did the job, 1
-is an outcome the script decided, 2 is a run that never got that far. The reporting scripts beside
-them — `health-check.ts`, `session-triage.ts`, and `size-report.ts` — always exit 0 instead, so a
-partly unreadable corpus still parses.
+`scripts/pr-comments.ts`, `scripts/size-check.ts`, `scripts/dup-check.ts`, and
+`scripts/worktree-merge.ts`: 0 did the job, 1 is an outcome the script decided, 2 is a run that never
+got that far. The reporting scripts beside them — `health-check.ts`, `session-triage.ts`, and
+`size-report.ts` — always exit 0 instead, so a partly unreadable corpus still parses.
 
 **stdout is asynchronous on a pipe**, so a script that emits a JSON report writes it and lets the
 module end rather than calling `process.exit` after the write, which would discard whatever the pipe
@@ -29,7 +29,9 @@ discard whatever the stream had not yet flushed, so a refused run would report a
 saying why. `task-move.ts`, `task-state.ts`, `pr-comments.ts`, and `worktree-merge.ts` reach that by
 throwing — an `Exit` carrying its code in the first three, `Refused`/`Unrunnable` in the last — which
 one handler at the module's end catches, so every refusal leaves through one place. `size-check.ts`
-assigns the status directly at each of its two sites instead.
+assigns the status directly at each of its two sites instead, and `dup-check.ts` splits the two: a
+`Refused` thrown from anywhere in the scan reaches one handler for the status 2, while the status 1 is
+assigned after the report is written, since a finding is the report rather than a refusal.
 
 ## `setup.ts`
 
@@ -188,6 +190,142 @@ The checkout discrimination — separating "not a git repository", which is a re
 from any other `git` failure, which is a refused run — is mirrored from `scripts/worktree-merge.ts`'s
 `checkoutHolding`. **Change either copy and change the other in the same edit.** The markdown-reading
 layer mirrors `scripts/health-check.ts`; see the mirror note in that section.
+
+## `scripts/corpus.ts`
+
+The one definition of the kit's Markdown corpus, imported by `scripts/dup-check.ts` and
+`scripts/size-report.ts`. It exposes no CLI — `corpusFiles(root, handlers)` returns the corpus as
+sorted absolute paths, and each caller supplies its own policy for what the walk could not read.
+
+**The corpus is the prose a reader loads:** every `.md` under `references/` (recursively), every
+`skills/*/SKILL.md`, `CORE_RULES.md`, and `AGENTS.md`. **This paragraph is that set's only
+statement** — the duplicate scan reads it and the size ratchet totals it, so a corpus described
+separately in each place is exactly the drift both checks exist to catch. `SCRIPTS.md`, `tests/`, and
+`scripts/` sit outside it: a contract stated in prose and again in a source is the sanctioned copy's
+mirror note to keep honest, not a duplicate to collapse.
+
+**Every entry is `lstat`ed and a symlink is never followed**, but what a symlink *means* is the
+caller's, and the two callers differ because one is a scan and the other a measurement. The walk
+reports each through `onSymlink` with the kind of position it held:
+
+- **`walked`** — a link met while enumerating, under `references/` or as a `skills/<entry>`. The entry
+  is skipped; it is one of many, and the corpus is still fully measured without it.
+- **`required`** — a link standing where a named corpus member belongs — a `skills/*/SKILL.md`,
+  `CORE_RULES.md`, or `AGENTS.md` — or where a corpus root does. `references/` and `skills/` are each
+  `lstat`ed before they are listed, because `readdirSync` resolves through a link and would otherwise
+  walk whatever the root points at, reading prose from outside the kit root that no per-entry check
+  ever sees. Nothing else supplies that member, and nothing else supplies the subtree behind that
+  root, so a caller measuring totals cannot treat either as a skip without anchoring its number below
+  the truth.
+
+`scripts/dup-check.ts` skips both kinds and names them on stderr; `scripts/size-report.ts` warns on
+`walked` and records `required` as a corpus miss, which refuses a `--update` capture. Collapsing the
+two would either silence a miss that has to refuse or refuse a run over an ordinary skipped link.
+
+A directory the walk cannot list reaches `onUnreadable` with its error code, except an absent
+`skills/`, which yields no entries rather than an error: a kit root legitimately carries none.
+
+A root rule file that is absent, or present but not a regular file, reaches `onMissing` with the
+reason — nothing else supplies that member, so `scripts/size-report.ts` records it as a corpus miss
+and `scripts/dup-check.ts` scans what exists. A skill directory holding no `SKILL.md` is not a
+skill and reports nothing.
+
+## `scripts/dup-check.ts`
+
+Reports the prose this kit says twice: every normalized sentence of at least **12 words** occurring in
+two or more distinct files of the corpus, with the `{file, line}` of each occurrence. A rule restated
+away from its home is the drift [AGENTS.md § *Change routing*](./AGENTS.md) exists to prevent — the
+home is edited, the restatement is not, the two disagree, and nothing fails — so this is the
+mechanical half of keeping one fact with one owner and every other file citing it.
+
+```
+node scripts/dup-check.ts [--allow FILE] <kit-root>
+```
+
+**The corpus it reads** is the one § *`scripts/corpus.ts`* defines, whose module this check imports —
+so what the size ratchet weighs is what this check reads, by construction rather than by two
+descriptions agreeing.
+
+**Every entry is `lstat`ed and a symlink is skipped**, named on stderr rather than followed. Which
+positions the walk can meet a link at, and why one of them is a miss for the size ratchet, is
+§ *`scripts/corpus.ts`*'s; this scan reads both kinds the same way, since a link that resolved back
+into the corpus would report the prose behind it as a duplicate of itself.
+
+**Cross-file only.** A group qualifies on its count of *distinct* files, so a sentence one file repeats
+— a section restating its own opening — is not a finding. Once a group qualifies every occurrence is
+listed, the within-file repeats included, because collapsing a duplicate means reading all of them.
+
+**What the scan does not read.** YAML frontmatter, fenced code blocks, ATX heading lines, every
+`## Core Rules` section of a `SKILL.md`, and any paragraph carrying the phrase `a sanctioned copy per`.
+The first three are not prose a reader takes a rule from; the `## Core Rules` block is the deliberate
+per-skill boilerplate the domain-pack interface requires of every skill, so flagging it would bury the
+report under one group per skill; and a sanctioned copy is a duplicate the kit has already decided to
+keep, recorded at its home with a mirror note (`AGENTS.md` § *Consumer lists*), so it is excluded by
+that phrase rather than re-argued in an allow-file. The Core Rules skip ends at the next heading of
+level 1 or 2, so a `###` inside the section stays skipped and the section after it does not.
+
+**Paragraphs are joined before sentences are split.** Files here wrap inconsistently — some near 100
+columns, some not at all — so a sentence split across two lines has to read as one sentence or the
+same text in a differently wrapped file would never match. A paragraph runs until a blank line, a
+heading, a fence, a list item, a table row, or the opening of a blockquote; a blockquote's `>` prefix
+is dropped from each line before the join, so a quoted rule reads as the same sentence as its plain
+twin, and a fence opened inside a blockquote closes with the quote, so an unterminated quoted fence
+cannot swallow the rest of the file; its lines are joined with single spaces; and each sentence is
+reported at **the line it starts on**. Sentences end at `.`, `!`, `?`, or `;` followed by
+whitespace or end of paragraph, which splits an abbreviation like "e.g." too — identically in every
+file, so a duplicate is still found, in two shorter groups rather than one.
+
+**Markup is blanked before the split and stripped after it.** The split runs over a shadow copy of the
+paragraph in which every markup character is replaced by a space *of the same width*, so offsets still
+name the original text and a sentence still reports its own line. Blanking rather than deleting is what
+finds the boundary in `…keep one inline.** No consumer states…`: the period abuts a bold close instead
+of whitespace, so a split that read the raw text would swallow the following sentence whole and it
+would never match the same sentence written after a plain full stop. Each sentence is then taken from
+the original text and normalized, so what the report prints and the allow-file matches is the stripped
+form, not the blanked one.
+
+**Normalization is what makes two wordings one sentence.** HTML comments and a leading list marker —
+with the task checkbox (`[ ]` or `[x]`) that may follow it — are dropped, links and images collapse to their text, backtick spans, emphasis markers, and table pipes are stripped, the result is
+lowercased and its whitespace collapsed. A word is a token holding a letter or a digit, so an em dash
+or a stray marker never pads a fragment up to the 12-word floor. That floor is what separates a
+restated rule from prose that happens to share a phrase; below it the report is noise.
+
+**The allow-file names the mirrors the kit keeps on purpose.** It is `<kit-root>/tests/dup-allow.json`
+unless `--allow` names another, and it holds an array of `{sentence, reason, files?}` — `sentence` in
+the normalized form the report prints, though it is normalized again on read so a copied-out sentence
+with its original casing still matches; `files`, when present, the kit-relative paths the mirror is
+expected in. An entry naming its files suppresses a group only when the group's distinct files are
+exactly that set: a third copy, or one that moved to a file the entry never named, is reported as a
+group, because what the entry excused was a particular pair of homes and not the sentence wherever it
+lands. An entry without `files` suppresses the sentence wherever it occurs. A missing file is an empty
+allow-list, not a refusal: the check is useful before anyone has decided a mirror is deliberate. An
+entry carrying no `reason` refuses the run, because a reasonless entry is how a collapse that was never
+done becomes permanent, and a `files` that is not a non-empty array of paths refuses it on the same
+terms.
+
+**A listed sentence that no longer occurs twice is `stale`, and stale fails.** An allow entry outlives
+the duplicate it excused — the mirror is collapsed, the sentence is reworded — and a silently ignored
+entry would then go on excusing whatever text later drifted into its shape. Reporting it as a finding
+is what gets it deleted in the same change that collapsed the copy.
+
+**Contract.** stdout is exactly one JSON object,
+`{"root":<absolute kit root>,"files":N,"groups":[…],"allowed":N,"stale":[…]}`. Each group is
+`{sentence,occurrences:[{file,line}]}` with `file` relative to the kit root, occurrences in file then
+line order, and groups ordered by occurrence count descending then sentence. `allowed` counts the
+allow-file entries that suppressed a group, and `stale` carries every entry whose sentence no longer
+occurs in two files exactly as it was written in the allow-file — original casing, markup, reason
+whitespace, and `files` when the entry carries it — so a reader finds it there by exact match. An
+entry whose sentence still repeats, but in files other than the ones it names, is in neither count:
+its group is reported. Skipped symlinks and the failure summary go to stderr.
+
+**Exit status.** 0 = no group survived allow-list filtering and no entry was stale. 1 = at least one of
+the two, the outcome the check decided. 2 = a run that never got that far: no kit root or one that is
+not a directory, an unknown option, a directory that could not be listed, a corpus file that could not
+be read, or an allow-file that exists but is unreadable, unparseable, not an array of entries
+carrying both fields, or carrying a `files` that is not a non-empty array of paths. An unreadable
+corpus file refuses rather than warning, unlike the reporting
+scripts beside it: a check that skipped a file it could not read would report a clean corpus it never
+finished reading.
 
 ## `scripts/health-check.ts`
 
@@ -559,24 +697,24 @@ counting it would put a file outside the kit in a kit load path.
 `approxTokens` is `round(bytes / 4)` — the flat approximation, applied to a set's total bytes rather
 than summed from its per-file values.
 
-**One kit-wide corpus beside the per-skill sets.** `corpus` counts every `.md` under `references/`
-(recursively), every `skills/*/SKILL.md`, and `CORE_RULES.md`. The per-skill sets measure what a skill
+**One kit-wide corpus beside the per-skill sets.** `corpus` counts the set § *`scripts/corpus.ts`*
+defines, whose module this script imports. The per-skill sets measure what a skill
 pays to run, which only reaches a file some skill cites; the corpus measures what the repository
 carries, so prose that grows in a file nothing cites yet is still a number someone can ratchet. It is
 counted, never listed — `files` is a count, and a per-file list would repeat what the per-skill sets
 already carry. `--skill` does not narrow it either: the corpus is a property of the kit, not of the
 selected rows.
 
-Every entry the walk meets is `lstat`ed, and a symlink met *inside* `references/` — to a file or to a
-directory — is skipped with a stderr warning rather than followed. This repository symlinks
-`skills/*/references` and `skills/*/AGENTS.md` at their real targets; those sit beside the walk rather
-than inside it, but a link planted under `references/` would otherwise count the same bytes twice and
-move the total with no prose having changed. A symlink at one of the two *named* paths — a
-`skills/*/SKILL.md` or `CORE_RULES.md` — is the opposite case and is reported as a miss below, not
-skipped: nothing else in the corpus counts that file, so following it would double nothing and
-skipping it drops real bytes. It is a miss rather than a silent count because the per-skill walk
-resolves the same path with `stat`, which *does* follow the link, so the two measurements would
-disagree about a file the kit demonstrably has.
+The two symlink kinds § *`scripts/corpus.ts`* defines land differently here, and this is the caller
+that makes the distinction load-bearing. A `walked` link is skipped with a stderr warning: a link
+planted under `references/` would otherwise count the same bytes twice and move the total with no
+prose having changed. A `required` link is reported as a miss below rather than skipped — nothing else
+in the corpus counts that file, so following it would double nothing and skipping it drops real bytes.
+It is a miss rather than a silent count because the per-skill walk resolves the same path with `stat`,
+which *does* follow the link, so the two measurements would disagree about a file the kit demonstrably
+has. A linked corpus root is the same miss at a larger grain: skipping it drops every file behind it,
+and the per-skill listing of `skills/` reads through the link, so the rows would name skills the corpus
+never counted.
 
 **A short walk is reported, never inferred from the total.** Every path the corpus walk could not
 measure — a `references/` subtree it could not list, a named file it could not `lstat`, one that is
@@ -1028,6 +1166,12 @@ node --test "tests/*.test.ts"           # every suite — quoted, because the ru
   its JSON contract.
 - **`size-check.test.ts`** — `scripts/size-check.ts`: the context-size baseline ratchet and its
   0/1/2 exit contract.
+- **`dup-check.test.ts`** — `scripts/dup-check.ts`: the cross-file duplicate-sentence scan — each
+  structural exclusion (frontmatter, a fenced block, a `SKILL.md` `## Core Rules` section and where
+  that skip ends, a sanctioned-copy paragraph, a symlinked directory), the hard-wrap join and the
+  line a wrapped sentence is reported at, the blockquote prefix, the task-list checkbox, the split through an abutting emphasis marker, the
+  twelve-word floor, the cross-file rule, the allow-list with its file scoping and its stale detection
+  — and its 0/1/2 exit contract.
 - **`worktree-merge.test.ts`** — `scripts/worktree-merge.ts`: the baseline manifest, the
   returned-worktree surface check, the verified incorporation and its verification, the receipt gate
   on removal, and the 0/1/2 exit contract.

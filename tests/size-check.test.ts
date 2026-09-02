@@ -31,6 +31,7 @@ const OTHER_SKILL = join(KIT, "skills", "other-skill");
 const REFERENCES_DIR = join(KIT, "references", "workflow");
 const CITED_REFERENCE = join(REFERENCES_DIR, "alpha.md");
 const CORE_RULES_FILE = join(KIT, "CORE_RULES.md");
+const AGENTS_FILE = join(KIT, "AGENTS.md");
 const ONE_SKILL_FILE = join(ONE_SKILL, "SKILL.md");
 const CITATION_LINE = "Read `./AGENTS.md`, then `./references/workflow/alpha.md`.";
 const HOT_SKILL = `# one-skill\n\n${CITATION_LINE}\n`;
@@ -83,12 +84,13 @@ function writeCleanKit(): void {
   mkdirSync(ONE_SKILL, { recursive: true });
   mkdirSync(REFERENCES_DIR, { recursive: true });
   writeFileSync(CORE_RULES_FILE, "# core\n");
+  writeFileSync(AGENTS_FILE, "# agents\n");
   writeFileSync(ONE_SKILL_FILE, HOT_SKILL);
   writeFileSync(CITED_REFERENCE, "# alpha\n");
 }
 
 function corpusBytes(): number {
-  return [CORE_RULES_FILE, ONE_SKILL_FILE, CITED_REFERENCE].reduce(
+  return [CORE_RULES_FILE, AGENTS_FILE, ONE_SKILL_FILE, CITED_REFERENCE].reduce(
     (total, path) => total + statSync(path).size,
     0,
   );

@@ -84,21 +84,14 @@ pipeline.
 ## Phase 2 — Reconcile
 
 Apply the assessment's findings to the task docs per `./references/workflow/reconciliation.md` and
-its **docs → reality** direction file `./references/workflow/reconciliation-docs-to-reality.md` —
-read both before editing; together they are the single source of truth and this phase adds no
-mechanics of its own. The shared file defines the shared mechanics (consent model, who runs the
-reference sweep, annotation formats, the append-only `## Reconciliation` record, the
-`## Current state` refresh, the sequence ending in the printed change list); the direction file
-defines the direction rules (write surface, repairs weaken while advances go through the shared
-engine), the shared repairs, and — in its `review-task-reconcile` mapping section — this pipeline's
-finding-type → edit mapping.
+its **docs → reality** direction file `./references/workflow/reconciliation-docs-to-reality.md`, read
+before editing: how those two split the mechanics between them, and that a phase running them adds
+none of its own, is the shared file's opening. This pipeline's finding-type → edit mapping is the
+direction file's `review-task-reconcile` section.
 
 The contract's reference sweep, `./references/workflow/reconciliation-sweep.md`, runs in this phase,
-its `## References` block printed before any edit. Enumerate its scope with
-`node <kit-root>/scripts/sweep-scope.ts <task folder>` before fetching anything, and fetch that set
-rather than one enumerated by hand; its contract is `<kit-root>/SCRIPTS.md`
-§ *`scripts/sweep-scope.ts`*, and `<kit-root>` resolves per `./references/workflow/task-store.md` § *Resolving `<kit-root>`*. <!-- cold -->
-Unavailable, the scope goes unenumerated and the sweep is reported skipped rather than hand-scoped.
+its `## References` block printed before any edit; that file owns the sweep in full, its scope script
+and the unavailable-script fallback included.
 It is this pipeline's only source of dead-link and reference-answered-question findings.
 
 The assessment's **numbered open questions** are put to the engineer and folded back into the plan per
@@ -121,12 +114,10 @@ Lists, never tables.
 - **Assessment** — the full review output exactly as `review-task` specs it, printed at the end of
   Phase 1 from pre-reconcile state, including the Plan Summary's `Cross-check:` line when `-x` was
   passed.
-- **References** — the reference check's tagged entries, printed at the start of Phase 2 before any
-  edit, exactly as the shared contract specs it — rendered even when nothing was in scope.
-- **Reconciliation applied** — the change list exactly as `./references/workflow/reconciliation.md`
-  specs it: every edit with the finding or engineer answer behind it, plus the "Not reconciled" list.
-  When nothing was actionable, print `Nothing to reconcile.` — and write nothing beyond the sweep's
-  `observations.md` rewrite, not even an empty Reconciliation entry.
+- **References** and **Reconciliation applied** — rendered exactly as their contracts spec them:
+  `./references/workflow/reconciliation-sweep.md` § *Output and routing* for the sweep's tagged
+  entries, which lands before any Phase 2 edit, and `./references/workflow/reconciliation.md`
+  § *Sequence and output* for the change list and for what a run with nothing actionable writes.
 
 **Next:** the concrete follow-up after the edits — `/implement-task <slug>` when the plan is now
 ready to execute, `/plan-task <slug>` for a step the review sent back for redesign, or the specific

@@ -285,9 +285,40 @@ test("the corpus totals every reference .md, every SKILL.md, and CORE_RULES.md i
   const { report } = runReport([KIT]);
   assert.deepStrictEqual(
     report.corpus,
-    { files: 13, bytes: 3717, approxTokens: 929 },
-    "the fixture kit's 8 reference files, 4 SKILL.md files, and CORE_RULES.md, counted not listed",
+    { files: 14, bytes: 3723, approxTokens: 931 },
+    "the fixture kit's 8 reference files, 4 SKILL.md files, CORE_RULES.md, and AGENTS.md, counted not listed",
   );
+});
+
+test("a missing root rule file is a corpus miss, never a silently shorter total", () => {
+  const kit = join(TEST_ROOT, "missing-agents-kit");
+  cpSync(FIXTURES, kit, { recursive: true });
+  rmSync(join(kit, "AGENTS.md"));
+  const { report } = runReport([kit]);
+  assert.deepStrictEqual(
+    report.corpusMisses,
+    ["AGENTS.md -> (no such file)"],
+    "an absent named member is recorded, so a capture refuses rather than anchoring the ratchet below the truth",
+  );
+  assert.strictEqual(report.corpus.files, 13, "everything the walk could reach is still measured");
+});
+
+test("a symlinked references root is a corpus miss, never a warned-away subtree", () => {
+  const kit = join(TEST_ROOT, "linked-root-kit");
+  cpSync(FIXTURES, kit, { recursive: true });
+  const outside = join(TEST_ROOT, "linked-root-references");
+  cpSync(join(kit, "references"), outside, { recursive: true });
+  rmSync(join(kit, "references"), { recursive: true });
+  symlinkSync(outside, join(kit, "references"));
+
+  const { report } = runReport([kit]);
+
+  assert.deepStrictEqual(
+    report.corpusMisses,
+    ["references -> (symlink)"],
+    "a linked root drops its whole subtree from the total, so a capture over it must refuse",
+  );
+  assert.strictEqual(report.corpus.files, 6, "the SKILL.md files and both root rule files are still measured");
 });
 
 test("a symlinked directory under references/ is skipped rather than followed into the corpus", () => {
@@ -343,7 +374,7 @@ test("a references subtree the walk cannot list is a contract entry, not a stder
   );
   assert.strictEqual(
     report.corpus.files,
-    12,
+    13,
     "gamma.md is missing from the count, which is exactly why the miss has to be reported",
   );
 });

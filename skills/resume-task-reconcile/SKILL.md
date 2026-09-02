@@ -49,8 +49,8 @@ sets; a model-invoked run carries no such consent and asks for every fix.
 **Skip when:**
 
 - You only want to know where the task stands → use `resume-task`; it is strictly read-only
-- The gap needs real work — code changes, re-running the acceptance gate, clearing a blocker → use
-  `implement-task`; this pipeline edits docs only
+- The gap needs real work, not a doc repair → `implement-task`, per `resume-task`'s Skip entry of
+  that name; this pipeline edits docs only
 - The information to write back came out of **this session's conversation** rather than the docs
   overstating reality → that's the opposite direction; use `reconcile-task`
 - The plan's `**Status:**` is `skipped` — terminal, and exempt from reconciliation entirely; Phase 1
@@ -72,23 +72,16 @@ never lost to a dead pipeline.
 ## Phase 2 — Reconcile
 
 Apply the brief's findings to the task docs per `./references/workflow/reconciliation.md` and its
-**docs → reality** direction file `./references/workflow/reconciliation-docs-to-reality.md` — read
-both before editing; together they are the single source of truth and this phase adds no mechanics of
-its own. The shared file defines the shared mechanics (consent model, who runs the reference sweep,
-annotation formats, the append-only `## Reconciliation` record, the `## Current state` refresh, the
-sequence ending in the printed change list); the direction file defines the direction rules (write
-surface, repairs weaken while advances go through the shared engine), the shared repairs, and — in
-its `resume-task-reconcile` mapping section — this pipeline's finding-type → edit mapping.
+**docs → reality** direction file `./references/workflow/reconciliation-docs-to-reality.md`, read
+before editing: how those two split the mechanics between them, and that a phase running them adds
+none of its own, is the shared file's opening. This pipeline's finding-type → edit mapping is the
+direction file's `resume-task-reconcile` section.
 
 Run the contract's reference sweep here, per `./references/workflow/reconciliation-sweep.md` — which
-owns it in full, down to why the sweep never substitutes for Phase 1's claim-level verification of
-what a finding names. Enumerate its scope with `node <kit-root>/scripts/sweep-scope.ts <task folder>`
-before fetching anything, and fetch that set rather than one enumerated by hand; its contract is
-`<kit-root>/SCRIPTS.md` § *`scripts/sweep-scope.ts`*, and `<kit-root>` resolves per `./references/workflow/task-store.md` § *Resolving `<kit-root>`*. <!-- cold -->
-Unavailable, the scope goes unenumerated and the sweep is reported skipped rather than hand-scoped.
-It runs in this phase because the brief
-sweeps nothing, so print its `## References` block after the brief and before any edit: it is this
-pipeline's only source of dead-link and reference-answered-question findings.
+owns it in full, its scope script and the unavailable-script fallback included, down to why the sweep
+never substitutes for Phase 1's claim-level verification of what a finding names. It runs in this
+phase because the brief sweeps nothing, so print its `## References` block after the brief and before
+any edit: it is this pipeline's only source of dead-link and reference-answered-question findings.
 
 Findings that need real work (code changes, re-running the acceptance gate, clearing a blocker) stay
 unfixed — they take the "Not reconciled" routing of `./references/workflow/reconciliation.md`
@@ -102,12 +95,11 @@ Lists, never tables.
 - **Brief** — the full briefing exactly as `resume-task` specs it, printed at the end of Phase 1 from
   pre-reconcile state. Its "Where to start" section is part of that snapshot; the **Next** line below
   is what accounts for the reconciled state.
-- **References** — the reference check's tagged entries, printed at the start of Phase 2 before any
-  edit, exactly as the shared contract specs it — rendered even when nothing was in scope.
-- **Reconciliation applied** — the change list exactly as `./references/workflow/reconciliation.md`
-  specs it: every edit with the finding or engineer answer behind it, plus the "Not reconciled" list.
-  When nothing was actionable, print `Nothing to reconcile.` — and write nothing beyond the sweep's
-  `observations.md` rewrite, not even an empty Reconciliation entry.
+- **References** and **Reconciliation applied** — the sweep's tagged entries and then the change
+  list, each rendered exactly as its own contract specs it
+  (`./references/workflow/reconciliation-sweep.md` § *Output and routing*,
+  `./references/workflow/reconciliation.md` § *Sequence and output*, the latter covering a run with
+  nothing actionable). References lands at the start of Phase 2, before any edit.
 
 **Next:** the concrete follow-up after the edits — the skill named against the "Not reconciled"
 findings (`/implement-task <slug>` for work the docs can't fix, `/plan-task <slug>` for a step that
