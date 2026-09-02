@@ -222,7 +222,7 @@ Example:
 - ticket ↔ goals — drift: ticket criterion "user can cancel a pending export" maps to no goal; add a delivering goal or drop the criterion.
 - CONTEXT ↔ goals — drift: goal G4 ("user can export archived rows") describes behavior CONTEXT's "Not Doing" excludes. Resolve by either lifting the exclusion or dropping the goal.
 - CONTEXT ↔ plan — no contradictions detected; restated grounding: the plan's Open Questions copies CONTEXT's resolved-questions list near-verbatim. Keep CONTEXT as the home; collapse the plan section to a citation plus its own plan-time questions.
-- goals ↔ plan — drift: `goals.md` lists G5 but the plan's Scope partition names it in neither the delivered nor deferred set — the partition is incomplete. Either deliver G5, defer it, or drop the goal.
+- goals ↔ plan — drift: `goals.md` lists G5 but the plan's Scope partition names it in neither the delivered nor deferred set — the partition is incomplete. Either deliver G5, defer it, or retire the goal.
 - plan ↔ result — drift: result file records Step 3 as shipped but the plan still shows `- [ ]`. Likely an interrupted `implement-task` run.
 - Status fields — plan is `executing` but no `result.md` exists (companion-file rule violated, per `./references/workflow/task-lifecycle.md`).
 ```

@@ -13,7 +13,10 @@ Everything else needs the engineer:
 
 1. Batch every judgment item into **one round of questions** after the report is printed — the host agent's structured question tool when available, otherwise chat. Reference the finding each question comes from and offer concrete options, not an open-ended "what should I do?".
 2. Apply only what the engineer actually answered: exactly the answer given, no redesign around it.
-3. Unanswered or declined items go to the "Not reconciled" list with the reason (`awaiting engineer answer`, or `needs real work via <skill>`).
+3. Whatever the run leaves unwritten goes to the "Not reconciled" list, each line opening with one of three labels — **this section is the one home for the labels**; the direction files and the skills cite it rather than restating it:
+   - **Needs work** — the docs can't carry the fix, or the run could not re-verify the claim; the line names the skill (`via /implement-task <slug>`, `via /plan-task <slug>`), with the reason where a criterion isn't re-runnable. A mapping row saying "Not reconciled" names `implement-task` or `plan-task` lands here, and so does every step or goal surfaced unverified.
+   - **Awaiting your answer** — a judgment item the round left unanswered or declined.
+   - **Yours to apply** — a surface no reconciler writes (`ticket.md`, a deliverable's `**Published:**` line — § *Never-annotated surfaces*), the proposed text attached where one exists, so the repair is a paste. A mapping row saying "Not reconciled" names the user lands here.
 
 ## The mapping legend
 
@@ -30,7 +33,11 @@ Reconciliation fixes the **docs, not the world**: no code changes, no git mutati
 
 ## One home per fact
 
-Every task-folder fact has one home file, and reconciliation respects it (`./one-home.md` § *One home per fact*): an edit records a finding **once**, in its home — grounding in `CONTEXT.md`, acceptance in `goals.md`, execution content in `plan.md`, history in `result.md`, an answer where its question lives. The upstream *ask* lives in `ticket.md`, **read-only** here: a changed ask is surfaced for the user, never written. A sibling needing the fact gets a `./` citation, never a copy.
+Every task-folder fact has one home file, and reconciliation respects it (`./one-home.md` § *One home per fact*): an edit records a finding **once**, in its home — grounding in `CONTEXT.md`, acceptance in `goals.md`, execution content in `plan.md`, history in `result.md`, an answer where its question lives. The upstream *ask* lives in `ticket.md`, **read-only** here: a changed ask is *Yours to apply*, never written. A sibling needing the fact gets a `./` citation, never a copy.
+
+## Grounding docs change by confirmation, never silently
+
+Writing `goals.md`, `CONTEXT.md` prose (`Recommended Direction`, `MVP Scope`, `Not Doing`, `Key Assumptions`), or a step's scope — anything that redefines scope or acceptance — is a **judgment item** in either direction: it goes through the batched confirmation round (§ *Consent model: obvious fixes only, ask for the rest*) and is written exactly as confirmed, never auto-applied and never on a report's suggestion or a session's word alone. What nominates the change is the direction's own evidence source — a session decision, a review's suggested rewrite, a ruling on a contradiction; the confirmation is the only license. `goals.md` edits obey the durable-ID scheme in `./task-goals.md`: a new goal takes the next free `G<n>`, IDs are never renumbered, a retired ID is never reused, and the file keeps its no-`**Status:**` / no-`## Description` shape. `CONTEXT.md`'s `**Status:**` origin marker is never touched. The upstream `ticket.md` sits outside the rule entirely (§ *One home per fact*). **This section is the one home for the rule**; the direction files and the skills cite it rather than restating it.
 
 ## Strengthen only on verified evidence
 
@@ -75,11 +82,12 @@ A finding routed **flag only** — every finding on the three surfaces above, an
 
 - plan.md — Step 3 unchecked; shipped claim gone (`src/auth/handler.ts` no longer defines `validateToken`) — finding: Drift since plan [warn]. Prior record: `#step-3--add-token-validation`
 - CONTEXT.md — References: spec-doc link marked broken (404) — finding: References [block]
+- goals.md — G4 reworded on the confirmed answer to Q2 — finding: Goal quality [weak]
 
 **Not reconciled:**
 
-- G2 regressed — needs real work: re-run the acceptance gate via `/implement-task <slug>`
-- Step 5 Verify criterion vague — awaiting engineer answer
+- Needs work — G2 regressed — re-run the acceptance gate via `/implement-task <slug>`
+- Awaiting your answer — Step 5 Verify criterion vague
 
 ---
 ```
@@ -89,23 +97,20 @@ A finding routed **flag only** — every finding on the three surfaces above, an
 Two in-place annotations recur across skills; the formats below fix the wording and the line each anchors to, so reconcilers invent neither. Which files they may be written in is the direction's write surface.
 
 - **Broken external link** — **auto**: append `— _broken as of YYYY-MM-DD (404)_` to the citing line (`CONTEXT.md`'s References or `## Open Questions`, a `plan.md` step or its `## Open Questions`), or swap in the new URL when a redirect target is known. **An annotation already correct on that line is a no-op**, re-dated in place only when the observed failure itself changed (404 → moved, with a known target), never appended twice. The three never-annotated surfaces take the never-annotated rule (§ *Never-annotated surfaces*) instead, never this format; prior `result.md` sections and `goals.md` carry no swept links at all (`./reconciliation-sweep.md` § *Scope*), so nothing there is annotatable.
-- **Answered open question** — **auto** only when the source answers it unambiguously (quote or tightly paraphrase it): append `— _answered YYYY-MM-DD: <answer> ([source](url) when there is one)_` to the question line in `CONTEXT.md`'s or `plan.md`'s Open Questions. **Ask** when the answer needs interpretation. A goal marked `_(unresolved: …)_` is never annotated in `goals.md` — it is surfaced in chat (docs → reality), or handled through the new-goal confirmation row (session → docs).
+- **Answered open question** — **auto** only when the source answers it unambiguously (quote or tightly paraphrase it): append `— _answered YYYY-MM-DD: <answer> ([source](url) when there is one)_` to the question line in `CONTEXT.md`'s or `plan.md`'s Open Questions. **Ask** when the answer needs interpretation. A goal marked `_(unresolved: …)_` is never annotated in `goals.md` — its resolution goes through each direction's goal confirmation row (*Goal quality findings* on the docs → reality side, *New, reworded, or retired goal decided in session* on the session → docs side), per § *Grounding docs change by confirmation, never silently*.
 
 **A carried-forward tag routes no new edit** in either direction: this sweep's fetch established nothing, so the last observation's `warn`/`block` simply stands (`./reconciliation-sweep.md` § *Tags*). The no-op above holds identically for an already-correct gone/moved note on a `**Pointers:**` entry — re-dated only when the observed failure itself changed, never written twice. **This section is the one home for both no-ops**; the direction files cite it rather than restating either. What a carried tag does still route is its *finding*, where that was flag only (§ *Flag-only findings are re-reported*).
 
 ## Cited reference changed
 
-The sweep's `warn` (doc rewritten, ticket closed, PR merged) or `block` on a `**Pointers:**` entry — the artifact behind the pointer deleted or moved — beyond answering an open question, which takes § *Annotation formats* instead. **This section is the one home for the row**; each direction file cites it and names only which of the deltas below it takes. **auto** for the world-truth surfaces only: refresh the affected `**Pointers:**` entry in § *Current state refresh* — for a `block`, a dated gone/moved note keeping the identifier — and note the observation in the `## Reconciliation` entry when other edits already warrant one, never appending one just for it. Then:
+The sweep's `warn` (doc rewritten, ticket closed, PR merged) or `block` on a `**Pointers:**` entry — the artifact behind the pointer deleted or moved — beyond answering an open question, which takes § *Annotation formats* instead. **This section is the one home for the row**; each direction file cites it rather than restating it. **auto** for the world-truth surfaces only: refresh the affected `**Pointers:**` entry in § *Current state refresh* — for a `block`, a dated gone/moved note keeping the identifier — and note the observation in the `## Reconciliation` entry when other edits already warrant one, never appending one just for it. Then:
 
 - never a status flip on its own: a merged PR is not the acceptance gate, and `blocked` clears when work resumes, and reconciliation doesn't resume work;
 - a `block` on a `CONTEXT.md` or `plan.md` citing line takes the broken-link format of § *Annotation formats*, not this row; a `warn`/`block` on a never-annotated surface takes § *Never-annotated surfaces* rather than either;
 - **route each citing occurrence by its own surface** (`./reconciliation-sweep.md` § *Fetching*): one URL named by both a `**Pointers:**` entry and the deliverable's `**Published:**` line produces both outcomes, never one in place of the other;
 - a carried-forward tag and an already-correct gone/moved note route nothing new (§ *Annotation formats*); where that carried tag's finding was flag only, or its ask declined or unanswered, the finding itself is re-reported (§ *Flag-only findings are re-reported*).
 
-**Two deltas, one per direction**, on the one case the directions route apart — a changed reference contradicting `CONTEXT.md` prose:
-
-- **docs → reality** — **flag only**, that prose never being rewritten in that direction: name `plan-task`.
-- **session → docs** — an **ask**, per that direction's `./reconciliation-session-to-docs.md` § *Grounding docs change by confirmation, never silently*.
+A changed reference contradicting `CONTEXT.md` prose is an **ask** in both directions, per § *Grounding docs change by confirmation, never silently*: confirm the prose, then write the matching section.
 
 ## Current state refresh
 
@@ -142,9 +147,10 @@ Every reconciler writes `plan.md` through the same five shared openings; the ses
 
 - `plan.md` — <edit> (finding: <section> [tag], or: engineer answer to Q<n>)
 - `result.md` — <edit> (finding: …)
-- `CONTEXT.md` — <annotation> (finding: …)
+- `CONTEXT.md` — <annotation, or confirmed prose rewrite> (finding: …)
+- `goals.md` — <edit> (finding: …, or: engineer answer to Q<n>)
 
 **Not reconciled:**
 
-- <finding> — <needs real work via <skill> / awaiting engineer answer>
+- <Needs work | Awaiting your answer | Yours to apply> — <finding> — <skill, or the proposed text; omitted for Awaiting your answer>
 ```

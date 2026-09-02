@@ -28,7 +28,7 @@ against the reference contract it names. Three overrides apply pipeline-wide:
 Past these three, a phase departs from its skill or contract only where its own section below says
 so — never by improvisation.
 
-**CRITICAL**: The write surface is exactly the four task files
+**CRITICAL**: The write surface is exactly the five task files
 `./references/workflow/reconciliation-docs-to-reality.md` § *Write surface* fixes, and nothing
 else — that section names every never-edited file and why. This pipeline fixes the **docs**, not the
 world (`./references/workflow/reconciliation.md` § *Docs, not the world*). It still does not
@@ -94,18 +94,19 @@ its `## References` block printed before any edit; that file owns the sweep in f
 and the unavailable-script fallback included.
 It is this pipeline's only source of dead-link and reference-answered-question findings.
 
-The assessment's **numbered open questions** are put to the engineer and folded back into the plan per
-the direction file's § *`review-task-reconcile` — assessment findings*, bounded by its § *Repairs
-weaken; advances go through the shared engine* for what an engineer answer may move: an answer refines
-plan content, and any advance goes through `./references/workflow/reconciliation.md` § *Strengthen
-only on verified evidence*, re-verified in this run. The assessment's **Answered by research** list
+The assessment's **numbered open questions** are put to the engineer and folded back into the task
+docs per the direction file's § *`review-task-reconcile` — assessment findings*, bounded by its
+§ *Repairs weaken; advances go through the shared engine* for what an engineer answer may move: an
+answer refines plan and grounding content, and any advance goes through
+`./references/workflow/reconciliation.md` § *Strengthen only on verified evidence*, re-verified in
+this run. The assessment's **Answered by research** list
 stays out of that standalone question round. Its originating findings still follow the direction's
 mapping: a disproved finding needs no Phase 2 action, while one the answer merely supplied repair
 content for carries that answer into its existing **ask** row as the proposed edit.
 
-Findings that need real work (a step that must be rethought, a goal the user has to rewrite, code
-changes) stay unfixed, listed under "Not reconciled" with the next skill named (`plan-task`,
-`implement-task`) per § *Consent model: obvious fixes only, ask for the rest*.
+Findings that need real work (a step that must be rethought, code changes) stay unfixed, listed as
+*Needs work* under "Not reconciled" with the next skill named (`plan-task`, `implement-task`) per
+§ *Consent model: obvious fixes only, ask for the rest*.
 
 ## Output
 
@@ -120,8 +121,8 @@ Lists, never tables.
   § *Sequence and output* for the change list and for what a run with nothing actionable writes.
 
 **Next:** the concrete follow-up after the edits — `/implement-task <slug>` when the plan is now
-ready to execute, `/plan-task <slug>` for a step the review sent back for redesign, or the specific
-goal rewrite left for the user to apply in `goals.md`.
+ready to execute, or `/plan-task <slug>` for a step the review sent back for redesign or a direction
+a confirmed grounding edit changed.
 
 ## Verification
 
@@ -139,16 +140,20 @@ Confirm the protocol invariants before finishing:
       § *`review-task-reconcile` — assessment findings*
 - [ ] Every box checked or `**Status:**` advanced went through
       `./references/workflow/reconciliation.md` § *Strengthen only on verified evidence*,
-      re-verified in this run — an engineer's answer refines plan content, never state
+      re-verified in this run — an engineer's answer refines plan and grounding content, never state
 - [ ] The reference check ran in Phase 2 — or its gate skipped it — its scope enumerated by
       `sweep-scope.ts` rather than by hand, with the `## References` block printed before any edit,
       rendered even when nothing was in scope, and `observations.md` rewritten with the swept lines
       or removed — `reconciliation-sweep.md`
-- [ ] Write surface held: nothing written outside the four files the direction fixes, and every file
+- [ ] Write surface held: nothing written outside the five files the direction fixes, and every file
       that section keeps off the surface untouched —
       `./references/workflow/reconciliation-docs-to-reality.md` § *Write surface*
 - [ ] No implementation and no redesign; steps needing rethinking flagged and routed to
       `plan-task` — the *Infeasible or conflicts-with-existing steps* row
-- [ ] Closing change list printed, with real-work findings under "Not reconciled" and the next skill
+- [ ] Closing change list printed, with *Needs work* lines under "Not reconciled" and the next skill
       named — or `Nothing to reconcile.` with nothing written beyond the sweep's
       `observations.md` rewrite — § *Sequence and output*
+- [ ] A declined or unanswered judgment item landed under "Not reconciled" as *Awaiting your answer*,
+      never applied, and a user-owned surface as *Yours to apply* with its proposed text where
+      one exists — `./references/workflow/reconciliation.md` § *Consent model: obvious fixes only,
+      ask for the rest*

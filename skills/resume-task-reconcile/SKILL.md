@@ -84,7 +84,7 @@ phase because the brief sweeps nothing, so print its `## References` block after
 any edit: it is this pipeline's only source of dead-link and reference-answered-question findings.
 
 Findings that need real work (code changes, re-running the acceptance gate, clearing a blocker) stay
-unfixed — they take the "Not reconciled" routing of `./references/workflow/reconciliation.md`
+unfixed — listed as *Needs work* under "Not reconciled" per `./references/workflow/reconciliation.md`
 § *Consent model: obvious fixes only, ask for the rest*, with the next skill named
 (`implement-task`, `plan-task`).
 
@@ -101,8 +101,8 @@ Lists, never tables.
   `./references/workflow/reconciliation.md` § *Sequence and output*, the latter covering a run with
   nothing actionable). References lands at the start of Phase 2, before any edit.
 
-**Next:** the concrete follow-up after the edits — the skill named against the "Not reconciled"
-findings (`/implement-task <slug>` for work the docs can't fix, `/plan-task <slug>` for a step that
+**Next:** the concrete follow-up after the edits — the skill named against the *Needs work* lines
+(`/implement-task <slug>` for work the docs can't fix, `/plan-task <slug>` for a step that
 needs rethinking), or the first action from the brief when nothing was left unreconciled.
 
 ## Verification
@@ -116,8 +116,9 @@ Confirm the protocol invariants before finishing:
       scan's own watermark bookkeeping — routed by
       `./references/workflow/reconciliation-docs-to-reality.md`
       § *`resume-task-reconcile` — brief findings*
-- [ ] Judgment items went to the engineer as one batched round, and anything unanswered or declined
-      landed under "Not reconciled" with its reason, per `./references/workflow/reconciliation.md`
+- [ ] Judgment items went to the engineer as one batched round, anything unanswered or declined
+      landed under "Not reconciled" as *Awaiting your answer*, and a user-owned surface as *Yours to
+      apply* with its proposed text where one exists, per `./references/workflow/reconciliation.md`
       § *Consent model: obvious fixes only, ask for the rest*
 - [ ] The reference check ran in Phase 2 — or its gate skipped it — its scope enumerated by
       `sweep-scope.ts` rather than by hand, with the `## References` block printed after the brief
@@ -132,5 +133,5 @@ Confirm the protocol invariants before finishing:
       checked or status advanced went through `./references/workflow/reconciliation.md`
       § *Strengthen only on verified evidence*, re-verified in this run
 - [ ] The run closed with the change list `./references/workflow/reconciliation.md`
-      § *Sequence and output* specs — real-work findings under "Not reconciled" with the next skill
+      § *Sequence and output* specs — *Needs work* lines under "Not reconciled" with the next skill
       named, or `Nothing to reconcile.` when nothing was actionable

@@ -14,7 +14,7 @@ This skill closes the gap a working or design session opens: things get decided,
 **CRITICAL**: This skill writes to the task docs by design. Consent — which fixes apply unprompted versus go to the batched round — is fixed by `./references/workflow/reconciliation.md` § *Consent model: obvious fixes only, ask for the rest*. Two guardrails and one boundary hold it:
 
 - **Strengthen only on verified evidence** — progress is recorded only on evidence re-verified this session, never a chat claim (`./references/workflow/reconciliation.md` § *Strengthen only on verified evidence*).
-- **Grounding docs change by confirmation** — anything redefining scope or acceptance goes through the batched confirmation round, never an auto-apply (`./references/workflow/reconciliation-session-to-docs.md` § *Grounding docs change by confirmation, never silently*).
+- **Grounding docs change by confirmation** — anything redefining scope or acceptance goes through the batched confirmation round, never an auto-apply (`./references/workflow/reconciliation.md` § *Grounding docs change by confirmation, never silently*).
 - **Docs, not the world** — no source code written, no git state mutated, no external system updated (`./references/workflow/reconciliation.md` § *Docs, not the world*). Which files this direction may write, and which stay read-only, is `./references/workflow/reconciliation-session-to-docs.md` § *Write surface*; a `warn` or `block` on one of the read-only surfaces routes by `./references/workflow/reconciliation.md` § *Never-annotated surfaces*. Output is those files plus a chat change list — no scratch artifact.
 
 ## When to Use
@@ -70,7 +70,7 @@ Walk the session and collect everything material the docs don't already carry, t
 - **Plan changes** — a step whose scope, verify criterion, or ordering the session changed.
 - **A changed ask** — the session revealed the product requirement shifted from what `ticket.md` states; it routes by the *Changed ask* row in `./references/workflow/reconciliation-session-to-docs.md` § *`reconcile-task` — session findings*.
 
-Group findings by target file (`CONTEXT.md` / `goals.md` / `plan.md` / `result.md`) — the ticket and a doc task's deliverable are read-only, so a changed ask lands under "Not reconciled" for the user, and a deliverable finding lands there too — its `**Published:**` line for the user, its content for `implement-task`.
+Group findings by target file (`CONTEXT.md` / `goals.md` / `plan.md` / `result.md`) — the ticket and a doc task's deliverable are read-only, so a changed ask lands under "Not reconciled" as *Yours to apply*, and a deliverable finding lands there too — its `**Published:**` line *Yours to apply*, its content *Needs work* via `implement-task`.
 
 ### 4. Check the Cited External References
 
@@ -129,9 +129,12 @@ Print the findings report **first**, from **pre-reconcile** state, never regener
 (or, when none in scope: `No external references in sweep scope.` — this heading always renders)
 
 ## Not reconciled
-- <finding> — <needs real work via implement-task / unverifiable this session>
+- Needs work — <finding> — via `/implement-task <slug>`
+- Yours to apply — <finding> — `ticket.md` / `**Published:**`; proposed text: <…>
 
-(or, when the session and the reference check both add nothing beyond the docs: `Nothing to reconcile.`)
+(*Awaiting your answer* never appears here — the report prints before the batched round.)
+
+(Or, when the session and the reference check both add nothing beyond the docs: `Nothing to reconcile.`)
 ```
 
 Then run Step 5 (verify) and Step 6 (auto-apply enrichments, then the batched confirmation round for the `[ask]` items), and close with the change list — reusing the format in `./references/workflow/reconciliation.md`:
@@ -143,7 +146,7 @@ Then run Step 5 (verify) and Step 6 (auto-apply enrichments, then the batched co
 
 **Not reconciled:**
 
-- <finding> — <needs real work via implement-task / awaiting answer / unverifiable this session>
+- <Needs work | Awaiting your answer | Yours to apply> — <finding> — <skill, or the proposed text; omitted for Awaiting your answer>
 ```
 
 (or, when nothing was actionable: `Nothing to reconcile.` — and no file beyond the sweep's `observations.md` rewrite was written)
@@ -162,6 +165,6 @@ Confirm the protocol invariants before finishing. Each item names the file, or t
 - [ ] A `skipped` plan handled per § *Skipped plans are exempt* — nothing swept, nothing written
 - [ ] The run followed § *Sequence and output*: findings report printed first from pre-reconcile state, every edit after it, closing change list printed
 - [ ] The reference sweep run before any edit — or gated out — its scope enumerated by `sweep-scope.ts` rather than by hand, its results tagged, rendered under `## References`, and ledgered per `reconciliation-sweep.md`, its flag-only findings routed by § *Never-annotated surfaces*
-- [ ] State advanced only per the shared file's § *Strengthen only on verified evidence* — Step 5's gate, its integrated-health precondition before any advance claiming the work complete, the evidence recorded in `result.md`; grounding docs (`goals.md`, `CONTEXT.md` prose, a step's scope) changed only per the direction file's § *Grounding docs change by confirmation, never silently*
+- [ ] State advanced only per the shared file's § *Strengthen only on verified evidence* — Step 5's gate, its integrated-health precondition before any advance claiming the work complete, the evidence recorded in `result.md`; grounding docs (`goals.md`, `CONTEXT.md` prose, a step's scope) changed only per the shared file's § *Grounding docs change by confirmation, never silently*
 - [ ] Every edit falls inside the direction file's § *Write surface* and maps to a printed finding or an answer to one, with no code, git, or external-system mutation per § *Docs, not the world*; no scratch artifact written
 - [ ] `## Current state` refreshed at the end of the run per § *Current state refresh*, its `done`-result freeze included; the size trigger tested with `task-state.ts --compaction-plan` (or the untested run said so), and the compaction proposal raised as an ask item on its `due`
