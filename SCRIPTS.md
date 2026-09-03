@@ -333,14 +333,14 @@ finished reading.
 Walks task roots and reports lifecycle health findings for the `maintain` skill.
 
 ```
-node scripts/health-check.ts [--stale-days N] [--result-max-kb N] <root> [<root>...]
+node scripts/health-check.ts [--stale-days N] [--result-max-kb N] [--task-max-kb N] [--record-max-kb N] <root> [<root>...]
 node scripts/health-check.ts --installs <kit-root> <home> [<home>...]
 ```
 
 **Emitted `check` values.** The task walk reports `stale`, `done-unarchived`, `started-in-backlog`,
 `unknown-status`, `legacy-result-status`, `dead-anchor`, `goal-id`, `no-current-state`,
-`oversized-result`, and `duplicate-slug`; `--installs` walks no tasks and reports `install-drift`
-instead.
+`oversized-result`, `oversized-task`, `oversized-record`, and `duplicate-slug`; `--installs` walks no
+tasks and reports `install-drift` instead.
 
 **Archived and backlogged folders.** Archived folders are counted in `scanned` and exempt from every
 check but `duplicate-slug`, which sees them because a bare slug falls back into `Archive/`
@@ -417,6 +417,16 @@ caller to. The import runs that way round because this script's CLI runs at modu
 *it* would run a whole walk as a side effect, while `task-state.ts` guards its CLI behind a direct-run
 check and can be imported for its pure layer.
 
+**The two budget measures have no second reader.** `oversized-task` sums the on-disk byte length of
+every `.md` file directly in the folder except `ticket.md` and its legacy `*.ticket.md` form — the
+same stat pass the age check already makes, so no file is read twice — and `oversized-record`
+measures each `## Step` or `## Full Run` section of `result.md`, heading line through the line
+before the next `##` heading, fenced content included because it is section content. Both fire
+strictly over their budget, both default to `scripts/lifecycle-constants.ts` and take a flag, and
+both are exempt under `Archive/`. Unlike `oversized-result` there is no compaction plan or second
+script to agree with, so their measures are fixed here and by the fixtures rather than by a shared
+function.
+
 These markdown-reading constants and helpers are mirrored in `scripts/task-state.ts`, the fence and
 status halves again in `scripts/task-move.ts`, the fence, heading, step-title, and checkbox halves
 again in `scripts/commit-scan.ts`, and the fence and heading halves again in
@@ -438,8 +448,8 @@ the other not is drift rather than a copy-mode difference.
 ## `scripts/lifecycle-constants.ts`
 
 The task constants `scripts/health-check.ts`, `scripts/task-move.ts`, and `scripts/task-state.ts`
-read: the plan status vocabulary, the terminal set, the compaction size trigger, and the recognition
-set that identifies a task folder by its contents.
+read: the plan status vocabulary, the terminal set, the compaction size trigger, the folder and
+record size budgets, and the recognition set that identifies a task folder by its contents.
 
 Each value is owned in prose by a reference file; this module is their one sanctioned
 machine-readable copy (AGENTS.md § *Consumer lists*) and changes in the same edit as the prose. Left
@@ -457,6 +467,10 @@ stale, done-unarchived, started-in-backlog — go quiet on every task holding it
 - **`RESULT_MAX_KB`** — `references/workflow/reconciliation-compaction.md`
   § *Compaction (size trigger)*, which `maintain` reads at run time and passes as `--result-max-kb`;
   this copy only keeps a bare health-check run honest.
+- **`TASK_MAX_KB`** — `references/workflow/task-layout.md` § *One task, one flat folder*: the folder
+  budget `oversized-task` measures, over the folder's `.md` bytes excluding `ticket.md`.
+- **`RECORD_MAX_KB`** — the same section: the per-record budget `oversized-record` measures, over one
+  `## Step` or `## Full Run` section of `result.md`.
 - **`ROLE_FILES`, `ROLE_SUFFIXES`, `holdsRoleFile`** — `references/workflow/task-layout.md`
   § *One task, one flat folder*: a folder is a task folder when it holds one of these files. The
   suffix forms are legacy names the format sweep renames, kept because only the kit's own canonical
@@ -800,8 +814,8 @@ disagree about which pause is active.
 
 `deliverable` is the doc-task deliverable, resolved per
 `references/workflow/doc-task-files.md` without the plan's optional `**Deliverable:**` header: the
-folder's `.md` that is neither a role file nor one of the two derived roles beside them
-(`diagram.md`, `observations.md`) and that carries a `**Status:**` line in its own header block —
+folder's `.md` that is neither a role file nor the derived role beside them (`observations.md`) and
+that carries a `**Status:**` line in its own header block —
 above the first `##` heading, never inside a fence or a blockquote, which is what keeps a doc quoting
 another file's header out. `deliverableCandidates` names every file passing that test; two is a
 layout error to surface rather than guess between, so `deliverable` is null, both are named, and the
@@ -873,10 +887,11 @@ The fence and status halves mirror `scripts/health-check.ts`; see the mirror not
 
 ## `scripts/task-state.ts`
 
-Reports one task folder's mechanical plan state for the `resume-task` and `review-task` skills:
-checkbox state, the next pending step, checkpoint outcomes, result-anchor resolution, and the
-goal-coverage map. Those skills keep the judgment that reads this report — whether a claim still
-holds, whether a citing step delivers all of its goal — and stop hand-enumerating the facts under it.
+Reports one task folder's mechanical plan state for the skills that open a resolved task folder:
+checkbox state, the next pending step and its body, checkpoint outcomes, result-anchor resolution,
+the goal-coverage map, and the result's current-state block. Those skills keep the judgment that
+reads this report — whether a claim still holds, whether a citing step delivers all of its goal — and
+stop hand-enumerating the facts under it, and stop opening the files the report already carries.
 Its second mode, `--compaction-plan`, reports the same kind of mechanical fact for a compaction
 proposal (`references/workflow/reconciliation-compaction.md`). **Neither mode writes anything.**
 
@@ -886,7 +901,7 @@ node scripts/task-state.ts --compaction-plan <task-dir>
 ```
 
 **Contract.** stdout is exactly one JSON object,
-`{taskDir,plan,result,goalsFile,steps,nextPendingStep,checkpoints,goalCoverage}`.
+`{taskDir,plan,result,goalsFile,steps,nextPendingStep,nextPendingStepBody,checkpoints,goalCoverage,currentState}`.
 
 `plan` is `{file,status,statusRaw}`: `status` is a value of the plan lifecycle vocabulary, `unknown`
 for a header the vocabulary does not hold, or null for no status header at all. `plan.md` is the
@@ -906,7 +921,12 @@ nothing, and a boolean for a checked one — false when the link is missing, poi
 or names a heading `result.md` does not hold, counting a tombstone under its `## Compacted` stub as
 held. `goalEscape` marks the `**Goal:** none (infra/refactor)` escape, which is what separates a
 deliberate infra step from an orphan. `nextPendingStep` is the first unchecked step's number, null
-when every step is checked. `checkpoints` lists every `### Checkpoint after Step N` the plan authors,
+when every step is checked; `nextPendingStepBody` is `{what,verify}` for that step — the text after
+the `**What:**` marker on its checkbox line and after the `**Verify:**` marker on its own line, each
+trimmed, each null when the step writes no such line, and the pair null when no step is pending. Both
+are single lines as the plan format writes them: a criterion wrapped across lines reports its first
+line, which is the report saying to open the step rather than a truncation to act on.
+`checkpoints` lists every `### Checkpoint after Step N` the plan authors,
 in plan order, each with the `**Outcome:**` token of the matching result section — null when no such
 section exists, which is a checkpoint that has not run.
 
@@ -918,6 +938,13 @@ that expected rather than a gap. `orphanSteps` are steps citing no goal and carr
 `goals.md` to check against. `scopePartition` is
 `{delivered,deferred,missingFromPartition,inBoth}` over `goals.md`'s IDs, read from the plan's
 `## Scope`; the partition is total exactly when the last two lists are empty.
+
+`currentState` is the text of `result.md`'s `## Current state` block — its heading line through the
+`---` that closes it, or, where none does, through the line before the next `##` heading — verbatim,
+trailing blank space trimmed. It is null when the folder has no `result.md` and when the file opens
+no such block; a `### Current state` nested under a later section is not the block, the same level-2
+rule the keep-list below applies. Carrying the block here is what lets a caller read a task's
+standing state without opening the log beneath it.
 
 **`--compaction-plan` mode** answers the mechanical half of a compaction proposal — is one due, may it
 run at all, and what would it collapse — for the skills that propose one. stdout is exactly one JSON
@@ -1146,7 +1173,8 @@ node --test "tests/*.test.ts"           # every suite — quoted, because the ru
 - **`task-move.test.ts`** — `scripts/task-move.ts`: the guarded archive and backlog moves, their
   preconditions, and the 0/1/2 exit contract.
 - **`task-state.test.ts`** — `scripts/task-state.ts`: the plan-state report — checkbox state, next
-  pending step, checkpoint outcomes, result-anchor resolution, goal coverage — the
+  pending step with its `nextPendingStepBody`, checkpoint outcomes, result-anchor resolution, goal
+  coverage, the `currentState` block and where it ends — the
   `--compaction-plan` mode's size trigger, `HEAD` precondition, and keep/removable split, and its
   0/1/2 exit contract. The CLI cases run fixture task folders end to end; the parsing variants call
   the exported pure layer directly, which needs no folder on disk. Its precondition cases build real
@@ -1180,6 +1208,11 @@ node --test "tests/*.test.ts"           # every suite — quoted, because the ru
 - **`worktree-merge.test.ts`** — `scripts/worktree-merge.ts`: the baseline manifest, the
   returned-worktree surface check, the verified incorporation and its verification, the receipt gate
   on removal, and the 0/1/2 exit contract.
+- **`templates.test.ts`** — `references/templates/`: a task folder built from the five templates
+  with their placeholders filled parses under `scripts/task-state.ts` with a vocabulary plan status,
+  closed goal coverage, and a `currentState` block, and raises no finding under
+  `scripts/health-check.ts`. A template that drifts out of the shape those two scripts read is
+  otherwise caught only by a real task going wrong.
 - **`invocation-gate.test.ts`** — the invocation gate's three-way invariant
   (`references/workflow/skill-conventions.md` § *The invocation gate*): a gated skill carries
   `disable-model-invocation: true` in its `SKILL.md` frontmatter, an `agents/openai.yaml` denying

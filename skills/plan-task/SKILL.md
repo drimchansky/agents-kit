@@ -27,7 +27,7 @@ For code, `./references/engineering/planning.md` gives these heuristics in engin
 
 ## Invariants
 
-**CRITICAL**: the output of this skill is two written files on disk — `goals.md` and `plan.md` — not a conversation message. After writing them, summarize briefly in the chat and point at the files. A third file, `diagram.md`, is written only when Step 5a's test warrants it.
+**CRITICAL**: the output of this skill is two written files on disk — `goals.md` and `plan.md` — not a conversation message. After writing them, summarize briefly in the chat and point at the files.
 
 - **One folder, fixed names.** Everything lands in the task folder Step 2 resolves, beside its `CONTEXT.md`, under fixed role names: always `goals.md` and `plan.md`, no slug prefix, one plan per folder. Skills find them by these names; the folder itself may be a path someone typed, the files inside it never are.
 - **Slug.** The folder name is the slug: 2–5 lowercase kebab-case words capturing the gist (`add-csv-export`, `fix-stale-cache-invalidation`). Derive it — don't ask. A slug colliding with an existing folder for a different effort gets a more specific one.
@@ -51,7 +51,7 @@ Resolve per the **resolve-or-create** discovery rules in `./references/workflow/
 
 The folder is this plan's authoritative home. Read its `CONTEXT.md`, and its `ticket.md` when present — Step 3 sharpens the ticket's criteria into goals. An existing `CONTEXT.md` is never rewritten; surface a missing `./ticket.md` citation in chat instead of editing it.
 
-**Scaffold a missing `CONTEXT.md`** before drafting the plan, per `./references/workflow/context-schema.md`: `**Status:** drafted-by-plan-task`; `Problem Statement` and `Key Assumptions to Validate` from the task description, or — with a `ticket.md` present — `Problem Statement` citing `./ticket.md` and the assumptions derived from it; every other section left a placeholder, so downstream consumers read the same section names however the task started.
+**Scaffold a missing `CONTEXT.md`** before drafting the plan — copy `./references/templates/CONTEXT.md` and fill it per `./references/workflow/context-schema.md`: `Problem Statement` and `Key Assumptions to Validate` from the task description, or — with a `ticket.md` present — `Problem Statement` citing `./ticket.md` and the assumptions derived from it; every other section left a placeholder, so downstream consumers read the same section names however the task started.
 
 **Infer `**Domain:**`** from the task description (`engineering` for a code change, `bureaucracy` for a residence application), or carry over what `refine-idea` set. Default to `engineering` for code work or ambiguity *within a coding context*; when the task is clearly non-code and the right domain is unclear, **ask** rather than stamping a label — a wrong `**Domain:**` silently loads the wrong rules.
 
@@ -85,13 +85,6 @@ Compare viable approaches, actively looking for ones the user may not have consi
 Weigh each on alignment with existing patterns, the minimum complexity that meets the requirements, risk and reversibility, and relative effort — a line per axis is enough.
 
 A `CONTEXT.md` `## Recommended Direction` is the starting point: `## Approach` **cites** it and records only the plan-time refinements and decisions.
-
-### 5a. Draw the Task Diagram (when warranted)
-
-With the approach chosen, draw the task's optional `diagram.md` when the resolved domain pack's diagram guidance says the change warrants one — for code, `./references/engineering/planning.md` § *The task diagram*, which owns the warranted test, what a diagram depicts, its altitude, and the notation. This skill owns only the timing and the file; it carries no diagram or Mermaid knowledge of its own.
-
-- **Warranted** → write `<task-dir>/diagram.md` in the format fixed by `./references/workflow/task-diagram.md`, its dated `**Reflects:**` line anchored `as of the plan`, and add the `**Diagram:**` link-header to the plan.
-- **Not warranted, or the resolved domain ships no diagram guidance** → write nothing, add no header. This is where most tasks land, and absence is the intended state rather than a gap: nothing records the decision, and no skill later reports the file as missing. Drawing one for a change with no structural shape is the failure mode to watch; the pack's not-warranted examples are the calibration.
 
 ### 6. Define Scope
 
@@ -156,78 +149,9 @@ For code, `./references/engineering/planning.md` gives file-count proxies for th
 
 ## Output
 
-**`goals.md`:**
+**`goals.md`** — copy `./references/templates/goals.md`; Step 3's `(external)` and `_(unresolved: …)_` markers are the optional glosses on its bullets.
 
-```markdown
-# Goals: <task title>
-
-**Plan:** [./plan.md](./plan.md)
-
-## Goals
-
-- G1 — <short, observable, externally-verifiable outcome>
-- G2 — <outcome>
-- G3 (external) — <outcome verified outside the session: human/client sign-off or live check>
-```
-
-**`plan.md`** — this top-level layout, adapted to task size; not every plan needs every section:
-
-```markdown
-# <task title>
-
-**Status:** to-do
-**Ticket:** [./ticket.md](./ticket.md) _(only when the task has one)_
-**Deliverable:** [./adr.md](./adr.md) _(only for a doc task — `./references/workflow/doc-task-files.md`)_
-**Context:** [./CONTEXT.md](./CONTEXT.md)
-**Goals:** [./goals.md](./goals.md)
-**Diagram:** [./diagram.md](./diagram.md) _(only when the change warranted one — see Step 5a)_
-**Result:** _(populated by `implement-task`: link to `./result.md`)_
-
-## Exploration Findings
-
-<key patterns, affected files, constraints — this pass's deltas beyond ./CONTEXT.md only (Step 4)>
-
-## Approach
-
-<the recommended approach and its rationale (Step 5); a side-by-side bullet list of alternatives only when several are viable>
-
-## Scope
-
-- **In scope:** <delivered goal IDs · what changes>
-- **Out of scope:** <deferred goal IDs · what won't change>
-- **Boundaries:** ...
-
-## Steps
-
-### Step 1 — <short title>
-
-- [ ] **What:** <one-sentence change>
-- **Verify:** <how to confirm>
-- **Goal:** <goal ID(s) this step delivers — e.g. `G1, G3` — or `none (infra/refactor)`>
-- **Depends on:** <prior step numbers, or "none">
-- **Due:** none _(optional; the date it must finish by)_
-- **Lead time:** none _(optional; how long it takes once started — e.g. "visa: ~8 weeks")_
-- **Touches:** none _(optional; the step's declared edit surface)_
-
-### Step 2 — <short title>
-
-- [ ] **What:** ...
-- **Verify:** ...
-- **Goal:** <IDs, or none (infra/refactor)>
-- **Depends on:** Step 1
-
-### Checkpoint after Step 2 _(only for plans >5 steps)_
-
-- End-to-end: <name the concrete outcome>
-
-## Risks
-
-- ...
-
-## Open Questions
-
-- <questions that arose during planning; CONTEXT's open questions are cited, not copied>
-```
+**`plan.md`** — copy `./references/templates/plan.md`, adapting the layout to task size; not every plan needs every section. Step 4's deltas fill `## Exploration Findings` and Step 5's choice `## Approach`. A doc task's `**Deliverable:**` names the file `./references/workflow/doc-task-files.md` assigns it; drop the line otherwise.
 
 Each step's leading `- [ ]` is the marker `implement-task` flips to `- [x]`, appending a link to the result file section. The plan starts at `to-do`, written by this skill; `implement-task` drives it through `executing` to `done` — or parks it at `in-review` when the goals include an `(external)` item still awaiting verification. If the user decides not to proceed **before execution begins** — a triage or scoping call, such as dropping a now-obsolete sibling plan — set `**Status:**` to `skipped` rather than deleting the plan or leaving a stale `to-do`, and add a `result.md` only if it's worth recording why. Full vocabulary and transitions: `./references/workflow/task-lifecycle.md`.
 
@@ -235,12 +159,11 @@ Each step's leading `- [ ]` is the marker `implement-task` flips to `- [x]`, app
 
 Confirm the protocol invariants before finishing:
 
-- [ ] Folder resolved or created per `task-layout.md`; `CONTEXT.md` present — a scaffolded one carrying `**Status:** drafted-by-plan-task` and an inferred (or asked-for) `**Domain:**`
+- [ ] Folder resolved or created per `task-layout.md`; `CONTEXT.md` present — a scaffolded one carrying an inferred (or asked-for) `**Domain:**`
 - [ ] `goals.md` written: durable `G<n>` IDs, `(external)` markers where verification leaves the session — including the required live-verification goal where the target repo declares one, surfaced rather than added when the file is hand-authored — no `**Status:**` field, hand-authored goals respected, each goal passing `./references/workflow/acceptance-criteria.md` or marked `_(unresolved: ...)_`
 - [ ] With a `ticket.md` present, every acceptance criterion sharpened into ≥1 `G<n>` goal, and no goal contradicting the ticket's stated scope
 - [ ] `plan.md` written at `to-do` with link-headers to `./CONTEXT.md`, `./goals.md`, and `./ticket.md` when the task has one; every step carrying the `- [ ]` checkbox, **What**, **Verify**, **Goal**, **Depends on**
 - [ ] Coverage closed: every goal ID cited by ≥1 step, every non-infra step citing ≥1 goal, `## Scope` partitioning all goal IDs into delivered / deferred (explicit lists, no ranges)
-- [ ] `diagram.md` written with its `**Reflects:**` line and cited by the plan's `**Diagram:**` header when the pack's guidance warranted one — neither when it didn't; absence never annotated
 - [ ] No `CONTEXT.md` content restated — sibling sections cited, the plan carrying only plan-time deltas
 - [ ] Plan grounded in the domain's actual reality; checkpoints every 2–3 steps for plans >5 steps
 - [ ] Risks specific to this task; open questions that could invalidate the approach surfaced

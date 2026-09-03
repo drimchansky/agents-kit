@@ -24,7 +24,6 @@ const TASK_ARTIFACTS = new Set([
   "plan.md",
   "result.md",
   "ticket.md",
-  "diagram.md",
   "observations.md",
   "adr.md",
   "rfc.md",

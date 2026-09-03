@@ -34,7 +34,7 @@ The ticket is always written to a file. Decide where:
 
 ### 4. Draft the ticket
 
-Fill the four sections defined in [`./references/workflow/ticket-format.md`](./references/workflow/ticket-format.md) — Title, Context, Description (with **In scope** / **Out of scope** bullets when the boundary isn't obvious), and Acceptance Criteria, plus the optional References. Keep every part in product terms — the functional output required, the observable behavior — and leave the *how* to the plan. Drop References unless the user gave you links, specs, or ticket IDs to carry.
+Copy `./references/templates/ticket.md` and fill the four sections defined in [`./references/workflow/ticket-format.md`](./references/workflow/ticket-format.md) — Title, Context, Description (with **In scope** / **Out of scope** bullets when the boundary isn't obvious), and Acceptance Criteria, plus the optional References. Keep every part in product terms — the functional output required, the observable behavior — and leave the *how* to the plan. Drop References unless the user gave you links, specs, or ticket IDs to carry.
 
 ### 5. Hold criteria to the bar
 

@@ -2,7 +2,16 @@
 import { lstatSync, readdirSync, readFileSync, readlinkSync, realpathSync, statSync } from "node:fs";
 import type { Dirent, Stats } from "node:fs";
 import { join, resolve, basename, sep } from "node:path";
-import { holdsRoleFile, LIVE_STATUSES, PLAN_VOCAB, RESULT_MAX_KB as DEFAULT_RESULT_MAX_KB, TERMINAL_STATUSES, UNSTARTED_STATUS } from "./lifecycle-constants.ts";
+import {
+  holdsRoleFile,
+  LIVE_STATUSES,
+  PLAN_VOCAB,
+  RECORD_MAX_KB as DEFAULT_RECORD_MAX_KB,
+  RESULT_MAX_KB as DEFAULT_RESULT_MAX_KB,
+  TASK_MAX_KB as DEFAULT_TASK_MAX_KB,
+  TERMINAL_STATUSES,
+  UNSTARTED_STATUS,
+} from "./lifecycle-constants.ts";
 import { resultSize } from "./task-state.ts";
 
 process.stdout.on("error", (err: NodeJS.ErrnoException) => {
@@ -20,7 +29,10 @@ const COMPLETED_LINE = /^[ \t]*(?:[-*+][ \t]+)?\*\*Completed:\*\*[ \t]*\d{4}-\d{
 const GOALS_HEADING = /^##[ \t]+Goals\b/;
 const GOAL_ID = /^G\d+$/;
 const STEP_HEADING = /^#{2,6}[ \t]+Step\b/;
+const RECORD_TITLE = /^(?:Step|Full Run)\b/;
+const TICKET_FILE = "ticket.md";
 const HEADING = /^#{1,6}[ \t]+(.+?)[ \t]*#*$/;
+const HEADING_LEVEL = /^(#{1,6})[ \t]/;
 const FENCE = /^([ \t]*)(`{3,}|~{3,})[ \t]*(.*)$/;
 const CHECKED_STEP = /^[ \t]*-[ \t]+\[[xX]\]/;
 const RESULT_LINK = /\(\[result\]\(([^()]*)\)\)/g;
@@ -42,6 +54,8 @@ type TaskCheck =
   | "goal-id"
   | "no-current-state"
   | "oversized-result"
+  | "oversized-task"
+  | "oversized-record"
   | "duplicate-slug";
 
 interface TaskFinding {
@@ -171,7 +185,12 @@ const STATUS_PATTERNS = [
   /^Status:[ \t]*(.+)$/im,
 ];
 
-function* liveLines(text: string): Generator<string> {
+interface ScannedLine {
+  readonly line: string;
+  readonly live: boolean;
+}
+
+function* scanLines(text: string): Generator<ScannedLine> {
   let fence: { indent: number; char: string; len: number } | null = null;
   for (const line of text.split("\n")) {
     const marker = line.match(FENCE);
@@ -181,10 +200,15 @@ function* liveLines(text: string): Generator<string> {
       else if (pad.length <= fence.indent && run[0] === fence.char && run.length >= fence.len && rest === "") {
         fence = null;
       }
+      yield { line, live: false };
       continue;
     }
-    if (!fence) yield line;
+    yield { line, live: fence === null };
   }
+}
+
+function* liveLines(text: string): Generator<string> {
+  for (const scanned of scanLines(text)) if (scanned.live) yield scanned.line;
 }
 
 function rawStatus(text: string): string | null {
@@ -252,22 +276,30 @@ function readStatusFrom(
   return { ...role, ...normalize(rawStatus(role.text)) };
 }
 
-function modifiedTimeOrZero(path: string): number {
+function statsOrNull(path: string): Stats | null {
   try {
-    return statSync(path).mtimeMs;
+    return statSync(path);
   } catch {
-    return 0;
+    return null;
   }
 }
 
-function lastModified(dir: string, entries: readonly Dirent[]): number {
-  let newest = 0;
+interface FolderStats {
+  readonly updated: number;
+  readonly markdownBytes: number;
+}
+
+function folderStats(dir: string, entries: readonly Dirent[]): FolderStats {
+  let updated = 0;
+  let markdownBytes = 0;
   for (const entry of entries) {
     if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
-    const modified = modifiedTimeOrZero(join(dir, entry.name));
-    if (modified > newest) newest = modified;
+    const stats = statsOrNull(join(dir, entry.name));
+    if (stats === null) continue;
+    if (stats.mtimeMs > updated) updated = stats.mtimeMs;
+    if (entry.name !== TICKET_FILE && !entry.name.endsWith(".ticket.md")) markdownBytes += stats.size;
   }
-  return newest;
+  return { updated, markdownBytes };
 }
 
 interface Task {
@@ -279,6 +311,7 @@ interface Task {
   readonly result: RoleFile | null;
   readonly goals: RoleFile | null;
   readonly updated: number;
+  readonly markdownBytes: number;
 }
 
 function collect(rootDir: string, rootDisplay: string): Task[] {
@@ -314,7 +347,7 @@ function collect(rootDir: string, rootDisplay: string): Task[] {
           plan: readStatusFrom(child, childDisplay, childEntries, "plan.md", ".plan.md"),
           result: readRoleFile(child, childDisplay, childEntries, "result.md", ".result.md"),
           goals: readRoleFile(child, childDisplay, childEntries, "goals.md", null),
-          updated: lastModified(child, childEntries),
+          ...folderStats(child, childEntries),
         });
         continue;
       }
@@ -606,6 +639,50 @@ function oversizedResultFinding(task: Task, resultMaxKb: number): UnrootedFindin
   };
 }
 
+function oversizedTaskFinding(task: Task, taskMaxKb: number): UnrootedFinding | null {
+  if (task.markdownBytes <= taskMaxKb * 1024) return null;
+  return {
+    check: "oversized-task",
+    path: task.path,
+    detail: `folder holds ${(task.markdownBytes / 1024).toFixed(1)} KB of .md excluding ${TICKET_FILE}, over the ${taskMaxKb} KB folder budget`,
+  };
+}
+
+function oversizedRecordFindings(task: Task, recordMaxKb: number): UnrootedFinding[] {
+  const result = task.result;
+  if (!result?.text) return [];
+  const out: UnrootedFinding[] = [];
+  let heading: string | null = null;
+  let section: string[] = [];
+  const close = (): void => {
+    if (heading === null) return;
+    const kb = Buffer.byteLength(section.join("\n"), "utf8") / 1024;
+    if (kb > recordMaxKb) {
+      out.push({
+        check: "oversized-record",
+        path: task.path,
+        detail: `${result.file} section "${heading}" is ${kb.toFixed(1)} KB, over the ${recordMaxKb} KB record budget`,
+      });
+    }
+    heading = null;
+    section = [];
+  };
+  for (const { line, live } of scanLines(result.text)) {
+    const title = live ? line.match(HEADING)?.[1] : undefined;
+    if (title !== undefined && line.match(HEADING_LEVEL)?.[1].length === 2) {
+      close();
+      if (RECORD_TITLE.test(title)) {
+        heading = title;
+        section = [line];
+      }
+      continue;
+    }
+    if (heading !== null) section.push(line);
+  }
+  close();
+  return out;
+}
+
 type PathKind = "missing" | "unreadable" | "link" | "dir" | "file" | "other";
 
 function kindOf(path: string, display: string): PathKind {
@@ -802,11 +879,13 @@ function installFindings(kitRoot: string, homeArg: string): InstallResult {
   return { findings, items };
 }
 
-type NumericKey = "staleDays" | "resultMaxKb";
+type NumericKey = "staleDays" | "resultMaxKb" | "taskMaxKb" | "recordMaxKb";
 
 const NUMERIC_OPTIONS: readonly { flag: string; key: NumericKey; fallback: number }[] = [
   { flag: "--stale-days", key: "staleDays", fallback: DEFAULT_STALE_DAYS },
   { flag: "--result-max-kb", key: "resultMaxKb", fallback: DEFAULT_RESULT_MAX_KB },
+  { flag: "--task-max-kb", key: "taskMaxKb", fallback: DEFAULT_TASK_MAX_KB },
+  { flag: "--record-max-kb", key: "recordMaxKb", fallback: DEFAULT_RECORD_MAX_KB },
 ];
 
 interface Options {
@@ -814,11 +893,18 @@ interface Options {
   readonly installs: boolean;
   readonly staleDays: number;
   readonly resultMaxKb: number;
+  readonly taskMaxKb: number;
+  readonly recordMaxKb: number;
 }
 
 function parseArgs(argv: readonly string[]): Options {
   const roots: string[] = [];
-  const values: Record<NumericKey, number> = { staleDays: DEFAULT_STALE_DAYS, resultMaxKb: DEFAULT_RESULT_MAX_KB };
+  const values: Record<NumericKey, number> = {
+    staleDays: DEFAULT_STALE_DAYS,
+    resultMaxKb: DEFAULT_RESULT_MAX_KB,
+    taskMaxKb: DEFAULT_TASK_MAX_KB,
+    recordMaxKb: DEFAULT_RECORD_MAX_KB,
+  };
   let installs = false;
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
@@ -853,7 +939,7 @@ function parseArgs(argv: readonly string[]): Options {
   return { roots, installs, ...values };
 }
 
-const { roots, installs, staleDays, resultMaxKb } = parseArgs(process.argv.slice(2));
+const { roots, installs, staleDays, resultMaxKb, taskMaxKb, recordMaxKb } = parseArgs(process.argv.slice(2));
 
 const now = Date.now();
 const findings: Finding[] = [];
@@ -885,7 +971,7 @@ if (installs) {
   }
 } else {
   if (roots.length === 0) {
-    warnings.push("no task root given; usage: node scripts/health-check.ts [--stale-days N] [--result-max-kb N] <root> [<root>...]");
+    warnings.push("no task root given; usage: node scripts/health-check.ts [--stale-days N] [--result-max-kb N] [--task-max-kb N] [--record-max-kb N] <root> [<root>...]");
   }
 
   const bySlug = new Map<string, SlugHolder[]>();
@@ -942,10 +1028,15 @@ if (installs) {
         single.push(
           currentStateFinding(task),
           oversizedResultFinding(task, resultMaxKb),
+          oversizedTaskFinding(task, taskMaxKb),
           unknownStatusFinding(task),
           legacyResultStatusFinding(task),
         );
-        rootFindings.push(...anchorFindings(task), ...goalIdFindings(task));
+        rootFindings.push(
+          ...anchorFindings(task),
+          ...goalIdFindings(task),
+          ...oversizedRecordFindings(task, recordMaxKb),
+        );
       }
       for (const finding of single) {
         if (finding) rootFindings.push(finding);

@@ -96,7 +96,7 @@ The "Not Doing" list is the most valuable part — focus is about saying no to g
 
 Confirm the protocol invariants before finishing:
 
-- [ ] One-pager written to the resolved task folder's `CONTEXT.md` per `./references/workflow/context-schema.md` — `**Status:** refined`, `**Domain:**` inferred (or asked when clearly non-code and unclear); an existing `CONTEXT.md` not silently overwritten
+- [ ] One-pager written to the resolved task folder's `CONTEXT.md` per `./references/workflow/context-schema.md` — `**Domain:**` inferred (or asked when clearly non-code and unclear); an existing `CONTEXT.md` not silently overwritten
 - [ ] When a `ticket.md` is present, it was read as the primary input and `## Problem Statement` cites it rather than restating the ask
 - [ ] Chat summary carries the literal `Next: /plan-task <token>` handoff line — token = slug for a canonical task, absolute folder path otherwise
 - [ ] Multiple directions explored, not just the user's first framing; hidden assumptions listed with how each could be validated
@@ -104,6 +104,6 @@ Confirm the protocol invariants before finishing:
 
 ## CONTEXT.md Structure
 
-Write the file using the canonical schema in `./references/workflow/context-schema.md`. Adapt section depth to the idea's size — keep the one-pager portion to one page where possible. Fill the sections from the two-phase pass: the "How Might We" problem statement, the recommended direction, the key assumptions, the MVP scope, and the "Not Doing" list.
+Write the file by copying `./references/templates/CONTEXT.md`, the canonical schema's shape. Adapt section depth to the idea's size — keep the one-pager portion to one page where possible. Fill the sections from the two-phase pass: the "How Might We" problem statement, the recommended direction, the key assumptions, the MVP scope, and the "Not Doing" list.
 
-Write `**Status:** refined` — the one-shot origin marker for a file this skill produced, never mutated after creation. Infer `**Domain:**` from the idea (e.g. `engineering` for a code change, `relocation` or `negotiation` otherwise); default to `engineering` only when the work is code or genuinely ambiguous within a coding context, and when the effort is clearly non-code but the right domain is unclear, **ask** rather than stamping a wrong label.
+Infer `**Domain:**` from the idea (e.g. `engineering` for a code change, `relocation` or `negotiation` otherwise); default to `engineering` only when the work is code or genuinely ambiguous within a coding context, and when the effort is clearly non-code but the right domain is unclear, **ask** rather than stamping a wrong label.

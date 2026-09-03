@@ -1,54 +1,16 @@
 # CONTEXT.md Schema
 
-The canonical structure of a task's `CONTEXT.md` — the static grounding context that sits beside `goals.md`, `plan.md`, `result.md`, and the optional `ticket.md`, `diagram.md`, and `observations.md` in a task folder. **This file is the single source of truth for the CONTEXT.md section layout**, so every producer and consumer of the file reads the same section names regardless of how the task started. When a section name changes, update it here first and propagate to the consumers that read or write these sections without citing this file: `review-task`, `implement-task`, `resume-task`, `reconcile-task`, `./reconciliation.md`, whose annotation rows name `## References` and `## Open Questions` and whose grounding-confirmation rule names `Recommended Direction`, `MVP Scope`, `Not Doing`, and `Key Assumptions`, and `scripts/sweep-scope.ts`, which matches the same two headings by name to bound the sweep's scope (and through them the two reconcile composites). Grep cannot reconstruct this registry, so it is maintained here; the producers cite this file and are found by reverse search.
+The canonical structure of a task's `CONTEXT.md` — the static grounding context that sits beside `goals.md`, `plan.md`, `result.md`, and the optional `ticket.md` and `observations.md` in a task folder. **This file is the single source of truth for the CONTEXT.md section layout**, so every producer and consumer of the file reads the same section names regardless of how the task started. When a section name changes, update it here first and propagate to the consumers that read or write these sections without citing this file: `review-task`, `implement-task`, `resume-task`, `reconcile-task`, `./reconciliation.md`, whose annotation rows name `## References` and `## Open Questions` and whose grounding-confirmation rule names `Recommended Direction`, `MVP Scope`, `Not Doing`, and `Key Assumptions`, and `scripts/sweep-scope.ts`, which matches the same two headings by name to bound the sweep's scope (and through them the two reconcile composites). Grep cannot reconstruct this registry, so it is maintained here; the producers cite this file and are found by reverse search.
 
 ## The schema
 
-```markdown
-# <task name>
-
-**Status:** <origin marker>
-**Domain:** <domain>
-
-## Problem Statement
-
-<one-sentence framing of what this task is solving — or, when a `ticket.md` exists, a citation to `./ticket.md` rather than a restatement of the ask>
-
-## Goals
-
-_(Goals live in `goals.md`. `plan-task` drafts that file before the plan and asks for clarification when requirements are unclear.)_
-
-## Recommended Direction
-
-<the chosen direction and why>
-
-## Key Assumptions to Validate
-
-- [ ] <assumption that, if wrong, would invalidate the plan> — <how to test it>
-
-## MVP Scope
-
-- **In:** <minimum to test the core assumption>
-- **Out:** <what's deferred>
-
-## Not Doing (and Why)
-
-- <intentional exclusion> — <reason>
-
-## Open Questions
-
-- <question the plan can't yet answer>
-
-## References
-
-_(External links, pasted specs, ticket numbers, screenshots, cross-cutting notes. Read by the plan and its result in this task folder.)_
-```
+`../templates/CONTEXT.md` is this schema's copy-ready form: copy it, keep every heading, fill the placeholders. What it can't carry is the field notes below.
 
 ## Field notes
 
-- **`**Status:**` is a one-shot origin marker**, not a lifecycle state — `refined` when `refine-idea` wrote the file, `drafted-by-plan-task` when `plan-task` scaffolded it, `seeded-by-decompose-task` when `decompose-task` materialized the folder as a confirmed part of a decomposition (see `./decomposition.md`). Never mutated after creation; the plan file owns the working lifecycle. Full vocabulary across all task files lives in `./task-lifecycle.md`.
+- **No `**Status:**` field** — the plan file owns the task's only lifecycle, and a legacy line here is read as none (`./task-lifecycle.md`). The file is still never mutated after creation, on that file's carve-out.
 - **`**Domain:**`** names which domain pack every skill in the task loads (default `engineering`). Infer it from the task; default to `engineering` when the work is code or genuinely ambiguous within a coding context, but when the task is clearly non-code and the right domain is unclear, **ask** rather than stamping a wrong label — a wrong `**Domain:**` silently loads the wrong rules.
 - **Placeholder sections are intentional.** Leave every section heading in place even when empty, so downstream skills find the same section names. `refine-idea` fills them from its three-phase pass; `plan-task`, when it scaffolds without a prior idea step, populates `Problem Statement` and `Key Assumptions to Validate` and leaves the rest as placeholders for the user; `decompose-task`'s seed populates `Problem Statement` (citing `./ticket.md`), `References`, `Open Questions` (the proposal's gate-nothing items that touch the part), and only what the source already decides in `Recommended Direction`.
-- **Keep it static grounding, not a scratchpad.** The user enriches `CONTEXT.md` over time (links, specs, standing decisions). The scripted writers are the three reconcilers — `reconcile-task`, `resume-task-reconcile`, `review-task-reconcile` — which may append minimal reconciliation annotations inside `## References` and `## Open Questions` (per the carve-out in `./task-lifecycle.md` and the contract in `./reconciliation.md`) and rewrite a prose section only through a confirmed judgment item, never the `**Status:**` marker (same contract, § *Grounding docs change by confirmation, never silently*); no other skill writes to this file. Don't dump per-step implementation notes, approach rationale, or verify criteria into it — those belong in the plan or its result file. Goals and acceptance criteria belong in the sibling `goals.md`, not here. The split cuts both ways: these sections are the **home** for the task's grounding, and downstream artifacts — the plan above all — cite them rather than restating them (see `./one-home.md` § *One home per fact*). Tasks are independent folders with no shared layer above them, so anything a sibling task needs is duplicated into its own `CONTEXT.md`.
+- **Keep it static grounding, not a scratchpad.** The user enriches `CONTEXT.md` over time (links, specs, standing decisions). The scripted writers are the three reconcilers — `reconcile-task`, `resume-task-reconcile`, `review-task-reconcile` — which may append minimal reconciliation annotations inside `## References` and `## Open Questions` (per the carve-out in `./task-lifecycle.md` and the contract in `./reconciliation.md`) and rewrite a prose section only through a confirmed judgment item (same contract, § *Grounding docs change by confirmation, never silently*); no other skill writes to this file. Don't dump per-step implementation notes, approach rationale, or verify criteria into it — those belong in the plan or its result file. Goals and acceptance criteria belong in the sibling `goals.md`, not here. The split cuts both ways: these sections are the **home** for the task's grounding, and downstream artifacts — the plan above all — cite them rather than restating them (see `./one-home.md` § *One home per fact*). Tasks are independent folders with no shared layer above them, so anything a sibling task needs is duplicated into its own `CONTEXT.md`.
 - **Project-level decisions live in the store's `DECISIONS.md` when one exists** (`./task-store.md` § *Store-level artifacts*). Cite them as `Decision #N — <root-relative path>` in `## References` instead of restating; when a copy is inlined for folder self-sufficiency, it must name `DECISIONS.md` as its source — the copy is a convenience, never the home.
 - **When a `ticket.md` is present, `## Problem Statement` cites it.** The product-facing ask is the ticket's home (see `./ticket-format.md`, and `./one-home.md` § *One home per fact*), so `## Problem Statement` links to `./ticket.md` rather than restating it, while `## References` carries links surfaced during refinement or planning — the requester's own links live in the ticket. With no ticket, `## Problem Statement` holds the one-sentence framing as before.

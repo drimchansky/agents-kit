@@ -2,16 +2,7 @@
 
 The contract for `goals.md`, one of the task folder's role files — where the folder sits and how it is discovered stay in the sibling `task-layout.md`. **This file is the single source of truth for the goals file's shape.**
 
-`goals.md` is the single source of task intent — the testable acceptance criteria for what "done" means (the quality bar lives in the sibling `acceptance-criteria.md`). Every other artifact *references* it by ID rather than restating intent. Its shape:
-
-```markdown
-# Goals: <task title>
-**Plan:** [./plan.md](./plan.md)
-
-## Goals
-- G1 — <testable, observable outcome>
-- G2 — <testable, observable outcome>
-```
+`goals.md` is the single source of task intent — the testable acceptance criteria for what "done" means (the quality bar lives in the sibling `acceptance-criteria.md`). Every other artifact *references* it by ID rather than restating intent. Its copy-ready shape, markers included, is `../templates/goals.md`.
 
 Like the spec it replaces, `goals.md` is a static input — it carries no `**Status:**` field and no `## Description`; the title and the goals themselves carry the intent.
 

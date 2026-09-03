@@ -1,6 +1,6 @@
 # implement-task: Non-Default Branches
 
-The `implement-task` skill's non-default branches — reviving a `skipped` plan, activating a backlogged task, the task worktree's creation and re-entry, the diagram re-check, the automatic parallel batch, mid-execution plan revisions, a criterion leg left open for someone else to verify, and the later-run `in-review` → `done` finalization — split out of that skill's SKILL.md, which keeps the loop, the templates, and the gates. Read the section a branch names when its condition fires. An `implement-task §N` reference names that SKILL.md's process step.
+The `implement-task` skill's non-default branches — reviving a `skipped` plan, activating a backlogged task, the task worktree's creation and re-entry, the automatic parallel batch, mid-execution plan revisions, a criterion leg left open for someone else to verify, and the later-run `in-review` → `done` finalization — split out of that skill's SKILL.md, which keeps the loop, the templates, and the gates. Read the section a branch names when its condition fires. An `implement-task §N` reference names that SKILL.md's process step.
 
 ## Reviving a skipped plan
 
@@ -33,19 +33,6 @@ Placement, naming, the sanction, and the degrade are `./task-delivery.md`; re-en
 
 A re-entered or recreated worktree is announced the way a created one is — the run says where it is working — and the recorded branch is never rewritten to match a worktree found somewhere else: the branch is the identity, and `./task-delivery-edges.md` § *Re-entry on resume* matches on it precisely so a moved or renamed directory stays adoptable.
 
-## Diagram re-check
-
-Three points re-check it: **each checkpoint**, **each structural plan revision** (implement-task §6), **the acceptance gate** (implement-task §7). No diagram → skip all three, absence unreported (`./task-diagram.md`).
-
-Compare the drawing against what shipped and record *what was compared* — which nodes and edges, against which files; that record is what keeps the gate off rubber-stamping. Then:
-
-- **Matches** → re-anchor and re-date `**Reflects:**`. No repaint, no render-check.
-- **Diverged** → repaint to what shipped, render-check per the pack's diagram guidance (code: `../engineering/planning.md` § *The task diagram*, which owns the notation and the render-check), record the divergence and why in that step's or checkpoint's result section, then re-anchor and re-date the same way.
-
-Either way `**Reflects:**` leaves anchored to the gate — `as of Step N` (the last step completed here) or `as of the acceptance gate` — dated today, replacing the plan-time `as of the plan`.
-
-A divergence is usually information, not failure: the build revealed what the plan didn't anticipate, which is what implement-task §6 surfaces. Stop-the-Line only when the shipped structure contradicts a goal.
-
 ## Automatic parallel batch
 
 Eligible independent steps run concurrently through the same contract and binding. Batch mechanics are not restated: worktree placement, the frozen shared tree, the merge gates, and cleanup are `./parallel-batch.md` § *Coordinator-side parallel batch*, run as written there. This section adds only eligibility, merge point, and record.
@@ -69,7 +56,6 @@ When the batch directly reaches its bounding checkpoint, run that checkpoint's a
 
 - **Update the plan in place** — revise the affected step or scope, add new steps, remove obsolete ones. Keep step numbers stable where possible (insert as `Step 3a`, `Step 3b` rather than renumbering).
 - **Record the divergence** under the affected step's `**Deviations from plan:**` field, including *why* the plan changed.
-- **Repaint the diagram when the revision changes structure** (only when the task has one), at the revision rather than deferred to the next checkpoint — the revision is the causal event, and in step-by-step mode it is where the user inspects. Same in both modes; run it per § *Diagram re-check* above.
 - In step-by-step mode, pause and confirm the revision with the user before continuing.
 - **If the right call is to abandon the task** rather than revise it, surface that and get explicit confirmation first — this skill never sets `skipped` on its own (`./task-lifecycle.md`). On confirmation set the plan's `**Status:**` to `skipped`, record why in the result file, and stop — don't delete the plan or leave it dangling in `executing`.
 

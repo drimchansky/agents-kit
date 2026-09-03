@@ -49,7 +49,7 @@ Run `decomposition.md` § *Materialization contract* per part:
 
 1. Create `<parent>/<NN->slug/`.
 2. Draft `ticket.md` by executing `../prepare-ticket/SKILL.md` against the part's confirmed acceptance sketch — destination: the part folder; bar: `./references/workflow/ticket-format.md`; clarifications: already batched in Phase 1.
-3. Seed `CONTEXT.md` per `./references/workflow/context-schema.md`: `**Status:** seeded-by-decompose-task` (registered in `./references/workflow/task-lifecycle.md`), the part's `**Domain:**`, `## Problem Statement` citing `./ticket.md`, `## References` carrying the source pointer, the part's Jira key when mapped, and the duplicated shared facts, `## Recommended Direction` holding only what the source decides for this part (cited to its section), `## Open Questions` carrying the proposal's gate-nothing items that touch this part, every other section heading present as a placeholder.
+3. Seed `CONTEXT.md` from `./references/templates/CONTEXT.md` per `./references/workflow/context-schema.md`: the part's `**Domain:**`, `## Problem Statement` citing `./ticket.md`, `## References` carrying the source pointer, the part's Jira key when mapped, and the duplicated shared facts, `## Recommended Direction` holding only what the source decides for this part (cited to its section), `## Open Questions` carrying the proposal's gate-nothing items that touch this part, every other section heading present as a placeholder.
 
 ## Output
 
@@ -74,6 +74,6 @@ Confirm the protocol invariants before finishing:
 - [ ] Source resolved and read in full; the decided-material check passed, or the run stopped naming `refine-idea`
 - [ ] Proposal printed with the recommended cut, numbering, acceptance sketches, and dependency notes — plus real alternatives, the Jira mapping, and gate-nothing items where they apply; nothing written before confirmation
 - [ ] One batched confirmation round; only confirmed parts materialized, exactly as answered, without renumbering surviving parts
-- [ ] Per part: folder placed per the numbering rules; `ticket.md` meets `ticket-format.md`'s bar; `CONTEXT.md` seed is the full schema skeleton with `seeded-by-decompose-task`, Problem Statement citing `./ticket.md`, References carrying source pointer + key + shared facts, gate-nothing items in Open Questions; nothing pre-existing silently overwritten
+- [ ] Per part: folder placed per the numbering rules; `ticket.md` meets `ticket-format.md`'s bar; `CONTEXT.md` seed is the full schema skeleton, Problem Statement citing `./ticket.md`, References carrying source pointer + key + shared facts, gate-nothing items in Open Questions; nothing pre-existing silently overwritten
 - [ ] No Jira write, no git mutation, no source-doc edit
 - [ ] Output reports every part — with its Jira disposition when a mapping exists — and owns **Next** with the `/plan-task` handoff

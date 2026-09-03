@@ -5,7 +5,7 @@ The **documentation domain pack's rules overlay** — loaded on top of the neutr
 ## Send & publish discipline
 
 - **Nothing is sent, shared, or published without an explicit ask.** Drafting is the agent's job; distribution is the user's. Sharing a page, moving it under a shared parent, locking or unlocking it, applying changes to a live/shared page, and every Slack / Jira / email send stay user actions unless the current request explicitly asks otherwise.
-- Outbound content (messages, ticket text, reply drafts, patch instructions for docs the agent doesn't own) is produced as **paste-ready drafts** in the task folder, carrying the send-state lifecycle from `../workflow/doc-task-files.md`.
+- Outbound content (messages, ticket text, reply drafts, patch instructions for docs the agent doesn't own) is produced as **paste-ready drafts** in the task folder, each recording what went out on the dated line `../workflow/doc-task-files.md` defines.
 - Run `proofread` over an outbound draft before handing it to the user to send.
 
 ## Before presenting a doc
@@ -30,7 +30,7 @@ Beyond this rules overlay, the pack provides:
 - `verification.md` — documentation's mapping for the neutral unit-outcome and integrated-health tiers, plus its acceptance-gate recipe (mechanical checks only; the judgment layer is `review-docs`'s)
 - `adr-format.md` — the generic ADR format bar: header block, section skeleton, decision shape, open-questions bar, register and trim rules
 - `rfc-format.md` — the generic RFC format bar: findings and decision items, decision log, scope bounds
-- `mermaid-core.md` plus five per-type sheets (`mermaid-flowchart.md`, `mermaid-sequence.md`, `mermaid-class.md`, `mermaid-er.md`, `mermaid-state.md`) — distilled Mermaid generation checklists: portability across renderers, label quoting and ID discipline, and each type's own traps and style calls, consumed by `prepare-diagram` and cited across pack boundaries by other domains' diagram guidance (`../engineering/planning.md` § *The task diagram*) — Mermaid is notation rather than domain knowledge, so the sheets stay here and are cited rather than copied
+- `mermaid-core.md` plus five per-type sheets (`mermaid-flowchart.md`, `mermaid-sequence.md`, `mermaid-class.md`, `mermaid-er.md`, `mermaid-state.md`) — distilled Mermaid generation checklists: portability across renderers, label quoting and ID discipline, and each type's own traps and style calls, consumed by `prepare-diagram` — Mermaid is notation rather than domain knowledge, so the sheets stay here and are cited rather than copied
 
 The pack also contributes two skills: `review-docs` — the doc reviewer carrying the against-codebase audit and the quality pass (whole-doc coherence, register) that the loop's mechanical verification tiers deliberately exclude — and `prepare-diagram` — the Mermaid diagram generator for a provided subject (a repo's code flow or architecture, a figure a doc needs, a process described in prose).
 

@@ -10,7 +10,7 @@ const PLAN_FILE = "plan.md";
 const TICKET_FILE = "ticket.md";
 const RESULT_FILE = "result.md";
 const LEDGER_FILE = "observations.md";
-const DERIVED_ROLE_FILES: ReadonlySet<string> = new Set(["diagram.md", LEDGER_FILE]);
+const DERIVED_ROLE_FILES: ReadonlySet<string> = new Set([LEDGER_FILE]);
 const USAGE = "usage: node scripts/sweep-scope.ts <task-dir>";
 
 const FENCE = /^([ \t]*)(`{3,}|~{3,})[ \t]*(.*)$/;

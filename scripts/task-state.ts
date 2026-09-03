@@ -17,9 +17,12 @@ const FENCE = /^([ \t]*)(`{3,}|~{3,})[ \t]*(.*)$/;
 const HEADING = /^#{1,6}[ \t]+(.+?)[ \t]*#*$/;
 const STEP_TITLE = /^Step[ \t]+(\d+[a-z]*)\b[ \t]*[—–:-]?[ \t]*(.*)$/i;
 const CHECKPOINT_TITLE = /^Checkpoint after Step[ \t]+(\d+[a-z]*)\b/i;
+const CURRENT_STATE_TITLE = /^current state\b/i;
 const SCOPE_HEADING = /^##[ \t]+Scope\b/;
 const GOALS_HEADING = /^##[ \t]+Goals\b/;
 const CHECKBOX = /^[ \t]*-[ \t]+\[([ xX])\]/;
+const WHAT_FIELD = /^[ \t]*-[ \t]+\[[ xX]\][ \t]*\*\*What:?\*\*:?[ \t]*(.*)$/i;
+const VERIFY_FIELD = /^[ \t]*[-*+]?[ \t]*\*\*Verify:?\*\*:?[ \t]*(.*)$/i;
 const GOAL_FIELD = /^[ \t]*[-*+]?[ \t]*\*\*Goal:?\*\*:?[ \t]*(.*)$/i;
 const DEPENDS_FIELD = /^[ \t]*[-*+]?[ \t]*\*\*Depends on:?\*\*:?[ \t]*(.*)$/i;
 const OUTCOME_FIELD = /^[ \t]*[-*+]?[ \t]*\*\*Outcome:?\*\*:?[ \t]*(.*)$/i;
@@ -33,6 +36,7 @@ const RESULT_LINK = /\(\[result\]\(([^()]*)\)\)/g;
 const COMPACTED_HEADING = /^Compacted\b/;
 const TOMBSTONE_BULLET = /^[ \t]*-[ \t]+(.+?)[ \t]*$/;
 const HEADING_LEVEL = /^(#{1,6})[ \t]/;
+const BLOCK_CLOSE = /^[ \t]*---[ \t]*$/;
 const PAUSE_KINDS: readonly { readonly status: string; readonly heading: RegExp; readonly label: RegExp }[] = [
   { status: "blocked", heading: /^blocked\b/i, label: /^[ \t]*\*\*blocked:?\*\*/i },
   { status: "in-review", heading: /^in[ \t]+review\b/i, label: /^[ \t]*\*\*in[ \t]+review:?\*\*/i },
@@ -69,6 +73,11 @@ export interface StepState {
   readonly goals: readonly string[];
   readonly goalEscape: boolean;
   readonly dependsOn: readonly string[];
+}
+
+export interface StepBody {
+  readonly what: string | null;
+  readonly verify: string | null;
 }
 
 export interface CheckpointState {
@@ -108,8 +117,10 @@ export interface TaskState {
   readonly goalsFile: string | null;
   readonly steps: readonly StepState[];
   readonly nextPendingStep: string | null;
+  readonly nextPendingStepBody: StepBody | null;
   readonly checkpoints: readonly CheckpointState[];
   readonly goalCoverage: GoalCoverage;
+  readonly currentState: string | null;
 }
 
 export interface TaskStateInput {
@@ -121,7 +132,12 @@ export interface TaskStateInput {
 
 const warnings: string[] = [];
 
-function* liveLines(text: string): Generator<string> {
+interface ScannedLine {
+  readonly line: string;
+  readonly live: boolean;
+}
+
+function* scanLines(text: string): Generator<ScannedLine> {
   let fence: { indent: number; char: string; len: number } | null = null;
   for (const line of text.split("\n")) {
     const marker = line.match(FENCE);
@@ -131,10 +147,15 @@ function* liveLines(text: string): Generator<string> {
       else if (pad.length <= fence.indent && run[0] === fence.char && run.length >= fence.len && rest === "") {
         fence = null;
       }
+      yield { line, live: false };
       continue;
     }
-    if (!fence) yield line;
+    yield { line, live: fence === null };
   }
+}
+
+function* liveLines(text: string): Generator<string> {
+  for (const scanned of scanLines(text)) if (scanned.live) yield scanned.line;
 }
 
 function headingText(line: string): string | null {
@@ -241,12 +262,20 @@ interface DraftStep {
   readonly title: string;
   checked: boolean;
   link: ResultLink | null;
+  what: string | null;
+  verify: string | null;
   goals: string[];
   goalEscape: boolean;
   dependsOn: string[];
   sawCheckbox: boolean;
+  sawVerify: boolean;
   sawGoal: boolean;
   sawDepends: boolean;
+}
+
+function fieldText(value: string | undefined): string | null {
+  const trimmed = value?.trim() ?? "";
+  return trimmed === "" ? null : trimmed;
 }
 
 interface ParsedPlan {
@@ -298,10 +327,13 @@ function parsePlan(text: string): ParsedPlan {
         title: stepHeading[2].trim(),
         checked: false,
         link: null,
+        what: null,
+        verify: null,
         goals: [],
         goalEscape: false,
         dependsOn: [],
         sawCheckbox: false,
+        sawVerify: false,
         sawGoal: false,
         sawDepends: false,
       };
@@ -318,6 +350,13 @@ function parsePlan(text: string): ParsedPlan {
       step.sawCheckbox = true;
       step.checked = box[1].toLowerCase() === "x";
       step.link = resultLink(line);
+      step.what = fieldText(line.match(WHAT_FIELD)?.[1]);
+      continue;
+    }
+    const verify = line.match(VERIFY_FIELD);
+    if (verify && !step.sawVerify) {
+      step.sawVerify = true;
+      step.verify = fieldText(verify[1]);
       continue;
     }
     const goal = line.match(GOAL_FIELD);
@@ -352,6 +391,25 @@ function checkpointOutcomes(text: string): Map<string, string> {
     if (token) outcomes.set(current, token);
   }
   return outcomes;
+}
+
+function currentStateBlock(text: string): string | null {
+  const block: string[] = [];
+  let open = false;
+  for (const { line, live } of scanLines(text)) {
+    const heading = live ? headingText(line) : null;
+    if (heading !== null && (line.match(HEADING_LEVEL)?.[1].length ?? 0) === 2) {
+      if (open) break;
+      if (!CURRENT_STATE_TITLE.test(heading)) continue;
+      open = true;
+      block.push(line);
+      continue;
+    }
+    if (!open) continue;
+    block.push(line);
+    if (live && BLOCK_CLOSE.test(line)) break;
+  }
+  return open ? block.join("\n").replace(/\s+$/, "") : null;
 }
 
 function goalIds(text: string): string[] {
@@ -397,6 +455,8 @@ export function taskState(input: TaskStateInput): TaskState {
     steps: steps.filter((step) => step.goals.includes(id)).map((step) => step.number),
   }));
 
+  const pending = steps.findIndex((step) => !step.checked);
+
   return {
     taskDir: input.taskDir,
     plan: readPlanStatus(input.planText),
@@ -406,7 +466,9 @@ export function taskState(input: TaskStateInput): TaskState {
         : { file: RESULT_FILE, legacyStatus: statusHeader(input.resultText) },
     goalsFile: input.goalsText === null ? null : GOALS_FILE,
     steps,
-    nextPendingStep: steps.find((step) => !step.checked)?.number ?? null,
+    nextPendingStep: pending === -1 ? null : steps[pending].number,
+    nextPendingStepBody:
+      pending === -1 ? null : { what: plan.steps[pending].what, verify: plan.steps[pending].verify },
     checkpoints: plan.checkpoints.map((afterStep) => ({ afterStep, outcome: outcomes.get(afterStep) ?? null })),
     goalCoverage: {
       goals,
@@ -425,6 +487,7 @@ export function taskState(input: TaskStateInput): TaskState {
         inBoth: ids.filter((id) => plan.delivered.has(id) && plan.deferred.has(id)),
       },
     },
+    currentState: input.resultText === null ? null : currentStateBlock(input.resultText),
   };
 }
 
@@ -463,7 +526,7 @@ export interface CompactionSections {
 }
 
 const KEEP_SECTIONS: readonly { readonly rule: KeepRule; readonly match: RegExp }[] = [
-  { rule: "current-state", match: /^current state\b/i },
+  { rule: "current-state", match: CURRENT_STATE_TITLE },
   { rule: "decision-log", match: /^decision log\b/i },
   { rule: "acceptance", match: /^acceptance\b/i },
   { rule: "health-boundary", match: /^health boundar(?:y|ies)\b/i },

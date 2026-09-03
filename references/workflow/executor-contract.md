@@ -126,7 +126,7 @@ One plan step from a task folder.
 - **Unit** — one plan step, its verify criterion the step's plan-defined `Verify` line. § *Write-mode routing* decides whose evidence proves the step's tier; the coordinator owns the health boundary.
 - **Segment bound** — in full-plan mode, the consecutive steps between two checkpoints (or a plan edge and its nearest checkpoint) form one segment launch (§ *Segment launches*), respecting `Depends on:` ordering; that is the mode's default launch shape, a single step between checkpoints being a segment of one. Steps eligible for the parallel batch leave the segment and batch instead. Step-by-step mode launches per step — a segment would collapse the pauses the mode exists for.
 - **Packet** — the step's `What` and `Verify` text, the full text of every cited goal, the edit surface below, and the relevant task context with the absolute task-folder path. Domain guidance resolves from the task's `**Domain:**` header, default `engineering`.
-- **Edit surface** — the step's declared `**Touches:**` paths when present, otherwise the scope stated by `What`. Never edit the task folder or its records, including `plan.md`, `goals.md`, `CONTEXT.md`, `diagram.md`, and `result.md` — the evidence report goes back to the coordinator, never into the folder.
+- **Edit surface** — the step's declared `**Touches:**` paths when present, otherwise the scope stated by `What`. Never edit the task folder or its records, including `plan.md`, `goals.md`, `CONTEXT.md`, and `result.md` — the evidence report goes back to the coordinator, never into the folder.
 - **Fallback** — inline execution for a serial step, serial re-execution for a parallel-batch step.
 - **Merge order** — plan order.
 

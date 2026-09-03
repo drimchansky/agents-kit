@@ -167,6 +167,45 @@ test("an untouched plan reports its first step as pending", () => {
   assert.strictEqual(state.nextPendingStep, "1");
 });
 
+test("the next pending step carries its What and Verify lines", () => {
+  const pending = parse(MIXED_PLAN, MIXED_RESULT, GOALS);
+  assert.strictEqual(pending.nextPendingStep, "2");
+  assert.deepStrictEqual(pending.nextPendingStepBody, { what: "do the second thing", verify: "it happens" });
+
+  const noVerify = parse(MIXED_PLAN.replace("- **Verify:** it happens\n", ""));
+  assert.deepStrictEqual(noVerify.nextPendingStepBody, { what: "do the second thing", verify: null });
+
+  const finished = parse(
+    MIXED_PLAN.replace("- [ ] **What:** do the second thing", "- [x] **What:** do the second thing"),
+  );
+  assert.strictEqual(finished.nextPendingStep, null);
+  assert.strictEqual(finished.nextPendingStepBody, null);
+});
+
+test("currentState is the result's Current state block, null without a result or a block", () => {
+  const state = parse(MIXED_PLAN, MIXED_RESULT, GOALS);
+  assert.strictEqual(state.currentState, "## Current state\n\n_Updated:_ 2026-01-01\n\n---");
+
+  assert.strictEqual(parse(MIXED_PLAN, null, GOALS).currentState, null);
+  assert.strictEqual(parse(MIXED_PLAN, "# Result: fixture\n\n## Step 1 — First thing\n", GOALS).currentState, null);
+});
+
+test("the Current state block ends at its closing rule, or at the next section heading", () => {
+  const unclosed = parse(MIXED_PLAN, "# Result: unclosed\n\n## Current state\n\nstill open\n\n## Step 1 — After\n\nlog\n");
+  assert.strictEqual(unclosed.currentState, "## Current state\n\nstill open");
+
+  const nested = parse(MIXED_PLAN, "# Result: nested\n\n## Step 1 — After\n\n### Current state\n\nnot the block\n");
+  assert.strictEqual(nested.currentState, null);
+});
+
+test("the CLI reports a committed fixture's Current state block", () => {
+  const state = report(join(REPO_DIR, "tests", "fixtures", "health", "anchors", "oversized-result"));
+  const block = state.currentState ?? "";
+  assert.match(block, /^## Current state\n/);
+  assert.match(block, /\*\*Next:\*\* none\n\n---$/);
+  assert.ok(!block.includes("## Step 1"), "the block stops at its closing rule");
+});
+
 test("checkpoints carry the result outcome, or null until they run", () => {
   const plan = `# Plan: checkpoints
 

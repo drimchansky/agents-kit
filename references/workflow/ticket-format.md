@@ -19,29 +19,7 @@ The bar is self-containment under a minimalism budget. A ticket that leans on "t
 
 ## Structure
 
-```markdown
-# <ticket title — imperative, leads with a verb, names the functional outcome>
-
-## Context
-
-<1–3 sentences: the problem and why it matters now — enough to act on cold, no more>
-
-## Description
-
-<the functional output required, at the altitude of intent — what the product should do, not how. Add the two bullets below only when the boundary isn't obvious:>
-
-**In scope:** <what this ticket covers>
-**Out of scope:** <what it deliberately doesn't>
-
-## Acceptance Criteria
-
-- <a single observable outcome that decides "done", in product terms — what the user or caller can now do; behavior, not implementation>
-- <the next outcome — cover the main flow, plus the failure or edge behavior the requester cares about>
-
-## References
-
-_(Optional — links, specs, or ticket IDs the requester provided. Drop the whole section when there are none; the ticket must stand without it.)_
-```
+The copy-ready shape is `../templates/ticket.md`. What each section holds:
 
 - **Title** — a concise, imperative line that leads with a verb and names the outcome ("Export the accounts table's current filter as CSV", not "CSV work"). A product outcome, not a technical change.
 - **Context** — one to three sentences: the problem, and why it matters now. Enough for a stranger to see the point; no design, no history dump.

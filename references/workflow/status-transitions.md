@@ -23,6 +23,6 @@ The result file carries no status of its own, so a plan flip lands on it as a **
 When changing the vocabulary:
 
 1. Update **this file** first (the registry).
-2. Update the skills that read or write the field — the propagate list at the top of `./task-lifecycle.md`: `refine-idea`, `plan-task`, `decompose-task`, `implement-task`, `resume-task`, `review-task`, `resume-task-reconcile`, `review-task-reconcile`, and `reconcile-task`.
+2. Update the skills that read or write the field — the propagate list at the top of `./task-lifecycle.md`: `plan-task`, `implement-task`, `resume-task`, `review-task`, `resume-task-reconcile`, `review-task-reconcile`, and `reconcile-task`.
 3. Update the one machine-readable copy of this vocabulary — `scripts/lifecycle-constants.ts`, which the scripts import because none of them can read this prose at run time; `AGENTS.md` § *Consumer lists* names them. A stale set there makes every task in the renamed state read as `unknown`, which the health walk's checks skip in silence, `task-move.ts` refuses every archive of (an unrecognized status is not terminal), and `task-state.ts` reports as `unknown` to the skills reading its JSON.
 4. `grep -rn "<old-status>" skills/ references/ scripts/` to catch stragglers (template literals, prose mentions).

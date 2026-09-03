@@ -35,11 +35,7 @@ A pack is a directory `references/<domain>/` holding, by convention:
 - **`exploration.md`** — how to "explore the domain's reality" before planning (what sources to
   read, what to confirm, how to map blast radius / dependencies).
 - **`planning.md`** — domain planning specifics: how to slice work, step-size caps, what a
-  checkpoint asserts — and the domain's **diagram guidance**, when it has any: when a change
-  warrants a task `diagram.md`, what it depicts and at what altitude, and the notation
-  (`../engineering/planning.md` § *The task diagram* is the worked example). A pack that ships no
-  diagram guidance opts its domain out of task diagrams — `plan-task` then draws none
-  (`task-diagram.md`).
+  checkpoint asserts.
 - **`execution.md`** — how to carry out and record one step in this domain.
 - **`verification.md`** — the domain's mapping for unit outcomes and integrated health, plus its
   acceptance-gate recipe (which a pack may split into a sibling file, as engineering does with
@@ -54,13 +50,12 @@ as "no domain-specific guidance for this phase" and proceeds on the neutral meth
 
 ## Resolving the active domain
 
-The active domain is declared by a **`**Domain:**`** header in the task's `CONTEXT.md`, written
-just under `**Status:**`:
+The active domain is declared by a **`**Domain:**`** header in the task's `CONTEXT.md`, in its
+header block:
 
 ```markdown
 # <task name>
 
-**Status:** refined
 **Domain:** engineering
 ```
 
@@ -69,8 +64,8 @@ just under `**Status:**`:
 - A skill loads the pack by reading `CONTEXT.md` (which it already does), taking the
   `**Domain:**` value, and reading the relevant files under `references/<domain>/`.
 - Resolution is by **header value, not directory shape** — `**Domain:**` is read straight from the
-  `CONTEXT.md` header, the same way `**Status:**` is (see `task-lifecycle.md`), never inferred from
-  where a file sits. A skill never inspects the filesystem to guess a domain.
+  `CONTEXT.md` header, the same way the plan's `**Status:**` is (see `task-lifecycle.md`), never
+  inferred from where a file sits. A skill never inspects the filesystem to guess a domain.
 
 ## Which skills resolve a domain vs. load a fixed pack
 

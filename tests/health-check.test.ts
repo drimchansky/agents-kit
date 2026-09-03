@@ -46,6 +46,8 @@ const NAMED_SCRIPTS = join(TEST_ROOT, "named-scripts");
 const PROJECT_ROOT = join(TEST_ROOT, "project-root");
 const SECOND_ROOT = join(TEST_ROOT, "second", "store");
 const ANCHORS = join(TEST_ROOT, "anchors");
+const BUDGETS = join(TEST_ROOT, "budgets");
+const LEGACY_CONTEXT = join(TEST_ROOT, "legacy-context");
 const INSTALLS = join(TEST_ROOT, "installs");
 const KIT = join(INSTALLS, "kit");
 const CLAUDE_HOME = join(INSTALLS, ".claude");
@@ -69,6 +71,9 @@ const CASE_PROBE = join(TEST_ROOT, "case-probe");
 const CASE_PROBE_RESPELLED = join(TEST_ROOT, "CASE-PROBE");
 const STORE_ARGS: readonly string[] = [STORE];
 const ANCHORS_ARGS: readonly string[] = [ANCHORS];
+const BUDGETS_ARGS: readonly string[] = [BUDGETS];
+const LOWERED_BUDGET_ARGS: readonly string[] = ["--task-max-kb", "1", "--record-max-kb", "1", BUDGETS];
+const LEGACY_CONTEXT_ARGS: readonly string[] = [LEGACY_CONTEXT];
 const INSTALLS_ARGS: readonly string[] = ["--installs", KIT, CLAUDE_HOME, CODEX_HOME];
 const DUP_ARGS: readonly string[] = [DUP_A, DUP_B];
 const VOLUME_ARGS: readonly string[] = [VOLUME_STORE];
@@ -89,6 +94,8 @@ const FIXTURE_AGE_DAYS: readonly (readonly [string, number])[] = [
   [join(STORE, "Archive", "done-archived"), 400],
   [join(STORE, "Backlog", "parked-todo"), DAYS_PAST_STALE],
   [ANCHORS, DAYS_WITHIN_STALE],
+  [BUDGETS, DAYS_WITHIN_STALE],
+  [LEGACY_CONTEXT, DAYS_WITHIN_STALE],
 ];
 
 interface Finding {
@@ -261,6 +268,8 @@ function writeInstallFixtures(): void {
 before(() => {
   copyFixture(join(FIXTURES, "store"), STORE);
   copyFixture(join(FIXTURES, "anchors"), ANCHORS);
+  copyFixture(join(FIXTURES, "budgets"), BUDGETS);
+  copyFixture(join(FIXTURES, "legacy-context"), LEGACY_CONTEXT);
   for (const [folder, days] of FIXTURE_AGE_DAYS) ageFolder(folder, days);
 
   const freshPlan = join(STORE, "fresh-executing", "plan.md");
@@ -352,6 +361,16 @@ test("a legacy result status is reported as legacy and never as an unrecognized 
     ["legacy-result-status"],
     "a result-side status produces no unknown-status and no other finding",
   );
+});
+
+test("a legacy CONTEXT.md status is tolerated and produces no finding", () => {
+  const { report } = runCheck(LEGACY_CONTEXT_ARGS);
+  assert.deepStrictEqual(
+    report.findings.map((entry) => `${entry.check} ${entry.path}`),
+    [],
+    "a CONTEXT.md carrying a legacy **Status:** line raises nothing",
+  );
+  assert.strictEqual(report.scanned, 1, "the legacy-context root holds the one fixture folder");
 });
 
 test("a 62-day-old executing task is reported stale with its status and age", () => {
@@ -711,6 +730,37 @@ test("--result-max-kb reports a result over the given trigger and stays quiet at
     findingDetail(report, "oversized-result", "anchors/Archive/archived-violations"),
     "",
     "an archived oversized result must stay silent even at a lowered threshold",
+  );
+});
+
+test("the folder and record budgets fire only past their thresholds, and never under Archive/", () => {
+  const { report: atDefaults } = runCheck(BUDGETS_ARGS);
+  assert.strictEqual(findingCount(atDefaults), 0, "the budget fixtures raise nothing at the committed defaults");
+
+  const { report } = runCheck(LOWERED_BUDGET_ARGS);
+  assert.strictEqual(findingCount(report, "oversized-task"), 1, "oversized-task count at a lowered budget");
+  assert.strictEqual(
+    findingDetail(report, "oversized-task", "budgets/over-budget"),
+    "folder holds 2.1 KB of .md excluding ticket.md, over the 1 KB folder budget",
+    "oversized-task measures the non-ticket .md bytes, not everything the folder holds",
+  );
+  assert.strictEqual(findingCount(report, "oversized-record"), 1, "oversized-record count at a lowered budget");
+  assert.strictEqual(
+    findingDetail(report, "oversized-record", "budgets/over-budget"),
+    'result.md section "Full Run — Padded record" is 1.5 KB, over the 1 KB record budget',
+    "oversized-record names the offending section and its size",
+  );
+  for (const check of ["oversized-task", "oversized-record"]) {
+    assert.strictEqual(
+      findingDetail(report, check, "budgets/Archive/over-budget-archived"),
+      "",
+      `an archived twin stays silent for ${check} even at a lowered budget`,
+    );
+  }
+  assert.strictEqual(
+    findingDetail(report, "oversized-task", "budgets/legacy-ticket"),
+    "",
+    "a legacy *.ticket.md is left out of the folder measure like ticket.md",
   );
 });
 
@@ -1145,13 +1195,15 @@ test("a rejected flag value re-enters the roots only when it names something on 
     "a malformed flag value is not reported as store the sweep did not see",
   );
 
-  const { report: afterEmptyValue } = runCheck(["--result-max-kb", "", STORE]);
-  assert.strictEqual(
-    afterEmptyValue.scanned,
-    13,
-    "an empty flag value does not add the process directory as a root",
-  );
-  assert.strictEqual(afterEmptyValue.unreadable, 0, "an empty flag value is not a coverage gap");
+  for (const flag of ["--result-max-kb", "--task-max-kb", "--record-max-kb"]) {
+    const { report: afterEmptyValue } = runCheck([flag, "", STORE]);
+    assert.strictEqual(
+      afterEmptyValue.scanned,
+      13,
+      `an empty ${flag} value does not add the process directory as a root`,
+    );
+    assert.strictEqual(afterEmptyValue.unreadable, 0, `an empty ${flag} value is not a coverage gap`);
+  }
 });
 
 test("a value that can never be a value is never consumed", () => {

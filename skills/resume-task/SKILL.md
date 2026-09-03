@@ -43,19 +43,16 @@ Resolve the task folder to brief on per the **resolve-current-or-ask** discovery
 
 The activation offer for a folder resolving under `Backlog/` is `./references/workflow/implement-task-edges.md` § *Activating a backlogged task* — read it when resolution lands there; the confirmed `mv` it asks for is the one exception to this skill's read-only rule. <!-- cold -->
 
-**Read the plan** — read the resolved folder's `plan.md` (one plan per folder). No `plan.md` → tell the user the folder exists but has no plan; suggest `plan-task`.
-
 ### 2. Load Artifacts
 
-Read all four core artifacts — plus `ticket.md`, `diagram.md`, and `observations.md` when present — don't answer from headers or the latest section alone:
+Follow `./references/workflow/task-layout.md` § *Reading a resolved folder*, then take from each artifact what the brief still needs — never answering from headers or the latest section alone. The report's exit 1 is a folder with no readable `plan.md` (one plan per folder): tell the user so and suggest `plan-task`.
 
-- `ticket.md` (when present) — the product-facing ask and its acceptance criteria.
-- `CONTEXT.md` — the static grounding context (problem statement, scope summary, key assumptions, references).
 - `goals.md` — capture the full `## Goals` list by `G<n>` ID. Note any goal marked `_(unresolved: ...)_`.
-- `plan.md` — note its `**Status:**` header and its `**Goals:**` link.
-- `diagram.md` (when present) — the target-state shape the plan builds toward; capture its dated `**Reflects:**` line. Absence is normal and is not a gap.
+- `result.md` — the report's `currentState` is the orientation (derived metadata, never trusted ground truth); then find the latest per-step or full-run section, capture every `**Blocked:**` and `**In review:**` block verbatim, and capture any `## Acceptance` section verbatim. A `**Status:**` line found here is legacy and read as none — the plan holds the task's only lifecycle status (`./references/workflow/task-lifecycle.md` § *`result.md` — no status field*).
+- `CONTEXT.md` — its header block for `**Domain:**` and `## Open Questions` for the brief; nothing else.
+- `plan.md` — the `nextPendingStep`'s **Due** / **Lead time** and the paths it touches, which the report does not carry; its `**Status:**` and `**Goals:**` link come from the report.
+- `ticket.md` (when present) — the product-facing ask and its acceptance criteria.
 - `observations.md` (when present) — the last sweep's dated observations of the folder's cited references (`./references/workflow/task-observations.md`); a cache to quote with its dates, never live truth. Absence is normal. <!-- cold -->
-- `result.md` — read `## Current state` first for orientation (derived metadata, never trusted ground truth); then find the latest per-step or full-run section, capture every `**Blocked:**` and `**In review:**` block verbatim, and capture any `## Acceptance` section verbatim. A `**Status:**` line found here is legacy and read as none — the plan holds the task's only lifecycle status (`./references/workflow/task-lifecycle.md` § *`result.md` — no status field*).
 
 Status vocabulary and the **companion-result-file rule** live in `./references/workflow/task-lifecycle.md` § *Status values* and § *Companion result file* — flag a missing companion, or a missing section the plan's state owes, as drift. Deliberate pauses are not drift: a `skipped` plan is abandoned (a missing result file is expected), `blocked` + `**Blocked:**` is paused (name the cause), and `in-review` + `**In review:**` is parked awaiting the listed `(external)` goals.
 
@@ -66,9 +63,7 @@ Flag in the brief:
 
 ### 3. Reconstruct State from Checkboxes
 
-Run `node <kit-root>/scripts/task-state.ts <task folder>` — `<kit-root>` and the script's own `SCRIPTS.md` contract section both per `./references/workflow/task-store.md` § *Resolving `<kit-root>`* <!-- cold --> — and read the state out of the JSON rather than re-deriving what the script decided. It reports every step in plan order with its checkbox, `nextPendingStep`, each `### Checkpoint after Step N` with its result section's `**Outcome:**` (`null` = not yet run), and whether each checked step's `([result](…))` anchor still resolves. Kit root, script, or `node` unavailable → say so and reconstruct the same facts from the plan by hand.
-
-Then read the files for what the report doesn't carry: the `nextPendingStep` step's **Verify**, any **Due** / **Lead time**, and the paths it touches; and every `**Blocked:**` and `**In review:**` section from the result file, verbatim.
+Read the state out of §2's report rather than re-deriving what the script decided: every step in plan order with its checkbox, `nextPendingStep` and its `nextPendingStepBody`, each `### Checkpoint after Step N` with its result section's `**Outcome:**` (`null` = not yet run), and whether each checked step's `([result](…))` anchor still resolves.
 
 A checked step whose `anchorResolves` is false has lost the evidence its checkbox claims — drift, not done. If the plan's prose and its checkboxes disagree, trust the checkboxes and note the disagreement.
 
@@ -106,7 +101,6 @@ Assemble per the output template below and print it to chat. This is the last st
 **Task dir:** `<resolved task folder path>`
 **Goals:** `goals.md`
 **Plan:** `plan.md` (Status: <status>)
-**Diagram:** `diagram.md` (Reflects: <the line verbatim>) — _omit this line entirely when the task has no diagram_
 **Result:** `result.md` — or "not yet started"
 
 ## Status
@@ -180,7 +174,7 @@ Omit sections with nothing to report — **except** "Drift since plan", which al
 
 Confirm the protocol invariants before finishing:
 
-- [ ] Task folder resolved per `task-layout.md` (asked when ambiguous); all four core artifacts read (plus `ticket.md`, `diagram.md`, and `observations.md` when present); a missing `goals.md` flagged
+- [ ] Task folder resolved per `task-layout.md` (asked when ambiguous); all four core artifacts read (plus `ticket.md` and `observations.md` when present); a missing `goals.md` flagged
 - [ ] Nothing written, edited, renamed, or deleted anywhere — save a user-confirmed activation `mv` of a backlogged folder; no git mutation, no watermark seeded or advanced, no candidate's `**Verify:**` re-run, no reference sweep run, no `BRIEF.md` or scratch briefing file
 - [ ] State reconstructed from checkbox markers, not prose; `**Blocked:**` / `**In review:**` sections surfaced verbatim; a `skipped` plan reported as abandoned, not drift
 - [ ] Drift check compared done/shipped claims against current reality — partitioned shipped vs. pending, `## Current state` claims included, a `done` plan's `met` goals re-checked in full or spot-checked, the branch named, a missing `## Acceptance` on a `done` plan flagged `block` — with "Drift since plan" rendered even when clean, and "Commits since watermark" reporting the scan's commit list, missing baseline, or orphan — on `no-checkout`, rendered unscanned naming the session's git root for a store-resident task, omitted only where no repository answers

@@ -20,46 +20,6 @@ For each approach, assess **alignment** (how well it matches existing codebase p
 **simplicity** (minimum complexity to meet requirements), **risk** (what could go wrong, how
 reversible), and **effort** (relative size S/M/L).
 
-## The task diagram (`diagram.md`)
-
-`plan-task` draws a task's optional `diagram.md` after approach selection, and `implement-task`
-re-checks it at each gate; the spine owns that timing. This section owns what a *code* diagram
-depicts and whether the change warrants one at all. Format, the dated `**Reflects:**` line, and the
-absence-is-never-a-gap rule live in `../workflow/task-diagram.md`.
-
-**Draw one when the change alters structure** — when a reader's mental model of the system would be
-wrong without it: a new module, service, or boundary; a new path data takes through existing
-components; a dependency direction that flips; a flow crossing three or more components a reader
-would otherwise have to assemble by hand.
-
-**Draw nothing when the structure is unchanged**, which is the ordinary outcome. A config or
-dependency bump, a fix local to one module that leaves its interfaces intact, a field added to an
-existing type, a docs edit — none of these have a shape worth a picture, and **never invent
-components, steps, or actors to round one out** (the anti-fabrication rule `prepare-diagram` states,
-for the same reason). The test is whether the picture tells a reader something the prose doesn't —
-not whether a picture could be drawn.
-
-What a code diagram depicts:
-
-- **The target state at module-or-service altitude** — the components involved and how data and
-  control move between them. Not a call graph, not a class map, and above all not the files the
-  plan's steps touch: that is `plan.md`'s `Touches:` data restated, which
-  `../workflow/one-home.md` § *One home per fact* forbids.
-- **The delta, marked** — new, changed, and removed elements carry a marker, so the reader sees the
-  change rather than only the endpoint. This is the sanctioned exception to
-  `../documentation/mermaid-core.md`'s no-styling default ("add styling only … when color carries
-  meaning the structure cannot"); note it in a `%%` comment where you use it.
-- **Size per `../documentation/mermaid-core.md` § *Size discipline*** — near 15 nodes, split by the
-  question the diagram answers. A change needing two diagrams to explain is usually a change wanting
-  two tasks.
-
-Notation comes from the Mermaid sheets — `../documentation/mermaid-core.md` plus the one per-type
-sheet beside it (`mermaid-flowchart.md`, `mermaid-sequence.md`, `mermaid-class.md`, `mermaid-er.md`,
-`mermaid-state.md`). Load core plus the type at hand; no Mermaid syntax is restated here or in the
-spine. Default to a flowchart because most code changes are structural; reach for a sequence diagram
-when the point is ordering across participants. Render-check on write per that file's § *Before
-returning a diagram*, taking its graceful skip when `npx` or the network is unavailable.
-
 ## Step shape
 
 Each step is a **verifiable piece of work** — after completing it, there's a concrete way to
