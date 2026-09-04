@@ -22,7 +22,7 @@ The asymmetry with § *Reviving a skipped plan* above is deliberate: an archived
 
 ## Task worktree
 
-Placement, naming, the sanction, and the degrade are `./task-delivery.md`; re-entry and removal are its satellite `./task-delivery-edges.md`. Read the one this branch reaches. What either costs this skill is here.
+Placement, naming, the sanction, and the degrade are `./task-delivery.md`; re-entry, removal, and the branch-pattern proposal are its satellite `./task-delivery-edges.md`. Read the one this branch reaches. What either costs this skill is here.
 
 **Creation runs once, at implement-task §3**, before the plan flips to `executing` — so every step of the run lands on the task's own branch and the result header's `**Pointers:**` carries it from the first write. That file's § *Branch and worktree creation* owns the gate, and its two skips differ. The skip is **silent** for a documentation or bureaucratic task, and for one whose repository — resolved by that section's **Which repository**, never read off the task folder's own location — is absent: no worktree and no note about not having one, since a run narrating that skip would train the user to read an ordinary doc task as a degraded one. The skip is **announced** where the repository resolves but holds none of the plan's paths — the run names that root and says none of the plan's paths exist in it yet, so a greenfield engineering task's missing branch is visible rather than silent. Neither skip records anything. **The degrade does** — announce it, record it in the run's `**Notes:**` (implement-task §5), and continue on the current checkout, where the shared tree is the checkout exactly as it was before this contract.
 
