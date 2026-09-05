@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Read-plus-verify reviewer for agents-kit's code-review skills — `review-commit`, `review-pr`, and the two triage-verify composites' phase 1. Reviews one session-supplied review object, runs the review's own verification over it, and returns findings as evidence under the shared reviewer contract. Launched only under a session's review packet; it never edits.
+description: Read-plus-verify reviewer for agents-kit's code-review skills — `review-pr` and the triage-verify composite's phase 1. Reviews one session-supplied review object, runs the review's own verification over it, and returns findings as evidence under the shared reviewer contract. Launched only under a session's review packet; it never edits.
 model: claude-opus-5
 effort: xhigh
 tools: Read, Grep, Glob, Bash, WebFetch

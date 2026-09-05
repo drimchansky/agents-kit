@@ -1,6 +1,6 @@
 # Code Review
 
-Lenses, calibration, and discipline that apply to **any** code review. Mode-specific orchestration lives in `skills/review-pr/SKILL.md` (branch diff against base) and `skills/review-commit/SKILL.md` (the staged pre-commit diff); everything below is mode-agnostic.
+Lenses, calibration, and discipline that apply to **any** code review. Mode-specific orchestration lives in `skills/review-pr/SKILL.md` (branch diff against base); everything below is mode-agnostic.
 
 Other reference checklists cover specific surfaces: `accessibility.md`, `code-style.md`, `css.md`, `forms.md`, `html.md`, `interactions.md`, `performance.md`, `privacy.md`, `react.md`, `security.md`, `tanstack-query.md`, `testing.md`, `typescript.md`. Consult those when the diff touches those domains. This file covers what those checklists don't.
 
@@ -60,6 +60,14 @@ Apply Chesterton's Fence: before recommending removal, understand why the code e
 - List what you found and ask before removing it — don't delete silently
 - Confirm it's truly unused (grep for all references) before recommending removal
 
+### Accidental Inclusions
+
+Every diff carries things the author never meant to ship, and they hide in plain sight because each one looked deliberate while it was being written. Read the added lines for them by name:
+
+- **Debug artifacts left in** — an added `console.log`, `debugger`, `print`, a stray stack dump, a commented-out probe. Flag each one where the diff added it, however sound the surrounding change: the noise reaches production logs, and a `debugger` statement stops a real user's browser. A `debugger` statement, a stack dump, and a commented-out probe have no legitimate shipped use, so each is a finding on sight; printed output is a finding only where it is not what the file exists to emit — a CLI entry point, a logger facade, or a reporter emits its product on stdout, and removing that breaks the program.
+- **Sensitive data** — tokens, API keys, passwords, connection strings, or a credential file such as `.env` committed alongside the code. Critical whenever it appears, because deleting the line later does not remove it from history: the finding has to say the value needs rotating, not just deleting.
+- **Unrelated formatting churn** — a reindent, an import reshuffle, or an editor's whole-file rewrite riding along with a behavioral change. Ask for it in a separate commit; while it stays, it buries the change under noise for this review and for everyone who reads `git blame` afterward.
+
 ### Multi-Model Review
 
 When reviewing AI-generated code (or your own output from an earlier step):
@@ -116,11 +124,11 @@ When suggesting findings the user will paste as inline PR comments, prefix the c
 
 ## Findings output shape
 
-What a diff review's findings list looks like, for `review-commit` and `review-pr` alike — defined once here, cited by both rather than restated. **One entry per issue**, each carrying its severity, `file:line`, the recommendation, and the impact, the whole list ordered by severity.
+What a diff review's findings list looks like — defined once here and cited rather than restated. **One entry per issue**, each carrying its severity, `file:line`, the recommendation, and the impact, the whole list ordered by severity.
 
 Minor findings take that same shape — listed individually, never collapsed into a prose block or a trailing summary line — and the list is never capped or truncated, however long it runs. The per-entry shape is what lets `/fix-findings` take findings one at a time in severity order; a collapsed block or a dropped tail is a finding the follow-up cannot select.
 
-Each skill's own Output section says where the list sits and what else rides on an entry; what a downstream publish step selects from it is that step's business, not this shape's.
+Each citing skill's own Output section says where the list sits and what else rides on an entry; what a downstream publish step selects from it is that step's business, not this shape's.
 
 ## Approval Bar
 
@@ -153,15 +161,15 @@ For large diffs (20+ files): review types and interfaces first to understand the
 
 ## Verification Scripts
 
-Diff reviews (`review-commit`, `review-pr`) always run the project's verification scripts, launched early rather than after the review:
+The diff review (`review-pr`) always runs the project's verification scripts, launched early rather than after the review:
 
-- **Launch as soon as the reviewed set is known** — for `review-commit` the staged set; for `review-pr` the diff against the base. Identify what the project exposes — lint, typecheck, and test scripts (check `package.json` scripts, a `Makefile`, or the stack's conventional commands) — and start them on the changed/staged files where they exist; what the project doesn't expose is skipped, not simulated.
+- **Launch as soon as the reviewed set is known** — the diff against the base. Identify what the project exposes — lint, typecheck, and test scripts (check `package.json` scripts, a `Makefile`, or the stack's conventional commands) — and start them on the changed files where they exist; what the project doesn't expose is skipped, not simulated.
 - **Run them in the background where the host supports it**, reviewing inline while they run and waiting on them per `../workflow/delegated-waiting.md` § *How to wait*; where it doesn't, run them in the foreground at that same early point.
 - **Collect before output** — merge failures and warnings into the findings, each with file location and severity.
 
 Beyond these scripts and the reproduction below, a review executes nothing: everything else stays analysis — read the code, reason about it. The reviewing session or its delegated reviewer (`../workflow/reviewer-contract.md`) is what runs them — a read-only probe still runs neither (`../workflow/agent-fanout.md`).
 
-**Both execute-only actions exercise what is on disk, never the review object itself.** The scripts above and the reproduction below run over the live tree, while the object is the index (`review-commit`) or committed history (`review-pr`) — and the two agree only where the tree carries the object's post-change content: a staged set the tree matches, or a branch diff whose head is checked out over a clean tree. At a reviewed path where they diverge — a partial `git add -p`, an edit made after staging, an uncommitted change on the branch — a run exercises content the object never carried, and its output is evidence for something other than the change under review. So one bar bounds both: a script failure or a reproduced failure mode located at a diverging path is **context, never an adopted finding** — report it as such, and settle the candidate by the verify route in `../workflow/agent-fanout.md` instead. The runner records every such path — the delegated reviewer under its return's `Divergence` heading (`../workflow/reviewer-contract.md` § *The return*), the session on its inline pass in the same words — and a run over a tree that matches the object records `None`. Neither review skill requires the tree to match — `review-commit` supports partial staging by design — which is why the bar bounds the evidence rather than refusing the run; the triage-verify composites add the tree-agreement precondition their probes need on top.
+**Both execute-only actions exercise what is on disk, never the review object itself.** The scripts above and the reproduction below run over the live tree, while the object is committed history — and the two agree only where the tree carries the object's post-change content, which for a branch diff means its head checked out over a clean tree. At a reviewed path where they diverge — an uncommitted change on the branch — a run exercises content the object never carried, and its output is evidence for something other than the change under review. So one bar bounds both: a script failure or a reproduced failure mode located at a diverging path is **context, never an adopted finding** — report it as such, and settle the candidate by the verify route in `../workflow/agent-fanout.md` instead. The runner records every such path — the delegated reviewer under its return's `Divergence` heading (`../workflow/reviewer-contract.md` § *The return*), the session on its inline pass in the same words — and a run over a tree that matches the object records `None`. The review skill never requires the tree to match, which is why the bar bounds the evidence rather than refusing the run; `review-pr-triage-verify` adds the tree-agreement precondition its probes need on top.
 
 **Reproduce before adopting.** A candidate whose failure mode is reproducible is reproduced in the session's scratch area before it is adopted, and the adopted finding carries the observed output — what the run printed, not a paraphrase of it — as its evidence. What runs is that one candidate's failure mode as an isolated scratch invocation: a crafted input against the defective unit, a minimal script. The project's build and suite stay out of bounds, and reproducing a candidate widens nothing past its own invocation. The reviewing session or its delegated reviewer is what runs it — a probe still never does, whatever the probe found. The divergence bar above binds here too: a candidate at a diverging path takes the verify route rather than a scratch run. Where the failure mode doesn't reproduce there — it needs infrastructure or prohibitive setup, or the claim isn't executable at all — the bar doesn't apply, and the candidate settles by the verify route in `../workflow/agent-fanout.md`.
 

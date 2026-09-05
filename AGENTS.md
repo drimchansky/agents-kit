@@ -233,6 +233,7 @@ Derivable — these enumerations were removed and are not re-added; find these c
 - `references/workflow/task-store.md` § *Resolving `<kit-root>`* — no citer enumeration, same test: every skill that runs a `scripts/` helper cites the section by path at its invocation, so the reverse search reconstructs the membership. The section states the rule and what an absent kit root means; whether the skill then stops or falls back is its own call and each states it in place.
 - `references/engineering/rules.md:3` — the loader enumeration, each named skill's `SKILL.md` citing the overlay (confirmed by grep). The `commit` exception is semantic and stays: `commit` cites the file only to state that it does *not* load it, so a reverse search would misread that citation as membership — the exception can't be re-derived from the citation graph.
 - `references/documentation/rules.md:3` — the pack-contributed loader enumeration, each named skill's `SKILL.md` citing the overlay (confirmed by grep). Unlike the engineering entry, nothing semantic accompanies it — the pack has no `commit`-style exception.
+- `references/engineering/review.md` § *Findings output shape* — the citer enumeration, which had already gone stale before the edit that removed it: it named both diff-review skills of the time while `references/workflow/reviewer-contract.md` § *The return* cites the section directly too. Searching the section name recovers both, and the composites that reach the shape through `review-pr` with it.
 
 Semantic — maintained, each with the reason it can't be derived:
 

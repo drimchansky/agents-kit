@@ -18,7 +18,7 @@ Gather findings from a source — a review produced in this session, a PR's revi
 Resolve the source in this order:
 
 1. **Explicit argument wins.** A PR number or URL → PR mode. An existing file path → parse that file. Pasted text, or a pointer like "the review above" → those findings.
-2. **No argument:** if the session contains review findings (from `/review-pr`, `/review-commit`, `/review-docs`, …), triage those — the most recent review is the natural target. Otherwise fall back to the open PR for the current branch (PR mode).
+2. **No argument:** if the session contains review findings (from `/review-pr`, `/review-docs`, …), triage those — the most recent review is the natural target. Otherwise fall back to the open PR for the current branch (PR mode).
 3. **Several sources named** → one merged view. When two sources describe the same issue, keep one entry and cite each source on it — two entries for one issue split the batch's story and double the count. If the sources disagree on whether the issue is addressed, the entry lands in **Verify** with the disagreement noted; if they disagree on severity, lead with the most severe prefix.
 
 Name the triaged source(s) in the Overview so the reader knows what was and wasn't covered.

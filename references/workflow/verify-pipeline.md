@@ -12,19 +12,19 @@ Each phase executes its skill file — read the sibling `SKILL.md` and run its f
 
 Past these three, a phase departs from its skill only where the composite's own section says so — never by improvisation.
 
-## The review composites
+## The review composite
 
-`review-commit-triage-verify` and `review-pr-triage-verify` chain a review skill into the pipeline, and everything in this section is theirs jointly: neither file restates it, each keeping only its own review object, the drift re-check that guards it, and the flags its review skill takes. `triage-findings-verify` runs no review phase and takes none of it.
+`review-pr-triage-verify` chains a review skill into the pipeline, and this section is the home of everything that follows from it: its own file restates none of this, keeping only its review object, the drift re-check that guards it, and the flags its review skill takes. `triage-findings-verify` runs no review phase and takes none of it.
 
 ### The tree-agreement precondition
 
-Each composite's Setup confirms, before the review phase, that the live working tree carries no change its review object does not — what exactly is compared being that composite's own. This is a **precondition, not a drift check**: it can be false from the first moment. Catching it in Setup costs nothing; catching it at the verify phase would waste the whole review. Fails → stop, name the diverging paths, and say what they need first. Passing there is also what makes the verify phase's re-run a genuine drift check.
+`review-pr-triage-verify`'s Setup confirms, before the review phase, that the live working tree carries no change its review object does not — what exactly is compared being the composite's own. This is a **precondition, not a drift check**: it can be false from the first moment. Catching it in Setup costs nothing; catching it at the verify phase would waste the whole review. Fails → stop, name the diverging paths, and say what they need first. Passing there is also what makes the verify phase's re-run a genuine drift check.
 
 The review skill run alone carries no such constraint — its verification scripts run over the tree under the divergence bar in `../engineering/review.md` § *Verification Scripts*, which bounds a diverging path's evidence rather than refusing the run. This precondition belongs to the verify phase, so it binds only the composite.
 
 ### Flags through the review phase
 
-Review-phase flags pass through to the review skill, each composite's Flags section naming the suppressions its own phases impose. Two consequences are shared. The review phase runs its verification scripts as that skill specifies (always): the reviewer runs them on a delegated pass, the session on the inline fallback. A script finding then reaches the probes like any other — but they never re-run the check that produced it: a lint or type failure re-verifies by reading; a test failure usually can't, and lands **Inconclusive**. The per-batch verify probes take no review-phase flag: they run on the native engine regardless.
+Review-phase flags pass through to the review skill, the composite's Flags section naming the suppressions its own phases impose. Two consequences follow. The review phase runs its verification scripts as that skill specifies (always): the reviewer runs them on a delegated pass, the session on the inline fallback. A script finding then reaches the probes like any other — but they never re-run the check that produced it: a lint or type failure re-verifies by reading; a test failure usually can't, and lands **Inconclusive**. The per-batch verify probes take no review-phase flag: they run on the native engine regardless.
 
 ### The review phase
 
@@ -55,7 +55,7 @@ Merge per the fan-out merge contract. **Not an issue** makes the finding **Withd
 Every member's Output carries both, placed among its own sections:
 
 - **Batches** — the triage frame: one section per concern zone, ordered by its most severe member. Each finding renders once: original text with its severity prefix, then `file:line` (or, with no anchor, the locator its own file names), then its verdict: **Confirmed** (root cause, plus fix options targeted → thorough), **Withdrawn** (the probe's evidence), **Inconclusive** (what's missing), or **Unverified** (reason: probe and fallback failed, or out of probe scope). A finding triage landed outside open shows that bucket in place of a verdict.
-- **Review pass** and **Divergence** (the review composites only) — forwarded from the review phase exactly as the review skill specs each. The `Review pass:` line is owed on either path — a pipeline output that dropped it would read like a delegated pass whatever ran. `Divergence` reads `None` when the tree carried the object, and any non-`None` entry is an anomaly Setup's precondition should have prevented — surfaced, never dropped.
+- **Review pass** and **Divergence** (`review-pr-triage-verify` only) — forwarded from the review phase exactly as the review skill specs each. The `Review pass:` line is owed on either path — a pipeline output that dropped it would read like a delegated pass whatever ran. `Divergence` reads `None` when the tree carried the object, and any non-`None` entry is an anomaly Setup's precondition should have prevented — surfaced, never dropped.
 - **Verified** — one mandatory line: `Verified: <n> confirmed · <n> withdrawn · <n> inconclusive · <n> unverified — <k> native probes`. Two segments are conditional: ` · <n> triaged out` joins the counts only when triage landed findings outside open — the **verify** and **addressed** buckets both, since neither got a verdict here — and `, <m> inline fallbacks` joins the probe count only when a batch was verified inline (probe failed or called off). Mandatory so a skipped or failed verify phase is visible rather than ambiguous.
 
 ## Shared checklist
@@ -67,4 +67,4 @@ Every member confirms these, alongside the items its own file adds:
 - [ ] Every probed batch covered by a probe (merged small zones count) or a flagged inline fallback; prompts carried the findings verbatim; probes read-only per the fan-out contract
 - [ ] The Output carries the mandatory **Verified** line
 - [ ] Nothing edited and nothing written to any source — the pipeline-wide read-only guarantee held
-- [ ] (the review composites only) The review phase suppressed the standalone settle — no finding the reviewer or the `-x` probe returned was settled or verified there — and every one of them got exactly one verdict in the verify phase, or its triage bucket
+- [ ] (`review-pr-triage-verify` only) The review phase suppressed the standalone settle — no finding the reviewer or the `-x` probe returned was settled or verified there — and every one of them got exactly one verdict in the verify phase, or its triage bucket

@@ -8,7 +8,6 @@ What the probe checks, per skill:
 
 - **`review-task`** — independent grounding: the plan's reality claims (integration points, "reuse X" assumptions, referenced files/symbols/APIs), verdict per claim.
 - **`review-pr`** — a cold second review of the branch diff against its base, findings with severity.
-- **`review-commit`** — a cold second review of the staged diff, findings with severity.
 - **`review-docs`** — independent grounding of the doc's verifiable claims against the artifacts they describe, verdict per claim.
 
 Shared mechanics, every `-x` cross-check run:

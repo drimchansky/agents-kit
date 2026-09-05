@@ -11,7 +11,7 @@ argument-hint: '[-x (cross-vendor second review)] [-p (parallel lens probes + ga
 
 One command for the full review pipeline: review the current branch against its base (`review-pr`), batch the findings by concern (`triage-findings`), then verify each batch in an isolated read-only probe running the `verify-issue` protocol — cold eyes per batch, uncolored by the session that wrote the findings. The final display is the triage frame with one verdict per finding.
 
-`./references/workflow/verify-pipeline.md` owns the mechanics this pipeline shares with the kit's other verify composites — the pipeline-wide overrides every phase runs under among them. Read it; the sections below carry only what is specific to this one.
+`./references/workflow/verify-pipeline.md` owns the mechanics this pipeline shares with the kit's other verify composite — the pipeline-wide overrides every phase runs under among them. Read it; the sections below carry only what is specific to this one.
 
 **CRITICAL**: The whole pipeline reads and displays. No phase edits code, posts to the PR, or writes to any source — the guarantee `triage-findings` and `verify-issue` each carry individually, held end to end.
 
@@ -55,7 +55,7 @@ Lists, never tables.
 - **Reviewed** — the provenance line exactly as `review-pr` specs it, so `/publish-pr-review` can anchor: `Reviewed at <head-sha> (merge-base <base-sha>) by <model>`.
 - **Review pass** and **Divergence** — forwarded from the review phase exactly as `review-pr` specs each, on the terms `./references/workflow/verify-pipeline.md` § *Output: Batches and the Verified line* adds.
 
-**Next:** `/publish-pr-review` offers the **Findings** and **Minor findings** lists above, and **Improvements**, as severity tiers and posts the one you select — Withdrawn are already excluded from both lists, and with nothing in any of them it posts a short approval instead of asking. With `-d`, `/update-pr-description` applies the drafted **PR description** to the PR. Or address the batches with `/implement-task` or `/review-commit`.
+**Next:** `/publish-pr-review` offers the **Findings** and **Minor findings** lists above, and **Improvements**, as severity tiers and posts the one you select — Withdrawn are already excluded from both lists, and with nothing in any of them it posts a short approval instead of asking. With `-d`, `/update-pr-description` applies the drafted **PR description** to the PR. Or address the batches with `/implement-task` or `/fix-findings`, then `/commit`; the PR's next review pass certifies them.
 
 ## Verification
 

@@ -21,8 +21,8 @@ The write surface is **working-tree code and nothing else**: never stages, never
 
 1. **Explicit argument wins.** A PR number or URL → PR mode. An existing file path → parse that file. Pasted text, or a pointer like "the review above" → those findings. A named subset ("the two majors", specific `file:line`s) → those entries of the latest session findings.
 2. **No argument:** the most recent findings in this session, with everything fixable selected —
-   - a **verify composite** (`review-commit-triage-verify`, `review-pr-triage-verify`, `triage-findings-verify`) → its Confirmed and Unverified findings;
-   - a **plain review** (`review-commit`, `review-pr`) or a **`triage-findings` batch** → all of it, none of which carries a verdict.
+   - a **verify composite** (`review-pr-triage-verify`, `triage-findings-verify`) → its Confirmed and Unverified findings;
+   - a **plain review** (`review-pr`) or a **`triage-findings` batch** → all of it, none of which carries a verdict.
 3. **Nothing to work from** → say so, name the forms above, and stop. Unlike `triage-findings`, this skill does **not** fall back to the current branch's open PR: that skill reads, this one edits, and fetching a remote findings list to start editing against is not something to infer from an empty argument.
 
 **Code findings only.** Whatever the route in — a `triage-findings` batch, a file, a paste — a documentation findings set is out of scope: this skill's integrated-health boundary uses the engineering recipe, which proves nothing about prose. A `/review-docs` set belongs back with a doc review.
@@ -146,7 +146,7 @@ Lists, never tables. Omit empty buckets.
 - **Fix failed** — fixes that were reverted, and fixes never attempted because a dependency of theirs failed, each with the reason and what would unblock them: the named prerequisite for one skipped as a cascade; the reason the baseline comparison could not run, after collection-level rollback on an unestablished control; the unresolved-health reason after an unconverged recovery; or whether one fix, a dependency group, or an interaction group was implicated. A never-attempted entry says so rather than reporting `(reverted)`, which would assert an edit that never happened. A delegated one notes the delegation, its engine, its batch, and its immediate-outcome evidence source here too; one applied by the coordinator notes its posture exception or its ask routing, as in **Fixed**.
 - **Untouched** — Withdrawn and Inconclusive findings with their verdict as the reason, findings triage landed outside **open** with their bucket, external findings dropped as `anchor moved` or `not actionable`, and any finding the user's subset excluded.
 
-**Next:** the fixes are unreviewed and unstaged — certify them with a review of the changed code. For a staged-diff flow that means staging the fixes first, then `/review-commit` (or `/review-commit-triage-verify`), then `/commit`. Findings that came from a PR or a saved list are answered in the working tree only: replying to the source, resolving its threads, and pushing all stay with you.
+**Next:** the fixes are unstaged and unreviewed — stage them and run `/commit`; `/review-pr` (or `/review-pr-triage-verify`) is what certifies the changed code, before merge rather than before the commit. Findings that came from a PR or a saved list are answered in the working tree only: replying to the source, resolving its threads, and pushing all stay with you.
 
 ## Don't Rationalize
 

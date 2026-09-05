@@ -1,6 +1,6 @@
 # Probe Prompt Shape: Verify
 
-The prompt shape for the triage-verify composites' per-batch probes (`review-pr-triage-verify`, `review-commit-triage-verify`, `triage-findings-verify`), and for settling a lens fleet's pooled candidates one group at a time (`./agent-fanout.md` § *Merge contract*). The probe contract and the merge contract that bind it are `./agent-fanout.md`; the engine and its launch recipe are `./probe-engines.md`.
+The prompt shape for the triage-verify composites' per-batch probes (`review-pr-triage-verify`, `triage-findings-verify`), and for settling a lens fleet's pooled candidates one group at a time (`./agent-fanout.md` § *Merge contract*). The probe contract and the merge contract that bind it are `./agent-fanout.md`; the engine and its launch recipe are `./probe-engines.md`.
 
 ```
 You are an independent verifier with no prior context. Working root: <absolute repo path>.
@@ -17,11 +17,11 @@ tradeoff decides between two of the options. Its scope step still runs: investig
 the same pattern elsewhere exactly as it says, and report what that turns up in
 the form below.
 
-The findings came from a review of <the staged diff (git diff --cached) | the diff
-<base>...HEAD | the PR's diff (gh pr diff <number>)>. Read that diff first — it is what changed. A finding about the change
-itself (something added, dropped, or missing from it) cannot be judged from current
-file contents alone, and a staged change is absent from git log entirely, so the
-protocol's recent-changes step will not surface it.
+The findings came from a review of <the diff <base>...HEAD | the PR's diff
+(gh pr diff <number>)>. Read that diff first — it is what changed. A finding
+about the change itself (something added, dropped, or missing from it) cannot be
+judged from current file contents alone, and the protocol's recent-changes step
+does not know which commits the review's base range covers.
 
 Treat each finding below as a separate verification target (its Multiple Findings
 rule). Answer per finding with its number and a verdict — Confirmed / Not an issue
@@ -48,7 +48,7 @@ Findings (verbatim, with severity and location when present):
 
 The findings go in verbatim — a summarized finding verifies a different claim. So does
 the diff line, this shape's review object and the counterpart of the cold-review shape's
-(`./probe-shape-cold-review.md`): hand it whenever the findings came from a change — a staged diff, a branch diff, or a PR's
+(`./probe-shape-cold-review.md`): hand it whenever the findings came from a change — a branch diff or a PR's
 diff (`gh pr diff`) — since a probe that isn't handed it then verifies a snapshot rather
 than a change. When the findings are standalone instead — a saved or pasted list with no
 associated change, as `triage-findings-verify` can resolve — drop that paragraph: there is

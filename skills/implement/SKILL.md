@@ -25,7 +25,7 @@ Before working, read `./references/workflow/execution-loop.md` — the loop, its
 
 - A task folder or plan already covers the work — use `implement-task`, which records progress against it
 - The work spans multiple modules, has several viable approaches worth comparing, or has requirements ambiguous enough to need decomposition — suggest `plan-task` first
-- The user wants the work assessed rather than done — that's `review-commit` or `review-pr`
+- The user wants the work assessed rather than done — that's `review-pr`
 
 Default to this skill when the change looks like one or two files with an approach that's already clear, because a plan would cost more than the work; escalate the moment framing or the work itself says otherwise.
 
@@ -97,7 +97,7 @@ Lists, never tables. Chat only — nothing written to disk beyond the work itsel
 - **Deviations** — anything that differs from the §1 frame, and why; omit when none
 - **Follow-ups** — what's left or worth watching; omit when none
 
-Close with `**Noticed but not touching:**` when applicable (`./AGENTS.md`), and point at the natural next step — `/review-commit` before committing, or `/plan-task` if the work outgrew this skill.
+Close with `**Noticed but not touching:**` when applicable (`./AGENTS.md`), and point at the natural next step — `/commit` to commit the change and `/review-pr` to review it before merge, or `/plan-task` if the work outgrew this skill.
 
 ## Verification
 

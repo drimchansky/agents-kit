@@ -20,11 +20,6 @@
     ]
   },
   {
-    "sentence": "before working, read ./references/engineering/review.md — it carries the lenses (what to look for, what not to flag, calibrate severity, approval bar, prioritize review effort, don't rationalize) that apply to every review.",
-    "reason": "review-commit and review-pr are peers; neither can cite the other, and a citation cannot stand in for an instruction to load",
-    "files": ["skills/review-commit/SKILL.md", "skills/review-pr/SKILL.md"]
-  },
-  {
     "sentence": "org specifics (people and mention tables, house style, published-page handling) live in the store's doc-conventions file, discovered per ../workflow/task-store.md § store-level artifacts — consult it when present;",
     "reason": "each format sheet is loaded alone and states in place that store conventions override it",
     "files": ["references/documentation/adr-format.md", "references/documentation/rfc-format.md"]
@@ -33,15 +28,5 @@
     "sentence": "use lists instead (tables wrap badly in narrow terminals and resist clean line-by-line diffs and edits)",
     "reason": "proofread is a deliberately lean utility skill that loads no shared rules file; the communication rule is stated in place, mirroring CORE_RULES.md § Communication",
     "files": ["CORE_RULES.md", "skills/proofread/SKILL.md"]
-  },
-  {
-    "sentence": "review pass — mandatory, per ./references/workflow/reviewer-contract.md § degrade rule: review pass: delegated (<model>) when the reviewer produced the pass, review pass: inline (<reason>) when the session did, the reason one of that section's closed set and <model> read as its § adapter defaults says.",
-    "reason": "review-commit and review-pr are peers; each Output section defines the line in place and names its home on the line",
-    "files": ["skills/review-commit/SKILL.md", "skills/review-pr/SKILL.md"]
-  },
-  {
-    "sentence": "divergence — the diverging reviewed paths the runner recorded per \"verification scripts\" in ./references/engineering/review.md — the return's divergence heading on a delegated pass, the session's own record on the inline fallback — each with the context reported at it;",
-    "reason": "review-commit and review-pr are peers; each Output section defines the line in place and names its home on the line",
-    "files": ["skills/review-commit/SKILL.md", "skills/review-pr/SKILL.md"]
   }
 ]
