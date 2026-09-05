@@ -2,7 +2,7 @@
 
 Two commit origins carry a task's work past its folder: a session where the folder was never opened, and a plain `git commit` outside the kit. The **scan** makes those commits visible; the **watermark** bounds it. Read it at the commits-since-watermark step — `resume-task` reading, a reconcile phase writing.
 
-**The mechanics are a script.** `node <kit-root>/scripts/commit-scan.ts <task-dir>` enumerates and reports as JSON, writing nothing. `<kit-root>` resolves per `./task-store.md` § *Resolving `<kit-root>`*; `<kit-root>/SCRIPTS.md` § *`scripts/commit-scan.ts`* owns its CLI form, stdout contract, and exit statuses. This file owns the judgment around it.
+**The mechanics are a script.** `node <kit-root>/scripts/commit-scan.ts <task-dir>` enumerates and reports as JSON, writing nothing. `<kit-root>` resolves per `./task-store.md` § *Resolving `<kit-root>`*; `../scripts/commit-scan.md` owns its CLI form, stdout contract, and exit statuses. This file owns the judgment around it.
 
 **A commit is a trigger, never evidence.** A commit — a revert included — *nominates* a pending step as a candidate; the box flips only where `./reconciliation.md` § *Strengthen only on verified evidence* attests it, by re-running that step's `**Verify:**` in the current run. The scan nominates and never weakens: unchecking a box whose work vanished is the unbacked-step repair's.
 
@@ -14,7 +14,7 @@ It also carries a **second meaning**: the **last-observed tip of `<ref>`**, the 
 
 ## The scan
 
-**The repository is resolved, never assumed** — the git root containing a project-local `.agents/tasks/` folder, or the session's git root for one in a task store or registered root (`./task-store.md`), never a root inferred from the shell's working directory. Neither resolving omits the section; the script reaches only the first case — the store case reports `no-checkout` and renders **unscanned**, naming that repository (`SCRIPTS.md` § *`scripts/commit-scan.ts`*).
+**The repository is resolved, never assumed** — the git root containing a project-local `.agents/tasks/` folder, or the session's git root for one in a task store or registered root (`./task-store.md`), never a root inferred from the shell's working directory. Neither resolving omits the section; the script reaches only the first case — the store case reports `no-checkout` and renders **unscanned**, naming that repository (`../scripts/commit-scan.md`).
 
 **A repository holding none of the plan's paths is not this task's.** At least one path a step names must **exist on disk** inside the resolved root — existence, not containment. Failing it omits the section: no scan, no seed, no re-seed. Both omissions arrive as `no-checkout`, never as an empty range.
 

@@ -18,7 +18,7 @@ node <kit-root>/scripts/task-move.ts <SRC> --to <archive|backlog>
 
 `<kit-root>` resolves per `./task-store.md` § *Resolving `<kit-root>`*, which owns that rule. With no kit root available, say the move can't be performed here and stop — a guarded move has no by-hand equivalent worth offering; the container's own file states what the move is for anyone doing it themselves.
 
-`<kit-root>/SCRIPTS.md` § *`scripts/task-move.ts`* owns its CLI and its stdout contract — read that section, not the whole file. What it decides, so the skill doesn't:
+`../scripts/task-move.md` owns its CLI and its stdout contract. What it decides, so the skill doesn't:
 
 - **The gate** — it reads the folder's state against the direction's own rule and refuses what fails it; each skill names which rule that is.
 - **The destination** — location-relative, derived from `SRC`'s own parent, with the **case-insensitive recognition** of an existing container (an `archive/` or `backlog/` is moved into as it is spelled; normalizing a stray spelling is `maintain`'s format sweep, not this move).

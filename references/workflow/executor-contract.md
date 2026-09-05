@@ -104,8 +104,7 @@ baseline <shared-tree> --out <scratch>/unit-<n>.json` (`./task-store.md` § *Res
 return run `check <shared-tree> --baseline <that manifest> --surface <each of those paths>`,
 attributing the delta per unit by the reports' `Changes` — the check bounds a segment whole, and
 `Changes` is its only per-unit bound. Exit 0 passes; exit 1 is a detected escape and takes the
-failure path above; exit 2, or no kit root, is a re-run case above (`<kit-root>/SCRIPTS.md` §
-*`scripts/worktree-merge.ts`*). Read the report first: a `Changes` entry outside the surface takes
+failure path above; exit 2, or no kit root, is a re-run case above (`../scripts/worktree-merge.md`). Read the report first: a `Changes` entry outside the surface takes
 that failure path before the script runs. A serially re-executed unit owes the same check against
 its own pre-unit capture.
 

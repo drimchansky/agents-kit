@@ -108,7 +108,7 @@ If the goals file is missing entirely, skip this step and treat the missing goal
 
 ### 5. Check Acceptance Coverage
 
-Run `node <kit-root>/scripts/task-state.ts <task folder>` — `<kit-root>` and the script's own `SCRIPTS.md` contract section both per `./references/workflow/task-store.md` § *Resolving `<kit-root>`* <!-- cold --> — and take the mapping from its `goalCoverage` rather than re-deriving it. Whether a goal is covered at all is **mechanical**, and the report is that answer, not a prose reading. Kit root, script, or `node` unavailable → say so and map the `**Goal:**` citations by hand. The one place a light read of the step is warranted is separating `covered` from `partially covered` below — a goal whose only citing step visibly delivers just part of it; that single judgment aside, the mapping stays citation-driven.
+Run `node <kit-root>/scripts/task-state.ts <task folder>` — `<kit-root>` per `./references/workflow/task-store.md` § *Resolving `<kit-root>`*, its contract `./references/scripts/task-state.md` <!-- cold --> — and take the mapping from its `goalCoverage` rather than re-deriving it. Whether a goal is covered at all is **mechanical**, and the report is that answer, not a prose reading. Kit root, script, or `node` unavailable → say so and map the `**Goal:**` citations by hand. The one place a light read of the step is warranted is separating `covered` from `partially covered` below — a goal whose only citing step visibly delivers just part of it; that single judgment aside, the mapping stays citation-driven.
 
 Tag each goal with one of:
 

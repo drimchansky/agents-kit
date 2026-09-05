@@ -2,7 +2,7 @@
 
 Compacting a `result.md` that outgrew the size trigger — split out of `./reconciliation.md`, which keeps no part of it. This file owns the consent a compaction needs and the judgment of what may collapse. Read it when a run reaches the trigger and the proposal is being built.
 
-**The mechanics are a script.** `node <kit-root>/scripts/task-state.ts --compaction-plan <task-dir>` reports whether the result is `due`, whether the version-history precondition holds, and which sections a compaction must keep against which it may collapse — as JSON, writing nothing. `<kit-root>` resolves per `./task-store.md` § *Resolving `<kit-root>`*; `<kit-root>/SCRIPTS.md` § *`scripts/task-state.ts`* owns its CLI form, stdout contract, and exit statuses.
+**The mechanics are a script.** `node <kit-root>/scripts/task-state.ts --compaction-plan <task-dir>` reports whether the result is `due`, whether the version-history precondition holds, and which sections a compaction must keep against which it may collapse — as JSON, writing nothing. `<kit-root>` resolves per `./task-store.md` § *Resolving `<kit-root>`*; `../scripts/task-state.md` owns its CLI form, stdout contract, and exit statuses.
 
 ## Compaction (size trigger)
 

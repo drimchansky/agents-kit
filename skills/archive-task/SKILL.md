@@ -51,7 +51,7 @@ Archiving moves a finished task folder into its own parent's `Archive/` — cano
 node <kit-root>/scripts/task-move.ts <SRC> --to archive
 ```
 
-`--to archive` is the direction; everything else in this step is `./references/workflow/task-relocation.md` § *2. Run the move* — the kit-root resolution and its missing-root outcome (with `task-archiving.md` as the by-hand reference), the `<kit-root>/SCRIPTS.md` section that owns the script's CLI and stdout contract, and reading the outcome from the exit status. For this direction the script's gate is the **terminal check** — the plan's status against the terminal set `status-transitions.md` defines, refusing a live, unknown, or plan-less folder — and its destination takes the **backlog exception** `task-archiving.md` defines: a finished task parked in a `Backlog/` archives *out* of it, into the backlog's own parent, never into a nested `Backlog/Archive/`.
+`--to archive` is the direction; everything else in this step is `./references/workflow/task-relocation.md` § *2. Run the move* — the kit-root resolution and its missing-root outcome (with `task-archiving.md` as the by-hand reference), `./references/scripts/task-move.md` as the script's CLI and stdout contract, and reading the outcome from the exit status. For this direction the script's gate is the **terminal check** — the plan's status against the terminal set `status-transitions.md` defines, refusing a live, unknown, or plan-less folder — and its destination takes the **backlog exception** `task-archiving.md` defines: a finished task parked in a `Backlog/` archives *out* of it, into the backlog's own parent, never into a nested `Backlog/Archive/`.
 
 ### 3. Report
 

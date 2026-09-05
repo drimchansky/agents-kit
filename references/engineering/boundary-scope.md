@@ -89,12 +89,12 @@ on a tree outside a checkout, where there are no ignore rules to ask. Left in, t
 boundary run, so a reference taken without pruning them reads as a delta at every later boundary,
 silently restoring the cost this scoping removes. But pruning a *tracked* output directory would drop
 a real change out of the delta before § *Widening* could ever see it, so tracked output is
-measured, not pruned, whatever churn it costs; `<kit-root>/SCRIPTS.md`
-§ *`scripts/worktree-merge.ts`* owns both guards for all three of the manifest's roles. The ignore drop
-has a consequence of its own, and it is the mirror of the prune one: a git-ignored path is not in the
-delta, so work done at one is never incorporated. In this role that costs nothing — a boundary compares
-a tree against its own earlier state, where an ignored path reads against itself and the delta is a
-scoping input rather than something to carry — but the merge role loses the work, which is why the
+measured, not pruned, whatever churn it costs; `../scripts/worktree-merge.md` owns both guards for
+all three of the manifest's roles. The ignore drop has a consequence of its own, and it is
+the mirror of the prune one: a git-ignored path is not in the delta, so work done at one is
+never incorporated. In this role that costs nothing — a boundary compares a tree against its
+own earlier state, where an ignored path reads against itself and the delta is a scoping
+input rather than something to carry — but the merge role loses the work, which is why the
 script reports and refuses it there rather than here.
 
 **With no kit root there is no in-session reference.** The boundary takes none and runs the whole
