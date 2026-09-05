@@ -382,26 +382,22 @@ test("an allow-file entry without a reason is a refusal", () => {
   assert.match(child.stderr, /carries no reason/);
 });
 
-test("the scan and the size corpus enumerate the same files, root rules included", () => {
-  const dir = kit("shared-corpus", {
+test("both root rule files are corpus members, not only references and skills", () => {
+  const dir = kit("root-rules", {
     "references/a.md": `# Alpha\n\n${SHORT}\n`,
     "skills/one/SKILL.md": `# One\n\n${SHORT}\n`,
-    "CORE_RULES.md": `# Core\n\n${SHORT}\n`,
-    "AGENTS.md": `# Agents\n\n${SHORT}\n`,
+    "CORE_RULES.md": `# Core\n\n${SHARED}\n`,
+    "AGENTS.md": `# Agents\n\n${SHARED}\n`,
   });
 
-  const { report } = check(dir);
-  const sizeReport = spawnSync(process.execPath, [join(REPO_DIR, "scripts", "size-report.ts"), dir], {
-    encoding: "utf8",
-  });
-  const corpus = (JSON.parse(sizeReport.stdout) as { corpus: { files: number } }).corpus;
+  const { run: child, report } = check(dir);
 
+  assert.strictEqual(child.status, 1);
   assert.strictEqual(report.files, 4, "references, a SKILL.md, and both root rule files");
-  assert.strictEqual(
-    corpus.files,
-    report.files,
-    "one corpus definition, so the ratchet weighs exactly what the scan reads",
-  );
+  assert.deepStrictEqual(group(report, SHARED_NORMALIZED).occurrences, [
+    { file: "AGENTS.md", line: 3 },
+    { file: "CORE_RULES.md", line: 3 },
+  ]);
 });
 
 test("the same sentence as a bullet in one file and prose in another is one group", () => {

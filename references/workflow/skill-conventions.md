@@ -184,17 +184,10 @@ of its citations carries the marker: a single unmarked citation loads it uncondi
 is hot.
 
 **A condition that fires on most runs is not cold.** A read at a health boundary that all but the
-smallest runs reach is hot however the sentence around it is worded, and marking it buys a smaller
-reported number while every run still pays the bytes. The honest fix for such a file is to split it —
-the part every run reads stays hot, the part only some runs reach becomes a cold satellite, and the
-marker goes on the satellite.
+smallest runs reach is hot however the sentence around it is worded, and marking it only misnames a
+load every run still pays. The honest fix for such a file is to split it — the part every run reads
+stays hot, the part only some runs reach becomes a cold satellite, and the marker goes on the
+satellite.
 
-A cold satellite is still loaded at run time, on its condition. That makes it a different thing from
-a **non-normative maintainer-notes file**, which no run loads at all: behavior lives in the runtime
-files and the notes only annotate them, so a notes file carries no marker because nothing cites it as
-a load. A contract's notes sibling is named `<contract>-notes.md` beside it, and is cited
-root-relative on purpose: writing it as a `./` citation would drop a never-loaded file into the
-measured context of every skill that reaches this file.
-
-`scripts/size-report.ts` reads the marker and reports each skill's hot and cold sets separately, so
-moving work off the hot path shows up as a number rather than a claim.
+Nothing reads the marker at run time. It classifies a citation for the reader, and whether a citation
+deserves it is judged by reading the skill's path to that load, not by a measurement.

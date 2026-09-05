@@ -7,10 +7,8 @@ const REFERENCES_DIR = "references";
 const SKILLS_DIR = "skills";
 const CORPUS_NAMED_FILES = ["CORE_RULES.md", "AGENTS.md"] as const;
 
-export type CorpusSkip = "walked" | "required";
-
 export interface CorpusHandlers {
-  readonly onSymlink: (abs: string, kind: CorpusSkip) => void;
+  readonly onSymlink: (abs: string) => void;
   readonly onUnreadable: (abs: string, code: string) => void;
   readonly onMissing: (abs: string, reason: string) => void;
 }
@@ -29,7 +27,7 @@ function presence(abs: string, handlers: CorpusHandlers): Presence {
     return "skipped";
   }
   if (stat.isSymbolicLink()) {
-    handlers.onSymlink(abs, "required");
+    handlers.onSymlink(abs);
     return "skipped";
   }
   return stat.isFile() ? "file" : "irregular";
@@ -43,7 +41,7 @@ function symlinkedRoot(abs: string, handlers: CorpusHandlers): boolean {
     return false;
   }
   if (!stat.isSymbolicLink()) return false;
-  handlers.onSymlink(abs, "required");
+  handlers.onSymlink(abs);
   return true;
 }
 
@@ -58,7 +56,7 @@ function walkReferences(dir: string, found: string[], handlers: CorpusHandlers):
   for (const entry of entries) {
     const abs = join(dir, entry.name);
     if (entry.isSymbolicLink()) {
-      handlers.onSymlink(abs, "walked");
+      handlers.onSymlink(abs);
       continue;
     }
     if (entry.isDirectory()) {
@@ -82,7 +80,7 @@ function skillFiles(root: string, found: string[], handlers: CorpusHandlers): vo
   for (const entry of entries) {
     const abs = join(skillsDir, entry.name);
     if (entry.isSymbolicLink()) {
-      handlers.onSymlink(abs, "walked");
+      handlers.onSymlink(abs);
       continue;
     }
     if (!entry.isDirectory()) continue;
