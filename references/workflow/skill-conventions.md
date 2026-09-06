@@ -55,7 +55,7 @@ composite. A genuinely modal flag touches the one phase it modifies and nothing 
 
 ### Composites — sequential phases
 
-- `review-pr-triage-verify` — review a PR or branch diff, then batch findings, then verify each batch.
+- `review-code-triage-verify` — review a PR, branch, range, or path set, then batch findings, then verify each batch.
 - `triage-findings-verify` — findings-first: batch findings you already have, then verify each batch.
 - `maintain` — format sweep, then the health sweep, then the active-task listing, then the session analysis. Every phase inline; it delegates to no skill and reconciles no task content, handing that to `resume-task-reconcile` in its **Next**. Registered for its phase ordering, not as a variation of a base skill — the one member with none, which is why step 2 below admits an inline phase.
 - `resume-task-reconcile` — print the resume brief, then reconcile the docs to it.
@@ -67,24 +67,21 @@ where they are rather than being re-implemented at the pipeline level.
 
 ### Modal flags — interleaved behavior
 
-- `-x` cross-vendor engine (`review-pr`, `review-docs`, `review-task`) — one meaning kit-wide:
+- `-x` cross-vendor engine (`review-code`, `review-docs`, `review-task`) — one meaning kit-wide:
   use the cross-vendor engine for this skill's read-only fan-out, an independent probe
   (`./probe-cross-check.md`) — and by the pass-through rule above, a composite's `-x` is its
   review phase's. The probe merges into the pass *before* its verdicts finalize, so it has no seam
   to run after. Its own documentation is one `Flags` entry, one launch line, and one `Cross-check:`
-  output line per skill. `review-pr-triage-verify` departs from the pass-through rule here, as it
-  does for `-p` below: it suppresses the review phase's standalone settle of the delegated
-  reviewer's return, and with `-x` the probe's verify-before-adopt step with it, since its own
-  phase 3 verifies every candidate the review hands forward and would pay twice for one verdict
-  (`./reviewer-contract.md` § *The settle*).
-- `-p` lens-probe fan-out (`review-pr`) — the probes merge into the pass *before* findings
-  finalize, the same seamlessness as `-x`, and both halves of the lens set — the triggered
-  per-surface checklists and the derived correctness angles — come from the change map the review
-  has already built. One composite departs from the pass-through rule above:
-  `review-pr-triage-verify` suppresses the cold settling of this flag's candidates, since its own
-  phase 3 verifies every finding the review hands forward and would pay twice for one verdict.
-- `-d` draft PR description (`review-pr`) — built from the change map the review has already
+  output line per skill. `review-code-triage-verify` departs from the pass-through rule here: it
+  suppresses the review phase's standalone settle of the delegated reviewer's return, and with `-x`
+  the probe's verify-before-adopt step with it, since its own phase 3 verifies every candidate the
+  review hands forward and would pay twice for one verdict (`./reviewer-contract.md` § *The
+  settle*).
+- `-d` draft PR description (`review-code`) — built from the change map the review has already
   assembled; a separate phase would rebuild it from scratch.
+- `-n N` independent reviewers (`review-code`) — the count multiplies the review pass's own
+  launch, and the returns pool into the one findings list that pass finalizes, so nothing is left
+  over for a phase to run afterwards.
 - `-f` fact verification (`proofread`) — verification runs inside the analysis pass, merging into
   the same errors/improvements list before it finalizes; there is no seam to split.
 

@@ -1,8 +1,8 @@
 # Code Review
 
-Lenses, calibration, and discipline that apply to **any** code review. Mode-specific orchestration lives in `skills/review-pr/SKILL.md` (branch diff against base); everything below is mode-agnostic.
+Lenses, calibration, and discipline that apply to **any** code review. The orchestration, and the objects a review takes — a branch's diff against its base, a commit range, or a set of paths at one commit — live in `skills/review-code/SKILL.md`. Everything below holds across all three but for § *Reviewing a path set*, which states where the last of them reads differently.
 
-Other reference checklists cover specific surfaces: `accessibility.md`, `code-style.md`, `css.md`, `forms.md`, `html.md`, `interactions.md`, `performance.md`, `privacy.md`, `react.md`, `security.md`, `tanstack-query.md`, `testing.md`, `typescript.md`. Consult those when the diff touches those domains. This file covers what those checklists don't.
+Other reference checklists cover specific surfaces: `accessibility.md`, `code-style.md`, `css.md`, `forms.md`, `html.md`, `interactions.md`, `performance.md`, `privacy.md`, `react.md`, `security.md`, `tanstack-query.md`, `testing.md`, `typescript.md`. Consult the ones the reviewed set's domains trigger. This file covers what those checklists don't.
 
 ## What to Look For
 
@@ -124,7 +124,7 @@ When suggesting findings the user will paste as inline PR comments, prefix the c
 
 ## Findings output shape
 
-What a diff review's findings list looks like — defined once here and cited rather than restated. **One entry per issue**, each carrying its severity, `file:line`, the recommendation, and the impact, the whole list ordered by severity.
+What a review's findings list looks like, whatever the reviewed object — defined once here and cited rather than restated. **One entry per issue**, each carrying its severity, `file:line`, the recommendation, and the impact, the whole list ordered by severity.
 
 Minor findings take that same shape — listed individually, never collapsed into a prose block or a trailing summary line — and the list is never capped or truncated, however long it runs. The per-entry shape is what lets `/fix-findings` take findings one at a time in severity order; a collapsed block or a dropped tail is a finding the follow-up cannot select.
 
@@ -133,6 +133,13 @@ Each citing skill's own Output section says where the list sits and what else ri
 ## Approval Bar
 
 Approve when the change **definitely improves overall code health**, even if it isn't perfect. The bar is improvement over the current state, not perfection — chasing perfect blocks shippable improvements. Block merge only when Critical findings remain. Major findings should be fixed before merge but don't get rubber-stamped as "fix in follow-up." Minor findings approve-with-comment.
+
+## Reviewing a path set
+
+A path set is the tracked files under the given paths at one commit — the whole reviewed object rather than a change to one. Two rules above read differently against it.
+
+- **None of it is unchanged code.** § *What NOT to Flag* excludes issues in unchanged code because a diff review is bounded by what the change touched; a path set has no such boundary — the files are what was asked about, so every line in them is in scope.
+- **The verdict states health, not a decision.** Nothing was proposed, so there is nothing to approve or request changes on: the assessment comes from the closed set `sound` / `needs work` / `needs discussion`. `sound` says the set is in good health as it stands, `needs work` that a Critical or Major finding should be fixed, and `needs discussion` that what to do turns on a question the review cannot settle by itself. § *Approval Bar* still calibrates which one — the bar is improvement over the current state, not perfection.
 
 ## Prioritize Review Effort
 
@@ -161,15 +168,15 @@ For large diffs (20+ files): review types and interfaces first to understand the
 
 ## Verification Scripts
 
-The diff review (`review-pr`) always runs the project's verification scripts, launched early rather than after the review:
+`review-code` always runs the project's verification scripts, launched early rather than after the review:
 
-- **Launch as soon as the reviewed set is known** — the diff against the base. Identify what the project exposes — lint, typecheck, and test scripts (check `package.json` scripts, a `Makefile`, or the stack's conventional commands) — and start them on the changed files where they exist; what the project doesn't expose is skipped, not simulated.
+- **Launch as soon as the reviewed set is known** — the diff against the base, or the path set at its commit. Identify what the project exposes — lint, typecheck, and test scripts (check `package.json` scripts, a `Makefile`, or the stack's conventional commands) — and start them on the changed files where they exist; what the project doesn't expose is skipped, not simulated.
 - **Run them in the background where the host supports it**, reviewing inline while they run and waiting on them per `../workflow/delegated-waiting.md` § *How to wait*; where it doesn't, run them in the foreground at that same early point.
 - **Collect before output** — merge failures and warnings into the findings, each with file location and severity.
 
 Beyond these scripts and the reproduction below, a review executes nothing: everything else stays analysis — read the code, reason about it. The reviewing session or its delegated reviewer (`../workflow/reviewer-contract.md`) is what runs them — a read-only probe still runs neither (`../workflow/agent-fanout.md`).
 
-**Both execute-only actions exercise what is on disk, never the review object itself.** The scripts above and the reproduction below run over the live tree, while the object is committed history — and the two agree only where the tree carries the object's post-change content, which for a branch diff means its head checked out over a clean tree. At a reviewed path where they diverge — an uncommitted change on the branch — a run exercises content the object never carried, and its output is evidence for something other than the change under review. So one bar bounds both: a script failure or a reproduced failure mode located at a diverging path is **context, never an adopted finding** — report it as such, and settle the candidate by the verify route in `../workflow/agent-fanout.md` instead. The runner records every such path — the delegated reviewer under its return's `Divergence` heading (`../workflow/reviewer-contract.md` § *The return*), the session on its inline pass in the same words — and a run over a tree that matches the object records `None`. The review skill never requires the tree to match, which is why the bar bounds the evidence rather than refusing the run; `review-pr-triage-verify` adds the tree-agreement precondition its probes need on top.
+**Both execute-only actions exercise what is on disk, never the review object itself.** The scripts above and the reproduction below run over the live tree, while the object is committed history — and the two agree only where the tree carries what the object holds, which for a diff means its head checked out over a clean tree and for a path set means those files as their commit has them. At a reviewed path where they diverge — an uncommitted change under it, whether a tracked edit on either side of the index or an untracked file standing where the object's tracked one belongs — a run exercises content the object never carried, and its output is evidence for something other than the change under review. So one bar bounds both: a script failure or a reproduced failure mode located at a diverging path is **context, never an adopted finding** — report it as such, and settle the candidate by the verify route in `../workflow/agent-fanout.md` instead. The runner records every such path — the delegated reviewer under its return's `Divergence` heading (`../workflow/reviewer-contract.md` § *The return*), the session on its inline pass in the same words — and a run over a tree that matches the object records `None`. The review skill never requires the tree to match, which is why the bar bounds the evidence rather than refusing the run; `review-code-triage-verify` adds the tree-agreement precondition its probes need on top.
 
 **Reproduce before adopting.** A candidate whose failure mode is reproducible is reproduced in the session's scratch area before it is adopted, and the adopted finding carries the observed output — what the run printed, not a paraphrase of it — as its evidence. What runs is that one candidate's failure mode as an isolated scratch invocation: a crafted input against the defective unit, a minimal script. The project's build and suite stay out of bounds, and reproducing a candidate widens nothing past its own invocation. The reviewing session or its delegated reviewer is what runs it — a probe still never does, whatever the probe found. The divergence bar above binds here too: a candidate at a diverging path takes the verify route rather than a scratch run. Where the failure mode doesn't reproduce there — it needs infrastructure or prohibitive setup, or the claim isn't executable at all — the bar doesn't apply, and the candidate settles by the verify route in `../workflow/agent-fanout.md`.
 

@@ -48,7 +48,7 @@ Read the preconditions off this snapshot rather than re-running the commands. Th
 
     Then write that message to a scratch file, verbatim as drafted, for `git commit -F` to read: passing it as a file keeps the multi-line body intact. Writing it here rather than at the commit is what leaves every later exit — the guard's stop below, the hand-over in 3d, a failed signature — with a file to hand back.
 
-2. **Scan that same diff against the closed set — on a hit, ask before committing.** Three things, scanned in the diff step 1 already read. This is not a review and the set does not grow: correctness, design, coverage, naming, and everything else are `/review-pr`'s before merge, not this skill's. If walking the list makes you want a fourth category, that is the signal to leave it out.
+2. **Scan that same diff against the closed set — on a hit, ask before committing.** Three things, scanned in the diff step 1 already read. This is not a review and the set does not grow: correctness, design, coverage, naming, and everything else are `/review-code`'s before merge, not this skill's. If walking the list makes you want a fourth category, that is the signal to leave it out.
 
     - **A secret-looking value** — an API token, a password, an access key, a private-key block, or a credential file such as `.env` appearing in the staged set.
     - **A debug artifact** — an added `console.log`, `debugger`, or `print` line, or a block of code commented out rather than deleted.
