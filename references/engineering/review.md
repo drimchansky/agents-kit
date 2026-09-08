@@ -2,7 +2,7 @@
 
 Lenses, calibration, and discipline that apply to **any** code review. The orchestration, and the objects a review takes — a branch's diff against its base, a commit range, or a set of paths at one commit — live in `skills/review-code/SKILL.md`. Everything below holds across all three but for § *Reviewing a path set*, which states where the last of them reads differently.
 
-Other reference checklists cover specific surfaces: `accessibility.md`, `code-style.md`, `css.md`, `forms.md`, `html.md`, `interactions.md`, `performance.md`, `privacy.md`, `react.md`, `security.md`, `tanstack-query.md`, `testing.md`, `typescript.md`. Consult the ones the reviewed set's domains trigger. This file covers what those checklists don't.
+Other reference checklists cover specific surfaces: `accessibility.md`, `code-style.md`, `css.md`, `design-to-code.md`, `forms.md`, `html.md`, `interactions.md`, `performance.md`, `privacy.md`, `react.md`, `security.md`, `tanstack-query.md`, `testing.md`, `typescript.md`. Consult the ones the reviewed set's domains trigger. This file covers what those checklists don't.
 
 ## What to Look For
 
@@ -93,7 +93,7 @@ For non-trivial decisions, ask: **what does this assume that could change?**
 
 ### Design Spec Alignment
 
-If the change is UI-facing, verify against design specs (Figma, mockups). Flag discrepancies between implementation and design intent.
+If the change is UI-facing, verify against design specs (Figma, mockups). Flag discrepancies between implementation and design intent. `design-to-code.md` § *Verify* names what the implementation should have reported — the pinned node, the comparison its named criterion called for, every token mapping and asset substitution — and its § *Hint priority* is the order a discrepancy is judged against: a Code Connect mapping the change bypassed outranks a hex value it got wrong.
 
 ### Cross-Project Consistency
 

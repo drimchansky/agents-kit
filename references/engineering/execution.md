@@ -20,6 +20,9 @@ Before touching code:
   web.dev) → runtime/browser compatibility (caniuse, node.green). **Never** Stack Overflow, blog
   posts, or training data as primary sources.
 - If versions are missing or ambiguous, ask the user — don't guess.
+- A unit whose ask cites a design source — a Figma node, a mockup, a prototype — grounds in it the
+  same way: `design-to-code.md` is the recipe, and its pinned source is read before any UI code is
+  written, whatever design-context tool the host has or lacks.
 - Record sources for non-obvious framework decisions per the consumer's **Record** binding
   (`../workflow/execution-bindings.md`), with full URLs and deep links to anchors where possible — keep
   provenance in the execution record, not in code comments (a code comment stays self-sufficient and

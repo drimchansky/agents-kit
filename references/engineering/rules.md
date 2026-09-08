@@ -52,6 +52,7 @@ Per-surface checklists — consult the ones a change touches:
 - `accessibility.md` — Landmarks, ARIA, keyboard/focus, contrast, live regions, native dialogs, motion preferences, forms a11y
 - `code-style.md` — Function shape, parameter limits, comment discipline (implementation comments only for non-obvious current invariants — security, concurrency, performance, external-API quirks, unit/format differences; no code/task-history/future-work narration, no duplicating what types, tests, configuration, or nearby code already encode; long-lived architectural decisions to an ADR or decision log; self-sufficient links; scoped validation of affected comments; material findings only, never verbosity or style; public-API docs and required directives excepted)
 - `css.md` — Layout, responsive, container queries, modern selectors (`:has()`, `@scope`), theming, modern color, cascade layers
+- `design-to-code.md` — Building UI from a design source (Figma node, mockup, prototype) with any design-context tool or none: pinned source, structured context before code, hint priority, reuse-first, exported assets, what the design leaves out, per-screen verify, what a delegated design unit's packet carries
 - `forms.md` — Semantics, autocomplete tokens, validation timing (`:user-invalid`), tap sizing, AJAX, multi-page forms
 - `html.md` — Document semantics, landmarks, native overlays (`<dialog>`, `[popover]`, `<details>`), resource prioritization, media
 - `interactions.md` — Motion mechanics, enter/exit, icon transitions, tactile feedback, surfaces, typography polish
