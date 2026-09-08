@@ -51,6 +51,8 @@ Resolve per the **resolve-or-create** discovery rules in `./references/workflow/
 
 The folder is this plan's authoritative home. Read its `CONTEXT.md`, and its `ticket.md` when present — Step 3 sharpens the ticket's criteria into goals. An existing `CONTEXT.md` is never rewritten; surface a missing `./ticket.md` citation in chat instead of editing it.
 
+**Read what the folder inherits** before Step 3 drafts anything: where it sits inside a registered root, its ancestor `GROUP_CONTEXT.md` files, taken root-to-task — `./references/workflow/task-store.md` § *Shared group context* settles which of them apply, which root ends the chain, and how a source is identified. Those constraints bind the goals, the approach, and the steps that follow, and they add no goal the ask itself does not carry. A scaffolded `## References` cites the group file that holds an inherited fact rather than absorbing its text (`./references/workflow/context-schema.md`); `## Exploration Findings` and `## Approach` likewise name the file behind a constraint they respect. Where no registered root contains the folder, nothing is inherited and planning runs exactly as before.
+
 **Scaffold a missing `CONTEXT.md`** before drafting the plan — copy `./references/templates/CONTEXT.md` and fill it per `./references/workflow/context-schema.md`: `Problem Statement` and `Key Assumptions to Validate` from the task description, or — with a `ticket.md` present — `Problem Statement` citing `./ticket.md` and the assumptions derived from it; every other section left a placeholder, so downstream consumers read the same section names however the task started.
 
 **Infer `**Domain:**`** from the task description (`engineering` for a code change, `bureaucracy` for a residence application), or carry over what `refine-idea` set. Default to `engineering` for code work or ambiguity *within a coding context*; when the task is clearly non-code and the right domain is unclear, **ask** rather than stamping a label — a wrong `**Domain:**` silently loads the wrong rules.
@@ -160,6 +162,7 @@ Each step's leading `- [ ]` is the marker `implement-task` flips to `- [x]`, app
 Confirm the protocol invariants before finishing:
 
 - [ ] Folder resolved or created per `task-layout.md`; `CONTEXT.md` present — a scaffolded one carrying an inferred (or asked-for) `**Domain:**`
+- [ ] Inherited group grounding read before Step 3; goals and steps respect it, name the file each constraint came from, and invent nothing the ask left out
 - [ ] `goals.md` written: durable `G<n>` IDs, `(external)` markers where verification leaves the session — including the required live-verification goal where the target repo declares one, surfaced rather than added when the file is hand-authored — no `**Status:**` field, hand-authored goals respected, each goal passing `./references/workflow/acceptance-criteria.md` or marked `_(unresolved: ...)_`
 - [ ] With a `ticket.md` present, every acceptance criterion sharpened into ≥1 `G<n>` goal, and no goal contradicting the ticket's stated scope
 - [ ] `plan.md` written at `to-do` with link-headers to `./CONTEXT.md`, `./goals.md`, and `./ticket.md` when the task has one; every step carrying the `- [ ]` checkbox, **What**, **Verify**, **Goal**, **Depends on**

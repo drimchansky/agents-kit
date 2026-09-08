@@ -9,16 +9,27 @@ node scripts/health-check.ts --installs <kit-root> <home> [<home>...]
 
 **Emitted `check` values.** The task walk reports `stale`, `done-unarchived`, `started-in-backlog`,
 `unknown-status`, `legacy-result-status`, `dead-anchor`, `goal-id`, `no-current-state`,
-`oversized-result`, `oversized-task`, `oversized-record`, and `duplicate-slug`; `--installs` walks no
-tasks and reports `install-drift` instead.
+`oversized-result`, `oversized-task`, `oversized-record`, `duplicate-slug`, and `nested-task`;
+`--installs` walks no tasks and reports `install-drift` instead.
 
 **Archived and backlogged folders.** Archived folders are counted in `scanned` and exempt from every
-check but `duplicate-slug`, which sees them because a bare slug falls back into `Archive/`
+check but two: `duplicate-slug`, which sees them because a bare slug falls back into `Archive/`
 (`../workflow/task-layout.md` § *Discovery rules for skills*), so an archived slug stays
-citable and must stay unique. Backlogged folders are exempt from `stale` alone — parked work is
+citable and must stay unique, and `nested-task`, below. Backlogged folders are exempt from `stale` alone — parked work is
 deliberately dormant (`../workflow/task-backlog.md`) — and stay in every other check,
 `duplicate-slug` included, since the same slug fallback reaches `Backlog/` and a parked task's docs
 are future work a later reconcile repairs rather than the frozen history an archived folder holds.
+
+`nested-task` reads the claim itself. A folder the recognition set claims is never descended into, so a
+role file one prefix away from `GROUP_CONTEXT.md` — a `CONTEXT.md` dropped into a group — turns the
+group into a task and hides every folder beneath it from this walk, from slug resolution, and from
+every listing derived from either (`../workflow/task-store.md` § *Shared group context*). This check
+lists the task folders found beneath a claimed one, so the shape is named rather than silently
+absorbed; it is the one check that looks inside a claimed folder, and it fires under `Archive/` too,
+since the hidden folders are hidden wherever the claim sits. Its descent applies the same
+classification as the store walk (`../workflow/task-store.md` § *The root registry*), so a lifecycle
+container it meets on the way down is walked through rather than claimed: a role file misfiled into
+an `Archive/` beneath the claim names the tasks under it instead of naming the container.
 
 Two checks read the location itself: `done-unarchived` names the backlog for a terminal task, which
 belongs in `Archive/`, and `started-in-backlog` fires for a plan past `to-do`, which no longer meets
@@ -64,8 +75,11 @@ rejected, and a name-based prune costs a real task its scan silently. `.agents` 
 name entered — the canonical root `<project>/.agents/tasks` sits inside it, so pruning it would cost
 a root registered as a project directory every task it holds. Every directory is listed exactly once
 and its entries handed down, so an unreadable directory reports one coverage gap rather than two.
-Neither container clears the other's flag, so a `Backlog/` under an `Archive/` stays archived: the
-archived exemptions are the wider set.
+The two containers are read differently: an `Archive/` fixes the state of everything beneath it at
+any depth, so a `Backlog/` nested inside one is archived all the same and the archived exemptions
+stay the wider set, while the backlog flag is the immediate parent's alone — a task filed under a
+group inside a `Backlog/`, or under an `Archive/` inside one, is not parked
+(`../workflow/task-archiving.md` § *Already archived is asked of the whole path up to the store*).
 
 **What a scan reads.** Fenced content is skipped in every task file, a status header is read from the
 header block above the file's first `##`-or-deeper heading alone, and a step link that resolves to a

@@ -58,11 +58,13 @@ If the resolved task folder doesn't exist, create it where that precedence puts 
 
 ## Process
 
+**Load the destination's shared grounding first.** Once § *Output File* has resolved the folder — before Phase 1 diverges — read the `GROUP_CONTEXT.md` files that apply to that location, root to task; [`./references/workflow/task-store.md`](./references/workflow/task-store.md) § *Shared group context* owns which ones apply, how the root bounding them is picked, and how each is named. A destination that no registered root contains inherits none, and this passes without a word. What the chain carries bounds the ideation rather than feeding it material: it narrows which directions stay viable and marks which assumptions are already settled above this task, and where the one-pager leans on an inherited constraint the `## References` section cites that file instead of absorbing its prose (`./references/workflow/context-schema.md`).
+
 This skill runs the shared two-phase ideation method — **Phase 1 (Diverge)** and **Phase 2 (Converge)** — defined in `./references/workflow/ideation.md`. Run both phases from there (the testable, plan-specific goals are deferred to `plan-task`'s goals step, not written here), then complete **Phase 3** below to produce the artifact.
 
 ### Phase 3 — Sharpen
 
-Write the one-pager to the resolved task folder's `CONTEXT.md`. Then post a short summary in this exact shape, so the user can copy-paste the next command. For a task whose root is the canonical one or a registered one, where the bare slug resolves:
+Write the one-pager to the resolved task folder's `CONTEXT.md`. Then post a short summary in this exact shape, so the user can copy-paste the next command. For a task the bare slug resolves — [`./references/workflow/task-layout.md`](./references/workflow/task-layout.md) § *One task, one flat folder* is the home of which folders it does:
 
 ```
 Context: <task-folder>/CONTEXT.md
@@ -71,7 +73,7 @@ Slug: <slug>
 Next: /plan-task <slug>
 ```
 
-For a task whose root is neither, the handoff token is the folder's absolute path (that is the only case where a bare slug does not resolve):
+For a task that rule hands off by path instead, the handoff token is the folder's absolute path:
 
 ```
 Context: <abs-path>/CONTEXT.md
@@ -80,7 +82,7 @@ Slug: <slug>
 Next: /plan-task <abs-path>/
 ```
 
-`plan-task` discovers `CONTEXT.md` by resolving the task folder. The handoff token is the **slug** when the folder sits in the canonical root or a registered one, and the folder's **absolute path** only when its root is neither (`./references/workflow/task-layout.md` § *One task, one flat folder*) — so for that last case the `Next:` line must carry the path. The pre-formatted next-command is what makes the handoff frictionless; don't drop it or paraphrase it.
+`plan-task` discovers `CONTEXT.md` by resolving the task folder. The handoff token is the **slug** where the bare slug resolves and the folder's **absolute path** otherwise — `./references/workflow/task-layout.md` § *One task, one flat folder* owns which is which — so for the path case the `Next:` line must carry the path. The pre-formatted next-command is what makes the handoff frictionless; don't drop it or paraphrase it.
 
 The "Not Doing" list is the most valuable part — focus is about saying no to good ideas. Make trade-offs explicit.
 
@@ -97,8 +99,9 @@ The "Not Doing" list is the most valuable part — focus is about saying no to g
 Confirm the protocol invariants before finishing:
 
 - [ ] One-pager written to the resolved task folder's `CONTEXT.md` per `./references/workflow/context-schema.md` — `**Domain:**` inferred (or asked when clearly non-code and unclear); an existing `CONTEXT.md` not silently overwritten
+- [ ] Group grounding above the destination read before Phase 1; an inherited constraint that shaped the one-pager is cited to its file, never copied into it
 - [ ] When a `ticket.md` is present, it was read as the primary input and `## Problem Statement` cites it rather than restating the ask
-- [ ] Chat summary carries the literal `Next: /plan-task <token>` handoff line — token = slug for a canonical task, absolute folder path otherwise
+- [ ] Chat summary carries the literal `Next: /plan-task <token>` handoff line — `./references/workflow/task-layout.md` § *One task, one flat folder* owns which token that is
 - [ ] Multiple directions explored, not just the user's first framing; hidden assumptions listed with how each could be validated
 - [ ] "Not Doing" list makes trade-offs explicit, with reasons
 

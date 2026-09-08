@@ -10,7 +10,7 @@ A larger effort that won't fit one plan becomes several independent sibling task
 .agents/tasks/03-ui/
 ```
 
-There is no shared layer above these folders — no shared context file, no cross-folder links. Anything a sibling needs is duplicated into its own `CONTEXT.md`. This keeps every folder self-sufficient: discoverable, movable, and archivable on its own.
+The siblings themselves share no layer — no sibling-level context file, no cross-folder links — so a fact one part needs is duplicated into its own `CONTEXT.md` whenever nothing above the set holds it. Inside a registered root something can: the group these folders sit under may carry a `GROUP_CONTEXT.md`, and a constraint governing the whole effort belongs at that home, cited from each part rather than pasted into all of them (`./task-store.md` § *Shared group context*). Either way each folder stays self-sufficient in the sense that matters here — discoverable, movable, and archivable on its own, with its own role files and its own lifecycle, and with every inherited fact named and sourced rather than assumed.
 
 A multi-part effort's siblings belong in **one parent directory** — the `NN-` ordering is only visible where the folders sort together, and location-relative archiving (`./task-archiving.md`) keeps finished parts (`<parent>/Archive/01-schema/`) beside the live ones, as location-relative backlogging (`./task-backlog.md`) does for parts not started yet (`<parent>/Backlog/03-api/`).
 

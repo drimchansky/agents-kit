@@ -28,13 +28,15 @@ Read the outcome from the exit status:
 
 - **0** → moved. Stdout is one line, `moved <src> -> <dest>`; the destination it names is what step 3 reports.
 - **1** → refused. Stderr is one line giving the reason. Surface it **verbatim** and stop; nothing moved.
-- **2** → the run couldn't be carried out — a usage error, a bare slug that matched nothing or several things, or an unexpected failure. Where the line names one of the first two, fix the invocation (pass `SRC` as the absolute path step 1 resolved) and re-run; where it reports a failure instead, report that and stop rather than re-running against it.
+- **2** → the run couldn't be carried out — a usage error, a bare slug that matched nothing or several things, a store the slug search couldn't read in full, or an unexpected failure. Where the line names one of the first three, fix the invocation (pass `SRC` as the absolute path step 1 resolved) and re-run; where it reports a failure instead, report that and stop rather than re-running against it.
 
 ## 3. Report
 
 Confirm what moved (`<slug>` → the `<dest>` the script printed), note that the folder's internal `./` links are intact, and remind the user that the task is now excluded from active listings. When the folder is inside a git repo, the change is working-tree-only — review with `git status` and commit; a task outside any repo has nothing to commit.
 
 The move is the whole of this section's write surface: nothing is regenerated, refreshed, or recorded afterwards.
+
+That covers the task's shared grounding too. Both containers sit beside the folder inside its own group, so this protocol leaves every applicable source exactly where it was — `./task-store.md` § *Shared group context* owns which files those are, and why a container between them counts for nothing. Landing the folder under **different** groups is a plain `mv` outside this protocol, and no command is added for it: it changes which sources apply, the next run reads the new chain off disk, and nothing snapshots the old one, rewrites the task's own context, or touches a dated record already in `result.md`. **Re-pointing the task's own citations after such a move is yours.** A `## References` entry citing a group file by its path from the selected root (`./one-home.md`) keeps resolving to a file that is still on disk and no longer governs, and no surface reports it: every drift check reads the chain that *applies* now, so a citation to one that no longer does is compared against nothing.
 
 ## Don't Rationalize
 

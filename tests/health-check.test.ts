@@ -63,6 +63,16 @@ const BLOCKED_FRESH_HOME = join(TEST_ROOT, "blocked-fresh", ".claude");
 const ABSENT_HOME = join(TEST_ROOT, "absent", ".claude");
 const VOLUME_STORE = join(TEST_ROOT, "big-report");
 const VOLUME_REPORT = join(TEST_ROOT, "big-report.json");
+const GROUPS = join(TEST_ROOT, "groups");
+const GROUPS_LEAVES = join(GROUPS, "product", "backend", "empty");
+const GROUPS_ARCHIVE = join(GROUPS_LEAVES, "Archive");
+const GROUPS_BACKLOG = join(GROUPS_LEAVES, "Backlog");
+const GROUPS_DEEP_BACKLOG = join(TEST_ROOT, "groups-deep-backlog");
+const GROUPS_DEEP_BACKLOG_CONTAINER = join(GROUPS_DEEP_BACKLOG, "Backlog");
+const GROUPS_DUP = join(TEST_ROOT, "groups-dup");
+const NEAR_MISS = join(TEST_ROOT, "groups-near-miss");
+const ARCHIVED_NEAR_MISS = join(TEST_ROOT, "groups-archived-near-miss");
+const ARCHIVED_NEAR_MISS_CLAIM = join(ARCHIVED_NEAR_MISS, "Archive", "product");
 const DUP_A = join(TEST_ROOT, "dup-a");
 const DUP_B = join(TEST_ROOT, "dup-b");
 const DUP_C = join(TEST_ROOT, "dup-c");
@@ -77,7 +87,12 @@ const LEGACY_CONTEXT_ARGS: readonly string[] = [LEGACY_CONTEXT];
 const INSTALLS_ARGS: readonly string[] = ["--installs", KIT, CLAUDE_HOME, CODEX_HOME];
 const DUP_ARGS: readonly string[] = [DUP_A, DUP_B];
 const VOLUME_ARGS: readonly string[] = [VOLUME_STORE];
+const GROUPS_ARGS: readonly string[] = [GROUPS];
+const NEAR_MISS_ARGS: readonly string[] = [NEAR_MISS];
+const ARCHIVED_NEAR_MISS_ARGS: readonly string[] = [ARCHIVED_NEAR_MISS];
 const TO_DO_PLAN = "# t\n\n**Status:** to-do\n";
+const DONE_PLAN = "# t\n\n**Status:** done\n";
+const EXECUTING_PLAN = "# t\n\n**Status:** executing\n";
 const VOLUME_PLAN =
   "# t\n\n**Status:** executing\n\n## Step 1 — do\n\n- [x] d ([result](./result.md#absent))\n";
 const VOLUME_RESULT = "# r\n\n## Current state\n\n_Updated:_ 2026-01-01\n";
@@ -185,9 +200,22 @@ function ageFolder(folder: string, days: number): void {
   }
 }
 
-function writeTaskFolder(dir: string): void {
+function writeTaskFolder(dir: string, plan: string = TO_DO_PLAN): void {
   mkdirSync(dir, { recursive: true });
-  writeFileSync(join(dir, "plan.md"), TO_DO_PLAN);
+  writeFileSync(join(dir, "plan.md"), plan);
+}
+
+function writeGroupFile(dir: string): void {
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, "GROUP_CONTEXT.md"), "# group\n\nShared grounding for the tasks below it.\n");
+}
+
+function writeMisfiledGroupFile(dir: string): void {
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(
+    join(dir, "CONTEXT.md"),
+    "# product\n\nGrounding misfiled one prefix away from GROUP_CONTEXT.md.\n",
+  );
 }
 
 function deleteFinderDroppings(root: string): void {
@@ -307,6 +335,37 @@ before(() => {
   writeTaskFolder(join(DUP_B, "unique-b"));
   writeTaskFolder(join(DUP_C, "area-a", "nested-dup"));
   writeTaskFolder(join(DUP_C, "area-b", "nested-dup"));
+
+  for (const group of [GROUPS, join(GROUPS, "product"), join(GROUPS, "product", "backend")]) {
+    writeGroupFile(group);
+  }
+  writeGroupFile(GROUPS_ARCHIVE);
+  writeGroupFile(GROUPS_BACKLOG);
+  writeTaskFolder(join(GROUPS_LEAVES, "active-leaf"));
+  writeTaskFolder(join(GROUPS_ARCHIVE, "archived-leaf"), DONE_PLAN);
+  writeTaskFolder(join(GROUPS_BACKLOG, "parked-leaf"), EXECUTING_PLAN);
+  ageFolder(join(GROUPS_ARCHIVE, "archived-leaf"), DAYS_PAST_STALE);
+  ageFolder(join(GROUPS_BACKLOG, "parked-leaf"), DAYS_PAST_STALE);
+
+  writeGroupFile(join(GROUPS_DEEP_BACKLOG_CONTAINER, "deeper"));
+  writeTaskFolder(join(GROUPS_DEEP_BACKLOG_CONTAINER, "deeper", "grouped-leaf"), EXECUTING_PLAN);
+  writeTaskFolder(join(GROUPS_DEEP_BACKLOG_CONTAINER, "parked-leaf"), EXECUTING_PLAN);
+  ageFolder(join(GROUPS_DEEP_BACKLOG_CONTAINER, "deeper", "grouped-leaf"), DAYS_PAST_STALE);
+  ageFolder(join(GROUPS_DEEP_BACKLOG_CONTAINER, "parked-leaf"), DAYS_PAST_STALE);
+
+  writeGroupFile(join(GROUPS_DUP, "alpha"));
+  writeGroupFile(join(GROUPS_DUP, "beta"));
+  writeTaskFolder(join(GROUPS_DUP, "alpha", "shared-leaf"));
+  writeTaskFolder(join(GROUPS_DUP, "beta", "shared-leaf"));
+
+  writeMisfiledGroupFile(join(NEAR_MISS, "product"));
+  writeTaskFolder(join(NEAR_MISS, "product", "backend", "hidden-leaf"));
+  writeTaskFolder(join(NEAR_MISS, "product", "Archive", "hidden-archived"), DONE_PLAN);
+  writeMisfiledGroupFile(join(NEAR_MISS, "product", "Archive"));
+
+  writeMisfiledGroupFile(ARCHIVED_NEAR_MISS_CLAIM);
+  writeTaskFolder(join(ARCHIVED_NEAR_MISS_CLAIM, "backend", "hidden-leaf"));
+  ageFolder(ARCHIVED_NEAR_MISS_CLAIM, DAYS_PAST_STALE);
 
   mkdirSync(CASE_PROBE);
   writeVolumeStore(VOLUME_STORE);
@@ -1132,6 +1191,135 @@ test("two area directories of one root collide — uniqueness is global, not per
     findingDetail(report, "duplicate-slug", "dup-c/area-a/nested-dup"),
     `slug "nested-dup" also at ${join(DUP_C, "area-b", "nested-dup")}`,
     "a within-root collision names its peer",
+  );
+});
+
+test("a root of grouping directories scans its task leaves and reports nothing about the groups", () => {
+  const { report, stderr } = runCheck(GROUPS_ARGS);
+  assert.strictEqual(stderr, "", "a readable group tree must produce no warnings");
+  assert.strictEqual(
+    report.scanned,
+    3,
+    "scanned counts the active, archived, and parked leaves — never the four groups above them",
+  );
+  assert.deepStrictEqual(
+    report.findings.map((entry) => entry.path).filter((path) => !path.endsWith("-leaf")),
+    [],
+    "a directory holding only a group file raises no finding of its own",
+  );
+  assert.strictEqual(findingCount(report, "nested-task"), 0, "a correctly spelled group tree hides no task folder");
+});
+
+test("a group holding a CONTEXT.md instead of a GROUP_CONTEXT.md is named with the task folders it hides", () => {
+  const { report } = runCheck(NEAR_MISS_ARGS);
+  assert.strictEqual(report.scanned, 1, "the near-miss group is the only folder the walk claims");
+  assert.strictEqual(
+    findingDetail(report, "nested-task", "groups-near-miss/product"),
+    "claimed as a task folder, hiding the task folders beneath it: groups-near-miss/product/Archive/hidden-archived, groups-near-miss/product/backend/hidden-leaf",
+    "the finding names every hidden task folder beneath the claimed one",
+  );
+});
+
+test("a role file misfiled into a container under a claim never makes the container the hidden task", () => {
+  const { report } = runCheck(NEAR_MISS_ARGS);
+  const hidden = findingDetail(report, "nested-task", "groups-near-miss/product")
+    .replace("claimed as a task folder, hiding the task folders beneath it: ", "")
+    .split(", ");
+  assert.ok(
+    hidden.includes("groups-near-miss/product/Archive/hidden-archived"),
+    "the descent walks through the container to the task folder beneath it",
+  );
+  assert.ok(
+    !hidden.includes("groups-near-miss/product/Archive"),
+    "the container is tested before the recognition set, so its own CONTEXT.md never claims it",
+  );
+});
+
+test("a claimed folder under Archive/ is still named with the task folders it hides", () => {
+  const { report } = runCheck(ARCHIVED_NEAR_MISS_ARGS);
+  assert.strictEqual(report.scanned, 1, "the archived near-miss group is the only folder the walk claims");
+  assert.strictEqual(
+    findingDetail(report, "nested-task", "groups-archived-near-miss/Archive/product"),
+    "claimed as a task folder, hiding the task folders beneath it: groups-archived-near-miss/Archive/product/backend/hidden-leaf",
+    "the archived exemption does not reach nested-task — a claim hides the folders beneath it wherever it sits",
+  );
+  assert.deepStrictEqual(
+    report.findings
+      .filter((entry) => entry.path === "groups-archived-near-miss/Archive/product")
+      .map((entry) => entry.check),
+    ["nested-task"],
+    "every other check still exempts the folder, well past the stale window as it is",
+  );
+});
+
+test("a group file dropped straight into a nested Archive/ or Backlog/ makes no task and no finding", () => {
+  const { report } = runCheck(GROUPS_ARGS);
+  for (const container of [
+    "groups/product/backend/empty/Archive",
+    "groups/product/backend/empty/Backlog",
+  ]) {
+    assert.deepStrictEqual(
+      report.findings.filter((entry) => entry.path === container),
+      [],
+      `${container} carries a group file and is still not a task folder`,
+    );
+  }
+  assert.strictEqual(report.scanned, 3, "the two decoy group files add no task folder to the walk");
+});
+
+test("a task archived inside a nested group is counted and exempt from every check but duplicate-slug", () => {
+  const { report } = runCheck(GROUPS_ARGS);
+  assert.deepStrictEqual(
+    report.findings.filter(
+      (entry) => entry.path === "groups/product/backend/empty/Archive/archived-leaf",
+    ),
+    [],
+    "a done leaf well past the stale window raises neither stale nor done-unarchived once archived",
+  );
+});
+
+test("a backlogged task inside a nested group is exempt from stale alone", () => {
+  const { report } = runCheck(GROUPS_ARGS);
+  assert.strictEqual(findingCount(report, "stale"), 0, "a parked leaf past the stale window is exempt");
+  assert.deepStrictEqual(
+    findingDetails(report, "started-in-backlog", "groups/product/backend/empty/Backlog/parked-leaf"),
+    ["executing, parked in Backlog/ — a parked task must be unstarted"],
+    "the same leaf is still judged by the checks the backlog does not exempt",
+  );
+});
+
+test("a task under a group inside Backlog/ is parked by nothing, while one directly under it is", () => {
+  const { report } = runCheck([GROUPS_DEEP_BACKLOG]);
+  assert.deepStrictEqual(
+    findingDetails(report, "started-in-backlog", "groups-deep-backlog/Backlog/deeper/grouped-leaf"),
+    [],
+    "a group between the container and the task leaves the task's immediate parent an ordinary group",
+  );
+  assert.deepStrictEqual(
+    report.findings.filter((entry) => entry.check === "stale").map((entry) => entry.path),
+    ["groups-deep-backlog/Backlog/deeper/grouped-leaf"],
+    "the grouped leaf is executing and past the window, and no backlog exemption reaches it",
+  );
+  assert.deepStrictEqual(
+    findingDetails(report, "started-in-backlog", "groups-deep-backlog/Backlog/parked-leaf"),
+    ["executing, parked in Backlog/ — a parked task must be unstarted"],
+    "the immediate-parent position is still the parked one",
+  );
+});
+
+test("a slug repeated in two groups of one root is reported per folder, each keeping its root", () => {
+  const { report } = runCheck([GROUPS_DUP]);
+  assert.strictEqual(report.scanned, 2, "both group leaves are walked");
+  assert.strictEqual(findingCount(report, "duplicate-slug"), 2, "one finding per colliding folder");
+  assert.strictEqual(
+    findingDetail(report, "duplicate-slug", "groups-dup/alpha/shared-leaf"),
+    `slug "shared-leaf" also at ${join(GROUPS_DUP, "beta", "shared-leaf")}`,
+    "a collision across two groups names its peer by absolute path",
+  );
+  assert.deepStrictEqual(
+    findingRoots(report, "duplicate-slug", "groups-dup/beta/shared-leaf"),
+    [GROUPS_DUP],
+    "each finding carries the root its folder was walked from",
   );
 });
 

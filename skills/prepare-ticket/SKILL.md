@@ -32,6 +32,8 @@ The ticket is always written to a file. Decide where:
 - **A target path in the arguments** (standalone) — that's the file. If it already exists, read it and ask whether to update it or write elsewhere.
 - **No path and no task intent** — suggest `<kebab-case-title>.md`, or offer to seed a task folder instead, and confirm before writing.
 
+**Seeding a task folder loads what that folder will sit under.** Before step 4 drafts, read the `GROUP_CONTEXT.md` files applicable to the resolved folder, root to task — [`./references/workflow/task-store.md`](./references/workflow/task-store.md) § *Shared group context* fixes the set, the root that bounds it, and the citation form. A standalone target path sits under no group, so nothing loads there. What arrives this way only narrows the draft: it may sharpen the minimal **Context** or an acceptance criterion the ask already implies, and it never adds a requirement the user did not ask for or a paragraph lifted from a group file. The ticket still travels alone — a reader with no access to that store acts on it unchanged.
+
 ### 4. Draft the ticket
 
 Copy `./references/templates/ticket.md` and fill the four sections defined in [`./references/workflow/ticket-format.md`](./references/workflow/ticket-format.md) — Title, Context, Description (with **In scope** / **Out of scope** bullets when the boundary isn't obvious), and Acceptance Criteria, plus the optional References. Keep every part in product terms — the functional output required, the observable behavior — and leave the *how* to the plan. Drop References unless the user gave you links, specs, or ticket IDs to carry.
@@ -44,7 +46,7 @@ Every acceptance criterion must pass the quality bar in [`./references/workflow/
 
 Write the file. Then, in chat, **report — don't paste the ticket**:
 
-- **Ticket** — the path and the title. When it seeded a task folder, add the handoff line so the next step is one copy-paste away: `Next: /plan-task <slug>` (or `/refine-idea <slug>` first when the ask still needs sharpening) — the bare slug when the folder sits in the canonical root or a registered one, the absolute path only when its root is neither (`./references/workflow/task-layout.md` § *One task, one flat folder*).
+- **Ticket** — the path and the title. When it seeded a task folder, add the handoff line so the next step is one copy-paste away: `Next: /plan-task <slug>` (or `/refine-idea <slug>` first when the ask still needs sharpening) — `<slug>` being the handoff token `./references/workflow/task-layout.md` § *One task, one flat folder* fixes for where the folder sits: the bare slug where one resolves, the folder's absolute path otherwise.
 - **Assumptions** — anything you inferred to fill a gap the user didn't state.
 - **Open questions** — anything still genuinely undecided. These stay out of the ticket file; a ready ticket is decided, and unresolved calls belong in chat where the user can answer them.
 
@@ -69,5 +71,6 @@ Confirm before finishing:
 - [ ] Context is self-contained (a reader with no access to this session can act; no "as discussed") and minimal (background and why only, no design dump or pasted spec)
 - [ ] Every acceptance criterion is a single, testable outcome stated as a plain sentence — no hedge words, behavior not implementation
 - [ ] Scope matches what was asked; no invented requirements; genuine gaps raised as questions, not guessed
+- [ ] Seeding a task folder: its applicable group grounding read before drafting, and used only to sharpen what the ask implies — nothing inherited became a requirement or a pasted paragraph
 - [ ] Lists, not tables; ticket written in the language of the request
 - [ ] Chat report gives path, title, assumptions, open questions (and the handoff line when a task folder was seeded) — the ticket itself not pasted

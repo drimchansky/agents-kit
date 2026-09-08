@@ -46,6 +46,7 @@ Resolve the task folder to write back into per the **resolve-current-or-ask** di
 
 Open the folder per `./references/workflow/task-layout.md` § *Reading a resolved folder*; what you open is the baseline you diff the session against, so read it in full, never skimmed:
 
+- **The inherited group chain** — every applicable `GROUP_CONTEXT.md` that order's third step loads, root-to-task, is part of the baseline too: a constraint the session changed, or one the docs now contradict, is a finding like any other. Name the selected root and cite each file by its path from it, and write none of them (`./references/workflow/reconciliation.md` § *Never-annotated surfaces*).
 - `goals.md` — capture the full `## Goals` list by `G<n>` ID, and the highest ID in use (a new goal takes the next free number).
 - `CONTEXT.md` — the static grounding context (problem statement, recommended direction, key assumptions, MVP scope, not-doing, open questions, references). Note the exact wording of prose sections; you compare, not paraphrase.
 - `plan.md` — every step's **What** / **Verify** wording and the `## Scope` partition, which the report does not carry.
@@ -68,8 +69,9 @@ Walk the session and collect everything material the docs don't already carry, t
 - **Verified progress** — a step or goal the session completed *and* whose result you can confirm now (Step 5), plus work merely discussed but not done (surface only).
 - **Plan changes** — a step whose scope, verify criterion, or ordering the session changed.
 - **A changed ask** — the session revealed the product requirement shifted from what `ticket.md` states; it routes by the *Changed ask* row in `./references/workflow/reconciliation-session-to-docs.md` § *`reconcile-task` — session findings*.
+- **A shared constraint changed or contradicted** — the session settled that an applicable group file governs the task differently than the docs assume, or that the two disagree; it routes by the *Shared constraint changed or contradicted* row in that same section, which separates the task-local consequence you may propose from the correction only the group file's owner may make.
 
-Group findings by target file (`CONTEXT.md` / `goals.md` / `plan.md` / `result.md`) — the ticket and a doc task's deliverable are read-only, so a changed ask lands under "Not reconciled" as *Yours to apply*, and a deliverable finding lands there too — its `**Published:**` line *Yours to apply*, its content *Needs work* via `implement-task`.
+Group findings by target file (`CONTEXT.md` / `goals.md` / `plan.md` / `result.md`) — the ticket, a doc task's deliverable, and every inherited group file are read-only, so a changed ask lands under "Not reconciled" as *Yours to apply*, a deliverable finding lands there too — its `**Published:**` line *Yours to apply*, its content *Needs work* via `implement-task` — and so does a correction whose home is a group file, addressed to that file's owner.
 
 ### 4. Check the Cited External References
 
@@ -115,6 +117,7 @@ Print the findings report **first**, from **pre-reconcile** state, never regener
 ### plan.md
 - [verify] Step 3 — completed this session; pending re-verification of its Verify criterion
 - [ask] Step 5 — scope changed to <…> in session
+- [ask] Step 4 — session settled that `EU` holds; the step still names `US`, against `product/backend/GROUP_CONTEXT.md` (root `Tasks/`)
 
 ### result.md
 - [auto] Session narrative — <what was explored / decided / tried>
@@ -129,7 +132,7 @@ Print the findings report **first**, from **pre-reconcile** state, never regener
 
 ## Not reconciled
 - Needs work — <finding> — via `/implement-task <slug>`
-- Yours to apply — <finding> — `ticket.md` / `**Published:**`; proposed text: <…>
+- Yours to apply — <finding> — `ticket.md` / `**Published:**` / a group file, named with its owner; proposed text: <…>
 
 (*Awaiting your answer* never appears here — the report prints before the batched round.)
 
@@ -166,4 +169,5 @@ Confirm the protocol invariants before finishing. Each item names the file, or t
 - [ ] The reference sweep run before any edit — or gated out — its scope enumerated by `sweep-scope.ts` rather than by hand, its results tagged, rendered under `## References`, and ledgered per `reconciliation-sweep.md`, its flag-only findings routed by § *Never-annotated surfaces*
 - [ ] State advanced only per the shared file's § *Strengthen only on verified evidence* — Step 5's gate, its integrated-health precondition before any advance claiming the work complete, the evidence recorded in `result.md`; grounding docs (`goals.md`, `CONTEXT.md` prose, a step's scope) changed only per the shared file's § *Grounding docs change by confirmation, never silently*
 - [ ] Every edit falls inside the direction file's § *Write surface* and maps to a printed finding or an answer to one, with no code, git, or external-system mutation per § *Docs, not the world*; no scratch artifact written
+- [ ] The inherited chain read as baseline and left byte-identical, no link inside it swept; a changed or contradicted shared constraint split per § *Never-annotated surfaces* — the group file's own correction *Yours to apply*, only the task-local consequence proposed and only on a confirmed answer
 - [ ] `## Current state` refreshed at the end of the run per § *Current state refresh*, its `done`-result freeze included; the size trigger tested with `task-state.ts --compaction-plan` (or the untested run said so), and the compaction proposal raised as an ask item on its `due`

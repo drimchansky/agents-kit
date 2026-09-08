@@ -3,7 +3,9 @@ import { lstatSync, readdirSync, readFileSync, readlinkSync, realpathSync, statS
 import type { Dirent, Stats } from "node:fs";
 import { join, resolve, basename, sep } from "node:path";
 import {
-  holdsRoleFile,
+  ARCHIVE_DIR,
+  BACKLOG_DIR,
+  classifyWalkEntry,
   LIVE_STATUSES,
   PLAN_VOCAB,
   RECORD_MAX_KB as DEFAULT_RECORD_MAX_KB,
@@ -18,10 +20,6 @@ process.stdout.on("error", (err: NodeJS.ErrnoException) => {
   if (err.code !== "EPIPE") throw err;
 });
 
-const SKIP_DIRS = new Set<string>(["node_modules"]);
-const TASK_STORE_DIR = ".agents";
-const ARCHIVE_DIR = /^archive$/i;
-const BACKLOG_DIR = /^backlog$/i;
 const DEFAULT_STALE_DAYS = 30;
 const DAY_MS = 86_400_000;
 const CURRENT_STATE = /^##[ \t]+Current state\b/im;
@@ -56,7 +54,8 @@ type TaskCheck =
   | "oversized-result"
   | "oversized-task"
   | "oversized-record"
-  | "duplicate-slug";
+  | "duplicate-slug"
+  | "nested-task";
 
 interface TaskFinding {
   readonly check: TaskCheck;
@@ -173,10 +172,6 @@ function fileText(path: string, display: string): string | null {
 function clip(text: string, max = 60): string {
   const line = text.trim();
   return line.length > max ? line.slice(0, max - 1) + "…" : line;
-}
-
-function isTaskDir(entries: readonly Dirent[]): boolean {
-  return holdsRoleFile(entries.filter((entry) => entry.isFile()).map((entry) => entry.name));
 }
 
 const STATUS_PATTERNS = [
@@ -312,6 +307,23 @@ interface Task {
   readonly goals: RoleFile | null;
   readonly updated: number;
   readonly markdownBytes: number;
+  readonly nested: readonly string[];
+}
+
+function nestedTaskDirs(dir: string, display: string, entries: readonly Dirent[]): string[] {
+  const found: string[] = [];
+  for (const entry of entries) {
+    const child = join(dir, entry.name);
+    const childDisplay = join(display, entry.name);
+    const { step, childEntries } = classifyWalkEntry(entry, () => listEntries(child, childDisplay));
+    if (step === "prune") continue;
+    if (step === "claimed") {
+      found.push(childDisplay);
+      continue;
+    }
+    found.push(...nestedTaskDirs(child, childDisplay, childEntries));
+  }
+  return found;
 }
 
 function collect(rootDir: string, rootDisplay: string): Task[] {
@@ -325,20 +337,15 @@ function collect(rootDir: string, rootDisplay: string): Task[] {
     backlogged: boolean,
   ): void => {
     for (const entry of entries) {
-      if (!entry.isDirectory() || SKIP_DIRS.has(entry.name)) continue;
-      if (entry.name.startsWith(".") && entry.name !== TASK_STORE_DIR) continue;
       const child = join(dir, entry.name);
       const childDisplay = join(display, entry.name);
-      const childEntries = listEntries(child, childDisplay);
-      if (ARCHIVE_DIR.test(entry.name)) {
-        walk(child, childDisplay, childEntries, true, backlogged);
+      const { step, childEntries } = classifyWalkEntry(entry, () => listEntries(child, childDisplay));
+      if (step === "prune") continue;
+      if (step === "container") {
+        walk(child, childDisplay, childEntries, archived || ARCHIVE_DIR.test(entry.name), BACKLOG_DIR.test(entry.name));
         continue;
       }
-      if (BACKLOG_DIR.test(entry.name)) {
-        walk(child, childDisplay, childEntries, archived, true);
-        continue;
-      }
-      if (isTaskDir(childEntries)) {
+      if (step === "claimed") {
         tasks.push({
           dir: child,
           path: childDisplay,
@@ -348,10 +355,11 @@ function collect(rootDir: string, rootDisplay: string): Task[] {
           result: readRoleFile(child, childDisplay, childEntries, "result.md", ".result.md"),
           goals: readRoleFile(child, childDisplay, childEntries, "goals.md", null),
           ...folderStats(child, childEntries),
+          nested: nestedTaskDirs(child, childDisplay, childEntries),
         });
         continue;
       }
-      walk(child, childDisplay, childEntries, archived, backlogged);
+      walk(child, childDisplay, childEntries, archived, false);
     }
   };
   walk(rootDir, rootDisplay, listEntries(rootDir, rootDisplay), false, false);
@@ -474,6 +482,15 @@ function startedInBacklogFinding(task: Task): UnrootedFinding | null {
     check: "started-in-backlog",
     path: task.path,
     detail: `${value}, parked in Backlog/ — a parked task must be unstarted`,
+  };
+}
+
+function nestedTaskFinding(task: Task): UnrootedFinding | null {
+  if (task.nested.length === 0) return null;
+  return {
+    check: "nested-task",
+    path: task.path,
+    detail: `claimed as a task folder, hiding the task folders beneath it: ${task.nested.join(", ")}`,
   };
 }
 
@@ -1022,6 +1039,7 @@ if (installs) {
         staleFinding(task, now, staleDays),
         doneUnarchivedFinding(task),
         startedInBacklogFinding(task),
+        nestedTaskFinding(task),
       ];
 
       if (!task.archived) {

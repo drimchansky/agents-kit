@@ -38,7 +38,7 @@ Phase 2 executes the sibling skill file — read `../prepare-ticket/SKILL.md` an
 ### Phase 1 — Propose (chat-only)
 
 1. **Resolve the source** per `decomposition.md` § *Source intake*: a task-folder doc by path, any file, pasted text, or a URL fetched read-only (ask for a paste when unreachable). Confirm it is decided material; when it isn't, stop and name `refine-idea`.
-2. **Resolve the parent directory** — where the siblings will live, resolved once here for the whole set: the destination the user named, else the source task folder's own parent when the source lives in a task store (continuing its `NN-` sequence), else the container `./references/workflow/task-destinations.md` § *Destination paths* selects — the matched project area, or the canonical root itself, never the `<slug>` folder its step 3 spells out — whose destination notice prints here, before the per-part loop, never once per part.
+2. **Resolve the parent directory** — where the siblings will live, resolved once here for the whole set: the destination the user named, else the source task folder's own parent when the source lives in a task store (continuing its `NN-` sequence), else the container `./references/workflow/task-destinations.md` § *Destination paths* selects — the matched project area, or the canonical root itself, never the `<slug>` folder its step 3 spells out — whose destination notice prints here, before the per-part loop, never once per part. Then read what a part landing there will inherit — every applicable `GROUP_CONTEXT.md` from the selected root down through that directory's own, in that root-to-task order, per `./references/workflow/task-store.md` § *Shared group context* — once here for the whole set, since every part lands under the same ancestors. That grounding informs steps 3–5 without enlarging them: an inherited constraint may move a cut line or sharpen an acceptance sketch, while no part gains a requirement the source does not decide.
 3. **Ground the cut** — read the source in full. When the domain is code, check the source's as-built pointers against current main (`decomposition.md` § *Engineering heuristics*) so staleness lands in the affected parts' seeds instead of resurfacing at plan time.
 4. **Propose** per `decomposition.md` § *The proposal*: the recommended cut (parts, numbering, per-part acceptance sketches, dependency notes), genuinely different alternatives when they exist, the Jira mapping when keys were passed, and the open items that gate nothing.
 5. **Confirm — one batched round** (the host's structured question tool when available): the cut, the numbering, the parent directory, missing Jira keys, and any per-part gap that would stall ticket drafting. Apply exactly what the user answers; a dropped part leaves the set without renumbering the others.
@@ -49,7 +49,7 @@ Run `decomposition.md` § *Materialization contract* per part:
 
 1. Create `<parent>/<NN->slug/`.
 2. Draft `ticket.md` by executing `../prepare-ticket/SKILL.md` against the part's confirmed acceptance sketch — destination: the part folder; bar: `./references/workflow/ticket-format.md`; clarifications: already batched in Phase 1.
-3. Seed `CONTEXT.md` from `./references/templates/CONTEXT.md` per `./references/workflow/context-schema.md`: the part's `**Domain:**`, `## Problem Statement` citing `./ticket.md`, `## References` carrying the source pointer, the part's Jira key when mapped, and the duplicated shared facts, `## Recommended Direction` holding only what the source decides for this part (cited to its section), `## Open Questions` carrying the proposal's gate-nothing items that touch this part, every other section heading present as a placeholder.
+3. Seed `CONTEXT.md` from `./references/templates/CONTEXT.md` per `./references/workflow/context-schema.md`: the part's `**Domain:**`, `## Problem Statement` citing `./ticket.md`, `## References` carrying the source pointer, the part's Jira key when mapped, and the shared facts it needs — each cited to the group file that already holds it, duplicated only where none does, `## Recommended Direction` holding only what the source decides for this part (cited to its section), `## Open Questions` carrying the proposal's gate-nothing items that touch this part, every other section heading present as a placeholder.
 
 ## Output
 
@@ -57,7 +57,7 @@ Lists, never tables. Report — don't paste the tickets:
 
 - **Materialized parts** — per part: folder path, ticket title, and — when a Jira mapping exists — the disposition (*absorb into `<KEY>`* — the ticket body doubles as that key's paste-ready description refresh — or *needs-new* with the parent/epic named); omitted for a run with no Jira context.
 - **Assumptions and open items** — anything inferred while drafting, plus the gate-nothing items carried from the proposal.
-- **Next:** `/plan-task <first-part>` — the bare slug when the parts landed in the canonical root or a registered one, the folder's path when their root is neither (`./references/workflow/task-layout.md` § *One task, one flat folder*) — then one line per remaining part in order.
+- **Next:** `/plan-task <first-part>` — the handoff token `./references/workflow/task-layout.md` § *One task, one flat folder* fixes for where the parts landed: the bare slug where one resolves, the folder's path otherwise — then one line per remaining part in order.
 
 ## Don't Rationalize
 
@@ -74,6 +74,7 @@ Confirm the protocol invariants before finishing:
 - [ ] Source resolved and read in full; the decided-material check passed, or the run stopped naming `refine-idea`
 - [ ] Proposal printed with the recommended cut, numbering, acceptance sketches, and dependency notes — plus real alternatives, the Jira mapping, and gate-nothing items where they apply; nothing written before confirmation
 - [ ] One batched confirmation round; only confirmed parts materialized, exactly as answered, without renumbering surviving parts
-- [ ] Per part: folder placed per the numbering rules; `ticket.md` meets `ticket-format.md`'s bar; `CONTEXT.md` seed is the full schema skeleton, Problem Statement citing `./ticket.md`, References carrying source pointer + key + shared facts, gate-nothing items in Open Questions; nothing pre-existing silently overwritten
+- [ ] Parent directory's inherited group grounding read once before the cut, and no part given a requirement the source does not decide
+- [ ] Per part: folder placed per the numbering rules; `ticket.md` meets `ticket-format.md`'s bar; `CONTEXT.md` seed is the full schema skeleton, Problem Statement citing `./ticket.md`, References carrying source pointer + key + shared facts (cited where a group file holds them), gate-nothing items in Open Questions; nothing pre-existing silently overwritten
 - [ ] No Jira write, no git mutation, no source-doc edit
 - [ ] Output reports every part — with its Jira disposition when a mapping exists — and owns **Next** with the `/plan-task` handoff

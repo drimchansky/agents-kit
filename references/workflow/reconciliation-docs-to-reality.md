@@ -16,6 +16,8 @@ Five task files, and nothing else:
 
 A doc task's **deliverable** is outside this surface entirely, on the shared exclusion in `./reconciliation.md` § *Authored surfaces are never written*; drift in it is flagged, never repaired (shared repairs below). The deliverable's `**Published:**` line is the user's to flip or re-date: the sweep reads it, the never-annotated rule routes what it finds, nothing here writes it.
 
+The shared grounding above the folder sits outside this surface on the same footing: an applicable `GROUP_CONTEXT.md` is read by both composites and written by neither (`./reconciliation.md` § *Never-annotated surfaces*).
+
 The upstream `ticket.md` is **never** edited: a changed *ask* is *Yours to apply* — surfaced with the proposed text for the user to update the ticket, after which `plan-task` re-derives the goals. Beyond the re-verification an advance owes the shared engine (§ *Repairs weaken; advances go through the shared engine*), this direction never re-runs the acceptance gate and never executes plan work.
 
 ## Repairs weaken; advances go through the shared engine
@@ -36,6 +38,7 @@ Both composites apply these; only the evidence source differs (the resume brief'
   - plan `done`, no `result.md` → flip `done → executing` (nothing records the gate having run), then apply the no-`result.md` rule above;
   - a plan status outside the vocabulary registered in `./task-lifecycle.md` → **ask**; the intended state can't be inferred.
 - **Result records work the plan doesn't show** (result section exists, plan still `- [ ]`) — the record *nominates*; checking the box goes through the shared engine like any other advance (§ *Repairs weaken; advances go through the shared engine*). A run that re-verifies the step checks it; a run that doesn't leaves it flag only — *Needs work*, naming `implement-task` to re-verify and flip.
+- **Inherited group constraint contradicts a task artifact** — nominated by the brief's drift finding weighing the current chain against a pending step, or by the assessment's `group context ↔ …` Cross-File Drift pair; either way the routing is `./reconciliation.md` § *Never-annotated surfaces*, unchanged. The group file's own correction is **flag only**, *Yours to apply*, its owner named. The task-local consequence is an **ask**: settle which side holds, then write the confirmed wording to the step's **What**/**Verify**, the `CONTEXT.md` prose section, or the `goals.md` line that owns it — the last two per `./reconciliation.md` § *Grounding docs change by confirmation, never silently*. Nothing advances on the contradiction, and an answer leaving the plan to redesign is *Needs work* naming `plan-task`.
 - **Cited reference materially changed or gone** — governed in full by `./reconciliation.md` § *Cited reference changed*.
 - **Never-annotated surface changed or broken** — the trigger and the rule are `./reconciliation.md` § *Never-annotated surfaces*, which governs while this row adds nothing, none of the three surfaces being in this write surface: on a `warn`, name the changed page and the claim it leaves stale (for a pause section, that the cause it names may no longer hold); on a `block`, name the page as gone.
 

@@ -42,7 +42,7 @@ Archiving moves a finished task folder into its own parent's `Archive/` — cano
 
 `./references/workflow/task-relocation.md` § *1. Resolve the target task folder* owns this step — the base resolution read at run time, the `SRC` naming and absolute-path rule, and the refusal of a tasks-parent. Here a folder qualifies as a task by holding a top-level `plan.md`. Two additions are this skill's own:
 
-- **Already archived** → when the slug matches only a folder inside an `Archive/`, report that it's already archived and stop. Nothing to do, and re-archiving would nest it.
+- **Already archived** → when the resolved folder is archived on the reading `task-archiving.md` § *Already archived is asked of the whole path up to the store* fixes — an `Archive` anywhere between it and its store root, matched **case-insensitively** — report that it's already archived and stop. Nothing to do, and re-archiving would file one archive inside another; the script refuses on that same reading, naming the container it found.
 - **The nothing-named listing carries status** → show each active folder's `plan.md` `**Status:**` beside it, so the choice is made against what is actually terminal. Don't guess.
 
 ### 2. Run the move
@@ -55,7 +55,7 @@ node <kit-root>/scripts/task-move.ts <SRC> --to archive
 
 ### 3. Report
 
-`./references/workflow/task-relocation.md` § *3. Report* owns the shape. Two things are this direction's: when the destination shows the task left a `Backlog/`, say so; and the way back is to move the folder out of `Archive/` — naming its slug only lets discovery find it there.
+`./references/workflow/task-relocation.md` § *3. Report* owns the shape. Two things are this direction's: when the destination shows the task left a `Backlog/`, say so; and the way back is to move the folder out from under the `Archive/` that archives it, which can sit above a group rather than directly over the task — naming its slug only lets discovery find it there.
 
 ## Output Template
 
@@ -86,7 +86,7 @@ The four entries in `./references/workflow/task-relocation.md` § *Don't Rationa
 
 Confirm the protocol invariants before finishing:
 
-- [ ] `SRC` resolved per `task-layout.md` at run time and validated by contents (a task folder, not a tasks-parent); an already-archived folder reported, not re-archived
+- [ ] `SRC` resolved per `task-layout.md` at run time and validated by contents (a task folder, not a tasks-parent); a folder already archived on the whole-path reading `task-archiving.md` § *Already archived is asked of the whole path up to the store* fixes reported, not re-archived
 - [ ] The script run once on that exact absolute path, with `--to archive` — no bare slug, no path rebuilt from slug + cwd
 - [ ] Exit 0 reported with the destination the script printed; a non-zero exit surfaced verbatim, with nothing moved by hand afterwards
 - [ ] No status or content edited, no git state mutated

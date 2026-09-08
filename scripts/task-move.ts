@@ -1,12 +1,22 @@
 #!/usr/bin/env node
-import { lstatSync, mkdirSync, readFileSync, readdirSync, renameSync, rmdirSync } from "node:fs";
+import { lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, renameSync, rmdirSync } from "node:fs";
+import type { Dirent } from "node:fs";
 import { homedir } from "node:os";
 import { basename, dirname, isAbsolute, join, resolve, sep } from "node:path";
-import { holdsRoleFile, PLAN_VOCAB, TERMINAL_STATUSES, UNSTARTED_STATUS } from "./lifecycle-constants.ts";
+import {
+  ARCHIVE_DIR,
+  BACKLOG_DIR,
+  classifyWalkEntry,
+  holdsRoleFile,
+  PLAN_VOCAB,
+  TASK_STORE_DIR,
+  TERMINAL_STATUSES,
+  UNSTARTED_STATUS,
+} from "./lifecycle-constants.ts";
 
 const CONTAINERS = {
-  archive: { match: /^archive$/i, create: "Archive" },
-  backlog: { match: /^backlog$/i, create: "Backlog" },
+  archive: { match: ARCHIVE_DIR, create: "Archive" },
+  backlog: { match: BACKLOG_DIR, create: "Backlog" },
 } as const;
 
 type Target = keyof typeof CONTAINERS;
@@ -66,15 +76,25 @@ function readdirNames(dir: string): string[] {
   }
 }
 
+function holdsTaskFiles(entries: readonly Dirent[]): boolean {
+  return holdsRoleFile(entries.filter((entry) => entry.isFile()).map((entry) => entry.name));
+}
+
 function isTaskFolder(path: string): boolean {
   if (entryKind(path) !== "dir") return false;
-  let names: string[];
   try {
-    names = readdirSync(path, { withFileTypes: true }).filter((entry) => entry.isFile()).map((entry) => entry.name);
+    return holdsTaskFiles(readdirSync(path, { withFileTypes: true }));
   } catch {
     return false;
   }
-  return holdsRoleFile(names);
+}
+
+function physicalPath(path: string): string {
+  try {
+    return realpathSync.native(path);
+  } catch {
+    return path;
+  }
 }
 
 function expandHome(path: string): string {
@@ -87,47 +107,182 @@ function looksLikePath(arg: string): boolean {
   return isAbsolute(arg) || arg.includes("/") || arg.includes(sep) || arg.startsWith("~");
 }
 
-function registeredRoots(): string[] {
+interface Root {
+  readonly path: string;
+  readonly identity: string;
+}
+
+type RegistryPolicy = "refuse" | "ignore";
+
+function registeredRoots(unreadable: RegistryPolicy): Root[] {
   const file = join(homedir(), ".config", "agents-kit", "config.json");
+  const warn = (message: string): void => {
+    if (unreadable === "refuse") process.stderr.write(`warning: ${message}\n`);
+  };
   let text: string;
   try {
     text = readFileSync(file, "utf8");
-  } catch {
+  } catch (err) {
+    if (!missing(err) && unreadable === "refuse") unsearchable(file, err);
     return [];
   }
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
   } catch {
-    process.stderr.write(`warning: ignoring unparseable ${file}\n`);
+    warn(`ignoring unparseable ${file}`);
     return [];
   }
   const entries = (parsed as { taskRoots?: unknown } | null)?.taskRoots;
-  if (!Array.isArray(entries)) return [];
-  const roots: string[] = [];
-  for (const entry of entries) {
+  if (entries === undefined) return [];
+  if (!Array.isArray(entries)) {
+    warn(`ignoring taskRoots in ${file}: not an array`);
+    return [];
+  }
+  const roots: Root[] = [];
+  for (const [index, entry] of entries.entries()) {
     const path = (entry as { path?: unknown } | null)?.path;
-    if (typeof path === "string" && path.trim()) roots.push(resolve(expandHome(path.trim())));
+    if (typeof path !== "string" || !path.trim()) {
+      warn(`ignoring taskRoots[${index}] in ${file}: no path`);
+      continue;
+    }
+    const resolved = resolve(expandHome(path.trim()));
+    roots.push({ path: resolved, identity: physicalPath(resolved) });
   }
   return roots;
 }
 
-function resolveSlug(slug: string): string {
-  const found = new Set<string>();
-  for (const root of [resolve(".agents", "tasks"), ...registeredRoots()]) {
-    const containers = readdirNames(root)
-      .filter((name) => CONTAINERS.archive.match.test(name) || CONTAINERS.backlog.match.test(name))
-      .map((name) => join(root, name));
-    for (const dir of [root, ...containers]) {
-      const candidate = join(dir, slug);
-      if (isTaskFolder(candidate)) found.add(candidate);
+function archiveAncestor(src: string, stopAt: string | null): string | null {
+  let dir = dirname(src);
+  for (;;) {
+    if (stopAt !== null && physicalPath(dir) === stopAt) return null;
+    if (CONTAINERS.archive.match.test(basename(dir))) return dir;
+    const next = dirname(dir);
+    if (next === dir) return null;
+    dir = next;
+  }
+}
+
+function boundingRoot(src: string): string | null {
+  const physical = physicalPath(src);
+  let registered: string | null = null;
+  for (const root of distinctRoots(registeredRoots("ignore"))) {
+    const under = physical === root.identity || physical.startsWith(`${root.identity}${sep}`);
+    if (under && (registered === null || root.identity.length > registered.length)) registered = root.identity;
+  }
+  if (registered !== null) return registered;
+
+  for (let dir = dirname(src); ; ) {
+    if (basename(dir) === TASK_STORE_DIR) {
+      const store = join(dir, "tasks");
+      return physicalPath(src.startsWith(`${store}${sep}`) ? store : dir);
+    }
+    const next = dirname(dir);
+    if (next === dir) break;
+    dir = next;
+  }
+  return null;
+}
+
+function distinctRoots(roots: readonly Root[]): Root[] {
+  const kept: Root[] = [];
+  const byIdentity = [...roots].sort((a, b) => (a.identity < b.identity ? -1 : a.identity > b.identity ? 1 : 0));
+  for (const root of byIdentity) {
+    if (kept.some((seen) => root.identity === seen.identity)) continue;
+    kept.push(root);
+  }
+  return kept;
+}
+
+function unsearchable(path: string, err: unknown): never {
+  const cause = (err as NodeJS.ErrnoException).code ?? (err as Error).message;
+  fail(`cannot read ${path}: ${cause}. Refusing to resolve a slug against a store it could not read in full. Pass its path instead.`);
+}
+
+function missing(err: unknown): boolean {
+  const code = (err as NodeJS.ErrnoException).code;
+  return code === "ENOENT" || code === "ENOTDIR";
+}
+
+function sortedEntries(dir: string): Dirent[] {
+  return readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name, "en"));
+}
+
+function readOrRefuse(dir: string): Dirent[] | null {
+  try {
+    return sortedEntries(dir);
+  } catch (err) {
+    if (missing(err)) return null;
+    unsearchable(dir, err);
+  }
+}
+
+function searchRoot(root: Root, slug: string, record: (dir: string) => void): void {
+  const entries = readOrRefuse(root.identity);
+  if (entries === null) {
+    process.stderr.write(`warning: skipping registered root ${root.path}: absent or not a directory\n`);
+    return;
+  }
+  const walk = (dir: string, dirEntries: readonly Dirent[]): void => {
+    for (const entry of dirEntries) {
+      const child = join(dir, entry.name);
+      const { step, childEntries } = classifyWalkEntry(entry, () => readOrRefuse(child) ?? []);
+      if (step === "prune") continue;
+      if (step === "claimed") {
+        if (entry.name === slug) record(child);
+        continue;
+      }
+      walk(child, childEntries);
+    }
+  };
+  walk(root.identity, entries);
+}
+
+interface Resolved {
+  readonly path: string;
+  readonly root: string;
+}
+
+function resolveSlug(slug: string): Resolved {
+  const found = new Map<string, Resolved>();
+  const record = (dir: string, root: string): void => {
+    const key = physicalPath(dir);
+    const prior = found.get(key);
+    if (prior === undefined || root.length > prior.root.length) found.set(key, { path: dir, root });
+  };
+
+  const canonical = resolve(".agents", "tasks");
+  const canonicalEntries = readOrRefuse(canonical);
+  if (canonicalEntries !== null) {
+    const canonicalIdentity = physicalPath(canonical);
+    const matchIn = (dir: string, entries: readonly Dirent[]): void => {
+      for (const entry of entries) {
+        if (!entry.isDirectory() || entry.name !== slug) continue;
+        if (CONTAINERS.archive.match.test(entry.name) || CONTAINERS.backlog.match.test(entry.name)) continue;
+        const child = join(dir, entry.name);
+        if (holdsTaskFiles(readOrRefuse(child) ?? [])) record(child, canonicalIdentity);
+      }
+    };
+    matchIn(canonical, canonicalEntries);
+    for (const entry of canonicalEntries) {
+      if (!entry.isDirectory()) continue;
+      if (!CONTAINERS.archive.match.test(entry.name) && !CONTAINERS.backlog.match.test(entry.name)) continue;
+      const container = join(canonical, entry.name);
+      const containerEntries = readOrRefuse(container);
+      if (containerEntries !== null) matchIn(container, containerEntries);
     }
   }
-  const matches = [...found];
+  for (const root of distinctRoots(registeredRoots("refuse"))) {
+    searchRoot(root, slug, (dir) => record(dir, root.identity));
+  }
+
+  const matches = [...found.values()];
   if (matches.length === 0) {
     fail(`no task folder named ${slug} under the canonical root or a registered one. Pass its path instead.`);
   }
-  if (matches.length > 1) fail(`${slug} matches ${matches.join(" and ")}. Pass the one you mean as a path.`);
+  if (matches.length > 1) {
+    fail(`${slug} matches ${matches.map((match) => match.path).join(" and ")}. Pass the one you mean as a path.`);
+  }
   return matches[0];
 }
 
@@ -231,7 +386,8 @@ function removeIfEmpty(dir: string): void {
 
 function main(): void {
   const { subject, target } = parseArgs(process.argv.slice(2));
-  const src = looksLikePath(subject) ? resolve(expandHome(subject)) : resolveSlug(subject);
+  const resolved: Resolved | null = looksLikePath(subject) ? null : resolveSlug(subject);
+  const src = resolved?.path ?? resolve(expandHome(subject));
 
   const srcKind = entryKind(src);
   if (srcKind === "absent") fail(`no such task folder: ${src}`);
@@ -245,13 +401,14 @@ function main(): void {
   const slug = basename(src);
   let parent = dirname(src);
   const parentName = basename(parent);
+  const archived = archiveAncestor(src, resolved?.root ?? boundingRoot(src));
   if (target === "archive") {
-    if (CONTAINERS.archive.match.test(parentName)) refuse(`${src} is already archived.`);
+    if (archived) refuse(`${src} is already archived under ${archived}.`);
 
     if (CONTAINERS.backlog.match.test(parentName)) parent = dirname(parent);
   } else {
     if (CONTAINERS.backlog.match.test(parentName)) refuse(`${src} is already parked.`);
-    if (CONTAINERS.archive.match.test(parentName)) {
+    if (archived) {
       refuse(`${src} is archived. Un-archive it first; an archived task never moves straight into a backlog.`);
     }
   }
