@@ -76,7 +76,7 @@ header block:
   infers the domain from the request, and `decompose-task` — which runs before any part folder
   exists — infers the effort's domain from the source doc and stamps each materialized part's own
   `**Domain:**` in its seeded `CONTEXT.md`.
-- **Engineering-only skills** — `commit`, `review-code`, `update-pr-description`, `publish-pr-review`,
+- **Engineering-only skills** — `commit`, `rebase`, `review-code`, `update-pr-description`, `publish-pr-review`,
   `triage-findings`, `verify-issue`, `fix-findings`, `review-code-triage-verify`,
   `triage-findings-verify` — operate on a codebase
   or diff, not a task folder, and load `references/engineering/` unconditionally. They are, in

@@ -67,6 +67,7 @@ where they are rather than being re-implemented at the pipeline level.
 
 ### Modal flags — interleaved behavior
 
+- `--amend` (`commit`) — explicitly replaces the latest commit; message selection, state guards and result verification change within the existing commit workflow. The long form matches Git and avoids confusing this mode with Git's `-a`, which stages tracked changes.
 - `-x` cross-vendor engine (`review-code`, `review-docs`, `review-task`) — one meaning kit-wide:
   use the cross-vendor engine for this skill's read-only fan-out, an independent probe
   (`./probe-cross-check.md`) — and by the pass-through rule above, a composite's `-x` is its
@@ -135,13 +136,13 @@ without the other leaves the skill open on the other host.
 Opening or closing a door is recorded in this list in the same change that flips the frontmatter
 and the policy file; the entry, or its removal, is what keeps this list and the two host mechanisms in step.
 
-Three skills write past the session and are deliberately **not** members. `publish-pr-review` mutates
+Four skills write past the session and are deliberately **not** members. `publish-pr-review` mutates
 a PR, but its step 4 is a counted choice: each severity tier it could post is offered with the
 number of comments that selection would write, posting nothing is one of the options, and nothing
 reaches the PR but the selection. `create-notion-page` has no such gate — it drafts and creates in
 one pass — but the page lands parentless in the user's Private section, visible to them alone and
 cheap to delete, and the skill never shares it or changes its permissions, so an unasked run
-publishes to nobody. `commit` is the third exception, under the request-based authorization below.
+publishes to nobody. `commit` and `rebase` are the other exceptions, under the request-based authorization below.
 Every other skill either authors or changes work that still sits in front of
 the user — working-tree code a `git diff` shows, task docs, a chat report — or previews and confirms
 its own write, as `decompose-task` does.
@@ -154,9 +155,10 @@ the skill body. A run carrying no such marker, or running on a host that leaves 
 indistinguishable, counts as **model-invoked**: the split exists to withhold a write nobody asked
 for, so an unreadable signal resolves the way that asks rather than the way that writes.
 
-Two authorizations read the user's request instead of that door marker. `skills/commit/SKILL.md`
-requires an explicit request to commit, including natural language; selecting the skill does not
-authorize its write. Separately, `./task-delivery.md` § *Checkpoint commits* governs when an explicit
+Three authorizations read the user's request instead of that door marker. `skills/commit/SKILL.md`
+and `skills/rebase/SKILL.md` each require an explicit request for their Git operation, including
+natural language; selecting either skill does not authorize its write. Separately,
+`./task-delivery.md` § *Checkpoint commits* governs when an explicit
 natural-language instruction to implement an engineering task's full plan authorizes those commits.
 The checkpoint conditions do not change this file's invocation flags or gated-skill roster.
 
