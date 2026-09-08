@@ -63,6 +63,7 @@ _Updated: YYYY-MM-DD_
 **Asserted:** <which named assertions ran — e.g. the e2e flow exercised>
 **Health:** <the one boundary on the tree this checkpoint bounds, including any batch it bounds>
 **Outcome:** passed
+**Commit:** <SHA `<sha>`; `none — no task changes`; `failed — <reason>`; or `not run — checkpoint failed`; omit when checkpoint commits were not authorized>
 **Merged:** <parallel-batch steps merged at this gate in plan order; omit when no batch>
 **Notes:** <surprises, near-misses, anything important; otherwise omit>
 

@@ -154,6 +154,11 @@ the skill body. A run carrying no such marker, or running on a host that leaves 
 indistinguishable, counts as **model-invoked**: the split exists to withhold a write nobody asked
 for, so an unreadable signal resolves the way that asks rather than the way that writes.
 
+One conditional sanction reads the user's request instead of that door marker: `./task-delivery.md`
+§ *Checkpoint commits* governs when an explicit natural-language instruction to implement an
+engineering task's full plan authorizes those commits. Its conditions do not change this file's
+invocation flags or gated-skill roster.
+
 **An open skill that reads its own invocation as consent states the user/model split where it makes
 that claim**, not here — `./reconciliation.md` § *Consent model* for the reconcilers,
 `./executor-routing.md` § *The registry and its authorization* for the write-mode consumers. Each
