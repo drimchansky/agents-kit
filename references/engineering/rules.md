@@ -1,6 +1,6 @@
 # Engineering Rules
 
-The **engineering domain pack's rules overlay** — loaded on top of the neutral `../../CORE_RULES.md` for any task with `**Domain:** engineering` (the default), and unconditionally by the engineering-only skills, each of which cites it. `commit` is the one engineering-contributed skill that does *not* load this overlay — it writes no code, so the only rule bearing on it is the Git-discipline line below, which its SKILL.md carries inline.
+The **engineering domain pack's rules overlay** — loaded on top of the neutral `../../CORE_RULES.md` for any task with `**Domain:** engineering` (the default), and unconditionally by the engineering-only skills, each of which cites it. `commit` is the one engineering-contributed skill that does *not* load this overlay — it writes no code, so the Git-discipline line below applies directly while its own SKILL.md carries the staged-change check gate appropriate to committing instead of this pack's changed-code health-boundary protocol.
 
 ## Code & Git discipline
 
