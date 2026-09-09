@@ -101,8 +101,8 @@ both are exempt under `Archive/`.
 
 **`--installs` mode** compares what `setup.ts` deployed against the kit. Only a marked item is
 kit-managed and comparable; a marker that cannot be read is not the user's, so it is recorded as a
-coverage gap and compared anyway. OS-generated files (`.DS_Store`, `.localized`, `Thumbs.db`) are
-matched by name rather than by a dotfile rule, because a skill may legitimately ship a dotfile (a
+coverage gap and compared anyway. OS-generated files (`.DS_Store`, `.localized`, `Thumbs.db`, and any `._*` AppleDouble sidecar) are
+matched by name or that one prefix rather than by a dotfile rule, because a skill may legitimately ship a dotfile (a
 template's `.gitignore`) and it stays comparable. A marked entry under the staging prefix is an
 interrupted install rather than a payload. Two symlinks are compared by their targets, since
 `setup.ts` copies skills link-preserving and references link-materializing; one side being a link and

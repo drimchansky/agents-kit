@@ -215,6 +215,43 @@ test("the pause section is swept only while the plan's status owes it", () => {
   );
 });
 
+test("two pause sections under one heading sweep only the active one", () => {
+  const superseded = "https://vendor.invalid/ticket/8";
+  const result = RESULT.replace(
+    "## Blocked — 2026-01-04",
+    `## Blocked\n\n**Blocked:** the first wait ${superseded}\n\n---\n\n## Blocked`,
+  );
+  const dir = folder("pause-twice", {
+    context: CONTEXT,
+    plan: PLAN.replace("**Status:** executing", "**Status:** blocked"),
+    ticket: TICKET,
+    result,
+    observations: LEDGER,
+    deliverable: { file: "adr.md", text: DELIVERABLE },
+  });
+  const scope = report(dir);
+  assert.ok(!scope.citations.some((citation) => citation.url === superseded), "the superseded pause was swept");
+  assert.deepStrictEqual(
+    cited(scope, PAUSE_ONLY).occurrences.map((occurrence) => occurrence.surface),
+    ["plan-open-questions", "result-pause"],
+  );
+});
+
+test("a pause section whose heading yields no anchor is still swept by its label", () => {
+  const dir = folder("pause-no-anchor", {
+    context: CONTEXT,
+    plan: PLAN.replace("**Status:** executing", "**Status:** blocked"),
+    ticket: TICKET,
+    result: RESULT.replace("## Blocked — 2026-01-04", "## ⏳"),
+    observations: LEDGER,
+    deliverable: { file: "adr.md", text: DELIVERABLE },
+  });
+  assert.deepStrictEqual(
+    cited(report(dir), PAUSE_ONLY).occurrences.map((occurrence) => occurrence.surface),
+    ["plan-open-questions", "result-pause"],
+  );
+});
+
 test("mailto, file, localhost, anchors, and relative links are out of scope", () => {
   const scope = report(fixture("skip-rules"));
   const urls = scope.citations.map((citation) => citation.url).join(" ");

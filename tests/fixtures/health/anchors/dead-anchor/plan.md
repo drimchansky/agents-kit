@@ -14,6 +14,11 @@
 - [x] **What:** Synthetic step whose anchor is absent from the result file. ([result](./result.md#step-2--never-written))
 - **Verify:** none
 
+### Step 2a — Inserted dead anchor
+
+- [x] **What:** Synthetic inserted step whose anchor is absent too. ([result](./result.md#step-2a--never-written))
+- **Verify:** none
+
 ### Step 3 — Unchecked step
 
 - [ ] **What:** An unchecked step carries no result link and is never flagged.

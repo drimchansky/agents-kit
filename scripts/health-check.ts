@@ -26,7 +26,7 @@ const CURRENT_STATE = /^##[ \t]+Current state\b/im;
 const COMPLETED_LINE = /^[ \t]*(?:[-*+][ \t]+)?\*\*Completed:\*\*[ \t]*\d{4}-\d{2}-\d{2}\b/i;
 const GOALS_HEADING = /^##[ \t]+Goals\b/;
 const GOAL_ID = /^G\d+$/;
-const STEP_HEADING = /^#{2,6}[ \t]+Step\b/;
+const STEP_HEADING = /^#{2,6}[ \t]+Step\b/i;
 const RECORD_TITLE = /^(?:Step|Full Run)\b/;
 const TICKET_FILE = "ticket.md";
 const HEADING = /^#{1,6}[ \t]+(.+?)[ \t]*#*$/;
@@ -94,11 +94,24 @@ function unreachable(kind: string, abs: string, display: string, err: ErrorLike)
   unreadablePaths.push(abs);
 }
 
-function listEntries(dir: string, display: string, optional = false): Dirent[] {
+function sortedEntries(dir: string): Dirent[] {
+  return readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name, "en"));
+}
+
+function listEntries(dir: string, display: string): Dirent[] {
   try {
-    return readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name, "en"));
+    return sortedEntries(dir);
   } catch (err) {
-    if (!(optional && err.code === "ENOENT")) unreachable("dir", dir, display, err);
+    unreachable("dir", dir, display, err);
+    return [];
+  }
+}
+
+function listEntriesIfPresent(dir: string, display: string): Dirent[] {
+  try {
+    return sortedEntries(dir);
+  } catch (err) {
+    if (err.code !== "ENOENT") unreachable("dir", dir, display, err);
     return [];
   }
 }
@@ -535,7 +548,7 @@ function headingSlugs(text: string): Set<string> {
 }
 
 function stepLabel(heading: string): string {
-  const step = heading.match(/^Step[ \t]+(\d+)/);
+  const step = heading.match(/^Step[ \t]+(\d+[a-z]*)/i);
   return step ? `Step ${step[1]}` : clip(heading, 40);
 }
 
@@ -817,7 +830,7 @@ function installFindings(kitRoot: string, homeArg: string): InstallResult {
   const compared = new Set<string>();
   const conflicts: InstallFinding[] = [];
 
-  for (const entry of listEntries(join(home, "skills"), join(display, "skills"), true)) {
+  for (const entry of listEntriesIfPresent(join(home, "skills"), join(display, "skills"))) {
     if (!entry.isDirectory() || entry.name.startsWith(STAGING_PREFIX)) continue;
     const skillDisplay = join(display, "skills", entry.name);
     if (markerState(join(home, "skills", entry.name, MARKER), join(skillDisplay, MARKER)) === "unowned") continue;
@@ -844,7 +857,7 @@ function installFindings(kitRoot: string, homeArg: string): InstallResult {
     comparePath(join(kitRoot, "CORE_RULES.md"), join(home, "CORE_RULES.md"), join(display, "CORE_RULES.md"), findings);
   }
 
-  const markers = listEntries(join(home, "agents"), join(display, "agents"), true)
+  const markers = listEntriesIfPresent(join(home, "agents"), join(display, "agents"))
     .filter((entry) => entry.isFile() && entry.name.startsWith(AGENT_MARKER_PREFIX));
   const extension = AGENT_EXTENSIONS.get(basename(home));
   if (markers.length > 0 && !extension) {
@@ -876,12 +889,12 @@ function installFindings(kitRoot: string, homeArg: string): InstallResult {
   if (absent("CORE_RULES.md")) kitOnly.push("CORE_RULES.md");
   if (absent("references")) kitOnly.push("references");
   const kitSkills = join(kitRoot, "skills");
-  for (const entry of listEntries(kitSkills, kitSkills, true)) {
+  for (const entry of listEntriesIfPresent(kitSkills, kitSkills)) {
     if (entry.isDirectory() && absent(join("skills", entry.name))) kitOnly.push(join("skills", entry.name));
   }
   if (extension) {
     const kitAgents = join(kitRoot, "agents");
-    for (const entry of listEntries(kitAgents, kitAgents, true)) {
+    for (const entry of listEntriesIfPresent(kitAgents, kitAgents)) {
       if (entry.isFile() && entry.name.endsWith(`.${extension}`) && absent(join("agents", entry.name))) {
         kitOnly.push(join("agents", entry.name));
       }

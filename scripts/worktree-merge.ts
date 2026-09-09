@@ -148,6 +148,8 @@ function gitIgnored(root: string, paths: readonly string[]): Set<string> | undef
   }
 }
 
+type GitignoreMode = "auto" | "off" | "required";
+
 interface Walked {
   readonly entries: Record<string, Entry>;
   readonly gitignore: boolean;
@@ -157,7 +159,7 @@ interface Walked {
 function walk(
   root: string,
   prunes: readonly string[],
-  gitignore?: boolean,
+  gitignore: GitignoreMode = "auto",
   keep: ReadonlySet<string> = new Set(),
 ): Walked {
   const leaves: { path: string; full: string; stat: ReturnType<typeof lstatSync> }[] = [];
@@ -190,10 +192,10 @@ function walk(
   if (!stat?.isDirectory()) unrunnable(`not a directory: ${root}`);
   visit(root);
   const ignored =
-    gitignore === false
+    gitignore === "off"
       ? undefined
       : gitIgnored(root, [...leaves.map((leaf) => leaf.path), ...unreadable.map((entry) => entry.path)]);
-  if (ignored === undefined && gitignore) {
+  if (ignored === undefined && gitignore === "required") {
     unrunnable(`${root} is not a Git checkout, and the baseline it is measured against excluded git-ignored paths`);
   }
   for (const entry of unreadable) {
@@ -310,7 +312,7 @@ function checkWorktree(
   const { entries: current, ignoredDropped } = walk(
     root,
     allPrunes,
-    manifest.gitignore,
+    manifest.gitignore ? "required" : "off",
     new Set(Object.keys(manifest.entries)),
   );
   const baseline = Object.fromEntries(
@@ -491,7 +493,7 @@ function splitVerified(from: string, shared: string, checked: Checked): { landed
   const { entries: worktreeEntries } = walk(
     from,
     checked.prunes,
-    checked.gitignore,
+    checked.gitignore ? "required" : "off",
     new Set(checked.changes.map((change) => change.path)),
   );
   for (const change of checked.changes) {

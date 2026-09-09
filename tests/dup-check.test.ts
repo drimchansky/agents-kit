@@ -372,6 +372,37 @@ test("an unparseable allow-file is a refusal", () => {
   assert.match(child.stderr, /not readable as JSON/);
 });
 
+test("two allow-file entries carrying the same sentence are a refusal", () => {
+  const dir = kit("duplicate-allow", { "references/a.md": `# Alpha\n\n${SHARED}\n` });
+  allowFile(dir, [
+    { sentence: SHARED, reason: "first", files: ["references/a.md", "references/b.md"] },
+    { sentence: SHARED_NORMALIZED, reason: "second" },
+  ]);
+
+  const child = run([dir]);
+
+  assert.strictEqual(child.status, 2);
+  assert.match(child.stderr, /entries 0 and 1 carry the same sentence/);
+});
+
+test("--allow followed by an option is a refusal, not an allow-file path", () => {
+  const dir = kit("allow-no-path", { "references/a.md": `# Alpha\n\n${SHARED}\n` });
+
+  const child = run(["--allow", "--nonsense", dir]);
+
+  assert.strictEqual(child.status, 2);
+  assert.match(child.stderr, /--allow needs a file path/);
+});
+
+test("--allow followed by an empty path is a refusal", () => {
+  const dir = kit("allow-empty-path", { "references/a.md": `# Alpha\n\n${SHARED}\n` });
+
+  const child = run(["--allow", "", dir]);
+
+  assert.strictEqual(child.status, 2);
+  assert.match(child.stderr, /--allow needs a file path/);
+});
+
 test("an allow-file entry without a reason is a refusal", () => {
   const dir = kit("reasonless-allow", { "references/a.md": `# Alpha\n\n${SHARED}\n` });
   allowFile(dir, [{ sentence: SHARED_NORMALIZED } as AllowEntry]);

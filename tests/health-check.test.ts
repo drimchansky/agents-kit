@@ -638,11 +638,14 @@ test("a checked step whose anchor is missing from the result file is reported, a
   const { report, stderr } = runCheck(ANCHORS_ARGS);
   assert.strictEqual(stderr, "", "the anchor fixtures must produce no warnings");
   assert.strictEqual(report.scanned, 14, "scanned count for the anchor fixtures");
-  assert.strictEqual(findingCount(report, "dead-anchor"), 5, "dead-anchor finding count");
-  assert.strictEqual(
-    findingDetail(report, "dead-anchor", "anchors/dead-anchor"),
-    "Step 2: anchor not found: #step-2--never-written in ./result.md",
-    "dead-anchor detail for an unresolvable anchor",
+  assert.strictEqual(findingCount(report, "dead-anchor"), 6, "dead-anchor finding count");
+  assert.deepStrictEqual(
+    findingDetails(report, "dead-anchor", "anchors/dead-anchor"),
+    [
+      "Step 2: anchor not found: #step-2--never-written in ./result.md",
+      "Step 2a: anchor not found: #step-2a--never-written in ./result.md",
+    ],
+    "dead-anchor details for unresolvable anchors, the inserted step labelled by its own number",
   );
 });
 
@@ -764,7 +767,7 @@ test("archived folders are exempt from the content checks", () => {
 
 test("an archived folder and a legacy done result without ## Current state produce no findings", () => {
   const { report } = runCheck(ANCHORS_ARGS);
-  assert.strictEqual(findingCount(report), 11, "total finding count for the anchor fixtures");
+  assert.strictEqual(findingCount(report), 12, "total finding count for the anchor fixtures");
 });
 
 test("--result-max-kb reports a result over the given trigger and stays quiet at the default", () => {

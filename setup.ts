@@ -61,9 +61,7 @@ function isMovedKitClone(linkTarget: string): boolean {
   );
 }
 
-function installAgent(homeDir: string): void {
-  const skillsDir = join(homeDir, "skills");
-
+function refuseConflicts(homeDir: string): boolean {
   const conflicts: string[] = [];
   const references = join(homeDir, "references");
   const coreRules = join(homeDir, "CORE_RULES.md");
@@ -73,31 +71,30 @@ function installAgent(homeDir: string): void {
   if (isSymlink(coreRules) || (existsSync(coreRules) && !isFile(join(homeDir, CORE_RULES_MARKER)))) {
     conflicts.push("CORE_RULES.md");
   }
-  if (conflicts.length > 0) {
-    console.error(
-      `Skipping ${homeDir}: user-owned ${conflicts.join(" and ")} found — kit skills resolve ./references and ./AGENTS.md against install-root copies, so installing would leave every kit skill broken. Move it aside and rerun.`,
-    );
-    skippedHomes = true;
-    return;
+  if (conflicts.length === 0) return false;
+  console.error(
+    `Skipping ${homeDir}: user-owned ${conflicts.join(" and ")} found — kit skills resolve ./references and ./AGENTS.md against install-root copies, so installing would leave every kit skill broken. Move it aside and rerun.`,
+  );
+  skippedHomes = true;
+  return true;
+}
+
+function reclaimSkillsLink(homeDir: string, skillsDir: string): boolean {
+  if (!isSymlink(skillsDir)) return true;
+  const linkTarget = readlinkSync(skillsDir);
+  const isThisRepo = linkTarget === REPO_DIR || linkTarget.startsWith(REPO_DIR + sep);
+  if (isThisRepo || !existsSync(skillsDir) || isMovedKitClone(linkTarget)) {
+    unlinkSync(skillsDir);
+    return true;
   }
+  console.error(
+    `Skipping ${homeDir}: ${skillsDir} is a symlink to ${linkTarget} — kit skills keep ../../ relative links that resolve only when skills/ is a real directory in ${homeDir}. Move it aside (or make skills/ a real dir) and rerun.`,
+  );
+  skippedHomes = true;
+  return false;
+}
 
-  if (isSymlink(skillsDir)) {
-    const linkTarget = readlinkSync(skillsDir);
-    const isThisRepo = linkTarget === REPO_DIR || linkTarget.startsWith(REPO_DIR + sep);
-    if (isThisRepo || !existsSync(skillsDir) || isMovedKitClone(linkTarget)) {
-      unlinkSync(skillsDir);
-    } else {
-      console.error(
-        `Skipping ${homeDir}: ${skillsDir} is a symlink to ${linkTarget} — kit skills keep ../../ relative links that resolve only when skills/ is a real directory in ${homeDir}. Move it aside (or make skills/ a real dir) and rerun.`,
-      );
-      skippedHomes = true;
-      return;
-    }
-  }
-  mkdirSync(skillsDir, { recursive: true });
-
-  console.log(`Installing into ${homeDir}:`);
-
+function sweepStaging(homeDir: string, skillsDir: string): void {
   const stale = [
     ...stagingDirs(skillsDir, SKILL_STAGING_PREFIX),
     ...stagingDirs(homeDir, REFERENCES_STAGING_PREFIX),
@@ -108,7 +105,9 @@ function installAgent(homeDir: string): void {
     if (isSymlink(target)) continue;
     if (isFile(join(target, MARKER))) rmSync(target, { recursive: true, force: true });
   }
+}
 
+function installSkills(skillsDir: string): void {
   for (const name of childDirectoryNames(join(REPO_DIR, "skills"))) {
     const target = join(skillsDir, name);
     if (existsSync(target) || isSymlink(target)) {
@@ -124,7 +123,10 @@ function installAgent(homeDir: string): void {
     renameSync(staging, target);
     console.log(`  ${name}`);
   }
+}
 
+function installReferences(homeDir: string): void {
+  const references = join(homeDir, "references");
   const refStaging = join(homeDir, `${REFERENCES_STAGING_PREFIX}${process.pid}`);
   rmSync(refStaging, { recursive: true, force: true });
   mkdirSync(refStaging);
@@ -134,11 +136,15 @@ function installAgent(homeDir: string): void {
   if (isFile(join(references, MARKER))) rmSync(references, { recursive: true, force: true });
   renameSync(refStaging, references);
   console.log("  references");
+}
 
+function installCoreRules(homeDir: string): void {
   touchMarker(join(homeDir, CORE_RULES_MARKER));
-  copyFileSync(join(REPO_DIR, "CORE_RULES.md"), coreRules);
+  copyFileSync(join(REPO_DIR, "CORE_RULES.md"), join(homeDir, "CORE_RULES.md"));
   console.log("  CORE_RULES.md");
+}
 
+function installAgents(homeDir: string): void {
   const agentExtension = AGENT_EXTENSIONS.get(basename(homeDir));
   if (agentExtension === undefined) return;
   const agentsDir = join(homeDir, "agents");
@@ -169,7 +175,22 @@ function installAgent(homeDir: string): void {
   }
 }
 
-for (const home of HOMES) installAgent(home);
+function installHome(homeDir: string): void {
+  if (refuseConflicts(homeDir)) return;
+  const skillsDir = join(homeDir, "skills");
+  if (!reclaimSkillsLink(homeDir, skillsDir)) return;
+  mkdirSync(skillsDir, { recursive: true });
+
+  console.log(`Installing into ${homeDir}:`);
+
+  sweepStaging(homeDir, skillsDir);
+  installSkills(skillsDir);
+  installReferences(homeDir);
+  installCoreRules(homeDir);
+  installAgents(homeDir);
+}
+
+for (const home of HOMES) installHome(home);
 if (skippedHomes) {
   console.error("Done, but skipped homes were left uninstalled (see above).");
   process.exitCode = 1;

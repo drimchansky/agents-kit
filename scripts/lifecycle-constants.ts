@@ -7,8 +7,8 @@ export const LIVE_STATUSES: ReadonlySet<string> = new Set([...PLAN_VOCAB].filter
 export const RESULT_MAX_KB = 20;
 export const TASK_MAX_KB = 64;
 export const RECORD_MAX_KB = 2;
-export const ROLE_FILES: readonly string[] = ["CONTEXT.md", "goals.md", "plan.md", "result.md", "ticket.md"];
-export const ROLE_SUFFIXES: readonly string[] = [".plan.md", ".result.md", ".spec.md", ".ticket.md"];
+const ROLE_FILES: readonly string[] = ["CONTEXT.md", "goals.md", "plan.md", "result.md", "ticket.md"];
+const ROLE_SUFFIXES: readonly string[] = [".plan.md", ".result.md", ".spec.md", ".ticket.md"];
 
 export function holdsRoleFile(fileNames: readonly string[]): boolean {
   return fileNames.some((name) => ROLE_FILES.includes(name) || ROLE_SUFFIXES.some((suffix) => name.endsWith(suffix) && name !== suffix));
@@ -19,7 +19,7 @@ export const TASK_STORE_DIR = ".agents";
 export const ARCHIVE_DIR = /^archive$/i;
 export const BACKLOG_DIR = /^backlog$/i;
 
-export type WalkStep = "prune" | "container" | "claimed" | "descend";
+type WalkStep = "prune" | "container" | "claimed" | "descend";
 
 export type WalkDecision =
   | { readonly step: "prune"; readonly childEntries: null }

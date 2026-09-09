@@ -372,6 +372,23 @@ test("the Pointers line is read from the Current state block, not from the log b
   assert.strictEqual(parsePointers(text).watermark, "aaaaaaa");
 });
 
+test("a nested ### Current state above the live block is not the live block", () => {
+  const text = `# Result: fixture
+
+## 2026-08-01 — an earlier entry
+
+### Current state
+
+- **Pointers:** SHA aaaaaaa (recorded 2026-08-01)
+
+## Current state
+
+- **Pointers:** SHA bbbbbbb (recorded 2026-09-01)
+`;
+
+  assert.strictEqual(parsePointers(text).watermark, "bbbbbbb");
+});
+
 test("a subheading inside Current state does not end the block", () => {
   const text = `# Result: fixture
 

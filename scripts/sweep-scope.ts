@@ -3,7 +3,7 @@ import { readFileSync, readdirSync, realpathSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { holdsRoleFile } from "./lifecycle-constants.ts";
-import { compactionSections, taskState } from "./task-state.ts";
+import { compactionSections, slugAllocator, taskState } from "./task-state.ts";
 
 const CONTEXT_FILE = "CONTEXT.md";
 const PLAN_FILE = "plan.md";
@@ -144,7 +144,7 @@ export function ledgerTags(text: string): ReadonlyMap<string, Tag> {
   return tags;
 }
 
-export function carriesStatusHeader(text: string): boolean {
+function carriesStatusHeader(text: string): boolean {
   for (const line of liveLines(text)) {
     if (QUOTE.test(line)) continue;
     if (headingText(line) !== null) {
@@ -162,13 +162,18 @@ interface Scoped {
   readonly line: string;
 }
 
-function* scopedLines(text: string, opens: (heading: string, level: number) => Surface | null): Generator<Scoped> {
+function* scopedLines(
+  text: string,
+  opens: (heading: string, level: number, anchor: string | null) => Surface | null,
+): Generator<Scoped> {
+  const allocate = slugAllocator();
   let open: { surface: Surface; section: string; level: number } | null = null;
   for (const line of liveLines(text)) {
     const heading = headingText(line);
     if (heading !== null) {
+      const anchor = allocate(heading);
       const level = line.match(HEADING_LEVEL)?.[1].length ?? 0;
-      const surface = opens(heading, level);
+      const surface = opens(heading, level, anchor);
       if (surface !== null) open = { surface, section: heading, level };
       else if (open !== null && level <= open.level) open = null;
       continue;
@@ -177,8 +182,9 @@ function* scopedLines(text: string, opens: (heading: string, level: number) => S
   }
 }
 
-function activePause(resultText: string, planStatus: string | null): string | null {
-  return compactionSections(resultText, planStatus).keep.find((section) => section.rule === "pause")?.heading ?? null;
+function activePause(resultText: string, planStatus: string | null): { anchor: string | null; heading: string } | null {
+  const section = compactionSections(resultText, planStatus).keep.find((section) => section.rule === "pause");
+  return section === undefined ? null : { anchor: section.anchor, heading: section.heading };
 }
 
 function occurrencesIn(file: string, scoped: Iterable<Scoped>): Occurrence[] {
@@ -224,10 +230,10 @@ function inScopeOccurrences(texts: TaskText, deliverable: string | null, planSta
   }
   if (texts.result !== null) {
     const pause = activePause(texts.result, planStatus);
-    found.push(...occurrencesIn(RESULT_FILE, scopedLines(texts.result, (heading, level) =>
+    found.push(...occurrencesIn(RESULT_FILE, scopedLines(texts.result, (heading, level, anchor) =>
       level === 2 && CURRENT_STATE_HEADING.test(heading)
         ? "result-pointers"
-        : level === 2 && pause !== null && heading === pause
+        : level === 2 && pause !== null && (pause.anchor === null ? heading === pause.heading : anchor === pause.anchor)
           ? "result-pause"
           : null)));
   }
@@ -237,7 +243,7 @@ function inScopeOccurrences(texts: TaskText, deliverable: string | null, planSta
   return found;
 }
 
-export function sweepScope(
+function sweepScope(
   taskDir: string,
   texts: TaskText,
   deliverable: string | null,

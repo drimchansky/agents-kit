@@ -104,7 +104,7 @@ function headingText(line: string): string | null {
   return line.match(HEADING)?.[1] ?? null;
 }
 
-export function pathsIn(text: string): readonly string[] {
+function pathsIn(text: string): readonly string[] {
   const found: string[] = [];
   for (const span of text.matchAll(CODE_SPAN)) {
     const raw = span[1].trim().replace(/^\.\//, "");
@@ -169,7 +169,7 @@ function pointersLine(text: string): string | null {
     const heading = headingText(line);
     if (heading !== null) {
       const level = line.match(/^#+/)?.[0].length ?? 0;
-      if (CURRENT_STATE_HEADING.test(heading)) {
+      if (level === 2 && CURRENT_STATE_HEADING.test(heading)) {
         inCurrentState = true;
         sawCurrentState = true;
         blockLevel = level;

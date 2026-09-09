@@ -191,7 +191,7 @@ function slugify(heading: string): string {
   return heading.trim().toLowerCase().replace(/[^\p{L}\p{N} _-]/gu, "").replace(/ /g, "-");
 }
 
-function slugAllocator(): (heading: string) => string | null {
+export function slugAllocator(): (heading: string) => string | null {
   const seen = new Map<string, number>();
   const taken = new Set<string>();
   return (heading) => {

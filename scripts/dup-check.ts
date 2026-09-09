@@ -293,11 +293,17 @@ function allowList(path: string): Allowance[] {
   if (!Array.isArray(parsed)) {
     refuse(`the allow-file ${path} is not an array of {sentence, reason} entries`);
   }
+  const seen = new Map<string, number>();
   return parsed.map((entry, index) => {
     const sentence = typeof entry?.sentence === "string" ? entry.sentence : "";
     const key = normalize(sentence);
     const reason = typeof entry?.reason === "string" ? entry.reason : "";
     if (key === "") refuse(`the allow-file ${path} entry ${index} carries no sentence`);
+    const first = seen.get(key);
+    if (first !== undefined) {
+      refuse(`the allow-file ${path} entries ${first} and ${index} carry the same sentence ("${excerpt(key)}")`);
+    }
+    seen.set(key, index);
     if (reason.trim() === "") {
       refuse(`the allow-file ${path} entry ${index} ("${excerpt(key)}") carries no reason`);
     }
@@ -311,8 +317,15 @@ function parseArgs(argv: readonly string[]): { root: string; allow: string } {
   let allowArg: string | null = null;
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
-    if (arg === "--allow" || arg.startsWith("--allow=")) {
-      allowArg = arg.includes("=") ? arg.slice(arg.indexOf("=") + 1) : argv[++i];
+    if (arg === "--allow") {
+      const next = argv[i + 1];
+      if (!next || next.startsWith("-")) refuse("--allow needs a file path");
+      allowArg = next;
+      i++;
+      continue;
+    }
+    if (arg.startsWith("--allow=")) {
+      allowArg = arg.slice("--allow=".length);
       if (!allowArg) refuse("--allow needs a file path");
       continue;
     }
@@ -395,7 +408,7 @@ function main(): void {
 try {
   main();
 } catch (err) {
-  if (!(err instanceof Refused)) throw err;
-  console.error(`[dup-check] ${err.message}`);
+  const message = err instanceof Refused ? err.message : `unexpected failure: ${err instanceof Error ? err.message : String(err)}`;
+  console.error(`[dup-check] ${message}`);
   process.exitCode = 2;
 }
