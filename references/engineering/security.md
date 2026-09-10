@@ -108,6 +108,18 @@ Severity alone is not the decision. Triage on **severity × reachability × runt
 
 Key questions: is the vulnerable function actually called in your code path? Is the dependency runtime or dev-only? Is the vulnerability exploitable in your deployment context (e.g., a server-side flaw in a client-only app)? When deferring, document the reason and a review date.
 
+## Review Validation Boundaries
+
+Keep reviewing general correctness, regressions, accessibility, performance, and every other applicable lens alongside this checklist.
+
+Reading the reviewed code and relevant references — including project documentation, PR or ticket context, manifests and lockfiles, and dependency documentation or source — through permitted read tools is analysis, whether the source is local or external. Executing code or sending crafted input is active validation, even when the invocation is intended to be read-only.
+
+Active validation is limited to the authorized local environment and the isolated scratch reproduction in `review.md` § *Verification Scripts*. Use synthetic inputs and set explicit time, memory, and input-size or input-count limits before running. Stop once the candidate's failure evidence is captured. Never use real credentials or private data, destructive actions, production or external targets, persistence, broad target discovery, or tooling that adds offensive capability beyond reproducing the candidate.
+
+If bounded reproduction would be unsafe, exceed the review's authorization, or is refused by policy, skip it and do not reroute the same operation through another executor, probe, tool, or target. Static inspection can still establish a defect, but it does not establish runtime reproduction or practical exploitability by itself. State what was observed, why active validation was not run, what remains unverified, and the environment or preconditions the impact depends on; do not present inferred impact as observed evidence.
+
+Security findings keep the severity and `file:line` shape in `review.md` § *Findings output shape*. Where they materially explain the issue, include the security class, exploit preconditions, user or production impact, targeted fix, and a regression-test recommendation. A review recommends that test; it does not modify project code.
+
 ## Common Mistakes
 
 - Trusting client-side validation as a security boundary — always validate server-side
