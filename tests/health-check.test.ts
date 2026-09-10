@@ -41,12 +41,16 @@ const UNREADABLE_STORE = join(TEST_ROOT, "unreadable-store");
 const UNREADABLE_FILE = join(UNREADABLE_STORE, "locked-task", "plan.md");
 const LOCKED_TREE = join(TEST_ROOT, "unreadable-tree");
 const LOCKED_TASK_DIR = join(LOCKED_TREE, "area", "locked-task");
+const LOCKED_SIBLING_DIR = join(LOCKED_TREE, "area", "citing-task");
+const LOCKED_OUTSIDE_DIR = join(TEST_ROOT, "outside-locked");
 const NOT_A_DIR = join(TEST_ROOT, "not-a-dir.md");
 const NAMED_SCRIPTS = join(TEST_ROOT, "named-scripts");
 const PROJECT_ROOT = join(TEST_ROOT, "project-root");
 const SECOND_ROOT = join(TEST_ROOT, "second", "store");
 const ANCHORS = join(TEST_ROOT, "anchors");
 const BUDGETS = join(TEST_ROOT, "budgets");
+const CITATIONS = join(TEST_ROOT, "citations");
+const CITATIONS_SECOND = join(TEST_ROOT, "citations-second");
 const LEGACY_CONTEXT = join(TEST_ROOT, "legacy-context");
 const INSTALLS = join(TEST_ROOT, "installs");
 const KIT = join(INSTALLS, "kit");
@@ -82,6 +86,8 @@ const CASE_PROBE_RESPELLED = join(TEST_ROOT, "CASE-PROBE");
 const STORE_ARGS: readonly string[] = [STORE];
 const ANCHORS_ARGS: readonly string[] = [ANCHORS];
 const BUDGETS_ARGS: readonly string[] = [BUDGETS];
+const CITATIONS_ARGS: readonly string[] = [CITATIONS];
+const CROSS_ROOT_ARGS: readonly string[] = [CITATIONS, CITATIONS_SECOND];
 const LOWERED_BUDGET_ARGS: readonly string[] = ["--task-max-kb", "1", "--record-max-kb", "1", BUDGETS];
 const LEGACY_CONTEXT_ARGS: readonly string[] = [LEGACY_CONTEXT];
 const INSTALLS_ARGS: readonly string[] = ["--installs", KIT, CLAUDE_HOME, CODEX_HOME];
@@ -297,6 +303,8 @@ before(() => {
   copyFixture(join(FIXTURES, "store"), STORE);
   copyFixture(join(FIXTURES, "anchors"), ANCHORS);
   copyFixture(join(FIXTURES, "budgets"), BUDGETS);
+  copyFixture(join(FIXTURES, "citations"), CITATIONS);
+  copyFixture(join(FIXTURES, "citations-second"), CITATIONS_SECOND);
   copyFixture(join(FIXTURES, "legacy-context"), LEGACY_CONTEXT);
   for (const [folder, days] of FIXTURE_AGE_DAYS) ageFolder(folder, days);
 
@@ -308,6 +316,15 @@ before(() => {
 
   mkdirSync(LOCKED_TASK_DIR, { recursive: true });
   copyFileSync(freshPlan, join(LOCKED_TASK_DIR, "plan.md"));
+  mkdirSync(LOCKED_SIBLING_DIR, { recursive: true });
+  copyFileSync(freshPlan, join(LOCKED_SIBLING_DIR, "plan.md"));
+  mkdirSync(LOCKED_OUTSIDE_DIR, { recursive: true });
+  writeFileSync(
+    join(LOCKED_SIBLING_DIR, "CONTEXT.md"),
+    "# Context\n\nThe prior ruling is [in the locked task](../locked-task/plan.md),\n" +
+      "and the spec is [outside the store](../../../outside-locked/spec.md).\n",
+  );
+  chmodSync(LOCKED_OUTSIDE_DIR, 0o000);
   chmodSync(LOCKED_TASK_DIR, 0o000);
 
   writeFileSync(NOT_A_DIR, "not a store\n");
@@ -373,6 +390,7 @@ before(() => {
 
 after(() => {
   chmodSync(LOCKED_TASK_DIR, 0o755);
+  chmodSync(LOCKED_OUTSIDE_DIR, 0o755);
   chmodSync(LOCKED_SKILL, 0o755);
   rmSync(TEST_ROOT, { recursive: true, force: true });
 });
@@ -569,12 +587,33 @@ test("an unlistable directory reaches the contract exactly once", (t: TestContex
   assert.strictEqual(
     report.unreadable,
     1,
-    "a directory that cannot be listed is counted once, not once per walk pass",
+    "a directory that cannot be listed is counted once, not once per walk pass — the sibling task " +
+      "cites into it, so the citation pass lists it a second time and must not record it again",
   );
   assert.deepStrictEqual(
     report.unreadablePaths,
     [LOCKED_TASK_DIR],
     "unreadablePaths names the directory by absolute path, once",
+  );
+});
+
+test("a citation into an unlistable directory is concealed rather than reported dead", (t: TestContext) => {
+  if (isReadable(LOCKED_TASK_DIR)) {
+    t.skip("the unreadable-directory case needs a user that chmod 000 actually stops");
+    return;
+  }
+  const { report } = runCheck([LOCKED_TREE]);
+  assert.deepStrictEqual(
+    report.findings.filter((entry) => entry.check === "dead-citation").map((entry) => entry.detail),
+    [],
+    "a target the walk cannot see is concealment rather than absence, and a run's findings are " +
+      "never read as its coverage — the unreadablePaths entry is what reports the gap",
+  );
+  assert.deepStrictEqual(
+    report.unreadablePaths,
+    [LOCKED_TASK_DIR],
+    "a citation climbing outside every walked root reaches an unlistable directory the store does " +
+      "not own, so it conceals the target without claiming a coverage gap this run never had",
   );
 });
 
@@ -767,7 +806,310 @@ test("archived folders are exempt from the content checks", () => {
 
 test("an archived folder and a legacy done result without ## Current state produce no findings", () => {
   const { report } = runCheck(ANCHORS_ARGS);
-  assert.strictEqual(findingCount(report), 12, "total finding count for the anchor fixtures");
+  assert.strictEqual(findingCount(report), 14, "total finding count for the anchor fixtures");
+});
+
+test("a dead link is reported under dead-citation wherever it sits, a dead step link twice over", () => {
+  const { report } = runCheck(ANCHORS_ARGS);
+  assert.deepStrictEqual(
+    report.findings
+      .filter((entry) => entry.check === "dead-citation")
+      .map((entry) => `${entry.path} — ${entry.detail}`),
+    [
+      "anchors/bad-goal-ids — goals.md: link target ./plan.md resolves to nothing",
+      "anchors/missing-target — plan.md: link target ./gone.result.md#step-1--vanished resolves to nothing",
+    ],
+    "a checked step's own dead link is checked like any other, while the backticked ([result](…)) " +
+      "example on the compacted-tombstone step raises nothing",
+  );
+  assert.strictEqual(
+    findingDetail(report, "dead-anchor", "anchors/missing-target"),
+    "Step 1: link target missing: ./gone.result.md#step-1--vanished",
+    "a checked step's dead link is both a dead anchor and a dead citation",
+  );
+});
+
+test("the citation fixtures scan without warnings and leave nothing unread", () => {
+  const { report, stderr } = runCheck(CITATIONS_ARGS);
+  assert.strictEqual(stderr, "", "the citation fixtures must produce no warnings");
+  assert.strictEqual(report.unreadable, 0, "the citation fixtures are all readable");
+});
+
+test("a link to a local path the store does not hold is reported once, with the target as written", () => {
+  const { report } = runCheck(CITATIONS_ARGS);
+  assert.deepStrictEqual(
+    findingDetails(report, "dead-citation", "citations/dead-link"),
+    ["CONTEXT.md: link target ../gone/adr.md resolves to nothing"],
+    "dead-citation detail names the citing file and the unresolvable target",
+  );
+});
+
+test("a resolving link, an anchor, a mailto, and an http URL are not local citations to check", () => {
+  const { report } = runCheck(CITATIONS_ARGS);
+  assert.deepStrictEqual(
+    report.findings.filter((entry) => entry.path === "citations/live-links"),
+    [],
+    "a ./ link that resolves, a bare #anchor, a mailto:, and an https:// target must all stay silent",
+  );
+});
+
+test("a citation differing from the file on disk by case alone is dead, whatever the filesystem folds", () => {
+  const { report } = runCheck(CITATIONS_ARGS);
+  assert.deepStrictEqual(
+    findingDetails(report, "dead-citation", "citations/case-only"),
+    ["CONTEXT.md: link target ./Plan.md resolves to nothing"],
+    "resolution compares the directory listing, so ./Plan.md misses a plan.md on a case-insensitive volume",
+  );
+});
+
+test("a cross-folder relative link is reported by form, its conformant replacement named", () => {
+  const { report } = runCheck(CITATIONS_ARGS);
+  assert.deepStrictEqual(
+    report.findings
+      .filter((entry) => entry.check === "citation-form")
+      .map((entry) => `${entry.path} — ${entry.detail}`),
+    [
+      "citations/cross-archived — CONTEXT.md: cross-folder link ../Archive/archived-sibling/adr.md — " +
+        "cite task `archived-sibling` by its bare slug (adr.md)",
+      "citations/cross-folder — CONTEXT.md: cross-folder link ../sibling-task/adr.md — " +
+        "cite task `sibling-task` by its bare slug (adr.md)",
+      "citations/cross-folder — CONTEXT.md: cross-folder link ../Area/nested-task/adr.md — " +
+        "cite the folder path Area/nested-task/adr.md",
+      "citations/cross-folder — CONTEXT.md: cross-folder link ../cross-folder/adr.md — cite ./adr.md inside this folder",
+      "citations/cross-folder — CONTEXT.md: cross-folder link ../../outside-the-root.md — " +
+        "the target lies outside the store root",
+      "citations/cross-folder — CONTEXT.md: cross-folder link ../cross-folder — cite this folder as ./",
+      "citations/cross-folder — CONTEXT.md: cross-folder link ../ — the target is the store root itself",
+      "citations/cross-root — CONTEXT.md: cross-folder link ../../citations-second/target-task/adr.md — " +
+        "the target lies outside the store root",
+      "citations/cross-root — CONTEXT.md: cross-folder link ../../citations-second/Area/deep-task/adr.md — " +
+        "the target lies outside the store root",
+      "citations/cross-root — CONTEXT.md: cross-folder link ../../citations-second/Hub/DECISIONS.md — " +
+        "the target lies outside the store root",
+      "citations/dead-link — CONTEXT.md: cross-folder link ../gone/adr.md — cite the folder path gone/adr.md",
+      "citations/root-absolute — CONTEXT.md: store-level doc link /Area/DECISIONS.md — " +
+        "cite Area/DECISIONS.md as plain text",
+      "citations/root-absolute — CONTEXT.md: root-absolute link /Area/gone.md — " +
+        "cite the folder path Area/gone.md",
+      "citations/root-absolute — CONTEXT.md: store-level doc link Area/DECISIONS.md — " +
+        "cite Area/DECISIONS.md as plain text",
+      "citations/store-level — ticket.md: cross-folder link ../Area/DECISIONS.md — cite Area/DECISIONS.md as plain text",
+      "citations/store-level — ticket.md: cross-folder link ../Stale/Area/DECISIONS.md — " +
+        "cite Stale/Area/DECISIONS.md as plain text",
+    ],
+    "a walked task is named by its bare slug, an archived one included, and a target in no task folder by its path",
+  );
+});
+
+test("the replacement named is one that resolves — never a slug for a group-nested or self-cited target", () => {
+  const { report } = runCheck(CITATIONS_ARGS);
+  const forms = report.findings
+    .filter((entry) => entry.check === "citation-form")
+    .map((entry) => entry.detail)
+    .join("\n");
+  assert.ok(
+    forms.includes("../Area/nested-task/adr.md — cite the folder path Area/nested-task/adr.md"),
+    "a bare slug reads the canonical root one level deep, so a group under it takes the path form",
+  );
+  assert.ok(
+    forms.includes("../cross-folder/adr.md — cite ./adr.md inside this folder"),
+    "a folder citing itself the long way round owes a ./ link, not its own slug",
+  );
+  assert.ok(
+    !forms.includes("cite the folder path ../"),
+    "a path from the root never begins with .., so a target above the root is named as outside it",
+  );
+  assert.ok(
+    forms.includes("../cross-folder — cite this folder as ./"),
+    "a link naming the citing folder itself owes a ./ link, and no branch names an empty path",
+  );
+  assert.ok(
+    forms.includes("../ — the target is the store root itself"),
+    "a link landing on the walked root names it rather than falling through to an empty path",
+  );
+});
+
+test("a cross-folder link whose target is gone is reported both by form and as a dead citation", () => {
+  const { report } = runCheck(CITATIONS_ARGS);
+  assert.deepStrictEqual(
+    report.findings
+      .filter((entry) => entry.path === "citations/dead-link")
+      .map((entry) => entry.check)
+      .sort(),
+    ["citation-form", "dead-citation"],
+    "the form is wrong whatever the target resolves to, and this target resolves to nothing",
+  );
+});
+
+test("a plain-text store-level path that resolves from no walked root is reported as written", () => {
+  const { report } = runCheck(CITATIONS_ARGS);
+  assert.deepStrictEqual(
+    findingDetails(report, "dead-citation", "citations/store-level"),
+    [
+      "ticket.md: store-level citation Stale/Area/DECISIONS.md resolves to nothing from the root",
+      "ticket.md: store-level citation Legacy/Area/DECISIONS.md resolves to nothing from the root",
+      "ticket.md: link target ../Stale/Area/DECISIONS.md resolves to nothing",
+    ],
+    "the run is the path token alone, so a bulleted line reports the target rather than the whole bullet",
+  );
+});
+
+test("a link whose text repeats its own path is one citation, not a link and a plain-text one", () => {
+  const { report } = runCheck(CITATIONS_ARGS);
+  assert.strictEqual(
+    findingDetails(report, "dead-citation", "citations/store-level").filter((detail) =>
+      detail.includes("Stale/Area/DECISIONS.md"),
+    ).length,
+    2,
+    "the link arm owns its target and the text repeating it, leaving only the unlinked citation above",
+  );
+});
+
+test("prose carrying an unrelated slash, and a placeholder broken by one, are not store-level citations", () => {
+  const { report } = runCheck(CITATIONS_ARGS);
+  const details = findingDetails(report, "dead-citation", "citations/store-level").join("\n");
+  assert.ok(
+    !details.includes("eng/platform"),
+    "a slash earlier in the sentence is not a path ahead of the filename, so the run stops at the token",
+  );
+  assert.ok(
+    !details.includes("CONTEXT section"),
+    "the leading-slash guard tests the token that gets reported, so a broken placeholder raises nothing",
+  );
+  assert.ok(
+    !details.includes("~/.claude"),
+    "a ~ path names a home rather than a store root, so it is an illustration the guard drops too",
+  );
+});
+
+test("a quoted repo path, a pathless filename, a relative token, and a link target are not this arm's", () => {
+  const { report } = runCheck(CITATIONS_ARGS);
+  assert.deepStrictEqual(
+    report.findings
+      .filter((entry) => entry.path === "citations/store-level")
+      .map((entry) => entry.check),
+    ["dead-citation", "citation-form", "dead-citation", "citation-form", "dead-citation"],
+    "only the unresolvable root-relative paths are dead citations, and the links are the link arm's alone",
+  );
+  assert.strictEqual(findingCount(report), 34, "total finding count for the citation fixtures");
+});
+
+test("a store-level path carrying a space in a group name resolves rather than reporting dead", () => {
+  const { report } = runCheck(CITATIONS_ARGS);
+  const details = findingDetails(report, "dead-citation", "citations/store-level").join("\n");
+  assert.ok(
+    !details.includes("Management"),
+    "the run widens across a space whenever the wider candidate resolves, so the live " +
+      `spaced path is read whole and resolves: ${details}`,
+  );
+  assert.ok(
+    !details.includes("Platform"),
+    "a group name carrying two spaces widens as far as it resolves, rather than stopping at the " +
+      `first word whose predecessor carries no slash: ${details}`,
+  );
+});
+
+test("a slug citation across two walked roots is named from the root that holds the target", () => {
+  const { report } = runCheck(CROSS_ROOT_ARGS);
+  assert.deepStrictEqual(
+    findingDetails(report, "citation-form", "citations/cross-root"),
+    [
+      "CONTEXT.md: cross-folder link ../../citations-second/target-task/adr.md — cite task " +
+        "`target-task` by its bare slug (adr.md)",
+      "CONTEXT.md: cross-folder link ../../citations-second/Area/deep-task/adr.md — cite the " +
+        `folder path Area/deep-task/adr.md in the root ${CITATIONS_SECOND}`,
+      "CONTEXT.md: cross-folder link ../../citations-second/Hub/DECISIONS.md — cite " +
+        `Hub/DECISIONS.md as plain text in the root ${CITATIONS_SECOND}`,
+    ],
+    "the depth test belongs to the holder's own root, so a uniquely-slugged task in the second " +
+      "root is citable by slug rather than reported as outside the store root, and a target no " +
+      "slug reaches takes the path form from the root that holds it, named",
+  );
+});
+
+test("a link target starting at the root is resolved from the root, not from the task folder", () => {
+  const { report } = runCheck(CITATIONS_ARGS);
+  assert.deepStrictEqual(
+    findingDetails(report, "dead-citation", "citations/root-absolute"),
+    [
+      "CONTEXT.md: link target /Area/gone.md resolves to nothing",
+      "CONTEXT.md: link target Area/DECISIONS.md resolves to nothing",
+    ],
+    "a leading slash names the store root, so the live decision log resolves and only the absent " +
+      "one is dead; the same path without the slash resolves from the folder, where it is not there",
+  );
+});
+
+test("a store-level doc cited as a link is reported by form, whatever the link resolves to", () => {
+  const { report } = runCheck(CITATIONS_ARGS);
+  assert.deepStrictEqual(
+    findingDetails(report, "citation-form", "citations/root-absolute"),
+    [
+      "CONTEXT.md: store-level doc link /Area/DECISIONS.md — cite Area/DECISIONS.md as plain text",
+      "CONTEXT.md: root-absolute link /Area/gone.md — cite the folder path Area/gone.md",
+      "CONTEXT.md: store-level doc link Area/DECISIONS.md — cite Area/DECISIONS.md as plain text",
+    ],
+    "one-home.md gives a store-level doc no link form at all, so the root-absolute and " +
+      "root-relative spellings are both reported however they resolve; a root-absolute target " +
+      "that names no store-level doc is reported by form too, since a renderer resolves it from " +
+      "the repository root and finds nothing there whatever this walk resolves it to",
+  );
+});
+
+test("a link inside a blockquote or an HTML comment is not the citing folder's own citation", () => {
+  const { report } = runCheck(CITATIONS_ARGS);
+  assert.deepStrictEqual(
+    findingDetails(report, "dead-citation", "citations/quoted"),
+    [
+      "CONTEXT.md: link target ./gone-after-heading.md resolves to nothing",
+      "CONTEXT.md: link target ./gone-after-list.md resolves to nothing",
+      "CONTEXT.md: store-level citation Gone/DECISIONS.md resolves to nothing from the root",
+      "CONTEXT.md: link target ./gone-after-break.md resolves to nothing",
+      "CONTEXT.md: link target ./gone-after-marker.md resolves to nothing",
+      "CONTEXT.md: link target ./gone-after-unclosed.md resolves to nothing",
+    ],
+    "a quoted line carries another file's markdown and a commented one a retired citation, so " +
+      "neither resolves against the quoting folder and neither is read; a heading, a list item, " +
+      "and a thematic break each open a block the quote cannot lazily continue into, so both arms " +
+      "read that line and everything under it rather than running on to the next blank line; a " +
+      "backticked <!-- is an illustration rather than an opener, so it cannot pair with the real " +
+      "comment below it and swallow the citations between them, and an unclosed one opens no span",
+  );
+});
+
+test("an angle-bracketed target carries its spaces, the one shape that form exists for", () => {
+  const { report } = runCheck(CITATIONS_ARGS);
+  assert.deepStrictEqual(
+    findingDetails(report, "dead-citation", "citations/angle-target"),
+    ["CONTEXT.md: link target ./no notes.md resolves to nothing"],
+    "the target runs to the closing bracket, so a spaced name resolves and a missing one reports in " +
+      "full, while padding inside the brackets is trimmed rather than resolved as a ' .' segment",
+  );
+});
+
+test("an archived folder's own citations are still followed, unlike every other content check", () => {
+  const { report } = runCheck(CITATIONS_ARGS);
+  assert.deepStrictEqual(
+    findingDetails(report, "dead-citation", "citations/Archive/archived-sibling"),
+    ["adr.md: link target ./gone-in-archive.md resolves to nothing"],
+    "the two citation checks run inside Archive/, where a slug fallback keeps the folder citable",
+  );
+});
+
+test("a link inside an inline code span is literal text, not a citation the check follows", () => {
+  const { report } = runCheck(CITATIONS_ARGS);
+  assert.deepStrictEqual(
+    report.findings
+      .filter((entry) => entry.path === "citations/code-span")
+      .map((entry) => `${entry.check} ${entry.detail}`),
+    [
+      "dead-citation CONTEXT.md: link target ./gone-outside.md resolves to nothing",
+      "dead-citation CONTEXT.md: link target ./gone-after-tick.md resolves to nothing",
+    ],
+    "a shell regex and a single- and double-backtick span raise nothing, while a link beside a span " +
+      "and one after an unclosed backtick are both followed; both arms read the blanked line, so a " +
+      "backticked path is an illustration to neither of them",
+  );
 });
 
 test("--result-max-kb reports a result over the given trigger and stays quiet at the default", () => {

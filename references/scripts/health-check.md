@@ -8,15 +8,18 @@ node scripts/health-check.ts --installs <kit-root> <home> [<home>...]
 ```
 
 **Emitted `check` values.** The task walk reports `stale`, `done-unarchived`, `started-in-backlog`,
-`unknown-status`, `legacy-result-status`, `dead-anchor`, `goal-id`, `no-current-state`,
-`oversized-result`, `oversized-task`, `oversized-record`, `duplicate-slug`, and `nested-task`;
-`--installs` walks no tasks and reports `install-drift` instead.
+`unknown-status`, `legacy-result-status`, `dead-anchor`, `dead-citation`, `citation-form`, `goal-id`,
+`no-current-state`, `oversized-result`, `oversized-task`, `oversized-record`, `duplicate-slug`, and
+`nested-task`; `--installs` walks no tasks and reports `install-drift` instead.
 
 **Archived and backlogged folders.** Archived folders are counted in `scanned` and exempt from every
-check but two: `duplicate-slug`, which sees them because a bare slug falls back into `Archive/`
+check but four: `duplicate-slug`, which sees them because a bare slug falls back into `Archive/`
 (`../workflow/task-layout.md` § *Discovery rules for skills*), so an archived slug stays
-citable and must stay unique, and `nested-task`, below. Backlogged folders are exempt from `stale` alone — parked work is
-deliberately dormant (`../workflow/task-backlog.md`) — and stay in every other check,
+citable and must stay unique; `nested-task`, below; and the two citation checks, since an archived
+folder's own citations are still followed — that same slug fallback is what keeps them resolvable —
+and a folder the archiving relocated is where a broken one concentrates. Backlogged folders are
+exempt from `stale` alone — parked work is deliberately dormant
+(`../workflow/task-backlog.md`) — and stay in every other check,
 `duplicate-slug` included, since the same slug fallback reaches `Backlog/` and a parked task's docs
 are future work a later reconcile repairs rather than the frozen history an archived folder holds.
 
@@ -48,6 +51,71 @@ and within each one, since the walk is recursive. It emits one finding per colli
 keeping its own `root`, so every finding still carries the single root its consumer attributes it by,
 and names its peers by absolute directory rather than by the root-basename-prefixed display path.
 
+**The two citation checks read every `.md` file sitting directly in the task folder.**
+`dead-citation` collects each markdown link target that carries no `<scheme>:` prefix at all — which
+drops a `://` URL, a `mailto:`, and a `tel:` or `data:` target in one test — and is not a bare
+`#fragment`, drops any fragment, percent-decodes what is left, and walks it segment by segment
+against each directory's own listing rather than through a `stat`, so a citation differing from the
+file on disk by case alone is dead here whatever the filesystem folds together. A target written
+`<…>` runs to its closing bracket and may carry spaces, though the padding around it is trimmed
+first by `angledTargetText` in `scripts/lifecycle-constants.ts` — the one helper `scripts/sweep-scope.ts`
+reads its own angled targets through — since a padded target otherwise resolves as a `" ."` segment
+and reports a live citation dead. One beginning `/` resolves from the walked
+root rather than from the task folder. A reference-style definition (`[ref]: ./target.md`) carries no
+`](` and is not read. Inline code spans are blanked before the line is scanned for links; an unclosed
+backtick opens no span, and a real link beside one on the same line is still read. A blockquote is
+skipped to its first blank line, its unprefixed lazy continuations included, or to the first line
+that opens a block of its own — an ATX heading, a list item, or a thematic break, none of which
+CommonMark reads as a lazy continuation. That line is read like any other rather than skipped with
+the quote, so a quote that a heading or a list follows hides no citation under it. An HTML comment is
+blanked before either arm reads the file — a quoted or
+commented-out citation resolves against the folder that wrote it rather than the one quoting it —
+and an unclosed `<!--` opens no span, as an unclosed backtick opens none. That blanking locates its
+delimiters over the live lines alone rather than the raw file, and over a copy of them whose inline
+code spans are blanked as well, so a `<!--` shown inside a fence or inside a code span cannot pair
+with a real one below it: the first would blank the fence terminator between them, carrying the
+fence to the end of the file, and the second would swallow every citation down to the next real
+comment, each taking those citations out of both arms with no diagnostic. Only the spans found that
+way are blanked, and they are blanked in the raw lines, leaving each line's own code-span blanking
+to run over what the author wrote. The same check
+reads a plain-text `DECISIONS.md`, `DOC_CONVENTIONS.md`, or `GROUP_CONTEXT.md` path outside any link
+— over the same blanked line the link arm reads, so backticks mark an illustration to both arms
+alike and a backticked path is a citation to neither. Only a link the link arm itself saw counts as
+a link here, so a backticked link is none, and its target is blanked with the span around it rather
+than falling through to the plain-text arm. A path the author did mean as a citation is written
+unbackticked, which is the form the one-home rule asks for anyway. Either way the path resolves from
+the walked root holding the citing task. That path is the run of path characters around the filename,
+widened back across each preceding space while every candidate so far has failed to resolve and
+stopping at the first that does, so a group name carrying any number of spaces is read whole rather
+than truncated to its last word. The widening decides only whether the citation resolves, never what
+is reported: where no candidate resolves the narrow run alone is the reported token, which is what
+keeps a sentence carrying an unrelated slash from being reported as whatever the widening left. It is
+read only when it carries a `/` ahead of the filename, since a bare filename names no location, and begins
+with none of `/`, `~`, `./`, or `../`, since a path from a root never does and those four mark
+an illustration or a question of form rather than of resolution. A link covers its own text as well
+as its target, so a link whose text repeats its target raises one finding rather than two.
+`citation-form` reports every link that climbs out of the citing folder — every `](../…)` link
+whatever it resolves to, and every other spelling that resolves outside it, since `./../x` and a
+mid-path climb break under archiving exactly as `../x` does — and every link whose target
+names a store-level doc a segment or more below where it starts — root-absolute or root-relative,
+reported as a `store-level doc link` rather than a cross-folder one — since `../workflow/one-home.md`
+§ *One home per fact* gives a store-level doc no link form at all, and a root-absolute link resolves
+here from the walked root while a Markdown renderer resolves it from the repository or workspace
+root, so the form is reported rather than followed. That last reason does not depend on what the
+target names, so a root-absolute link to anything else is reported as a `root-absolute link` for the
+same reason, whatever this walk resolves it to. Its `detail` names the
+replacement: the target task's bare slug where the target sits directly in the walked root, or
+directly in that root's own `Archive/` or `Backlog/`, and its slug is unique; a `./` link where the
+target is in the citing folder itself; the store-level doc's path from the root where the target is
+one; that target's own path from the root otherwise, naming by absolute directory the root that holds the
+target where it is not the citing task's, since two roots sharing a basename are ordinary and a
+basename would not tell them apart; a note that the target is the store root itself where the link lands on that
+root; and, where the target lies outside every walked root, a note saying so in place of a
+replacement. The two notes name what was cited rather than a replacement because no citation form
+expresses either target, and no branch ever names an empty path. Which form a citation owes is `../workflow/one-home.md`
+§ *One home per fact*. A checked step's dead evidence link is reported under both `dead-citation`
+and `dead-anchor`, which read the same link for different reasons.
+
 **Where the lifecycle is read.** `plan.md` is the sole lifecycle-status home
 (`../workflow/task-lifecycle.md` § *`result.md` — no status field*), so every status this walk
 reads is the plan's and `unknown-status` judges the plan alone; a `result.md` still carrying a
@@ -63,18 +131,23 @@ unfinished work under a status nothing else can contradict.
 `{"findings":[…],"scanned":N,"unreadable":N,"unreadablePaths":[…]}`. Task findings are
 `{check,path,detail,root}`, with `root` the resolved absolute task root; `--installs` findings are
 `{check,path,detail}`. `scanned` counts the task folders walked — or, under `--installs`, the
-marker-owned items compared — and `unreadablePaths` names everything this run could not open, by
-absolute path, so a coverage gap is attributable to its root the way a finding is and two roots
-sharing a basename stay distinct; findings alone are never read as coverage (`scanned` is a floor
-while `unreadablePaths` is non-empty). Warnings go to stderr and the exit status is always 0, so a
+marker-owned items compared — and `unreadablePaths` names everything under a walked root that this
+run could not open, by absolute path, so a coverage gap is attributable to its root the way a finding
+is and two roots sharing a basename stay distinct; findings alone are never read as coverage
+(`scanned` is a floor while `unreadablePaths` is non-empty). A citation resolves wherever it points,
+so the citation pass can meet an unlistable directory no walked root holds: that conceals the target
+the same way, and is deliberately absent from `unreadablePaths`, which measures this run's coverage
+of the store rather than every directory it touched. Warnings go to stderr and the exit status is always 0, so a
 partly unreadable store still parses.
 
 **Walk rules.** `node_modules` is pruned at every depth because the walk would never finish
 otherwise; a helper directory needs no entry there, since a folder holding no role file is already
 rejected, and a name-based prune costs a real task its scan silently. `.agents` is the one dotted
 name entered — the canonical root `<project>/.agents/tasks` sits inside it, so pruning it would cost
-a root registered as a project directory every task it holds. Every directory is listed exactly once
-and its entries handed down, so an unreadable directory reports one coverage gap rather than two.
+a root registered as a project directory every task it holds. The walk lists every directory exactly
+once and hands its entries down; the citation pass lists on its own account, following a target
+wherever it points, so a directory can be listed by both. `unreadablePaths` is keyed by absolute
+path against that, so an unreadable directory reports one coverage gap however many passes reach it.
 The two containers are read differently: an `Archive/` fixes the state of everything beneath it at
 any depth, so a `Backlog/` nested inside one is archived all the same and the archived exemptions
 stay the wider set, while the backlog flag is the immediate parent's alone — a task filed under a

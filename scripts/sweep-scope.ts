@@ -2,7 +2,7 @@
 import { readFileSync, readdirSync, realpathSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { holdsRoleFile } from "./lifecycle-constants.ts";
+import { angledTargetText, holdsRoleFile } from "./lifecycle-constants.ts";
 import { compactionSections, slugAllocator, taskState } from "./task-state.ts";
 
 const CONTEXT_FILE = "CONTEXT.md";
@@ -25,7 +25,7 @@ const POINTERS_FIELD = /^[ \t]*[-*+]?[ \t]*\*\*Pointers:?\*\*/i;
 const PUBLISHED_FIELD = /^[ \t]*[-*+]?[ \t]*\*\*Published:?\*\*/i;
 const STATUS_FIELD = /^[ \t]*[-*+]?[ \t]*\*\*Status\b[^:*\n]*:?\*\*/i;
 const LEDGER_TAG = /^[ \t]*-[ \t]+\[(info|warn|block)\]/i;
-const LINK_TARGET = /\]\([ \t]*<?((?:[^()\s>]|\([^()\s]*\))+)/g;
+const LINK_TARGET = /\]\([ \t]*(?:<([^<>\n]*)>|((?:[^()\s>]|\([^()\s]*\))+))/g;
 const BARE_URL = /[A-Za-z][A-Za-z0-9+.-]*:\/\/(?:[^\s<>()[\]"'`]|\([^()\s]*\))+/g;
 const URL_SCHEME = /^([A-Za-z][A-Za-z0-9+.-]*):\/\//;
 const TRAILING_NOISE = /[>\].,;:!?]+$/;
@@ -119,12 +119,18 @@ function fetchable(url: string): boolean {
 
 export function urlsIn(line: string): readonly string[] {
   const found = new Set<string>();
+  const links = [...line.matchAll(LINK_TARGET)];
+  const angledSpans = links
+    .filter((match) => match[1] !== undefined)
+    .map((match) => [match.index, match.index + match[0].length] as const);
   const candidates = [
-    ...[...line.matchAll(LINK_TARGET)].map((match) => match[1]),
-    ...[...line.matchAll(BARE_URL)].map((match) => match[0]),
+    ...links.map((match) => ({ written: match[1] ?? match[2], angled: match[1] !== undefined })),
+    ...[...line.matchAll(BARE_URL)]
+      .filter((match) => !angledSpans.some(([from, to]) => match.index >= from && match.index < to))
+      .map((match) => ({ written: match[0], angled: false })),
   ];
-  for (const candidate of candidates) {
-    const url = candidate.replace(TRAILING_NOISE, "");
+  for (const { written, angled } of candidates) {
+    const url = (angled ? angledTargetText(written) : written.replace(TRAILING_NOISE, "")).replace(/ /g, "%20");
     if (url !== "" && fetchable(url)) found.add(url);
   }
   return [...found];

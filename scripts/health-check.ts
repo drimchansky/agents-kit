@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 import { lstatSync, readdirSync, readFileSync, readlinkSync, realpathSync, statSync } from "node:fs";
 import type { Dirent, Stats } from "node:fs";
-import { join, resolve, basename, sep } from "node:path";
+import { join, resolve, basename, dirname, relative, sep } from "node:path";
 import {
   ARCHIVE_DIR,
   BACKLOG_DIR,
+  angledTargetText,
   classifyWalkEntry,
   LIVE_STATUSES,
   PLAN_VOCAB,
@@ -34,6 +35,16 @@ const HEADING_LEVEL = /^(#{1,6})[ \t]/;
 const FENCE = /^([ \t]*)(`{3,}|~{3,})[ \t]*(.*)$/;
 const CHECKED_STEP = /^[ \t]*-[ \t]+\[[xX]\]/;
 const RESULT_LINK = /\(\[result\]\(([^()]*)\)\)/g;
+const LINK_TARGET = /\]\([ \t]*(?:<([^<>\n]*)>|((?:[^()\s>]|\([^()\s]*\))+))/g;
+const TRAILING_NOISE = /[>\].,;:!?]+$/;
+const TARGET_SCHEME = /^[A-Za-z][A-Za-z0-9+.-]*:/;
+const STORE_LEVEL_DOCS = new Set<string>(["DECISIONS.md", "DOC_CONVENTIONS.md", "GROUP_CONTEXT.md"]);
+const STORE_LEVEL_CITATION = /(?<![A-Za-z0-9_.-])(?:DECISIONS|DOC_CONVENTIONS|GROUP_CONTEXT)\.md(?![A-Za-z0-9])/g;
+const PATH_RUN_CHAR = /[A-Za-z0-9._~\/-]/;
+const HTML_COMMENT = /<!--[\s\S]*?-->/g;
+const BLOCKQUOTE = /^[ \t]*>/;
+const LIST_START = /^[ \t]*(?:[-*+]|1[.)])[ \t]/;
+const THEMATIC_BREAK = /^[ \t]*(?:(?:\*[ \t]*){3,}|(?:-[ \t]*){3,}|(?:_[ \t]*){3,})$/;
 const MARKER = ".agents-kit";
 const CORE_RULES_MARKER = ".agents-kit-core-rules";
 const AGENT_MARKER_PREFIX = ".agents-kit-";
@@ -49,6 +60,8 @@ type TaskCheck =
   | "unknown-status"
   | "legacy-result-status"
   | "dead-anchor"
+  | "dead-citation"
+  | "citation-form"
   | "goal-id"
   | "no-current-state"
   | "oversized-result"
@@ -83,6 +96,7 @@ interface Report {
 
 const warnings: string[] = [];
 const unreadablePaths: string[] = [];
+const unreadableSeen = new Set<string>();
 
 interface ErrorLike {
   readonly code?: string;
@@ -90,6 +104,8 @@ interface ErrorLike {
 }
 
 function unreachable(kind: string, abs: string, display: string, err: ErrorLike): void {
+  if (unreadableSeen.has(abs)) return;
+  unreadableSeen.add(abs);
   warnings.push(`unreadable ${kind} ${display}: ${err.code ?? err.message}`);
   unreadablePaths.push(abs);
 }
@@ -259,26 +275,48 @@ function roleFileName(entries: readonly Dirent[], exactName: string, suffix: str
   return suffix ? files.find((name) => name.endsWith(suffix) && name !== suffix) : undefined;
 }
 
+type MarkdownTexts = ReadonlyMap<string, string | null>;
+
+function markdownTexts(dir: string, display: string, entries: readonly Dirent[]): MarkdownTexts {
+  const texts = new Map<string, string | null>();
+  for (const entry of entries) {
+    if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+    texts.set(entry.name, fileText(join(dir, entry.name), join(display, entry.name)));
+  }
+  return texts;
+}
+
+interface Artifact {
+  readonly file: string;
+  readonly text: string;
+}
+
+function readableArtifacts(texts: MarkdownTexts): Artifact[] {
+  const out: Artifact[] = [];
+  for (const [file, text] of texts) {
+    if (text !== null) out.push({ file, text });
+  }
+  return out;
+}
+
 function readRoleFile(
-  dir: string,
-  display: string,
   entries: readonly Dirent[],
+  texts: MarkdownTexts,
   exactName: string,
   suffix: string | null,
 ): RoleFile | null {
   const name = roleFileName(entries, exactName, suffix);
   if (!name) return null;
-  return { file: name, text: fileText(join(dir, name), join(display, name)) };
+  return { file: name, text: texts.get(name) ?? null };
 }
 
 function readStatusFrom(
-  dir: string,
-  display: string,
   entries: readonly Dirent[],
+  texts: MarkdownTexts,
   exactName: string,
   suffix: string | null,
 ): RoleStatus | null {
-  const role = readRoleFile(dir, display, entries, exactName, suffix);
+  const role = readRoleFile(entries, texts, exactName, suffix);
   if (!role) return null;
   if (role.text == null) return { ...role, value: "unknown", raw: "unreadable" };
   return { ...role, ...normalize(rawStatus(role.text)) };
@@ -318,6 +356,7 @@ interface Task {
   readonly plan: RoleStatus | null;
   readonly result: RoleFile | null;
   readonly goals: RoleFile | null;
+  readonly artifacts: readonly Artifact[];
   readonly updated: number;
   readonly markdownBytes: number;
   readonly nested: readonly string[];
@@ -359,14 +398,16 @@ function collect(rootDir: string, rootDisplay: string): Task[] {
         continue;
       }
       if (step === "claimed") {
+        const texts = markdownTexts(child, childDisplay, childEntries);
         tasks.push({
           dir: child,
           path: childDisplay,
           archived,
           backlogged,
-          plan: readStatusFrom(child, childDisplay, childEntries, "plan.md", ".plan.md"),
-          result: readRoleFile(child, childDisplay, childEntries, "result.md", ".result.md"),
-          goals: readRoleFile(child, childDisplay, childEntries, "goals.md", null),
+          plan: readStatusFrom(childEntries, texts, "plan.md", ".plan.md"),
+          result: readRoleFile(childEntries, texts, "result.md", ".result.md"),
+          goals: readRoleFile(childEntries, texts, "goals.md", null),
+          artifacts: readableArtifacts(texts),
           ...folderStats(child, childEntries),
           nested: nestedTaskDirs(child, childDisplay, childEntries),
         });
@@ -601,6 +642,278 @@ function anchorFindings(task: Task): UnrootedFinding[] {
     }
     const slugs = slugCache.get(targetPath);
     if (slugs && !slugs.has(anchor)) report(step, `anchor not found: #${anchor} in ${file}`);
+  }
+  return out;
+}
+
+type DirNames = ReadonlySet<string> | "missing" | "unreadable";
+
+interface Resolved {
+  readonly path: string | null;
+  readonly concealed: boolean;
+}
+
+function listedNames(dir: string, dirs: Map<string, DirNames>, rootDirs: readonly string[]): DirNames {
+  const cached = dirs.get(dir);
+  if (cached !== undefined) return cached;
+  let names: DirNames;
+  try {
+    names = new Set(readdirSync(dir));
+  } catch (err) {
+    const code = (err as ErrorLike).code;
+    if (code === "ENOENT" || code === "ENOTDIR") names = "missing";
+    else {
+      const root = rootHolding(dir, rootDirs);
+      if (root !== null) unreachable("dir", dir, join(basename(root), relative(root, dir)), err as ErrorLike);
+      names = "unreadable";
+    }
+  }
+  dirs.set(dir, names);
+  return names;
+}
+
+function resolveListed(
+  fromDir: string,
+  target: string,
+  dirs: Map<string, DirNames>,
+  rootDirs: readonly string[],
+): Resolved {
+  let current = fromDir;
+  for (const segment of target.split("/")) {
+    if (segment === "" || segment === ".") continue;
+    if (segment === "..") {
+      current = dirname(current);
+      continue;
+    }
+    const names = listedNames(current, dirs, rootDirs);
+    if (names === "unreadable") return { path: null, concealed: true };
+    if (names === "missing" || !names.has(segment)) return { path: null, concealed: false };
+    current = join(current, segment);
+  }
+  return { path: current, concealed: false };
+}
+
+function decodePath(target: string): string {
+  try {
+    return decodeURIComponent(target);
+  } catch {
+    return target;
+  }
+}
+
+function localTarget(written: string): string | null {
+  if (written === "" || written.startsWith("#") || TARGET_SCHEME.test(written)) return null;
+  const hash = written.indexOf("#");
+  const bare = hash === -1 ? written : written.slice(0, hash);
+  return bare === "" ? null : decodePath(bare);
+}
+
+interface CitationContext {
+  readonly rootDir: string;
+  readonly rootDirs: readonly string[];
+  readonly bySlug: ReadonlyMap<string, readonly SlugHolder[]>;
+  readonly holders: readonly SlugHolder[];
+  readonly dirs: Map<string, DirNames>;
+}
+
+function holderOf(abs: string, holders: readonly SlugHolder[]): SlugHolder | null {
+  let deepest: SlugHolder | null = null;
+  for (const holder of holders) {
+    if (abs !== holder.dir && !abs.startsWith(holder.dir + sep)) continue;
+    if (deepest === null || holder.dir.length > deepest.dir.length) deepest = holder;
+  }
+  return deepest;
+}
+
+function slugResolves(dir: string, rootDir: string): boolean {
+  const parent = dirname(dir);
+  if (parent === rootDir) return true;
+  const container = basename(parent);
+  return dirname(parent) === rootDir && (ARCHIVE_DIR.test(container) || BACKLOG_DIR.test(container));
+}
+
+function conformantForm(abs: string, fromDir: string, ctx: CitationContext): string {
+  const holder = holderOf(abs, ctx.holders);
+  if (holder?.dir === fromDir) {
+    const inFolder = relative(holder.dir, abs);
+    return inFolder === "" ? "cite this folder as ./" : `cite ./${inFolder} inside this folder`;
+  }
+  if (holder && slugResolves(holder.dir, holder.root)) {
+    const slug = basename(holder.dir);
+    if (ctx.bySlug.get(slug)?.length === 1) {
+      const inFolder = relative(holder.dir, abs);
+      const named = inFolder === "" ? "" : ` (${inFolder})`;
+      return `cite task \`${slug}\` by its bare slug${named}`;
+    }
+  }
+  const owner = rootHolding(abs, ctx.rootDirs);
+  if (owner === null) return "the target lies outside the store root";
+  const fromRoot = relative(owner, abs);
+  const named = owner === ctx.rootDir ? "" : ` in the root ${owner}`;
+  if (STORE_LEVEL_DOCS.has(basename(abs))) return `cite ${fromRoot} as plain text${named}`;
+  if (fromRoot === "") return "the target is the store root itself";
+  return `cite the folder path ${fromRoot}${named}`;
+}
+
+function rootHolding(abs: string, rootDirs: readonly string[]): string | null {
+  let deepest: string | null = null;
+  for (const root of rootDirs) {
+    if (abs !== root && !abs.startsWith(root + sep)) continue;
+    if (deepest === null || root.length > deepest.length) deepest = root;
+  }
+  return deepest;
+}
+
+type Span = readonly [number, number];
+
+function storeLevelFindings(
+  task: Task,
+  file: string,
+  line: string,
+  linked: readonly Span[],
+  ctx: CitationContext,
+): UnrootedFinding[] {
+  const out: UnrootedFinding[] = [];
+  for (const match of line.matchAll(STORE_LEVEL_CITATION)) {
+    const at = match.index;
+    if (linked.some(([from, to]) => at >= from && at < to)) continue;
+    const stop = at + match[0].length;
+    let start = at;
+    while (start > 0 && PATH_RUN_CHAR.test(line[start - 1])) start--;
+    if (!line.slice(start, at).includes("/")) continue;
+    const written = line.slice(start, stop);
+    if (written.startsWith("/") || written.startsWith("~")) continue;
+    if (written.startsWith("./") || written.startsWith("../")) continue;
+    let resolved = resolveListed(ctx.rootDir, written, ctx.dirs, ctx.rootDirs);
+    for (let from = start; resolved.path === null && !resolved.concealed; ) {
+      if (from === 0 || line[from - 1] !== " ") break;
+      let prior = from - 1;
+      while (prior > 0 && PATH_RUN_CHAR.test(line[prior - 1])) prior--;
+      if (prior === from - 1) break;
+      resolved = resolveListed(ctx.rootDir, line.slice(prior, stop), ctx.dirs, ctx.rootDirs);
+      from = prior;
+    }
+    if (resolved.path !== null || resolved.concealed) continue;
+    out.push({
+      check: "dead-citation",
+      path: task.path,
+      detail: `${file}: store-level citation ${written} resolves to nothing from the root`,
+    });
+  }
+  return out;
+}
+
+function backtickRuns(line: string): Span[] {
+  const runs: Span[] = [];
+  let at = 0;
+  while (at < line.length) {
+    if (line[at] !== "`") {
+      at++;
+      continue;
+    }
+    let end = at;
+    while (end < line.length && line[end] === "`") end++;
+    runs.push([at, end]);
+    at = end;
+  }
+  return runs;
+}
+
+function withoutCodeSpans(line: string): string {
+  if (!line.includes("`")) return line;
+  const runs = backtickRuns(line);
+  const width = (run: Span): number => run[1] - run[0];
+  let blanked = line;
+  let index = 0;
+  while (index < runs.length) {
+    const open = runs[index];
+    let closing = index + 1;
+    while (closing < runs.length && width(runs[closing]) !== width(open)) closing++;
+    if (closing === runs.length) {
+      index++;
+      continue;
+    }
+    const spanEnd = runs[closing][1];
+    blanked = blanked.slice(0, open[0]) + " ".repeat(spanEnd - open[0]) + blanked.slice(spanEnd);
+    index = closing + 1;
+  }
+  return blanked;
+}
+
+function withoutHtmlComments(lines: Iterable<string>): string[] {
+  const raw = [...lines];
+  const live = raw.join("\n");
+  const scan = raw.map(withoutCodeSpans).join("\n");
+  let blanked = live;
+  for (const span of scan.matchAll(HTML_COMMENT)) {
+    const start = span.index;
+    const end = start + span[0].length;
+    blanked = blanked.slice(0, start) + blanked.slice(start, end).replace(/[^\n]/g, " ") + blanked.slice(end);
+  }
+  return blanked.split("\n");
+}
+
+function opensBlock(line: string): boolean {
+  return HEADING.test(line) || LIST_START.test(line) || THEMATIC_BREAK.test(line);
+}
+
+function citationFindings(task: Task, ctx: CitationContext): UnrootedFinding[] {
+  const out: UnrootedFinding[] = [];
+  for (const artifact of task.artifacts) {
+    let quoted = false;
+    for (const line of withoutHtmlComments(liveLines(artifact.text))) {
+      if (BLOCKQUOTE.test(line)) {
+        quoted = true;
+        continue;
+      }
+      if (quoted) {
+        if (line.trim() !== "" && !opensBlock(line)) continue;
+        quoted = false;
+      }
+      const scan = withoutCodeSpans(line);
+      const linked: Span[] = [];
+      for (const match of scan.matchAll(LINK_TARGET)) {
+        const angled = match[1] !== undefined;
+        const raw = angled ? match[1] : match[2];
+        const stop = match.index + match[0].length - (angled ? 1 : 0);
+        const text = scan.lastIndexOf("[", match.index);
+        linked.push([text === -1 ? stop - raw.length : text, stop]);
+        const written = angled ? angledTargetText(raw) : raw.replace(TRAILING_NOISE, "");
+        const target = localTarget(written);
+        if (target === null) continue;
+        const rootAbsolute = target.startsWith("/");
+        const from = rootAbsolute ? ctx.rootDir : task.dir;
+        const resolved = resolveListed(from, target, ctx.dirs, ctx.rootDirs);
+        const fromTask = resolve(task.dir, target);
+        const crossFolder = !rootAbsolute
+          && (target.startsWith("../")
+            || (fromTask !== task.dir && !fromTask.startsWith(task.dir + sep)));
+        const storeDocLink = !crossFolder
+          && !target.startsWith("./")
+          && target.includes("/")
+          && STORE_LEVEL_DOCS.has(basename(target));
+        const abs = resolved.path
+          ?? resolve(storeDocLink || rootAbsolute ? ctx.rootDir : from, target.replace(/^\/+/, ""));
+        if (crossFolder || storeDocLink || rootAbsolute) {
+          const kind = crossFolder
+            ? "cross-folder link"
+            : storeDocLink ? "store-level doc link" : "root-absolute link";
+          out.push({
+            check: "citation-form",
+            path: task.path,
+            detail: `${artifact.file}: ${kind} ${written} — ${conformantForm(abs, task.dir, ctx)}`,
+          });
+        }
+        if (resolved.path === null && !resolved.concealed) {
+          out.push({
+            check: "dead-citation",
+            path: task.path,
+            detail: `${artifact.file}: link target ${written} resolves to nothing`,
+          });
+        }
+      }
+      out.push(...storeLevelFindings(task, artifact.file, scan, linked, ctx));
+    }
   }
   return out;
 }
@@ -1005,6 +1318,7 @@ if (installs) {
   }
 
   const bySlug = new Map<string, SlugHolder[]>();
+  const walkedTasks: { readonly rootDir: string; readonly tasks: readonly Task[] }[] = [];
   const candidates: RootCandidate[] = roots
     .filter((rootArg) => isDirectory(rootArg, "root"))
     .map((rootArg) => {
@@ -1031,6 +1345,7 @@ if (installs) {
     const { rootArg, rootDir } = candidate;
 
     const tasks = collect(rootDir, basename(rootDir) || rootArg);
+    walkedTasks.push({ rootDir, tasks });
     for (const task of tasks) {
       const slug = basename(task.dir);
 
@@ -1074,6 +1389,15 @@ if (installs) {
       }
     }
     findings.push(...rootFindings.map((finding) => ({ ...finding, root: rootDir })));
+  }
+  const dirs = new Map<string, DirNames>();
+  const holders = [...bySlug.values()].flat();
+  const rootDirs = walkedTasks.map(({ rootDir }) => rootDir);
+  for (const { rootDir, tasks } of walkedTasks) {
+    const ctx: CitationContext = { rootDir, rootDirs, bySlug, holders, dirs };
+    for (const task of tasks) {
+      findings.push(...citationFindings(task, ctx).map((finding) => ({ ...finding, root: rootDir })));
+    }
   }
   findings.push(...duplicateSlugFindings(bySlug));
 }

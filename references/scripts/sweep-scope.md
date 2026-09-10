@@ -57,7 +57,19 @@ count is warned on stderr. Only a resolved deliverable's `**Published:**` lines 
 than three; `file://` and a loopback host (`localhost`, `127.0.0.1`, `[::1]`, `0.0.0.0`) are then
 excluded by name. Both markdown link targets and
 bare URLs are read out of every line and deduplicated within it, so a link whose text repeats its own
-URL is one occurrence rather than two.
+URL is one occurrence rather than two. An angle-bracketed target (`](<…>)`) is read whole and
+literally — the trailing-noise trim that ends a bare target does not apply inside the brackets,
+which delimit the URL themselves — but the padding around it is not part of it: `angledTargetText`
+in `scripts/lifecycle-constants.ts` trims the capture before anything else reads it, so
+`](< https://x/y >)` keys the same URL its unpadded spelling does. Without that trim a leading space
+percent-encodes into the scheme position and the candidate stops being fetchable at all, while a
+trailing one keys a URL no other spelling of the same link ever produces. Every *interior* space is
+still percent-encoded, so the key matches the one the ledger's own non-angled line yields on the next
+read. `scripts/health-check.ts` reads its own angled targets through that same helper, since a
+padded target resolves as a `" ."` path segment and reports a live citation dead. The bare-URL pass does not read
+inside one, which would otherwise add that target's
+own first word as a second candidate; an unclosed `](<` opens no such target, so the bare-URL pass
+is what still finds the URL behind it.
 
 **Exit status.** 0 whenever a report was written — an empty `citations` list is the no-sweep state the
 caller reports, not a failure. 2 is the run that never got that far: bad usage, an unreadable argument,

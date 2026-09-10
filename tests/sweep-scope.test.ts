@@ -267,6 +267,17 @@ test("mailto, file, localhost, anchors, and relative links are out of scope", ()
     "https://en.wikipedia.invalid/wiki/Merge_(SQL)",
   ]);
   assert.deepStrictEqual(urlsIn("see https://x.invalid/a_(b) inline."), ["https://x.invalid/a_(b)"]);
+  assert.deepStrictEqual(urlsIn("- [a](<https://x.invalid/x>) angled"), ["https://x.invalid/x"]);
+  assert.deepStrictEqual(urlsIn("- [a](<https://x.invalid/a b>) spaced"), ["https://x.invalid/a%20b"]);
+  assert.deepStrictEqual(urlsIn("- [a](<https://x.invalid/y!>) literal"), ["https://x.invalid/y!"]);
+  assert.deepStrictEqual(urlsIn("- [a](<https://x.invalid/x unclosed"), ["https://x.invalid/x"]);
+  assert.deepStrictEqual(urlsIn("- [a](<>) empty"), []);
+  assert.deepStrictEqual(urlsIn("- [a](< https://x.invalid/padded >) both ends"), [
+    "https://x.invalid/padded",
+  ]);
+  assert.deepStrictEqual(urlsIn("- [a](<https://x.invalid/trailing >) one end"), [
+    "https://x.invalid/trailing",
+  ]);
 });
 
 test("prose, out-of-scope sections, and the result log below Current state are not swept", () => {

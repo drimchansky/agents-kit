@@ -33,3 +33,7 @@ export function classifyWalkEntry(entry: Dirent, readChild: () => readonly Diren
   const claimed = holdsRoleFile(childEntries.filter((child) => child.isFile()).map((child) => child.name));
   return { step: claimed ? "claimed" : "descend", childEntries };
 }
+
+export function angledTargetText(captured: string): string {
+  return captured.trim();
+}
