@@ -34,6 +34,8 @@ _Updated: YYYY-MM-DD_
 
 **Deviations from plan:** <if any — what differed and why; otherwise omit>
 
+**Grounding corrected:** <surface (a group file or ticket.md by its path from the selected root), prior wording, new wording, and the evidence that disproved it; otherwise omit>
+
 **Notes:** <surprises, gotchas, follow-ups, anything important; otherwise omit>
 
 ---
@@ -53,6 +55,8 @@ _Updated: YYYY-MM-DD_
 **Executed:** <one `Step N …` entry per step that deviated from the default launch; otherwise omit>
 
 **Deviations from plan:** <if any>
+
+**Grounding corrected:** <one `Step N …` entry per correction, as above; otherwise omit>
 
 **Notes:** <surprises, gotchas, follow-ups>
 

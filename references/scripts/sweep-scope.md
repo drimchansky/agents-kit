@@ -26,7 +26,7 @@ because `block` is a state tag a later `warn` line does not supersede.
 
 `surface` says which in-scope surface the occurrence sits on: `context-references`,
 `context-open-questions`, `plan-step`, `plan-open-questions`, `ticket-references`, `result-pointers`,
-`result-pause`, `deliverable-published`. It is what routes an occurrence's finding, three of them
+`result-pause`, `deliverable-published`. It is what routes an occurrence's finding, two of them
 being surfaces a run never writes into (`../workflow/reconciliation.md`
 § *Never-annotated surfaces*). A section opens at its heading and closes at the next heading of the
 same level or shallower, so a `####` block inside a plan step stays inside that step. Every surface

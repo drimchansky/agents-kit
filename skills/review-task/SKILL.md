@@ -45,7 +45,7 @@ Read the plan, the sibling `goals.md`, the sibling `CONTEXT.md`, **and** the `ti
 
 **Skip when:**
 
-- The assessment's findings should also be written back into the task docs, and its Questions actually put to you → use `review-task-reconcile`, which runs this review and then reconciles against it
+- The assessment's findings should also be written back into the task docs, and its Questions settled and written into the docs rather than left rhetorical → use `review-task-reconcile`, which runs this review and then reconciles against it
 - The plan is trivial enough that review takes longer than execution
 - The user has already validated the plan themselves and wants to move to implementation
 - The task is a small bug fix with a clear root cause
