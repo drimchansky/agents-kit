@@ -163,7 +163,7 @@ natural-language instruction to implement an engineering task's full plan author
 The checkpoint conditions do not change this file's invocation flags or gated-skill roster.
 
 **An open skill that reads its own invocation as consent states the user/model split where it makes
-that claim**, not here — `./reconciliation.md` § *Consent model* for the reconcilers,
+that claim**, not here — `./reconciliation.md` § *Consent model: findings apply, the record carries them* for the reconcilers,
 `./executor-routing.md` § *The registry and its authorization* for the write-mode consumers. Each
 states what the answer buys; the test above is where they get it. This section rules on which door
 is closed and on how a run tells which one it came through.
