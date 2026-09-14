@@ -9,232 +9,161 @@ argument-hint: '[task folder path]'
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for (`execution.md`, `verification.md`, …). If the domain has no pack, run the neutral methodology and say so.
 
-Executes a plan written by `plan-task` — or any same-format `plan.md` in a task folder, canonically under `.agents/tasks/` though a folder anywhere on disk works the same. It implements the work, records it in a companion **result file** as it goes, marks each step done in the plan with a link to that record, and runs an **acceptance gate** against the goals before flipping the plan to `done`.
+Executes a task folder's `plan.md`: implements each step, records it in `result.md` as it goes, marks the step done in the plan with a link to that record, and runs an acceptance gate against `goals.md` before flipping the plan to `done`.
 
-Plan = the contract for **how**. Goals = the contract for **what done means**. Result file = the **record**: a rewritable `## Current state` digest above an append-only log. `CONTEXT.md` = static grounding context. `ticket.md` = the product-facing ask the goals derive from.
+This skill mutates the plan and the result file freely, and the grounding surfaces (`CONTEXT.md`, `goals.md`, `ticket.md`, an inherited `GROUP_CONTEXT.md`) only as § *Correcting Grounding Where It's Wrong* licenses. It authors a doc task's deliverable as the plan directs and never writes a deliverable's `**Published:**` line. Its Git writes are the task's own branch and worktree (§1, §3, §8), the branch-scoped `git fetch origin <default-branch>` the **merged** predicate runs, and checkpoint commits only under the sanction §2 establishes. Nothing is pushed or amended. Its one write outside the task folder and the work product is the repository's own `AGENTS.md` / `CLAUDE.md`, for the branch convention a creation-path run proposes, **only on the user's explicit confirmation** and stated when written: `./references/workflow/task-delivery-edges.md` § *Proposing an observed branch convention*. <!-- cold -->
+
+Per-file authorship is `./references/workflow/task-authorship.md` § *Files*; the plan changes only by checkbox flips, appended result links, `**Status:**`, and §6 revisions.
 
 ## Inputs
 
-All in the resolved task folder, opened in the order §1 fixes — never all at once:
+In the resolved task folder, opened in the order §1 fixes: `ticket.md` (optional), `CONTEXT.md`, `goals.md` (the acceptance contract, §7), `plan.md`, and `result.md` (this run's record, §3 and §5). The first three are correctable only under § *Correcting Grounding Where It's Wrong*, and `goals.md` never by the run that grades against it.
 
-- `ticket.md` — optional; correctable under § *Correcting Grounding Where It's Wrong*
-- `CONTEXT.md` — correctable under § *Correcting Grounding Where It's Wrong*
-- `goals.md` — the acceptance contract (§7); correctable under § *Correcting Grounding Where It's Wrong*, never by the run that grades against it
-- `plan.md` — the steps to execute
-- `result.md` — this run's record (§3, §5)
-
-Read `./references/workflow/execution-loop.md` before working — the loop, its two verification tiers, its failure discipline, and the six parameters this skill binds — five in §4 below, **Acceptance** at the §7 gate — stated here in full, so this skill needs nothing from the cross-consumer index. Then the pack files Core Rules 2 calls for: `execution.md` (how to carry out a step), `verification.md` (what its two tiers run), and any per-surface checklist the work touches. For code that is `./references/engineering/`, where the checklists matter most because this skill produces the actual work product.
-
-**CRITICAL**: This skill mutates the plan and the result file freely, and the grounding surfaces — `CONTEXT.md`, `goals.md`, `ticket.md`, an inherited `GROUP_CONTEXT.md` — only as the corrections § *Correcting Grounding Where It's Wrong* licenses, which are bounded and recorded. A doc task's deliverable it authors as the plan directs; a deliverable's `**Published:**` line it never writes. Its Git writes are the task's own branch and worktree (§1, §3, §8), the branch-scoped `git fetch origin <default-branch>` the **merged** predicate runs wherever it is invoked — §8's removal, §1's re-entry — and coordinator checkpoint commits only when §2 establishes the separate sanction in `./references/workflow/task-delivery.md` § *Checkpoint commits*. Nothing is pushed or amended. Outside the task folder and the work product, its one write is the repository's own `AGENTS.md` / `CLAUDE.md` — the branch convention a creation-path run proposes where the repository declares no pattern, recorded there **only on the user's explicit confirmation**: `./references/workflow/task-delivery-edges.md` § *Proposing an observed branch convention*. <!-- cold -->
-
-Per-file authorship is `./references/workflow/task-authorship.md` § *Files*; this skill adds only that the plan changes by checkbox flips, appended result links, `**Status:**`, and §6 revisions.
+Read `./references/workflow/execution-loop.md` before working; §4 and §7 bind its six parameters. Then read the pack files Core Rules 2 names and any per-surface checklist the work touches.
 
 ## When to Use
 
-**Use when** the user asks to implement, execute, run, carry out, or resume a task or its plan — pointing at a task folder (e.g. `.agents/tasks/add-csv-export/`) or its `plan.md`, or naming a task already established in this session.
-
-**Skip when:**
-
-- No task folder exists yet — direct the user to `plan-task` first
-- The work is small enough that a plan would be overhead — use `implement`, the same loop against an ask framed in the session
-- The plan is still being iterated on, not yet finalized
-- The plan's `**Status:**` is `skipped` — deliberately abandoned. Confirm the user wants it revived; never silently run an abandoned plan. On confirmation, §3 takes the registered `skipped → executing` revive (`./references/workflow/task-lifecycle.md`)
-
-A task described with no plan: suggest `plan-task` when it's non-trivial, `implement` when it isn't.
+**Use when** the user asks to implement, execute, run, carry out, or resume a task or its plan, by task folder, by `plan.md`, or by a task already established in this session. **Skip when** no task folder exists yet (`plan-task`), the work is too small for a plan (`implement`), or the plan is still being iterated on. A plan whose `**Status:**` is `skipped` runs only after the user confirms reviving it; never silently run an abandoned plan. On confirmation, §3 takes the registered `skipped → executing` revive (`./references/workflow/task-lifecycle.md`).
 
 ## Process
 
 ### 0. Prepare Against Authoritative Sources
 
-Establish ground truth before the work, per `./references/workflow/execution-loop.md` § *Ground truth before work* — the resolved domain's `execution.md` carries the recipe.
-
-**Binding for what you find:** record the sources you ground the work on — and any pattern you couldn't ground — in the result file's `**Sources:**` field (§5), never in code comments.
+Establish ground truth per `./references/workflow/execution-loop.md` § *Ground truth before work*; the domain's `execution.md` carries the recipe. Record the sources you ground the work on, and any pattern you couldn't ground, in the result file's `**Sources:**` field (§5), never in code comments.
 
 ### 1. Locate and Load the Task
 
-**Resolve the folder** per the **resolve-current-or-ask** discovery rules in `./references/workflow/task-layout.md` — cite them, don't restate them.
+**Resolve the folder** per the **resolve-current-or-ask** rules in `./references/workflow/task-layout.md`. A folder under `Backlog/` takes the activation offer in `./references/workflow/implement-task-edges.md` § *Activating a backlogged task*. <!-- cold -->
 
-The activation offer for a folder resolving under `Backlog/` is `./references/workflow/implement-task-edges.md` § *Activating a backlogged task* — read it when resolution lands there. <!-- cold -->
+**Then load it** in the order `./references/workflow/task-layout.md` § *Reading a resolved folder* fixes:
 
-**Then load it** in the order `./references/workflow/task-layout.md` § *Reading a resolved folder* fixes. What that order means here:
+- The report's exit 1 is a folder with no readable `plan.md`: say so and suggest `plan-task`.
+- `goals.md` missing: stop and tell the user. Never invent goals.
+- `CONTEXT.md`: its header for `**Domain:**`; its prose when a step's packet (§4) turns on it.
+- Shared grounding is read from wherever the folder sits **now**, on every invocation. Where a group file contradicts anything the task asserts (the ticket's scope, `CONTEXT.md`'s direction or an assumption, a pending or checked step, a goal recorded as met), rule on it and correct the losing surface under § *Correcting Grounding Where It's Wrong*, naming both statements and their sources in the record. Rule before a pending step runs, or before `## Acceptance` is written where it bears on done work (the `in-review → done` re-run's only moment). A contradiction the evidence leaves balanced goes to the user (`./AGENTS.md` § *Ask Before Assuming*).
+- `ticket.md` is the product-facing ask; the gate runs against `goals.md`, not the ticket.
+- A `currentState` block or any checked step means a prior session got partway: pick up there, never redoing completed steps. Then branch on the plan status (`./references/workflow/task-lifecycle.md`):
+    - `blocked`: read the result's `**Blocked:**` section; resume only once the blocker has cleared, flipping the plan back to `executing` first.
+    - `in-review`: read the result's `**In review:**` section. Do not re-run the plan. Take its `(external)` goals through §7 against the confirmation the user now provides, and a goal a `**Grounding corrected:**` record names through §7 against live behavior on its new wording (a user's report is not evidence for it), then §8.
 
-- The report's exit 1 is a folder with no readable `plan.md` (one plan per folder) → say so and suggest `plan-task`.
-- `goals.md` defines the final gate. Missing → stop and tell the user; `plan-task` should produce one. Never invent goals to fill the gap.
-- `CONTEXT.md` — its header block for the `**Domain:**` Core Rules 2 needs; its prose sections when a step's packet (§4) turns on them.
-- The shared grounding that order loads ahead of `CONTEXT.md` is taken from wherever the folder sits **now**, on every invocation, so a group file edited since planning — or a task moved between groups — governs this run. Where one of those files materially contradicts anything the task asserts — `ticket.md`'s scope, `CONTEXT.md`'s recommended direction or a key assumption, a step still pending, a step already checked, or a goal `goals.md` records as met — **rule on it and correct the surface that loses**, rather than handing it back. Name both statements with their sources in the record: the group file by its path from the selected root, the step by its number or the goal by its `G<n>` ID, and the ticket or `CONTEXT.md` by its section. Apply the correction under § *Correcting Grounding Where It's Wrong*, the group file included. Which moment depends on what the contradiction bears on: before the step runs where one is still pending, and before `## Acceptance` is written where it bears on work already done. That second moment is what covers the `in-review` → `done` re-run above, which executes no plan step at all, so a reread keyed to pending work would find nothing to weigh on the one run that flips the plan to `done`. §4's Stop-the-Line still governs once the step has begun, and a contradiction whose sides the evidence leaves genuinely balanced is the one that goes to the user, per `./AGENTS.md` § *Ask Before Assuming*.
-- `ticket.md` when present — the product-facing ask; the gate runs against `goals.md`, not the ticket, whatever that section corrects in it.
-- A `currentState` block, or any step already checked, means a prior session got partway: pick up where it left off, never redoing completed steps. Then branch on the reported plan status (`./references/workflow/task-lifecycle.md`):
-    - `blocked` → read the result's `**Blocked:**` section; resume only once the blocker has cleared, flipping the plan back to `executing` first.
-    - `in-review` → read the result's `**In review:**` section: the pending `(external)` goals, plus any goal a prior run's `**Grounding corrected:**` record names as holding finalizing. Don't re-run the plan: take the `(external)` goals through §7 against the external confirmation the user now provides, and a corrected goal through §7 against live behavior on its new wording, as any agent-verifiable goal is gated — a user's report that it holds is not evidence for it — then §8, whose later-run finalization runs a fresh health boundary before `done`.
-
-**A branch in `**Pointers:**` means a task worktree** — re-enter or recreate it first: `./references/workflow/implement-task-edges.md` § *Task worktree*. <!-- cold -->
+**A branch in `**Pointers:**` means a task worktree**: re-enter or recreate it first per `./references/workflow/implement-task-edges.md` § *Task worktree*. <!-- cold -->
 
 ### 2. Decide Execution Mode
 
 Ask the user, or infer from the request:
 
-- **Step-by-step** — one step, update both files, pause for the user to inspect or decide. Default for risky or large plans.
-- **Full plan** — every step end-to-end, then one combined result (§5). Default for small plans (≤3 steps) or an explicit "just run the whole thing".
+- **Step-by-step**: one step, update both files, pause. Default for risky or large plans.
+- **Full plan**: every step end-to-end, then one combined result (§5). Default for plans of three steps or fewer, or an explicit "run the whole thing".
 
-Step-by-step simply pauses after each step's unit outcome and the health boundary that pause carries (§4). The automatic parallel batch is full-plan only — a batch would collapse exactly the pause points step-by-step exists to give the user.
-
-Record whether full-plan mode came from the user's explicit instruction. A natural-language request to implement the full or whole plan qualifies without a slash-command marker; the small-plan default does not. For an engineering task, that explicit instruction also grants the checkpoint commits `./references/workflow/task-delivery.md` § *Checkpoint commits* defines, unless the user says not to commit. <!-- cold -->
+Step-by-step pauses after each step's unit outcome and health boundary (§4); the automatic parallel batch is full-plan only. Record whether full-plan mode came from the user's explicit instruction (a natural-language request to implement the whole plan qualifies, the small-plan default does not). For an engineering task, that instruction also grants the checkpoint commits `./references/workflow/task-delivery.md` § *Checkpoint commits* defines, unless the user says not to commit. <!-- cold -->
 
 ### 3. Initialize Execution State
 
-Every status value and transition used here is registered in `./references/workflow/task-lifecycle.md`, the single source of truth; on any disagreement the registry wins.
+**Create the task branch and worktree first**, unless §1 re-entered one, when the resolved `**Domain:**` is `engineering` and the resolved repository holds at least one path a plan step names. Creation is announced, and `**Pointers:**` carries the branch. A doc or bureaucratic task, or one for which no root resolves, skips creation silently. Every other run follows `./references/workflow/task-delivery.md` § *Branch and worktree creation* for **Which repository**, the naming, the sanction, the degrade, and the one skip that announces itself. <!-- cold -->
 
-**Create the task branch and worktree first** — unless §1 re-entered one — when both gate conditions hold: the task's resolved `**Domain:**` is `engineering`, and the resolved repository exists and holds at least one path a plan step names. Creation is **announced**, so the `**Pointers:**` below carries the branch. A doc or bureaucratic task, or one for which no root resolves at all, fails the gate and skips creation silently, opening nothing; every other run reads `./references/workflow/task-delivery.md` § *Branch and worktree creation*, which owns **Which repository**, the naming, the sanction, the degrade, and the one skip that announces itself. <!-- cold -->
+Create `<task-dir>/result.md` when absent, from the header and `## Current state` block of `./references/templates/result.md`, dated today; it carries no `**Status:**` header of its own.
 
-Create `<task-dir>/result.md` when it doesn't already exist, from the header and `## Current state` block of `./references/templates/result.md`, dated today.
+When §2 granted checkpoint commits, capture and inspect the shared tree's existing staged and unstaged changes before the first step, per `./references/workflow/task-delivery.md` § *Checkpoint commits*. <!-- cold -->
 
-When §2 granted checkpoint commits, capture and inspect the effective shared tree's existing staged and unstaged changes before the first step, on the terms `./references/workflow/task-delivery.md` § *Checkpoint commits* owns. <!-- cold -->
-
-`## Current state` is derived header metadata on the contract in `./references/workflow/task-authorship.md`: rewritten **in place**, with everything below its closing `---` the append-only log.
+`## Current state` is rewritten **in place** on the contract in `./references/workflow/task-authorship.md`; everything below its closing `---` is the append-only log.
 
 Then point the plan's `**Result:**` line at `./result.md` and flip its `**Status:**` from `to-do` to `executing`.
 
-**Reviving a `skipped` plan** — only after the explicit confirmation the *Skip when* gate requires.
-
-The archive-location check and the revive procedure are `./references/workflow/implement-task-edges.md` § *Reviving a skipped plan* — read them at a revive. <!-- cold -->
+**Reviving a `skipped` plan**, only after the confirmation *Skip when* requires: `./references/workflow/implement-task-edges.md` § *Reviving a skipped plan*. <!-- cold -->
 
 ### 4. Execute Steps
 
-Run the loop in `./references/workflow/execution-loop.md` — the five beats, its two verification tiers, Stop-the-Line when required evidence fails, the assertion-gate discipline. Read it before starting.
+Run the loop in `./references/workflow/execution-loop.md`: the five beats, the two verification tiers, Stop-the-Line when required evidence fails.
 
 **This skill's bindings:**
 
-- **Source** — one unit is one plan step; its criterion is that step's plan-defined `Verify` line. Stay inside the plan's scope; respect `Depends on:` ordering in both modes.
-- **Inherited grounding** — the applicable group sources §1 loaded travel with the step, identified by the selected root and each file's path from it, on the terms the `implement-task` binding of `./references/workflow/executor-contract.md` § *Bindings* fixes for a packet. A step whose grounding contradicts it does not launch: §1 rules on the contradiction first, and no executor receives an unresolved conflict. None of those files is ever on an **executor's** edit surface — a correction § *Correcting Grounding Where It's Wrong* licenses is the coordinator's to apply, never delegated.
-- **Record** — append a result section (§5) once the step's outcome and, where the step carries one, its health boundary have run.
-- **Mark done** — flip `- [ ]` to `- [x]` for that step and append the result-section link:
+- **Source**: one unit is one plan step; its criterion is that step's `Verify` line. Stay inside the plan's scope; respect `Depends on:` ordering in both modes.
+- **Inherited grounding**: the group sources §1 loaded travel with the step, identified by root and path, per the `implement-task` binding in `./references/workflow/executor-contract.md` § *Bindings*. A step whose grounding contradicts it does not launch until §1 has ruled. None of those files is ever on an executor's edit surface; a grounding correction is the coordinator's, never delegated.
+- **Record**: append a result section (§5) once the step's outcome and, where it carries one, its health boundary have run.
+- **Mark done**: flip `- [ ]` to `- [x]` and append the result-section link:
 
     ```
     - [x] **What:** <unchanged> ([result](./result.md#step-1--add-csv-writer))
     ```
 
-- **Pause or continue** — step-by-step: stop after each step and report progress. Full-plan: continue.
-- **Blocked** — a Stop-the-Line that can't clear this session: the plan's `**Status:**` to `blocked`, a `**Blocked:**` section in the result file naming the cause (what failed, what was tried, what's needed — or what's awaited) and the last health boundary that passed with what it covered, or `none` where none did, `## Current state` rewritten naming the blocker, then stop — don't skip ahead (`./references/workflow/task-lifecycle.md`).
-- **Health boundaries** — every step-by-step pause before the user receives the tree; every authored checkpoint after its named assertions; each natural batch bound before dependent work; the full-plan tail before acceptance; and every later-run `in-review → done` finalization after the pending external goals are re-checked and before status advances. A batch bounded by a checkpoint shares that checkpoint's one health pass, and a tail batch shares the full-plan tail — neither adds another. At a step-by-step pause the boundary runs after the step's outcome proof and **before** its result section is appended, so the section records a result that exists. Between boundaries, a step proves its own outcome tier (`./references/workflow/execution-loop.md` § *Two verification tiers*) and no more; the integrated recipe (`./references/engineering/verification.md` for code, which resolves each boundary's scope) runs only at the places above. The later finalization is a fresh boundary under the shared loop's cross-run identity rule; record a successful result in §8's dated section. If it fails, take the plan through the registered `in-review → executing` edge before this binding's existing **Blocked** behavior.
-- **Integration assertions** — the plan's `### Checkpoint after Step N` headings. Each is **mandatory** after marking step N done, not an optional summary; a checkpoint is not a step, carries no `- [ ]`, and is never flipped. Run its assertions per the shared loop, then its health boundary. When §2 granted checkpoint commits, the coordinator applies `./references/workflow/task-delivery.md` § *Checkpoint commits* next — never from an executor worktree and never by invoking `commit`. Append the checkpoint section (§5) after that attempt; in step-by-step mode no checkpoint commit is sanctioned, so append and pause as at a step boundary. <!-- cold -->
+- **Pause or continue**: step-by-step stops after each step and reports; full-plan continues.
+- **Blocked**: a Stop-the-Line that can't clear this session. Set the plan's `**Status:**` to `blocked`; write a `**Blocked:**` section in the result file naming what failed, what was tried, what's needed or awaited, and the last health boundary that passed with what it covered (`none` where none did); rewrite `## Current state` naming the blocker; stop. Never skip ahead.
+- **Health boundaries**: every step-by-step pause, after the step's outcome proof and before its result section is appended; every authored checkpoint after its assertions; each natural batch bound before dependent work; the full-plan tail before acceptance; and every later-run `in-review → done` finalization, as a fresh boundary recorded in §8's dated section. A batch bounded by a checkpoint or by the tail shares that one health pass. Between boundaries a step proves only its own outcome tier (`./references/workflow/execution-loop.md` § *Two verification tiers*); the integrated recipe (`./references/engineering/verification.md` for code) runs only at the places above, and health is current only when its last boundary ran on the final unchanged tree. A failed finalization boundary takes the registered `in-review → executing` edge, then **Blocked**.
+- **Integration assertions**: the plan's `### Checkpoint after Step N` headings, each mandatory after marking step N done. A checkpoint is not a step, carries no `- [ ]`, and is never flipped. Run its assertions, then its health boundary. When §2 granted checkpoint commits, the coordinator then applies `./references/workflow/task-delivery.md` § *Checkpoint commits*, never from an executor worktree and never by invoking `commit`. Append the checkpoint section (§5) after that attempt; in step-by-step mode no checkpoint commit is sanctioned, so append and pause. <!-- cold -->
 
 #### Execution strategy: every step delegates
 
-Execute each step through an **executor** per `./references/workflow/executor-contract.md` and its `implement-task` binding — read both before the first step — whose **Segment bound** fixes the launch shape and whose engine `native` places a serially delegated step or segment on the shared tree; steps eligible for the parallel batch below leave that shape.
+Execute each step through an **executor** per `./references/workflow/executor-contract.md` and its `implement-task` binding, whose **Segment bound** fixes the launch shape; engine `native` places a serially delegated step or segment on the shared tree.
 
-**Every step goes to an executor**: `./references/workflow/write-mode-posture.md` owns that posture, what a launch packet owes, and the three exceptions that keep a step here — read it before the first step. Capture the shared tree before launching — the `baseline` manifest the intake's surface check needs, one per segment, checked over its steps' edit surfaces. **Deviation is measured against the mode's default launch on `native`**, never against whichever engine the run selected — which is what the `**Executed:**` fields (§5) record. While an executor is in flight the coordinator waits — no step of its own, no shared-tree edit — per `./references/workflow/delegated-waiting.md` § *How to wait*. Then take each report through that contract's § *Write-mode routing* intake, which decides whether the step's outcome tier is re-proved here, and record the step (§5); a failure there is Stop-the-Line at that step, on the contract's § *Segment launches* terms.
+**Every step goes to an executor** per `./references/workflow/write-mode-posture.md`, which fixes what a launch packet owes and the three exceptions that keep a step here. Capture the `baseline` manifest of the shared tree before launching, one per segment. **Deviation is measured against the mode's default launch on `native`**, which is what `**Executed:**` (§5) records. While an executor is in flight the coordinator waits, with no step of its own and no shared-tree edit (`./references/workflow/delegated-waiting.md` § *How to wait*). Then take each report through the contract's § *Write-mode routing* intake, which decides whether the outcome tier is re-proved here, and record the step (§5); a failure there is Stop-the-Line at that step.
 
-**Inline is an exception, announced and recorded.** A step runs here only on one of that **posture** file's three exceptions, on the announce-and-record terms it sets — `**Executed:**` (§5) is this skill's shape for them. A failed or hung executor is reported and takes this binding's **Fallback**, after which continue. On a segment, the contract's § *Segment launches* governs what stands and what relaunches. <!-- cold -->
+**Inline is an exception, announced and recorded** in `**Executed:**` (§5), on one of the posture file's three exceptions. A failed or hung executor is reported and takes the binding's **Fallback**; on a segment, § *Segment launches* governs what stands and what relaunches. <!-- cold -->
 
 #### Automatic parallel batch (full-plan mode)
 
-Eligible independent steps run concurrently through the same contract and binding. Eligibility, launch, merge, and the checkpoint hand-off are `./references/workflow/implement-task-edges.md` § *Automatic parallel batch* — read it when steps declare `**Touches:**` surfaces in full-plan mode and a batch may qualify. No `**Touches:**` line (or `**Touches:** none`) → serially-delegated. <!-- cold -->
+Eligible independent steps run concurrently through the same contract and binding. Eligibility, launch, merge, and the checkpoint hand-off are `./references/workflow/implement-task-edges.md` § *Automatic parallel batch*, read when steps declare `**Touches:**` surfaces in full-plan mode. No `**Touches:**` line, or `**Touches:** none`, means serially delegated. <!-- cold -->
 
 ### 5. Result File: Sections
 
-Copy each section from `./references/templates/result.md` and fill it: the per-step record, the full-run variant that replaces the per-step blocks in full-plan mode, the checkpoint block, the `## Decision log` line, and §7's `## Acceptance`.
+Copy each section from `./references/templates/result.md`: the per-step record, the full-run variant that replaces per-step blocks in full-plan mode, the checkpoint block, the `## Decision log` line, and §7's `## Acceptance`.
 
-Each record is held to `RECORD_MAX_KB` (`./references/workflow/task-layout.md` § *One task, one flat folder*), which is what the field bounds serve: an executor's report is cited by the `executor` / `coordinator` token `**Verified:**` opens with — on a segment, by the unit it was reported for — and never pasted, a longer excerpt going to a scratch or log file the record cites. The full-run variant and the checkpoint block bound each step's entry the same way.
+Each record is held to `RECORD_MAX_KB` (`./references/workflow/task-layout.md` § *One task, one flat folder*): `**Verified:**` opens with the `executor` / `coordinator` token and cites the report, never pastes it.
 
-`**Health:**` records the boundary to the resolved domain's shape (`./references/engineering/verification.md` § *What a boundary records* for code), omitted on a step merged from a parallel batch and on one that ended at an authored checkpoint, whose section carries it instead.
+`**Health:**` records the boundary to the domain's shape (`./references/engineering/verification.md` § *What a boundary records* for code); it is omitted on a step merged from a parallel batch and on one that ended at an authored checkpoint, whose section carries it.
 
-`**Executed:**` is omitted for a step that ran the mode's default launch on `native` — per-step serial in step-by-step, its checkpoint-bounded segment in full-plan. Otherwise it names what deviated: "parallel batch (<executor engine>), merged in plan order at/before <the §4 merge point>", "serial delegation (<executor engine>)", or "inline (<which posture exception: not specifiable / delegation unavailable / executor failed> — <detail>)". The full-run variant prefixes each such entry `Step N`, and writes "Steps M–N segment (<executor engine>)" for a segment reshaped by a relaunch. `**Grounding corrected:**` (§ *Correcting Grounding Where It's Wrong*) takes the same `Step N` prefix in the full-run variant.
+`**Executed:**` is omitted for a step that ran the mode's default launch on `native`: per-step serial in step-by-step, its checkpoint-bounded segment in full-plan. Otherwise it names the deviation: "parallel batch (<engine>), merged in plan order at/before <the §4 merge point>", "serial delegation (<engine>)", or "inline (<not specifiable / delegation unavailable / executor failed> — <detail>)". The full-run variant prefixes each entry `Step N`, as does `**Grounding corrected:**`, and writes "Steps M–N segment (<engine>)" for a relaunched segment.
 
-In full-plan mode, still flip every step's `- [ ]` to `- [x]`, each linking to the same `#full-run--<date>` anchor (note the double hyphen — the em-dash in the header drops out and both surrounding spaces become hyphens).
+In full-plan mode, still flip every step's checkbox, each linking to the same `#full-run--<date>` anchor (double hyphen). Merged parallel-batch steps keep their own per-step sections and link there; only the batch's serially-executed steps fold into the combined block.
 
-Merged parallel-batch steps are the exception on both counts: each keeps its own per-step section — its merge gates and `**Executed:**` record are per-step — and its checkbox links there instead of the `#full-run` anchor. Only the batch's serially-executed steps fold into the combined block.
+A failed assertion or health boundary records the `**Asserted:**` and `**Health:**` results that ran (or `not run`), `**Outcome:** failed`, `**Commit:** not run — checkpoint failed` when commits were granted, and the failure details, then follows Stop-the-Line. A checkpoint commit failure records `**Commit:** failed — <reason>` and blocks later steps. A successful commit records its SHA; no task changes records `none — no task changes`. Do not move on until a sanctioned checkpoint has a successful or no-change commit result. On resume, settle a pending checkpoint commit before later steps and do not repeat one already recorded as successful.
 
-A failed assertion or health boundary records the `**Asserted:**` and `**Health:**` results that ran (or `not run`), `**Outcome:** failed`, `**Commit:** not run — checkpoint failed` when §2 had granted checkpoint commits, and the failure details, then follows Stop-the-Line. A checkpoint commit failure records `**Commit:** failed — <reason>` and blocks later steps. A successful commit records its SHA; no task changes records `none — no task changes`. Do not move on until a sanctioned checkpoint has a successful or no-change commit result. On resume, settle a pending checkpoint commit before later steps and do not repeat one whose success is already recorded.
-
-**At every plan `**Status:**` flip and at run end** — finalize included; a run dying mid-way leaves it stale, tolerated by the next run — rewrite `## Current state` on its cited contract, carrying any commit watermark entry forward untouched (`./references/workflow/reconciliation-commits.md` § *The watermark*). **When a step records a decision**, append the template's dated one-liner to the result's `## Decision log`, creating that section directly below `## Current state`'s closing `---` when absent, as the first section of the append-only log — a pointer to where the decision is recorded, never the decision text itself (`./references/workflow/task-authorship.md`).
+**At every plan `**Status:**` flip and at run end**, finalize included, rewrite `## Current state` on its contract, never claiming a stronger state than the plan's `**Status:**`, and carrying any commit watermark entry forward untouched, never advanced, dropped, or created here (`./references/workflow/reconciliation-commits.md` § *The watermark*). **When a step records a decision**, append the template's dated one-liner to `## Decision log`, creating that section directly below `## Current state`'s closing `---` when absent: a pointer to where the decision is recorded, never the decision text.
 
 ### 6. Plan Revisions Mid-Execution
 
-When implementation reveals the plan is wrong — a step infeasible, scope wrong, a new step needed, or a step too large to land in one slice — apply the scope-change rules in `./references/workflow/execution-recovery.md` § *Scope changes mid-execution*, including its splitting strategies. The binding — the in-place plan update, the `**Deviations from plan:**` record, the step-by-step pause, and the abandon flow — is `./references/workflow/implement-task-edges.md` § *Plan revisions* — read it when a revision is needed. <!-- cold -->
+When implementation reveals the plan is wrong (a step infeasible, scope wrong, a step missing or too large for one slice), apply `./references/workflow/execution-recovery.md` § *Scope changes mid-execution*. The in-place plan update, the `**Deviations from plan:**` record, the step-by-step pause, and the abandon flow are `./references/workflow/implement-task-edges.md` § *Plan revisions*. <!-- cold -->
 
 ### 7. Acceptance Gate
 
-After the last step is marked done but **before** flipping the plan's `**Status:**` to `done`, run the acceptance gate against `goals.md`, applying the acceptance discipline in `./references/workflow/execution-acceptance.md`. Binding: the criteria are `goals.md`'s `G<n>` goals, and the verdict goes in an `## Acceptance` section of the result file.
+After the last step is marked done and **before** the plan flips to `done`, run the gate against `goals.md` per `./references/workflow/execution-acceptance.md`: every `G<n>` goal gated against live behavior, the verdict in a single `## Acceptance` section of the result file copied from the template, one line per goal with its tag and the evidence, caveat, or awaited confirmation.
 
-**Tag each goal** by its `G<n>` ID: `met`, `met with caveats`, `unmet`, `out of scope`, or `pending external`.
+**Tag each goal** `met`, `met with caveats`, `unmet`, `out of scope`, or `pending external`. `out of scope` **only when the plan's `## Scope` lists that goal ID in its deferred partition**; a goal that isn't there drifted in after planning, so surface it rather than dropping it. `pending external` **only for a goal carrying the `(external)` marker** whose verification you can't perform in-session, recording what's awaited and who verifies it; undone agent-verifiable work is `unmet`.
 
-- `out of scope` **only when the plan's `## Scope` lists that goal ID in its deferred partition** — confirm the ID is actually there. One you'd call out-of-scope that isn't in the deferred set drifted in after the plan was written: surface it rather than silently dropping it under a label the scope never authorized.
-- `pending external` **only for a goal carrying the `(external)` marker** whose verification you genuinely can't perform in-session (a human/client sign-off, a live/production state you can't drive) — record what's awaited and who/what will verify it. Never a substitute for `unmet`: if the agent-verifiable work behind the goal isn't done, it's `unmet`.
+**Any goal `unmet`: do not finalize.** Apply Stop-the-Line: localize the gap, then either revise the plan and return to execution, or surface a goals misunderstanding for the user to edit and re-run the gate.
 
-Append a single `## Acceptance` section to the result file, copied from `./references/templates/result.md`: one line per goal, each carrying its tag and the evidence, caveat, or awaited confirmation behind it.
+**Any goal `met with caveats`: secure explicit user acknowledgement before finalizing**, and record it in that goal's `## Acceptance` entry. An unacknowledged caveat is treated as `unmet`.
 
-**Any goal `unmet` → do not finalize.** Apply Stop-the-Line: localize the gap, then decide whether it's a missed step (revise the plan, add steps, return to execution) or a goals misunderstanding (surface it, let the user edit the goals file, re-run the gate).
-
-**Any goal `met with caveats` → secure explicit user acknowledgement before finalizing.** Surface each caveat — what's caveated and why — confirm the user accepts shipping with it (the provenance `out of scope` carries at tag time), and record the acknowledgement in that goal's `## Acceptance` entry. An unacknowledged `met with caveats` is not a pass: treat it like `unmet` and do not finalize.
-
-**Any goal `pending external` → do not finalize to `done`; park at `in-review`.** Every *other* goal must be `met` / acknowledged-caveat / out-of-scope first. Then take §8's `in-review` branch.
+**Any goal `pending external`: park at `in-review`**, once every other goal is `met`, acknowledged, or `out of scope`. Then take §8's `in-review` branch.
 
 ### 8. Finalize
 
-The gate produces one of two session-terminal outcomes. "Acknowledged" below means the §7 acknowledgement for every `met with caveats` and `out of scope` goal.
+"Acknowledged" below means the §7 acknowledgement for every `met with caveats` and `out of scope` goal.
 
-**Park at `in-review`** when every agent-verifiable goal is `met` or acknowledged **but one or more `(external)` goals are `pending external`**:
+**Park at `in-review`** when every agent-verifiable goal is `met` or acknowledged but one or more `(external)` goals are `pending external`:
 
 - The plan's `**Status:**` to `in-review`
-- An `**In review:**` section in the result file listing each pending goal — `- G<n> — <what's awaited, who/what verifies it>` — and **no** `**Completed:**` line
-- The shared loop's *Before presenting* step (`./references/workflow/execution-acceptance.md` § *Before presenting*); its summary additionally names which agent-verifiable goals are `met`, and exactly what external verification is outstanding and how to confirm it
+- An `**In review:**` section in the result file listing each pending goal (`- G<n> — <what's awaited, who/what verifies it>`) and **no** `**Completed:**` line
+- The shared loop's *Before presenting* step (`./references/workflow/execution-acceptance.md` § *Before presenting*); the summary names which goals are `met` and what external verification is outstanding
 
-**Finalize to `done`** only once every goal is `met` or acknowledged **and none is `pending external`**:
+**Finalize to `done`** only once every goal is `met` or acknowledged and none is `pending external`:
 
 - The plan's `**Status:**` to `done`
-- A closing `**Completed:** YYYY-MM-DD` line in the result file
+- A closing `**Completed:** YYYY-MM-DD` line in the result file, written only at `done`
 - The shared loop's *Before presenting* step (`./references/workflow/execution-acceptance.md` § *Before presenting*)
-- The task worktree and branch removed **after** that step and last of these four, per `./references/workflow/task-delivery-edges.md` § *Removal* — merged PR and clean tree, else refused with the reason. That step deletes scratch artifacts the **clean** predicate would read as dirty, and its boundary runs on the worktree removal takes away. Checkpoint authorization adds no tail or final commit, so later work can still make refusal the usual outcome — recorded either way, never blocking the finalize — with `maintain`'s husk sweep collecting the worktree later. <!-- cold -->
+- The task worktree and branch removed **after** that step and last of the four, per `./references/workflow/task-delivery-edges.md` § *Removal*: merged PR and clean tree, else refused with the reason, never forced. Checkpoint authorization adds no tail or final commit. Refusal is recorded and never blocks the finalize. <!-- cold -->
 
-In **both** branches, rewrite `## Current state` last of all — after the removal above, so `**Pointers:**` records whether the branch survived; at `in-review` its `**Next:**` names the awaited external verification; at `done` the block stays frozen as the final digest.
+In **both** branches, rewrite `## Current state` last, after the removal, so `**Pointers:**` records whether the branch survived; at `in-review` its `**Next:**` names the awaited verification.
 
-**Reaching `done` from `in-review` (a later re-run).** The procedure is `./references/workflow/implement-task-edges.md` § *Reaching done from in-review* — read it on a later run finalizing an `in-review` task. <!-- cold -->
+**Reaching `done` from `in-review`** on a later run: `./references/workflow/implement-task-edges.md` § *Reaching done from in-review*. <!-- cold -->
 
 ## Correcting Grounding Where It's Wrong
 
-Execution is the one activity that finds out whether the grounding was true. When it finds that it wasn't, this skill corrects the surface that owns the fact rather than routing the engineer a note: `CONTEXT.md`, `goals.md`, `ticket.md`, or an applicable `GROUP_CONTEXT.md`. What licenses the write is the same thing that licenses a reconciler's — evidence the run actually produced, and a record of the change — so the terms below are those of `./references/workflow/reconciliation.md` § *Grounding docs change on evidence, never silently* and § *The upstream ask is writable, and never rewritten quietly*, which this section cites rather than restates.
+When execution disproves the grounding, correct the surface that owns the fact: `CONTEXT.md`, `goals.md`, `ticket.md`, or an applicable `GROUP_CONTEXT.md`, on the terms of `./references/workflow/reconciliation.md` § *Grounding docs change on evidence, never silently* and § *The upstream ask is writable, and never rewritten quietly*.
 
-**A correction is bounded by what the run learned.** Rewrite the statement the work disproved, and nothing adjacent to it. Reshaping grounding the run never tested is planning: name `plan-task` and leave it.
+**A correction is bounded by what the run learned.** Rewrite the statement the work disproved and nothing adjacent; reshaping untested grounding is `plan-task`'s.
 
-**Record every correction in the result file** as it lands — a `**Grounding corrected:**` field on the step's entry, or its own dated line when no step owns it — carrying the surface, the prior wording, the new wording, and the evidence. A group file or `ticket.md` is named by its path from the selected root, since both reach past this folder.
+**Record every correction in the result file** as it lands: a `**Grounding corrected:**` field on the step's entry, or its own dated line when no step owns it, carrying the surface, the prior wording, the new wording, and the evidence. A group file or `ticket.md` is named by its path from the selected root.
 
-**The gate never grades work against a contract this run rewrote.** A run that writes `goals.md` **does not finalize**: it applies the edit, records it, finishes its steps, and stops at `executing` with `## Acceptance` unwritten, naming the edited `G<n>` as what holds finalizing. The next run loads the new wording at §1 and gates against it normally. No new verdict is invented for this — the registered set in `./references/workflow/acceptance-criteria.md` is unchanged; the gate simply has not run. A run that rewrites a goal and then passes itself on the new wording has graded its own paper. The same bar blocks the cheaper version: never retire a goal because it failed, never soften a `**Verify:**` line because the step tripped on it, and never edit `ticket.md` toward what was built. A goal that fails is `unmet` (§7); an ask that turns out to be wrong is `plan-task`'s to re-derive. On the `in-review` re-run (§1) the plan stays `in-review`, since `## Acceptance` already stands and is append-only: record the correction as its own dated line, add the edited `G<n>` to `**In review:**` as what holds finalizing, and stop; the next run's `in-review` branch re-gates that goal beside the pending externals and appends the fresh verdict.
+**The gate never grades work against a contract this run rewrote.** A run that writes `goals.md` does not finalize: it applies the edit, records it, finishes its steps, and stops at `executing` with `## Acceptance` unwritten, naming the edited `G<n>` as what holds finalizing; the next run gates against the new wording. Never retire a goal because it failed, never soften a `**Verify:**` line because the step tripped on it, and never edit `ticket.md` toward what was built; what the ticket means is the requester's to say. A goal that fails is `unmet` (§7); an ask that turns out to be wrong is `plan-task`'s to re-derive. On the `in-review` re-run the plan stays `in-review`, since `## Acceptance` is append-only: record the correction as its own dated line, add the edited `G<n>` to `**In review:**`, and stop; the next run re-gates it beside the pending externals.
 
-**Announce corrections in the run's closing summary**, grouped by surface, so a reader who sees only that summary knows the grounding moved.
-
-## Don't Rationalize
-
-The shared loop's *Don't Rationalize* list applies in full (`./references/workflow/execution-loop.md`). These are this skill's own:
-
-- "I'll update the result file at the end" — Update it as you go. End-of-task batching loses the surprises and reasoning that are worth recording.
-- "The worktree verify passed, merging is a formality" — A worktree executor's pass is provisional by contract. Integration is where parallel work breaks; the merge gates are the ones that count.
-- "These steps look independent, I'll parallelize them without declarations" — Undeclared means serial. The `Touches:` declaration is the eligibility evidence, not paperwork.
-- "The goal was worded badly, so I fixed it and it passes now" — Rewording a goal you then grade yourself against is the one grounding write that is never legitimate. Fix the wording, defer the verdict.
-- "The ticket clearly meant what I built" — What the ticket means is the requester's to say. Evidence the ask moved licenses a ticket edit; evidence the work diverged does not.
-
-### Red flags
-
-The shared loop's red flags apply in full. When the domain is code, also watch the engineering red flags in `./references/engineering/execution.md` § *Red flags*.
-
-## Verification
-
-Confirm the protocol invariants before finishing:
-
-- [ ] All four core artifacts read before starting (plus `ticket.md` when present); a missing `goals.md` surfaced, never invented
-- [ ] Result file initialized and carrying every section its plan's state owes per `./references/workflow/task-lifecycle.md` § *Companion result file* — no `**Status:**` header of its own, `**Completed:**` line only at `done`
-- [ ] `## Current state` rewritten at every plan status flip and once at run end (finalize included) — on its cited contract, never claiming a stronger state than the plan's `**Status:**`
-- [ ] Any `**Pointers:**` commit watermark entry carried forward unchanged at every one of those rewrites — never advanced, never dropped, and never created here; seeding one is a reconciler's act (`./references/workflow/task-authorship.md`)
-- [ ] Task branch and worktree created once at §3, re-entered from the recorded branch on a resume, and both removed at §8 — each on the terms those sections cite, never guessed between two folders and never forced, any degrade recorded
-- [ ] Every completed step: its full unit-outcome tier passed on the evidence the intake accepted or re-proved (`./references/workflow/executor-contract.md` § *Write-mode routing*), that source named in its `**Verified:**` record, checkbox flipped with a link to its result section
-- [ ] Integrated health established at every boundary the **Health boundaries** binding declares — each at the scope the domain recipe resolves, with a checkpoint or tail batch sharing that one boundary, a later finalization freshly recorded, and current against the final unchanged tree
-- [ ] Every checkpoint ran its named assertions, recorded distinct `Asserted`, `Health`, `Outcome`, and applicable `Commit` results, and passed before work continued; failed gates ran no commit
-- [ ] Checkpoint commits occurred only for an explicit user-directed engineering full-plan run with no no-commit override, from the shared implementation tree after green assertions and health; pre-existing work was preserved, staged bytes were task-attributable and inspected, and no empty, tail, or final commit was invented
-- [ ] The gate ran every goal by `G<n>` ID against live behavior and wrote `## Acceptance` — nothing left `unmet` at finalize, `pending external` only on `(external)` goals (parking the task at `in-review`)
-- [ ] Group grounding reread at §1 from the folder's current location and carried into each step's packet with its sources named; a contradiction with anything the task asserts — the ticket's scope, CONTEXT's direction or assumptions, pending step, checked step, or `met` goal — ruled on before that step ran or before `## Acceptance` was written, never delegated to an executor, and never left silently unresolved
-- [ ] Every grounding correction bounded by what the run learned, recorded with its surface, prior wording, new wording and evidence, and named in the closing summary; no goal retired because it failed, no `**Verify:**` softened because a step tripped, no `ticket.md` edited toward what was built
-- [ ] Any run that wrote `goals.md` stopped at `executing` with no `## Acceptance` written — or, on the `in-review` re-run, stayed `in-review` with the edited goal added to `**In review:**` — naming the edited `G<n>` as what holds finalizing
-- [ ] Deviations and plan revisions recorded in the result file, and the repository's `AGENTS.md` / `CLAUDE.md` written only on the user's explicit confirmation and stated when written
-- [ ] Domain pre-presentation checks run over the full changed surface; framework code grounded in `**Sources:**`, any ungrounded pattern stopped or recorded there. Presentation consumed health as `./references/workflow/execution-acceptance.md` § *Before presenting* fixes
-- [ ] Every step delegated — through the mode's default launch or an announced parallel batch — with any inline step naming which of the three posture exceptions applied, and its `**Executed:**` field recording whatever deviated
-- [ ] Every parallel-batch step merged only through §4's cited merge gates, conflicts and surface escapes falling back to serial delegation; no per-merge health run
-- [ ] Executors wrote no task-folder file and no status; batches recorded (`**Executed:**` fields, checkpoint `**Merged:**` lines) and every coordinator-managed worktree removed after merge
+**Announce corrections in the run's closing summary**, grouped by surface.

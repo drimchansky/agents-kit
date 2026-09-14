@@ -9,89 +9,57 @@ argument-hint: '[topic, file path, or any other source of information]'
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. Load the domain pack: take the task's `**Domain:**` (default `engineering`; infer from the request when there's no `CONTEXT.md`) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for. If the domain has no pack, run the neutral methodology and say so.
 
-This skill guides clear, structured explanations of any topic the user wants to understand — from a single function to an architectural pattern, from a system's internals to an external library or a domain concept. The methodology is domain-neutral; when the topic is code, load the engineering pack's `exploration.md` for the codebase-specific gathering recipe.
-
-The user asks about something they want to understand. This can be code in the current project, an external library or API, a protocol, a design pattern, a domain concept, or how things relate to each other.
-
-Use web search liberally — don't rely on training data for anything that could be outdated: library APIs, framework behavior, version-specific details, ecosystem conventions. Make as many web requests as needed to give an accurate, current answer.
+Explain the requested topic at the depth needed. For code, apply `./references/engineering/exploration.md`; methodology otherwise follows the resolved domain. Verify potentially outdated APIs, behavior, versions, and conventions through authoritative web sources.
 
 ## Determine Scope
 
-Match the explanation level to the question:
+- **Code:** function/module behavior, inputs, outputs, side effects.
+- **Feature:** business purpose, user journey, data flow, components.
+- **Architecture:** structure, concepts, patterns, integrations.
+- **External:** library/API/protocol purpose, API surface, mental model, local fit.
+- **Concept:** definition, relevance, implications, misconceptions.
+- **Pre-plan:** existing constraints, affected consumers, alternatives, open questions.
 
-- **Code** — Points to a specific function, component, or module → what it does, how it works, inputs/outputs, side effects
-- **Feature** — Asks about a user flow, business feature, or behavior → business purpose, user journey, data flow, key components
-- **Architecture** — Asks about structure, patterns, or how things fit together → high-level overview, core concepts, organization, integrations
-- **External** — Asks about a library, API, protocol, or external tool → what it is, core API surface, mental model, how it fits into the project
-- **Concept** — Asks about a domain concept or engineering principle → definition, why it matters, practical implications, common misconceptions
-- **Pre-plan** — Asks what exists before planning a change or choosing an approach → constraints, blast radius, known alternatives, open questions
-
-When the question spans levels, start at the highest relevant level and drill down. When unclear, ask.
+Start at the highest relevant level, then drill down. Ask when scope is unclear; answer the actual question.
 
 ## Gather Context
 
-Build understanding before explaining. Match the strategy to where the answer lives:
-
 ### When the answer is in the project / domain artifacts
 
-Ground the explanation in what actually exists, not what you remember. Read the primary source fully, trace how it connects to the rest, check history for the "why" the artifact alone doesn't carry, and identify the load-bearing elements an explanation must respect. When the topic is code, follow the engineering pack's `./references/engineering/exploration.md` for the concrete recipe (trace callers / callees / types / tests, map blast radius, verify claims against source).
+Read the primary source fully, trace connections, inspect history for intent, and identify constraints the explanation must preserve. Follow `./references/engineering/exploration.md` for code: callers, callees, types, tests, affected consumers, and source verification.
 
 ### When the answer is external (a library, standard, concept, or fact)
 
-1. **Search the web** — Look up official documentation, changelogs, and authoritative sources. Don't guess signatures, behavior, or facts from memory.
-2. **Check local usage** — See how the thing is already used in the project or in prior work.
-3. **Pin the version / source** — Know which version or edition is in use before describing it.
-4. **Cross-reference** — If the authoritative source and actual local usage disagree, flag it.
+1. Search official documentation, changelogs, and authoritative sources; do not guess signatures or behavior.
+2. Inspect local usage and prior work.
+3. Establish the relevant version or edition before describing it.
+4. Flag disagreement between authoritative documentation and local usage.
 
 ## Explain
 
 ### Start with Purpose
 
-Open with _why_ this exists or _why_ it matters, not _what_ it is. "This module handles retry logic for failed API requests so that transient network errors don't surface to the user" is better than "This module exports a `retry` function that takes a callback."
+Lead with why it exists or matters, then describe what it does.
 
 ### Then Build Understanding
 
-- Go **top-down**: big picture first, then details on demand
-- Explain the **mental model** — what concepts does a reader need to hold in their head?
-- **Anchor claims to the primary source** — point to specific lines, sections, or evidence, not vague descriptions
-- Narrate **the flow** — follow a request, a user action, or a process from trigger to result
-- Highlight **non-obvious behavior** — gotchas, implicit assumptions, surprising side effects, common misconceptions
-- Use analogies when they genuinely clarify; skip them when they oversimplify
+- Build from the big picture to requested detail; explain concepts before relying on them.
+- Cite specific source lines, sections, or evidence. Mark inference and missing context explicitly.
+- Follow a request/action/process from trigger to result; code alone is not an explanation.
+- Explain non-obvious assumptions, side effects, gotchas, and misconceptions.
+- Use analogies only when they clarify without distorting.
 
 ### When Exploring for Planning
 
-If the user will use this output to make a decision (design, refactor, or implement), go beyond description:
-
-- **Surface constraints** — State explicitly what can't change and why (public interfaces, downstream consumers, invariants, external commitments)
-- **Identify change points** — Where does the thing naturally extend or branch? What's isolated vs. entangled?
-- **Discover alternatives** — Name 2–3 known approaches to achieving the goal (patterns already in use, common solutions, available capabilities). Don't fabricate — only surface options you can point to.
-- **Compare alternatives** — For each option, note: complexity to implement, coupling to what exists, reversibility. One sentence per axis is enough.
-- **Recommend** — Given what exists, which fits best and why? Flag if you're uncertain.
-
-## Don't Rationalize
-
-- "I know how this library works" — Check the docs. APIs change between versions. Web search is free.
-- "The code is self-explanatory" — Self-explanatory to you is not the test; the reader who needs the explanation is.
-- "This is probably how it works" — Inference without flagging it as inference is misleading. Cite sources or say you're guessing.
-- "That's too much detail" — Match depth to the question. A question about internals needs internals.
-- "Here's the code" — Code without narration is not an explanation. Explain what it does and why.
-
-## Verification
-
-Confirm before finishing:
-
-- [ ] Answers the actual question asked, not an adjacent one
-- [ ] Claims anchored to the primary source; version-sensitive information verified via web search
-- [ ] Uncertainty flagged where context is missing
-- [ ] If pre-plan: constraints and load-bearing elements identified, alternatives surfaced with trade-offs
+Name constraints and why they cannot change, downstream consumers, and natural change points. Distinguish isolated areas from coupled ones. Present 2–3 source-backed approaches; compare implementation complexity, coupling, and reversibility. Recommend the best fit when evidence supports it; otherwise state uncertainty.
 
 ## Output Structure
 
-Adapt to the level — don't force a rigid template. Include what's relevant:
+Adapt to the question rather than forcing every field:
 
-- **Purpose** — Why this exists or matters (always lead with this)
-- **How It Works** — Logic flow for code; user journey for features; organization for architecture; core API for libraries
-- **Key Details** — Parameters, return values, side effects, edge cases, error handling
-- **Constraints** — _(for pre-plan use)_ What's load-bearing, what can't change, downstream consumers and coupling
-- **Connections** — Related code, dependencies, integration points; alternatives with trade-offs when planning (complexity, coupling, reversibility) and a recommendation if confident
-- **Entry Points** — Where to start reading for deeper exploration; links to docs for external topics
+- **Purpose:** always lead with relevance.
+- **How It Works:** logic, journey, organization, or API.
+- **Key Details:** parameters, returns, side effects, boundaries, errors.
+- **Constraints:** for planning, protected behavior and affected consumers.
+- **Connections:** dependencies, integrations, alternatives/tradeoffs, supported recommendation.
+- **Entry Points:** sources for deeper reading, including external docs.

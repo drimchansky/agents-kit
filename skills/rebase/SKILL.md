@@ -8,39 +8,41 @@ description: Rebase the current Git branch onto a confirmed base, or resume its 
 1. Read `./AGENTS.md` and apply its rules.
 2. Read `./references/engineering/rules.md` for the engineering overlay.
 
-An explicit user request to rebase, including natural language, authorizes this operation and clear conflict resolutions needed to complete it. Selecting this skill alone grants no Git writes. Work in the requested checkout; do not stash user changes, skip commits, abort, reset, or push without the user's instruction. Preserve commit messages and hooks. Ask only when the target, commit range, or a conflict's intended behavior cannot be established.
+An explicit rebase request authorizes this operation and clear conflict resolutions. Skill selection alone grants no Git writes. Use the requested checkout, preserving commit messages, hooks, and signing. Do not stash, skip, abort, reset, or push without instruction. Ask when target, replay range, or conflict intent is unclear.
 
 ## Inspect and select
 
-Read the repository instructions, `git status`, current branch and HEAD, and any active operation before choosing a command. Resolve rebase metadata with `git rev-parse --git-path rebase-merge` and `git rev-parse --git-path rebase-apply`; linked worktrees do not necessarily have a `.git` directory. An existing rebase goes to **Resume** below. A different unfinished Git operation blocks starting a rebase.
+Read repository instructions, status, branch, HEAD, and active operation. Resolve metadata through `git rev-parse --git-path rebase-merge` and `git rev-parse --git-path rebase-apply`, including linked worktrees. Existing rebase goes to Resume; another unfinished operation blocks starting.
 
 For a new rebase:
 
-- Require a clean index and working tree. Inspect untracked paths for possible overwrites; leave them intact. If local work prevents rebasing, report it and stop.
-- Resolve the destination from the user's request or established PR/task base. A branch's tracking upstream can be its own published copy; it does not establish the intended PR base. If the destination is remote, fetch only the relevant branch when refreshing it is within the request. If freshness cannot be established, disclose that and ask before using a potentially stale tip.
-- Inspect the graph and identify the exact commits to replay. When the base branch was rewritten, use the recorded old base, reflog, or patch comparison to establish the old boundary; a merge-base alone may include obsolete upstream commits. Confirm that boundary is an ancestor of the original tip and list the selected commits. Ask if the boundary remains ambiguous.
-- Capture the branch name, original tip, old boundary, and resolved destination SHA in the session before mutation. Announce the destination and selected range. If the destination is already incorporated, report no change unless the user requested a specific history rewrite. If the selected range contains merges, establish the intended topology before proceeding; do not silently flatten it.
+- Require clean index/tracked worktree; inspect untracked overwrite risks and leave those paths intact. Stop if local work prevents rebasing.
+- Resolve destination from the request or established PR/task base. Tracking upstream alone does not establish the intended base. Refresh only the relevant remote branch within authorization; ask before using a tip whose freshness remains uncertain.
+- Inspect the graph and exact replay set. After upstream rewrite, establish the old boundary from recorded base, reflog, or patch comparison; merge-base alone can include obsolete upstream commits. Require that boundary to be an ancestor of the original tip and list selected commits. Ask about unresolved range ambiguity.
+- Capture branch, original tip, old boundary, and destination SHA before mutation; announce destination and range. Report no change when destination is already incorporated unless history rewriting was requested. Establish intended merge topology before replaying merges; do not silently flatten them.
 
 ## Start or resume
 
-Read [hardware signing](./references/engineering/git-hardware-signing.md) before any command that can create rewritten commits. Apply its permission handling to both the initial rebase and each continuation.
+Read [hardware signing](./references/engineering/git-hardware-signing.md) before commands that can create rewritten commits. Apply its discovery, touch warning, and permission handling to the initial rebase and every continuation.
 
-For a new linear rebase, use `git rebase --no-autostash --no-update-refs --onto DESTINATION_SHA OLD_BOUNDARY_SHA`, substituting the captured SHAs. This keeps the replay range explicit and limits ref updates to the current branch. Add topology or history-editing options only when they match the established request. Immediately before execution, recheck the branch, original tip, clean tracked state, and absence of another operation. If approval is required, put these checks inside the approved invocation so they run after approval. Stop on drift instead of recalculating and replaying a new range silently.
+Immediately before starting the rebase, recheck branch, original tip, clean tracked state, and absence of another operation. When approval is needed, include checks inside the approved invocation. Stop on drift rather than silently selecting another range.
+
+Start a linear rebase with `git rebase --no-autostash --no-update-refs --onto DESTINATION_SHA OLD_BOUNDARY_SHA`, substituting captured SHAs. Add topology/history options only within the established request.
 
 ### Resume
 
-Inspect status, unresolved paths, staged and unstaged diffs, and the current patch (`git rebase --show-current-patch` when available). Read the stored original branch/tip, destination, completed steps and remaining todo where the backend provides them. Recover the original replay boundary or intended commit set from prior context and available history; rebase metadata may not retain that boundary. Keep the stored destination and sequence; do not start another rebase or change the base during continuation. Inspect any pending `exec` or other custom todo action before allowing it to run.
+Inspect status, unresolved paths, staged/unstaged diffs, and `git rebase --show-current-patch` when available. Read stored original branch/tip, destination, completed steps, and todo. Recover the old boundary or intended picks from session/history; metadata may omit it. Retain destination and sequence; do not start another rebase or change its base. Inspect pending exec/custom todo actions before running them.
 
-- **Conflicts:** resolve only files involved in the current replay, preserving both the intended change and relevant upstream behavior. Ask about semantic ambiguity. Review and stage only the resolved paths, then confirm there are no unresolved entries or unrelated staged edits before `git rebase --continue`.
-- **Signing failure:** confirm the staged patch belongs to the stopped replay. A signing error can leave applied changes and reschedule the failed pick; a repeated todo entry alone is not permission to delete or skip it. Use the shared reference to select hardware access, then continue the existing rebase. If it still fails, inspect the new state and report the blocker; do not repeat unchanged attempts.
-- **Other stops:** distinguish an intentional edit, an empty commit, a failed hook or todo command, and unrelated user changes. Follow the requested history edits; ask before dropping work or changing an action whose intent is unclear.
+- **Conflicts:** resolve only current-replay files, preserving intended changes and relevant upstream behavior. Ask about semantic ambiguity. Review and stage only resolutions; require no unresolved entries or unrelated staged changes before continuing.
+- **Signing failure:** verify the index belongs to this replay. Applied changes and a rescheduled pick may coexist; a repeated todo entry grants no permission to delete/skip. Select hardware access through that reference before continuing once. Inspect any further failure, and report its blocker without repeating unchanged attempts.
+- **Other stops:** distinguish edit, empty commit, hook/todo failure, and unrelated changes. Follow requested history edits; ask before dropping work or changing an unclear action.
 
-Before each continuation, recheck the operation identity, HEAD, todo and index/worktree state against what was just reviewed; run those checks inside an escalated invocation when applicable. If they changed while awaiting approval, stop and inspect again. Use `GIT_EDITOR=true` only when continuing should accept the existing message unchanged. Never claim a failed continuation left the index or todo untouched; read the resulting state.
+Before `git rebase --continue`, recheck operation identity, HEAD, todo, index, and worktree against inspected state. Run checks inside escalation when applicable; stop and inspect approval-time drift. Use `GIT_EDITOR=true` only to accept an existing message unchanged. Read resulting state after failure; do not claim index/todo stayed untouched.
 
 ## Verify and report
 
-After success, confirm the original branch is checked out, rebase metadata is gone, and the destination is an ancestor of its new tip. When the original replay boundary is known, compare `OLD_BOUNDARY_SHA..ORIGINAL_TIP_SHA` with `DESTINATION_SHA..HEAD` using `git range-diff`; inspect every changed, added or dropped patch. Otherwise compare identifiable original picks with their replacements and report the limit on verifying the complete range; do not substitute a guessed boundary. Check the graph separately when preserving merges. Account for upstream-equivalent commits rather than assuming equal counts prove correctness.
+Confirm original branch, removed rebase metadata, and destination ancestry. With the old boundary known, `git range-diff OLD_BOUNDARY_SHA..ORIGINAL_TIP_SHA DESTINATION_SHA..HEAD`; inspect every changed, added, or dropped patch. Otherwise compare identifiable picks and report incomplete-range verification; do not guess a boundary. Check merge topology separately. Explain upstream-equivalent omissions; equal commit counts prove nothing.
 
-Check signatures on newly created commits when signing was required, distinguishing a missing signature from verification that lacks local trust configuration. Run the repository's applicable non-fixing checks over the rebased result, including conflict resolutions; report unavailable or failing checks. A completed rebase and passing validation are separate outcomes.
+Check required signatures on new commits, separating missing signatures from missing local trust. Run applicable non-fixing repository checks over the rebased result and conflict resolutions; report unavailable/failing validation separately from rebase completion.
 
-Report the branch, destination, old/new tips, commits replayed or omitted with reasons, checks, and final worktree status. If paused, identify the stopped commit, blocker, and next safe action. Do not report success while a rebase is active or hide pending validation. Any publishing step requires its own user request.
+Report branch, destination, old/new tips, replayed/omitted commits with reasons, checks, and final worktree status. If paused, name the stopped commit, blocker, and next safe action. An active rebase is not success; pending validation stays explicit. Publishing requires its own request.

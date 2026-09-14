@@ -1,97 +1,34 @@
 # Engineering Verification
 
-What "verify" means when the domain is code — the recipe behind the neutral verification tiers,
-Stop-the-Line, health boundaries, and the acceptance gate, whose recipe sits in the sibling
-`./acceptance-gate.md` (`implement-task`, `implement`, `review-task`, `resume-task`,
-`reconcile-task`, `fix-findings`).
-`../workflow/execution-loop.md` owns *that* you verify and gate; this file owns *what to run*.
+What "verify" means when the domain is code: the recipe behind the neutral verification tiers, Stop-the-Line, health boundaries, and the acceptance gate in `./acceptance-gate.md` (`implement-task`, `implement`, `review-task`, `resume-task`, `reconcile-task`, `fix-findings`). `../workflow/execution-loop.md` owns *that* you verify and gate; this file owns *what to run*.
 
 ## Two verification tiers
 
-`../workflow/execution-loop.md` § *Two verification tiers* is the one definition of the tiers and of
-what each proves; this section is the code-domain recipe for running them:
+`../workflow/execution-loop.md` § *Two verification tiers* defines the tiers; this is the code recipe:
 
-- **Unit outcome** — immediately run the unit's stated verify criterion (see the consumer's
-  **Source** binding in `../workflow/execution-bindings.md`). Then validate every comment the unit added
-  or edited against `code-style.md` → Comments — that unit's comments only, never a repo-wide comment
-  audit — and fix what that section prohibits before recording the outcome. Then, where the project
-  exposes a formatter, run it over the files that unit touched — those files only, never a repo-wide
-  format run — and fix the drift it reports before the outcome is recorded, so no later boundary's
-  delta carries formatting churn this unit left behind. This proves the new behavior, its touched comments,
-  and their formatting; it is not integrated-health evidence.
-- **Integrated health** — at every consumer-declared health boundary, run every exposed typecheck,
-  lint, test, and distinct build command over the **dependency closure of the delta** since a recorded
-  reference: this run's last green boundary. Outside the closure a file keeps that boundary's verdict,
-  so re-running it proves nothing — the whole warrant for narrowing, and why it holds only where the
-  reference carries a verdict. **A boundary whose reference carries no in-session green
-  result runs the whole relevant surface instead.** Discovery is unchanged — the project's
-  authoritative manifests, documented verification commands, and CI configuration — and every
-  discovered command still runs; only its scope narrows. Record as unavailable a check class the
-  project exposes no command for.
+- **Unit outcome**: immediately run the unit's stated verify criterion (the consumer's **Source** binding, `../workflow/execution-bindings.md`). Then validate every comment the unit added or edited against `code-style.md` → Comments, that unit's comments only, and fix what it prohibits. Then, where the project exposes a formatter, run it over the touched files only and fix the drift before recording the outcome. This is not integrated-health evidence.
+- **Integrated health**: at every consumer-declared health boundary, run every exposed typecheck, lint, test, and distinct build command over the **dependency closure of the delta** since this run's last green boundary. **A boundary whose reference carries no in-session green result runs the whole relevant surface instead.** Discovery is unchanged (manifests, documented verification commands, CI configuration) and every discovered command still runs; only its scope narrows. Record as unavailable a check class the project exposes no command for. Scope computation is `./boundary-scope.md`, read at a boundary.
 
-  How that scope is computed — per-class scopes, runner caches, reference and delta, widening
-  triggers, infra-bound commands, concurrency — is `./boundary-scope.md`, read at a boundary and not
-  between them.
+A unit criterion that happens to invoke a health command does not exempt the next boundary. A rollback is a work-product edit like any other.
 
-Invalidation is the home's rule (`../workflow/execution-loop.md` § *Two verification tiers*), and a
-rollback is a work-product edit like any other. What it adds here: a unit criterion that happens to
-invoke one health command does not exempt the next boundary, which re-runs the closure of what changed
-since the last green one, so boundary count stops mattering.
-
-How `fix-findings` pays these tiers across a batch, and what a red boundary reruns:
-`./batched-fixes.md` — read at a `fix-findings` health boundary, and above all when that boundary is
-red.
+How `fix-findings` pays these tiers across a batch, and what a red boundary reruns: `./batched-fixes.md`.
 
 ## What a boundary records
 
-**The one home for the shape of a recorded code-domain boundary**, cited by every consumer's
-`**Health:**` field rather than restated. That field stays domain-neutral: the same skills run
-documentation tasks, whose boundary is `../documentation/verification.md` § *Integrated health —
-declared boundaries*, defining none of these. In order:
+The shape of a recorded code-domain boundary, cited by every consumer's `**Health:**` field. In order:
 
-- **The reference** — the `worktree-merge.ts` manifest the delta was taken against and the tree it
-  captured. A boundary that took none records why instead, and no delta: `whole surface: reference
-  carries no in-session green result`, `reference skipped: no narrowing class exposed`, `reference
-  skipped: no kit root`.
-- **The delta** — its size in paths.
-- **Per command** — its scope (delta, closure, or whole tree) and its result. A widened scope names
-  the `./boundary-scope.md` § *Widening* trigger; a class reaching its closure as a cached whole-tree
-  run says so. An infra-bound command records that file's `not run in-session: needs <X>; carried by
-  CI required check <name>` / `uncovered` form instead of a result, leaving the boundary green.
+- **The reference**: the `worktree-merge.ts` manifest the delta was taken against and the tree it captured. A boundary that took none records why instead, and no delta: `whole surface: reference carries no in-session green result`, `reference skipped: no narrowing class exposed`, `reference skipped: no kit root`.
+- **The delta**: its size in paths.
+- **Per command**: its scope (delta, closure, or whole tree) and its result. A widened scope names the `./boundary-scope.md` § *Widening* trigger; a class reaching its closure as a cached whole-tree run says so. An infra-bound command records that file's `not run in-session: needs <X>; carried by CI required check <name>` / `uncovered` form instead of a result, leaving the boundary green.
 
 ## Stop-the-Line (when either tier fails)
 
-Read `../workflow/execution-loop.md` § *Stop-the-Line* for the rule itself, its triage order, and the
-blocked stop. Below is what each of those triage steps means when the deliverable is code: localize
-with `git bisect` where the failure is a regression, and **fix the root cause, not the symptom** —
-deduplicating in the UI when the API returns duplicates is a symptom fix; fixing the JOIN is a
-root-cause fix.
+`../workflow/execution-loop.md` § *Stop-the-Line* is the rule and its triage order. In code: localize with `git bisect` where the failure is a regression, and fix the root cause, not the symptom (fix the JOIN, not the UI deduplication).
 
-**Guarding against recurrence is where code has a discipline of its own.** Add a regression test that
-fails without the fix and passes with it. Prove the red half before the fix lands wherever that order
-is yours (`./execution.md` § *Prove-It pattern*, the planned bug-fix step); once it is live, the only
-thing left to un-fix is working code. Never edit the shared tree back to the broken state to get that
-red — an interruption then leaves the defect reintroduced in tracked code with only an unversioned
-copy to restore from — and `git stash` is no substitute, since `./rules.md` forbids mutating Git state
-unasked. Use a throwaway `git worktree` at the pre-fix state and remove it after: transient scratch
-that commits nothing and makes no branch sits inside that rule rather than against it
-(`../workflow/parallel-batch.md`). That pre-fix state is the shared tree with only the fix withheld,
-not the commit under it: `git worktree add` checks out a commit, and under the no-commit rule the tree
-carries earlier units and the new test itself uncommitted — so seed the worktree from the shared tree
-as that file's batches do, withhold the fix, and carry the test in. A red from an absent test or a
-missing module is not the red half. Where even that is unavailable, record the guard as proved
-forward-only — a gap the unit's report surfaces, not a cleared step, since a test written after the
-fix tests the implementation rather than the bug (`../workflow/execution-loop.md` § *Don't
-Rationalize*) — rather than asserting a red half that was never run.
+Guard against recurrence with a regression test that fails without the fix and passes with it, proving the red half before the fix lands wherever that order is yours (`./execution.md` § *Prove-It pattern*). Never edit the shared tree back to the broken state to get that red, and never `git stash` for it (`./rules.md` forbids mutating Git state unasked). Use a throwaway `git worktree` (detached with `--detach`, no branch, no commit) seeded from the shared tree as `../workflow/parallel-batch.md`'s batches are, the fix withheld and the test carried in, and remove it after. A red from an absent test or a missing module is not the red half. Where even that is unavailable, record the guard as proved forward-only, a gap the report surfaces rather than a cleared step.
 
 ## Integration assertions
 
-At each consumer-declared integration-assertion gate, run every named assertion and exercise every
-named end-to-end flow **end to end**, never assuming it holds because unit tests pass. Integration
-assertions and health boundaries may be adjacent, but their evidence remains distinct: an assertion
-does not narrow or replace the boundary's recipe, and health does not replace a named assertion. If
-an assertion fails, apply Stop-the-Line; if its recovery changes the work product, run a fresh health
-boundary before presenting the run as complete.
+At each consumer-declared integration-assertion gate, run every named assertion and exercise every named end-to-end flow end to end, never assuming it holds because unit tests pass. Assertion evidence and boundary evidence stay distinct; neither replaces the other. A failed assertion is Stop-the-Line, and a recovery that changes the work product runs a fresh health boundary before the run is presented.
 
-What the acceptance gate runs against shipped behavior, including drift spot-checks and `(external)`
-goals: `./acceptance-gate.md` — read when running the acceptance gate on code goals.
+The acceptance gate on code goals, drift spot-checks and `(external)` goals included: `./acceptance-gate.md`.

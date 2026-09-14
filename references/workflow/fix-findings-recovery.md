@@ -1,117 +1,60 @@
 # fix-findings: Recovery and Delegation Mechanics
 
-The failure-path and delegation machinery of the `fix-findings` skill — dependency-safe recovery, the red health-boundary procedure, and the executor and batch mechanics — split out of that skill's SKILL.md, which keeps the gate, the loop bindings, the capture rules, and the report. Read this file when a final-integrated outcome or a health boundary fails, or before the first delegation. A `fix-findings` § citation names a section of that SKILL.md.
+A `fix-findings` section citation refers to `skills/fix-findings/SKILL.md`.
 
 ## Dependency-safe recovery
 
-Use coordinator-managed scratch copies seeded from the immutable baseline. Replay the ordered change
-sets in dependency-closed groups and test the active failure predicate there. Here the post-execution
-form of `fix-findings` § *The Gate: Auto vs Ask*'s definition applies: a dependency includes an explicit dependency and
-overlapping or ordering-sensitive change sets; never replay a later overlapping fix alone when its patch
-embeds or relies on earlier bytes.
+Use coordinator-managed scratch copies seeded from the immutable baseline. Replay ordered change sets in dependency-closed groups and test the active failure predicate. Dependencies include explicit dependencies and overlapping or ordering-sensitive change sets (`fix-findings` § *The Gate: Auto vs Ask*). Do not replay a later overlapping fix without earlier bytes it embeds or requires.
 
-**Establish the control before isolating**, per the green-control rule in
-`./execution-recovery.md` § *Evidence lifecycle*. The two predicates below need different controls,
-and using the wrong one implicates work that was never at fault.
+Establish a green control before isolating (`./execution-recovery.md` § *Evidence lifecycle*):
 
-- **A failed health command** — the control is the immutable baseline, already proven green by the
-  comparison the boundary section runs first. Isolate with only the failed command or commands, never
-  the whole recipe, each named over its resolved targets minus those the replayed state does not
-  carry (`./execution-recovery.md` § *Evidence lifecycle*) — a group replayed without the change set
-  that added a target must not be handed that target, or it is implicated by the omission rather than
-  by its own work.
-- **A failed final-integrated outcome** — the control is the baseline **plus that finding's own change
-  set**, never the bare baseline, which predates the fix and so reproduces the finding's problem by
-  definition. Every replayed group carries that change set and its dependency closure, and that
-  finding's **full outcome tier** is what is tested — the same tier whose failure opened the
-  recovery, never the criterion alone, or a tier that failed on a per-unit check leaves every
-  replayed group green and implicates nobody. Replay it alone first: if that tier still fails there,
-  the fix itself is inadequate — bucket that finding Fix failed and implicate no other group.
+- **Failed health command:** use the baseline proven green by the comparison below. Test only failed commands over their resolved targets, excluding targets absent from each replayed state.
+- **Failed final-integrated outcome:** use the baseline plus that finding's change set and dependency closure. Run its full outcome tier on this control and every replayed group containing it. If the control fails, bucket that finding Fix failed without implicating another group.
 
-Against its own control: if one group fails alone, it is the implicated dependency group. If groups
-pass alone but a combination fails, isolate the smallest supported interaction group. If the evidence remains ambiguous, implicate
-and revert the whole ambiguous group rather than guessing that the most recent fix caused it. Recovery
-records say whether the result was one fix, a dependency group, or an interaction group; they do not
-misattribute a group failure to every member as an individual failure.
+A group failing alone implicates that dependency group. Groups passing alone but failing together implicate the smallest supported interaction group. Revert the whole ambiguous group when evidence cannot distinguish its members; do not blame recency. Record whether the evidence implicates one fix, a dependency group, or an interaction group.
 
-Rebuild the shared tree from the immutable baseline plus survivor change sets in original order. The
-result must equal that baseline plus exactly the ultimately reported survivors, with every pre-run
-byte and presence otherwise preserved and every unattributed byte held by the attribution bound of `fix-findings` § *Content baseline and immediate outcomes* — the equality is a statement about this run's own change sets, never a licence to delete what
-the run did not write. Do not reverse-patch, reset, or check out user content. **A survivor whose
-known dependency is in the implicated group is not a survivor**: it joins that group, is reverted
-with it, and is bucketed Fix failed naming that prerequisite — the same rule the immediate path
-applies to a not-yet-attempted fix (`fix-findings` § *Content baseline and immediate outcomes*), for the same reason. Replaying it onto a base missing its
-prerequisite's bytes tests nothing, and the next pass would then read it as independently inadequate,
-which is the cascade misattribution this section forbids. A later fix that overlaps an implicated
-change set survives only when it is independently replayable or re-executable and its outcome can be
-re-proved on the rebuilt base; otherwise it too remains in the implicated dependency group. **Which of
-the two is permitted follows the fix's authority.** A Confirmed auto-path fix may be re-executed,
-because the verdict authorizes the change rather than a particular diff. An **ask-approved** fix may
-only be replayed verbatim from its recorded change set: what the user approved was an edit, these
-exact bytes (`fix-findings` § *The Gate: Auto vs Ask*), and re-executing it against a different base regenerates
-bytes nobody approved. An ask-approved fix that cannot be replayed verbatim is re-approved against a
-freshly shown diff or bucketed Fix failed — never silently re-derived. Re-prove every survivor on
-the rebuilt final tree. Remove scratch copies and captures once their evidence has been recorded;
-never mutate Git state.
+Rebuild the shared tree from the immutable baseline plus survivor change sets in original order, within `fix-findings` § *Content baseline and immediate outcomes*' attribution bound. The run-owned result must equal exactly those survivors; preserve all other pre-run content and presence. Do not reverse-patch, reset, or check out user content.
+
+A survivor requiring an implicated fix joins its failed group and names that prerequisite in Fix failed. A later overlapping fix survives only if independently replayable or re-executable and re-provable on the rebuilt base:
+
+- A Confirmed auto-path fix may be re-executed.
+- An ask-approved fix may only replay its approved change set verbatim. If that fails, obtain approval of a fresh diff or bucket it Fix failed (`fix-findings` § *The Gate: Auto vs Ask*).
+
+Re-prove all survivors on the rebuilt final tree. After recording evidence, remove scratch copies and captures under the skill's write-surface rule.
 
 ## Red boundary: comparison, disposition, recovery
 
-If it is red, rerun only the failed command or commands against the immutable baseline first — each
-over the **targets the boundary's invocation resolved on the shared tree**, named explicitly so that
-only the tree changes, never the selecting command re-evaluated on the baseline, where it recomputes
-against pre-change bytes and passes vacuously (`./execution-recovery.md` § *Evidence lifecycle*).
-**A named target the baseline does not carry is excluded from that rerun**, per the same section: a
-fix that adds a file — the ordinary shape of a missing-regression-test fix — resolves targets the
-baseline never had, and naming one there exits on a missing path, a red the comparison itself caused
-and would otherwise read as the matching baseline failure below. Where the exclusion empties a
-command's target set, that command's comparison is **inconclusive**.
-Rerun it in a coordinator-managed scratch copy seeded from the baseline and materialized with the
-dependency and build state that command needs, so an exposed command can execute there at all; never
-by moving the shared tree back to the baseline to observe it, and never a second boundary recipe
-merely to compare. **Reuse or link that state from the shared tree only where no retained change set
-affects it**, and re-derive it from baseline sources otherwise: a fix that touched a manifest, a
-lockfile, a codegen input, or a build input leaves the shared tree's derived state downstream of
-this run's own edits, and baseline sources under it are a hybrid rather than the baseline — which is
-exactly the control this comparison exists to establish. A command that cannot execute in that copy,
-or whose state cannot be re-derived from the baseline, yields an **inconclusive comparison** —
-neither matching nor green, and never grounds for selectively implicating one fix.
+First rerun only failed commands against the immutable baseline. Name the targets each boundary invocation resolved on the shared tree; do not re-evaluate its selector against baseline sources (`./execution-recovery.md` § *Evidence lifecycle*). Exclude targets absent from the baseline. An empty target set makes that comparison inconclusive.
 
-Neither a matching baseline failure nor an inconclusive comparison attributes the failed boundary to
-a particular fix, but they differ in what they prove, and the disposition follows that difference.
+Run this comparison in a coordinator-managed scratch copy, with the dependencies and build state its commands need. Keep the shared tree in place. Reuse or link derived state only when no retained change set affects it; otherwise re-derive it from baseline sources. An unexecutable command or unreconstructable state makes the comparison inconclusive. The comparison is not another full health recipe.
 
-**A matching baseline failure** is positive evidence the run did not cause the red: the same command
-was already failing on bytes that predate every fix. Retain the survivors and report each under
-**Health uncertifiable** — its final-integrated outcome evidence, the baseline-failing command, and
-that no boundary certifies this tree. They are not Fixed, since Fixed requires a green boundary; the
-certifying re-review the run's **Next** points at is what resolves them. Reverting outcome-verified
-work over a failure the baseline already carried would discard the user's fixes for a defect they did
-not introduce.
+Apply the evidence per failed command; selective isolation requires a green control for that predicate:
 
-**An inconclusive comparison** proves nothing either way — the control was never established. Restore
-the shared tree to the immutable pre-run content baseline within the attribution bound of `fix-findings` § *Content baseline and immediate outcomes* and place
-every still-retained attempted fix in Fix failed, naming the reason the comparison could not run.
-Preserve Decided, Untouched, and earlier immediate-failure buckets; no changed-code survivor remains.
-This is collection-level rollback on an unestablished control, not selective fault attribution.
+- **Matching baseline failure:** retain outcome-proved survivors as **Health uncertifiable**, naming the command, targets, and final-outcome evidence. State that the tree lacks a certifying boundary; direct the user to the skill's re-review next step.
+- **Inconclusive comparison:** restore the immutable baseline within `fix-findings` § *Content baseline and immediate outcomes*' attribution bound. Bucket every still-retained attempted fix Fix failed, naming why comparison could not run. Retain no changed-code survivor.
+- **Green baseline control:** use § *Dependency-safe recovery* with the failed commands. Rebuild baseline plus survivors, re-prove their final outcomes, and run a fresh complete health boundary referenced to the immutable pre-run baseline. Repeat if red. If recovery cannot converge this session, restore the baseline within the same attribution bound and bucket all remaining attempts Fix failed with the unresolved-health reason.
 
-If the failed command is green at baseline, use dependency-safe recovery with those failed commands
-as the predicate. Rebuild from baseline plus survivors, re-prove every survivor's final-integrated
-outcome, then run one fresh health boundary over that candidate, **referenced to the immutable
-pre-run baseline** — a rebuilt candidate is that baseline plus a subset of change sets, so it has no
-green boundary of its own to reference. Repeat when that boundary is still red. If recovery cannot
-converge to a green complete boundary in this session, restore the pre-run baseline within that same
-attribution bound and place every still-retained attempted fix in Fix failed with the
-unresolved-health reason. Preserve Decided, Untouched, and earlier immediate-failure buckets; no
-changed-code survivor remains or is reported Fixed. A fresh boundary is only for this failure
-recovery; otherwise the successful boundary remains the run's one health boundary.
+Collection rollback preserves Decided, Untouched, and earlier immediate-failure buckets. Only recovery earns another health boundary; the happy path keeps its single pass.
 
 ## Delegation mechanics
 
-A delegated fix runs through an **executor** per the `fix-findings` binding in `./executor-contract.md` § *Bindings* — read it before the first delegation — on the engine and defaults in `./executor-routing.md` § *Write-mode engine registry*. That engine is `native`, whose host adapter supplies those defaults, for every fix delegated inside the same Confirmed auto-path surface (`fix-findings` § *Execution strategy: every auto-path fix delegates*), which is every such fix no posture exception keeps inline — an exception fix still runs on the coordinator. That binding fixes the packet; the point of it is that the executor sees only the packet — the finding verbatim, its root cause, the chosen fix option, the expected surface, its processing order and any known dependencies, the always-applying pack section verbatim, the engineering-pack guidance the fix's surface triggers by path, the per-unit checks — and never this session, so whatever the fix depends on has to be in it. The coordinator takes the report through the intake in `./executor-contract.md` § *Write-mode routing* — every heading read, a failed criterion or a scope escape routed to the failure path rather than accepted, and that section deciding whether the immediate outcome is proved again here — then captures the ordered change set and performs the final-integrated checks and health boundary.
+Launch an **executor** on `native` under `./executor-contract.md` § *Bindings* and `./executor-routing.md` § *Write-mode engine registry*. Use the Confirmed auto-path surface from `fix-findings` § *Execution strategy: every auto-path fix delegates*.
 
-**The write surface binds the executor exactly as it binds you**: working-tree code and nothing else, never staged, never committed, no other Git state mutated, and nothing written back to the findings' source — no reply, no resolved thread, no push. The binding restates it for the executor. Delegation is not an escape hatch from the Git-discipline rule.
+Supply the binding's complete packet: finding verbatim, root cause, chosen option, expected surface, order, dependencies, always-applicable pack guidance verbatim, surface-specific guidance paths, and per-unit checks. Include the skill's write-surface restriction. The executor receives this packet without session history.
 
-**Announce and record.** Delegation is the standing posture inside that surface (`./write-mode-posture.md`), so what chat announces is any fix that stays with the coordinator and which of the three exceptions kept it there. Note the delegation and the engine that ran it inside the affected `Fixed` / `Fix failed` entry — no new bucket — and note an exception fix's exception in the same place. That entry is this skill's shape for the record the posture file requires.
+Apply `./executor-contract.md` § *Write-mode routing* to every returned report. Reject failed criteria and scope escapes; re-prove immediate outcomes when intake requires it. Only then capture the ordered change set. The coordinator performs final-integrated checks and health.
 
-**Parallel batches.** Confirmed auto-path fixes may batch only under `./parallel-batch.md` § *Coordinator-side parallel batch*; its worktree placement, frozen shared tree, complete content/presence surface checks, ordered incorporation, and cleanup bind here. The order is this skill's processing order (`fix-findings` § *The Gate: Auto vs Ask*), and each expected surface is the chosen option's stated blast radius. After every merge, re-prove that finding's full outcome tier on the integrated tree — never the criterion alone, and never on a worktree-placed executor's own report; a declared serial fallback's report goes through the intake instead (`./executor-contract.md` § *Write-mode routing*) — before appending its incorporated content/presence change set — relative to the shared state immediately before it, with known dependencies — to the immutable run-baseline recovery ledger. After all selected fixes, these ledger entries feed the final-integrated outcome sweep and the one retained-collection health boundary; a batch adds no health pass of its own.
+Record delegation, engine, and batch in the finding's Fixed or Fix failed entry. For an inline exception, announce and record the applicable `./write-mode-posture.md` exception.
 
-**Failure keeps revert-and-continue intact.** An unavailable or hung batch executor, like a surface escape or a conflict, discards its worktree — which leaves the shared tree untouched, the cleanest revert available — and the fix then re-executes serially, at the placement its engine defines, per `./parallel-batch.md` § *Coordinator-side parallel batch*: the integrated tree. All four triggers reach that one path; none of them silently drops the fix. For a serial delegate, the coordinator restores the pre-fix content capture on an immediate failure — within the attribution bound of `fix-findings` § *Content baseline and immediate outcomes*, so residue the run did not write is surfaced rather than reverted — then takes the next rung: retrying inline, or bucketing the finding Fix failed and continuing. A **merge-position** integrated-outcome failure restores the exact pre-incorporation capture `fix-findings` § *Content baseline and immediate outcomes* took, buckets the finding Fix failed, and continues — at that position the incorporation is the newest delta and its capture is still in hand, so the ledger recovery's own rationale (later fixes landed on top, the capture may be gone) does not apply, and the failed unit has no ledger entry to recover from in any case (`./parallel-batch.md` § *Coordinator-side parallel batch* records a change set only after the outcome passes). A **later** final-outcome or health failure is recovered from the ordered change-set ledger and immutable baseline above, never by unapplying a patch from the live dirty tree. The absolute half holds throughout: remove worktrees before recovery and never continue with a failing fix or implicated group left in the tree.
+**Parallel batches:** apply `./parallel-batch.md` § *Coordinator-side parallel batch*. Surfaces come from the chosen options' stated blast radii and must be pairwise disjoint. Follow the skill's dependency-respecting processing order for incorporation. Keep the shared tree frozen while executors run, check complete content/presence surfaces, and use the ordered merge gates.
+
+After each incorporation, prove that finding's full outcome tier on the integrated tree before recording its delta. A worktree executor's own proof cannot substitute; serial fallbacks use intake. Append the actual content/presence delta against the immediately preceding shared state, with dependencies, to the run-baseline recovery ledger. Those entries feed the final sweep and retained-collection boundary; no batch adds a health pass.
+
+**Fallbacks:**
+
+- An unavailable, hung, surface-escaping, or conflicting batch executor loses its worktree and re-executes serially on the integrated tree under the parallel-batch contract. Do not silently drop the fix.
+- A serial delegate's immediate failure restores the pre-fix capture within the skill's attribution bound. Retry inline or bucket it Fix failed and continue independently.
+- A merge-position outcome failure restores the exact pre-incorporation capture and buckets the finding Fix failed. It receives no ledger entry.
+- Later final-outcome or health failures use the immutable baseline and ordered ledger above.
+
+Remove executor worktrees before recovery. Continue only after removing failed fixes and implicated groups from the shared tree.

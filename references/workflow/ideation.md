@@ -1,51 +1,23 @@
 # Ideation Method: Diverge then Converge
 
-The two-phase ideation method behind `refine-idea`, which cites this file directly. **This file is the single source of truth for the method.** The skill runs these two phases, then writes the result as a `CONTEXT.md` one-pager and hands off to `plan-task`.
-
-The two phases are sequential. Don't skip them to jump straight to the one-pager.
+The two-phase method `refine-idea` runs before writing its `CONTEXT.md` one-pager. The phases are sequential; do not skip to the one-pager.
 
 ## Phase 1 — Diverge
 
-**Goal:** Open the idea up before narrowing it down.
+Open the idea up before narrowing it.
 
-1. **Restate as "How Might We"** — Reframe the user's input as a one-sentence "How might we…" problem. This forces clarity on what's actually being solved versus what's being assumed.
-2. **Ask 3–5 sharpening questions** — No more. Focus on:
-    - Who is this for, specifically?
-    - What does success look like?
-    - What are the real constraints (time, tech, resources)?
-    - What's been tried before?
-    - Why now?
+1. **Restate as "How Might We"**: one sentence naming what is being solved versus what is assumed.
+2. **Ask 3–5 sharpening questions**, no more: who is this for, what does success look like, what are the real constraints, what has been tried, why now. Do not proceed until the target user and rough success picture can inform a direction.
+3. **Generate 5–8 variations** through the lenses that fit: inversion (the opposite), constraint removal, audience shift, combination with an adjacent idea, simplification (10× simpler), the 10× version, the expert lens. Push beyond the initial ask; each variation has a reason to exist.
 
-    Don't proceed until the target user and rough success picture are concrete enough to inform the recommended direction.
-3. **Generate 5–8 variations** using lenses (pick the ones that fit; don't run all mechanically):
-    - **Inversion** — What if we did the opposite?
-    - **Constraint removal** — What if budget / time / tech weren't factors?
-    - **Audience shift** — What if this were for a different user?
-    - **Combination** — What if we merged this with an adjacent idea?
-    - **Simplification** — What's the version that's 10× simpler?
-    - **10× version** — What would this look like at massive scale?
-    - **Expert lens** — What would domain experts find obvious that outsiders miss?
-
-    Push beyond what the user initially asked for. Each variation should have a reason it exists, not just be a bullet point.
-
-**Ground in what exists:** Use the domain's reality to ground variations in existing structure, patterns, and prior art — cite specifics rather than speaking in the abstract. When the domain is code, that means grep / file reads / codebase search (see `../engineering/exploration.md`).
+**Ground in what exists:** cite specifics from the domain's existing structure, patterns, and prior art rather than speaking in the abstract. For code, that means grep, file reads, and codebase search (`../engineering/exploration.md`).
 
 ## Phase 2 — Converge
 
-After the user reacts to Phase 1 (signals which variations resonate, pushes back, adds context), shift to evaluation.
+After the user reacts to Phase 1, evaluate.
 
-1. **Cluster** the resonant ideas into 2–3 distinct directions. Each direction should feel meaningfully different, not just variations on the same theme.
-2. **Stress-test** each direction on three axes:
-    - **User value** — Who benefits and how much? Painkiller or vitamin?
-    - **Feasibility** — Cost and effort to pull off? What's the hardest part?
-    - **Differentiation** — What makes this genuinely different? Would someone switch?
-3. **Surface hidden assumptions.** For each direction, name explicitly:
-    - What you're betting is true but haven't validated
-    - What could kill the idea
-    - What you're choosing to ignore (and why that's okay for now)
+1. **Cluster** the resonant ideas into 2–3 meaningfully different directions.
+2. **Stress-test** each on user value (painkiller or vitamin), feasibility (cost, the hardest part), and differentiation (would someone switch).
+3. **Surface hidden assumptions** per direction: what is bet on but unvalidated, what could kill it, what is ignored for now and why that is acceptable. Do not skip this.
 
-    This is where most ideation fails. Don't skip it.
-
-**Be honest, not supportive.** A good ideation partner is not a yes-machine. If a direction is weak, say so with kindness and specificity.
-
-After converging, hand the chosen direction, its key assumptions, MVP scope, and "Not Doing" list to the skill's output phase. The testable, plan-specific goals are not written here — `refine-idea` defers them to `plan-task`'s goals step.
+Be honest, not supportive: name a weak direction with specificity. Hand the chosen direction, its assumptions, MVP scope, and "Not Doing" list to the skill's output phase. Testable goals are deferred to `plan-task`.

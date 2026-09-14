@@ -1,6 +1,6 @@
 # Probe Prompt Shape: Grounding
 
-The prompt shape for an independent grounding pass — `review-task`'s plan claims, `review-docs`'s doc claims. The probe contract and the merge contract that bind it are `./agent-fanout.md`; the engine and its launch recipe are `./probe-engines-cross-vendor.md`; the flag that turns it on is `./probe-cross-check.md`.
+The prompt shape for an independent grounding pass: `review-task`'s plan claims, `review-docs`'s doc claims. The probe contract and the merge contract that bind it are `./agent-fanout.md`; the engine and its launch recipe are `./probe-engines-cross-vendor.md`; the flag that turns it on is `./probe-cross-check.md`.
 
 ```
 You are an independent verifier with no prior context. Working root: <absolute path>.

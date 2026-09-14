@@ -2,132 +2,110 @@
 
 ## Input & Injection
 
-- [ ] User input validated and sanitized before use in queries, commands, or HTML
-- [ ] No string concatenation for SQL, shell commands, or HTML — use parameterized queries, safe APIs, or templating
-- [ ] `dangerouslySetInnerHTML` only with sanitized content (DOMPurify or equivalent). Where Trusted Types is enforced (see Browser Security Headers below), route DOM-sink writes through a named policy
-- [ ] Prefer `textContent`/`innerText` over `innerHTML`; use `setHTML` (Sanitizer API) where available
-- [ ] Grep risky sinks: `innerHTML`, `outerHTML`, `document.write`, `eval`, `setTimeout(string, ...)`, `script.src` assigned from untrusted input
-- [ ] URL parameters and path segments validated before use in routing, redirects, or fetches
-- [ ] No `eval()`, `new Function()`, or dynamic `import()` with user-controlled strings
-- [ ] Redirect targets validated against an allowlist — no open redirects
+- [ ] Validate/sanitize queries/commands/HTML/routes/redirects/fetch input.
+- [ ] Parameterize queries; safe command APIs/templates; no input concatenation.
+- [ ] Sanitize dangerouslySetInnerHTML; honor Trusted Types.
+- [ ] Prefer textContent/innerText or supported Sanitizer API setHTML.
+- [ ] Search innerHTML/outerHTML/document.write/eval/string timers/untrusted script.src.
+- [ ] No user-controlled eval/new Function/dynamic import strings.
+- [ ] Allowlist redirect targets.
 
 ## Authentication & Authorization
 
-- [ ] Auth checks on every protected route and API endpoint — not just UI hiding
-- [ ] Token/session validation server-side; no client-only auth gates
-- [ ] Role and permission checks at the resource level, not just the page level
-- [ ] Auth tokens in `httpOnly` cookies or secure storage — not `localStorage`
-- [ ] Logout invalidates session server-side, not just client state
+- [ ] Every protected route/API validates sessions/tokens/resource permissions server-side.
+- [ ] Auth tokens: httpOnly cookies/secure storage; no localStorage.
+- [ ] Invalidate sessions server-side on logout.
 
 ## Data Exposure
 
-- [ ] API responses contain only fields the client needs — no full database records
-- [ ] Error messages and stack traces not exposed to end users in production
-- [ ] Sensitive data (PII, tokens, passwords) not logged or included in analytics
-- [ ] No secrets, API keys, or credentials in source code — use environment variables
-- [ ] `.env` and credential files in `.gitignore`
+- [ ] Return needed fields only; hide production errors/stacks.
+- [ ] Exclude PII, tokens, and passwords from logs/analytics.
+- [ ] Credentials in environment variables; ignore .env/credential files.
 
 ## CSRF & Cookies
 
-- [ ] State-changing requests use CSRF tokens or rely on `SameSite=Lax`/`Strict` cookies
-- [ ] First-party session cookies named with the `__Host-` prefix (requires `Secure; Path=/`, no `Domain` attribute) — protects against same-site and network attackers
-- [ ] When `__Host-` doesn't fit (subdomain sharing), use `__Secure-` prefix
-- [ ] Third-party / embedded contexts: `SameSite=None; Secure; Partitioned` (CHIPS). Never unpartitioned `SameSite=None` — increasingly blocked for tracking
-- [ ] `Content-Type` validated on API endpoints that parse request bodies
-- [ ] CORS `Access-Control-Allow-Origin` not set to `*` for authenticated endpoints; never paired with `Access-Control-Allow-Credentials: true`
+- [ ] Mutations require CSRF tokens or SameSite=Lax/Strict cookies.
+- [ ] Sessions: __Host- cookies (Secure; Path=/; no Domain); subdomain sharing: __Secure-.
+- [ ] Embedded cookies: SameSite=None; Secure; Partitioned (CHIPS); no unpartitioned SameSite=None.
+- [ ] Validate request Content-Type before parsing.
+- [ ] No Access-Control-Allow-Origin: * on authenticated endpoints or with Access-Control-Allow-Credentials: true.
 
 ## Browser Security Headers
 
-A layered baseline. Companion headers (HSTS, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, SRI) are low-risk and can ship immediately; CSP, Trusted Types, and cross-origin isolation are the high-leverage, higher-effort rollouts.
+Deploy companion headers first; stage other policies below.
 
 ### Companion headers (low risk, deploy first)
 
-- [ ] `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload` — start with short `max-age` (e.g., 300s), ramp to 1 year. A long misconfigured HSTS can lock users out
-- [ ] `X-Content-Type-Options: nosniff` paired with correct server `Content-Type` for every response
-- [ ] `Referrer-Policy: strict-origin-when-cross-origin` as a safe default (see `privacy.md`)
-- [ ] `Permissions-Policy: camera=(), geolocation=(), microphone=()` — disable powerful features by default, delegate via iframe `allow=` only where needed (see `privacy.md`)
-- [ ] `X-Frame-Options: SAMEORIGIN` (or CSP `frame-ancestors 'self'`) to block clickjacking
-- [ ] Subresource Integrity on immutable, versioned third-party scripts: `<script src="…" integrity="sha384-…" crossorigin="anonymous">`. Never on dynamic/unversioned assets — silent updates break execution
+- [ ] Ramp verified HTTPS from HSTS max-age=300 to `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`.
+- [ ] X-Content-Type-Options: nosniff plus correct response Content-Type.
+- [ ] Default Referrer-Policy: strict-origin-when-cross-origin (`privacy.md`).
+- [ ] Default `Permissions-Policy: camera=(), geolocation=(), microphone=()`; iframe allow grants needed features (`privacy.md`).
+- [ ] Block clickjacking: X-Frame-Options: SAMEORIGIN or CSP frame-ancestors 'self'.
+- [ ] SRI only for immutable/versioned scripts: integrity="sha384-…" crossorigin="anonymous".
 
 ### Content Security Policy
 
-- [ ] Mainline directive: `script-src 'nonce-{RANDOM}' 'strict-dynamic' 'report-sample'; object-src 'none'; base-uri 'none';`
-- [ ] Use nonces (server-rendered) or hashes (static SPA HTML) — not URL allowlists, which are bypassable via open redirects, JSONP, and dependency injection on the allowed origin
-- [ ] Wire `Reporting-Endpoints` + `report-to` and watch for violations even after enforcing
-- [ ] Optional but useful: `form-action 'self'`, `upgrade-insecure-requests`, `frame-ancestors 'self'`
-- [ ] On retrofits, deploy `Content-Security-Policy-Report-Only` first and let it run for days/weeks across real traffic before enforcing
+- [ ] Baseline: `script-src 'nonce-{RANDOM}' 'strict-dynamic' 'report-sample'; object-src 'none'; base-uri 'none';`.
+- [ ] Server nonces/static-HTML hashes; no URL allowlists.
+- [ ] Monitor Reporting-Endpoints/report-to after enforcement too.
+- [ ] Consider `form-action 'self'`, `upgrade-insecure-requests`, and `frame-ancestors 'self'`.
+- [ ] Retrofits: Content-Security-Policy-Report-Only for days/weeks of traffic before enforcement.
 
 ### Trusted Types
 
-- [ ] `Content-Security-Policy: require-trusted-types-for 'script'` — blocks string assignment to dangerous DOM sinks at runtime
-- [ ] Define one named policy per app that performs sanitization/escaping; route all sink writes through it
-- [ ] Prerequisite: framework + third-party widgets emit `TrustedHTML`/`TrustedScript` values, or the policy will break them. Stage with report-only, refactor sinks, then enforce
+- [ ] Content-Security-Policy: require-trusted-types-for 'script'.
+- [ ] Route sinks through one named sanitizing/escaping policy.
+- [ ] Check framework/widget TrustedHTML/TrustedScript compatibility; report-only, refactor sinks, enforce.
 
 ### Cross-Origin Isolation
 
-Set CORP on every response based on whether it should be embeddable.
-
-- [ ] `Cross-Origin-Resource-Policy: same-origin` for authenticated data, session JSON, internal scripts
-- [ ] `same-site` for shared assets across subdomains of one eTLD+1
-- [ ] `cross-origin` only on resources intended for generic embedding (public CDN assets)
-- [ ] `Cross-Origin-Opener-Policy: same-origin-allow-popups` for most apps — blocks XS-leaks attacks from openers while leaving OAuth/payment popups working. Move to `same-origin` only when no integrations rely on `window.opener` access
-- [ ] Full COOP+COEP+CORP isolation (required for `SharedArrayBuffer`/WASM threads) is high-breakage — audit every embedded subresource for explicit CORP first. Chrome 142+: `Document-Isolation-Policy: isolate-and-credentialless` is a lighter alternative
+- [ ] CORP: same-origin for authenticated/internal responses, same-site for subdomain assets, cross-origin for public embeds.
+- [ ] COOP: same-origin-allow-popups for OAuth/payments; same-origin requires no window.opener dependencies.
+- [ ] Before COOP+COEP+CORP for SharedArrayBuffer/WASM threads, audit every embed's CORP.
+- [ ] Consider supported Document-Isolation-Policy: isolate-and-credentialless for lighter isolation.
 
 ## Cross-Origin Communication
 
-- [ ] `window.postMessage` receivers: strict equality check on `event.origin` against an allowlist — never `*` and never substring/regex matching
-- [ ] Senders: pass a specific `targetOrigin` (not `*`) when the payload is sensitive
-- [ ] Validate the payload shape before using it; treat it as untrusted input even from "known" origins
-- [ ] Iframes embedding untrusted content: start from an empty `<iframe sandbox>` (no flags = zero capabilities) and add only the tokens the embed actually needs. **Don't combine `allow-scripts` with `allow-same-origin`** on untrusted or same-origin embeds — together they let the frame script away its own sandbox. If the embed needs scripting and same-origin access, host it on a distinct origin so `allow-same-origin` doesn't apply to your own context
-- [ ] Fetch Metadata (server-side): reject `Sec-Fetch-Site: cross-site` on non-navigational endpoints; `Vary: Sec-Fetch-Site` so CDN caches don't serve poisoned responses
+- [ ] postMessage: exact allowlisted event.origin, no wildcard/substring/regex; validate payloads.
+- [ ] Sensitive sends require non-wildcard targetOrigin.
+- [ ] Untrusted iframes start empty-sandboxed; grant minimum capabilities.
+- [ ] No combined allow-scripts/allow-same-origin on untrusted/same-origin embeds; isolate necessary combinations on distinct origins.
+- [ ] Reject Sec-Fetch-Site: cross-site on non-navigational endpoints; emit Vary: Sec-Fetch-Site.
 
 ## Rollout Discipline
 
-- [ ] Use `*-Report-Only` headers first (CSP, COOP, COEP, Document-Policy); ship `Reporting-Endpoints` from day one even on enforced policies
-- [ ] Include `'report-sample'` in `script-src` so violation reports carry the first 40 chars of the offending source — essential for debugging
-- [ ] Filter report noise: ignore reports from obscure UAs, browser-extension-injected markup, and low-volume one-offs
-- [ ] Never include PII, auth tokens, or query strings with secrets in reports — mask at the edge
-- [ ] On logout: `Clear-Site-Data: "cookies", "storage", "cache"` (see `privacy.md`)
+- [ ] Stage CSP/COOP/COEP/Document-Policy report-only; emit reporting endpoints immediately, including enforced policies.
+- [ ] Include script `'report-sample'`; filter obscure-UA, extension, and low-volume report noise.
+- [ ] Edge-mask PII/tokens/secret query strings before reporting.
+- [ ] Logout: Clear-Site-Data: "cookies", "storage", "cache" (`privacy.md`).
 
 ## Dependencies
 
-- [ ] No `npm install` of unmaintained or suspiciously low-download packages
-- [ ] `package-lock.json` / `pnpm-lock.yaml` committed and reviewed for unexpected changes
-- [ ] Dependency updates checked for known vulnerabilities (`npm audit` / `pnpm audit`)
+- [ ] Avoid unmaintained/suspiciously low-download packages.
+- [ ] Commit/review lockfiles; npm audit/pnpm audit updates.
 
 ### Triaging audit findings
 
-Severity alone is not the decision. Triage on **severity × reachability × runtime-vs-dev**:
+Assess severity/reachability/runtime placement/deployment exploitability:
 
-- **Critical / High, reachable in production code path** — fix immediately (update, patch, or replace the dependency)
-- **Critical / High, dev-only or unreachable code path** — fix soon, but not a release blocker
-- **Critical / High, no patched version available** — evaluate workarounds, consider replacing the dependency, or allowlist with a documented review date
-- **Moderate, reachable in production** — fix in the next release cycle
-- **Moderate, dev-only** — track in backlog, fix when convenient
-- **Low** — fold into routine dependency updates
+- Critical/High, production-reachable: update, patch, or replace immediately.
+- Critical/High, dev-only or unreachable: fix soon; not a release blocker.
+- Critical/High, unpatched: workaround/replace or allowlist with review date.
+- Moderate, production-reachable: next release; dev-only: backlog.
+- Low: routine updates.
 
-Key questions: is the vulnerable function actually called in your code path? Is the dependency runtime or dev-only? Is the vulnerability exploitable in your deployment context (e.g., a server-side flaw in a client-only app)? When deferring, document the reason and a review date.
+Record deferral reasons/review dates.
 
 ## Review Validation Boundaries
 
-Keep reviewing general correctness, regressions, accessibility, performance, and every other applicable lens alongside this checklist.
+Continue other lenses. Permitted source/context reading is analysis; executing code/crafted inputs is active validation, including read-only invocations.
 
-Reading the reviewed code and relevant references — including project documentation, PR or ticket context, manifests and lockfiles, and dependency documentation or source — through permitted read tools is analysis, whether the source is local or external. Executing code or sending crafted input is active validation, even when the invocation is intended to be read-only.
+Validate only in authorized local environments and isolated scratch reproduction per `review.md` § *Verification Scripts*. Synthetic inputs, preset time/memory/input-size/count bounds; stop after capturing failure evidence. Never use real credentials/private data, destructive actions, production/external targets, persistence, broad discovery, or offensive tooling beyond reproducing the candidate.
 
-Active validation is limited to the authorized local environment and the isolated scratch reproduction in `review.md` § *Verification Scripts*. Use synthetic inputs and set explicit time, memory, and input-size or input-count limits before running. Stop once the candidate's failure evidence is captured. Never use real credentials or private data, destructive actions, production or external targets, persistence, broad target discovery, or tooling that adds offensive capability beyond reproducing the candidate.
+Skip unsafe/unauthorized/policy-refused reproduction; no rerouting through executors, probes, tools, or targets. Static evidence alone proves neither reproduction nor practical exploitability. Report observations, skip reasons, uncertainty, and impact preconditions; distinguish inference from observed evidence.
 
-If bounded reproduction would be unsafe, exceed the review's authorization, or is refused by policy, skip it and do not reroute the same operation through another executor, probe, tool, or target. Static inspection can still establish a defect, but it does not establish runtime reproduction or practical exploitability by itself. State what was observed, why active validation was not run, what remains unverified, and the environment or preconditions the impact depends on; do not present inferred impact as observed evidence.
-
-Security findings keep the severity and `file:line` shape in `review.md` § *Findings output shape*. Where they materially explain the issue, include the security class, exploit preconditions, user or production impact, targeted fix, and a regression-test recommendation. A review recommends that test; it does not modify project code.
+Severity/file:line per `review.md` § *Findings output shape*. Include material class/preconditions/impact/fix/regression-test advice. Do not edit project code.
 
 ## Common Mistakes
 
-- Trusting client-side validation as a security boundary — always validate server-side
-- Storing JWTs in `localStorage` — vulnerable to XSS; prefer `httpOnly` cookies
-- Checking permissions in the UI but not in the API — UI is not a security layer
-- Logging request bodies that contain passwords or tokens
-- URL allowlists in CSP `script-src` — bypassable via open redirects, JSONP, and dependency injection; use nonces + `'strict-dynamic'`
-- `Access-Control-Allow-Origin: *` on authenticated endpoints — leaks data to any origin; reflect a validated `Origin` instead
-- `postMessage` receivers without strict `event.origin` check — any opener/iframe can send a payload
-- Long `Strict-Transport-Security` `max-age` shipped before HTTPS is fully working — locks every cached browser out for a year
-- Iframe with `sandbox="allow-scripts allow-same-origin"` on untrusted content served from your **own** origin — that combo lets the frame script away its own sandbox; safe only when the embed is isolated on a distinct origin (see *Cross-Origin Communication*)
+- [ ] Server validation/authorization cannot depend on client checks.

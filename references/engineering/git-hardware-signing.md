@@ -1,19 +1,17 @@
 # Hardware signing for Git operations
 
-This reference owns hardware-access discovery and permission handling for operations that create signed commits. The calling workflow owns authorization to change Git history, its state checks, and recovery from a paused operation.
-
 ## Discover the signer
 
-Use results already gathered by the caller, or read `commit.gpgsign` as a Git boolean, `gpg.format`, `user.signingkey`, and `gpg.ssh.program` with their config origins. Interpret settings by name; an unset setting produces no value. Include explicit signing options and any signing choice recorded by an active rebase when determining the effective signer.
+Read `commit.gpgsign` as a Git boolean, `gpg.format`, `user.signingkey`, and `gpg.ssh.program` with their config origins. Reuse values already gathered by the caller. Interpret results by setting name; unset settings print nothing. Account for explicit signing options and signing choices recorded by an active rebase.
 
-For SSH signing with a key-file path, expand a leading `~/` and run `ssh-keygen -l -f` on the quoted path. A type ending in `-SK`, such as `ED25519-SK` or `ECDSA-SK`, identifies a FIDO hardware key. Inline public keys and agent-selected identities are not file paths; inspect their public identity using the applicable mechanism without displaying private key material. An unsuccessful probe leaves hardware use unknown, not disproved.
+For an SSH key-file path, expand a leading `~/` and run `ssh-keygen -l -f` on the quoted path. A key type ending in `-SK` identifies a FIDO hardware signer. Inspect inline public keys and agent-selected identities through their public identity, without displaying private key material. A failed probe leaves hardware use unknown.
 
 ## Request device access
 
-On Codex in a macOS sandbox, a confirmed SSH hardware signer requires requesting `sandbox_permissions="require_escalated"` for the authorized commit-producing command. Explain in the tool's justification that the configured signer needs access to the connected hardware key. A no-touch key still needs device access; sandbox denial can appear as `device not found` even when enumeration sees the key. Do not escalate read-only discovery or project checks solely for signing.
+On Codex in a macOS sandbox, request `sandbox_permissions="require_escalated"` for the authorized commit-producing invocation when an SSH hardware signer is confirmed. Explain in the justification that the configured signer needs access to the connected hardware key. A no-touch key still requires device access. Keep discovery and project checks under their existing permissions.
 
-Request permission for the specific invocation through the host's approval flow. Keep the caller's last state comparison inside that invocation, after approval and immediately before the Git mutation. Permission to use the device does not authorize a different branch, range, staged set, or todo. Preserve signing settings, key selection and hooks; do not add an unsigned fallback or change the global sandbox policy.
+Keep the caller's final state comparisons inside the approved invocation, immediately before mutation. Preserve the authorized branch, range, staged set, todo, signing configuration, and hooks. Never disable signing or change sandbox policy to bypass a failure.
 
-If a touch may be required, tell the user immediately before the operation. The key's filename is not evidence that touch is disabled. A rebase may sign several commits and require more than one touch.
+Warn immediately before execution when a touch may be required; a key's filename does not establish touch behavior. A rebase may sign several commits and require more than one touch.
 
-If escalation is unavailable or denied, report the reason and return control without attempting another execution route. Keep any prepared message or paused operation intact. If an approved attempt fails, inspect the resulting Git state and distinguish device/signature errors from conflicts or hooks; follow the caller's recovery path without looping on the same failure. A sandboxed failure with an unclassified signer warrants discovery before any retry; `device not found` alone does not prove sandbox denial.
+If escalation is unavailable or denied, report the reason and stop without trying another execution route. Retain any prepared message file and paused operation. After an approved failure, inspect Git state and follow the caller's recovery path without repeating unchanged attempts. Discover an unclassified signer before retrying a sandboxed signing failure; `device not found` alone does not establish sandbox denial.

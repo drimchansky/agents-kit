@@ -1,17 +1,17 @@
 # Reconciliation Compaction
 
-Compacting a `result.md` that outgrew the size trigger — split out of `./reconciliation.md`, which keeps no part of it. This file owns the consent a compaction needs and the judgment of what may collapse. Read it when a run reaches the trigger and the proposal is being built.
-
-**The mechanics are a script.** `node <kit-root>/scripts/task-state.ts --compaction-plan <task-dir>` reports whether the result is `due`, whether the version-history precondition holds, and which sections a compaction must keep against which it may collapse — as JSON, writing nothing. `<kit-root>` resolves per `./task-store.md` § *Resolving `<kit-root>`*; `../scripts/task-state.md` owns its CLI form, stdout contract, and exit statuses.
+Run `node <kit-root>/scripts/task-state.ts --compaction-plan <task-dir>` to inspect whether compaction is due, its history precondition, and keep/removable sections. This reports JSON without writing. Resolve `<kit-root>` through `./task-store.md` § *Resolving `<kit-root>`*; CLI and report: `../scripts/task-state.md`.
 
 ## Compaction (size trigger)
 
-At the end of a `reconcile-task` run, if the report says `due`, propose the compaction and apply it only on the user's confirmation — never auto-apply it, and docs → reality never compacts. No finding evidences a compaction, so it takes neither route of `./reconciliation.md` § *Consent model: findings apply, the record carries them*; the consent it needs is this file's own. **Anything but `precondition: ok` refuses the compaction outright**: this is the one sanctioned removal of prior log sections, safe only because the removed text stays recoverable from version history, and that field is the whole of what says it does. A report saying `uncommitted` refuses just the same: the working text is in no commit yet, so consenting would collapse sections recoverable nowhere. Have the user commit first; a later run re-tests and may propose then.
+At a `reconcile-task` run's end, propose compaction when the report says `due`. Apply only on user confirmation; never auto-compact. Docs → reality never compacts. This confirmation is separate from finding-based consent (`./reconciliation.md` § *Consent model: findings apply, the record carries them*).
 
-The trigger is **20 KB**. This number has one machine-readable copy — `RESULT_MAX_KB` in `scripts/lifecycle-constants.ts`, which `scripts/task-state.ts` measures the mode against and `scripts/health-check.ts` applies to a bare run, since a script cannot read this prose at run time. It is a sanctioned copy per `AGENTS.md` § *Consumer lists*: change the trigger here and change it there in the same edit. (`maintain` needs no such copy — it reads this section at run time and passes the value as `--result-max-kb`.)
+Refuse unless `precondition.state` is `ok` and `uncommitted` is false; removed text must remain recoverable from version history. On `uncommitted`, have the user commit first; a later run re-tests before proposing.
+
+The trigger is **20 KB**. `RESULT_MAX_KB` in `scripts/lifecycle-constants.ts` is a sanctioned copy per `AGENTS.md` § *Consumer lists*. Change both in the same edit. `scripts/task-state.ts` and `scripts/health-check.ts` consume it; `maintain` reads this section and passes `--result-max-kb`.
 
 ## What may be collapsed
 
-The report's `removable` list is **eligibility, never a decision**: collapse only **superseded narrative** — sections a later `## Reconciliation` entry supersedes, verbose transcripts, step detail long overtaken by events. Everything else it lists stays where it is, and nothing on its `keep` list is ever touched.
+Treat `removable` as eligibility, not permission. Collapse only superseded narrative, such as sections a later `## Reconciliation` entry supersedes, verbose transcripts, or overtaken step detail. Keep all other sections, and never touch a `keep` entry.
 
-Each collapsed section becomes one line under a single `## Compacted — YYYY-MM-DD` stub, the bullet carrying that section's reported `heading` and nothing else, and the stub closing with "full text in git history (pre-compaction state)." as its own line after the bullets, never appended to one.
+Replace each collapsed section with a bullet containing only its reported `heading`, under one `## Compacted — YYYY-MM-DD` stub. Close the stub after the bullets with a separate line: "full text in git history (pre-compaction state)."

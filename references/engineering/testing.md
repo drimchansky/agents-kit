@@ -2,28 +2,17 @@
 
 ## Strategy
 
-- [ ] Test behavior and public API surfaces, not implementation details
-- [ ] Skip trivial tests that restate the implementation
-- [ ] Add a test for every fixed bug
-- [ ] Match the project's existing test structure
+- [ ] Test behavior/public APIs; skip trivial restatements; guard every bug fix; match project structure.
 
 ## Isolation
 
-- [ ] Mock external dependencies (network, filesystem, time) — not internal modules
-- [ ] If mocking 5+ things, the unit is too coupled
-- [ ] Snapshot tests only for stable serialized output
+- [ ] Mock external dependencies, excluding internal modules; 5+ mocks signals coupling. Snapshot only stable serialization.
 
 ## Structure
 
-- [ ] Arrange-Act-Assert pattern
-- [ ] Descriptive test names that state the behavior being verified
-- [ ] Shared setup in `beforeEach` or helpers; assertions inline
-- [ ] Error paths tested, not just happy paths
-- [ ] Tests carry behavioral contracts and worked examples through descriptive names, cases, assertions, and fixtures rather than production-code commentary; test comments follow the same invariant-only discipline as implementation comments (public-API docs stay at the code; see `code-style.md` → Comments)
+- [ ] Arrange-Act-Assert; behavioral names; shared beforeEach/helpers, inline assertions; cover success/errors/timeouts/invalid inputs.
+- [ ] Encode contracts/examples in cases/assertions/fixtures; comments follow `code-style.md` → Comments; API docs stay on code.
 
 ## Common Mistakes
 
-- Testing implementation details (internal state, call order) — refactors break these without behavior change
-- Overmocking — if the test can't fail when implementation is wrong, it's useless
-- Copy-paste test suites — extract shared setup, keep assertions inline
-- Missing error paths — errors, timeouts, and invalid inputs are where bugs hide
+- [ ] Wrong behavior fails tests; no internal-state/call-order assertions, overmocking, or copied setup.

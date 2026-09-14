@@ -1,77 +1,67 @@
 # implement-task: Non-Default Branches
 
-The `implement-task` skill's non-default branches — reviving a `skipped` plan, activating a backlogged task, the task worktree's creation and re-entry, the automatic parallel batch, mid-execution plan revisions, a criterion leg left open for someone else to verify, and the later-run `in-review` → `done` finalization — split out of that skill's SKILL.md, which keeps the loop, the templates, and the gates. Read the section a branch names when its condition fires. An `implement-task §N` reference names that SKILL.md's process step.
+Read the applicable branch when triggered. `implement-task §N` refers to that skill's process step.
 
 ## Reviving a skipped plan
 
-**Check where the folder sits first.** A bare slug falls back to `Archive/<slug>/` (`./task-layout.md`) and skipped tasks are the ones that get archived, so a revive can land there — but a live task under `Archive/` is stranded outside every active listing `resume-task` and `review-task` build, and `archive-task` would refuse it as non-terminal. Resolved under `Archive/` → **stop**: have the user move it out (a manual `mv`; archiving is one-way), then re-run.
+First check placement. Slug discovery may resolve Archive (`./task-layout.md`). If archived, stop and have the user move the folder out with manual `mv`, then rerun; archiving is one-way.
 
-Otherwise flip `skipped → executing` (the registered revive edge) and continue as a normal run. An existing result file — the record of why the work was dropped — simply stays: the append-only rule holds, and this run's sections append after it (implement-task §5).
+Otherwise take the registered `skipped → executing` edge and resume normally. Preserve existing results and append new sections under implement-task §5.
 
 ## Activating a backlogged task
 
-**Check the container at resolution too** (implement-task §1). The condition is the resolved folder's immediate parent being named `Backlog` — matched case-insensitively (`./task-backlog.md`) — however resolution reached it: the bare-slug container fallback, an explicit folder path, or a `plan.md` path. `resume-task` takes this branch at its own resolution step, on the same terms.
+At implement-task/resume-task resolution, detect an immediate parent named Backlog case-insensitively (`./task-backlog.md`).
 
-Such a task is parked, and execution does not run on it in place (`./task-backlog.md` § *Planning acts in place; execution activates first*) — location alone carries "parked", so a run left where it lies would leave live work sitting where every active listing excludes it. **Offer activation instead:** name the folder, name the container's parent it would return to, and ask.
+Offer activation to the container's parent, naming both locations. Execution cannot run in parked folders (`./task-backlog.md` § *Planning acts in place; execution activates first*).
 
-- **Confirmed** → `mv` the whole folder to that parent in one operation — one move keeps the folder's internal `./` links intact (the move mechanics `./task-backlog.md` cites) — then continue the run against the new location.
-- **Declined** → **stop**, reporting that the task stays parked. Never execute a task in place under `Backlog/`.
-- **`<container-parent>/<slug>` already exists** → **stop** and surface it; never clobber it.
-
-The asymmetry with § *Reviving a skipped plan* above is deliberate: an archived task is finished, so getting it back out is the user's own `mv`; a backlogged one is exactly the work this run is about to start, so the move is offered here.
+- On confirmation, move the whole folder in one operation and continue at its destination.
+- On refusal, stop and report that it remains parked.
+- If the destination exists, stop and surface the collision without overwriting.
 
 ## Task worktree
 
-Placement, naming, the sanction, and the degrade are `./task-delivery.md`; re-entry, removal, and the branch-pattern proposal are its satellite `./task-delivery-edges.md`. Read the one this branch reaches. What either costs this skill is here.
+Creation placement, naming, sanction, and degrade: `./task-delivery.md`. Re-entry, removal, and branch-convention proposals: `./task-delivery-edges.md`.
 
-**Creation runs once, at implement-task §3**, before the plan flips to `executing` — so every step of the run lands on the task's own branch and the result header's `**Pointers:**` carries it from the first write. That file's § *Branch and worktree creation* owns the gate, and its two skips differ. The skip is **silent** for a documentation or bureaucratic task, and for one whose repository — resolved by that section's **Which repository**, never read off the task folder's own location — is absent: no worktree and no note about not having one, since a run narrating that skip would train the user to read an ordinary doc task as a degraded one. The skip is **announced** where the repository resolves but holds none of the plan's paths — the run names that root and says none of the plan's paths exist in it yet, so a greenfield engineering task's missing branch is visible rather than silent. Neither skip records anything. **The degrade does** — announce it, record it in the run's `**Notes:**` (implement-task §5), and continue on the current checkout, where the shared tree is the checkout exactly as it was before this contract.
+**Creation** runs at implement-task §3 before executing status, under § *Branch and worktree creation*. Resolve the repository through Which repository, not task-folder placement. Skip silently for documentation/bureaucratic tasks or missing repositories. Announce a resolved repository containing none of the plan's paths. Neither skip records a pointer or degrade. Failed creation announces and records the degrade, then continues on the current checkout.
 
-**Re-entry runs at implement-task §1**, on `./task-delivery-edges.md` § *Re-entry on resume*, whenever `**Pointers:**` carries a branch. Two of its outcomes bear on the shape of the run:
+**Re-entry** runs at §1 when Pointers records a branch (`./task-delivery-edges.md` § *Re-entry on resume*). A merged or missing branch stops work: ask whether to create fresh follow-up or treat delivery as complete. With no recorded branch, including a prior degrade, apply §3 creation as a first delivery run.
 
-- **branch merged or gone** → the run does **not** start work. Report it and ask which reading holds — a fresh branch for follow-up, or a task already delivered — because a silent recreate forks a second line of work off a stale base under one name, and the plan's remaining steps would land there.
-- **no branch recorded** → for delivery purposes this is a first run whatever the result file says, so §3's creation applies unchanged. A prior run that degraded, and any run predating this contract, is exactly this case.
-
-A re-entered or recreated worktree is announced the way a created one is — the run says where it is working — and the recorded branch is never rewritten to match a worktree found somewhere else: the branch is the identity, and `./task-delivery-edges.md` § *Re-entry on resume* matches on it precisely so a moved or renamed directory stays adoptable.
+Announce re-entered/recreated worktrees like new ones. Preserve the recorded branch identity rather than substituting another worktree's branch.
 
 ## Automatic parallel batch
 
-Eligible independent steps run concurrently through the same contract and binding. Batch mechanics are not restated: worktree placement, the frozen shared tree, the merge gates, and cleanup are `./parallel-batch.md` § *Coordinator-side parallel batch*, run as written there. This section adds only eligibility, merge point, and record.
+Follow `./parallel-batch.md` § *Coordinator-side parallel batch* for placement, frozen shared tree, gates, and cleanup. Announce qualifying steps and eligibility before launch. The coordinator alone writes task files and statuses.
 
-No flag: when a batch qualifies, launch it and **announce it in chat** — which steps, why eligible — so automatic parallelism is never silent. The contract's invariants hold: the coordinator owns the shared tree, both task files, and every status; executors never touch the task folder.
+**Eligibility.** Apply all parallel-batch conditions and its serial default when uncertain. Implement-task also requires steps within one checkpoint-bounded batch and explicit disjoint Touches surfaces. Respect Depends on paths. Missing or `none` Touches means serial delegation.
 
-**Eligibility.** Every condition in the cited section applies as written, its when-in-doubt-run-serially default included. This skill adds:
+**Run.** Execute serial steps before launch unless they depend directly/transitively on batch steps. Dependent serial steps wait until the integrated batch health boundary. Keep each group in plan order.
 
-- the steps sit in the same checkpoint-bounded batch (between the last checkpoint and the next);
-- each declares its surface as a `**Touches:**` line — the declared surface the cited disjointness test and surface check read; `Depends on:` is the dependency path they read.
+**Merge at the batch bound**, applying ordered gates per step in plan order. Coordinator re-proof covers the full outcome tier after incorporation; worktree proof or criterion alone cannot replace it. Serial fallback takes intake instead. Record, check off, and link a step only after it passes, with Executed under implement-task §5. No health command runs between individual merges.
 
-No `**Touches:**` line (or `**Touches:** none`) → serially-delegated.
-
-**Run** per the cited *Run* rules. In a mixed batch, serial steps depending on a batch step — directly or transitively — run only after the batch's declared health boundary on the integrated tree; every other serial step runs before launch; both in plan order.
-
-**Merge at the batch's bound** — run the cited ordered gates per batch step, **in plan order**, plan order being this skill's declared unit order. Its integrated re-proof is that step's full outcome tier, which a worktree-placed step always owes the coordinator and a step that fell back serially proves through the intake (`./executor-contract.md` § *Write-mode routing*) — never the health recipe, never the criterion alone; record the step only after it passes, by flipping the checkbox and appending the result section with its `**Executed:**` field (implement-task §5), as in serial execution. The cited mechanics expose each incorporated change set; no project-health command runs between merged steps.
-
-When the batch directly reaches its bounding checkpoint, run that checkpoint's assertions once every batch step has executed — merged or fallen back to serial — then run its health recipe **once** for both the checkpoint and the batch. Failure in either is Stop-the-Line on the integrated tree. Otherwise merge at its natural bound — before the first dependent serial step, or before the acceptance gate for the plan's tail — and don't invent an implicit checkpoint there. At a dependent-work bound, run one health boundary before the dependent step; at the tail, the full-plan boundary runs once before acceptance.
+At a checkpoint, run its assertions after every batch step finishes, then one health pass for all accumulated work. Either failure is integrated Stop-the-Line. Without a checkpoint, merge at the natural bound before dependent serial work or acceptance. Run one boundary there; add no invented checkpoint.
 
 ## Plan revisions
 
-- **Update the plan in place** — revise the affected step or scope, add new steps, remove obsolete ones. Keep step numbers stable where possible (insert as `Step 3a`, `Step 3b` rather than renumbering).
-- **Record the divergence** under the affected step's `**Deviations from plan:**` field, including *why* the plan changed.
-- In step-by-step mode, pause and confirm the revision with the user before continuing.
-- **If the right call is to abandon the task** rather than revise it, surface that and get explicit confirmation first — this skill never sets `skipped` on its own (`./task-lifecycle.md`). On confirmation set the plan's `**Status:**` to `skipped`, record why in the result file, and stop — don't delete the plan or leave it dangling in `executing`.
+- Revise affected scope/steps in place, adding needed units or removing obsolete ones. Keep numbers stable where possible; insert `Step 3a`/`Step 3b`.
+- Record what changed and why in the affected step's Deviations from plan.
+- Step-by-step mode confirms revisions before continuing.
+- Abandonment requires explicit confirmation before setting skipped (`./task-lifecycle.md`). Record the reason and stop, retaining the plan.
 
 ## An open criterion leg
 
-A step's `Verify` sometimes carries a leg nothing in the session can execute — a browser check, a device, a person's eyes. Keeping that leg whole is `./parallel-batch.md` § *Coordinator-side parallel batch* → **An unexecutable leg is carried open, at any placement**: it is named before launch, carried as an **explicitly open leg**, and never split off to leave a smaller criterion the run can pass. What it costs this skill is here.
+A browser, device, or human check unavailable in-session remains part of the criterion. Name it before launch as explicitly open under `./parallel-batch.md` § *Coordinator-side parallel batch* → **An unexecutable leg is carried open**. Removing it cannot turn partial proof into a pass.
 
-**The step is parked, not recorded.** Proving the executable half proves that half and no more, so the checkbox stays unflipped and the step's result section names the open leg, what it asserts, and who is to verify it. A step recorded done on half its criterion puts every later step on an unproved base, which is the failure this branch exists to stop. When the open leg gates a goal, the task lands at `in-review` with that goal's `## Acceptance` line `pending external`, and § *Reaching done from in-review* below is the path out once the user reports the verification happened.
+Leave the step unchecked and record the open leg, assertion, and verifier. When it gates an external goal, park in-review with Acceptance pending external. Resume through § *Reaching done from in-review*.
 
-**The offered option's described behavior is the behavior.** Where the run offered the leg to the user and the user took it — they will check it and report back — the run stays open on that leg and closes out only after they do; announcing a hand-off and then closing out as if verified is worse than never having offered.
+When the user accepts an option containing their verification leg, keep it open until they report the outcome.
 
 ## Reaching done from in-review
 
-**Reaching `done` from `in-review` (a later re-run).** When the user reports the external verification happened — a confirmation, a receipt, the observed live state — re-run the gate on each `pending external` goal against that **best-available proxy** (`./acceptance-criteria.md`): the user-reported confirmation *is* the sanctioned evidence for an `(external)` goal. Update its `## Acceptance` line to `met`, noting the proxy. A goal `**In review:**` names because a prior run's `**Grounding corrected:**` record rewrote it (implement-task § *Correcting Grounding Where It's Wrong*) is not an `(external)` goal and takes no proxy: gate it against live behavior on its new wording, exactly as §7 gates every agent-verifiable goal, and append its fresh verdict beside the externals' — the user's say-so verifies nothing here. An `unmet` verdict on it is a surfaced problem like any other below: flip the plan back to `executing` and resume rather than finalize. Then run a fresh domain health boundary on the current work product — never reuse the earlier tail result, because this record carries no exact boundary identity across runs (`./execution-loop.md` § *Health boundaries*).
+For reported external verification, re-gate pending goals against the best available proxy: confirmation, receipt, or reported live state (`./acceptance-criteria.md`). Update each Acceptance line to met with that evidence.
 
-On success, append the fresh evidence before advancing status:
+A goal named by In review because a Grounding corrected record rewrote it requires live verification, not a proxy. Append its verdict beside the external goals; unmet returns the plan to executing. Then run fresh integrated health on the current work product (`./execution-loop.md` § *Health boundaries*).
+
+After success, append the evidence before advancing:
 
 ```markdown
 ## Health boundary — YYYY-MM-DD
@@ -82,9 +72,9 @@ On success, append the fresh evidence before advancing status:
 ---
 ```
 
-Then finalize to `done` per implement-task §8 and add the `**Completed:**` line. If the fresh boundary fails, do not append the success section and do not finalize: flip the plan through the registered `in-review → executing` edge, then apply implement-task §4's **Blocked** behavior, recording the failed finalization boundary and the last boundary that passed. If review instead surfaced problems, flip the plan back to `executing` and resume — don't force `done`.
+Finalize through implement-task §8 and add Completed. A failed boundary produces no success section or finalization: take `in-review → executing`, then §4 Blocked, recording failure and the last green boundary. Review findings requiring changes likewise return to executing.
 
-**Worktree removal comes last**, on either path to `done` — this one and implement-task §8's direct `executing → done`. The boundary above runs on the current work product, which *is* the task worktree where the run has one, so removal follows the boundary and the finalize rather than preceding either: a worktree removed first takes with it the tree the boundary was to run on. Then run `./task-delivery-edges.md` § *Removal*:
+**Worktree removal comes last** on both this path and direct finalization, after boundary and status updates (`./task-delivery-edges.md` § *Removal*).
 
-- **PR observed merged and the worktree clean** → remove the worktree and the local branch, and record both — in the dated section above on this path, in the run's own result section on the direct one.
-- **Dirty, unpushed, or the PR not merged** → **refuse, record the reason in the same place, and finalize anyway.** The refusal never holds the task open: the task is done on its goals, the leftovers belong to the backstop that section names, and forcing the removal to tidy the record would destroy the only copy of whatever made the tree dirty.
+- Observed merged PR and clean tree: remove worktree/local branch and record both in this path's dated section, or the direct run's record.
+- Dirty, unpushed, or unmerged work: refuse removal and record why there; finalization still stands. Preserve the work without forced removal.

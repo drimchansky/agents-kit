@@ -1,195 +1,131 @@
 # Code Review
 
-Lenses, calibration, and discipline that apply to **any** code review. The orchestration, and the objects a review takes — a branch's diff against its base, a commit range, or a set of paths at one commit — live in `skills/review-code/SKILL.md`. Everything below holds across all three but for § *Reviewing a path set*, which states where the last of them reads differently.
+Lenses, calibration, and discipline for any code review. Orchestration and the review objects live in `skills/review-code/SKILL.md`; everything below holds across a diff, a range, and a path set except § *Reviewing a path set*.
 
-Other reference checklists cover specific surfaces: `accessibility.md`, `code-style.md`, `css.md`, `design-to-code.md`, `forms.md`, `html.md`, `interactions.md`, `performance.md`, `privacy.md`, `react.md`, `security.md`, `tanstack-query.md`, `testing.md`, `typescript.md`. Consult the ones the reviewed set's domains trigger. This file covers what those checklists don't.
+Per-surface checklists sit beside this file (`accessibility.md`, `css.md`, `security.md`, `react.md`, …); consult the ones the reviewed set's domains trigger.
 
 ## What to Look For
 
 ### Impact on Existing Code
 
-The highest-value part of a review. For every change to shared code:
-
-- **Search all usage sites** — Don't just review the diff; grep for every modified export and verify callers still work
-- **Check behavioral changes** — A renamed prop, a changed default, a new required field can break distant consumers silently
-- **Trace data flow changes** — If data shape changes, follow it through the pipeline to the UI
-- **Verify API contracts** — Breaking changes to interfaces or public APIs must be caught
+For every change to shared code, grep every modified export and verify callers still work; check behavioral changes (a renamed prop, a changed default, a new required field); trace data-shape changes through to the UI; catch breaking changes to interfaces and public APIs.
 
 ### Problem Verification
 
-- Understand the problem before evaluating the solution — does the fix address the root cause, or just the symptom?
-- For bug fixes: is there now a test that would have caught this regression?
-- Search for the same pattern elsewhere in the codebase — a fix in one place often applies to siblings
+Does the fix address the root cause or the symptom? For bug fixes, is there now a test that would have caught the regression? Search for the same pattern elsewhere; a fix in one place often applies to siblings.
 
 ### Touched Comments
 
-Comments ship in diffs of every kind, so this lens applies to **every** diff — it is not gated on which per-surface checklists the diff's domains trigger. Two bars, by what the diff did to the comment:
-
-- **Comments the diff adds or edits** — held to the full discipline in `code-style.md` → Comments. A comment that discipline prohibits is a finding on its own the moment the diff introduces it; the discipline already classes it as a maintenance defect, so it needs no separate impact argument.
-- **Pre-existing comments adjacent to the change** — held to the materiality bar: flag only when the change makes them materially misleading to correctness, security, API compatibility, or maintenance. Untouched comments the change doesn't bear on are not the review's business.
+Applies to every diff. Comments the diff adds or edits are held to `code-style.md` → Comments; one that discipline prohibits is a finding on its own. Pre-existing comments adjacent to the change are flagged only when the change makes them materially misleading.
 
 ### Abstraction Justification
 
-- **Premature extraction** — Under ~20 lines rarely needs its own module. Inline until a second or third consumer proves the abstraction — unless the unit owns a meaningful boundary, such as state, hooks, lifecycle, or a distinct concern, which justifies extraction at a single use site (for components, see `react.md` → Components).
-- **Wrapper types** — Custom type aliases that re-wrap a library's types without adding information obscure the original API.
-- **One-use helpers** — Functions extracted for "reusability" but called from exactly one place fragment logic without reducing complexity.
+- **Premature extraction:** under ~20 lines rarely needs its own module. Inline until a second or third consumer proves it, unless the unit owns a boundary such as state, hooks, or lifecycle (`react.md` → Components).
+- **Wrapper types:** aliases that re-wrap a library's types without adding information.
+- **One-use helpers:** functions extracted for "reusability" but called from one place.
 
 ### Complexity Signals
 
-Concrete patterns to scan for. Flag as Minor by default; promote to Major if the pattern hides a bug (e.g., deep nesting masking a missing edge-case branch).
+Flag as Minor by default; promote to Major when the pattern hides a bug.
 
-- **Deep nesting** (3+ levels of `if`/`for`/`try`) — refactor candidate via guard clauses or extracted helpers
-- **Long functions** (~50+ lines, or one function with multiple distinct responsibilities) — split-into-named-pieces candidate
-- **Nested ternaries** — replace with if/else, switch, or a lookup map
-- **Boolean parameter flags** (`doThing(true, false)`) — prefer an options object or separate functions; positional booleans are unreadable at the call site
-- **Generic names** (`data`, `result`, `temp`, `val`, `item`) or **abbreviated names** (`usr`, `cfg`, `btn`, `evt`) — rename to describe the content; allow universal abbreviations (`id`, `url`, `api`)
-- **Repeated conditionals** — the same predicate in multiple places — extract to a named function
+- **Deep nesting** (3+ levels): guard clauses or extracted helpers.
+- **Long functions** (~50+ lines, or several responsibilities): split into named pieces.
+- **Nested ternaries:** if/else, switch, or a lookup map.
+- **Boolean parameter flags:** an options object or separate functions.
+- **Generic or abbreviated names** (`data`, `temp`, `usr`): rename to describe the content; `id`, `url`, `api` are fine.
+- **Repeated conditionals:** extract the predicate to a named function.
 
-For style-level findings (3-param function limit, single responsibility), defer to `code-style.md` instead of duplicating here; comments are not among them, since Touched Comments above applies to every diff.
+Style-level findings defer to `code-style.md`.
 
 ### Interface Design
 
-- Prefer `children`, render props, or slot patterns over configuration props (`buttonProps`, `mode` flags). Boolean/mode props often signal a component doing too many things.
-- Can the interface be smaller? Each prop is a contract that must be maintained.
+Prefer `children`, render props, or slot patterns over configuration props (`buttonProps`, `mode` flags), which often signal a component doing too many things. Each prop is a contract, so ask whether the interface can be smaller.
 
 ### Dead Code
 
-Apply Chesterton's Fence: before recommending removal, understand why the code exists. Check `git blame`, read callers, look for non-obvious reasons (performance, platform constraint, historical bug fix). If you can't explain why it's there, flag it as a question, not a removal recommendation.
-
-- Identify dead code explicitly: unused exports, unreachable branches, commented-out blocks
-- List what you found and ask before removing it — don't delete silently
-- Confirm it's truly unused (grep for all references) before recommending removal
+Apply Chesterton's Fence: learn why the code exists (`git blame`, callers) before recommending removal, and flag it as a question if you cannot. List dead code explicitly (unused exports, unreachable branches, commented-out blocks), confirm it is unused by grepping all references, and ask before removing it.
 
 ### Accidental Inclusions
 
-Every diff carries things the author never meant to ship, and they hide in plain sight because each one looked deliberate while it was being written. Read the added lines for them by name:
+Read the added lines for what the author never meant to ship:
 
-- **Debug artifacts left in** — an added `console.log`, `debugger`, `print`, a stray stack dump, a commented-out probe. Flag each one where the diff added it, however sound the surrounding change: the noise reaches production logs, and a `debugger` statement stops a real user's browser. A `debugger` statement, a stack dump, and a commented-out probe have no legitimate shipped use, so each is a finding on sight; printed output is a finding only where it is not what the file exists to emit — a CLI entry point, a logger facade, or a reporter emits its product on stdout, and removing that breaks the program.
-- **Sensitive data** — tokens, API keys, passwords, connection strings, or a credential file such as `.env` committed alongside the code. Critical whenever it appears, because deleting the line later does not remove it from history: the finding has to say the value needs rotating, not just deleting.
-- **Unrelated formatting churn** — a reindent, an import reshuffle, or an editor's whole-file rewrite riding along with a behavioral change. Ask for it in a separate commit; while it stays, it buries the change under noise for this review and for everyone who reads `git blame` afterward.
+- **Debug artifacts:** a `debugger`, a stack dump, or a commented-out probe is a finding on sight; printed output only where it is not what the file exists to emit (a CLI entry point, a logger).
+- **Sensitive data:** tokens, keys, passwords, connection strings, or a committed `.env`. Critical whenever it appears; the value needs rotating, since history keeps it.
+- **Unrelated formatting churn:** a reindent or import reshuffle riding along with a behavioral change. Ask for a separate commit.
 
 ### Multi-Model Review
 
-When reviewing AI-generated code (or your own output from an earlier step):
-
-- Apply the same standards as human-written code — AI output is not exempt from review
-- Watch for AI-specific patterns: overly verbose error handling, unnecessary abstractions, hallucinated APIs, inconsistent naming
+Hold AI-generated code, and your own earlier output, to the same standards: watch for verbose error handling, unnecessary abstractions, hallucinated APIs, inconsistent naming.
 
 ### Assumptions Audit
 
-For non-trivial decisions, ask: **what does this assume that could change?**
-
-- Assumes a specific API response shape, field presence, or ordering
-- Assumes a component is rendered exactly once, or in a specific context
-- Assumes a domain constant is stable — if it's not, it should be a config value, not an inline literal
-- If an assumption is load-bearing, it should be enforced by types or validated at runtime
+For non-trivial decisions, ask what this assumes that could change: an API response shape, a component rendered exactly once, a domain constant that should be config. A load-bearing assumption is enforced by types or validated at runtime.
 
 ### State Persistence
 
-- **URL search params** — For state that should be shareable, bookmarkable, or deep-linkable
-- **Ephemeral state** — For transient UI concerns (modals, hover, animation). No persistence needed.
-- **localStorage** — Only for user preferences that should survive sessions and don't need to be shareable.
-- **Avoid multi-store sync** — The same conceptual state should live in one place.
+URL search params for shareable state; ephemeral state for transient UI concerns; `localStorage` only for user preferences that need no sharing. The same conceptual state lives in one place.
 
 ### Design Spec Alignment
 
-If the change is UI-facing, verify against design specs (Figma, mockups). Flag discrepancies between implementation and design intent. `design-to-code.md` § *Verify* names what the implementation should have reported — the pinned node, the comparison its named criterion called for, every token mapping and asset substitution — and its § *Hint priority* is the order a discrepancy is judged against: a Code Connect mapping the change bypassed outranks a hex value it got wrong.
+If the change is UI-facing, verify against the design source. `design-to-code.md` § *Verify* names what the implementation should have reported; its § *Hint priority* orders how a discrepancy is judged.
 
 ### Cross-Project Consistency
 
-If sibling or related projects exist:
-
-- **Naming divergence** — Different names for equivalent concepts across projects. Align when the concept is the same.
-- **Reinvented utilities** — Existing shared utilities that could be reused instead of reimplemented.
-- **Pattern drift** — Established conventions in older projects that should carry forward.
+If sibling projects exist, flag naming divergence for equivalent concepts, reinvented utilities a shared one covers, and pattern drift from established conventions.
 
 ## What NOT to Flag
 
-- **Style preferences** that don't violate project conventions — if it's valid and consistent, leave it
-- **Equally valid alternatives** — "I would have done it differently" is not a review finding
-- **Issues in unchanged code** — unless the diff directly affects them
-- **Nitpicks on code being deleted or moved** — don't review dead code
-- **Hypothetical future problems** — flag only if the current change creates a concrete risk
-- **Comment verbosity or style on its own** — never a standalone finding; a comment-only finding has to clear one of the two bars in Touched Comments above
+- Style preferences that do not violate project conventions.
+- Equally valid alternatives; "I would have done it differently" is not a finding.
+- Issues in unchanged code, unless the diff directly affects them.
+- Nitpicks on code being deleted or moved.
+- Hypothetical future problems, unless the change creates a concrete risk.
+- Comment verbosity or style on its own; a comment-only finding clears one of the Touched Comments bars.
 
 ## Calibrate Severity
 
-Severity reflects **user and production impact**, not code aesthetics:
+Severity reflects user and production impact, not code aesthetics:
 
-- 🔴 **Critical** — Breaks functionality, causes data loss, security vulnerability, accessibility barrier that blocks users. Must fix before merge.
-- 🟡 **Major** — Causes problems over time: missing tests for complex logic, performance regressions, incorrect types that hide bugs, shared code changes without verifying consumers. Should fix before merge.
-- 🟢 **Minor** — Could be better: simplification opportunities, minor duplication, non-blocking naming suggestions. Fix if convenient.
+- 🔴 **Critical:** breaks functionality, data loss, a security vulnerability, or a blocking accessibility barrier. Must fix before merge.
+- 🟡 **Major:** causes problems over time: missing tests for complex logic, performance regressions, types that hide bugs, unverified consumers. Should fix before merge.
+- 🟢 **Minor:** simplification, minor duplication, non-blocking naming. Fix if convenient.
 
-When suggesting findings the user will paste as inline PR comments, prefix the comment text instead of using the emoji: `Critical:` (🔴, blocks merge), `Major:` (🟡, should fix before merge), `Nit:` / `Optional:` (🟢, non-blocking), `FYI:` (informational, no action requested).
+For inline PR comments, prefix the text instead of the emoji: `Critical:`, `Major:`, `Nit:` / `Optional:` (non-blocking), `FYI:` (informational).
 
 ## Findings output shape
 
-What a review's findings list looks like, whatever the reviewed object — defined once here and cited rather than restated. **One entry per issue**, each carrying its severity, `file:line`, the recommendation, and the impact, the whole list ordered by severity.
-
-Minor findings take that same shape — listed individually, never collapsed into a prose block or a trailing summary line — and the list is never capped or truncated, however long it runs. The per-entry shape is what lets `/fix-findings` take findings one at a time in severity order; a collapsed block or a dropped tail is a finding the follow-up cannot select.
-
-Each citing skill's own Output section says where the list sits and what else rides on an entry; what a downstream publish step selects from it is that step's business, not this shape's.
+One entry per issue, each carrying its severity, `file:line`, the recommendation, and the impact, the list ordered by severity. Minor findings take the same shape, listed individually and never collapsed, and the list is never capped, so `/fix-findings` can take findings one at a time. Each citing skill's Output says where the list sits.
 
 ## Approval Bar
 
-Approve when the change **definitely improves overall code health**, even if it isn't perfect. The bar is improvement over the current state, not perfection — chasing perfect blocks shippable improvements. Block merge only when Critical findings remain. Major findings should be fixed before merge but don't get rubber-stamped as "fix in follow-up." Minor findings approve-with-comment.
+Approve when the change definitely improves overall code health, even if imperfect. Block merge only when Critical findings remain. Major findings should be fixed before merge and are not rubber-stamped as "fix in follow-up". Minor findings approve-with-comment.
 
 ## Reviewing a path set
 
-A path set is the tracked files under the given paths at one commit — the whole reviewed object rather than a change to one. Two rules above read differently against it.
-
-- **None of it is unchanged code.** § *What NOT to Flag* excludes issues in unchanged code because a diff review is bounded by what the change touched; a path set has no such boundary — the files are what was asked about, so every line in them is in scope.
-- **The verdict states health, not a decision.** Nothing was proposed, so there is nothing to approve or request changes on: the assessment comes from the closed set `sound` / `needs work` / `needs discussion`. `sound` says the set is in good health as it stands, `needs work` that a Critical or Major finding should be fixed, and `needs discussion` that what to do turns on a question the review cannot settle by itself. § *Approval Bar* still calibrates which one — the bar is improvement over the current state, not perfection.
+A path set is the tracked files under the given paths at one commit, the whole reviewed object rather than a change. Two rules read differently: none of it is unchanged code, so every line is in scope; and the verdict states health, not a decision, from the closed set `sound` / `needs work` (a Critical or Major finding should be fixed) / `needs discussion` (turns on a question the review cannot settle), § *Approval Bar* still calibrating which.
 
 ## Prioritize Review Effort
 
-Not all changes deserve equal attention:
+- **High:** new logic, state changes, data flow; shared code; security-relevant code (auth, input handling, API).
+- **Medium:** new files and abstractions; test changes (verify they test real behavior).
+- **Low:** renames, formatting, import reordering, config, boilerplate.
 
-- **High** — New logic, state changes, data flow (where bugs live)
-- **High** — Changes to shared code: components, utils, types (widest blast radius)
-- **High** — Security-relevant code: auth, input handling, API (highest stakes)
-- **Medium** — New files and new abstractions (design decisions that compound)
-- **Medium** — Test changes (verify they test real behavior)
-- **Low** — Renames, formatting, import reordering (unlikely to introduce bugs)
-- **Low** — Config and boilerplate changes (skim for obvious errors)
-
-For large diffs (20+ files): review types and interfaces first to understand the contract, then group remaining files by feature/concern rather than reviewing file-by-file.
-
-## Don't Rationalize
-
-- "The code looks fine to me" — Trace all usage sites for changed shared code. "Looks fine" isn't a review.
-- "I would have done it differently" — Preference isn't a finding. Different isn't wrong.
-- "It's just a small change" — Small changes to shared code have the widest blast radius. Check consumers.
-- "The tests pass" — Passing tests prove the tests pass, not that the code is correct. Tests have gaps.
-- "I'll flag it next time" — Note it now. Use severity levels to indicate urgency.
-- "Fix it in a follow-up PR" — Deferred fixes don't get fixed. Block on it now or accept it forever; don't pretend a Critical finding is a follow-up.
-- "It's mostly good, just approve" — Rubber-stamping is not review. If you didn't trace the shared-code consumers, you didn't review them.
-- "This code is obviously dead/redundant" — Chesterton's Fence: check `git blame` and callers before recommending removal or simplification. Accumulated complexity often has a real reason; if you can't explain why it's there, ask, don't remove.
+For large diffs (20+ files): review types and interfaces first, then group remaining files by concern.
 
 ## Verification Scripts
 
-`review-code` always runs the project's verification scripts, launched early rather than after the review:
+`review-code` always runs the project's verification scripts, launched early:
 
-- **Launch as soon as the reviewed set is known** — the diff against the base, or the path set at its commit. Identify what the project exposes — lint, typecheck, and test scripts (check `package.json` scripts, a `Makefile`, or the stack's conventional commands) — and start them on the changed files where they exist; what the project doesn't expose is skipped, not simulated.
-- **Run them in the background where the host supports it**, reviewing inline while they run and waiting on them per `../workflow/delegated-waiting.md` § *How to wait* — never a foreground `sleep` standing in for that wait, which the same file's § *What is not a wait* rules out; where it doesn't, run them in the foreground at that same early point.
-- **Collect before output** — merge failures and warnings into the findings, each with file location and severity.
+- **Launch as soon as the reviewed set is known:** the lint, typecheck, and test scripts the project exposes, on the changed files; what the project does not expose is skipped, not simulated.
+- **Run them in the background where the host supports it**, waiting per `../workflow/delegated-waiting.md` § *How to wait* (a foreground `sleep` is not a wait, per its § *What is not a wait*); otherwise in the foreground at that same early point.
+- **Collect before output:** merge failures and warnings into the findings, each with file location and severity.
 
-Beyond these scripts and the reproduction below, a review executes nothing: everything else stays analysis — read the code and the references it bears on, and reason about them; `security.md` § *Review Validation Boundaries* draws the line between that reading and active validation. The reviewing session or its delegated reviewer (`../workflow/reviewer-contract.md`) is what runs them — a read-only probe still runs neither (`../workflow/agent-fanout.md`).
+Beyond these scripts and the reproduction below, a review executes nothing; `security.md` § *Review Validation Boundaries* draws the line between reading and active validation. The session or its delegated reviewer (`../workflow/reviewer-contract.md`) runs them; a read-only probe runs neither (`../workflow/agent-fanout.md`).
 
-**Both execute-only actions exercise what is on disk, never the review object itself.** The scripts above and the reproduction below run over the live tree, while the object is committed history — and the two agree only where the tree carries what the object holds, which for a diff means its head checked out over a clean tree and for a path set means those files as their commit has them. At a reviewed path where they diverge — an uncommitted change under it, whether a tracked edit on either side of the index or an untracked file standing where the object's tracked one belongs — a run exercises content the object never carried, and its output is evidence for something other than the change under review. So one bar bounds both: a script failure or a reproduced failure mode located at a diverging path is **context, never an adopted finding** — report it as such, and settle the candidate by the verify route in `../workflow/agent-fanout.md` instead. The runner records every such path — the delegated reviewer under its return's `Divergence` heading (`../workflow/reviewer-contract.md` § *The return*), the session on its inline pass in the same words — and a run over a tree that matches the object records `None`. The review skill never requires the tree to match, which is why the bar bounds the evidence rather than refusing the run; `review-code-triage-verify` adds the tree-agreement precondition its probes need on top.
+**Both execute-only actions exercise what is on disk, never the review object.** A script failure or reproduced failure at a reviewed path where the tree diverges from the object (an uncommitted change on either side of the index, or an untracked file in a tracked path's place) is **context, never an adopted finding**: report it as such and settle the candidate by the verify route in `../workflow/agent-fanout.md`. The runner records every such path, the reviewer under its return's `Divergence` heading (`../workflow/reviewer-contract.md` § *The return*) and the session on its inline pass; a matching tree records `None`. The review never requires the tree to match.
 
-**Reproduce before adopting.** A candidate whose failure mode is safely reproducible is reproduced in the session's scratch area before it is adopted, and the adopted finding carries the observed output — what the run printed, not a paraphrase of it — as its evidence. What runs is that one candidate's failure mode as an isolated scratch invocation: a crafted input against the defective unit, a minimal script. The project's build and suite stay out of bounds, and reproducing a candidate widens nothing past its own invocation. The reviewing session or its delegated reviewer is what runs it — a probe still never does, whatever the probe found. The divergence bar above binds here too: a candidate at a diverging path takes the verify route rather than a scratch run. Security candidates also follow `security.md` § *Review Validation Boundaries*. Where the failure mode doesn't reproduce there — it needs infrastructure or prohibitive setup, is unsafe or disallowed, or the claim isn't executable at all — the bar doesn't apply, and the candidate settles by the verify route in `../workflow/agent-fanout.md`.
+**Reproduce before adopting.** A safely reproducible failure mode is reproduced in the session's scratch area before adoption, as one isolated invocation (a crafted input, a minimal script), and the finding carries the observed output as evidence. The project's build and suite stay out of bounds, and a probe never runs it. A candidate at a diverging path, or one that does not reproduce (infrastructure, unsafe, not executable), settles by the verify route; security candidates also follow `security.md` § *Review Validation Boundaries*.
 
 ## Standard Verification Checklist
 
-Before finalizing any review output, confirm:
-
-- [ ] All usage sites of modified shared code checked
-- [ ] Severity ratings reflect user/production impact, not aesthetics
-- [ ] No findings on style preferences alone
-- [ ] No findings on unchanged code
-- [ ] Bug fixes have regression tests, or the gap is flagged
-- [ ] Touched comments validated per `code-style.md` → Comments; any comment-only finding clears the bar Touched Comments assigns it
-- [ ] Dead code identified and listed explicitly
-- [ ] Assumptions in non-trivial decisions identified
-- [ ] Findings render in the shape § *Findings output shape* defines — one entry per issue, Minors included, the list never capped or collapsed
+Before finalizing, re-read the lenses above against the output: usage sites checked, severity by impact, no style-only or unchanged-code findings, regression tests or the gap flagged, touched comments validated, dead code listed, assumptions identified, findings in the shape § *Findings output shape* defines.

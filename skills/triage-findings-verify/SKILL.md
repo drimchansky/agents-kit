@@ -1,7 +1,7 @@
 ---
 name: triage-findings-verify
-description: Use when asked for a verified triage of findings you already have — one command that gathers findings from a source (a PR's review comments, a saved or pasted list, or this session's review), batches them by concern, verifies each open batch in an isolated read-only probe, and displays one verdict per finding. Reads and displays only; never edits code or posts anywhere.
-argument-hint: '[source: PR number/URL, file path, or pasted findings — defaults to session findings; passed to the triage phase]'
+description: Use when asked for a verified triage of findings you already have. One command gathers findings from a source (a PR's review comments, a saved or pasted list, or this session's review), batches them by concern, verifies each open batch in an isolated read-only probe, and displays one verdict per finding. Reads and displays only; never edits code or posts anywhere.
+argument-hint: '[source: PR number/URL, file path, or pasted findings; defaults to session findings]'
 ---
 
 ## Core Rules
@@ -9,52 +9,44 @@ argument-hint: '[source: PR number/URL, file path, or pasted findings — defaul
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core.
 
-One command for the findings-first pipeline: gather and batch findings you already have (`triage-findings`), then verify each **open** batch in an isolated read-only probe running the `verify-issue` protocol — cold eyes per batch, one verdict per finding. Unlike the review composite `review-code-triage-verify`, there is no review phase: the findings come from an external source that triage resolves — a PR's review comments, a saved or pasted list, or a review run earlier this session. So triage's `verify` and `addressed` buckets can be genuinely populated, and this skill shows them rather than assuming everything is open.
+Findings-first pipeline: gather and batch findings you already have (`triage-findings`), then verify each **open** batch in an isolated read-only probe running the `verify-issue` protocol, one verdict per finding. There is no review phase, so the `verify` and `addressed` buckets can be populated and are shown.
 
-`./references/workflow/verify-pipeline.md` owns the mechanics this pipeline shares with the kit's other verify composite — the pipeline-wide overrides every phase runs under among them. Read it; the sections below carry only what is specific to this one.
+`./references/workflow/verify-pipeline.md` carries the shared mechanics and the pipeline-wide overrides; the sections below carry only what is specific to this composite.
 
-**CRITICAL**: The whole pipeline reads and displays. No phase edits code, posts to a PR, resolves a thread, or writes to any source — the guarantee `triage-findings` and `verify-issue` each carry individually, held end to end. Addressing the findings is a separate, manual follow-up.
+The whole pipeline reads and displays. No phase edits code, posts to a PR, resolves a thread, or writes to any source.
 
 ## Source
 
-There are no flags — `-x`/`-d` belong to the review phase the review composite carries, and this one has none; the per-batch verify probes run on the **native** engine regardless. The only argument is the triage source, passed straight to phase 1.
+There are no flags. The only argument is the triage source, passed to phase 1.
 
-Phase 1 runs `../triage-findings/SKILL.md`'s **full** source resolution — an explicit argument wins (a PR number/URL → PR mode, a file path → that file, pasted text → those findings); with no argument it takes this session's review findings, else falls back to the open PR for the current branch; several named sources merge into one view. This is the departure from the review composite, which pins triage to its own phase-1 review and forbids other sources — here there is no in-session review to pin to, so triage resolves the source itself.
+Phase 1 runs `../triage-findings/SKILL.md` § *Sources* in full, with no pinning and no source narrowing.
 
-There is **no working-tree precondition and no drift re-check**. The review composite guards a reviewed-diff identity — a head and merge-base its probes must not diverge from — because its probes read the live tree and the findings were produced from a snapshot in that same session. This composite has no such snapshot: the findings pre-exist and may already be partly addressed, and `triage-findings`' classify step already routes any finding whose anchored code changed since it was written into the **verify** (outdated) bucket. If the source yields nothing to triage, phase 1 says so and stops.
+There is no working-tree precondition and no drift re-check: the findings pre-exist, and the `triage-findings` classify step routes a finding whose anchored code changed into **verify**. If the source yields nothing to triage, phase 1 says so and stops.
 
 ## Phase 1 — Triage
 
-Execute `../triage-findings/SKILL.md` end to end, with its full source resolution above — no pinning, no source narrowing. It classifies every finding into exactly one bucket (**open** / **verify** / **addressed**) and batches the open ones by concern. Print its **Overview** — the source(s) triaged and the counts — as the one progress line; hold the batch detail for the final Output.
+Execute `../triage-findings/SKILL.md` end to end. Print its **Overview** as the one progress line; hold the batch detail for the final Output.
 
-**No open findings** — everything landed in `verify`/`addressed`, or the source had no findings at all — makes phase 2 vacuous: skip it and render the Output without probe verdicts, its **Verified** line reading `Verified: no open findings to verify` and the non-open findings still shown under their buckets.
+**No open findings** makes phase 2 vacuous: skip it and render the Output without probe verdicts, its **Verified** line reading `Verified: no open findings to verify`, non-open findings still shown under their buckets.
 
 ## Phase 2 — Verify
 
-This skill fans out under `./references/workflow/agent-fanout.md`, `./references/workflow/probe-engines.md`, and `./references/workflow/probe-shape-verify.md`. Fan out, merge, and degrade per `./references/workflow/verify-pipeline.md`, over the batches phase 1 held. The merge's session-review contradiction turn binds only where the source resolved to this session's own review; findings from a PR or a saved list have no session pass to contradict, so a probe's **Not an issue** withdraws them directly.
+Fan out under `./references/workflow/agent-fanout.md`, `./references/workflow/probe-engines.md`, and `./references/workflow/probe-shape-verify.md`; fan out, merge, and degrade per `./references/workflow/verify-pipeline.md`. The merge's session-review contradiction turn binds only where the source is this session's own review; a probe's **Not an issue** withdraws a PR or saved-list finding directly.
 
-Alone among the members, this one's **review object** varies — it depends on the source triage resolved:
+The **review object** depends on the source:
 
-- **PR mode** — hand the probe the PR's diff (`gh pr diff <number>`); the findings are review comments on that change, and a finding about what the PR added or dropped can't be judged from current file contents alone.
-- **This session's review findings** — hand the reviewed diff if it is recoverable from the session (`<base>...HEAD` on a branch against its base, `<merge-base>...<b>` on a commit range), exactly as the review composite does. A `paths` review has no diff to hand, and it is not the standalone case below either: give the probe the reviewed path set and the head `review-code`'s **Reviewed** line records for it, so it verifies each finding against those files as that commit has them rather than against whatever the tree currently holds.
-- **A file, pasted text, or any standalone finding with no associated change** — there is no diff; the probe verifies each finding as a standalone claim against current code, which is `verify-issue`'s native single-issue mode. Say so in the prompt, so the probe investigates the claim rather than hunting for a change that was never its subject.
+- **PR mode:** the PR's diff (`gh pr diff <number>`).
+- **This session's review findings:** the reviewed diff (`<base>...HEAD`, or `<merge-base>...<b>` on a range); for a `paths` review, the reviewed path set and the head from `review-code`'s **Reviewed** line.
+- **A file, pasted text, or any standalone finding:** no diff. Say so in the prompt; the probe verifies each finding as a claim against current code.
 
-When triage merged several sources, one concern batch can span these — some findings from a change, some standalone. The review object is then per finding, not per batch: give a probe only the diff its change-based findings came from, verify the standalone ones as claims against current code, and where a single batch spans both, split it along that line so no probe is handed a diff that doesn't correspond to some of its findings — worse than none, per the skeleton.
+A batch spanning change-based and standalone findings is split along that line.
 
 ## Output
 
-Lists, never tables.
+Lists, not tables.
 
-- **Overview** — the source(s) triaged and the counts: N open, N to verify, N addressed. This names the provenance — which source was and wasn't covered; there is no review `Reviewed at <sha>` line here.
-- **Batches** and **Verified** — as `./references/workflow/verify-pipeline.md` § *Output: Batches and the Verified line* specs them, `Batches` here taking a short quote as its no-anchor locator.
-- **Inaccessible context** (only if any) — sources or links triage couldn't fetch, with the reason, forwarded from phase 1.
+- **Overview:** the source(s) triaged and the counts: N open, N to verify, N addressed.
+- **Batches** and **Verified:** per `./references/workflow/verify-pipeline.md` § *Output: Batches and the Verified line*, `Batches` taking a short quote as its no-anchor locator.
+- **Inaccessible context** (only if any): sources or links triage could not fetch, with the reason.
 
-**Next:** address the confirmed findings — `/implement-task` (or `/fix-findings`) applies the fix, `/commit` commits it, and `/review-code` reviews it before merge. Withdrawn findings need no action.
-
-## Verification
-
-Confirm `./references/workflow/verify-pipeline.md` § *Shared checklist* — its phases here are `triage-findings` and probes on `verify-issue`, and its read-only item covers posting to a PR and resolving a thread — plus these:
-
-- [ ] Phase 1 ran `triage-findings` with its full source resolution, and the source(s) are named in the Overview
-- [ ] Every probe prompt carried the right review object — the diff when the source has one, none for standalone findings
-- [ ] Output carries the Overview provenance
+**Next:** `/implement-task` or `/fix-findings` applies the confirmed fixes, `/commit` commits them, and `/review-code` reviews them before merge.

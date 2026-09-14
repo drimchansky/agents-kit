@@ -1,32 +1,32 @@
 # Acceptance Criteria
 
-Quality bar for the goals in `goals.md`, each a durably-ID'd `G<n>` bullet (`- G1 — <outcome>`). A goal that fails any check below is not ready for `review-task` or `implement-task` — fix it (or mark `_(unresolved: <note>)_`) before downstream skills run.
+Quality bar for the goals in `goals.md`, each a `G<n>` bullet (`- G1 — <outcome>`). Fix a goal that fails a check below, or mark it `_(unresolved: <note>)_`, before `review-task` or `implement-task` runs.
 
 ## Each goal is
 
-- [ ] **Testable** — verifiable by running a command, exercising a flow, inspecting state, or — for a one-shot or irreversible outcome — by its best available proxy (a confirmation, a receipt, the observed end state); not "feels right" or "works well"
-- [ ] **Specific** — names a concrete artifact, behavior, or measurable yardstick; no hedge words ("works", "good", "robust", "fast enough")
-- [ ] **Outcome-oriented** — describes user-visible or caller-visible behavior, not implementation steps
-- [ ] **Singular** — one observable claim per bullet; split "and"-stuffed compounds into separate bullets
-- [ ] **Bounded** — scope is unambiguous; reader can tell what's in vs out without guessing
-- [ ] **Stated as behavior, not implication** — "user can X" beats "X is implemented"; "GET /foo returns 200 with `{shape}`" beats "the endpoint exists"
+- [ ] **Testable**: verifiable by a command, a flow, an inspected state, or the best available proxy for a one-shot outcome; not "feels right"
+- [ ] **Specific**: names a concrete artifact, behavior, or yardstick; no hedge words ("works", "robust", "fast enough")
+- [ ] **Outcome-oriented**: user- or caller-visible behavior, not implementation steps
+- [ ] **Singular**: one observable claim per bullet
+- [ ] **Bounded**: the reader can tell what is in and out without guessing
+- [ ] **Stated as behavior**: "user can X" beats "X is implemented"; "GET /foo returns 200 with `{shape}`" beats "the endpoint exists"
 
 ## Verifying outcomes that can't be re-run
 
-Some goals name a one-shot or irreversible result — an event that occurred, a deal closed, a lease signed. They are still testable: verify them against the **best available proxy** (a confirmation, a receipt, the observed end state) or evaluate them **post-hoc** in a retro. "Testable" never requires the check to be *repeatable* — only that there's an observable yardstick. This is the non-code counterpart to running a test; the engineering acceptance-gate recipe (run the command, observe the output) lives in `../engineering/acceptance-gate.md`.
+A one-shot or irreversible outcome (an event held, a lease signed) is verified against its best available proxy: a confirmation, a receipt, the observed end state, or a post-hoc retro. Testable requires an observable yardstick, not a repeatable check. The code counterpart is `../engineering/acceptance-gate.md`.
 
 ## Externally-verified goals — the `(external)` marker
 
-Some goals can only be confirmed **outside the agent's working session**, and only **after** implementation — a human or client signs off, or the outcome is observed in a live/production environment the agent can't drive in-session ("changes deployed and verified live", "verified by the client"). Mark such a goal with an `(external)` token right after its ID:
+A goal confirmed only outside the agent's session and after implementation, a human sign-off or a live state the agent cannot drive, carries `(external)` right after its ID:
 
 ```markdown
 - G5 (external) — Changes are deployed and verified live in production
 - G6 (external) — Client confirms the new checkout flow works
 ```
 
-- **Still testable.** An `(external)` goal is not a licence to be vague — it must name a concrete outcome and an observable yardstick, verified against its **best available proxy** (the confirmation/receipt/observed live state the user reports) when the proxy arrives. `(external)` marks *who verifies and when*, not *whether* it's testable. Don't use `(external)` to smuggle in a hedge-word goal.
-- **It gates the task at `in-review`, not `done`.** At the acceptance gate the agent verifies every unmarked (agent-verifiable) goal as usual; an `(external)` goal it can't confirm in-session is tagged **`pending external`** (not `met`, not `unmet`), and the task parks in the `in-review` state until the external check is confirmed on a later re-run. This is the mechanism that stops a task reaching `done` on code-complete alone. See `./task-lifecycle.md` for the `in-review` state and `pending external` verdict.
-- **Absent marker = agent-verifiable (default).** Existing goals need no change; only add `(external)` where verification genuinely leaves the session.
+- It still names a concrete outcome and yardstick, verified against the proxy the user reports. `(external)` marks who verifies and when, not whether the goal is testable.
+- At the acceptance gate an `(external)` goal not confirmable in-session is tagged `pending external`, and the task parks at `in-review` until a later run confirms it (`./task-lifecycle.md`).
+- No marker means agent-verifiable.
 
 ## Anti-patterns
 
@@ -34,11 +34,10 @@ Some goals can only be confirmed **outside the agent's working session**, and on
 - "Performance is acceptable" → "p95 export latency under 2s for the largest tenant in staging"
 - "Handles errors gracefully" → "On API failure, the UI shows the server error message and the export button re-enables"
 - "Auth is implemented and tokens are validated" → split into "Login flow returns a JWT" + "Requests with an expired JWT receive 401"
-- "Add a `formatCsv()` helper" → not a goal at all; that's a plan step. Restate as the user-facing outcome it delivers.
+- "Add a `formatCsv()` helper" → a plan step, not a goal; restate as the outcome it delivers
 
 ## Common Mistakes
 
-- Treating absence of complaint as success — "no errors in the console" is not a goal; name the behavior that proves the feature works
-- Letting the goal describe the test rather than the outcome — "the unit test passes" tautologically passes once the test exists
-- Hiding multiple goals inside one bullet — coverage analysis can't tag a compound goal accurately
-- Reusing vague phrasing from the original ticket without sharpening — `goals.md` is the place to make requirements testable, not to mirror upstream language
+- "No errors in the console" names an absence, not the behavior that proves the feature
+- "The unit test passes" describes the test, and holds as soon as the test exists
+- A compound bullet hides goals that coverage analysis cannot tag

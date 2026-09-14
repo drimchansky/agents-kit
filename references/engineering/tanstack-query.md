@@ -1,46 +1,31 @@
 # TanStack Query
 
-Check the project's installed `@tanstack/react-query` version — APIs change between major versions.
+Check installed-major docs (`./execution.md` § *Detect stack and sources*):
 
-- **v4** — `useQuery({ queryKey, queryFn })` object syntax; `cacheTime` for GC; `onSuccess`/`onError`/`onSettled` callbacks on `useQuery` are supported
-- **v5** — `cacheTime` renamed to `gcTime`; `useQuery` callbacks (`onSuccess`/`onError`/`onSettled`) removed — use `useEffect` or mutation callbacks instead; `queryOptions()` factory fully supported
-
-The v4 → v5 renames above are the ones that bite, so confirm a hook option against the installed major's own docs before using it — the sourcing rule is `./execution.md` § *Detect stack and sources*.
+- v4: object useQuery, cacheTime, query onSuccess/onError/onSettled.
+- v5: gcTime; effects/mutation callbacks replace query callbacks; queryOptions supported.
 
 ## Custom Hooks
 
-- [ ] Return raw `useQuery`/`useMutation` results — don't wrap in custom types that discard fields
-- [ ] No wrapper types like `{ data: T; isLoading: boolean }` — consumers lose metadata
-- [ ] Hook adds value beyond what `useQuery(options)` already provides
+- [ ] Add value beyond useQuery(options); return raw results without field-discarding wrappers.
 
 ## Query Options
 
-- [ ] `queryOptions()` factory for reusable configs
-- [ ] `select` for different views of the same data
-- [ ] Colocate `queryOptions` with data-fetching logic, not with consumers
+- [ ] Reusable queryOptions beside fetching; select for views.
 
 ## Query Keys
 
-- [ ] `queryKeys` factory to centralize key construction
-- [ ] Invalidation matches key structure exactly
+- [ ] Central queryKeys factory; invalidation matches exactly.
 
 ## Side Effects
 
-- [ ] Mutation callbacks (`onError`/`onSuccess`/`onSettled`) over `useEffect` on mutation state
-- [ ] `throwOnError` for error boundary propagation
+- [ ] Mutation callbacks over state effects; throwOnError for boundaries.
 
 ## Mutations
 
-- [ ] `useMutation` for writes, not manual `useState` tracking
-- [ ] `onSuccess` to invalidate related queries or update cache
-- [ ] `mutateAsync` when awaiting; `mutate` with callbacks for fire-and-forget
-- [ ] Separate hooks for read (polling) and write (mutation) concerns
-- [ ] `mutation.variables` over mirrored `useState` for in-flight item
+- [ ] useMutation for writes; onSuccess invalidates/updates cache; await mutateAsync or use mutate callbacks.
+- [ ] Separate read/write hooks; mutation.variables instead of mirrored in-flight state.
 
 ## Common Mistakes
 
-- Wrapping/discarding query result fields
-- Duplicate queries with different key strings for same endpoint
-- Missing key parameters (e.g., `['user']` instead of `['user', userId]`)
-- Invalidation key mismatches
-- Mirrored mutating-item state via `useState`
+- [ ] Keys include identity parameters; identical queries share keys.

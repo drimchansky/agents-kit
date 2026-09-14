@@ -1,24 +1,16 @@
 # Engineering Rules
 
-The **engineering domain pack's rules overlay** — loaded on top of the neutral `../../CORE_RULES.md` for any task with `**Domain:** engineering` (the default), and unconditionally by the engineering-only skills, each of which cites it. `commit` is the one engineering-contributed skill that does *not* load this overlay — it writes no code, so the Git-discipline line below applies directly while its own SKILL.md carries the staged-change check gate appropriate to committing instead of this pack's changed-code health-boundary protocol.
+The engineering domain pack's rules overlay, loaded on top of `../../CORE_RULES.md` for any task with `**Domain:** engineering` (the default), and unconditionally by the engineering-only skills, each of which cites it. `commit` is the one engineering-contributed skill that does not load this overlay: it writes no code, so the Git-discipline line below applies directly and its own SKILL.md carries the staged-change check gate instead of the changed-code health-boundary protocol.
 
 ## Code & Git discipline
 
 - Don't introduce new dependencies without justification
 - Don't remove or rename public APIs without checking all consumers
-- Don't commit, stage changes, or otherwise mutate Git state unless explicitly asked — `../workflow/task-delivery.md` owns the task lifecycle sanction and the separate checkpoint-commit sanction granted by an explicit engineering full-plan request
+- Don't commit, stage changes, or otherwise mutate Git state unless explicitly asked; `../workflow/task-delivery.md` owns the task lifecycle sanction and the checkpoint-commit sanction an explicit engineering full-plan request grants
 
 ## Before presenting changes
 
-Before presenting results from any code change:
-
-- Have current integrated health for the final changed surface — the typecheck, lint, test, and
-  build recipe `./verification.md` § *Two verification tiers* names, run at the scope that section
-  resolves for the boundary, at the consumer's declared health boundary
-  (`../workflow/execution-loop.md` § *Health boundaries*), or, for work under no such consumer, at
-  presentation itself. That scope is the final delta's closure where the boundary's reference
-  carries a verdict and the whole surface where it does not; never narrower than it either way,
-  since a narrower scope can miss a consumer.
+- Have current integrated health for the final changed surface: the recipe `./verification.md` § *Two verification tiers* names, at the scope it resolves, at the consumer's declared health boundary (`../workflow/execution-loop.md` § *Health boundaries*) or, under no such consumer, at presentation itself. That scope is the final delta's closure where the boundary's reference carries a verdict and the whole surface where it does not; never narrower.
 - If changing exports or shared code, grep for all consumers and verify compatibility
 - Remove debug artifacts (console.log, commented-out code, temporary variables)
 
@@ -38,28 +30,27 @@ Before presenting results from any code change:
 
 ## Engineering pack contents
 
-Beyond this rules overlay, the engineering pack provides the methodology bodies the neutral spine
-loads by phase:
+Methodology bodies the neutral spine loads by phase:
 
-- `exploration.md` — how to explore a codebase before planning or reviewing (read code, trace callers/callees, map blast radius, check versions, ground in prior art)
-- `planning.md` — engineering planning specifics: vertical slicing, step-size caps, checkpoint shape, and when-to-plan heuristics
-- `execution.md` — stack/version detection, authoritative doc-sourcing, the Prove-It bug pattern, the verification cadence, unresolved-source handling, red flags
-- `verification.md` — engineering's mapping for the neutral unit-outcome and integrated-health tiers, with the satellites `boundary-scope.md` (how a health boundary's scope is computed and what it records), `acceptance-gate.md` (the acceptance-gate recipe) and `batched-fixes.md` (batched `fix-findings` boundaries)
-- `review.md` — code-review lenses, complexity signals, severity calibration
+- `exploration.md`: exploring a codebase before planning or reviewing
+- `planning.md`: vertical slicing, step-size caps, checkpoint shape, when to plan
+- `execution.md`: stack detection, doc sourcing, the Prove-It bug pattern, the verification cadence
+- `verification.md`: the unit-outcome and integrated-health tiers, with the satellites `boundary-scope.md`, `acceptance-gate.md`, and `batched-fixes.md`
+- `review.md`: code-review lenses, complexity signals, severity calibration
 
-Per-surface checklists — consult the ones a change touches:
+Per-surface checklists, consulted for what a change touches:
 
-- `accessibility.md` — Landmarks, ARIA, keyboard/focus, contrast, live regions, native dialogs, motion preferences, forms a11y
-- `code-style.md` — Function shape, parameter limits, comment discipline (implementation comments only for non-obvious current invariants — security, concurrency, performance, external-API quirks, unit/format differences; no code/task-history/future-work narration, no duplicating what types, tests, configuration, or nearby code already encode; long-lived architectural decisions to an ADR or decision log; self-sufficient links; scoped validation of affected comments; material findings only, never verbosity or style; public-API docs and required directives excepted)
-- `css.md` — Layout, responsive, container queries, modern selectors (`:has()`, `@scope`), theming, modern color, cascade layers
-- `design-to-code.md` — Building UI from a design source (Figma node, mockup, prototype) with any design-context tool or none: pinned source, structured context before code, hint priority, reuse-first, exported assets, what the design leaves out, per-screen verify, what a delegated design unit's packet carries
-- `forms.md` — Semantics, autocomplete tokens, validation timing (`:user-invalid`), tap sizing, AJAX, multi-page forms
-- `html.md` — Document semantics, landmarks, native overlays (`<dialog>`, `[popover]`, `<details>`), resource prioritization, media
-- `interactions.md` — Motion mechanics, enter/exit, icon transitions, tactile feedback, surfaces, typography polish
-- `performance.md` — Core Web Vitals (LCP/INP/CLS), rendering, data fetching, containment, resource hints, bundle, memory
-- `privacy.md` — Data minimization, transparency, storage choices (CHIPS), privacy headers, third-party embeds, fingerprinting
-- `react.md` — Version-aware (<18 / 18 / 19+) components, hooks, context, effects, derived state
-- `security.md` — Input/injection, authn/authz, data exposure, CSRF/cookies, browser security headers (CSP, Trusted Types, COOP/COEP), cross-origin comms
-- `tanstack-query.md` — Version-aware (v4 / v5) custom hooks, `queryOptions`, query keys, mutation side effects
-- `testing.md` — Behavior over implementation, mocking discipline, Arrange-Act-Assert, error-path coverage
-- `typescript.md` — Strict types (no `any`), discriminated unions, narrowing, `satisfies`, `as const`, naming
+- `accessibility.md`: landmarks, ARIA, keyboard/focus, contrast, live regions, native dialogs, motion, forms a11y
+- `code-style.md`: function shape, parameter limits, comment discipline (non-obvious current invariants only; no narration or duplication; scoped validation; public-API docs excepted)
+- `css.md`: layout, responsive, container queries, `:has()`, `@scope`, theming, color, cascade layers
+- `design-to-code.md`: building UI from a design source (Figma node, mockup, prototype), with or without a design-context tool
+- `forms.md`: semantics, autocomplete, validation timing, tap sizing, AJAX, multi-page forms
+- `html.md`: document semantics, landmarks, native overlays, resource prioritization, media
+- `interactions.md`: motion, enter/exit, icon transitions, tactile feedback, surfaces, typography
+- `performance.md`: Core Web Vitals, rendering, data fetching, containment, resource hints, bundle, memory
+- `privacy.md`: data minimization, transparency, storage choices, privacy headers, embeds, fingerprinting
+- `react.md`: version-aware components, hooks, context, effects, derived state
+- `security.md`: injection, authn/authz, data exposure, CSRF/cookies, security headers, cross-origin comms
+- `tanstack-query.md`: version-aware hooks, `queryOptions`, query keys, mutation side effects
+- `testing.md`: behavior over implementation, mocking discipline, Arrange-Act-Assert, error paths
+- `typescript.md`: strict types, discriminated unions, narrowing, `satisfies`, `as const`, naming

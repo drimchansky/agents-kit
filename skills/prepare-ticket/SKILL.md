@@ -8,69 +8,38 @@ argument-hint: '[task description] [optional task folder, slug, or target file p
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 
-This skill writes a **product-facing ticket** — deliberately domain-neutral, and *upstream* of `CONTEXT.md`, so no `**Domain:**` marker exists yet to resolve. It reads the neutral core and resolves **no** pack. Its source of truth is `./references/workflow/ticket-format.md` (the ticket's shape and quality bar), `./references/workflow/task-layout.md` (folder resolution), and `./references/workflow/task-destinations.md` (where a new folder lands), read **at run time**.
-
-Turn a task the user describes into a **self-contained ticket** — a file someone can pick up cold, with no access to this session, and act on. The ticket names the **real functional output required** — what the product should do for its user — in product terms, not implementation. Its four parts (a title, minimal **Context**, a **Description** of the work, and testable **Acceptance Criteria**) and the quality bar they must meet are defined once in [`./references/workflow/ticket-format.md`](./references/workflow/ticket-format.md). Read it before drafting. The file is the deliverable.
-
-Inside the task workflow this ticket is the **product-facing origin** of a task folder — the role-named `ticket.md` that `refine-idea` and `plan-task` later derive `CONTEXT.md` and `goals.md` from (see [`./references/workflow/task-layout.md`](./references/workflow/task-layout.md)). Run standalone, it just writes a ticket to a file you name.
+Write a self-contained, product-facing ticket to a file. Resolve no domain pack: the ticket precedes Domain grounding. Read `./references/workflow/ticket-format.md`, `./references/workflow/task-layout.md`, and `./references/workflow/task-destinations.md` before drafting.
 
 ## Process
 
 ### 1. Understand the task
 
-Read what the user gave you and restate the core ask to yourself in one sentence — as the functional outcome the product must deliver. If you can't, it's too thin — go to step 2. If you're running inside a codebase, ground the ticket in reality: grep for the components, files, and names involved so the Description and Criteria use the real vocabulary, not a paraphrase — while keeping the ticket itself at the altitude of product intent, not implementation. Cite concrete paths where they help the reader.
+Identify the requested functional outcome in one sentence. In a codebase, locate relevant components/files/names for accurate vocabulary and useful path citations. Keep the ticket in product terms; prescribe implementation only when the user did. Include minimal sufficient context for a reader without this session, linking specifications instead of pasting them. Add no unrequested requirement.
 
 ### 2. Clarify only if thin
 
-If you can't write testable criteria from the description — scope is fuzzy, "done" is undefined, a load-bearing constraint is missing — ask a **tight batch of up to three** questions before drafting. Don't guess silently; don't interrogate either — a well-specified task goes straight through. Batch these with the destination question in step 3 so the user is interrupted once, not twice.
+If scope, done, or an essential constraint prevents testable criteria, ask up to three focused questions before drafting. Batch any destination question with them. A sufficiently specified request proceeds directly; unresolved requirements stay questions rather than guesses.
 
 ### 3. Destination
 
-The ticket is always written to a file. Decide where:
+- **Task folder/slug or task-start intent:** resolve-or-create under `./references/workflow/task-layout.md` and destination precedence under `./references/workflow/task-destinations.md`. Use the supplied folder/slug or derive a 2–5-word kebab-case slug. Write its role-named ticket.md. Read an existing ticket and ask whether to update or choose another slug.
+- **Standalone target file:** use that path; if it exists, read it and confirm update versus another path.
+- **Neither path nor task intent:** suggest `<kebab-case-title>.md` or task seeding, and confirm before writing.
 
-- **Seeding a task folder** (the workflow starting point) — when the user names a task folder or slug, or asks to start a task, the ticket is the folder's role-named `ticket.md`. Resolve or create the folder per the *resolve-or-create* rules in [`./references/workflow/task-layout.md`](./references/workflow/task-layout.md) and the *Destination paths* precedence in [`./references/workflow/task-destinations.md`](./references/workflow/task-destinations.md): use the task-folder path/slug the user supplied, or derive a 2–5-word kebab-case slug from the task and let that precedence place the new folder. Write `<task-folder>/ticket.md`. If a `ticket.md` already exists there, read it and ask whether to update it or pick a different slug — never silently overwrite.
-- **A target path in the arguments** (standalone) — that's the file. If it already exists, read it and ask whether to update it or write elsewhere.
-- **No path and no task intent** — suggest `<kebab-case-title>.md`, or offer to seed a task folder instead, and confirm before writing.
-
-**Seeding a task folder loads what that folder will sit under.** Before step 4 drafts, read the `GROUP_CONTEXT.md` files applicable to the resolved folder, root to task — [`./references/workflow/task-store.md`](./references/workflow/task-store.md) § *Shared group context* fixes the set, the root that bounds it, and the citation form. A standalone target path sits under no group, so nothing loads there. What arrives this way only narrows the draft: it may sharpen the minimal **Context** or an acceptance criterion the ask already implies, and it never adds a requirement the user did not ask for or a paragraph lifted from a group file. The ticket still travels alone — a reader with no access to that store acts on it unchanged.
+Before drafting a seeded task's ticket, read applicable GROUP_CONTEXT root-to-task under `./references/workflow/task-store.md` § *Shared group context*. Standalone files load none. Grounding may sharpen context or implied criteria, never add requirements or copied paragraphs. The ticket must remain usable without the store.
 
 ### 4. Draft the ticket
 
-Copy `./references/templates/ticket.md` and fill the four sections defined in [`./references/workflow/ticket-format.md`](./references/workflow/ticket-format.md) — Title, Context, Description (with **In scope** / **Out of scope** bullets when the boundary isn't obvious), and Acceptance Criteria, plus the optional References. Keep every part in product terms — the functional output required, the observable behavior — and leave the *how* to the plan. Drop References unless the user gave you links, specs, or ticket IDs to carry.
+Fill `./references/templates/ticket.md` under `./references/workflow/ticket-format.md`: Title, Context, Description, Acceptance Criteria. Use In scope/Out of scope where needed. Include References only for requester-supplied links/specs/ticket IDs. Write in the request's language using lists, not tables.
 
 ### 5. Hold criteria to the bar
 
-Every acceptance criterion must pass the quality bar in [`./references/workflow/ticket-format.md`](./references/workflow/ticket-format.md), which holds each to the same checks as a goal (`./references/workflow/acceptance-criteria.md`): testable, specific, outcome-oriented, singular, bounded, stated as observable behavior. Rewrite the vague ones: "the export works" → "The user can export the current filter as CSV; the downloaded file's row count matches the on-screen count"; "performance is acceptable" → "the file downloads in under 2s for the largest tenant in staging".
+Apply `./references/workflow/ticket-format.md` and `./references/workflow/acceptance-criteria.md`. Each criterion is a single, specific, bounded, testable outcome in plain behavioral language. Replace vague success claims with observable results.
 
 ### 6. Write and report
 
-Write the file. Then, in chat, **report — don't paste the ticket**:
+Write only to the confirmed destination; do not silently overwrite existing content. Report briefly in chat without pasting the ticket:
 
-- **Ticket** — the path and the title. When it seeded a task folder, add the handoff line so the next step is one copy-paste away: `Next: /plan-task <slug>` (or `/refine-idea <slug>` first when the ask still needs sharpening) — `<slug>` being the handoff token `./references/workflow/task-layout.md` § *One task, one flat folder* fixes for where the folder sits: the bare slug where one resolves, the folder's absolute path otherwise.
-- **Assumptions** — anything you inferred to fill a gap the user didn't state.
-- **Open questions** — anything still genuinely undecided. These stay out of the ticket file; a ready ticket is decided, and unresolved calls belong in chat where the user can answer them.
-
-A few lines; the file is the deliverable.
-
-## Don't Rationalize
-
-- "Whoever picks this up will have the conversation" — They won't. The ticket travels alone; if it's not in the file, it doesn't exist.
-- "More context is safer than too little" — Not here. Every extra paragraph buries the ask. Minimal-but-sufficient is the bar; link the spec, don't paste it.
-- "I'll spell out how it should be built" — The ticket names the functional output, not the implementation. The *how* is the plan's job; prescribing it here pre-empts planning and dates the ticket.
-- "'It works' is a fine criterion" — It isn't testable. Name the observable behavior in a plain sentence, or it can't gate anything.
-- "I'll add a couple of obvious requirements while I'm here" — Capture only what's asked. An unrequested requirement is a question for the user, not a line in the ticket.
-- "The description is clear enough to skip clarifying" — If you can't write testable criteria from it, it isn't. Ask the tight batch first.
-
-## Verification
-
-Confirm before finishing:
-
-- [ ] Ticket written to a confirmed path — a task folder's role-named `ticket.md` when seeding a task, or the standalone path otherwise; an existing file never silently overwritten
-- [ ] Title, Context, Description, and Acceptance Criteria follow [`./references/workflow/ticket-format.md`](./references/workflow/ticket-format.md)
-- [ ] Ticket describes the real functional output required, in product terms — no prescribed implementation the user didn't ask for
-- [ ] Context is self-contained (a reader with no access to this session can act; no "as discussed") and minimal (background and why only, no design dump or pasted spec)
-- [ ] Every acceptance criterion is a single, testable outcome stated as a plain sentence — no hedge words, behavior not implementation
-- [ ] Scope matches what was asked; no invented requirements; genuine gaps raised as questions, not guessed
-- [ ] Seeding a task folder: its applicable group grounding read before drafting, and used only to sharpen what the ask implies — nothing inherited became a requirement or a pasted paragraph
-- [ ] Lists, not tables; ticket written in the language of the request
-- [ ] Chat report gives path, title, assumptions, open questions (and the handoff line when a task folder was seeded) — the ticket itself not pasted
+- **Ticket:** path/title. For seeded tasks, add `Next: /plan-task <slug>`, or `/refine-idea <slug>` if still needing refinement. Use the resolvable slug or absolute folder path under `./references/workflow/task-layout.md` § *One task, one flat folder*.
+- **Assumptions:** inferred details.
+- **Open questions:** undecided matters, kept in chat rather than a ready ticket.

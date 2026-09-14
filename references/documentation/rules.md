@@ -1,37 +1,37 @@
 # Documentation Rules
 
-The **documentation domain pack's rules overlay** — loaded on top of the neutral `../../CORE_RULES.md` for any task with `**Domain:** documentation`, and unconditionally by the pack-contributed skills, each of which cites it. The pack governs document work: RFCs, ADRs, architecture notes, diagrams, outreach and reply drafts, and other document deliverables.
+Apply with `../../CORE_RULES.md` for `**Domain:** documentation` and documentation-pack skills. Covers RFCs, ADRs, architecture notes, diagrams, outreach, replies, and other document deliverables.
 
 ## Send & publish discipline
 
-- **Nothing is sent, shared, or published without an explicit ask.** Drafting is the agent's job; distribution is the user's. Sharing a page, moving it under a shared parent, locking or unlocking it, applying changes to a live/shared page, and every Slack / Jira / email send stay user actions unless the current request explicitly asks otherwise.
-- Outbound content (messages, ticket text, reply drafts, patch instructions for docs the agent doesn't own) is produced as **paste-ready drafts** in the task folder, each recording what went out on the dated line `../workflow/doc-task-files.md` defines.
-- Run `proofread` over an outbound draft before handing it to the user to send.
+- Send, share, publish, move under a shared parent, lock/unlock, or change a live/shared page only on explicit request. Otherwise these remain user actions, including Slack, Jira, and email sends.
+- Produce outbound content as paste-ready task-folder drafts. Record what went out using the dated line in `../workflow/doc-task-files.md`.
+- Run `proofread` before handing an outbound draft to the user.
 
 ## Before presenting a doc
 
-Before presenting results from any document change:
+- Open or fetch every link in changed sections, including relative paths and anchors. Fix or flag dead targets.
+- Remove drafting placeholders: TK, TBD, TODO, lorem, angle-bracket stubs, and fill-in prompts.
+- Trace figures, dates, names, and quotes to sources opened during this task. Mark unsupported claims unverified or cut them.
+- Confirm distribution stayed within § *Send & publish discipline*.
 
-- **Every link resolves** — open or fetch each link the changed sections carry (relative paths, URLs, section anchors); fix or flag dead ones.
-- **No placeholder text remains** — no TK / TBD / TODO / lorem, no `<angle-bracket>` stubs, no "(fill in)" left from drafting.
-- **Every figure, name, and quote traces to a source** — numbers, dates, people, and quoted words each have a source you actually opened this task; anything you can't ground is marked unverified or cut.
-- **Nothing went out as a side effect** — the send & publish discipline above held throughout the work.
-
-Before publishing or staging a substantial doc, run `review-docs` over it — the quality pass (whole-doc coherence, register); when the doc's subject is code, also its against-codebase audit.
+Before publishing or staging a substantial doc, run `review-docs` for coherence and register. Include its codebase audit for code subjects.
 
 ## Repo grounding for code-subject docs
 
-A doc whose subject is code — an ADR or RFC about services, an architecture note, a migration writeup — is **grounded the way engineering work is**: read the actual repositories, cite files and symbols precisely, verify every claim about code behavior against the code itself rather than memory, and record the sources per the consumer's Record binding (`../workflow/execution-bindings.md`). This license pulls in engineering's *grounding practice only* — it does **not** load the engineering pack or its gates: no build/quality-tool runs, no stack-detection ritual, and no engineering step-sizing apply to a documentation task. The verify recipes stay this pack's (`./verification.md`).
+Read the actual repositories for code subjects. Verify behavioral claims against code and cite files and symbols precisely. Record sources per `../workflow/execution-bindings.md`.
+
+Apply engineering's grounding practice only. Documentation tasks use `./verification.md`, without engineering gates, stack detection, or step sizing.
 
 ## Documentation pack contents
 
-Beyond this rules overlay, the pack provides:
+- `verification.md`: mechanical unit outcomes, integrated health, and acceptance.
+- `adr-format.md`: ADR headers, sections, decisions, open questions, and register.
+- `rfc-format.md`: findings, decision items, logs, and scope.
+- `mermaid-core.md`: shared Mermaid conventions. Type sheets: `mermaid-flowchart.md`, `mermaid-sequence.md`, `mermaid-class.md`, `mermaid-er.md`, `mermaid-state.md`.
+- `review-docs`: source accuracy and document quality.
+- `prepare-diagram`: Mermaid diagrams for code, documents, and described processes.
 
-- `verification.md` — documentation's mapping for the neutral unit-outcome and integrated-health tiers, plus its acceptance-gate recipe (mechanical checks only; the judgment layer is `review-docs`'s)
-- `adr-format.md` — the generic ADR format bar: header block, section skeleton, decision shape, open-questions bar, register and trim rules
-- `rfc-format.md` — the generic RFC format bar: findings and decision items, decision log, scope bounds
-- `mermaid-core.md` plus five per-type sheets (`mermaid-flowchart.md`, `mermaid-sequence.md`, `mermaid-class.md`, `mermaid-er.md`, `mermaid-state.md`) — distilled Mermaid generation checklists: portability across renderers, label quoting and ID discipline, and each type's own traps and style calls, consumed by `prepare-diagram` — Mermaid is notation rather than domain knowledge, so the sheets stay here and are cited rather than copied
+The pack has no exploration, planning, execution, or review files. State that fallback and use the neutral methodology for those phases.
 
-The pack also contributes two skills: `review-docs` — the doc reviewer carrying the against-codebase audit and the quality pass (whole-doc coherence, register) that the loop's mechanical verification tiers deliberately exclude — and `prepare-diagram` — the Mermaid diagram generator for a provided subject (a repo's code flow or architecture, a figure a doc needs, a process described in prose).
-
-The pack is deliberately partial: it ships no exploration / planning / execution / review files yet. A phase that asks for one runs on the neutral methodology — state it, don't fabricate. Org-specific conventions (people and mention tables, house style, page-handling rules for published docs) are deliberately **not** kit content; they live in a store-level doc-conventions file discovered per `../workflow/task-store.md` § *Store-level artifacts*, and the kit checklists cite that role rather than carrying org data.
+Discover organizational conventions through `../workflow/task-store.md` § *Store-level artifacts*. Keep people tables, house style, and published-page handling in that store document.

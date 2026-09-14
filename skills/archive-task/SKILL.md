@@ -9,41 +9,24 @@ disable-model-invocation: true
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 
-This skill operates on the **task-folder envelope** — it relocates a whole task folder on disk — not on a task's domain content. Like `maintain`, it deliberately does **not** resolve a `**Domain:**` pack: archiving is identical for every task regardless of its domain, so there is no domain-specific overlay to load. Its source of truth is `./references/workflow/task-archiving.md` (the archive location, its guards, and the backlog exception), `./references/workflow/task-relocation.md` (the move procedure both parking skills share), `./references/workflow/task-layout.md` (the discovery rules), and `./references/workflow/status-transitions.md` (the **terminal-state set** that says which tasks are finished), read **at run time** — never a hardcoded status list.
+Archive a whole finished task folder through `scripts/task-move.ts`. This skill changes no task content or status and mutates no Git state. No staging, commits, checkout, stash, or `git mv`.
 
-Archiving moves a finished task folder into its own parent's `Archive/` — canonically from `.agents/tasks/` into `.agents/tasks/Archive/`, though a task folder anywhere on disk archives the same way — so the active list shows only live work. It is the **write** side of the archive boundary whose read side already exists: discovery rules exclude `Archive/` from active scans and fall back into it for an explicit slug (`task-layout.md`).
-
-**The move itself is `scripts/task-move.ts`**, which implements that contract in code: it reads the terminal set, derives the destination from the resolved folder's own location, guards it, and relocates the whole folder in one operation. This skill decides *which* task — asking when that is a real question — then runs the script and reports what it did. It never edits task content, never changes a `**Status:**`, and never touches git.
-
-**CRITICAL**:
-
-- **Terminal tasks only.** A task archives only when its `plan.md` `**Status:**` is one of the **terminal states** `status-transitions.md` defines. The script enforces this and refuses everything else — a live task, an unknown status, a folder with no `plan.md`. Never change a status to make a task archivable, and never work around the refusal.
-- **Operate only on the resolved folder.** Hand the script the *exact absolute path resolved in Step 1* — never a bare slug, never a path rebuilt from the slug plus the current directory. A slug can name a folder in another project or anywhere else on disk, and a cwd-relative `.agents/tasks/<slug>` would then validate one task and move another. The script derives the archive from the path it is given.
-- **Read-only on status and content.** The move relocates the folder; it does not edit `**Status:**`, goals, plan steps, or the result record. If a task should be abandoned, the user does that through the normal lifecycle (`task-lifecycle.md`) first, then re-runs.
-- **Never touch git.** No add, commit, checkout, stash, or `git mv`. The move is working-tree only; the user reviews with `git status` / `git diff` and commits.
-- **A refusal is the answer.** When the script exits non-zero, report its line as the outcome and stop. Nothing moved, and nothing about the folder changed.
+Load no domain pack; filing is domain-independent. Read `./references/workflow/task-archiving.md`, `./references/workflow/task-relocation.md`, `./references/workflow/task-layout.md`, and `./references/workflow/status-transitions.md` at run time. Use the registered terminal set, not a copied status list.
 
 ## When to Use
 
-**Use when:**
+**Use when** removing finished or abandoned tasks from their parent's active list.
 
-- A task has reached a terminal state (finished or abandoned, per `status-transitions.md`) and you want it out of its parent's active listing (canonically `.agents/tasks/`).
-- The active task list has grown cluttered with completed work.
-
-**Skip when:**
-
-- The task is still live (any non-terminal state) — finish or abandon it first; this skill won't archive in-flight work.
-- You want to *un-archive* a task — the way back out is the user's own move; this skill is one-way (see `task-archiving.md`).
-- There's no `.agents/tasks/` folder yet and no task was named by path — nothing to archive.
+**Skip when** work is live; finish or abandon it through its lifecycle first. Un-archiving is the user's own move; this skill is one-way. With no canonical task root and no named path, report nothing to archive.
 
 ## Process
 
 ### 1. Resolve the target task folder
 
-`./references/workflow/task-relocation.md` § *1. Resolve the target task folder* owns this step — the base resolution read at run time, the `SRC` naming and absolute-path rule, and the refusal of a tasks-parent. Here a folder qualifies as a task by holding a top-level `plan.md`. Two additions are this skill's own:
+Apply `./references/workflow/task-relocation.md` § *1. Resolve the target task folder*: resolve an exact absolute SRC and refuse task parents. This direction requires a top-level `plan.md`.
 
-- **Already archived** → when the resolved folder is archived on the reading `task-archiving.md` § *Already archived is asked of the whole path up to the store* fixes — an `Archive` anywhere between it and its store root, matched **case-insensitively** — report that it's already archived and stop. Nothing to do, and re-archiving would file one archive inside another; the script refuses on that same reading, naming the container it found.
-- **The nothing-named listing carries status** → show each active folder's `plan.md` `**Status:**` beside it, so the choice is made against what is actually terminal. Don't guess.
+- Already archived under `./references/workflow/task-archiving.md`'s whole-path-to-store rule: report it and stop. Recognize the container case-insensitively, including above a grouping directory.
+- With nothing named, list active folders with their plan Status and ask which; do not guess.
 
 ### 2. Run the move
 
@@ -51,11 +34,15 @@ Archiving moves a finished task folder into its own parent's `Archive/` — cano
 node <kit-root>/scripts/task-move.ts <SRC> --to archive
 ```
 
-`--to archive` is the direction; everything else in this step is `./references/workflow/task-relocation.md` § *2. Run the move* — the kit-root resolution and its missing-root outcome (with `task-archiving.md` as the by-hand reference), `./references/scripts/task-move.md` as the script's CLI and stdout contract, and reading the outcome from the exit status. For this direction the script's gate is the **terminal check** — the plan's status against the terminal set `status-transitions.md` defines, refusing a live, unknown, or plan-less folder — and its destination takes the **backlog exception** `task-archiving.md` defines: a finished task parked in a `Backlog/` archives *out* of it, into the backlog's own parent, never into a nested `Backlog/Archive/`.
+Pass the exact absolute SRC resolved in Step 1, never a bare slug or a path rebuilt from cwd. Apply `./references/workflow/task-relocation.md` § *2. Run the move* and `./references/scripts/task-move.md` for root resolution, guards, and output.
+
+The helper permits only terminal plans, refusing live, unknown, or missing plans. Never change status to pass the gate or bypass a refusal. A terminal task directly in Backlog archives out to the grandparent's Archive, not Backlog/Archive (`./references/workflow/task-archiving.md`).
+
+Report non-zero output verbatim and stop, without moving anything manually or merging a collision.
 
 ### 3. Report
 
-`./references/workflow/task-relocation.md` § *3. Report* owns the shape. Two things are this direction's: when the destination shows the task left a `Backlog/`, say so; and the way back is to move the folder out from under the `Archive/` that archives it, which can sit above a group rather than directly over the task — naming its slug only lets discovery find it there.
+Apply `./references/workflow/task-relocation.md` § *3. Report*, using the helper's printed destination. State when the task left Backlog. Explain that un-archiving moves it out from under the applicable Archive container; naming its slug merely discovers it there. Make no post-move content or record update.
 
 ## Output Template
 
@@ -64,9 +51,9 @@ On success:
 ```markdown
 # archive-task — <slug>
 
-Archived `<slug>` → `<dest>` (plan was `done`; canonically `.agents/tasks/Archive/<slug>/`).
+Archived `<slug>` → `<dest>` (plan was `<observed terminal status>`).
 Internal `./` links preserved; folder excluded from active listings.
-Working-tree only — review with `git status` and commit (if the folder is inside a git repo).
+Working-tree only; review with `git status` and commit if inside a Git repository.
 ```
 
 On refusal:
@@ -74,19 +61,6 @@ On refusal:
 ```markdown
 # archive-task — <slug>
 
-Not archived: <the script's line, verbatim>
-Carry it to `done`, or mark the plan `skipped`, then re-run.
+Not archived: <script's line verbatim>
+<Applicable next action; finish or explicitly abandon live work before retrying.>
 ```
-
-## Don't Rationalize
-
-The four entries in `./references/workflow/task-relocation.md` § *Don't Rationalize* are this skill's, reading *archived* for *moved*: the tasks-parent one, the slug-shortcut one, the refusal-override one, and the merge-the-collision one.
-
-## Verification
-
-Confirm the protocol invariants before finishing:
-
-- [ ] `SRC` resolved per `task-layout.md` at run time and validated by contents (a task folder, not a tasks-parent); a folder already archived on the whole-path reading `task-archiving.md` § *Already archived is asked of the whole path up to the store* fixes reported, not re-archived
-- [ ] The script run once on that exact absolute path, with `--to archive` — no bare slug, no path rebuilt from slug + cwd
-- [ ] Exit 0 reported with the destination the script printed; a non-zero exit surfaced verbatim, with nothing moved by hand afterwards
-- [ ] No status or content edited, no git state mutated

@@ -1,28 +1,38 @@
 # Status Transitions: The Non-Forward Registry
 
-The registered **non-forward** status transitions — the reconcilers' downward repairs and verified upward advances, and the terminal-state exit registry — plus the procedure for changing the vocabulary, split out of `./task-lifecycle.md`, which keeps the status vocabulary and the companion-result-file rule. Read this file when taking or auditing a non-forward transition (a reconciler run, a revive, archiving finished tasks) or when changing the vocabulary.
+Forward vocabulary and companion-result requirements: `./task-lifecycle.md`.
 
 ## Downward reconciliation and upward advances
 
-**Downward reconciliation by the docs → reality composites** (`resume-task-reconcile` / `review-task-reconcile`; shared contract in the sibling `reconciliation.md`). Three plan transitions repair docs that overstate reality: `done → executing` when a done plan's claims no longer hold (shipped work vanished, a `met` goal regressed, or the `## Acceptance` section is missing — the gate never ran), recorded in a matching `## Reconciliation` entry in the result file — this is the **repair** exit from `done`, that state's one registered exit; `in-review → executing` when an in-review plan's implementation claims no longer hold (the shipped work behind a `met` agent-verifiable goal vanished); and `executing → to-do` when a plan sits in `executing` with no result file and no evidence work happened — here no result file exists or is created, so the printed change list is the record. A repair only ever weakens — it never sets `skipped`, `blocked`, or `in-review` — and a judged edit refines plan and grounding content without moving state at all (`./reconciliation-docs-to-reality.md` § *Repairs weaken; advances go through the shared engine*).
+`resume-task-reconcile` and `review-task-reconcile` repair overstated claims through these transitions (`./reconciliation.md`):
 
-**Upward advances by either direction, through one engine.** `reconcile-task` reconciles in the opposite (session → docs) direction, and the docs → reality composites advance as well; either may check a step, mark a goal `met`, flip `to-do → executing`, `executing → done`, `executing → in-review`, or flip `in-review → done` — but only through `./reconciliation.md` § *Strengthen only on verified evidence*, the direction-agnostic engine that is the one home for every precondition those advances owe and for the one `(external)`-goal exception among them. What differs between the directions is only what **nominates** a claim for that engine — the session's witnessed work on one side, a printed report's findings on the other. That route is the only one by which a reconciler enters `done` or `in-review` at all.
+- `done → executing`: completed claims fail, a `met` goal regresses, or Acceptance is missing. Record the repair in Reconciliation.
+- `in-review → executing`: implementation claims behind an agent-verifiable `met` goal no longer hold. Record the repair in Reconciliation.
+- `executing → to-do`: no result exists and no evidence shows work happened. Create no result; the printed change list records the repair.
 
-Reconciliation never sets `skipped` — in either direction, on any evidence, the engine included. A `skipped` plan is exempt from reconciliation entirely (`./reconciliation.md` § *Skipped plans are exempt*), and its one exit is `implement-task`'s user-confirmed revive (§ *Terminal vs. live states*).
+Repairs only weaken; never set `skipped`, `blocked`, or `in-review`. Judged content edits leave state unchanged (`./reconciliation-docs-to-reality.md` § *Repairs weaken; advances go through the shared engine*).
+
+Both directions, `reconcile-task` (session → docs) and the composites (docs → reality), may check steps, record `met`, or advance `to-do → executing`, `executing → done`, `executing → in-review`, and `in-review → done`, but only through `./reconciliation.md` § *Strengthen only on verified evidence*, including its external-goal exception.
+
+Reconciliation never sets `skipped` or edits a skipped plan (`./reconciliation.md` § *Skipped plans are exempt*).
 
 ## Terminal vs. live states
 
-**Terminal vs. live states.** `done` and `skipped` are the two **terminal** plan states — a plan in either is finished and the forward lifecycle advances no further (`done` = completed, `skipped` = abandoned). `to-do`, `executing`, `blocked`, and `in-review` are **non-terminal** (live) — an `in-review` task is awaiting external verification, not finished. Terminal means the lifecycle stops on its own, not that no edge ever leaves: one registered exit leaves each of the two terminal states, taken only by an explicit act, and the two differ by act as much as by producer. `done` has the docs → reality composites' `done → executing` **repair**, which weakens the status because the docs overstated reality. `skipped` has `implement-task`'s user-confirmed `skipped → executing` **revive** (`revive` names this status flip only; moving a folder back out of `Archive/` is an **un-archive**, per `./task-archiving.md`). Neither happens as part of normal progression, which is why neither appears in the lifecycle headers in `./task-lifecycle.md` — those carry the forward lifecycle, and these exits are registered here. A skill that acts only on finished tasks — e.g. `archive-task` — reads this terminal set from here at run time rather than baking the names into itself, which is why a change to this vocabulary needs no edit in those skills (a non-terminal `in-review` task is refused, as intended). A script cannot read prose at run time, so `scripts/lifecycle-constants.ts` carries the one machine-readable copy of this set — a sanctioned copy per `AGENTS.md` § *Consumer lists*, consumed by `scripts/health-check.ts` and `scripts/task-move.ts`; when the terminal set changes here, change it there in the same edit.
+**Terminal** states are `done` (completed) and `skipped` (abandoned). **Live** states are `to-do`, `executing`, `blocked`, and `in-review`. An in-review task awaits external verification and is not finished.
+
+Terminal exits are docs → reality's `done → executing` repair and `implement-task`'s user-confirmed `skipped → executing` revive. These are explicit acts outside forward progression. Moving from Archive is **un-archive**, separate from revive (`./task-archiving.md`).
+
+Skills acting on finished tasks read this terminal set at run time.
+
+`scripts/lifecycle-constants.ts` holds the terminal set, a sanctioned copy per `AGENTS.md` § *Consumer lists*. Change that copy alongside this set; `scripts/health-check.ts` and `scripts/task-move.ts` consume it.
 
 ## Result-side reconciler writes
 
-The result file carries no status of its own, so a plan flip lands on it as a **section** write. The docs → reality composites drop the result's closing `**Completed:**` line alongside a plan flip out of `done` (header metadata, not narrative — the same class as the `## Current state` block; `implement-task` re-adds it on re-finalize). They may also create a missing result file (skeleton header only) when execution is evidenced, and they append `## Reconciliation — YYYY-MM-DD` sections — a recognized append-only section type written only by a reconciler, one per run.
+Results carry no status header. Repairing out of `done` removes `**Completed:**`; `implement-task` restores it on re-finalization. Create missing result skeletons only for evidenced execution. Append one dated Reconciliation section per run under `./reconciliation.md`; preserve prior narrative.
 
 ## Adding or renaming statuses
 
-When changing the vocabulary:
-
-1. Update **this file** first (the registry).
-2. Update the skills that read or write the field — the propagate list at the top of `./task-lifecycle.md`: `plan-task`, `implement-task`, `resume-task`, `review-task`, `resume-task-reconcile`, `review-task-reconcile`, and `reconcile-task`.
-3. Update the one machine-readable copy of this vocabulary — `scripts/lifecycle-constants.ts`, which the scripts import because none of them can read this prose at run time; `AGENTS.md` § *Consumer lists* names them. A stale set there makes every task in the renamed state read as `unknown`, which the health walk's checks skip in silence, `task-move.ts` refuses every archive of (an unrecognized status is not terminal), and `task-state.ts` reports as `unknown` to the skills reading its JSON.
-4. `grep -rn "<old-status>" skills/ references/ scripts/` to catch stragglers (template literals, prose mentions).
+1. Update this registry and `./task-lifecycle.md`'s vocabulary.
+2. Update that file's propagate list: `plan-task`, `implement-task`, `resume-task`, `review-task`, `resume-task-reconcile`, `review-task-reconcile`, and `reconcile-task`.
+3. Update the machine-readable vocabulary in `scripts/lifecycle-constants.ts` (`AGENTS.md` § *Consumer lists*).
+4. Run `grep -rn '<old-status>' skills/ references/ scripts/` and update remaining vocabulary uses, including templates.

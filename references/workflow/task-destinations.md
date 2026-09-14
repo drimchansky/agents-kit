@@ -1,29 +1,31 @@
 # Task Destinations: Where a New Task Folder Lands
 
-Where a **creating** skill puts a new task folder — the precedence that places it, how an explicit destination path is read off what is on disk, and when a registered root's project area is used instead of the canonical root — split out of `./task-layout.md`, which keeps the folder shape, the recognition set, and the discovery rules that find an *existing* folder. **This file is the single source of truth for destination resolution.** Read it when creating a task folder, or when stating what registering a root does and does not grant.
-
 ## Destination paths (creating skills)
 
-The creating skills — `resolve-or-create`'s four members, listed in `./task-layout.md` § *Discovery rules for skills* — accept an optional destination path naming where the task folder should live. A new task folder's location resolves by this precedence. `decompose-task` is the one member that interposes a step of its own: its Phase 1 step 2 continues a source's sibling sequence ahead of step 2 below.
+The resolve-or-create skills in `./task-layout.md` accept an optional destination. Resolve creation in this order:
 
-1. **An explicit destination path** the user gave.
-2. **A matched project area in a registered root** — confirmed first when the project-local canonical root holds a task.
-3. **The project-local canonical root**, `.agents/tasks/<slug>/`.
+1. The user's explicit destination.
+2. A matched project area in a registered root, confirmed when the canonical root holds a task.
+3. The project-local canonical root, `.agents/tasks/<slug>/`.
 
-Interpret an explicit destination path by what's on disk:
+`decompose-task` Phase 1 step 2 continues an existing sibling sequence before item 2.
 
-- **Exists, and is a task folder** (by contents, per the **recognition set** in `./task-layout.md` § *One task, one flat folder* — that section owns the file list, including the legacy suffix forms) → that *is* the task folder; use it verbatim. Its name is the slug — don't derive one.
-- **Exists, and is a directory** holding no recognition-set file → it's the **parent**: create `<path>/<slug>/` inside it. Exception: if its basename already equals the derived slug, ask — silently creating `<slug>/<slug>/` is almost never intended.
-- **Doesn't exist** → if its basename equals the derived slug, the user named the folder itself: create it verbatim. Otherwise ask whether to create `<path>/<slug>/` inside it (the usual intent) or use `<path>` as the folder itself.
-- **Exists, but is a file** → refuse; a destination must be a directory.
+Interpret explicit destinations from disk:
 
-Resolve the destination to an absolute path before using it. Avoid creating a live task under a directory named `Archive/` — not only directly under one, but anywhere the reading `./task-archiving.md` § *Already archived is asked of the whole path up to the store* fixes would call it archived; warn and confirm first. A destination under a directory named `Backlog/` needs no such guard — it creates the task parked from birth, which is permitted (`./task-backlog.md`).
+- Existing task folder, under `./task-layout.md` § *One task, one flat folder*: use it verbatim, with its basename as slug.
+- Existing non-task directory: create `<path>/<slug>/`. If its basename already equals the derived slug, ask before creating a doubled path.
+- Missing path with the derived slug as basename: create the folder verbatim. Otherwise ask whether the path names the parent or the task itself.
+- Existing file: refuse; the destination must be a directory.
+
+Resolve an absolute path before use. Before creating live work anywhere considered archived by `./task-archiving.md` § *Already archived is asked of the whole path up to the store*, warn and confirm. Backlog requires no equivalent confirmation; a task may be created parked (`./task-backlog.md`).
 
 ## A matched project area
 
-A registered root (`./task-store.md`) matches when it holds an area directory whose basename equals the git root's basename case-insensitively — `Tasks/Treasury/` matches the `treasury` checkout — *and* that area **holds a task**. A directory **holds a task** when the walk `./task-store.md` § *The root registry* defines — down through grouping directories to unbounded depth — finds a folder that is a task folder by the **recognition set** in `./task-layout.md` § *One task, one flat folder*, counting those under `Archive/` and `Backlog/` wherever they sit: an archive proves the project's tasks live there. That one test settles every occupancy question in this rule — no other reading of "empty" applies. **Git root** here means the main checkout's root — not the working directory, and not the nearest `.agents/` ancestor — so a linked worktree matches the area its main checkout does.
+A registered root matches when it contains an area whose basename equals the main checkout's basename case-insensitively, and that area **holds a task**. Use the main checkout root, including from linked worktrees, not the current directory or nearest `.agents` ancestor.
 
-- **Confirm first only when the project-local canonical root holds a task** — the project demonstrably uses both roots, so which one is meant is a real question. Declining creates in the canonical root. When that root holds none, or is absent, an unambiguous match creates without asking.
-- **When that confirmation can't be presented, create in the canonical root** and say which root and why: `No destination given and the area confirmation is unavailable; creating in <absolute canonical root>.` That is the default by rule — nothing here detects a run mode.
-- **Creation in a matched area is never silent.** Print the **absolute** destination path — not the area name — what it matched on, and that a destination path overrides it: `Creating in <absolute destination> — matched area <area> to git root <basename>; pass a destination path to override.` A case-insensitive compare can land on the wrong project, and this line is what makes that visible before the folder is used.
-- **No match falls through to the canonical root silently** — no registry, no area of that basename, or an area of that basename that holds no task creates `.agents/tasks/<slug>/`, with no confirmation and no notice.
+For every occupancy check here, **holds a task** means the recursive walk in `./task-store.md` § *The root registry* finds a recognized task. Count tasks under groups and all Archive/Backlog containers. Recognition uses `./task-layout.md` § *One task, one flat folder*.
+
+- When the canonical root also holds a task, confirm the matched area first. Declining uses the canonical root. Without canonical tasks, an unambiguous match needs no confirmation.
+- If that confirmation cannot be presented, use the canonical root and say: `No destination given and the area confirmation is unavailable; creating in <absolute canonical root>.`
+- Announce every matched-area creation before use: `Creating in <absolute destination> — matched area <area> to git root <basename>; pass a destination path to override.`
+- With no registry, no matching basename, or an area holding no task, fall through silently to the canonical root.

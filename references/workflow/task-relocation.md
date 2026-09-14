@@ -1,14 +1,12 @@
 # Relocating a Task Folder: The Shared Move Protocol
 
-The procedure `archive-task` and `backlog-task` share for moving a whole task folder into a container beside it — `Archive/` per `./task-archiving.md`, `Backlog/` per `./task-backlog.md` — by running `scripts/task-move.ts`. **This file is the single source of truth for that procedure**: resolving the folder, running the script, reading its outcome, and reporting it. Each skill keeps only what its direction changes — the container, the gate the script applies, what qualifies as a task folder, and the branches its own listing and refusals add — and cites the step here for everything else.
+Move whole folders through `scripts/task-move.ts` into a sibling Archive or Backlog container (`./task-archiving.md`, `./task-backlog.md`).
 
 ## 1. Resolve the target task folder
 
-Resolve per the **resolve-or-ask** base resolution in `./task-layout.md` § *Discovery rules for skills*, read at run time — that section owns every branch (a bare slug across the canonical root and every registered one, each with its container fallback; an explicit folder path; a `plan.md` path; and the nothing-named listing). Don't work from a copy: a skill that carried one went stale the moment the registry widened where a slug resolves.
+Use **resolve-or-ask** from `./task-layout.md` § *Discovery rules for skills* at run time. Resolve ambiguity before invoking the helper; pass the absolute folder path as `SRC`, not the unresolved slug.
 
-Call the folder you resolve `SRC` — canonically inside a `.agents/tasks/` directory, but any location on disk works the same, and it may lie outside the current working directory entirely. Resolve it to an **absolute path**; that path is the whole of what step 2 acts on.
-
-**Validate what `SRC` is before going further.** However it was produced — slug, folder path, or `plan.md` path — it must be a real task folder by **contents**, not by address shape, against the recognition the skill names for its direction. A folder that itself *contains* an `Archive/` or a `Backlog/` subdirectory (both matched case-insensitively, per `./task-archiving.md` and `./task-backlog.md`) is a task **parent**, not a task folder — **refuse**; moving it would drag its whole archive and backlog along.
+Validate SRC by contents under the direction's recognition rule, wherever it sits. Refuse any folder containing its own Archive or Backlog directory, matched case-insensitively: it is a task parent and must not move with its children.
 
 ## 2. Run the move
 
@@ -16,31 +14,20 @@ Call the folder you resolve `SRC` — canonically inside a `.agents/tasks/` dire
 node <kit-root>/scripts/task-move.ts <SRC> --to <archive|backlog>
 ```
 
-`<kit-root>` resolves per `./task-store.md` § *Resolving `<kit-root>`*, which owns that rule. With no kit root available, say the move can't be performed here and stop — a guarded move has no by-hand equivalent worth offering; the container's own file states what the move is for anyone doing it themselves.
+Resolve `<kit-root>` using `./task-store.md` § *Resolving `<kit-root>`*. If unavailable, report that the move cannot run and stop; offer no hand-completed substitute.
 
-`../scripts/task-move.md` owns its CLI and its stdout contract. What it decides, so the skill doesn't:
+Apply `../scripts/task-move.md`. The helper checks the direction's state gate, derives the destination from SRC's parent, and preserves an existing container's spelling. It refuses symlinked sources, symlinked/non-directory containers, and occupied destinations. Never bypass a refusal with a manual move or merge colliding folders.
 
-- **The gate** — it reads the folder's state against the direction's own rule and refuses what fails it; each skill names which rule that is.
-- **The destination** — location-relative, derived from `SRC`'s own parent, with the **case-insensitive recognition** of an existing container (an `archive/` or `backlog/` is moved into as it is spelled; normalizing a stray spelling is `maintain`'s format sweep, not this move).
-- **The guards** — a symlinked source, a symlinked or non-directory container, and an occupied `<container>/<slug>` are each refused rather than overwritten or followed.
+Read its exit status:
 
-Read the outcome from the exit status:
-
-- **0** → moved. Stdout is one line, `moved <src> -> <dest>`; the destination it names is what step 3 reports.
-- **1** → refused. Stderr is one line giving the reason. Surface it **verbatim** and stop; nothing moved.
-- **2** → the run couldn't be carried out — a usage error, a bare slug that matched nothing or several things, a store the slug search couldn't read in full, or an unexpected failure. Where the line names one of the first three, fix the invocation (pass `SRC` as the absolute path step 1 resolved) and re-run; where it reports a failure instead, report that and stop rather than re-running against it.
+- **0**: moved; stdout is `moved <src> -> <dest>`. Report that destination.
+- **1**: refused, nothing moved. Surface stderr's reason verbatim and stop.
+- **2**: run failed before deciding. For usage errors, unmatched/ambiguous slugs, or unreadable slug-search stores, correct the invocation to the resolved absolute SRC and retry. Report other failures and stop.
 
 ## 3. Report
 
-Confirm what moved (`<slug>` → the `<dest>` the script printed), note that the folder's internal `./` links are intact, and remind the user that the task is now excluded from active listings. When the folder is inside a git repo, the change is working-tree-only — review with `git status` and commit; a task outside any repo has nothing to commit.
+Name the moved slug and printed destination, preserved internal `./` links, and exclusion from active listings. In a Git repository, report a working-tree-only move for the user to inspect and commit; outside one, there is nothing to commit.
 
-The move is the whole of this section's write surface: nothing is regenerated, refreshed, or recorded afterwards.
+The move is the entire write surface. Regenerate, refresh, and record nothing afterwards, including task grounding.
 
-That covers the task's shared grounding too. Both containers sit beside the folder inside its own group, so this protocol leaves every applicable source exactly where it was — `./task-store.md` § *Shared group context* owns which files those are, and why a container between them counts for nothing. Landing the folder under **different** groups is a plain `mv` outside this protocol, and no command is added for it: it changes which sources apply, the next run reads the new chain off disk, and nothing snapshots the old one, rewrites the task's own context, or touches a dated record already in `result.md`. **Re-pointing the task's own citations after such a move is yours.** A `## References` entry citing a group file by its path from the selected root (`./one-home.md`) keeps resolving to a file that is still on disk and no longer governs, and no surface reports it: every drift check reads the chain that *applies* now, so a citation to one that no longer does is compared against nothing.
-
-## Don't Rationalize
-
-- "This `plan.md` path has an eligible plan, good enough to move" — Check *what* it is first: a task folder by contents, holding no `Archive/` or `Backlog/` of its own. A tasks-parent would drag its whole archive and backlog along; refuse it rather than handing it to the script.
-- "I'll pass the slug and let the script find it" — Its slug resolution is a minimum, deliberately: ambiguity is the *skill's* question to ask, with the listing and the statuses in front of the user. Resolve first, then pass the absolute path.
-- "The script refused, but the task really qualifies — I'll move it myself" — No. The refusal is the contract answering, and a hand-finished move would relocate a folder whose state nothing verified. Report the line and let the user act on it.
-- "It refused because the destination is occupied, so I'll merge the two folders" — Never. Two folders holding one slug is a collision for the user to resolve; merging silently destroys one of them.
+In-place filing preserves applicable group sources (`./task-store.md` § *Shared group context*). A move between groups is outside this protocol: use a plain move, and the next task invocation reads the new chain. Snapshot nothing and rewrite no context or prior result history. The user must repoint task citations to former group sources; those files may still exist while no longer applying, so ordinary drift checks will not catch stale applicability (`./one-home.md`).

@@ -1,129 +1,60 @@
 # Skill Conventions: How Behavior Varies
 
-The kit varies a skill's behavior two ways — a **composite** skill that runs phases in order, and a
-single-letter **flag** on one skill. **This file is the single source of truth for which mechanism a
-given behavior takes.** When a new behavior is added, or an existing one is reclassified, decide it
-here first and propagate to the skills. Everything else about a skill — its protocol, its output, its
-write surface — lives in the skill file; this file only rules on the *shape* the variation takes.
+Classify new or changed variations as composites or flags. Keep protocols and write surfaces in each SKILL.md.
 
-The file carries two conventions that are not variations at all: the **invocation gate** and the
-**cold-citation marker**, which rule on *who may start a skill* and on *when* a file a skill cites
-is loaded, rather than on how the skill behaves. Both sit here for the same reason — decided once,
-then propagated to the skills.
-
-The rule covers variations of **one skill's** behavior. Sibling skills that share a method but own
-different deliverables — `implement-task` and `implement` (the same execution loop against a task
-folder's plan vs. an ask framed in the session) — are two skills, not a base plus a variation, and
-sit outside this file; each carries its full contract.
+Different deliverables keep separate skill contracts, as `implement-task` and `implement` do.
 
 ## The rule
 
-**Sequential phases compose; modal or interleaved behavior flags.**
+Default to **composites for sequential phases and flags for modal or interleaved behavior**, because complete phase outputs provide composition boundaries.
 
-Default to this because the two mechanisms have genuinely different seams. A sequential phase is a
-whole unit of work with a clean boundary: the first phase's output is complete before the second
-begins, so the second can live in its own file and cite the first. Modal behavior has no such
-boundary — it changes what happens *inside* a phase, so pulling it into a separate file would mean
-restructuring or deleting the capability rather than relocating it.
+A tiny sequential phase may stay a flag; state that exception in the skill.
 
-Deviate when a sequential phase is small enough that a second skill file costs more than the seam is
-worth — a phase of two or three sentences that no one would invoke on its own. Say so in the skill
-rather than leaving the classification implicit.
-
-**Iteration doesn't change the shape.** A composite may repeat its phase sequence under a stated
-cap — each pass is still whole phases with clean seams, so the classification stays composite; the
-cap, the exit criterion, and the per-pass display economy live in the composite's own file. A write
-surface doesn't decide the shape either — per this file's intro it lives in the skill files, with
-the member that performs the edits.
+Whole-phase iteration stays composite; state its cap, exit criterion, and per-pass display rules there. Write permissions do not determine classification.
 
 ### The diagnostic
 
-Ask where the behavior sits relative to the base skill's protocol:
+- Entirely before or after the base protocol, with its output complete and printed at the boundary: composite. Keep the base skill whole; the composite orders phases.
+- Inside a phase, changing execution or merging intermediate work before verdicts finalize: flag.
 
-- **Runs entirely before or entirely after it**, with the base skill's output complete and printed at
-  the seam → **composite**. The base skill stays whole and unaware; the composite owns the ordering.
-- **Changes what happens within a phase** — merging into a pass before its verdicts finalize, running
-  checks inside the review that produces findings, reusing an intermediate the phase built, or
-  choosing how one phase executes → **flag**. There is nothing to split at.
-
-The reliable tell for a misclassified flag is **conditionals scattered through the base skill**. When
-a skill accumulates "(only with `-X`)" branches across its steps, output template, and checklist, the
-branches are there because a separate phase is wearing a mode's clothes — the behavior wanted a
-composite. A genuinely modal flag touches the one phase it modifies and nothing else.
+Scattered flag conditionals suggest a misclassified phase. A modal flag modifies one phase.
 
 ## Current members
 
 ### Composites — sequential phases
 
-- `review-code-triage-verify` — review a PR, branch, range, or path set, then batch findings, then verify each batch.
-- `triage-findings-verify` — findings-first: batch findings you already have, then verify each batch.
-- `maintain` — format sweep, then the health sweep, then the active-task listing, then the session analysis. Every phase inline; it delegates to no skill and reconciles no task content, handing that to `resume-task-reconcile` in its **Next**. Registered for its phase ordering, not as a variation of a base skill — the one member with none, which is why step 2 below admits an inline phase.
-- `resume-task-reconcile` — print the resume brief, then reconcile the docs to it.
-- `review-task-reconcile` — print the plan assessment, then reconcile the docs and fold in answers.
-- `decompose-task` — propose the cut of an approved source into ordered sibling parts, then materialize each confirmed part (`prepare-ticket` per part + a seeded `CONTEXT.md`).
+- `review-code-triage-verify` — review a PR, branch, range, or path set; batch findings; verify each batch.
+- `triage-findings-verify` — batch existing findings, then verify each batch.
+- `maintain` — format sweep, health sweep, active-task listing, then session analysis. Its phases run inline without invoking sibling skills. It reconciles no task content; **Next** hands that to `resume-task-reconcile`. This composite has no base skill.
+- `resume-task-reconcile` — print the resume brief, then reconcile docs to it.
+- `review-task-reconcile` — print the plan assessment, then reconcile docs and incorporate answers.
+- `decompose-task` — propose ordered sibling parts from an approved source; after confirmation, materialize each through `prepare-ticket` and seeded `CONTEXT.md`.
 
-A composite passes a phase's own modal flags through to that phase unchanged — the flags below stay
-where they are rather than being re-implemented at the pipeline level.
+Pass each phase's modal flags through unchanged, except the `review-code-triage-verify` settle override below.
 
 ### Modal flags — interleaved behavior
 
-- `--amend` (`commit`) — explicitly replaces the latest commit; message selection, state guards and result verification change within the existing commit workflow. The long form matches Git and avoids confusing this mode with Git's `-a`, which stages tracked changes.
-- `-x` cross-vendor engine (`review-code`, `review-docs`, `review-task`) — one meaning kit-wide:
-  use the cross-vendor engine for this skill's read-only fan-out, an independent probe
-  (`./probe-cross-check.md`) — and by the pass-through rule above, a composite's `-x` is its
-  review phase's. The probe merges into the pass *before* its verdicts finalize, so it has no seam
-  to run after. Its own documentation is one `Flags` entry, one launch line, and one `Cross-check:`
-  output line per skill. `review-code-triage-verify` departs from the pass-through rule here: it
-  suppresses the review phase's standalone settle of the delegated reviewer's return, and with `-x`
-  the probe's verify-before-adopt step with it, since its own phase 3 verifies every candidate the
-  review hands forward and would pay twice for one verdict (`./reviewer-contract.md` § *The
-  settle*).
-- `-d` draft PR description (`review-code`) — built from the change map the review has already
-  assembled; a separate phase would rebuild it from scratch.
-- `-n N` independent reviewers (`review-code`) — the count multiplies the review pass's own
-  launch, and the returns pool into the one findings list that pass finalizes, so nothing is left
-  over for a phase to run afterwards.
-- `-f` fact verification (`proofread`) — verification runs inside the analysis pass, merging into
-  the same errors/improvements list before it finalizes; there is no seam to split.
+- `--amend` (`commit`) — replace the latest commit, changing message selection, state guards, and verification within the commit workflow. The long form matches Git and avoids its staging flag `-a`.
+- `-x` (`review-code`, `review-docs`, `review-task`) — use a cross-vendor read-only probe (`./probe-cross-check.md`), merging before verdicts finalize. A composite passes it to its review phase. Document one Flags entry, one launch line, and one `Cross-check:` output line per skill. `review-code-triage-verify` suppresses the review's standalone reviewer settle and, with `-x`, the probe's verify-before-adopt step. Its phase 3 verifies every candidate (`./reviewer-contract.md` § *The settle*).
+- `-d` (`review-code`) — draft a PR description from the review's existing change map.
+- `-n N` (`review-code`) — launch N independent reviewers within the review pass and pool returns before finalizing findings.
+- `-f` (`proofread`) — verify facts during analysis, merging into its errors/improvements list before finalization.
 
 ## Adding a behavior
 
-1. Run the diagnostic above and classify it.
-2. Composite → a new skill folder whose phases execute the sibling skill files — or run inline where
-   no sibling skill owns the phase, as `maintain` does — with the pipeline-wide overrides the
-   existing composites carry (one Core Rules block, one Output, the composite owning **Next**).
-   Flag → document it in the host skill's `Flags` section and its `argument-hint`.
-3. Record it under **Current members** here.
+1. Apply the diagnostic.
+2. For a composite, create a skill whose phases execute sibling skills, or run inline when no sibling provides that phase. Apply pipeline overrides: one Core Rules block, one Output, and composite-controlled **Next**. For a flag, update the host skill's Flags and `argument-hint`.
+3. Register the behavior under **Current members**.
 
 ## The invocation gate
 
-A skill is reachable two ways: the user names it (`/<name>`), or the model reaches for it from the
-description. **A skill closes the second door when it is a terminal filing or publishing step — the
-act that takes finished work out of the session and puts it somewhere permanent — and carries no
-confirmation gate of its own.** Where the skill already previews the act and waits for a yes, that
-gate is the consent, and closing invocation would only withhold a tool the model can use safely.
+Disable model invocation for terminal filing or publishing skills without their own confirmation gate. Preview-and-confirm permits model invocation.
 
-**A counted choice is the second sanctioned gate form**, alongside preview-and-confirm. Where a skill
-presents the act itself as a choice whose options each name the exact payload they would write and
-how much of it there is, and where writing nothing is one of those options, selecting one is both the
-preview and the yes — the label carries what a preview would have shown, at the granularity the
-decision turns on. The enumeration is what makes it a gate, not the mechanism: a numbered list in
-chat qualifies exactly as a host's structured question tool does. A choice that names options without
-their payload, or payloads without their size, or that leaves no way to write nothing, is not one —
-it collects a preference about a write the user has not agreed to, which is the agreement a closed
-door exists to obtain. Nor is a choice of *target* — which task to file, which of several candidates
-to act on: the act was settled before the question, and the answer only aims it.
+A **counted choice** also qualifies when every write option names its exact payload and size, and another option writes nothing. Write only the selection. A numbered chat list and a structured question qualify equally. Selecting a target alone does not authorize the act.
 
-**A skill also closes it when its run reaches past the current project** — across every registered
-root, or into installed state — because the premise the open door rests on, that the work still
-sits in front of the user where a `git diff` shows it, does not hold there. A per-change gate does
-not reopen the door in that case: the gate covers what the run writes, never the sweep an unasked
-run performs to decide what to write.
+Also disable model invocation for sweeps beyond the current project, across registered roots or into installed state. A per-change confirmation does not authorize that sweep. Resolving one named task across roots is not such a sweep.
 
-Closing it takes both host mechanisms together, since `setup.ts` deploys every skill to both homes:
-`disable-model-invocation: true` in the SKILL.md frontmatter (Claude Code) and an
-`agents/openai.yaml` carrying `policy.allow_implicit_invocation: false` beside it (Codex). One
-without the other leaves the skill open on the other host.
+Close both host mechanisms together: SKILL.md frontmatter `disable-model-invocation: true` for Claude Code, and sibling `agents/openai.yaml` with `policy.allow_implicit_invocation: false` for Codex. `setup.ts` deploys both.
 
 **Gated skills:**
 
@@ -133,65 +64,30 @@ without the other leaves the skill open on the other host.
 - `maintain` — sweeps and rewrites installed state across every registered root.
 - `init-config` — walks the home project parents and writes the machine's root registry.
 
-Opening or closing a door is recorded in this list in the same change that flips the frontmatter
-and the policy file; the entry, or its removal, is what keeps this list and the two host mechanisms in step.
+Update this roster in the same change that opens or closes both host mechanisms.
 
-Four skills write past the session and are deliberately **not** members. `publish-pr-review` mutates
-a PR, but its step 4 is a counted choice: each severity tier it could post is offered with the
-number of comments that selection would write, posting nothing is one of the options, and nothing
-reaches the PR but the selection. `create-notion-page` has no such gate — it drafts and creates in
-one pass — but the page lands parentless in the user's Private section, visible to them alone and
-cheap to delete, and the skill never shares it or changes its permissions, so an unasked run
-publishes to nobody. `commit` and `rebase` are the other exceptions, under the request-based authorization below.
-Every other skill either authors or changes work that still sits in front of
-the user — working-tree code a `git diff` shows, task docs, a chat report — or previews and confirms
-its own write, as `decompose-task` does.
-Resolving a named task across the registered roots is not the reach above either: the reach is a run
-that ranges over them to decide what to act on.
+Deliberate non-members:
 
-**Which door a run came through is read, never inferred.** A user's invocation arrives as the typed
-command in the turn that opens the run — Claude Code renders it as a `<command-name>` block ahead of
-the skill body. A run carrying no such marker, or running on a host that leaves the two
-indistinguishable, counts as **model-invoked**: the split exists to withhold a write nobody asked
-for, so an unreadable signal resolves the way that asks rather than the way that writes.
+- `publish-pr-review` offers counted severity tiers, including comment counts and posting nothing. Its selection gates the PR write.
+- `create-notion-page` drafts and creates a parentless page in the user's Private section, visible only to them and cheap to delete. It shares nothing and changes no permissions.
+- `commit` and `rebase` use the explicit-request authorization below.
 
-Three authorizations read the user's request instead of that door marker. `skills/commit/SKILL.md`
-and `skills/rebase/SKILL.md` each require an explicit request for their Git operation, including
-natural language; selecting either skill does not authorize its write. Separately,
-`./task-delivery.md` § *Checkpoint commits* governs when an explicit
-natural-language instruction to implement an engineering task's full plan authorizes those commits.
-The checkpoint conditions do not change this file's invocation flags or gated-skill roster.
+Other skills produce local work or chat output, or confirm their own write, as `decompose-task` does.
 
-**An open skill that reads its own invocation as consent states the user/model split where it makes
-that claim**, not here — `./reconciliation.md` § *Consent model: findings apply, the record carries them* for the reconcilers,
-`./executor-routing.md` § *The registry and its authorization* for the write-mode consumers. Each
-states what the answer buys; the test above is where they get it. This section rules on which door
-is closed and on how a run tells which one it came through.
+Read invocation origin from the typed command opening the run; Claude Code supplies a preceding `<command-name>` block. Missing or indistinguishable markers count as **model-invoked**. Do not infer user invocation.
+
+`skills/commit/SKILL.md` and `skills/rebase/SKILL.md` require an explicit request for their Git operation, including natural language. Skill selection alone authorizes neither write. An explicit engineering full-plan request grants checkpoint commits only under `./task-delivery.md` § *Checkpoint commits*. That sanction changes neither invocation flags nor this roster.
+
+An open skill using invocation as consent states the user/model split beside that permission. Apply `./reconciliation.md` § *Consent model: findings apply, the record carries them* for reconcilers, or `./executor-routing.md` § *The registry and its authorization* for write-mode consumers.
 
 ## Cold citations
 
-A SKILL.md's citations are its load list, and by default every one of them is paid on every
-invocation. Some are not: a file the skill opens only when a flag is set, only when a task folder is
-present, only when it delegates. **A citation with the HTML comment `<!-- cold -->` on the same line
-is cold — not read on the typical invocation path.** Every unmarked citation is hot, loaded the
-moment the skill runs, and a skill's own SKILL.md and its core-rules citation (`AGENTS.md`) stay hot
-whatever a marker says.
+A SKILL.md citation marked `<!-- cold -->` on the same line is skipped on the typical invocation path. Unmarked citations load when the skill runs. The skill's own SKILL.md and core-rules citation (`AGENTS.md`) remain hot regardless of markers.
 
-**The marker classifies; it never states the condition.** The condition a cold file loads on — the
-flag, the file's presence, the non-default branch — is named in the prose beside the citation, which
-stays its one home. A marker with nothing named beside it tells the reader a file is skippable
-without telling them when, which is worse than no marker at all.
+State the cold citation's loading condition beside it: a flag, file presence, or another conditional branch. The marker classifies the citation; it never supplies its condition.
 
-One marker governs its whole line. A line whose citations do not share a gating gets split into one
-line per gating rather than half-marked, and a file cited more than once is cold only when every one
-of its citations carries the marker: a single unmarked citation loads it unconditionally, so the file
-is hot.
+One marker covers every citation on its line. Split citations with different conditions onto separate lines. A repeatedly cited file is cold only when every citation is marked; one unmarked citation makes it hot.
 
-**A condition that fires on most runs is not cold.** A read at a health boundary that all but the
-smallest runs reach is hot however the sentence around it is worded, and marking it only misnames a
-load every run still pays. The honest fix for such a file is to split it — the part every run reads
-stays hot, the part only some runs reach becomes a cold satellite, and the marker goes on the
-satellite.
+A condition reached on most runs is hot, including routine health boundaries. Split such a file into hot guidance and a conditional satellite before marking the latter cold.
 
-Nothing reads the marker at run time. It classifies a citation for the reader, and whether a citation
-deserves it is judged by reading the skill's path to that load, not by a measurement.
+The marker has no runtime interpreter; judge it against the loading path.

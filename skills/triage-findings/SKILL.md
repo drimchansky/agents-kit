@@ -1,7 +1,7 @@
 ---
 name: triage-findings
-description: Use when asked to triage, sort, or batch findings — from a review in this session, a PR's review comments, or a pasted/saved list — surfaces which are still unaddressed and groups them by concern. Reads and displays only; does not edit code or post anywhere.
-argument-hint: '[source: PR number/URL, file path, or pasted findings — defaults to session findings]'
+description: Use when asked to triage, sort, or batch findings from a review in this session, a PR's review comments, or a pasted or saved list. Surfaces which are still unaddressed and groups them by concern. Reads and displays only; does not edit code or post anywhere.
+argument-hint: '[source: PR number/URL, file path, or pasted findings; defaults to session findings]'
 ---
 
 ## Core Rules
@@ -9,63 +9,49 @@ argument-hint: '[source: PR number/URL, file path, or pasted findings — defaul
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core.
 
-Gather findings from a source — a review produced in this session, a PR's review comments, or a findings list in a file or pasted text — filter to the ones still unaddressed, cluster them by concern, and display the batches so the author can see the shape of the remaining work.
+Gather findings from a source, filter to the ones still unaddressed, cluster them by concern, and display the batches.
 
-**CRITICAL**: This skill only reads and displays. It never edits code and never writes to any source — no `gh pr comment`, no `gh pr review`, no resolving threads, no editing the findings file. Addressing the batches is a separate follow-up — `/fix-findings` takes these batches as a source, or handle them via `/implement-task` or by hand.
+This skill only reads and displays: no code edits, no `gh pr comment` or `gh pr review`, no thread resolution, no edit to the findings file. `/fix-findings` takes these batches as a source.
 
 ## Sources
 
 Resolve the source in this order:
 
-1. **Explicit argument wins.** A PR number or URL → PR mode. An existing file path → parse that file. Pasted text, or a pointer like "the review above" → those findings.
-2. **No argument:** if the session contains review findings (from `/review-code`, `/review-docs`, …), triage those — the most recent review is the natural target. Otherwise fall back to the open PR for the current branch (PR mode).
-3. **Several sources named** → one merged view. When two sources describe the same issue, keep one entry and cite each source on it — two entries for one issue split the batch's story and double the count. If the sources disagree on whether the issue is addressed, the entry lands in **Verify** with the disagreement noted; if they disagree on severity, lead with the most severe prefix.
-
-Name the triaged source(s) in the Overview so the reader knows what was and wasn't covered.
+1. **Explicit argument wins.** A PR number or URL selects PR mode. An existing file path is parsed. Pasted text or a session pointer selects those findings.
+2. **No argument:** triage this session's most recent review findings. With none, fall back to the open PR for the current branch.
+3. **Several sources named:** one merged view, one entry per issue citing each source. When sources disagree on whether an issue is addressed, put it in **Verify** with the disagreement noted; on severity, lead with the most severe prefix.
 
 ## Fetch
 
-**PR mode.** Locate the PR: use the given number or URL, else find the open PR for the current branch with `gh pr view --json number,url,title,state` (requires `gh` CLI). If the command fails because `gh` is missing or the repo has no GitHub remote, note that and stop — there is nothing to triage without a PR.
+**PR mode.** Use the given number or URL, else `gh pr view --json number,url,title,state` for the current branch's open PR. If `gh` is missing or the repo has no GitHub remote, say so and stop.
 
-Fetch all comments from three sources:
+Fetch all three comment sources:
 
-- **Review threads** (inline comments on code — the primary, resolvable target) — `node <kit-root>/scripts/pr-comments.ts <pr-number-or-url>`, with `<kit-root>` per `./references/workflow/task-store.md` § *Resolving `<kit-root>`* <!-- cold -->. `./references/scripts/pr-comments.md` owns the CLI form and the stdout contract: one JSON object whose `threads` each carry resolution, outdatedness, anchor, and comments in the order GitHub returned them. Read them out of that JSON rather than re-deriving what the script decided; resolution status has no other source, so if the kit root, the script, or `node`/`gh` is unavailable, say so with the reason and stop — there is no by-hand equivalent, since nothing but this query reports whether a thread is resolved.
-    - `paginationComplete: false` means the report is a prefix of the review: `threads.length` against `threadsTotal` measures the gap, and a thread's `commentsComplete: false` marks replies cut short. Report the shortfall under **Inaccessible context** — never as a clean fetch.
-    - `acknowledgmentCandidate: true` is mechanical — unresolved, last comment by the PR author. It marks a thread to *read*, not a verdict: whether that comment acknowledges the fix is your judgement, per **Classify** below.
-- **Review summary bodies** and **general PR comments** — `gh pr view <target> --json reviews,comments`. These carry no thread-resolution state; treat a non-empty review body or issue comment as **open** unless a later comment or reply clearly supersedes it.
+- **Review threads:** `node <kit-root>/scripts/pr-comments.ts <pr-number-or-url>`, with `<kit-root>` per `./references/workflow/task-store.md` § *Resolving `<kit-root>`* <!-- cold -->. Read its JSON per `./references/scripts/pr-comments.md`. Resolution status has no other source: if the kit root, the script, `node`, or `gh` is unavailable, say so and stop. `paginationComplete: false` means a prefix of the review: report the gap under **Inaccessible context**, never as a clean fetch.
+- **Review summary bodies** and **general PR comments:** `gh pr view <target> --json reviews,comments`. They carry no resolution state; treat a non-empty body as **open** unless a later comment clearly supersedes it.
 
-**Session findings.** Take each finding as the review emitted it — severity, `file:line`, recommendation. Don't re-review or re-rank; the triage batches existing judgement, it doesn't second-guess it.
+**Session findings.** Take each finding as the review emitted it: severity, `file:line`, recommendation. Do not re-review or re-rank.
 
-**File or pasted text.** Parse the findings-shaped list, preserving each entry's original wording and any severity prefix. If the input has no discernible findings, say so and stop rather than inventing structure.
+**File or pasted text.** Parse the findings-shaped list, preserving wording and severity prefixes. With no discernible findings, say so and stop.
 
 ## Classify addressed vs unaddressed
 
-Every finding lands in exactly one bucket — **open**, **verify**, or **addressed**; never drop one silently.
+Every finding lands in exactly one bucket: **open**, **verify**, or **addressed**. Never drop one silently.
 
-- PR thread `isResolved: true` → **addressed**. Skip it (counted only).
-- PR thread unresolved, but the last comment is a reply from the PR author acknowledging the fix (e.g. "done", "fixed", "addressed in `<sha>`") → **likely handled**. List under **Verify**, not the main batches.
-- Any finding anchored to `path:line` in the local repo, from any source: the code at the anchor changed after the finding was produced (thread `isOutdated: true`, a `git log`/blame check on those lines, or the finding's quoted code no longer matching) → **possibly already handled**, list under **Verify**. Code unchanged, or nothing to establish "after" by (a pasted finding with no timestamp or quote) → **open**.
-- A finding with no anchor and no resolution state → **open** — unless its own source shows it superseded (a later reply, a struck-through entry), then **addressed**.
+- PR thread `isResolved: true` → **addressed** (counted only).
+- Unresolved thread whose last comment is the PR author acknowledging the fix → **Verify**.
+- Any anchored finding whose code changed after it was produced (thread `isOutdated: true`, blame on those lines, or a quoted snippet that no longer matches) → **Verify**. Code unchanged, or nothing to establish "after" by → **open**.
+- No anchor and no resolution state → **open**, unless its own source shows it superseded → **addressed**.
 
 ## Batch
 
-Batch open findings by concern, then file. Read them and cluster into named zones by shared concern (e.g. error handling, naming, types, tests, API surface, docs), keeping same-file findings together within a zone. Preserve each finding's original wording and any severity prefix (`Critical:` / `Major:` / `Nit:` / `Optional:` / `FYI:` — see `./references/engineering/review.md`); do not rewrite or re-rank the reviewer's judgement.
+Cluster open findings into named concern zones (error handling, naming, tests, …), keeping same-file findings together within a zone. Preserve each finding's wording and severity prefix (`Critical:` / `Major:` / `Nit:` / `Optional:` / `FYI:`, per `./references/engineering/review.md`); do not rewrite or re-rank.
 
 ## Output
 
-Lists, never tables.
+Lists, not tables.
 
-- **Overview** — the source(s) triaged, and counts: N open, N to verify, N addressed (skipped).
-- **Batches** — one section per concern zone, ordered by the most severe member. Each entry lists the finding's location, who raised it (reviewer login, review skill, or the file/paste it came from), the original text (with its severity prefix if present), and its anchor: the GitHub permalink for PR comments, `path:line` or a short quote otherwise. In a merged run, every source that raised the issue is cited on its entry.
-- **Verify** (only if any) — likely-handled findings with the reason (author said done / code changed / thread outdated), so the author can confirm and resolve them.
-- **Inaccessible context** (only if any) — sources or links that couldn't be fetched, with the reason (auth required, private, 404, tool unavailable). Do not fabricate what's behind them — flag the gap.
-
-## Verification
-
-Confirm the protocol invariants before finishing:
-
-- [ ] Source resolved per the order in **Sources** and named in the Overview
-- [ ] PR mode: all three comment sources fetched (review threads via `scripts/pr-comments.ts`, review bodies, general comments), and an incomplete walk named as short rather than passed off as clean
-- [ ] Every finding classified into exactly one bucket (open / verify / addressed) — none dropped
-- [ ] Merged run: each entry cites every source that raised it
-- [ ] No code edited and nothing written to any source
+- **Overview:** the source(s) triaged, and counts: N open, N to verify, N addressed.
+- **Batches:** one section per concern zone, ordered by most severe member. Each entry: location, who raised it, the original text with its severity prefix, and its anchor (GitHub permalink, `path:line`, or a short quote), citing every source that raised it.
+- **Verify** (only if any): likely-handled findings with the reason (author said done, code changed, thread outdated).
+- **Inaccessible context** (only if any): sources or links that could not be fetched, with the reason. Do not fabricate what is behind them.

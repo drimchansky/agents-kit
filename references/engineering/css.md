@@ -2,112 +2,75 @@
 
 ## Layout
 
-- [ ] `gap` over margins between flex/grid children
-- [ ] No fixed widths on containers — `max-width` with fluid defaults
-- [ ] Logical properties (`margin-inline`, `padding-block`) for i18n-friendly spacing
+- [ ] Flex/grid gap, fluid max-width containers, logical spacing.
 
 ## Responsive Design
 
-- [ ] Mobile-first — `min-width` media queries
-- [ ] Relative units (`rem`, `em`, `%`, `vw`/`vh`) for scalable sizing
-- [ ] `clamp()` for fluid typography and spacing
-- [ ] Usable without horizontal scroll at 320px viewport
-- [ ] `dvh`/`dvw` (or `svh`/`svw`) over `vh`/`vw` on mobile to account for browser-chrome shift
-- [ ] `100%`, not `100vw`/`100dvw`, for full-width — no viewport-width unit subtracts a classic scrollbar, so each overflows by its width
+- [ ] Mobile-first min-width queries, relative units, clamp(); no horizontal scroll at 320px.
+- [ ] Mobile: dvh/dvw or svh/svw; full width: 100%, excluding scrollbars.
 
 ## Container Queries
 
-Mental model: container queries = component context. Media queries = page-level layout and user preferences (`prefers-color-scheme`, `prefers-reduced-motion`).
-
-- [ ] Establish a context with `container-type: inline-size` (1D) or `size` (2D) on a wrapper before descendants can query. Shorthand: `container: card / inline-size` (name / type)
-- [ ] Use container query units (`cqi`, `cqb`, `cqw`, `cqh`) in `clamp()` to scale type/spacing to component width, not viewport
-- [ ] With `container-type: size`, the container ignores intrinsic child size — give it a definite block-size or descendants collapse
-- [ ] Don't use container query units inside descendants of a non-qualifying ancestor — they silently fall back to small viewport units
+- [ ] Query components; media queries handle pages/preferences.
+- [ ] Set wrapper container-type: inline-size/size; size needs definite block-size.
+- [ ] Use cqi/cqb/cqw/cqh in clamp() under qualifying containers; otherwise units use small viewports.
 
 ## Tailwind
 
-- [ ] No arbitrary values (`max-h-[500px]`) — use design tokens or config
-- [ ] Built-in scale values; custom tokens in config if no fit
-- [ ] Don't mix Tailwind utilities with manual CSS for the same property
+- [ ] Built-in scales/configured tokens; no arbitrary values or same-property manual CSS.
 
 ## Conventions
 
-- [ ] No magic numbers — design tokens or variables for spacing, colors, typography
-- [ ] CSS custom properties for repeating/themeable values
-- [ ] Low specificity — class selectors, no `!important`, no deep nesting
-- [ ] Colocate styles with their component
-- [ ] Don't override library component styles with global CSS
-- [ ] Use keywords (`inherit`, `initial`, `unset`, `revert`) to express intent — `transition: inherit` beats restating every transition property on a child
-- [ ] Declare cascade layers upfront: `@layer reset, base, theme, components, utilities;` — gives predictable priority zones across the codebase
-- [ ] Don't write global `*` resets — web components and lower cascade layers can't override them without `!important`. Scope to specific elements/conditions instead
+- [ ] Tokens/custom properties for magic/repeating/themeable values; colocate styles.
+- [ ] Low-specificity classes; no !important, deep nesting, global library overrides, or global * resets.
+- [ ] Use inherit/initial/unset/revert; declare layers upfront: `@layer reset, base, theme, components, utilities;`.
 
 ## Modern Selectors
 
-- [ ] `:has()` for parent/sibling state styling — `label:has(:checked)` instead of toggling a class in JS. Don't nest `:has()` and don't use pseudo-elements inside it
-- [ ] `:where()` for forgiving, zero-specificity grouping (often used for fallback selectors): `[popover]:where(:popover-open, .\:popover-open) { … }` covers native + polyfill in one rule
-- [ ] `:is()` when you want grouping AND specificity (`:is(.a, .b) > c`)
-- [ ] `:user-valid` / `:user-invalid` for form styling — never `:valid` / `:invalid`, which flag required-empty fields on page load (see `forms.md`)
-- [ ] `@scope (...) to (...)` for proximity-based scoping where specificity doesn't express intent — closest-ancestor theming, "all `.card` content except deeply nested `.content`"
-- [ ] `:not(:last-child)` is a clearer expression of "between items" than overriding `:last-child`; same idea for `:not(:disabled)` on hover states
+- [ ] :has() for parent/sibling state, excluding nested :has() and pseudo-elements.
+- [ ] :where() for forgiving zero-specificity groups; :is() for specificity-bearing groups.
+- [ ] :user-valid/:user-invalid for forms, excluding immediate validity styling with :invalid/:valid (`forms.md`).
+- [ ] @scope (...) to (...) for proximity; :not(:last-child)/:not(:disabled) for exclusions.
 
 ## Theming and Color Schemes
 
-Organize design tokens in tiers, layered:
-
-1. Literal (`--color-blue-10`, `--size-xl`)
-2. Semantic (`--color-accent`, `--font-heading`)
-3. UI-general (`--ui-border`, `--surface-bg`)
-4. Component (`--button-bg-primary-hover`)
-
-Small projects need fewer tiers. Reuse existing conventions before inventing new ones.
-
-- [ ] `color-scheme: light dark` on `:root` plus `light-dark(<light>, <dark>)` for color tokens. Resolve `light-dark()` as late as possible (pass it through unregistered custom properties) so descendants with a different `color-scheme` still adapt
-- [ ] `accent-color` to brand native form widgets (checkboxes, radios, sliders, progress) without abandoning semantics
-- [ ] Forced Colors Mode strips `background-image`, `box-shadow`, `border-image`. When any carries information, provide `@media (forced-colors: active)` fallbacks using system color keywords (`CanvasText`, `LinkText`, `Highlight`, `GrayText`). Use `forced-color-adjust: none` only where the color **is** the information (syntax highlighter, color picker swatch)
+- [ ] Match token tiers: literal, semantic, UI-general, component; simplify for small projects.
+- [ ] Root color-scheme: light dark; defer light-dark() through unregistered variables for descendant schemes.
+- [ ] Accent-color brands native widgets; forced-colors: active replaces meaningful backgrounds/shadows/border images with system colors.
+- [ ] Reserve forced-color-adjust: none for color information, e.g. swatches.
 
 ## Modern Color
 
-- [ ] Specify gradient and `color-mix()` interpolation explicitly: `linear-gradient(in oklab, …)`. `oklch` preserves chroma but can escape gamut; `oklab` stays in gamut but desaturates between opposite hues
-- [ ] Generate tints/shades via `color-mix(in oklab, var(--accent), white 20%)`. Don't adjust the L channel of `oklch` directly until browsers gamut-map; results are unpredictable today
-- [ ] `filter: drop-shadow()` for shadows on non-rectangular shapes or transparent PNGs; `box-shadow` for rectangular elevation
-- [ ] Layer multiple `box-shadow`s for natural soft depth (see `interactions.md` for the shadow-as-border recipe)
+- [ ] Specify gradient/mix interpolation; mix tints/shades in Oklab; avoid direct OKLCH lightness edits until gamut mapping supports them.
+- [ ] Drop-shadow() for nonrectangular/translucent shapes; layered box-shadow for rectangular depth (`interactions.md`).
 
 ## Modern Layout
 
-- [ ] Pick layout by decision tree: single axis → flex; rows+columns → grid; nested needs to align to grandparent tracks → subgrid; floating overlay tethered to a trigger → anchor positioning
-- [ ] Subgrid (`grid-template-rows: subgrid`) solves ragged-edge alignment across sibling cards — titles, bodies, and CTAs line up across the row. Same-cascade fallback: declare `grid-template-rows: auto 1fr;` (or whatever explicit tracks suit) immediately before the subgrid line; non-supporting browsers ignore the second declaration. For column-axis subgrid, use a same-axis fallback (`grid-template-columns: <tracks>;` before `grid-template-columns: subgrid;`) — axes are independent
-- [ ] `grid-template-areas` for page-level layouts — area names are self-documenting and the declaration aligns visually
-- [ ] `place-content` / `place-items` / `place-self` to align both axes in one declaration
-- [ ] `aspect-ratio` to reserve space for media before assets load (prevents CLS)
-- [ ] `overflow: clip` to clip *without* establishing a scroll container; opt into spillover with `overflow-clip-margin`
-- [ ] `scrollbar-gutter: stable` reserves scrollbar space and prevents shift when content grows
-- [ ] `overscroll-behavior: contain` (or `none`) on scrollable widgets — keeps scroll chains from bubbling into the page
-- [ ] Don't use `grid-auto-flow: dense` on interactive content — it reorders visually but keyboard tab still follows DOM
-- [ ] For native overlays (`<dialog>`, `[popover]`), see `html.md`
+- [ ] Flex: one axis; grid: two; subgrid: ancestor tracks; anchors: overlays.
+- [ ] Precede subgrid declarations with explicit same-axis track fallbacks.
+- [ ] Grid-template-areas for pages; place-* for alignment; aspect-ratio for media.
+- [ ] Overflow: clip avoids scroll containment; overflow-clip-margin controls spill; scrollbar-gutter: stable reserves scrollbars.
+- [ ] Widgets use overscroll-behavior: contain/none; interactive content excludes grid-auto-flow: dense.
+- [ ] Use native overlays (`html.md`).
 
 ## Anchor Positioning
 
-Tethers a floating element to a trigger in CSS — no JS measurement loop, and it works on top-layer elements (`[popover]`, `<dialog>`) where an absolutely positioned ancestor gives you nothing. For the overlay markup itself see `html.md` → Native Overlays.
-
-- [ ] `anchor-name: --x` on the trigger; `position-anchor: --x` plus `position: absolute` (or `fixed`) on the floating element — without a `position` value the anchor properties are inert
-- [ ] `position-area` for placement (a 9-cell grid around the anchor: `position-area: block-end center`) before reaching for `anchor()` in inset properties — `anchor()`/`anchor-size()` are for fine control the grid can't express
-- [ ] `position-try-fallbacks: flip-block, flip-inline` so the element flips instead of overflowing the viewport; `@position-try` for custom fallbacks that change more than placement
-- [ ] `anchor-scope: --x` on the repeating wrapper whenever a component repeats — duplicate `anchor-name`s resolve to the **last** one in source order, so every card's menu lands on the last card
-- [ ] `position-visibility: anchors-visible` to hide the floater when its anchor scrolls out of view; a `display: none` anchor silently re-anchors the element to its nearest positioned ancestor instead
-- [ ] `popovertarget` implicitly anchors a popover to its invoker — no `anchor-name` needed for that pairing
-- [ ] Chrome/Edge 125+, Firefox 147+, Safari 26+ at writing (~82% of traffic — the pre-Safari-26 tail is still real). Feature-detect with `@supports (anchor-name: --a)` and keep the un-anchored fallback usable
+- [ ] Trigger anchor-name: --x; floater position-anchor: --x plus absolute/fixed position.
+- [ ] Prefer position-area (nine-cell grid, e.g. block-end center); anchor()/anchor-size() for finer control.
+- [ ] Add position-try-fallbacks: flip-block, flip-inline; @position-try for custom fallbacks.
+- [ ] Repeaters use anchor-scope: --x; duplicate names otherwise select the last anchor.
+- [ ] Position-visibility: anchors-visible hides floaters; display:none anchors redirect to nearest positioned ancestors.
+- [ ] Popovertarget implicitly anchors to invokers (`html.md` → Native Overlays).
+- [ ] Detect `@supports (anchor-name: --a)`; retain usable unanchored fallbacks.
 
 ## Transitioning Discrete Properties
 
-- [ ] Animate `display`, `<dialog>` open/close, `[popover]` show/hide with `transition-behavior: allow-discrete;` paired with a `@starting-style` block defining the "from" state
-- [ ] For reduced-motion variants, prefer per-animation overrides — global `animation-duration: 0.01ms !important` often makes specific animations more jarring (see `accessibility.md` Motion & User Preferences)
+- [ ] Pair transition-behavior: allow-discrete with @starting-style for display/dialog/popover transitions.
+- [ ] Reduce motion per animation (`accessibility.md` Motion & User Preferences).
 
 ## Common Mistakes
 
-- [ ] No `height: 100%` without explicit ancestor heights
-- [ ] No `overflow: hidden` as a band-aid when you want clipping — use `overflow: clip` (no scroll container) and fix the real overflow source
-- [ ] No `z-index` without a stacking-context strategy — `[popover]` and `<dialog>` live in the top layer, no z-index needed
-- [ ] Animate `transform` and `opacity`, not `width`/`height`/`top`/`left`
-- [ ] CSS-only solutions over JS for visual effects when possible
-- [ ] No `text-wrap: balance` or `pretty` applied via `*` — they have a layout cost; scope to headings (`balance`) and short-to-medium copy (`pretty`)
-- [ ] No `:invalid` / `:valid` styling on form fields — use `:user-invalid` / `:user-valid` so styling doesn't fire on page load (see `forms.md`)
+- [ ] Height:100% needs explicit ancestor heights; fix overflow instead of hiding it.
+- [ ] Plan stacking contexts; native overlays need no z-index.
+- [ ] Animate transform/opacity, excluding layout; prefer CSS effects.
+- [ ] Scope text-wrap: balance to headings, pretty to short/medium copy.

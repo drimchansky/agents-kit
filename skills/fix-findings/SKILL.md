@@ -1,6 +1,6 @@
 ---
 name: fix-findings
-description: Use when asked to fix, apply, or address a set of findings — from a review in this session, a PR's review comments, or a pasted or saved list. Applies the fixes (a Confirmed finding automatically when the targeted fix is clear and low-blast-radius; anything unverified only through one batched ask showing the change as a diff) and reports the rest untouched. Edits code only; never stages, never commits, never writes back to the findings' source.
+description: Use when asked to fix, apply, or address a set of findings from a session review, PR comments, or a pasted or saved list. Applies eligible Confirmed fixes automatically; other actionable fixes require approval of a diff in one batched ask. Edits code only, with no staging, commits, or source replies.
 argument-hint: '[source]'
 ---
 
@@ -9,168 +9,86 @@ argument-hint: '[source]'
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core.
 
-The write-mode follow-up to every code-review skill and source that produces findings: take a findings set from anywhere, apply the fixes, and report the rest untouched. From a verify composite, each **Confirmed** finding arrives with `verify-issue`'s root cause and fix options (ordered targeted → thorough, each with blast radius) — this skill consumes that judgment; it doesn't re-litigate it.
+Apply selected code findings and report the rest untouched. Consume a verify composite's root cause and ordered fix options without repeating its investigation.
 
-**CRITICAL**: Nothing is fixed on this skill's own judgment alone. A fix needs one of exactly two authorities — a **Confirmed** verdict, or the user's approval in the ask batch. **Withdrawn and Inconclusive findings are never edited**: a probe looked and either found no issue or couldn't establish a root cause, and that evidence outranks any later impulse to fix anyway. Findings nobody verified — a plain review's, an external list's, or one a verify phase marked **Unverified** — carry no such evidence either way, so they take the ask and never the auto path.
-
-The write surface is **working-tree code and nothing else**: never stages, never commits, never otherwise mutates Git state — staging the fixes is the user's call, per the Git-discipline rule. Reading findings from a PR adds nothing to that surface: they are fixed locally, never answered with a reply, a resolved thread, or a push.
+Edit working-tree code only: no staging, commits, other Git mutations, or writes to the findings' source, including replies, thread resolution, and pushes. Transient coordinator-managed executor worktrees are the exception allowed by `./references/workflow/parallel-batch.md` § *Coordinator-side parallel batch*. <!-- cold -->
 
 ## Source
 
-**Any findings set works.** Resolve it in this order, mirroring `../triage-findings/SKILL.md`'s Sources:
+Resolve findings in this order (`../triage-findings/SKILL.md` § *Sources*):
 
-1. **Explicit argument wins.** A PR number or URL → PR mode. An existing file path → parse that file. Pasted text, or a pointer like "the review above" → those findings. A named subset ("the two majors", specific `file:line`s) → those entries of the latest session findings.
-2. **No argument:** the most recent findings in this session, with everything fixable selected —
-   - a **verify composite** (`review-code-triage-verify`, `triage-findings-verify`) → its Confirmed and Unverified findings;
-   - a **plain review** (`review-code`) or a **`triage-findings` batch** → all of it, none of which carries a verdict.
-3. **Nothing to work from** → say so, name the forms above, and stop. Unlike `triage-findings`, this skill does **not** fall back to the current branch's open PR: that skill reads, this one edits, and fetching a remote findings list to start editing against is not something to infer from an empty argument.
+1. Use the explicit argument: PR number or URL, existing file, pasted text, or a session pointer. A named subset selects matching entries from the latest session findings.
+2. Otherwise use the latest session findings. Select Confirmed and Unverified entries from a verify composite; select all entries from a plain review or triage batch.
+3. With no findings, name the accepted source forms and stop. Do not infer the current branch's PR.
 
-**Code findings only.** Whatever the route in — a `triage-findings` batch, a file, a paste — a documentation findings set is out of scope: this skill's integrated-health boundary uses the engineering recipe, which proves nothing about prose. A `/review-docs` set belongs back with a doc review.
+Accept code findings only; return documentation findings to a doc review. Do not generate findings during this run or assign new severities or verdicts. Preserve each finding's wording, severity, anchor, root cause, and fix options as supplied.
 
-**Never produce the findings yourself** — no reviewing the diff, no scanning for problems to fix. That the judgment came from somewhere else is this skill's whole safety property, and a set you authored in the same breath as the fix is not a findings set.
+For PRs, use `../triage-findings/SKILL.md` § *Fetch*, including its incomplete-fetch reporting and unavailable-tool stop. Resolved threads and findings triaged outside **open** go to Untouched with their source bucket.
 
-**PR mode** fetches per `../triage-findings/SKILL.md`'s Fetch section, unchanged. A thread already resolved there is **addressed**: report it Untouched, never re-fix it.
-
-Take each finding as its source left it — severity if it has one, `file:line` if it has one, and whatever else it carries: root cause and fix options from a verify composite, a recommendation from a review, free prose from a PR comment. Don't re-rank a severity and don't assign a verdict the source didn't give. Findings triage landed outside **open** (addressed / verify buckets) are already handled — report them under Untouched with their bucket.
-
-**Check the anchor before fixing an external finding.** A finding from a PR, a file, or a paste can predate the current code. If its `file:line` no longer holds what it describes, or its quoted snippet no longer matches, it lands in Untouched as `anchor moved` — the issue may already be fixed, and editing there invents a problem to solve. If it is too vague to yield one specific change, it lands in Untouched as `not actionable` rather than going to the ask: approving a fix is the user's job, designing one from an unclear complaint is not.
+Check external PR, file, and pasted findings against the current code. A mismatched location or quoted snippet goes to Untouched as `anchor moved`. A finding too vague for one specific change goes there as `not actionable`.
 
 ## The Gate: Auto vs Ask
 
-Work in severity order (critical → major → minor), or in source order where the findings carry no severity — but **within dependency order**, so a fix never runs before one it is known to depend on. Findings are usually independent and the two orders rarely disagree; where they do, dependency wins, because severity order alone would invert a pair and leave the later fix testing a base it needs.
+Process findings in dependency order, then severity order (critical, major, minor), or source order when severity is absent. Use that order for execution, executor packets, and merges (`./references/workflow/executor-contract.md` § *Bindings*). <!-- cold -->
 
-That order is the one a batch merges in, and the one the executor packet carries — `./references/workflow/executor-contract.md` § *Bindings*, read it before the first delegation. <!-- cold -->
+Before execution, known dependencies are source- or user-declared dependencies and overlaps between chosen options' declared blast-radius surfaces. Recovery uses the recorded-change-set definition in `./references/workflow/fix-findings-recovery.md` § *Dependency-safe recovery*. Do not infer other cascade dependencies. <!-- cold -->
 
-A dependency is **known** in one of two forms, by phase. Before execution — for this ordering and for the cascade rule in § *Content baseline and immediate outcomes* — it is one the findings' source or the user declares, or an overlap between two fixes' declared surfaces, each derived from its chosen option's stated blast radius (§ *Execution strategy: every auto-path fix delegates*).
+**Withdrawn and Inconclusive findings are never edited.** Put them in Untouched with their verdict. A fix requires a Confirmed verdict or the user's approval of its diff:
 
-After execution, for recovery, it is the recorded-change-set form `./references/workflow/fix-findings-recovery.md` § *Dependency-safe recovery* defines. <!-- cold -->
+- **Auto:** a Confirmed finding with one unambiguous targeted change, confined to reviewed files, with no new dependency or public API or behavior change beyond the finding. Default to this option because the review already established the problem and the change is bounded.
+- **Ask:** every other actionable finding, including unverified findings and Confirmed findings with design choices, meaningful option trade-offs, unsettled intent, or broader scope.
 
-Nothing else counts — no fix is skipped or reverted as a cascade on an inferred relationship. Two rules come before the gate itself:
-
-**A finding without a Confirmed verdict always routes to the ask batch.** That is everything except a verify composite's Confirmed entries — a plain review's findings, Unverified ones, and every external set. No probe established a root cause, so there is no verified judgment for an auto-apply to stand on; the user's approval is what supplies it.
-
-**Show the change, not the claim.** Each ask entry carries the finding, the fix as a concrete diff of what you would write, and your recommendation. A prose description invites approval of the *claim* — and the claim is the unverified part. A diff is approved as an edit, which is the decision actually being made.
-
-For a **Confirmed** finding, decide from its fix options:
-
-- **Apply the targeted option without asking** when it is unambiguous — the options agree on one evident change, no genuine design choice among them — and its blast radius is minimal: confined to the files the review covered, no public API or behavior contract change beyond what the finding names, no new dependency. Default to auto here because at that size the fix is cheaper to apply than to discuss, and the review already did the judging.
-- **Route to the ask batch** otherwise — genuinely different options with trade-offs, a thorough option worth weighing against the targeted one, intent the code can't settle, blast radius reaching beyond the reviewed files. A wrong guess there costs more than the question.
-
-**One batched ask per run.** Collect every ask-routed finding and present them together in a single interaction — each with the finding, its diff or options, and your recommendation — not one interruption per finding. Apply the decisions, then continue.
+**Present one batched ask per run.** For each ask-routed finding, show the finding, the concrete diff for each offered fix, and your recommendation. Wait for the user's decisions before applying those edits. Approval of a claim without its diff is insufficient.
 
 ## Applying Fixes
 
-Run each fix through the loop in `./references/workflow/execution-loop.md` — read it before the first fix. This skill's bindings:
+Use `./references/workflow/execution-loop.md` with these bindings:
 
-- **Source** — one finding with its chosen fix: a Confirmed finding's fix option, or the fix the user approved in the ask. The verify criterion is **the problem the finding names no longer reproduces**, re-checked against the finding's own evidence — a Confirmed finding's root cause and reproduction path, or, for an unverified one, the specific thing the finding called wrong. That criterion is one half of the tier: proving a fix's outcome also runs the per-unit checks the resolved domain's `verification.md` adds (`./references/workflow/execution-loop.md` § *Two verification tiers*) — for code, validating the comments this fix touched.
-- **Record** — the chat report below; this skill writes no task-folder file and no status.
-- **Blocked** — a fix that cannot pass its **immediate** outcome is restored from its pre-fix content state and reported `fix failed (reverted): <reason>`. A failed health boundary follows § *Integrated health boundary*: isolate from a green baseline control when one exists; retain the survivors as **Health uncertifiable** when the same command was already red at the baseline; restore the complete pre-run content baseline when the comparison is inconclusive. Findings are independent, so an isolated failure does not strand independent survivors.
-    A failed **final-integrated** outcome uses the dependency-safe recovery in `./references/workflow/fix-findings-recovery.md` § *Dependency-safe recovery* instead. <!-- cold -->
-- **Acceptance** — every selected finding lands in exactly one report bucket, each bucket entry re-read against the live tree before reporting.
-- **Health boundaries** — no up-front health run and no per-batch health run. After all selected serial and batched fixes' immediate outcomes have settled and all retained fixes' final-integrated outcomes pass, run one engineering-health boundary for the retained fixes, at the scope § *Integrated health boundary* resolves — and a fresh one after any recovery that changed the tree, before a survivor is called Fixed. The certifying re-review of the whole set remains a separate run.
-    A red boundary follows the recovery procedure in `./references/workflow/fix-findings-recovery.md`. <!-- cold -->
-- **Integration assertions** — none within the fix run; the certifying re-review named under **Health boundaries** above is what covers the changed code end to end.
-
-A fix is Fixed only when its final-integrated outcome and the current final-tree health boundary both
-pass.
+- **Source:** one finding and its chosen fix option or approved diff. Its criterion is that the named problem no longer reproduces, checked against the finding's evidence. Use the supplied root cause and reproduction path when present. Run the full unit-outcome tier, including engineering's touched-comment and available formatter checks (`./references/workflow/execution-loop.md` § *Two verification tiers*).
+- **Record:** the chat report in § *Output*. Write no task-folder file or status.
+- **Blocked:** restore an immediate failure's pre-fix state and report `fix failed (reverted): <reason>`. Final-outcome failures use `./references/workflow/fix-findings-recovery.md` § *Dependency-safe recovery*. Independent findings may continue after recovery. <!-- cold -->
+- **Acceptance:** re-read every selected finding against the live tree and place it in exactly one report bucket.
+- **Health boundaries:** use § *Integrated health boundary* after all serial and batched fixes settle. Red-boundary recovery follows `./references/workflow/fix-findings-recovery.md`. <!-- cold -->
+- **Integration assertions:** none. A separate re-review certifies the changed code.
 
 ### Content baseline and immediate outcomes
 
-After the selection gate and before any fix edits, capture an immutable **pre-run content baseline** of
-the dirty shared tree. It preserves the bytes and presence of tracked, staged, unstaged, and untracked
-content as applicable, including separately staged and unstaged versions, without changing the index,
-staging, or commits. This is a content snapshot, not a clean-Git assumption or a Git operation: user
-bytes that predate the run are never recovery material. There is no up-front health comparison.
+After selection and before any fix edit, capture an immutable **pre-run content baseline** of the dirty shared tree. Preserve content and presence, including tracked and untracked files and separately staged and unstaged versions. Capture bytes without changing the index.
 
-**Attribution bounds every restoration.** No restore or rebuild in this skill removes content it cannot
-attribute to the baseline or to a recorded change set — content that appeared after the baseline is
-neither, so it is preserved and surfaced to the user, never removed to satisfy an equality or to return
-the tree to a capture. A run that edits the tree is not the only thing touching it, and a snapshot
-restored blindly reverts the user's work as readily as the run's own. This is the one home for that
-rule; the restore steps here cite it rather than restating it, and so do those in
-`./references/workflow/fix-findings-recovery.md`. <!-- cold -->
+**Restore only attributable content.** Every restoration or rebuild preserves pre-run user bytes and content outside the baseline and recorded run-owned change sets. Surface unattributed changes to the user; do not remove them to force equality with a capture (`./references/workflow/fix-findings-recovery.md`). <!-- cold -->
 
-Process attempted fixes in the established order. Immediately before each serial fix — or before a
-batch unit's eventual shared incorporation — capture its exact pre-fix content state, not merely the
-declared edit surface, and beside it the `worktree-merge.ts baseline` manifest the intake's surface
-check compares the executor's return against. A serial immediate-outcome pass records its ordered,
-run-owned change set: the content and presence delta from the state immediately before that fix. The
-change set is evidence and recovery input only; it is never staging or commit state. If the
-immediate outcome fails, restore that pre-fix content state within the attribution bound above,
-bucket the finding Fix failed, and continue. A not-yet-attempted fix whose known dependency is the
-fix that just failed is **not attempted**: bucket it Fix failed naming that prerequisite. Do not let
-a partial or failed attempt become part of a later change set.
+Immediately before each serial fix or shared batch incorporation, capture the exact pre-fix content state, beyond its declared surface. Also capture the `worktree-merge.ts baseline` manifest required by executor intake. After an immediate-outcome pass, record the ordered content/presence delta against that pre-fix state, with known dependencies. These change sets are recovery evidence.
 
-After every immediate outcome has settled, re-prove every retained finding's full outcome tier on the
-final integrated shared tree, whatever proved the immediate one
-(`./references/workflow/executor-contract.md` § *Write-mode routing*). That earlier proof is never
-enough for Fixed. Re-check all retained outcomes again after each rebuild.
-Resolve a failed final outcome through the dependency-safe recovery in `./references/workflow/fix-findings-recovery.md` § *Dependency-safe recovery*, using that outcome as the failure predicate, before running project health. <!-- cold -->
+On immediate failure, restore the pre-fix capture within the attribution bound and bucket the finding Fix failed. Skip unattempted fixes whose known prerequisite failed, naming that prerequisite. Leave no failed attempt in a later change set.
+
+After all immediate outcomes settle, re-prove every retained finding's full outcome tier on the final integrated shared tree, regardless of who proved it earlier. Repeat this sweep after every rebuild. Resolve failures before project health through `./references/workflow/fix-findings-recovery.md` § *Dependency-safe recovery*, using the failed tier as the predicate. <!-- cold -->
 
 ### Integrated health boundary
 
-When retained fixes remain, run one engineering health boundary over their final integrated tree,
-scoped by `./references/engineering/verification.md` § *Two verification tiers*. Its reference is the
-immutable pre-run content baseline — this skill's at every boundary, a recovery rebuild's fresh one
-included — and since this skill takes no up-front health run, that baseline never carries an
-in-session green result, so the boundary runs the whole relevant surface rather than a closure. That
-is what keeps **Health uncertifiable** below reachable: a failure the tree already carried has to
-surface in the boundary before the baseline comparison can attribute it. If it is green, that
-unchanged-tree result supplies pre-presentation health evidence and the survivors can be reported
-Fixed.
+When fixes remain, run one engineering-health boundary after their final outcome sweep. Run no up-front, per-finding, or per-batch health recipe. Use `./references/engineering/verification.md` § *Two verification tiers*: the immutable pre-run baseline is the reference at every boundary. It has no in-session green result, so run the whole relevant surface.
 
-If it is red, the comparison against the baseline, the three dispositions, and the recovery procedure
-are `./references/workflow/fix-findings-recovery.md` § *Red boundary: comparison, disposition, recovery* — read it when the boundary is red. <!-- cold -->
+A finding is **Fixed** only when its final-integrated outcome passes and the unchanged final tree has a green health boundary.
+
+On red, use `./references/workflow/fix-findings-recovery.md` § *Red boundary: comparison, disposition, recovery*. A matching baseline failure retains Health uncertifiable survivors; an inconclusive comparison restores the baseline; a green control permits isolation. Recovery that changes the tree requires a fresh boundary. <!-- cold -->
 
 ### Execution strategy: every auto-path fix delegates
 
-**The delegation surface is Confirmed auto-path fixes only.** A fix the gate routed to auto on a **Confirmed** verdict is the only kind an executor may apply. Ask-routed fixes stay here: the coordinator authored the diff the user approved, so nothing is left for an executor to decide, and drafting an ask-batch diff sits too close to judgment to hand off. **Withdrawn and Inconclusive findings are never edited at all** — by this session or by any executor; delegation changes nothing about that.
+Delegate every Confirmed auto-path fix and no other finding. Keep ask drafting and ask-approved edits with the coordinator. Apply `./references/workflow/write-mode-posture.md` before the first fix; announce and record any inline exception it permits.
 
-**Inside that surface, delegation is the standing posture, not a judgment call**: every Confirmed auto-path fix goes to an executor, whatever its size and wherever it sits in the processing order, and `./references/workflow/write-mode-posture.md` — read it before the first fix — owns that rule and the only three exceptions that keep a fix here. A fix framed in session has no packet on disk, so assemble one from what the review and the gate established — the finding verbatim, its root cause, the chosen option, that option's expected surface, the processing order and known dependencies — rather than keep the fix; a gap you can close by reading is closed, and only a gap that can be closed *solely by applying the fix* is an exception. Announce any fix that stays here as it happens, naming which exception applied, and note it in that finding's `Fixed` / `Fix failed` entry.
+For each delegation, supply the finding, root cause, chosen option, expected surface, order, and known dependencies. Complete the packet before launch; a gap resolvable by reading does not justify inline execution.
 
-The executor-contract binding, the write-surface restatement, the announce-and-record duty, the batch
-mechanics, and the failure fallbacks are `./references/workflow/fix-findings-recovery.md` § *Delegation mechanics* — read it before the first delegation. <!-- cold -->
+Use `./references/workflow/fix-findings-recovery.md` § *Delegation mechanics* for launch, intake, batching, and fallback. <!-- cold -->
 
-**Judgment stays with the coordinator** under every posture: the auto-vs-ask gate, the one batched ask,
-the intake that decides each immediate outcome's proof
-(`./references/workflow/executor-contract.md` § *Write-mode routing*), all final-integrated outcomes,
-the health boundary, recovery, and the report buckets.
+The coordinator retains the auto/ask decision, batched ask, immediate-evidence intake (`./references/workflow/executor-contract.md` § *Write-mode routing*), final-integrated checks, health, recovery, and report buckets.
 
 ## Output
 
-Lists, never tables. Omit empty buckets.
+Use lists; omit empty buckets. Preserve the finding's original text and severity in each entry.
 
-- **Fixed** — every applied fix, per finding: the original text with severity, what changed (`file:line`), whose evidence proved its immediate outcome (`executor`, or `coordinator` with the re-run case where one fired), its final-integrated outcome evidence, and the current final-tree health boundary, recorded to the shape `./references/engineering/verification.md` § *What a boundary records* fixes. Mark an entry that had no Confirmed verdict as fixed on the user's approval, so the report never lends a verified finding's authority to one that had none. A delegated fix's entry notes the delegation, the engine that ran it, and its batch where it ran in one; one applied by the coordinator instead notes which posture exception kept it here, or that it was ask-routed.
-- **Health uncertifiable** — survivors retained after a red boundary whose failed command was already red at the immutable baseline over the boundary's own resolved targets, named rather than reselected and minus any the baseline does not carry (`./references/workflow/execution-recovery.md` § *Evidence lifecycle*): per finding, the original text with severity, what changed (`file:line`), the same `executor` / `coordinator` immediate-outcome evidence source and final-integrated outcome evidence, and that baseline-failing command with those targets, which nothing can certify against. Not Fixed — the certifying re-review **Next** points at is what resolves these.
-- **Decided** — ask-routed findings that produced no fix: the user's decision and why nothing was applied — skipped, deferred, or the finding rejected. An ask-routed fix that was applied belongs in **Fixed**, not here.
-- **Fix failed** — fixes that were reverted, and fixes never attempted because a dependency of theirs failed, each with the reason and what would unblock them: the named prerequisite for one skipped as a cascade; the reason the baseline comparison could not run, after collection-level rollback on an unestablished control; the unresolved-health reason after an unconverged recovery; or whether one fix, a dependency group, or an interaction group was implicated. A never-attempted entry says so rather than reporting `(reverted)`, which would assert an edit that never happened. A delegated one notes the delegation, its engine, its batch, and its immediate-outcome evidence source here too; one applied by the coordinator notes its posture exception or its ask routing, as in **Fixed**.
-- **Untouched** — Withdrawn and Inconclusive findings with their verdict as the reason, findings triage landed outside **open** with their bucket, external findings dropped as `anchor moved` or `not actionable`, and any finding the user's subset excluded.
+- **Fixed:** changed `file:line`; immediate proof source (`executor`, or `coordinator` with its re-run reason); final-integrated evidence; current health per `./references/engineering/verification.md` § *What a boundary records*. Identify fixes made on user approval. Record delegation, engine, and batch, or the coordinator's posture exception or ask routing.
+- **Health uncertifiable:** surviving changes and the same immediate and final outcome evidence, plus the baseline-failing command and its resolved targets. Apply target exclusions from `./references/workflow/execution-recovery.md` § *Evidence lifecycle*. State that no boundary certifies the tree.
+- **Decided:** ask-routed findings without an applied fix, with the user's decision and reason: skipped, deferred, or rejected.
+- **Fix failed:** reverted fixes and unattempted dependents, with the reason and what would unblock them. Distinguish one fix, a dependency group, and an interaction group. Name an unestablished control or unconverged health recovery when applicable. Say `not attempted` for skipped dependents, not `reverted`. Include execution and immediate-evidence details as for Fixed.
+- **Untouched:** excluded findings, non-open triage buckets, barred verdicts, moved anchors, and non-actionable complaints, each with its reason.
 
-**Next:** the fixes are unstaged and unreviewed — stage them and run `/commit`; `/review-code` (or `/review-code-triage-verify`) is what certifies the changed code, before merge rather than before the commit. Findings that came from a PR or a saved list are answered in the working tree only: replying to the source, resolving its threads, and pushing all stay with you.
-
-## Don't Rationalize
-
-- "The probe confirmed it, so the fix must be right" — The probe confirmed the *problem*. The fix's verify is the root cause no longer reproducing, checked fresh.
-- "This Inconclusive one looks easy, I'll fix it while I'm here" — A probe investigated and couldn't establish the root cause; that verdict is the contract, and "looks easy" is not new evidence. Ask for another verify pass instead.
-- "The user will obviously pick the targeted option, I'll skip the ask" — The gate routed it because judgment was needed. Obvious-to-you is the thing being checked.
-- "I wrote this finding myself an hour ago and I'm sure of it — the ask is a formality" — Confidence in your own unverified finding is the least reliable input available, and it is precisely what the ask exists to check. Sureness is not a verdict.
-- "The executor reported the fix verified, so it's Fixed" — That is only immediate evidence. Fixed means the criterion holds on the final integrated tree and its current health boundary is green.
-- "The newest fix made health red, so undo it" — Overlap and interactions make recency unreliable. Isolate dependency-closed groups from the immutable baseline and revert only what the evidence implicates.
-
-## Verification
-
-Confirm the protocol invariants before finishing:
-
-- [ ] Findings sourced per **Source**; none produced by this run, none re-verdicted
-- [ ] No Withdrawn or Inconclusive finding edited; every fix lacking a Confirmed verdict approved by the user against a shown diff
-- [ ] Every ask-routed finding decided in one batched interaction
-- [ ] External findings anchor-checked before fixing; nothing written back to a PR or findings file
-- [ ] Immutable pre-run content baseline captured before any edit; every attempt has an exact pre-fix capture and an ordered run-owned change set or an exact restoration, and every batched entry records the incorporated content/presence delta from the immediately preceding shared state with its dependencies
-- [ ] Every retained finding's full outcome tier re-proved on the final integrated tree; every Fixed entry has that evidence and a current final-tree health boundary recorded to the shape **Fixed** requires
-- [ ] One health boundary ran on the happy path after all selected serial and batched fixes, referenced to the immutable pre-run baseline; a red command was compared with the baseline alone over its resolved targets, excluding any the baseline does not carry and calling the comparison inconclusive where that empties the set, a matching baseline failure retained its survivors as Health uncertifiable, an inconclusive comparison restored the pre-run baseline with no changed-code survivor, and a green control used dependency-safe scratch isolation before another boundary against that baseline
-- [ ] Every failed fix or group was restored without changing pre-run bytes, index, staging, or commits; an unconverged health recovery restored the exact baseline and left no changed-code survivor
-- [ ] Every selected finding in exactly one output bucket
-- [ ] Batched fixes ran only over blast-radius-declared, pairwise-disjoint surfaces and came back through `./references/workflow/parallel-batch.md` § *Coordinator-side parallel batch*'s ordered gates, in this skill's processing order <!-- cold -->
-- [ ] Every Confirmed auto-path fix delegated, any that stayed with the coordinator naming its posture exception; delegation confined to that surface — no ask-routed, Withdrawn, or Inconclusive finding sent to an executor — and every delegation announced and noted with its engine and its immediate-outcome evidence source in its `Fixed` / `Fix failed` entry
-- [ ] The gate, the batched ask, final-integrated outcome checks, health recovery, and the report buckets stayed with the coordinator
-- [ ] Nothing staged, nothing committed, no Git state mutated (transient coordinator-managed worktrees excepted — created scratch, removed after merge)
+**Next:** tell the user the fixes remain unstaged and unreviewed. They can stage them and run `/commit`; `/review-code` or `/review-code-triage-verify` certifies the changed code before merge. Source replies, thread resolution, and pushes remain separate user actions.

@@ -1,99 +1,106 @@
 # Delegated Review Contract
 
-This is the host-neutral contract for a delegated **reviewer** — the kit's second delegate kind, between the read-only probe of `./agent-fanout.md` and the write-mode executor of `./executor-contract.md`. A reviewer takes one named review object, reviews it, runs verification over it, and returns evidence to the session that launched it; this file owns that posture, its packet, its return, and the settle. The review itself — lenses, severity calibration, findings shape — stays in `../engineering/review.md`; base resolution, the verdicts, the drafted PR description, and the rendered output stay with the host skill. Host adapters select native model, effort, and tool defaults, then load their installed copy of this contract.
-
-Two audiences read this file. § *Posture*, § *Launch packet*, and § *The return* address the **reviewer**, which loads the file in its own sidechain. § *The launch*, § *Safety blocks*, § *The settle*, § *Consumers*, § *Adapter defaults*, and § *Degrade rule* address the **session** that launched it, which reads them cold at the launch, the settle, and the fallback rather than restating them in the host skill — a reviewer that cannot launch never reads this file, so what the session owes on that path has to reach the session.
+A read-only reviewer examines one identified object, runs verification, and returns evidence. Method: `../engineering/review.md`. Final verdicts and rendering belong to the host skill. Posture, Launch packet, and The return address reviewers; other sections address the session.
 
 ## Posture
 
-- **Read-only toward the review object and everything the project tracks.** The reviewer writes no file, stages nothing, and mutates no Git state.
-- **Execute-only toward verification.** It runs the project's verification scripts over the reviewed set, and the scratch reproduction of a candidate's failure mode — both under `../engineering/review.md` § *Verification Scripts*, which owns the bar for each and is not restated here. Waiting on a script it backgrounds is `./delegated-waiting.md` § *How to wait*, and that file's § *What is not a wait* is why a foreground `sleep` is never that wait — both cited, neither restated. Scratch invocations and the caches a tool manages for itself are not writes under this contract.
-- **Bound by the instruction hierarchy at the effective root.** Read and follow what applies there — `AGENTS.md` / `CLAUDE.md`, `CORE_RULES.md`, the engineering rules overlay (`rules.md`) — before reviewing, as `./executor-contract.md` § *Execution boundaries* binds an executor to the same root. The two halves arrive differently: `AGENTS.md` / `CLAUDE.md` the reviewer discovers at the root itself, while `CORE_RULES.md` and the overlay sit in the install home rather than at the root of a consumer repository and reach the reviewer as absolute paths in the packet. Either way, an invariant they state is a lens on the reviewed set, not context to skip.
-- **A live parent sandbox, approval setting, or managed security policy takes precedence** over this contract and any adapter default. A denial that prevents the reviewer from producing a usable pass is reported to the session under the return's `Safety blocked` heading, preserving any error code and message the host supplies; never broaden access to get it to run. A reviewer that can still return a complete pass records a denied check and its limits under `Verification scripts` instead, without retrying it.
-- **No fan-out of its own.** A reviewer launches no agents — a native subagent cannot reliably spawn further subagents. The `-x` cross-check stays session-launched and merges in the settle.
+- **Read-only:** edit no review-object or tracked file; stage nothing and mutate no Git state.
+- **Execute-only verification:** run project scripts over the reviewed set and reproduce candidates in scratch (`../engineering/review.md` § *Verification Scripts*).
+- **Instruction hierarchy:** before review, load effective-root AGENTS/CLAUDE and the packet's CORE_RULES and engineering rules. Apply their invariants as review lenses.
+- **Security:** live parent sandbox, approval, and managed policies override defaults and this contract. Preserve access boundaries. A denial preventing a usable pass is Safety blocked; otherwise record the denied check under Verification scripts without retrying.
+- **No nested fan-out:** the session launches and settles any `-x` cross-check.
 
 ## Launch packet
 
-Treat the session's launch prompt as the source of truth — the reviewer sees no session context and fetches none. It supplies:
+Supply the object by identity, not pasted text:
 
-- **the review object, named concretely, with its identity** — never pasted diff or file text: the diff, `<base>...HEAD` on a branch against its base and `<merge-base>...<b>` on a commit range, with the reviewed head SHA and the merge-base SHA; or a path set, named as its own paths with the head SHA and the digest of the sorted path list, which the reviewer recomputes with this exact command:
+- A `pr` diff, `<base>...HEAD` or `<merge-base>...<b>`, with head and merge-base SHAs; or a `paths` set at one commit, with head SHA and path-list digest.
+- One absolute effective root, possibly a worktree.
+- PR context and every extracted URL.
+- Absolute installed paths for `../engineering/review.md`, its per-surface checklists, CORE_RULES, and `../engineering/rules.md`.
+- User context/constraints verbatim or `none`; host Review Focus verbatim; verification-scripts instruction.
+
+The reviewer:
+
+- Requires an unambiguous object, identity, and root from an authorized § *Consumers* packet; otherwise reports the gap and reviews nothing.
+- Recomputes a paths-set digest and assembles the object using:
 
     ```bash
     git ls-files --full-name --error-unmatch -- <paths> | LC_ALL=C sort | git hash-object --stdin
     ```
 
-    The `LC_ALL=C` and the `--full-name` are both load-bearing, and the command travels here in full for that reason: the session and the reviewer both compute this digest, § *The settle*'s intake check 1 makes any mismatch a hard stop, and either pin missing lets the identical object digest two ways and the check kill a legitimate pass. An unpinned `sort` collates by each process's own locale; `git ls-files` without `--full-name` prints paths relative to the current working directory, so a session invoked from a subdirectory disagrees with a reviewer that runs at the root as this contract's next item requires. A reviewer that has to guess the recipe is the failure this literal prevents; the packet carries no path to the host skill, so nothing else here can supply it. The reviewer assembles the object itself;
-- **one absolute effective working root** — the tree the object lives on, which may be a worktree rather than the main checkout. Every command runs there; never infer a location from the adapter or the shell's directory;
-- **the kind** — `pr` for a diff, a branch's against its base or a commit range alike, and `paths` for a set of tracked files at one commit;
-- **the PR context** — title, description, review comments and discussion threads, and every URL extracted from them. Links travel as URLs, not as fetched content: the reviewer fetches them itself and records what it could not reach;
-- **the absolute installed paths of the review pack and of the installed rules § *Posture* binds the review to** — `../engineering/review.md` and the per-surface checklists beside it, plus the install home's `CORE_RULES.md` and the engineering overlay `../engineering/rules.md`, as the host installed them. The reviewer reads them itself, loading the checklists the reviewed set's domains trigger;
-- **the user's own context and constraints as given with the invocation** — the why behind the change, a focus to take, a constraint to honour — verbatim, or an explicit `none`. The session holds them and the reviewer sees no session context, so unsent context is silently dropped from the pass; where a constraint conflicts with this contract, § *Posture* governs;
-- **the host skill's § *Review Focus*, verbatim** — the emphasis the skill owns (what to read first, what to prioritize), which the review pack does not carry. The session composes it into the packet at launch from the skill it already holds, so nothing is copied on disk and nothing needs mirroring;
-- **the verification-scripts instruction** — that the reviewer runs the project's verification scripts over the reviewed set, and reproduces a candidate's failure mode in scratch before adopting it, as § *Posture* binds it on either kind: the reviewed set is the diff on a `pr` object and the files themselves on a `paths` one. Where the session puts several reviewers on one object, only the first carries that instruction and each of the others carries `verification scripts: skip — reviewer 1 runs them`: the scripts exercise the one tree, so repeating them per reviewer buys no evidence and costs contention on it. A reviewer carrying the skip says so under its return's `Verification scripts` heading rather than leaving that heading empty.
-
-The change map, the blast-radius search over every modified export, and the link reading are the reviewer's own work, not the session's — moving them off the main thread is what the delegation buys.
-
-Before reviewing, confirm the object, its identity, and the effective root are present and unambiguous. If any is missing or ambiguous, or the prompt is not a review packet from a consumer registered below, report that and review nothing.
+    Preserve `LC_ALL=C` and `--full-name`; digest mismatch hard-stops settlement.
+- Runs commands at that root, without inferring another from adapter or shell.
+- Fetches links and reports inaccessible context; loads triggered checklists.
+- Builds the change map and searches blast radius for every modified export.
+- Runs verification and reproduces candidate failures before adoption. For multiple reviewers, only reviewer 1 receives this instruction; others receive `verification scripts: skip — reviewer 1 runs them`. Conflicting constraints follow § *Posture*.
 
 ## The return
 
-Return evidence, not a verdict — and never an audience-facing artifact: the PR description is the session's to draft, from the `Change map` below, under rules the reviewer never sees. Include every heading, using an explicit `None` where one is empty — except the headings § *The settle*'s intake check 2 names as never empty, where a `None` fails that check:
+Return evidence only, without final verdict or audience-facing artifact. Include every heading; empty fields use `None`, subject to § *The settle*'s four required substantive fields:
 
-- `Summary` — what changed, its intent, and the reviewer's overall assessment (approve / request changes / needs discussion), or on a `paths` object what the set does and a health verdict from the closed set `../engineering/review.md` § *Reviewing a path set* fixes. Evidence like the rest — the session restates the assessment after settling, but only the reviewer read the object, so the summary's substance comes from here.
-- `Findings` — in the shape `../engineering/review.md` § *Findings output shape* defines, each entry additionally carrying its cited `file:line` evidence and a one-line excerpt of what stands at that line. The excerpt is what lets the session settle from the return instead of re-deriving the review.
-- `Improvements` — non-blocking suggestions. Not findings — they carry no required `file:line`, and the settle passes them through rather than dropping them as uncited.
-- `Identity` — the object's identity echoed back as the reviewer resolved it at the effective root: the head and merge-base SHAs, or on a `paths` object the head SHA and the path-list digest.
-- `Verification scripts` — each script launched and its outcome, its failures and warnings already merged into `Findings`; a script the project does not expose is named as skipped. A packet carrying the skip in § *Launch packet* is answered here with the listing `skipped (reviewer 1 runs them)` — a listing like any other, and not `None`.
-- `Divergence` — every reviewed path where the effective root's on-disk content diverges from the review object, under the bar `../engineering/review.md` § *Verification Scripts* sets: a script failure or reproduction at such a path is reported here as context, never merged into `Findings`. `None` when the tree carries the object.
-- `Inaccessible context` — every link the reviewer could not fetch, each with its URL and the reason (auth-walled, private workspace, 404, tool unavailable). Never fabricate what sits behind one.
-- `Change map` — the reviewed set grouped by file and by intent, or by file and concern on a `paths` object, which carries no intent to read. Compact enough to take in at a glance and complete enough for the session to draft from, and returned on every pass.
-- `Safety blocked` — `None` on every pass the reviewer completed, denied checks included, since those belong under `Verification scripts`. Where a sandbox, approval, or policy denial prevented a usable pass, the exact error code and message the host supplied, with nothing inferred about which operation triggered it; the other headings then carry whatever was completed before the denial, and the never-`None` rule § *The settle* names does not apply to such a return, which § *Safety blocks* classifies before that check runs.
+- `Summary`: changes, intent, and assessment (approve/request changes/needs discussion). For paths, explain the set and give its health assessment (`../engineering/review.md` § *Reviewing a path set*).
+- `Findings`: `../engineering/review.md` § *Findings output shape*, with file:line evidence and a one-line excerpt.
+- `Improvements`: non-blocking suggestions; file:line optional.
+- `Identity`: object identity resolved at the effective root.
+- `Verification scripts`: every launched script and outcome, with failures/warnings merged into Findings. Name unexposed scripts as skipped. A packet's skip instruction returns `skipped (reviewer 1 runs them)`, not None.
+- `Divergence`: every reviewed path differing on disk from the object (`../engineering/review.md` § *Verification Scripts*). Keep failures/reproductions on divergent bytes here, excluded from Findings.
+- `Inaccessible context`: each unfetched URL and reason, with no invented content.
+- `Change map`: files grouped by intent, or by concern for paths sets.
+- `Safety blocked`: None for completed passes, including denied checks. Otherwise give only the host's exact error code/message and completed evidence elsewhere. Substantive-field requirements are waived for these blocked returns.
 
 ## The launch
 
-Session-facing. How the session starts a pass, and the one home for it: the host skills cite this section rather than restating it. Spawn the native `reviewer` subagent — the kit-installed adapter § *Adapter defaults* describes; a host with no adapter, or one that cannot launch it, takes the host skill's inline fallback under § *Degrade rule*. The launch prompt is a review packet per § *Launch packet*, whose items the host skill composes from what its own Setup resolved; the reviewer loads this file's reviewer-facing sections in its own sidechain, while the session hands the packet over and then settles the return by the session-facing ones, read cold at that point.
+Launch the named native `reviewer` adapter using § *Adapter defaults* and a packet built from host Setup.
+Each primary reviewer independently reviews the complete object.
+`-n N` counts complete passes, never a split by concern or path.
+Generic or targeted probes cannot substitute for primary reviewers.
+
+Use inline review only for a listed § *Degrade rule* failure, recording its concrete reason on `Review pass:`.
+Review size, simplicity, and available context do not establish failure.
 
 ## Safety blocks
 
-Session-facing. Only an explicit signal that a safety or security policy denial prevented a usable review pass is `safety blocked`: a non-`None` `Safety blocked` heading in the return (§ *The return*), or a host signal that the launch itself was denied. A complete return that records a denied validation remains a usable report and goes through ordinary intake with that limitation visible. An ordinary error, malformed return, or launch that produced no return carries no safety conclusion and stays on § *Degrade rule*'s ordinary failure path. Preserve only the error code and message the signal actually supplies; never infer which operation triggered it, and never treat the denial as evidence that a candidate defect exists.
+Require an explicit security-denial signal preventing a usable pass: non-None Safety blocked, or a denied-launch host signal. A denied check within a complete return takes ordinary intake; other failures take § *Degrade rule*. Preserve only the supplied code/message. Infer neither the triggering operation nor a code defect from the denial.
 
-Do not retry the denied work through the session, another reviewer, the `-x` runner, or a later composite phase. Separately returned, completed verification outcomes remain usable; an incomplete reviewer report still has to pass § *The settle*'s intake and citation checks and gains no exception from the denial. A different verification check may run only when the signal identifies the denied operation precisely enough to establish that the check is independent and already authorized; if it does not, record the remaining scripts as unavailable rather than guessing that a retry is safe.
+Denied work cannot retry through the session, another reviewer, `-x`, or a later composite phase. Keep completed verification outcomes. Remaining scripts are unavailable unless the signal establishes independence from the denied operation and existing authorization.
 
-In a fleet, a safety-blocked reviewer is unavailable and the usable returns still standing remain full-object passes, with their reduced completed/requested coverage made explicit by the host skill. If none stands, one explicit safety block makes the review terminally blocked: do not take the inline fallback and do not render a clean or no-findings result. At that no-usable-return boundary, an identity mismatch from any returned report retains § *The settle*'s higher-priority hard stop. A cross-check may be reported as unattached evidence, but it never substitutes for a blocked primary review.
+A blocked fleet member is unavailable; usable returns stand with reduced coverage recorded. If none stands, terminally block the review: no inline fallback or clean/no-findings rendering. Report cross-check output only as unattached evidence, not a primary-review substitute.
 
 ## The settle
 
-Session-facing. What the session does with the return. `./agent-fanout.md`'s rule that the invoking skill owns its verdicts holds for a reviewer exactly as it does for a probe. A return whose `Safety blocked` heading is not `None`, or a host signal that the launch itself was denied, is classified under § *Safety blocks* before anything else. Two **intake checks** then run, in this order, before any settle step below and before any post-return launch:
+The host owns final verdicts (`./agent-fanout.md`). Classify explicit safety signals first under § *Safety blocks*. Before settlement or post-return launches, check in order:
 
-1. **Identity.** The `Identity` echo matches the identity the host skill's Setup recorded — the head and merge-base SHAs, or on a `paths` object the head SHA and the path-list digest. A mismatch means the reviewer resolved a different object: stop and report; settle nothing, launch nothing.
-2. **Completeness.** Every § *The return* heading is present — an explicit `None` counts, an absent heading does not. A return missing one is malformed: a matching `Identity` echo with findings but no `Verification scripts` would render `delegated (<model>)` with the always-run guarantee silently unmet. Four headings may never be `None`, and a `None` under one of them is malformed exactly as an absent heading is: `Identity`, `Verification scripts`, `Change map`, and `Summary` — the script heading lists each exposed script with its outcome, and a project exposing none says so as a listing (`none exposed`), as does a reviewer whose packet carried § *Launch packet*'s skip, never as `None`, or the check meant to catch that unmet guarantee passes on it, and a `None` map leaves the session with nothing to draft from. Take § *Degrade rule*'s path with reason `reviewer failed`.
+1. **Identity:** match the Setup-recorded identity. On mismatch, stop and report without settlement or further launches.
+2. **Completeness:** require every return heading; an explicit None counts as present. Identity, Verification scripts, Change map, and Summary require content. Scripts list each exposed command/outcome, `none exposed`, or `skipped (reviewer 1 runs them)`. Malformed returns take § *Degrade rule* as `reviewer failed`.
 
-**Where the session put several reviewers on one object**, first classify any explicit safety-block signal under § *Safety blocks*, then run both checks per returned report. A return failing either check or a reviewer that was safety blocked is unavailable rather than ending a pass that still has a usable return: the session records which reviewer went and why, runs the steps below on the returns still standing — pooled by location first, per `./agent-fanout.md` § *Merge contract* — and records their completed/requested coverage. Only once nothing stands does the session choose the terminal path: any identity mismatch is the hard stop above; otherwise any safety block is the blocked outcome § *Safety blocks* defines; otherwise a failed completeness check or ordinary unavailability takes § *Degrade rule*'s path. Losing the first reviewer ordinarily costs the verification scripts with it, every other packet having carried the skip, so the session runs them itself before output. If reviewer 1 was safety blocked, the script handling instead follows § *Safety blocks*: preserve completed outcomes, run only checks shown to be independent of the denied operation, and otherwise record the remaining scripts as unavailable.
+For fleets, check every return. Record unavailable members and reasons; pool survivors by location under `./agent-fanout.md` § *Merge contract*, with completed/requested coverage. If none survives, prioritize identity hard stop, then safety-block outcome, then degrade. Losing reviewer 1 requires session-run verification before output, subject to Safety blocks if that reviewer was blocked.
 
-Then:
+After intake:
 
-- **Adopt each finding whose evidence is cited.** An entry carrying a `file:line` and its excerpt is adopted as it stands; an uncited entry is an opinion, and the session re-derives it or drops it. `Improvements` are exempt — not findings, they pass through as returned.
-- **Spot-check the Critical and Major anchors only** — re-read each cited line before rendering the finding, against the review object rather than the disk at any path the return lists under `Divergence` (`git show <head-sha>:<path>`): the on-disk line there is the content the object never carried. Minor findings settle on their citation; re-deriving a tier in full costs back what the delegation saved.
-- **Assign the final verdicts**, marking any severity changed from the one the reviewer returned.
-- **Merge the `-x` probe here**, before findings are finalized, per `./probe-cross-check.md`.
-- **Under a composite, the steps after the intake checks are suppressed.** The composite's phase 3 gives every finding exactly one verdict, so a standalone settle would settle it twice. The intake checks still run: a composite that forwards a malformed return verifies against a pass that never ran in full.
+- Adopt cited findings; re-derive or drop uncited ones. Pass Improvements through.
+- Spot-check only Critical/Major anchors against the object. Use `git show <head-sha>:<path>` for Divergence paths; Minor findings settle on citations.
+- Assign final verdicts and mark changed severities.
+- Merge `-x` before finalizing findings (`./probe-cross-check.md`).
+
+Composites suppress these post-intake steps because their verify phase assigns each finding's verdict. Intake still runs.
 
 ## Consumers
 
-Session-facing. The skills authorized to launch or consume a delegated reviewer — the membership § *Launch packet*'s gate checks a packet against: `review-code` launches one, and `review-code-triage-verify` consumes this contract through its phase 1's execution of that skill. Authorization is contract content, the same class as `./executor-contract.md` § *Bindings* — not a record of who cites this file, which reverse search reconstructs.
+Authorization membership: `review-code` launches reviewers; `review-code-triage-verify` consumes them through its review-code phase. The packet gate checks this list. Like `./executor-contract.md` § *Bindings*, it defines authorization rather than reconstructing citations.
 
 ## Adapter defaults
 
-Session-facing. The adapters are `~/.claude/agents/reviewer.md` and `~/.codex/agents/reviewer.toml`; each carries its own model and effort pins, and both are read from the installed definition rather than from this file: the `<model>` on the `Review pass:` line from its `model:` line on Claude and its `model =` on Codex, and the `<effort>` a host skill names where it announces a fleet launch — the one place any skill prints it — from its `effort:` line on Claude and its `model_reasoning_effort =` on Codex. The Claude adapter withholds the write tools and keeps `Bash`, which verification needs, so the read-only posture is enforced for the named tools and promised for the rest — the trust `./probe-engines.md` records for every native subagent. The Codex adapter sets `sandbox_mode = "workspace-write"`, since the verification scripts and scratch reproductions § *Posture* mandates write outside the tracked tree and a `read-only` sandbox would deny them; there the posture toward the tracked tree is prompt-borne, the same trust. On either host the live parent sandbox, approval setting, or managed security policy stays authoritative. A pin that does not resolve, or sits at or below the session's own model, is the user's to retune in the installed definition, removing its sibling `.agents-kit-reviewer` marker so the install keeps the retune — the recovery `./executor-routing.md` § *Write-mode engine registry* gives the executor, with why the pins are full model names; a session that hits it mid-review reports it and takes the inline fallback, never editing the install. What makes the file at that path the kit adapter is its body citing the installed `reviewer-contract.md`, not the marker: a same-name definition without that citation is the user's own agent and is never launched under a packet — § *Degrade rule* reads it as `adapter not installed`.
+Adapters: `~/.claude/agents/reviewer.md` and `~/.codex/agents/reviewer.toml`. Read model for `Review pass:` and effort for fleet announcements. Claude uses `model:`/`effort:`; Codex uses `model =`/`model_reasoning_effort =`. Prompt posture supplements withheld tools (`./probe-engines.md`); live security remains authoritative.
+
+Unresolved pins, or pins at/below the session model, require user retuning in the installed definition and removal of its sibling `.agents-kit-reviewer` marker (`./executor-routing.md` § *Write-mode engine registry*). Report and fall back inline; make no installation edits. A kit adapter cites installed reviewer-contract.md in its body. Other same-name definitions are user agents: do not launch them with this packet; report `adapter not installed`.
 
 ## Degrade rule
 
-Session-facing. Subject to § *Safety blocks*, where the reviewer cannot launch, or launched and did not produce a usable pass, announce it and run the host skill's own inline review pass, which stays the fallback protocol. Degrading changes the runner, never the review object, the effective root, or what the output owes. The output records which happened on its mandatory `Review pass:` line — `Review pass: delegated (<model>)` when a reviewer produced the pass, `Review pass: inline (<reason>)` when the session did — and the reason is one of a closed set, each with the test that selects it:
+Subject to Safety blocks, announce unavailable or unusable delegated review and run the host's inline pass. Preserve object, root, and output obligations. Always record `Review pass:` as `delegated (<model>)` or `inline (<reason>)`. Reasons are limited to:
 
-- `no subagent support` — the host cannot launch a subagent at all.
-- `adapter not installed` — no kit adapter at the installed path for this host: no definition, or one that does not cite this contract (§ *Adapter defaults*).
-- `adapter not registered` — the kit definition is on disk but the launch fails on an unknown agent type: the harness's registry predates the write, as it does for a session that outlives the install. A kit definition's presence falsifies the previous reason, which is what keeps this one distinct.
-- `unresolved model pin` — the adapter launched but its pinned model does not resolve on this host, or resolves at or below the session's own model; § *Adapter defaults* has the recovery for either.
-- `reviewer failed` — a launched reviewer did not return, returned an ordinary error with no explicit safety-block signal, or returned a malformed report (§ *The settle*, intake check 2).
-
-An unrecorded degrade reads exactly like a delegated pass, which is why the line is owed on either path.
+- `no subagent support`: host cannot launch subagents.
+- `adapter not installed`: absent kit adapter or definition missing this contract citation.
+- `adapter not registered`: kit file exists but launch reports unknown agent type.
+- `unresolved model pin`: unresolved or at/below the session model.
+- `reviewer failed`: no return, ordinary non-security error, or malformed report.

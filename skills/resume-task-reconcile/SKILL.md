@@ -8,147 +8,47 @@ argument-hint: '[task folder path]'
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 
-One command for the catch-up-and-fix pipeline: brief the task (`resume-task`), then write the brief's
-findings back into the task docs so they stop overstating what's been built. Two phases, in order —
-the brief is a faithful snapshot of **pre-reconcile** state, and the reconcile runs against it.
+One command for the catch-up-and-fix pipeline: brief the task (`resume-task`), then write the brief's findings back into the task docs so they stop overstating what has been built. The brief is a snapshot of pre-reconcile state; the reconcile runs against it.
 
-Phase 1 executes its skill file — read the sibling `SKILL.md` and run its full protocol; Phase 2 runs
-against the reference contract it names. Three overrides apply pipeline-wide:
+Phase 1 runs `../resume-task/SKILL.md`'s full protocol; Phase 2 runs the reference contract it names. Three overrides apply pipeline-wide:
 
-- **Core Rules blocks** — the composite's own block above covers the pipeline; the inner skill's
-  AGENTS.md read is already satisfied and doesn't repeat. The override stops there: `resume-task`'s
-  domain-pack step still runs, resolving the task's `**Domain:**` and applying that pack.
-- **Chat display** — the composite's Output owns what reaches you. Unlike the review pipelines, this
-  one holds nothing back: the brief prints in full at the end of Phase 1, **before** any edit.
-- **Next pointers** — the inner skill's follow-up suggestions are dropped; the composite's Output
-  owns **Next**.
+- **Core Rules blocks**: this block covers the pipeline; the inner AGENTS.md read does not repeat. `resume-task`'s domain-pack step still runs.
+- **Chat display**: the brief prints in full at the end of Phase 1, before any edit.
+- **Next pointers**: the inner skill's follow-ups are dropped; this Output owns **Next**.
 
-Past these three, a phase departs from its skill or contract only where its own section below says
-so — never by improvisation.
+Any other departure from the inner skill or the contract is named in the phase's section below.
 
-**CRITICAL**: This pipeline writes only what the **docs → reality** direction allows, and
-`./references/workflow/reconciliation-docs-to-reality.md` § *Write surface* is the whole of that
-surface — the task files, the two surfaces reaching past the folder and the added terms
-`./references/workflow/reconciliation.md` § *The upstream ask is writable, and never rewritten
-quietly* sets on them, every never-edited file and its reason, and the bound on what a reconcile may
-re-run or execute. It fixes the **docs**, not the world
-(`./references/workflow/reconciliation.md` § *Docs, not the world*), and creates no `BRIEF.md` or
-scratch briefing file.
+This pipeline writes only what `./references/workflow/reconciliation-docs-to-reality.md` § *Write surface* allows: the task files, plus `ticket.md` and an applicable `GROUP_CONTEXT.md` on the added terms of `./references/workflow/reconciliation.md` § *The upstream ask is writable, and never rewritten quietly*. `./references/workflow/reconciliation-docs-to-reality.md` § *Write surface* names every never-edited file and bounds what a reconcile may re-run. It fixes the docs, not the world (`./references/workflow/reconciliation.md` § *Docs, not the world*), and creates no `BRIEF.md` or scratch briefing file.
 
-A user invoking this skill is this direction's consent, on the terms
-`./references/workflow/reconciliation.md` § *Consent model: findings apply, the record carries them*
-sets — nothing is put back to you mid-run; a model-invoked run carries no such consent and asks for
-every fix.
+Invoking this skill as the user supplies this direction's consent, on the terms `./references/workflow/reconciliation.md` § *Consent model: findings apply, the record carries them* sets; nothing is put back to the user mid-run. A model-invoked run has no such consent and asks before each fix.
 
 ## When to Use
 
-**Use when:**
+**Use when** returning to a task whose docs have drifted (stale statuses, steps checked for work that is gone, dead links) and you want them corrected; wrapping up or handing off; or `resume-task` already showed drift and the answer is "fix that".
 
-- Returning to a task whose docs have visibly drifted — stale statuses, steps checked for work that's
-  gone, dead links — and you want them corrected, not just reported
-- Wrapping up or handing off, and the folder should be a faithful record before the next session
-- `resume-task` already showed drift and the answer is "yes, fix that"
-
-**Skip when:**
-
-- You only want to know where the task stands → use `resume-task`; it is strictly read-only
-- The gap needs real work, not a doc repair → `implement-task`, per `resume-task`'s Skip entry of
-  that name; this pipeline edits docs only
-- The information to write back came out of **this session's conversation** rather than the docs
-  overstating reality → that's the opposite direction; use `reconcile-task`
-- The plan's `**Status:**` is `skipped` — terminal, and exempt from reconciliation entirely; Phase 1
-  reports it as abandoned and Phase 2 writes nothing
+**Skip when** you only want to know where the task stands → `resume-task`; the gap needs real work → `implement-task`; the information came out of this session's conversation rather than the docs overstating reality → `reconcile-task`; the plan is `skipped` → terminal and exempt, so Phase 1 reports it as abandoned and Phase 2 writes nothing.
 
 ## Phase 1 — Brief
 
-Execute `../resume-task/SKILL.md` end to end against the resolved task folder, and print its brief in
-full — every template section, including the always-rendered "Drift since plan" heading and, wherever
-the commit scan resolves a repository this task acts on, "Commits since watermark". The brief sweeps no citations of its
-own, per the **docs → reality** direction definition opening
-`./references/workflow/reconciliation.md`; the cited links are Phase 2's business.
+Execute `../resume-task/SKILL.md` end to end against the resolved task folder and print its brief in full: every template section, including the always-rendered "Drift since plan" heading and, wherever the commit scan resolves a repository, "Commits since watermark". The brief sweeps no citations (the **docs → reality** direction definition opening `./references/workflow/reconciliation.md`); the cited links are Phase 2's.
 
-The brief is the pipeline's pre-reconcile snapshot and the evidence Phase 2 acts on — printed
-**before** any edit and never regenerated after one, per `./references/workflow/reconciliation.md`
-§ *Sequence and output*. If Phase 2 fails hard, the brief still stands as printed — the catch-up is
-never lost to a dead pipeline.
+The brief prints before any edit and is never regenerated afterwards (`./references/workflow/reconciliation.md` § *Sequence and output*). If Phase 2 fails hard, the brief stands as printed.
 
 ## Phase 2 — Reconcile
 
-Apply the brief's findings to the task docs per `./references/workflow/reconciliation.md` and its
-**docs → reality** direction file `./references/workflow/reconciliation-docs-to-reality.md`, read
-before editing: how those two split the mechanics between them, and that a phase running them adds
-none of its own, is the shared file's opening. This pipeline's finding-type → edit mapping is the
-direction file's `resume-task-reconcile` section.
+Apply the brief's findings per `./references/workflow/reconciliation.md` and `./references/workflow/reconciliation-docs-to-reality.md`, read before editing. This pipeline's finding-type → edit mapping is the direction file's § *`resume-task-reconcile` — brief findings*.
 
-Run the contract's reference sweep here, per `./references/workflow/reconciliation-sweep.md` — which
-owns it in full, its scope script and the unavailable-script fallback included, down to why the sweep
-never substitutes for Phase 1's claim-level verification of what a finding names. It runs in this
-phase because the brief sweeps nothing, so print its `## References` block after the brief and before
-any edit: it is this pipeline's only source of dead-link and reference-answered-question findings.
+Run the reference sweep per `./references/workflow/reconciliation-sweep.md` in this phase, since the brief sweeps nothing; print its `## References` block after the brief and before any edit. It is this pipeline's only source of dead-link and reference-answered-question findings, and it never substitutes for Phase 1's claim-level verification.
 
-A finding admitting more than one defensible edit is settled here rather than put back to you: pick
-the reading the brief's and the sweep's evidence best supports, write it, and give its record line
-the alternatives it passed over, per `./references/workflow/reconciliation.md` § *Consent model:
-findings apply, the record carries them* — a grounding rewrite additionally quoting the prior wording
-(§ *Grounding docs change on evidence, never silently*), a `ticket.md` or group-file edit
-additionally naming the external surface (§ *The upstream ask is writable, and never rewritten
-quietly*). What that licence never reaches is state: a box, a `**Status:**`, a goal recorded `met`
-moves only through § *Strengthen only on verified evidence*.
+A finding admitting more than one defensible edit is settled here: pick the reading the brief's and the sweep's evidence best supports, write it, and give its record line the alternatives passed over (§ *Consent model: findings apply, the record carries them*). A grounding rewrite also quotes the prior wording (§ *Grounding docs change on evidence, never silently*); a `ticket.md` or group-file edit also names the external surface and quotes both wordings (§ *The upstream ask is writable, and never rewritten quietly*), never rewriting the ask to match what was built. State (a box, a `**Status:**`, a goal recorded `met`) moves only through § *Strengthen only on verified evidence*, re-verified in this run. Watermark writes follow `./references/workflow/reconciliation-commits.md`: a missing baseline seeded where a `result.md` exists, an orphan re-seeded, the scanned commit list recorded, the `**Pointers:**` entry advanced to the scanned HEAD. The one user-owned surface, a deliverable's `**Published:**` line, goes to *Yours to apply* under "Not reconciled" with proposed text.
 
-Findings that need real work (code changes, re-running the acceptance gate, clearing a blocker) stay
-unfixed — listed as *Needs work* under "Not reconciled" per that same consent section, with the next
-skill named (`implement-task`, `plan-task`).
+Findings that need real work (code changes, re-running the acceptance gate, clearing a blocker) stay unfixed, listed as *Needs work* under "Not reconciled" with the next skill named (`implement-task`, `plan-task`).
 
 ## Output
 
 Lists, never tables.
 
-- **Brief** — the full briefing exactly as `resume-task` specs it, printed at the end of Phase 1 from
-  pre-reconcile state. Its "Where to start" section is part of that snapshot; the **Next** line below
-  is what accounts for the reconciled state.
-- **References** and **Reconciliation applied** — the sweep's tagged entries and then the change
-  list, each rendered exactly as its own contract specs it
-  (`./references/workflow/reconciliation-sweep.md` § *Output and routing*,
-  `./references/workflow/reconciliation.md` § *Sequence and output*, the latter covering a run with
-  nothing actionable). References lands at the start of Phase 2, before any edit.
+- **Brief**: the full briefing as `resume-task` specs it, printed at the end of Phase 1 from pre-reconcile state. Its "Where to start" section is part of that snapshot; the **Next** line below accounts for the reconciled state.
+- **References** and **Reconciliation applied**: the sweep's tagged entries, then the change list, per `./references/workflow/reconciliation-sweep.md` § *Output and routing* and `./references/workflow/reconciliation.md` § *Sequence and output* (the latter covering a run with nothing actionable). References lands at the start of Phase 2, before any edit.
 
-**Next:** the concrete follow-up after the edits — the skill named against the *Needs work* lines
-(`/implement-task <slug>` for work the docs can't fix, `/plan-task <slug>` for a step that
-needs rethinking), or the first action from the brief when nothing was left unreconciled.
-
-## Verification
-
-Confirm the protocol invariants before finishing:
-
-- [ ] Phase 1 ran from `resume-task`'s skill file with its domain-pack step intact — not improvised
-- [ ] The brief printed in full from pre-reconcile state, before any edit, and was never regenerated
-      after one, per `./references/workflow/reconciliation.md` § *Sequence and output*
-- [ ] Every edit traces to a brief finding or a reference finding — or is the
-      scan's own watermark bookkeeping — routed by
-      `./references/workflow/reconciliation-docs-to-reality.md`
-      § *`resume-task-reconcile` — brief findings*
-- [ ] Every judgment item was settled on this run's evidence and applied, its record line carrying the
-      readings declined — nothing deferred for an answer, nothing applied whose alternatives couldn't
-      be named — and the one user-owned surface, a deliverable's `**Published:**` line, landed under
-      "Not reconciled" as *Yours to apply* with its proposed text, per
-      `./references/workflow/reconciliation.md`
-      § *Consent model: findings apply, the record carries them*
-- [ ] Any `ticket.md` or `GROUP_CONTEXT.md` edit named the external surface and quoted both wordings,
-      and none rewrote the ask to match what was built —
-      `./references/workflow/reconciliation.md`
-      § *The upstream ask is writable, and never rewritten quietly*
-- [ ] The reference check ran in Phase 2 — or its gate skipped it — its scope enumerated by
-      `sweep-scope.ts` rather than by hand, with the `## References` block printed after the brief
-      and before any edit, and `observations.md` left as `reconciliation-sweep.md` specs; Phase 1
-      swept no citations
-- [ ] Write surface held — every file written is one
-      `./references/workflow/reconciliation-docs-to-reality.md` § *Write surface* allows, nothing
-      outside it was touched, and no `BRIEF.md` or scratch briefing file was created
-- [ ] Watermark writes made per `./references/workflow/reconciliation-commits.md` — a missing
-      baseline seeded where a `result.md` exists to hold it, an orphan re-seeded, the scanned
-      commit list recorded, the `**Pointers:**` entry advanced to the scanned HEAD — and every box
-      checked or status advanced went through `./references/workflow/reconciliation.md`
-      § *Strengthen only on verified evidence*, re-verified in this run
-- [ ] The run closed with the change list `./references/workflow/reconciliation.md`
-      § *Sequence and output* specs — *Needs work* lines under "Not reconciled" with the next skill
-      named, or `Nothing to reconcile.` when nothing was actionable
+**Next:** the skill named against the *Needs work* lines (`/implement-task <slug>` for work the docs cannot fix, `/plan-task <slug>` for a step that needs rethinking), or the first action from the brief when nothing was left unreconciled.

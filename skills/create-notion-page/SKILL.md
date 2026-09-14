@@ -6,48 +6,30 @@ argument-hint: '[what the page should contain] [optional destination: page or da
 
 # Create Notion Page
 
-Create a Notion page holding the content the user asked for. Pages land **private by default**: created with no parent, they go to the user's Private section, visible to them alone — a page whose placement nobody chose belongs where nobody else can see it. The user names a destination when they want one.
+Create the requested content as a private page by default. Only a destination named in this request changes that placement.
 
 ## Hard rules
 
-- **Notion writes go through the session's Notion tools.** If no Notion tools are connected, stop and say so — suggest connecting the official Notion MCP (`https://mcp.notion.com/mcp`) — and end there. Never improvise a write path (curl against the API, a token found in the environment).
-- **No parent unless the user named a destination in this request.** Omitting the parent is the documented way to create a private page — omit it even when the tool schema marks `parent` required. Never pick a parent yourself; a guessed parent publishes private content under an unrelated shared page.
-- **Never share the page or change permissions.** Creating is the whole job; sharing is the user's.
-- **Report the URL the tool returned** — never a URL constructed from memory.
+Use only the session's Notion tools for writes; never improvise an API/token path. Do not share pages or change permissions. No parent unless the user named a destination; do not choose one because it seems related.
 
 ## Process
 
 ### 1. Find the Notion tools
 
-Locate the session's Notion tools (MCP tool names contain `notion`). None connected → hard rule one: stop, suggest, end. Don't pre-judge from the schema whether a server allows a parentless (private) page — the `parent`-required flag doesn't settle it (hard rule two). So attempt the private create (step 4), and only if the server rejects it for a missing parent (some wrap the raw API, which genuinely requires one) do you say so and ask where the page should go — never silently pick.
+Locate tools whose names contain notion. If none are connected, stop and suggest the official Notion MCP (`https://mcp.notion.com/mcp`).
+
+For private creation, omit parent even when the schema marks it required. Attempt creation; only a server rejection for missing parent triggers a destination question. Do not silently substitute a parent.
 
 ### 2. Draft
 
-Compose what the user asked for, in the language of the request, from the request and anything they provided; if it needs facts you don't have, fetch or ask rather than invent. Give the page a clear title (the user's words when they gave them); add an icon when an obvious one fits, skip it otherwise. Format for Notion — headings, lists, to-dos, callouts, toggles where they genuinely help, plain paragraphs otherwise. Tables are fine *inside the page* (Notion renders them; the no-tables rule is about terminal chat output).
+Use the request's language and supplied material; fetch or ask for missing facts. Preserve a supplied title, otherwise choose a clear one. Add an obvious icon when useful. Use Notion headings/lists/to-dos/callouts/toggles where helpful, otherwise paragraphs. Tables are allowed inside the page.
 
-Default to drafting and creating in one pass, because the page lands private and is cheap to edit or delete. Deviate when the request is too thin to draft from ("make me a page") — ask what should be on it — or when the user asked to see the content first.
+Default to drafting and creating together because a private page is easily revised. Ask for content when the request is too thin, or preview when requested; do not pad an empty ask with invented structure.
 
 ### 3. Resolve the destination
 
-- No destination named → no parent, nothing to resolve. Don't search for a home.
-- Destination named → resolve it with Notion search. Several plausible matches → list them and ask which. A database destination → fetch its schema first and fill the properties the request supplies; leave the rest empty rather than inventing values.
+Without a named destination, omit parent and do not search for a home. Otherwise search Notion and ask among plausible matches. For a database, read its schema and fill only requested properties; leave other values empty.
 
 ### 4. Create and report
 
-Create the page — one per request unless the user asked for several. Report in chat: title, where it lives (Private, or the named destination), the returned URL, and a line on what's in it. Don't paste the page back into chat — the page is the deliverable. Lists, never tables, in the report.
-
-## Don't rationalize
-
-- "The schema marks `parent` required, so I have to pick one" — Omitting it is the documented private-page path. A guessed parent is a publish, not a fix.
-- "This existing page looks related — nesting it there is tidier" — Related is not requested. Only a destination named in this request moves the page out of Private.
-- "The content is clearly for their team, I'll share it" — Creating is the job. Sharing is the user's call, never yours.
-- "The request is vague, I'll pad the page with a template" — A thin request gets one scoping question, not an invented structure.
-
-## Verification
-
-Confirm the hard rules held before finishing:
-
-- [ ] Page created through the session's Notion tools — or stopped cleanly with the connect suggestion; no improvised write path
-- [ ] Parent omitted unless the user named a destination in this request; ambiguous destinations resolved by asking
-- [ ] No sharing, no permission changes
-- [ ] Report gives title, placement, and the tool-returned URL; page not pasted into chat; no tables in the report
+Create one page unless more were requested. Report title, Private/named placement, the tool-returned URL, and one line describing contents. Do not construct the URL or paste the page into chat. Use lists rather than tables in the report.
