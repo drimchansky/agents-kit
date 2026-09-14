@@ -49,7 +49,7 @@ If worktree removal succeeds but branch deletion fails, record partial cleanup a
 
 ## Proposing an observed branch convention
 
-Run only on a user-invoked creation path whose engineering/repository/path-existence gate passed (`./task-delivery.md`, `./skill-conventions.md` § *The invocation gate*). If a branch pattern is declared, use it without scanning. With neither AGENTS nor CLAUDE present, take the kit default without asking.
+On every user-invoked creation path whose engineering, repository, and path-existence gates passed, choose the branch name through this procedure (`./task-delivery.md`, `./skill-conventions.md` § *The invocation gate*). If a branch pattern is declared, use it without scanning. With neither AGENTS nor CLAUDE present, take the kit default without asking.
 
 From the resolved implementation repository, tally the prefix before the first slash:
 
