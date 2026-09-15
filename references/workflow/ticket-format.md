@@ -12,6 +12,7 @@ A ticket names the functional output required, what the product does for its use
 - **Product-oriented.** "User can export the current filter as CSV" is the output; "add a `formatCsv()` helper" is a mechanism for the plan. Prescribe an implementation only when the requester did.
 - **Minimal.** Context is the smallest *why* that makes the work make sense. Link a spec rather than pasting it. Cut any sentence that does not help the reader act.
 - **Criteria are testable.** Each acceptance criterion is one observable outcome in a plain sentence, held to `./acceptance-criteria.md`.
+- **Criteria are plain bullets.** Write each acceptance criterion as a `-` list item, never a `- [ ]` task checkbox: criteria state outcomes, not progress.
 - **Only what's asked.** Capture the scope as described. A genuine gap is a question for the requester, not a guessed line item.
 - **Lists, never tables.** Write the ticket in the language of the request.
 

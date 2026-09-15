@@ -91,7 +91,7 @@ Authorization membership: `review-code` launches reviewers; `review-code-triage-
 
 ## Adapter defaults
 
-Adapters: `~/.claude/agents/reviewer.md` and `~/.codex/agents/reviewer.toml`. Read model for `Review pass:` and effort for fleet announcements. Claude uses `model:`/`effort:`; Codex uses `model =`/`model_reasoning_effort =`. Prompt posture supplements withheld tools (`./probe-engines.md`); live security remains authoritative.
+Adapters: `~/.claude/agents/reviewer.md` and `~/.codex/agents/reviewer.toml`. Read model for `Review pass:` and effort for launch announcements. Claude uses `model:`/`effort:`; Codex uses `model =`/`model_reasoning_effort =`. Prompt posture supplements withheld tools (`./probe-engines.md`); live security remains authoritative.
 
 Unresolved pins, or pins at/below the session model, require user retuning in the installed definition and removal of its sibling `.agents-kit-reviewer` marker (`./executor-routing.md` § *Write-mode engine registry*). Report and fall back inline; make no installation edits. A kit adapter cites installed reviewer-contract.md in its body. Other same-name definitions are user agents: do not launch them with this packet; report `adapter not installed`.
 

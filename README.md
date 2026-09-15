@@ -143,14 +143,13 @@ Two native agent definitions ship with the kit, installed as `agents/*.md` for C
 ## References and rules
 
 - `CORE_RULES.md` — the domain-neutral rules every workflow skill loads first: scope discipline, ask before assuming, push back when warranted, build only what's asked.
-- `references/workflow/` — the cross-skill methodology: task layout and lifecycle, context schema, execution loop, reconciliation, agent fan-out, probe shapes, reviewer and executor contracts.
+- `references/workflow/` — the cross-skill methodology: task layout and lifecycle, context schema, execution loop, reconciliation, agent fan-out, probe shapes, reviewer and executor contracts, and the user-facing message contract.
 - `references/engineering/` — the engineering pack: code style, TypeScript, React, CSS, HTML, forms, accessibility, performance, security, privacy, testing, verification, review.
 - `references/documentation/` — the documentation pack: rules, verification, ADR and RFC formats, Mermaid cheatsheets.
 - `references/templates/` — copy-ready shapes of the five task files.
 - `references/scripts/` — the CLI and stdout contract of every helper a skill runs at run time.
 
-Inside an installed skill, `./AGENTS.md` links to `CORE_RULES.md` and `./references` links to the installed `references/`, so a skill reads the same files wherever it runs. The four lean utilities, `create-notion-page`, `proofread`, `review-note`, and `translate`, load only the core's Ask Before Assuming section.
-They ship the `./AGENTS.md` link and no `./references` link.
+Inside an installed skill, `./AGENTS.md` links to `CORE_RULES.md` and `./references` links to the installed `references/`, so a skill reads the same files wherever it runs. The four lean utilities, `create-notion-page`, `proofread`, `review-note`, and `translate`, load only the core's Ask Before Assuming section. Three ship the `./AGENTS.md` link alone; `proofread` also links `./references` for the shared user-facing message contract.
 
 ---
 

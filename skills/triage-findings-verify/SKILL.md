@@ -25,7 +25,7 @@ There is no working-tree precondition and no drift re-check: the findings pre-ex
 
 ## Phase 1 — Triage
 
-Execute `../triage-findings/SKILL.md` end to end. Print its **Overview** as the one progress line; hold the batch detail for the final Output.
+Execute `../triage-findings/SKILL.md` end to end. Print its **Overview** as the one progress line (`./references/workflow/user-facing-messages.md` § *Blocks*); hold the batch detail for the final Output.
 
 **No open findings** makes phase 2 vacuous: skip it and render the Output without probe verdicts, its **Verified** line reading `Verified: no open findings to verify`, non-open findings still shown under their buckets.
 

@@ -84,17 +84,17 @@ If sibling projects exist, flag naming divergence for equivalent concepts, reinv
 
 ## Calibrate Severity
 
-Severity reflects user and production impact, not code aesthetics:
+Severity reflects user and production impact, not code aesthetics. Each level renders as its canonical marker on every user-facing surface (`../workflow/user-facing-messages.md` § *Markers*):
 
-- 🔴 **Critical:** breaks functionality, data loss, a security vulnerability, or a blocking accessibility barrier. Must fix before merge.
-- 🟡 **Major:** causes problems over time: missing tests for complex logic, performance regressions, types that hide bugs, unverified consumers. Should fix before merge.
-- 🟢 **Minor:** simplification, minor duplication, non-blocking naming. Fix if convenient.
+- **Critical:** breaks functionality, data loss, a security vulnerability, or a blocking accessibility barrier. Must fix before merge.
+- **Major:** causes problems over time: missing tests for complex logic, performance regressions, types that hide bugs, unverified consumers. Should fix before merge.
+- **Minor:** simplification, minor duplication, non-blocking naming. Fix if convenient.
 
-For inline PR comments, prefix the text instead of the emoji: `Critical:`, `Major:`, `Nit:` / `Optional:` (non-blocking), `FYI:` (informational).
+Legacy text prefixes are valid input; `../workflow/user-facing-messages.md` § *Markers* maps each to its marker before rendering.
 
 ## Findings output shape
 
-One entry per issue, each carrying its severity, `file:line`, the recommendation, and the impact, the list ordered by severity. Minor findings take the same shape, listed individually and never collapsed, and the list is never capped, so `/fix-findings` can take findings one at a time. Each citing skill's Output says where the list sits.
+One entry per issue, each carrying its severity, `file:line`, the recommendation, and the impact, the list ordered by severity. Minor findings take the same shape, listed individually and never collapsed, and the list is never capped, so `/fix-findings` can take findings one at a time. Each citing skill's Output says where the list sits and renders it as the finding entry `../workflow/user-facing-messages.md` § *Blocks* fixes; a reviewer's return keeps this abstract shape (`../workflow/reviewer-contract.md` § *The return*).
 
 ## Approval Bar
 

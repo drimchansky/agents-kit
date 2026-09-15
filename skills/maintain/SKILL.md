@@ -15,7 +15,7 @@ Report first. Only the `.maintain-last-run` marker updates without confirmation,
 
 The only Git writes are confirmed removal of spent task worktrees and their branches, or recorded branches whose worktrees are gone. The removal predicate may first run `git fetch origin <default-branch>`, updating only that remote-tracking ref. Never add, commit, push, checkout, stash, or revert in any repository. Report dirty paths for the user to handle.
 
-Every phase runs inline under its cited contracts. Print one progress line per phase and retain every confirmation gate. Consolidate findings in **Output**, with one **Next**. Apply only the phase-specific overrides below.
+Every phase runs inline under its cited contracts. Print one progress line (`./references/workflow/user-facing-messages.md` § *Blocks*) per phase and retain every confirmation gate. Consolidate findings in **Output**, with one **Next**. Apply only the phase-specific overrides below.
 
 ## Setup — resolve targets
 

@@ -21,13 +21,13 @@ Publishes one review from this session's upstream review. Invocation alone grant
 
 ## Process
 
-1. **Resolve source tiers.** From `/review-code`, tiers 1 and 2 use its Findings section: Critical/Major entries, then Minor entries. Tier 3 uses Improvements. From `/review-code-triage-verify`, use Findings, Minor findings, Improvements respectively. Never publish Batches, Withdrawn findings, Summary, Inaccessible context, or Cross-check detail. Keep each entry's location and full problem/recommendation/impact text verbatim. Remove only `cited by k/N` corroboration markers. Preserve all Inconclusive/Unverified notes, including out-of-probe-scope notes, at every severity. Count existing entries without reviewing the diff again.
+1. **Resolve source tiers.** From `/review-code`, tiers 1 and 2 use its Findings section: Critical/Major entries, then Minor entries. Tier 3 uses Improvements. From `/review-code-triage-verify`, use Findings, Minor findings, Improvements respectively. Never publish Batches, Withdrawn findings, Summary, Inaccessible context, or Cross-check detail. Keep each entry's location and full problem/recommendation/impact text verbatim. Remove only `cited by k/N` corroboration markers; step 3 normalizes the leading severity marker. Preserve all Inconclusive/Unverified notes, including out-of-probe-scope notes, at every severity. Count existing entries without reviewing the diff again.
 
 2. **Name reviewing models.** Take the model from Reviewed, dropping `×N`; do not attribute the review to the current publisher. A non-skipped Cross-check adds its cross-vendor engine (`./references/workflow/probe-cross-check.md`). <!-- cold --> Use `Reviewed by <model>`, plus `, cross-checked by <engine>` when applicable.
 
 3. **Build selectable payloads.** Each selection includes its tier and preceding tiers.
 
-   - Prefix entries under `./references/engineering/review.md` § *Calibrate Severity*: Critical:/Major: for tier 1, Nit: for tier 2, FYI: for tier 3. Follow with the full preserved text and verification notes; do not use Optional:.
+   - Open each entry with the marker `./references/workflow/user-facing-messages.md` § *Surface adapters* assigns it for GitHub PR review comments. Strip one recognized legacy prefix or marker from the source text first, then keep the rest verbatim with its verification notes. Entries under `Not anchored to the changed lines:` take the same marker.
    - Use COMMENT when the selection contains Critical/Major, APPROVE otherwise. Range and own-PR overrides force COMMENT; decide both before the picker.
    - Anchor changed-line entries as `{path,line,side:"RIGHT",body}`, using LEFT for removed lines. Put unanchorable or unlocated entries under `Not anchored to the changed lines:` in the body; omit none.
    - Body contains attribution and any unanchored list, plus one-line approval for APPROVE. A COMMENT with no inline entries says entries are in the body rather than approving. Range bodies additionally name the recorded base and head. Include no summary or unselected tier.

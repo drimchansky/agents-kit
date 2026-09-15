@@ -14,7 +14,7 @@ Suggest improvements while preserving the author's tone, voice, style, formattin
 
 ## Flags
 
-- `-f`: verify checkable names, dates, numbers, and technical terms. Check session context/files/tool output first, then web sources for unsettled claims. State unverifiable claims without guessing. Off by default because short proofreads rarely need research.
+- `-f`: verify checkable names, dates, numbers, and technical terms. Check session context/files/tool output first, then web sources for unsettled claims. Emit one progress line per web-checked claim: `🔵 In progress: checking "<claim>" against <source>` (`./references/workflow/user-facing-messages.md` § *Blocks*). Render every checked claim once in the **Facts** ledger of § *Output Format* (`./references/workflow/user-facing-messages.md` § *Blocks*). State unverifiable claims without guessing. Off by default because short proofreads rarely need research. <!-- cold -->
 
 ## Analysis Criteria
 
@@ -32,5 +32,7 @@ Fix real problems, leaving clear wording alone. Explain each suggestion briefly 
 **Errors**, when present: Quote/location → Fix → Why.
 
 **Improvements**, when present: Quote/location → Suggestion → Why.
+
+**Facts**, only with `-f`: render the shared fact ledger (`./references/workflow/user-facing-messages.md` § *Blocks*). <!-- cold --> An incorrect claim also lands in Errors so the Updated version carries the correction. Without `-f`, no ledger.
 
 Give one-line overall assessment. For changed text, include **Updated version** with all fixes/improvements and original formatting/structure. Omit it when unchanged.

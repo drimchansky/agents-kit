@@ -36,11 +36,11 @@ The adopt, spot-check, and final-verdict steps do not run. The phase holds every
 
 ### The triage phase
 
-Execute `triage-findings` with the source pinned to the review phase's findings: no PR-comment merge, no other sources. Expect everything **open**; the classify step still applies, and anything landing outside open keeps its bucket into the final display. Print one progress line with the zones and their counts; hold the batch detail for the final Output.
+Execute `triage-findings` with the source pinned to the review phase's findings: no PR-comment merge, no other sources. Expect everything **open**; the classify step still applies, and anything landing outside open keeps its bucket into the final display. Print one progress line (`./user-facing-messages.md` § *Blocks*) with the zones and their counts; hold the batch detail for the final Output.
 
 ## Fan-out and probes
 
-One probe per batch on the **native** engine, launched in parallel. Default to probing every open finding. On a large set, scoping probes to Major/Critical is fair economy; scoped-out findings take `Unverified (out of probe scope)`. Findings outside **open** are never probed and get no verdict.
+One probe per batch on the **native** engine, launched in parallel and announced as one progress line naming the batches in flight (`./user-facing-messages.md` § *Blocks*). Default to probing every open finding. On a large set, scoping probes to Major/Critical is fair economy; scoped-out findings take `Unverified (out of probe scope)`. Findings outside **open** are never probed and get no verdict.
 
 Each probe prompt follows the verify shape, carrying the batch's findings verbatim, the review object, and the absolute path of the installed `verify-issue/SKILL.md`.
 
@@ -54,7 +54,7 @@ Merge per the fan-out merge contract. **Not an issue** makes the finding **Withd
 
 Every member's Output carries both:
 
-- **Batches:** one section per concern zone, ordered by its most severe member. Each finding renders once: original text with its severity prefix, then `file:line` (or the locator its own file names), then its verdict: **Confirmed** (root cause, fix options targeted → thorough), **Withdrawn** (the probe's evidence), **Inconclusive** (what's missing), or **Unverified** (the reason). A finding outside open shows its bucket in place of a verdict.
+- **Batches:** one section per concern zone, ordered by its most severe member. Each finding renders once as a finding entry (`./user-facing-messages.md` § *Blocks*): its canonical severity marker, a legacy prefix normalized first, then `file:line` (or the locator its own file names), the original text, then its verdict: **Confirmed** (root cause, fix options targeted → thorough), **Withdrawn** (the probe's evidence), **Inconclusive** (what's missing), or **Unverified** (the reason). A finding outside open shows its bucket in place of a verdict.
 - **Review pass** and **Divergence** (`review-code-triage-verify` only): forwarded from the review phase as the review skill specs each. The `Review pass:` line is owed on either path; a `Divergence` entry other than `None` is surfaced, never dropped.
 - **Verified:** one mandatory line: `Verified: <n> confirmed · <n> withdrawn · <n> inconclusive · <n> unverified — <k> native probes`. ` · <n> triaged out` joins the counts only when triage landed findings outside open; `, <m> inline fallbacks` joins the probe count only when a batch was verified inline.
 

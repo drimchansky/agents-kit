@@ -19,7 +19,7 @@ Resolve the source in this order:
 
 1. **Explicit argument wins.** A PR number or URL selects PR mode. An existing file path is parsed. Pasted text or a session pointer selects those findings.
 2. **No argument:** triage this session's most recent review findings. With none, fall back to the open PR for the current branch.
-3. **Several sources named:** one merged view, one entry per issue citing each source. When sources disagree on whether an issue is addressed, put it in **Verify** with the disagreement noted; on severity, lead with the most severe prefix.
+3. **Several sources named:** one merged view, one entry per issue citing each source. When sources disagree on whether an issue is addressed, put it in **Verify** with the disagreement noted; on severity, lead with the most severe.
 
 ## Fetch
 
@@ -32,7 +32,7 @@ Fetch all three comment sources:
 
 **Session findings.** Take each finding as the review emitted it: severity, `file:line`, recommendation. Do not re-review or re-rank.
 
-**File or pasted text.** Parse the findings-shaped list, preserving wording and severity prefixes. With no discernible findings, say so and stop.
+**File or pasted text.** Parse the findings-shaped list, preserving wording and any severity prefix or marker. With no discernible findings, say so and stop.
 
 ## Classify addressed vs unaddressed
 
@@ -45,13 +45,13 @@ Every finding lands in exactly one bucket: **open**, **verify**, or **addressed*
 
 ## Batch
 
-Cluster open findings into named concern zones (error handling, naming, tests, …), keeping same-file findings together within a zone. Preserve each finding's wording and severity prefix (`Critical:` / `Major:` / `Nit:` / `Optional:` / `FYI:`, per `./references/engineering/review.md`); do not rewrite or re-rank.
+Cluster open findings into named concern zones (error handling, naming, tests, …), keeping same-file findings together within a zone. Preserve each finding's wording and severity; do not rewrite or re-rank. A legacy text prefix is valid input and renders as its canonical marker (`./references/workflow/user-facing-messages.md` § *Markers*).
 
 ## Output
 
 Lists, not tables.
 
 - **Overview:** the source(s) triaged, and counts: N open, N to verify, N addressed.
-- **Batches:** one section per concern zone, ordered by most severe member. Each entry: location, who raised it, the original text with its severity prefix, and its anchor (GitHub permalink, `path:line`, or a short quote), citing every source that raised it.
+- **Batches:** one section per concern zone, ordered by most severe member. Each entry is a finding entry (`./references/workflow/user-facing-messages.md` § *Blocks*): its canonical severity marker, its anchor (GitHub permalink, `path:line`, or a short quote), the original text, and who raised it, citing every source that raised it.
 - **Verify** (only if any): likely-handled findings with the reason (author said done, code changed, thread outdated).
 - **Inaccessible context** (only if any): sources or links that could not be fetched, with the reason. Do not fabricate what is behind them.
