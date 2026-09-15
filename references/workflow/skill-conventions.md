@@ -76,7 +76,7 @@ Other skills produce local work or chat output, or confirm their own write, as `
 
 Read invocation origin from the typed command opening the run; Claude Code supplies a preceding `<command-name>` block. Missing or indistinguishable markers count as **model-invoked**. Do not infer user invocation.
 
-`skills/commit/SKILL.md` and `skills/rebase/SKILL.md` require an explicit request for their Git operation, including natural language. Skill selection alone authorizes neither write. An explicit engineering full-plan request grants checkpoint commits only under `./task-delivery.md` § *Checkpoint commits*. That sanction changes neither invocation flags nor this roster.
+`skills/commit/SKILL.md` and `skills/rebase/SKILL.md` require an explicit request for their Git operation, including natural language. Skill selection alone authorizes neither write. An explicit engineering full-plan request grants checkpoint commits only under `./task-delivery.md` § *Checkpoint commits*. When `implement-task` runs `commit` there, that request is the explicit request `commit` requires. That sanction changes neither invocation flags nor this roster.
 
 An open skill using invocation as consent states the user/model split beside that permission. Apply `./reconciliation.md` § *Consent model: findings apply, the record carries them* for reconcilers, or `./executor-routing.md` § *The registry and its authorization* for write-mode consumers.
 
