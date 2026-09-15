@@ -4,7 +4,7 @@ The one posture for the write-mode consumers registered in `./executor-routing.m
 
 **Every unit delegates.** Each unit a registered consumer frames goes to an executor under the launch packet and gates `./executor-contract.md` fixes: one unit per launch, or several consecutive units in one launch where that file's § *Segment launches* and the consumer's binding sanction it. There is no size threshold, no last-unit branch, and no default to weigh. A consumer's binding may restrict which work is delegable at all (`fix-findings`'s Confirmed auto-path surface is the only such restriction today); inside that surface delegation is not a judgment call.
 
-**Delegation owes a packet; the packet's cost is no reason to keep the unit.** Before launching, confirm every § *Launch packet* item is filled for this unit: its text and criterion, its edit surface, the context it cannot see for itself, the domain guidance, the per-unit checks, the effective root and placement. Close a gap by reading, searching, or asking. A gap that can only be closed by running the unit is exception 1.
+**Delegation owes a packet; the packet's cost is no reason to keep the unit.** Before launching, confirm every § *Launch packet* item is filled for this unit: its text and criterion, its edit surface, the context it cannot see for itself, the decision rule with prior decisions and boundaries, the domain guidance, the per-unit checks, the effective root and placement, the consumer label. Close a gap by reading, searching, or asking. A gap that can only be closed by running the unit is exception 1.
 
 ## The exceptions
 

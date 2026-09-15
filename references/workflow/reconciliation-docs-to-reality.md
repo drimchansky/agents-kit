@@ -31,7 +31,7 @@ Use brief drift, assessment cross-file findings, or either sweep. Routes: `./rec
   - `done` without result: repair to `executing`, then apply its missing-result rule above.
   - Unknown status: **judged**: choose the weakest evidence-supported status (`./task-lifecycle.md`); record the original verbatim.
 - **Result records work the plan doesn't show** — nominate for verification; check only on pass. Otherwise flag **Needs work**, naming `implement-task`.
-- **Inherited group constraint contradicts a task artifact** — **judged**: rule on inherited grounding versus pending steps or assessment Cross-File Drift. Apply upstream-ask terms to groups and grounding terms to local What/Verify, context, or goals. Without clearly favored evidence, task-local content yields. Flag redesign for `plan-task`.
+- **Inherited group constraint contradicts a task artifact** — **judged**: rule on inherited grounding versus pending steps or assessment Cross-File Drift. Apply upstream-ask terms to groups and grounding terms to local What/Verify, context, or goals. Apply evidence-settled corrections and prior decisions; leave unresolved impactful precedence choices pending. Flag redesign for `plan-task`.
 - **Cited reference materially changed or gone** — apply `./reconciliation.md` § *Cited reference changed*.
 - **Never-annotated surface changed or broken** — apply `./reconciliation.md` § *Never-annotated surfaces*. Name changed pages and stale claims for `warn`, including cleared pause causes; name gone pages for `block`.
 
@@ -51,9 +51,9 @@ Use Drift since plan, Commits since watermark, Open questions, and the sweep. Br
 
 Use assessment and sweep findings. References take `./reconciliation.md` § *Annotation formats*; cross-file drift takes Shared repairs.
 
-Rule on numbered Questions using assessment evidence; write at home and record declined options (`./reconciliation.md` § *Consent model: findings apply, the record carries them*). Stay within findings. Answered by research is evidence: route surviving defects, writing the research answer as the row's repair; disproved findings route nowhere.
+Route numbered Questions using assessment evidence under `./reconciliation.md` § *Consent model: findings apply, the record carries them*. Reuse the assessment's researched options. Apply evidence-settled answers at home and record declined options; leave unresolved impactful choices pending. Stay within findings. Disproved findings route nowhere.
 
-- **Scope partition not total** — **judged**: deliver step-reached goals, defer untouched ones; retire only requirements dropped by ticket/context. Update Scope. Retire under the grounding rule; repair retired-ID citations below.
+- **Scope partition not total** — **judged**: use verified step reach and prior decisions to settle delivered/deferred placement. Leave an unresolved impactful partition choice pending. Retire only requirements dropped by ticket/context, under `./reconciliation.md` § *Grounding docs change on evidence, never silently*; repair retired-ID citations below.
 - **Ticket criterion maps to no goal** — **judged**: add a goal with the next free `G<n>`. Remove ticket criteria only on changed-ask evidence (§ *Write surface*), never because work is missing.
 - **Stale or orphan goal citations** — **judged**: repoint to the fitting goal, mark `none (infra/refactor)`, or add a next-free-ID goal and cite it. Flag step removal for `plan-task`.
 - **Vague or untestable Verify criterion** — **judged**: apply the assessment's rewrite; check only through verification (§ *Repairs weaken; advances go through the shared engine*).

@@ -4,6 +4,10 @@ description: Use when asked to create a Notion page — drafts the requested con
 argument-hint: '[what the page should contain] [optional destination: page or database]'
 ---
 
+## Core Rules
+
+Read and apply `./AGENTS.md` § *Ask Before Assuming*.
+
 # Create Notion Page
 
 Create the requested content as a private page by default. Only a destination named in this request changes that placement.

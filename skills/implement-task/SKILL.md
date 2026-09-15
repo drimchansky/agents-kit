@@ -40,7 +40,7 @@ Establish ground truth per `./references/workflow/execution-loop.md` § *Ground 
 - The report's exit 1 is a folder with no readable `plan.md`: say so and suggest `plan-task`.
 - `goals.md` missing: stop and tell the user. Never invent goals.
 - `CONTEXT.md`: its header for `**Domain:**`; its prose when a step's packet (§4) turns on it.
-- Shared grounding is read from wherever the folder sits **now**, on every invocation. Where a group file contradicts anything the task asserts (the ticket's scope, `CONTEXT.md`'s direction or an assumption, a pending or checked step, a goal recorded as met), rule on it and correct the losing surface under § *Correcting Grounding Where It's Wrong*, naming both statements and their sources in the record. Rule before a pending step runs, or before `## Acceptance` is written where it bears on done work (the `in-review → done` re-run's only moment). A contradiction the evidence leaves balanced goes to the user (`./AGENTS.md` § *Ask Before Assuming*).
+- Read shared grounding from the folder's current location on every invocation. Resolve material contradictions before dependent steps or acceptance under § *Correcting Grounding Where It's Wrong*. Record both statements and sources. Unresolved material contradictions or impactful choices take `./AGENTS.md` § *Ask Before Assuming* before dependent writes.
 - `ticket.md` is the product-facing ask; the gate runs against `goals.md`, not the ticket.
 - A `currentState` block or any checked step means a prior session got partway: pick up there, never redoing completed steps. Then branch on the plan status (`./references/workflow/task-lifecycle.md`):
     - `blocked`: read the result's `**Blocked:**` section; resume only once the blocker has cleared, flipping the plan back to `executing` first.
@@ -95,7 +95,7 @@ Run the loop in `./references/workflow/execution-loop.md`: the five beats, the t
 
 Execute each step through an **executor** per `./references/workflow/executor-contract.md` and its `implement-task` binding, whose **Segment bound** fixes the launch shape; engine `native` places a serially delegated step or segment on the shared tree.
 
-**Every step goes to an executor** per `./references/workflow/write-mode-posture.md`, which fixes what a launch packet owes and the three exceptions that keep a step here. Capture the `baseline` manifest of the shared tree before launching, one per segment. **Deviation is measured against the mode's default launch on `native`**, which is what `**Executed:**` (§5) records. While an executor is in flight the coordinator waits, with no step of its own and no shared-tree edit (`./references/workflow/delegated-waiting.md` § *How to wait*). Then take each report through the contract's § *Write-mode routing* intake, which decides whether the outcome tier is re-proved here, and record the step (§5); a failure there is Stop-the-Line at that step.
+**Every step goes to an executor** per `./references/workflow/write-mode-posture.md`, which fixes what a launch packet owes and the three exceptions that keep a step here. Capture the `baseline` manifest of the shared tree before launching, one per segment. **Deviation is measured against the mode's default launch on `native`**, which is what `**Executed:**` (§5) records. While an executor is in flight the coordinator waits, with no step of its own and no shared-tree edit (`./references/workflow/delegated-waiting.md` § *How to wait*). Then take each report through the contract's § *Write-mode routing* intake, which decides whether the outcome tier is re-proved here, and record the step (§5); a failure there is Stop-the-Line at that step, and a pending impactful choice takes the contract's third outcome: ask, hold the step and its dependents, and keep the plan `executing` while the answer arrives in this run. A choice still open when the run ends takes this binding's **Blocked** (`./references/workflow/execution-bindings.md`): the plan enters `blocked` and `**Blocked:**` records the choice, its options and recommendation, and the held step, so §1's resume branch finds it.
 
 **Inline is an exception, announced and recorded** in `**Executed:**` (§5), on one of the posture file's three exceptions. A failed or hung executor is reported and takes the binding's **Fallback**; on a segment, § *Segment launches* governs what stands and what relaunches. <!-- cold -->
 
@@ -121,7 +121,7 @@ A failed assertion or health boundary records the `**Asserted:**` and `**Health:
 
 ### 6. Plan Revisions Mid-Execution
 
-When implementation reveals the plan is wrong (a step infeasible, scope wrong, a step missing or too large for one slice), apply `./references/workflow/execution-recovery.md` § *Scope changes mid-execution*. The in-place plan update, the `**Deviations from plan:**` record, the step-by-step pause, and the abandon flow are `./references/workflow/implement-task-edges.md` § *Plan revisions*. <!-- cold -->
+When implementation reveals the plan is wrong (a step infeasible, scope wrong, a step missing or too large for one slice), apply `./references/workflow/execution-recovery.md` § *Scope changes mid-execution*. The in-place plan update, the `**Deviations from plan:**` record, and the abandon flow are `./references/workflow/implement-task-edges.md` § *Plan revisions*. <!-- cold -->
 
 ### 7. Acceptance Gate
 
@@ -158,7 +158,11 @@ In **both** branches, rewrite `## Current state` last, after the removal, so `**
 
 ## Correcting Grounding Where It's Wrong
 
-When execution disproves the grounding, correct the surface that owns the fact: `CONTEXT.md`, `goals.md`, `ticket.md`, or an applicable `GROUP_CONTEXT.md`, on the terms of `./references/workflow/reconciliation.md` § *Grounding docs change on evidence, never silently* and § *The upstream ask is writable, and never rewritten quietly*.
+When execution disproves a factual claim, correct its owning surface: `CONTEXT.md`, `goals.md`, `ticket.md`, or an applicable `GROUP_CONTEXT.md`.
+Apply `./references/workflow/reconciliation.md` § *Grounding docs change on evidence, never silently* and § *The upstream ask is writable, and never rewritten quietly*.
+
+Before a correction requiring an unresolved impactful choice, apply `./AGENTS.md` § *Ask Before Assuming* and hold dependent writes.
+A discrepancy proves no new requirement. Evidence-settled facts and settled prior decisions keep their correction route.
 
 **A correction is bounded by what the run learned.** Rewrite the statement the work disproved and nothing adjacent; reshaping untested grounding is `plan-task`'s.
 

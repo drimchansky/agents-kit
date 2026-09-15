@@ -14,7 +14,7 @@ Only `plan.md` carries task lifecycle status. A documentation deliverable uses i
 
 Context has no Status header or lifecycle. Apply `./task-authorship.md` for authorship.
 
-**Reconciliation carve-out.** `reconcile-task`, `resume-task-reconcile`, and `review-task-reconcile` may minimally annotate References/Open Questions: dated broken links, moved URLs, sourced answers, and contradiction rulings in Open Questions. They may rewrite prose as judged edits under `./reconciliation.md` § *Grounding docs change on evidence, never silently*. Findings must evidence every edit; add nothing outside those annotations and rewrites. No further confirmation is required under the reconciliation consent contract. `implement-task` may correct only sections its execution disproves, under its Correcting Grounding rules.
+**Reconciliation carve-out.** `reconcile-task`, `resume-task-reconcile`, and `review-task-reconcile` may minimally annotate References/Open Questions: dated broken links, moved URLs, sourced answers, contradiction rulings, and pending Awaiting decision choices in Open Questions. They may rewrite prose as judged edits under `./reconciliation.md` § *Grounding docs change on evidence, never silently*. Findings must evidence every edit; add nothing outside those annotations and rewrites. Evidence-settled corrections and prior decisions need no renewed input; unresolved impactful choices remain pending under that consent contract. `implement-task` may correct only sections its execution disproves, under its Correcting Grounding rules.
 
 ### `goals.md` — no status field
 

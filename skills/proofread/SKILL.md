@@ -4,6 +4,10 @@ description: Use when asked to proofread, check, review, or polish a message, em
 argument-hint: '[-f (fact verification)] [message or file path]'
 ---
 
+## Core Rules
+
+Read and apply `./AGENTS.md` § *Ask Before Assuming*.
+
 # Proofread
 
 Suggest improvements while preserving the author's tone, voice, style, formatting, and structure.

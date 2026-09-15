@@ -42,9 +42,9 @@ At a checkpoint, run its assertions after every batch step finishes, then one he
 
 ## Plan revisions
 
+- Take unresolved impactful revisions through `./execution-recovery.md` § *Scope changes mid-execution* in either mode before dependent writes.
 - Revise affected scope/steps in place, adding needed units or removing obsolete ones. Keep numbers stable where possible; insert `Step 3a`/`Step 3b`.
 - Record what changed and why in the affected step's Deviations from plan.
-- Step-by-step mode confirms revisions before continuing.
 - Abandonment requires explicit confirmation before setting skipped (`./task-lifecycle.md`). Record the reason and stop, retaining the plan.
 
 ## An open criterion leg

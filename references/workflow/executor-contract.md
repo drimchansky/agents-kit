@@ -9,6 +9,7 @@ The coordinator supplies:
 - Unit text, verify criterion, and the full text of cited completion contracts.
 - Exact edit paths, or the unit's stated scope.
 - Context unavailable to the executor, with absolute paths. For reachable files, give paths and non-obvious facts; otherwise provide verbatim content.
+- Relevant `../../CORE_RULES.md` § *Ask Before Assuming* text verbatim, plus prior user decisions and agreed boundaries.
 - Domain guidance: universal per-unit sections verbatim, including code-style Comments for code; overlays/triggered pack files as absolute paths, or explicit `none`.
 - Per-unit checks as commands/procedures beside the criterion (`./execution-loop.md` § *Two verification tiers*), or `none`. Code units check touched comments against the packet and format touched files (`../engineering/verification.md` § *Two verification tiers*).
 - One absolute effective root and its placement (`./executor-routing.md` § *Write-mode engine registry*).
@@ -22,6 +23,7 @@ Report missing/ambiguous items or unregistered packets without editing. Infer no
 - Edit only the packet's surface. Report a needed outside edit as an attempted scope escape.
 - Change work products only; records, statuses, and completion verdicts remain with the coordinator.
 - Apply the effective root's instruction hierarchy and packet guidance before editing. Exclude adjacent cleanup and unlisted units; execute segment units in packet order.
+- Return unresolved impactful choices to the coordinator before dependent edits. Continue independent authorized work under the supplied decision rule.
 - Live sandbox, approval, and managed security policies override adapter defaults and this contract. Preserve those boundaries. On denied writing or verification, stop and report a blocker without requesting or assuming broader access.
 
 ## Verification and fallback
@@ -29,6 +31,9 @@ Report missing/ambiguous items or unregistered packets without editing. Infer no
 Run only criterion/packet checks at the effective root; fix and rerun failures within scope. Prove each unit before its successor; failure ends the segment with completed evidence returned. Health remains coordinator-only.
 
 Report execution blockers without changing root/scope. The coordinator applies the binding's fallback.
+
+Pending impactful choices require user input under `../../CORE_RULES.md` § *Ask Before Assuming*.
+Fallback cannot select an option, authorize dependent work, or establish completion while that choice remains pending.
 
 ## Evidence report
 
@@ -39,7 +44,8 @@ Report each unit in packet order; label unreached units `not started`. Include e
 - `Comments added or edited`: each comment and its non-obvious invariant.
 - `Verification`: each criterion/check's exact command or procedure, unmodified output, exit status, and absolute execution root. All four are required evidence.
 - `Sources consulted`: external sources, linked where available.
-- `Blockers or attempted scope escapes`: denials, missing capabilities, host failures, and outside edits considered.
+- `Blockers or attempted scope escapes`: denials, missing capabilities, host failures, outside edits considered, and pending impactful choices.
+  For choices, give researched viable options, material trade-offs, a reasoned recommendation, and the held dependent work.
 
 Send the report only as the coordinator reply. Make no completion claims, status updates, or report-file writes.
 
@@ -55,9 +61,11 @@ After mid-segment executor failure, completed units passing intake stand. Relaun
 
 Registered `./executor-routing.md` consumers delegate unless an announced, recorded `./write-mode-posture.md` exception applies. Others use `./agent-fanout.md`, except reviews under `./reviewer-contract.md`.
 
-**Coordinator-only judgment:** unit framing, health boundaries, report buckets, statuses, and intake.
+**Coordinator-only judgment:** unit framing, health boundaries, report buckets, statuses, intake, and consequential-choice selection under the user's decision.
 
 **Intake.** Read the report before advancing the unit. Require every § *Evidence report* heading and substantively filled fields where work requires them. A missing field, inappropriate `None`, failing check, or blocker/scope-escape entry prevents advancement. Apply Fallback for execution failure and Stop-the-Line for criterion failure. Scope escapes cannot silently retry; failure reports cannot count as passing evidence.
+
+**A pending impactful choice is a third outcome**, neither execution failure nor criterion failure. A criterion unmet only because dependent edits were held does not fail the unit. Take § *Verification and fallback*: ask the user and hold that unit and its dependents. After the decision, resume under the consumer's execution rules: relaunch a still-delegable unit or its held remainder with the decision in the packet's prior-decisions item and run intake on that relaunch's report; where the binding keeps the chosen option with the coordinator, apply it there after approval of its concrete change (`fix-findings` § *The Gate: Auto vs Ask*, § *Execution strategy: every auto-path fix delegates*). From the report that returned the choice, take only its `Changes` and `Comments added or edited` entries for edits that stayed in the tree; its criterion outcome never counts. While the answer is awaited in this run, neither Stop-the-Line nor the **Blocked** binding's stop and status effects apply; a binding's restore-on-hold rule (`fix-findings` § *Content baseline and immediate outcomes*) still runs at return. A choice still open when the run ends takes the consumer's **Blocked** binding, naming the choice, its options and recommendation, and the held work as the cause.
 
 **Placement decides whose proof counts.** Shared-tree native units, serial or segment, supply their outcome proof when all four check fields exist, roots match, and the surface check passes. Accept without rerunning except in the closed set below. Worktree proof predates incorporation and requires full integrated re-proof at parallel-batch gate 3.
 

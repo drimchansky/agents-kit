@@ -60,7 +60,7 @@ A goal confirmable only outside the session, a sign-off or a live state, carries
 
 Where the task's resolved repository declares live verification (`./references/workflow/task-delivery.md` § *Repo delivery declarations*, the repository per its § *Branch and worktree creation* → **Which repository**), the draft carries a `G<n> (external)` goal naming the live outcome and its yardstick. A hand-authored `goals.md` lacking one is surfaced, never amended. The gate's execution half is `./references/workflow/task-delivery-edges.md` § *The live-verification gate*. <!-- cold -->
 
-**Clarifying questions** go in one batched round, only for a goal that fails the checklist or whose verification class is unclear. Each names the goal, says which step it changes, and offers options. A deferred question leaves its goal marked `_(unresolved: <short note>)_` for `review-task` and `implement-task`.
+**Goals clarification** uses one batched round for goals that fail the checklist or whose verification class is unclear. Each question names the goal, says which step it changes, and offers options. This round does not settle Step 5's approach choices. A deferred question leaves its goal marked `_(unresolved: <short note>)_` for `review-task` and `implement-task`.
 
 Goals are outcomes, not implementation: "User can export the current filter as CSV" is a goal; "Add a `formatCsv()` helper" is a step.
 
@@ -70,7 +70,10 @@ Explore before designing, per the domain's exploration guide (`./references/engi
 
 ### 5. Evaluate Approaches
 
-Compare viable approaches, including ones the user may not have considered, and recommend a better one than the user named when it clearly is better. Do not fabricate alternatives when one approach is clearly right; say so. Weigh alignment with existing patterns, minimum complexity, risk and reversibility, and effort, a line per axis. `## Approach` cites CONTEXT's `## Recommended Direction` and records only plan-time refinements.
+Compare viable approaches, including ones the user may not have considered, and recommend a better one when warranted. With only one viable approach, explain the constraint without fabricating alternatives. Weigh alignment with existing patterns, minimum complexity, risk and reversibility, and effort, a line per axis.
+
+Take unresolved impactful approach choices through `./AGENTS.md` § *Ask Before Assuming*, even when goals are clear.
+`## Approach` cites CONTEXT's `## Recommended Direction` and records only plan-time refinements.
 
 ### 6. Define Scope
 
@@ -108,9 +111,9 @@ Only risks specific to this task: the concrete scenario, its likelihood given ex
 
 ## Scaling Plan Depth
 
-Step 3 runs at every depth.
+Step 3 and Step 5's unresolved-choice gate run at every depth.
 
-- **Medium** (small, clear pattern): Steps 1–4 and 6–10; explore only the touched files; scope as the partition plus boundaries; risks only where a step carries the mitigation; open questions only where one gates a step.
+- **Medium** (small, clear pattern): Steps 1–4 and 6–10, with Step 5 reduced to its gate: no comparison, but an impactful approach choice the exploration surfaces is still asked; explore only the touched files; scope as the partition plus boundaries; risks only where a step carries the mitigation; open questions only where one gates a step.
 - **Large** (bigger, some ambiguity): all steps, moderate detail.
 - **Complex** (cross-cutting, structural): all steps, deep exploration, several approaches compared.
 

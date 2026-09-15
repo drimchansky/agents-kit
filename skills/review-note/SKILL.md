@@ -4,6 +4,10 @@ description: Use when asked to review, validate, check, expand, or improve a per
 argument-hint: '[note file path or pasted text]'
 ---
 
+## Core Rules
+
+Read and apply `./AGENTS.md` § *Ask Before Assuming*.
+
 # Review Note
 
 Review each note for the author's future reference and understanding, calibrated to its purpose. Return a separate findings block and overall assessment per note. Propose fixes in chat; edit only on an explicit follow-up after the findings, within the authorized scope.

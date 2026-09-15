@@ -59,7 +59,7 @@ Read the preconditions off this snapshot; amend mode rebuilds it.
     - **A debug artifact**: an added `console.log`, `debugger`, or `print` line, or a block of code commented out rather than deleted.
     - **A staged path the drafted message does not account for.** A lockfile, snapshot, or generated file is accounted for when a named change regenerates it.
 
-    On a hit, name the path, the line, and every category it trips, then ask whether to commit anyway, here, before 3a. **Where the host cannot present an interactive question (Codex is one), a secret-looking value stops the run here**: state the finding, commit nothing, and name the retained message file. A debug artifact or an unaccounted path on such a host is stated in the same message as the commit invocation, and the run continues.
+    On a hit, name the path, the line, and every category it trips, then ask whether to commit anyway, here, before 3a. If the structured question interface is unavailable, use an available conversational channel. If no channel can receive the answer in this run, state the finding and stop with HEAD and the index unchanged; retain and name the message file. Never carry an unresolved scan hit into the commit invocation.
 
     **On a "no", stop.** HEAD and the index stay as they are, and the message file stays with them; name its path and say they can delete it. On a "yes", or on a scan that hit nothing, continue to the verification gate.
 
@@ -79,7 +79,7 @@ Select the narrowest scope that is demonstrably sound for the staged paths, incl
 
     **A touch is needed when all three hold**: `commit.gpgsign` is `true`, `gpg.format` is `ssh`, and the reported key type ends in `-SK` (`ED25519-SK`, `ECDSA-SK`). No listing mode reveals a `no-touch-required` key, so every `-SK` key counts. **Anything else signs unattended**, a probe that errors or prints nothing included: skip 3b and go to 3c.
 
-    **3b. When a touch is needed, ask.** Ask the user to confirm the commit or to run it themselves, naming the snapshot's staged-path count and its digest. Where the host cannot present an interactive question (Codex is one), skip the ask: carry the touch requirement into the same message as the commit invocation and continue.
+    **3b. When a touch is needed, ask.** Ask the user to confirm the commit or to run it themselves, naming the snapshot's staged-path count and its digest. Without the structured question interface, ask through an available conversational channel. Only when no channel can receive an answer in this run, carry the touch requirement into the same message as the commit invocation and continue: the touch itself confirms the commit.
 
     **3c. Re-check the index and amendment target.** Immediately before the commit, or before the hand-over block is printed, re-run `git diff --cached | git hash-object --stdin` and compare it to the snapshot digest. In amend mode, also require HEAD and branch identity to match the captured original. Put these comparisons inside the executed or handed-over command, including after any permission approval. **On a mismatch**: report both digests and stop. Do not commit, do not print the hand-over block, and do not re-run the preconditions against the new set.
 

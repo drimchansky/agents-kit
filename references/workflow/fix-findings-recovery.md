@@ -18,9 +18,16 @@ Rebuild the shared tree from the immutable baseline plus survivor change sets in
 A survivor requiring an implicated fix joins its failed group and names that prerequisite in Fix failed. A later overlapping fix survives only if independently replayable or re-executable and re-provable on the rebuilt base:
 
 - A Confirmed auto-path fix may be re-executed.
-- An ask-approved fix may only replay its approved change set verbatim. If that fails, obtain approval of a fresh diff or bucket it Fix failed (`fix-findings` § *The Gate: Auto vs Ask*).
+- An ask-approved fix may only replay its approved change set verbatim. If that fails, obtain approval of a fresh diff, list it Awaiting decision while that approval is pending, or bucket it Fix failed (`fix-findings` § *The Gate: Auto vs Ask*).
 
 Re-prove all survivors on the rebuilt final tree. After recording evidence, remove scratch copies and captures under the skill's write-surface rule.
+
+## Approved decisions and changed evidence
+
+Proceed with an unchanged approved diff within agreed boundaries.
+When new evidence materially changes a consequential choice or exceeds those boundaries, apply `../../CORE_RULES.md` § *Ask Before Assuming*.
+Hold dependent edits until the user decides. Changed ask-routed edits require fresh concrete-diff approval (`fix-findings` § *The Gate: Auto vs Ask*).
+A choice still open at report time lists under **Awaiting decision** (`fix-findings` § *Output*).
 
 ## Red boundary: comparison, disposition, recovery
 
@@ -34,7 +41,7 @@ Apply the evidence per failed command; selective isolation requires a green cont
 - **Inconclusive comparison:** restore the immutable baseline within `fix-findings` § *Content baseline and immediate outcomes*' attribution bound. Bucket every still-retained attempted fix Fix failed, naming why comparison could not run. Retain no changed-code survivor.
 - **Green baseline control:** use § *Dependency-safe recovery* with the failed commands. Rebuild baseline plus survivors, re-prove their final outcomes, and run a fresh complete health boundary referenced to the immutable pre-run baseline. Repeat if red. If recovery cannot converge this session, restore the baseline within the same attribution bound and bucket all remaining attempts Fix failed with the unresolved-health reason.
 
-Collection rollback preserves Decided, Untouched, and earlier immediate-failure buckets. Only recovery earns another health boundary; the happy path keeps its single pass.
+Collection rollback preserves Decided, Awaiting decision, Untouched, and earlier immediate-failure buckets. Only recovery earns another health boundary; the happy path keeps its single pass.
 
 ## Delegation mechanics
 

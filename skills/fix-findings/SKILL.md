@@ -1,6 +1,6 @@
 ---
 name: fix-findings
-description: Use when asked to fix, apply, or address a set of findings from a session review, PR comments, or a pasted or saved list. Applies eligible Confirmed fixes automatically; other actionable fixes require approval of a diff in one batched ask. Edits code only, with no staging, commits, or source replies.
+description: Use when asked to fix, apply, or address a set of findings from a session review, PR comments, or a pasted or saved list. Applies eligible Confirmed fixes automatically; other actionable fixes require batched diff approval. Edits code only, with no staging, commits, or source replies.
 argument-hint: '[source]'
 ---
 
@@ -38,7 +38,9 @@ Before execution, known dependencies are source- or user-declared dependencies a
 - **Auto:** a Confirmed finding with one unambiguous targeted change, confined to reviewed files, with no new dependency or public API or behavior change beyond the finding. Default to this option because the review already established the problem and the change is bounded.
 - **Ask:** every other actionable finding, including unverified findings and Confirmed findings with design choices, meaningful option trade-offs, unsettled intent, or broader scope.
 
-**Present one batched ask per run.** For each ask-routed finding, show the finding, the concrete diff for each offered fix, and your recommendation. Wait for the user's decisions before applying those edits. Approval of a claim without its diff is insufficient.
+**Batch ask-routed findings.** Show each finding, concrete diffs and material trade-offs for its viable fixes, and your recommendation. Wait for the user's decisions before applying those edits. Approval of a claim without its diff is insufficient. A finding still unanswered when the run reports lists under Awaiting decision (§ *Output*).
+
+Post-approval choices follow `./references/workflow/fix-findings-recovery.md` § *Approved decisions and changed evidence*.
 
 ## Applying Fixes
 
@@ -46,7 +48,7 @@ Use `./references/workflow/execution-loop.md` with these bindings:
 
 - **Source:** one finding and its chosen fix option or approved diff. Its criterion is that the named problem no longer reproduces, checked against the finding's evidence. Use the supplied root cause and reproduction path when present. Run the full unit-outcome tier, including engineering's touched-comment and available formatter checks (`./references/workflow/execution-loop.md` § *Two verification tiers*).
 - **Record:** the chat report in § *Output*. Write no task-folder file or status.
-- **Blocked:** restore an immediate failure's pre-fix state and report `fix failed (reverted): <reason>`. Final-outcome failures use `./references/workflow/fix-findings-recovery.md` § *Dependency-safe recovery*. Independent findings may continue after recovery. <!-- cold -->
+- **Blocked:** restore an immediate failure's pre-fix state and report `fix failed (reverted): <reason>`. A pending impactful choice restores the same way and lists the finding Awaiting decision (§ *Content baseline and immediate outcomes*). Final-outcome failures use `./references/workflow/fix-findings-recovery.md` § *Dependency-safe recovery*. Independent findings may continue after recovery. <!-- cold -->
 - **Acceptance:** re-read every selected finding against the live tree and place it in exactly one report bucket.
 - **Health boundaries:** use § *Integrated health boundary* after all serial and batched fixes settle. Red-boundary recovery follows `./references/workflow/fix-findings-recovery.md`. <!-- cold -->
 - **Integration assertions:** none. A separate re-review certifies the changed code.
@@ -59,7 +61,7 @@ After selection and before any fix edit, capture an immutable **pre-run content 
 
 Immediately before each serial fix or shared batch incorporation, capture the exact pre-fix content state, beyond its declared surface. Also capture the `worktree-merge.ts baseline` manifest required by executor intake. After an immediate-outcome pass, record the ordered content/presence delta against that pre-fix state, with known dependencies. These change sets are recovery evidence.
 
-On immediate failure, restore the pre-fix capture within the attribution bound and bucket the finding Fix failed. Skip unattempted fixes whose known prerequisite failed, naming that prerequisite. Leave no failed attempt in a later change set.
+On immediate failure, restore the pre-fix capture within the attribution bound and bucket the finding Fix failed. Skip unattempted fixes whose known prerequisite failed, naming that prerequisite. Leave no failed attempt in a later change set. An executor that returns a pending impactful choice restores the same way: its landed edits return to the pre-fix capture, and the finding lists Awaiting decision rather than Fix failed. The surfaced choice ends its auto eligibility: the finding joins the ask-routed batch and re-executes only after approval of the chosen option's concrete diff (§ *The Gate: Auto vs Ask*). Nothing partial stays in the tree.
 
 After all immediate outcomes settle, re-prove every retained finding's full outcome tier on the final integrated shared tree, regardless of who proved it earlier. Repeat this sweep after every rebuild. Resolve failures before project health through `./references/workflow/fix-findings-recovery.md` § *Dependency-safe recovery*, using the failed tier as the predicate. <!-- cold -->
 
@@ -88,6 +90,7 @@ Use lists; omit empty buckets. Preserve the finding's original text and severity
 - **Fixed:** changed `file:line`; immediate proof source (`executor`, or `coordinator` with its re-run reason); final-integrated evidence; current health per `./references/engineering/verification.md` § *What a boundary records*. Identify fixes made on user approval. Record delegation, engine, and batch, or the coordinator's posture exception or ask routing.
 - **Health uncertifiable:** surviving changes and the same immediate and final outcome evidence, plus the baseline-failing command and its resolved targets. Apply target exclusions from `./references/workflow/execution-recovery.md` § *Evidence lifecycle*. State that no boundary certifies the tree.
 - **Decided:** ask-routed findings without an applied fix, with the user's decision and reason: skipped, deferred, or rejected.
+- **Awaiting decision:** findings whose impactful choice has no answer yet, with the offered options, the recommendation, and the edits held for the answer. Their fixes are not applied; edits landed before the choice was returned were restored to the pre-fix capture (§ *Content baseline and immediate outcomes*).
 - **Fix failed:** reverted fixes and unattempted dependents, with the reason and what would unblock them. Distinguish one fix, a dependency group, and an interaction group. Name an unestablished control or unconverged health recovery when applicable. Say `not attempted` for skipped dependents, not `reverted`. Include execution and immediate-evidence details as for Fixed.
 - **Untouched:** excluded findings, non-open triage buckets, barred verdicts, moved anchors, and non-actionable complaints, each with its reason.
 

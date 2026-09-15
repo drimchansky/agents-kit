@@ -19,7 +19,7 @@ The execution loop's failure path: the evidence lifecycle that continues `./exec
 
 When the work reveals that a unit is infeasible, the scope was wrong, a new unit is needed, or one is too large for a single slice:
 
-- **Stop and surface it.** A silent deviation takes the decision away from the user.
+- **Surface the divergence.** Take unresolved impactful changes through `../../CORE_RULES.md` § *Ask Before Assuming* before dependent revisions or work.
 - **Do not absorb adjacent work because you're already here.** Revise the scope explicitly, or treat the new work as separate.
 - **Record the divergence** per the **Record** binding, including why it changed.
 

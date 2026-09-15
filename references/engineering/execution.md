@@ -10,7 +10,8 @@ The recipe `implement-task`, `implement`, and `fix-findings` load when carrying 
 - If versions are missing or ambiguous, ask the user.
 - A unit whose ask cites a design source (a Figma node, a mockup, a prototype) reads it before any UI code: `design-to-code.md`.
 - Record sources for non-obvious framework decisions per the consumer's **Record** binding (`../workflow/execution-bindings.md`), with full URLs and deep links. Provenance stays in the record, never in code comments (`code-style.md` → Comments).
-- With no authoritative source for a pattern, default to stopping and asking before shipping it, and record the uncertainty per the **Record** binding. Proceed without asking only when the pattern is local and cheap to reverse, still recording it.
+- With no authoritative source, record uncertainty per **Record** and default to asking before shipping the pattern.
+  Routine local details within agreed scope may proceed. Unresolved impactful workarounds take `../../CORE_RULES.md` § *Ask Before Assuming*, including reversible ones.
 
 Read any per-surface checklist the step touches (`react.md`, `security.md`, …) before writing. `code-style.md` → Comments governs every code-writing step: validate the comments this unit added or edited when proving its outcome, never as a repo-wide audit.
 

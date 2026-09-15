@@ -4,6 +4,10 @@ description: Use when asked to translate text from one language to another.
 argument-hint: '[target language] [text]'
 ---
 
+## Core Rules
+
+Read and apply `./AGENTS.md` § *Ask Before Assuming*.
+
 # Translate
 
 ## Rules

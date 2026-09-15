@@ -7,19 +7,22 @@ Compaction: `./reconciliation-compaction.md`.
 
 ## Consent model: findings apply, the record carries them
 
-User-invoked reconciliation applies every evidenced fix without mid-run questions. Model-invoked runs ask before fixing (`./skill-conventions.md` § *The invocation gate*).
+User-invoked reconciliation applies obvious fixes, evidence-settled factual corrections, previously approved changes, and routine judgments within agreed scope. Model-invoked runs ask before fixing (`./skill-conventions.md` § *The invocation gate*).
 
-An **obvious** fix needs no interpretation, alternatives, or invented annotation. **Judged** fixes choose among alternatives; record the rejected readings and deciding evidence (§ *The record*).
+An **obvious** fix needs no interpretation, alternatives, or invented annotation. A **judged** finding admits several defensible edits. Apply evidence-settled facts, prior decisions, and routine details within agreed scope, recording rejected readings and the selection basis (§ *The record*).
 
-Without identifiable alternatives and deciding evidence, flag redesign for its owning skill. List unapplied findings under Not reconciled:
+An unresolved impactful judged choice follows `../../CORE_RULES.md` § *Ask Before Assuming*. Present researched viable options, material trade-offs, and a reasoned recommendation. Hold its dependent edit, continue independent fixes, and list an unanswered choice under Not reconciled as **Awaiting decision**. Record the held choice at its home before the run ends: append it to the owning file's Open Questions (grounding in `CONTEXT.md`, execution in `plan.md`) with its options and recommendation, so a later run finds it without a result file.
+
+Flag redesign when the repair exceeds the finding or reconciliation's write surface. List unapplied findings under Not reconciled:
 
 - **Needs work:** docs cannot fix it or verification failed. Name implement-task/plan-task, explain non-rerunnable criteria, and include all unverified steps/goals.
 - **Yours to apply:** deliverable Published changes (§ *Never-annotated surfaces*). Supply paste-ready text for the user.
+- **Awaiting decision:** an unresolved impactful choice, its options and recommendation, and the dependent edits held for the answer.
 
 ## The mapping legend
 
 - **auto:** apply the obvious fix under the consent model above.
-- **judged:** choose, apply, and record alternatives on evidence under that model.
+- **judged:** apply evidence-settled corrections, prior decisions, and routine details within scope; only unresolved impactful choices use Awaiting decision.
 - **verify:** re-prove the nominated claim before writing (§ *Strengthen only on verified evidence*).
 - **flag only:** leave unchanged; name the repair owner and re-report (§ *Flag-only findings are re-reported*).
 
@@ -86,6 +89,8 @@ Ticket/group writes follow upstream-ask terms. Ticket block takes Annotation for
 Re-report every flag-only finding in full with its owner until that owner records repair; ledger entries alone do not resolve it.
 
 For tagged findings, re-report fetched block and carried warn/block. Report warn once more after a clean fetch retags it info, then stop (`./reconciliation-sweep.md` § *Tags*).
+
+Re-report an Awaiting decision choice in full from its Open Questions entry until the answer lands; a clean fetch retagging its originating reference `info` does not retire it.
 
 Re-report untagged findings while disk or Reconciliation shows them. Report unrecorded session findings fully; their named owners hold the record.
 
@@ -167,9 +172,10 @@ Preserve existing step numbers in both directions. Permitted insertions use Step
 1. Print the full report from pre-reconcile state and preserve it after edits. Reconcile-task sweeps before composing and renders References inline.
 2. Sweep before edits (`./reconciliation-sweep.md`). Composites print References at reconciliation start. Tags supply finding evidence; the ledger rewrite lands with the check.
 3. Apply obvious fixes by file: owed result, plan, then context.
-4. Apply judged fixes in that order, then goals, ticket, and groups. Record each judged edit as it lands.
-5. Refresh Current state.
-6. Print the change list below. With no actionable findings, print `Nothing to reconcile.` and write only the sweep ledger. Append no empty Reconciliation section or watermark advance (`./reconciliation-commits.md` § *The record*).
+4. Apply settled judged fixes in that order, then goals, ticket, and groups. Record each judged edit as it lands.
+5. Present unresolved impactful choices after reusing their existing research. Apply answered edits in the same order; keep unanswered ones under Awaiting decision.
+6. Refresh Current state.
+7. Print the change list below. With no actionable findings, print `Nothing to reconcile.` and write only the sweep ledger. Append no empty Reconciliation section or watermark advance (`./reconciliation-commits.md` § *The record*).
 
 ```markdown
 ## Reconciliation applied
@@ -183,5 +189,5 @@ Preserve existing step numbers in both directions. Permitted insertions use Step
 
 **Not reconciled:**
 
-- <Needs work | Yours to apply> — <finding> — <skill, or proposed text>
+- <Needs work | Yours to apply | Awaiting decision> — <finding> — <skill, proposed text, or researched options>
 ```

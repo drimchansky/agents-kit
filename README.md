@@ -109,7 +109,7 @@ Each skill is `skills/<name>/SKILL.md`, invoked as `/<name>` in Claude Code and 
 - `review-code` — review a PR, branch, commit range, or set of paths. Flags: `-n N` independent reviewers, `-x` cross-vendor second review, `-d` draft a PR description.
 - `review-code-triage-verify` — review, batch the findings by concern, verify each batch in an isolated probe, one verdict per finding.
 - `triage-findings`, `triage-findings-verify` — batch findings you already have, optionally verifying each batch.
-- `fix-findings` — apply a set of findings; confirmed ones automatically, the rest through one batched ask.
+- `fix-findings` — apply a set of findings; confirmed ones automatically, the rest after you approve their diffs.
 - `publish-pr-review` — post `review-code`'s findings to the PR as inline comments, by severity tier.
 - `update-pr-description` — replace a PR body with the description `review-code -d` drafted. Gated.
 - `commit` — commit staged changes after inspecting them and running the applicable checks. Never stages, never pushes.
@@ -149,7 +149,8 @@ Two native agent definitions ship with the kit, installed as `agents/*.md` for C
 - `references/templates/` — copy-ready shapes of the five task files.
 - `references/scripts/` — the CLI and stdout contract of every helper a skill runs at run time.
 
-Inside an installed skill, `./AGENTS.md` links to `CORE_RULES.md` and `./references` links to the installed `references/`, so a skill reads the same files wherever it runs. The four lean utilities — `create-notion-page`, `proofread`, `review-note`, `translate` — ship neither link and state the one rule each needs in place.
+Inside an installed skill, `./AGENTS.md` links to `CORE_RULES.md` and `./references` links to the installed `references/`, so a skill reads the same files wherever it runs. The four lean utilities, `create-notion-page`, `proofread`, `review-note`, and `translate`, load only the core's Ask Before Assuming section.
+They ship the `./AGENTS.md` link and no `./references` link.
 
 ---
 

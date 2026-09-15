@@ -1,6 +1,6 @@
 ---
 name: reconcile-task
-description: Use when asked to reconcile, sync, capture, or write back into a task folder the important information that emerged in the current session — decisions, constraints, references, answered questions, and verified progress — that never made it into `CONTEXT.md`, `goals.md`, `plan.md`, or `result.md`. Also re-checks the folder's cited tickets, PRs, and docs against their live state.
+description: Use when asked to reconcile, sync, capture, or write back important session findings into a task folder. Applies settled corrections, presents unresolved impactful choices, and re-checks cited tickets, PRs, and docs.
 argument-hint: '[task folder path]'
 ---
 
@@ -11,7 +11,7 @@ argument-hint: '[task folder path]'
 
 Review **this session against the task docs** and write the missing information back: the enriching direction of reconciliation. Shared mechanics: `./references/workflow/reconciliation.md`. This direction's rules and mapping: `./references/workflow/reconciliation-session-to-docs.md`.
 
-This skill writes the task docs and asks nothing mid-run, except the compaction proposal and the trim raised with it (`./references/workflow/reconciliation-compaction.md` § *Compaction (size trigger)*). Which fixes land unprompted and which land as judged edits carrying their record: `./references/workflow/reconciliation.md` § *Consent model: findings apply, the record carries them*. Four rules bound it:
+This skill applies settled task-doc corrections and presents unresolved impactful choices under `./references/workflow/reconciliation.md` § *Consent model: findings apply, the record carries them*. Compaction retains its separate confirmation (`./references/workflow/reconciliation-compaction.md` § *Compaction (size trigger)*). Four rules bound it:
 
 - **Strengthen only on verified evidence.** Progress is recorded only on evidence re-verified this session, never a chat claim (`./references/workflow/reconciliation.md` § *Strengthen only on verified evidence*).
 - **Grounding docs change on evidence.** Anything redefining scope or acceptance is a judged edit whose record carries the prior wording and the readings passed over (`./references/workflow/reconciliation.md` § *Grounding docs change on evidence, never silently*).
@@ -72,7 +72,7 @@ The rule is `./references/workflow/reconciliation.md` § *Strengthen only on ver
 
 ### 6. Reconcile the Docs
 
-Apply the findings per `./references/workflow/reconciliation.md` (the append-only `## Reconciliation` record, § *The record*, included) and `./references/workflow/reconciliation-session-to-docs.md` § *`reconcile-task` — session findings*, whose route values are the shared file's § *The mapping legend*; **verify** means Step 5's gate. Every edit maps to a Step 3 or Step 4 finding. A **verify** row waits on Step 5 passing; a **judged** row lands only with the record its route owes, the alternatives declined and, for `ticket.md` or a group file, the external-surface line.
+Apply the findings per `./references/workflow/reconciliation.md` (the append-only `## Reconciliation` record, § *The record*, included) and `./references/workflow/reconciliation-session-to-docs.md` § *`reconcile-task` — session findings*, whose route values are the shared file's § *The mapping legend*; **verify** means Step 5's gate. Every edit maps to a Step 3 or Step 4 finding. A **verify** row waits on Step 5 passing. Every **judged** row follows the shared § *Consent model: findings apply, the record carries them* and retains its required record.
 
 End every run by refreshing the result's `## Current state` per the shared file's § *Current state refresh*. Then test the size trigger with `node <kit-root>/scripts/task-state.ts --compaction-plan <task folder>` and read the verdict off its JSON (`./references/scripts/task-state.md`; `<kit-root>` per `./references/workflow/task-store.md` § *Resolving `<kit-root>`*). On `due`, raise the compaction proposal per `./references/workflow/reconciliation-compaction.md` § *Compaction (size trigger)*, which owns its consent and what may collapse; read it only then. When the script is unavailable, say the trigger went untested; never report it as under the trigger. A `maintain` `oversized-task` or `oversized-record` finding is raised alongside the proposal and cut only on the same confirmation, narrative never evidence. <!-- cold -->
 
@@ -119,11 +119,12 @@ Print the findings report **first**, from pre-reconcile state, never regenerated
 ## Not reconciled
 - Needs work — <finding> — via `/implement-task <slug>`
 - Yours to apply — <finding> — a deliverable's `**Published:**` line; proposed text: <…>
+- Awaiting decision — <finding> — <researched options, material trade-offs, recommendation, and held edits>
 
 (Or, when the session and the reference check both add nothing beyond the docs: `Nothing to reconcile.`)
 ```
 
-Then run Step 5 and Step 6 (auto enrichments first, then the `[judged]` edits with their records), and close with the change list in `./references/workflow/reconciliation.md`'s format:
+Then run Step 5 and Step 6 (independent settled edits first, then choices), and close with the change list in `./references/workflow/reconciliation.md`'s format:
 
 ```markdown
 ## Reconciliation applied
@@ -133,7 +134,7 @@ Then run Step 5 and Step 6 (auto enrichments first, then the `[judged]` edits wi
 
 **Not reconciled:**
 
-- <Needs work | Yours to apply> — <finding> — <skill, or the proposed text>
+- <Needs work | Yours to apply | Awaiting decision> — <finding> — <skill, proposed text, or researched options>
 ```
 
 (or, when nothing was actionable: `Nothing to reconcile.`, with no file beyond the sweep's `observations.md` rewrite written)

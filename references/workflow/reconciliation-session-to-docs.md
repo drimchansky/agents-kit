@@ -12,6 +12,7 @@ Use the five shared plan openings, plus:
 - **New open questions**, **auto**: append in Open Questions.
 
 Judge context prose, goals, and step scope under `./reconciliation.md` § *Grounding docs change on evidence, never silently*. Ticket/group content additionally follows § *The upstream ask is writable, and never rewritten quietly*. Annotation-only edits retain § *Annotation formats*' route.
+Every judged row follows the shared consent model; an unresolved impactful choice writes no dependent change before the answer.
 
 Auto-enrich references, questions, and result narrative at their home (`./reconciliation.md` § *One home per fact*).
 
@@ -25,7 +26,7 @@ Use the session and sweep (`./reconciliation-sweep.md`); routes follow `./reconc
 - **Cited reference answers an open question** (`warn`) — use the shared answer format and fetched source at the question's home: **auto** if unambiguous, otherwise **judged**.
 - **Cited reference materially changed or gone** — apply `./reconciliation.md` § *Cited reference changed*. Name `implement-task` under Not reconciled wherever that row leaves status unchanged.
 - **Never-annotated surface changed or broken** — **flag only** under `./reconciliation.md` § *Never-annotated surfaces*: user for Published, `implement-task` for pauses.
-- **Shared constraint changed or contradicted** — **judged**: rule on session evidence; write group edits under upstream-ask terms and local scope/Verify, context, or goals at home. Quote both statements with their sources, cite the group file by its path from the selected root, and record which side lost. Flag redesign for `plan-task`.
+- **Shared constraint changed or contradicted** — **judged**: apply evidence-settled corrections and prior decisions; otherwise leave an impactful precedence choice pending. Write settled group edits under upstream-ask terms and local scope/Verify, context, or goals at home. Quote both statements with their sources, cite the group file by its path from the selected root, and record which side lost. Flag redesign for `plan-task`.
 - **New open question** — **auto**: append grounding questions in context, execution questions in plan.
 - **Session narrative** without state or grounding change — **auto**: append Reconciliation to result. When work is evidenced, create result; **verify** before taking `to-do → executing` under `./task-lifecycle.md` § *Companion result file* and the shared advance engine.
 - **Step completed this session** — **verify** Verify and domain per-unit checks (`./execution-loop.md` § *Two verification tiers*). Pass: check and record evidence. Otherwise leave pending; flag **Needs work**, naming `implement-task`.

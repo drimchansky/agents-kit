@@ -1,6 +1,6 @@
 ---
 name: review-task-reconcile
-description: Use when asked to sanity-check a task's plan and also act on the findings — one command that prints the feasibility assessment from pre-reconcile state, then reconciles obvious findings into the task docs and rules on the review's Questions itself, each ruling applied and recorded with the reading it declined. Also re-checks the folder's cited tickets, PRs, and docs against their live state. Writes the task docs only; never code, never git.
+description: Use when asked to sanity-check a plan and act on findings. Prints the pre-reconcile assessment, applies settled corrections, and presents unresolved impactful choices using the review's research. Writes task docs only; never code or Git.
 argument-hint: '[task folder path] [-x (cross-vendor grounding probe)] — passed through to the review phase'
 ---
 
@@ -8,7 +8,7 @@ argument-hint: '[task folder path] [-x (cross-vendor grounding probe)] — passe
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 
-One command for the review-and-fix pipeline: validate the plan against reality (`review-task`), then write the assessment's findings back into the task docs, with the review's own Questions ruled on and folded into the plan. The assessment is a snapshot of pre-reconcile state; the reconcile runs against it.
+One command for the review-and-fix pipeline: validate the plan against reality (`review-task`), then reconcile its findings. Settle the review's Questions or present them for input. The assessment is a snapshot of pre-reconcile state.
 
 Phase 1 runs `../review-task/SKILL.md`'s full protocol; Phase 2 runs the reference contract it names. Three overrides apply pipeline-wide:
 
@@ -20,7 +20,7 @@ A phase departs from its skill or contract only where its section below says so.
 
 The write surface is exactly what `./references/workflow/reconciliation-docs-to-reality.md` § *Write surface* fixes: the task files plus `ticket.md` and an applicable `GROUP_CONTEXT.md`, on the added terms of `./references/workflow/reconciliation.md` § *The upstream ask is writable, and never rewritten quietly*. `./references/workflow/reconciliation-docs-to-reality.md` § *Write surface* names every never-edited file. This pipeline fixes the docs, not the world (`./references/workflow/reconciliation.md` § *Docs, not the world*), and never implements or redesigns: a step that needs rethinking is flag-only and goes back to `plan-task`, per the mapping's *Infeasible or conflicts-with-existing steps* row.
 
-The user's invocation is the consent `./references/workflow/reconciliation.md` § *Consent model: findings apply, the record carries them* defines; a model-invoked run carries no such consent and asks for every fix. Past that bar nothing is put back to the user: a finding admitting more than one defensible edit is ruled on here, applied, and recorded with the reading passed over.
+User invocation authorizes settled corrections under `./references/workflow/reconciliation.md` § *Consent model: findings apply, the record carries them*. Unresolved impactful choices are presented with their options; those still unanswered remain Awaiting decision. A model-invoked run has no write consent and asks before each fix.
 
 ## Flags
 
@@ -44,7 +44,7 @@ Apply the assessment's findings per `./references/workflow/reconciliation.md` an
 
 Run the reference sweep, `./references/workflow/reconciliation-sweep.md`, in this phase, its `## References` block printed before any edit. It is this pipeline's only source of dead-link and reference-answered-question findings.
 
-The assessment's **numbered open questions** are this phase's to rule on, not relay: each becomes a ruling on the evidence in front of it, written into the home file the mapping names, with the option passed over recorded per § *Consent model: findings apply, the record carries them*, and no redesign around it. An entry whose options all reach past the finding is redesign: name `plan-task` under "Not reconciled". A ruling refines plan and grounding content and never attests that work was done (the direction file's § *Repairs weaken; advances go through the shared engine*); an advance goes through `./references/workflow/reconciliation.md` § *Strengthen only on verified evidence*, re-verified in this run. The **Answered by research** list is evidence, not a ruling target: a disproved finding needs no action, and one the answer supplied repair content for carries that answer into its **judged** row. A deliverable's `**Published:**` line lands under "Not reconciled" as *Yours to apply* with its proposed text.
+Route every numbered Question through § *Consent model: findings apply, the record carries them*. Reuse `review-task`'s researched options, trade-offs, and recommendation without repeating research. An entry whose options exceed the finding is redesign and goes to `plan-task`. A ruling never attests work; advances still require § *Strengthen only on verified evidence*. Disproved findings need no action. A deliverable's `**Published:**` line remains Yours to apply.
 
 Findings that need real work (a step to rethink, code changes) stay unfixed, listed as *Needs work* under "Not reconciled" with the next skill named (`plan-task`, `implement-task`).
 
@@ -55,4 +55,4 @@ Lists, never tables.
 - **Assessment**: the full review output as `review-task` specs it, printed at the end of Phase 1 from pre-reconcile state, including the Plan Summary's `Cross-check:` line when `-x` was passed.
 - **References** and **Reconciliation applied**: rendered per `./references/workflow/reconciliation-sweep.md` § *Output and routing* (before any Phase 2 edit) and `./references/workflow/reconciliation.md` § *Sequence and output* (the change list, and what a run with nothing actionable writes).
 
-**Next:** `/implement-task <slug>` when the plan is ready to execute, or `/plan-task <slug>` for a step sent back for redesign or a direction a judged grounding edit changed.
+**Next:** answer Awaiting decision when present; otherwise use `/implement-task <slug>` when ready or `/plan-task <slug>` for redesign.
