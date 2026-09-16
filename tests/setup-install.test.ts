@@ -363,7 +363,15 @@ function observeTomlParse(): TomlProbe {
       interpreter,
       [
         "-c",
-        'import sys, tomllib\nfor path in sys.argv[1:]:\n    tomllib.load(open(path, "rb"))',
+        [
+          "import sys, tomllib",
+          'permission_keys = {"sandbox_mode", "sandbox_workspace_write", "sandbox_read_only", "approval_policy", "approvals_reviewer", "default_permissions", "permissions"}',
+          "for path in sys.argv[1:]:",
+          '    agent = tomllib.load(open(path, "rb"))',
+          "    overrides = sorted(permission_keys.intersection(agent))",
+          '    assert not overrides, f"{path}: permission overrides prevent inheritance: {overrides}"',
+          '    assert "network_proxy" not in agent.get("features", {}), f"{path}: network proxy configuration must inherit"',
+        ].join("\n"),
         ...agentSources("toml").map((name) => join(CODEX_HOME, "agents", name)),
       ],
       { encoding: "utf8", maxBuffer: MAX_BUFFER_BYTES },
@@ -675,7 +683,7 @@ test("Codex shared skills, references, and CORE_RULES.md install unchanged", () 
   assertNoProblems(observed.clean.codexPayload, "the Codex home must hold the kit payload byte for byte");
 });
 
-test("installed Codex agent TOML definitions parse", (t: TestContext) => {
+test("installed Codex agent TOML definitions parse and inherit parent permissions", (t: TestContext) => {
   const probe = observed.toml;
   if (probe.interpreter === null) {
     t.skip("no Python carrying tomllib is installed, so the deployed TOML was not parsed");
@@ -684,7 +692,7 @@ test("installed Codex agent TOML definitions parse", (t: TestContext) => {
   assert.strictEqual(
     probe.status,
     0,
-    `${probe.interpreter} could not parse an installed Codex agent TOML:\n${probe.output}`,
+    `${probe.interpreter} rejected an installed Codex agent TOML or its permission overrides:\n${probe.output}`,
   );
 });
 
