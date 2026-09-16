@@ -56,8 +56,8 @@ Each primary reviewer independently reviews the complete object.
 `-n N` counts complete passes, never a split by concern or path.
 Generic or targeted probes cannot substitute for primary reviewers.
 
-Use inline review only for a listed § *Degrade rule* failure, recording its concrete reason on `Review pass:`.
-Review size, simplicity, and available context do not establish failure.
+Use inline review only when the user explicitly asks for it or for a listed § *Degrade rule* failure, recording its concrete reason on `Review pass:`.
+Review size, simplicity, available context, and the pinned model's standing relative to the session model do not establish failure.
 
 ## Safety blocks
 
@@ -93,14 +93,15 @@ Authorization membership: `review-code` launches reviewers; `review-code-triage-
 
 Adapters: `~/.claude/agents/reviewer.md` and `~/.codex/agents/reviewer.toml`. Read model for `Review pass:` and effort for launch announcements. Claude uses `model:`/`effort:`; Codex uses `model =`/`model_reasoning_effort =`. Prompt posture supplements withheld tools (`./probe-engines.md`); live security remains authoritative.
 
-Unresolved pins, or pins at/below the session model, require user retuning in the installed definition and removal of its sibling `.agents-kit-reviewer` marker (`./executor-routing.md` § *Write-mode engine registry*). Report and fall back inline; make no installation edits. A kit adapter cites installed reviewer-contract.md in its body. Other same-name definitions are user agents: do not launch them with this packet; report `adapter not installed`.
+Unresolved pins require user retuning in the installed definition and removal of its sibling `.agents-kit-reviewer` marker (`./executor-routing.md` § *Write-mode engine registry*). Report and fall back inline; make no installation edits. A kit adapter cites installed reviewer-contract.md in its body. Other same-name definitions are user agents: do not launch them with this packet; report `adapter not installed`.
 
 ## Degrade rule
 
-Subject to Safety blocks, announce unavailable or unusable delegated review and run the host's inline pass. Preserve object, root, and output obligations. Always record `Review pass:` as `delegated (<model>)` or `inline (<reason>)`. Reasons are limited to:
+Subject to Safety blocks, announce an explicit user request or an unavailable or unusable delegated review, and run the host's inline pass. Preserve object, root, and output obligations. Always record `Review pass:` as `delegated (<model>)` or `inline (<reason>)`. Reasons are limited to:
 
+- `user requested`: the user explicitly asked for an in-session review pass.
 - `no subagent support`: host cannot launch subagents.
 - `adapter not installed`: absent kit adapter or definition missing this contract citation.
 - `adapter not registered`: kit file exists but launch reports unknown agent type.
-- `unresolved model pin`: unresolved or at/below the session model.
+- `unresolved model pin`: the pinned model does not resolve on this host.
 - `reviewer failed`: no return, ordinary non-security error, or malformed report.

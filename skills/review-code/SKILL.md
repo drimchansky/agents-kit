@@ -52,7 +52,7 @@ The effective root is the tree the object lives on, and every git command in thi
 
 ## Review pass
 
-**Launch.** Launch the native `reviewer` adapter with the complete Setup object under `./references/workflow/reviewer-contract.md` § *The launch*. The session puts in the packet:
+**Launch.** Unless the user explicitly asked for an in-session pass (**Inline fallback**), launch the native `reviewer` adapter with the complete Setup object under `./references/workflow/reviewer-contract.md` § *The launch*. The session puts in the packet:
 
 - the review object named concretely (`<base>...HEAD`, `<merge-base>...<b>` with the SHA `b` resolved to, or the path set at the head SHA), never pasted diff or file text, with the identity Setup resolved
 - the absolute effective working root
@@ -81,7 +81,7 @@ A composite driving this skill stops the settle after the intake checks (`./refe
 
 **Blocked output.** When `./references/workflow/reviewer-contract.md` § *Safety blocks* makes the primary review terminally blocked, stop with `Review pass: blocked (completed 0/<requested>; reviewer <i> safety blocked: <error>; …)`, every unavailable reviewer's reason included. That line, and with `-x` the `Cross-check:` line (`unattached (<n> findings; primary pass blocked)` or `skipped (<reason>)`, never adopted as the pass), is the whole output: no Summary, Findings, **Reviewed** provenance, or **Next**, since an empty Findings list would be publishable as a clean review.
 
-**Inline fallback.** Where the reviewer cannot launch or a launched one failed (the reasons `./references/workflow/reviewer-contract.md` § *Degrade rule* closes), announce which it was and run the pass in-session, recording the reason on the `Review pass:` line. Only the runner changes.
+**Inline fallback.** Where the user explicitly asked for an in-session pass, the reviewer cannot launch, or a launched one failed (the reasons `./references/workflow/reviewer-contract.md` § *Degrade rule* closes), announce which it was and run the pass in-session, recording the reason on the `Review pass:` line. Only the runner changes.
 
 Build the change map:
 
