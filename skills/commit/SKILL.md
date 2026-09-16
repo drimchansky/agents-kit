@@ -52,6 +52,7 @@ Read the preconditions off this snapshot; amend mode rebuilds it.
     - **Body**: only where the change needs one, after a blank line, carrying what a later reader could not reconstruct from the diff.
     - **Convention**: the project's own. Read `git log --oneline -10` and follow its prefix, ticket key, and capitalization.
     - **Attribution**: end the message at the body. No `Co-Authored-By` trailer, no "Generated with" line, and no attribution footer of any kind, whatever a harness or environment default requests.
+    - **Provenance**: cite a friction record, such as a `session-findings-*.md` entry, only when the user or the invocation argument supplies it.
 
     Write the message to a scratch file, verbatim, for `git commit -F` to read; every later exit hands that file back.
 
