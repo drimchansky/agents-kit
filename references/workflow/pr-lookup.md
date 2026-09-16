@@ -22,7 +22,8 @@ For a stopping consumer, distinguish the two no-match cases and give the corresp
 - **GitHub lacks the head:** the commit lookup returns `No commit found for SHA`, as for an unpushed tip. Tell the user to push and rerun the follow-up; an unchanged reviewed head retains its review. This lookup authorizes no push.
 - **GitHub has the head but no open PR stands at it:** the lookup succeeds with no exact-head match. Request a fresh review at the intended head; pushing cannot update the reviewed object. For a description follow-up, use `review-code -d`.
 
-Use this shared query except for two branch-based context lookups:
+Use this shared query except for three branch-based context lookups:
 
 - **`review-code`**, `../../skills/review-code/SKILL.md` § *Setup*: use the current branch's `gh pr view` without a positional argument for declared base and PR context. This applies to a branch review or a range ending at current HEAD, including an unpushed local tip. Both calls request `state`; anything other than `OPEN` supplies no PR context/base. A range ending elsewhere uses the SHA query above.
 - **`triage-findings`**, `../../skills/triage-findings/SKILL.md` § *Fetch*: PR mode has no reviewed object; its object is the branch PR's threads. Use `gh pr view --json number,url,title,state` without a positional argument, requiring `OPEN`. `triage-findings-verify` and `fix-findings` execute that Fetch section instead of copying its query.
+- **`review-pr-loop`**, `../../skills/review-pr-loop/SKILL.md` § *Setup*: with no argument, use `gh pr view` without a positional argument for the checked-out branch's PR, requiring `OPEN`; a number or URL names the PR directly. Setup carries that number to every pass and watch instead of repeating discovery.

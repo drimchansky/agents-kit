@@ -33,7 +33,7 @@ The reviewer:
 - Runs commands at that root, without inferring another from adapter or shell.
 - Fetches links and reports inaccessible context; loads triggered checklists.
 - Builds the change map and searches blast radius for every modified export.
-- Runs verification and reproduces candidate failures before adoption. For multiple reviewers, only reviewer 1 receives this instruction; others receive `verification scripts: skip — reviewer 1 runs them`. Conflicting constraints follow § *Posture*.
+- Runs verification and reproduces candidate failures before adoption. For multiple reviewers, only reviewer 1 receives this instruction; others receive `verification scripts: skip — reviewer 1 runs them`. A packet substituting its own evidence names its own skip reason instead. Conflicting constraints follow § *Posture*.
 
 ## The return
 
@@ -43,7 +43,7 @@ Return evidence only, without final verdict or audience-facing artifact. Include
 - `Findings`: `../engineering/review.md` § *Findings output shape*, with file:line evidence and a one-line excerpt.
 - `Improvements`: non-blocking suggestions; file:line optional.
 - `Identity`: object identity resolved at the effective root.
-- `Verification scripts`: every launched script and outcome, with failures/warnings merged into Findings. Name unexposed scripts as skipped. A packet's skip instruction returns `skipped (reviewer 1 runs them)`, not None.
+- `Verification scripts`: every launched script and outcome, with failures/warnings merged into Findings. Name unexposed scripts as skipped. A packet's skip instruction returns `skipped (<the packet's reason>)`, not None.
 - `Divergence`: every reviewed path differing on disk from the object (`../engineering/review.md` § *Verification Scripts*). Keep failures/reproductions on divergent bytes here, excluded from Findings.
 - `Inaccessible context`: each unfetched URL and reason, with no invented content.
 - `Change map`: files grouped by intent, or by concern for paths sets.
@@ -72,9 +72,9 @@ A blocked fleet member is unavailable; usable returns stand with reduced coverag
 The host owns final verdicts (`./agent-fanout.md`). Classify explicit safety signals first under § *Safety blocks*. Before settlement or post-return launches, check in order:
 
 1. **Identity:** match the Setup-recorded identity. On mismatch, stop and report without settlement or further launches.
-2. **Completeness:** require every return heading; an explicit None counts as present. Identity, Verification scripts, Change map, and Summary require content. Scripts list each exposed command/outcome, `none exposed`, or `skipped (reviewer 1 runs them)`. Malformed returns take § *Degrade rule* as `reviewer failed`.
+2. **Completeness:** require every return heading; an explicit None counts as present. Identity, Verification scripts, Change map, and Summary require content. Scripts list each exposed command/outcome, `none exposed`, or `skipped (<the packet's reason>)`. Malformed returns take § *Degrade rule* as `reviewer failed`.
 
-For fleets, check every return. Record unavailable members and reasons; pool survivors by location under `./agent-fanout.md` § *Merge contract*, with completed/requested coverage. If none survives, prioritize identity hard stop, then safety-block outcome, then degrade. Losing reviewer 1 requires session-run verification before output, subject to Safety blocks if that reviewer was blocked.
+For fleets, check every return. Record unavailable members and reasons; pool survivors by location under `./agent-fanout.md` § *Merge contract*, with completed/requested coverage. If none survives, prioritize identity hard stop, then safety-block outcome, then degrade. Losing reviewer 1 requires session-run verification before output, subject to Safety blocks if that reviewer was blocked. Under a packet substituting its own evidence, the session runs nothing instead.
 
 After intake:
 
@@ -83,11 +83,11 @@ After intake:
 - Assign final verdicts and mark changed severities.
 - Merge `-x` before finalizing findings (`./probe-cross-check.md`).
 
-Composites suppress these post-intake steps because their verify phase assigns each finding's verdict. Intake still runs.
+Composites running `./verify-pipeline.md` § *The review phase* suppress these post-intake steps because their verify phase assigns each finding's verdict. Intake still runs.
 
 ## Consumers
 
-Authorization membership: `review-code` launches reviewers; `review-code-triage-verify` consumes them through its review-code phase. The packet gate checks this list. Like `./executor-contract.md` § *Bindings*, it defines authorization rather than reconstructing citations.
+Authorization membership: `review-code` launches reviewers; `review-code-triage-verify` and `review-pr-loop` consume them through their review-code phase. The packet gate checks this list. Like `./executor-contract.md` § *Bindings*, it defines authorization rather than reconstructing citations.
 
 ## Adapter defaults
 

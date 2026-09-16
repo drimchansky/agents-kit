@@ -29,6 +29,7 @@ Scattered flag conditionals suggest a misclassified phase. A modal flag modifies
 - `resume-task-reconcile` — print the resume brief, then reconcile docs to it.
 - `review-task-reconcile` — print the plan assessment, then reconcile docs and incorporate answers.
 - `decompose-task` — propose ordered sibling parts from an approved source; after confirmation, materialize each through `prepare-ticket` and seeded `CONTEXT.md`.
+- `review-pr-loop` — review a PR, publish its Critical/Major tier, watch its head, and repeat. Whole-phase iteration: the cap is 10 passes, a clean pass or a closed PR ends it, and each pass displays its progress line, the review's three provenance lines, and the publish report. It pins `publish-pr-review`'s tier selection, its own gate carrying that consent, and substitutes the PR's checks for the review phase's verification scripts.
 
 Pass each phase's modal flags through unchanged, except the `review-code-triage-verify` settle override below.
 
@@ -59,6 +60,7 @@ Close both host mechanisms together: SKILL.md frontmatter `disable-model-invocat
 **Gated skills:**
 
 - `update-pr-description` — replaces a live PR body.
+- `review-pr-loop` — posts a review per pass with no per-pass picker.
 - `archive-task` — files a task into `Archive/`.
 - `backlog-task` — files a task into `Backlog/`.
 - `maintain` — sweeps and rewrites installed state across every registered root.
@@ -68,7 +70,7 @@ Update this roster in the same change that opens or closes both host mechanisms.
 
 Deliberate non-members:
 
-- `publish-pr-review` offers counted severity tiers, including comment counts and posting nothing. Its selection gates the PR write.
+- `publish-pr-review` offers counted severity tiers, including comment counts and posting nothing. Its selection gates the PR write, except under `review-pr-loop`, whose own gate carries that consent.
 - `create-notion-page` drafts and creates a parentless page in the user's Private section, visible only to them and cheap to delete. It shares nothing and changes no permissions.
 - `commit` and `rebase` use the explicit-request authorization below.
 
