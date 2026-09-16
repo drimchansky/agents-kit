@@ -2,6 +2,7 @@
 name: fix-findings
 description: Use when asked to fix, apply, or address a set of findings from a session review, PR comments, or a pasted or saved list. Applies eligible Confirmed fixes automatically; other actionable fixes require batched diff approval. Edits code only, with no staging, commits, or source replies.
 argument-hint: '[source]'
+disable-model-invocation: true
 ---
 
 ## Core Rules

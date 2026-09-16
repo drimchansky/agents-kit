@@ -148,7 +148,7 @@ interface WholeHomeConflict {
 interface Observations {
   readonly clean: CleanInstall;
   readonly toml: TomlProbe;
-  readonly doctor: DoctorProbe;
+  readonly doctor: DoctorProbe | null;
   readonly managed: ManagedReinstall;
   readonly retiredSkill: readonly string[];
   readonly userSkill: PreservedPair;
@@ -636,7 +636,7 @@ before(() => {
   observed = {
     clean,
     toml: observeTomlParse(),
-    doctor: observeDoctor(),
+    doctor: process.env.AGENTS_KIT_LIVE_CODEX_DOCTOR === "1" ? observeDoctor() : null,
     managed: observeManagedReinstall(),
     retiredSkill: observeRetiredSkill(),
     userSkill: observeUserOwnedSkill(),
@@ -690,6 +690,10 @@ test("installed Codex agent TOML definitions parse", (t: TestContext) => {
 
 test("Codex strict-config doctor reports a valid configuration (its exit status only reflects environmental diagnostics)", (t: TestContext) => {
   const probe = observed.doctor;
+  if (probe === null) {
+    t.skip("set AGENTS_KIT_LIVE_CODEX_DOCTOR=1 to run Codex diagnostics with network access");
+    return;
+  }
   if (!probe.available) {
     t.skip("codex is not installed, so its strict-config doctor was not run");
     return;

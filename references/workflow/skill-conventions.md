@@ -59,6 +59,8 @@ Close both host mechanisms together: SKILL.md frontmatter `disable-model-invocat
 
 **Gated skills:**
 
+- `implement` — explicit invocation required by user preference.
+- `fix-findings` — explicit invocation required by user preference.
 - `update-pr-description` — replaces a live PR body.
 - `review-pr-loop` — posts a review per pass with no per-pass picker.
 - `archive-task` — files a task into `Archive/`.
