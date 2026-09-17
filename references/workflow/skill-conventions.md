@@ -29,7 +29,7 @@ Scattered flag conditionals suggest a misclassified phase. A modal flag modifies
 - `resume-task-reconcile` — print the resume brief, then reconcile docs to it.
 - `review-task-reconcile` — print the plan assessment, then reconcile docs and incorporate answers.
 - `decompose-task` — propose ordered sibling parts from an approved source; after confirmation, materialize each through `prepare-ticket` and seeded `CONTEXT.md`.
-- `review-pr-loop` — review a PR, publish its Critical/Major tier, watch its head, and repeat. Whole-phase iteration: the cap is 10 passes, a clean pass or a closed PR ends it, and each pass displays its progress line, the review's three provenance lines, and the publish report. It pins `publish-pr-review`'s tier selection, its own gate carrying that consent, and substitutes the PR's checks for the review phase's verification scripts.
+- `review-pr-loop` — review a PR, publish its Critical/Major tier, watch its head, and repeat. Whole-phase iteration: the cap is 10 passes, a clean pass ends after APPROVE or COMMENT on the reviewer's own PR, and a closed PR ends it too. Each pass displays progress, provenance when a review completes, and a publish or no-submission report. It pins `publish-pr-review`'s supplied tiers and selection, its own gate carrying that consent, and substitutes the PR's checks for the review phase's verification scripts. A head move before submission starts a fresh pass within the cap.
 
 Pass each phase's modal flags through unchanged, except the `review-code-triage-verify` settle override below.
 
@@ -62,7 +62,7 @@ Close both host mechanisms together: SKILL.md frontmatter `disable-model-invocat
 - `implement` — explicit invocation required by user preference.
 - `fix-findings` — explicit invocation required by user preference.
 - `update-pr-description` — replaces a live PR body.
-- `review-pr-loop` — posts a review per pass with no per-pass picker.
+- `review-pr-loop` — posts selected reviews with no per-pass picker, and approves a clean PR or comments when the reviewer owns it.
 - `archive-task` — files a task into `Archive/`.
 - `backlog-task` — files a task into `Backlog/`.
 - `maintain` — sweeps and rewrites installed state across every registered root.

@@ -111,7 +111,7 @@ Each skill is `skills/<name>/SKILL.md`, invoked as `/<name>` in Claude Code and 
 - `triage-findings`, `triage-findings-verify` — batch findings you already have, optionally verifying each batch.
 - `fix-findings` — apply a set of findings; confirmed ones automatically, the rest after you approve their diffs.
 - `publish-pr-review` — post `review-code`'s findings to the PR as inline comments, by severity tier.
-- `review-pr-loop` — review a PR against its CI checks rather than local scripts, post the Critical/Major findings, wait for the next push to settle, repeat until a pass is clean. Gated.
+- `review-pr-loop` — review a PR against its CI checks rather than local scripts, post the Critical/Major findings, wait for the next push to settle, repeat until a pass is clean, then approve the PR from your account. Gated.
 - `update-pr-description` — replace a PR body with the description `review-code -d` drafted. Gated.
 - `commit` — commit staged changes after inspecting them and running the applicable checks. Never stages, never pushes.
 - `rebase` — rebase onto a confirmed base, or resume a paused rebase, preserving signing.

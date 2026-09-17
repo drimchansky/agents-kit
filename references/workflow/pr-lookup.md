@@ -15,7 +15,7 @@ Read the selected number with `gh pr view <number> --json <fields>`. Every follo
 **Coming up short has two outcomes, selected by the consumer:**
 
 - `publish-pr-review` and `update-pr-description` stop and name the cause: missing `gh`, no GitHub remote, auth/network errors, non-OPEN state, multiple matches, or no match. Name all candidate numbers for multiple matches; do not choose one.
-- `review-code` records missing PR context and continues reviewing the object's commits. Lookup failure does not block the review.
+- `review-code` records missing PR context and continues reviewing the object's commits. Lookup failure does not block a standalone review. Supplied `review-pr-loop` context is scoped to one selected PR, so its lookup failures stop and a head move takes the loop's named retry outcome.
 
 For a stopping consumer, distinguish the two no-match cases and give the corresponding remedy:
 
@@ -24,6 +24,6 @@ For a stopping consumer, distinguish the two no-match cases and give the corresp
 
 Use this shared query except for three branch-based context lookups:
 
-- **`review-code`**, `../../skills/review-code/SKILL.md` § *Setup*: use the current branch's `gh pr view` without a positional argument for declared base and PR context. This applies to a branch review or a range ending at current HEAD, including an unpushed local tip. Both calls request `state`; anything other than `OPEN` supplies no PR context/base. A range ending elsewhere uses the SHA query above.
+- **`review-code`**, `../../skills/review-code/SKILL.md` § *Setup*: use the current branch's `gh pr view` without a positional argument for declared base and PR context. This applies to a branch review or a range ending at current HEAD, including an unpushed local tip. Both calls request `state`; anything other than `OPEN` supplies no PR context/base. A range ending elsewhere uses the SHA query above. `review-pr-loop` is the exception: it supplies its selected number and expected head to both reads. A head move returns the loop's named retry outcome; other lookup failures stop that pass.
 - **`triage-findings`**, `../../skills/triage-findings/SKILL.md` § *Fetch*: PR mode has no reviewed object; its object is the branch PR's threads. Use `gh pr view --json number,url,title,state` without a positional argument, requiring `OPEN`. `triage-findings-verify` and `fix-findings` execute that Fetch section instead of copying its query.
-- **`review-pr-loop`**, `../../skills/review-pr-loop/SKILL.md` § *Setup*: with no argument, use `gh pr view` without a positional argument for the checked-out branch's PR, requiring `OPEN`; a number or URL names the PR directly. Setup carries that number to every pass and watch instead of repeating discovery.
+- **`review-pr-loop`**, `../../skills/review-pr-loop/SKILL.md` § *Setup*: with no argument, use `gh pr view` without a positional argument for the checked-out branch's PR, requiring `OPEN`; a number or URL names the PR directly. Setup carries that number, its host and repository, and each pass's refreshed expected head into `review-code`, `publish-pr-review`, helpers, and the watch. The loop retries a named pre-submission head move within its pass cap and never retries a failed submission.

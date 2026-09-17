@@ -271,7 +271,7 @@ Change CLI, stdout, exit, and caller-facing contracts at their owners in the sam
 
 After corpus prose edits, run `node scripts/dup-check.ts .`. Resolve duplicate rules to a citation of their owner, or register intentional copies in `tests/dup-allow.json` under § *`scripts/dup-check.ts`*. The corpus includes both root rule files (§ *`scripts/corpus.ts`*). The one-home rule is [references/workflow/one-home.md](./references/workflow/one-home.md).
 
-Cite the friction motivating a kit change: a `~/.local/state/agents-kit/session-findings-*.md` finding or a consumer-project task where it occurred. A failing test is the sole exemption; cite the failure. Without either, defer the addition. A commit message carries a friction citation only under `skills/commit/SKILL.md` step 1 **Provenance**. The duplicate scan catches repetition, not unsupported growth; spend the friction citation when adding corpus prose.
+Cite the friction motivating a kit change: a `~/.local/state/agents-kit/session-findings-*.md` finding or a consumer-project task where it occurred. A failing test is the sole exemption; cite the failure. Without either, defer the addition. Keep this evidence in session or task records. The duplicate scan catches repetition, not unsupported growth; spend the friction citation when adding corpus prose.
 
 Edit the authoritative owner. Update dependent consumers only when their consumed contract changes.
 
