@@ -17,7 +17,7 @@ Supply the object by identity, not pasted text:
 - A `pr` diff, `<base>...HEAD` or `<merge-base>...<b>`, with head and merge-base SHAs; or a `paths` set at one commit, with head SHA and path-list digest.
 - One absolute effective root, possibly a worktree.
 - PR context and every extracted URL.
-- Absolute installed paths for `../engineering/review.md`, its per-surface checklists, CORE_RULES, and `../engineering/rules.md`.
+- Absolute paths under the install root (§ *Adapter defaults*) for `../engineering/review.md`, its per-surface checklists, CORE_RULES, and `../engineering/rules.md`.
 - User context/constraints verbatim or `none`; host Review Focus verbatim; verification-scripts instruction.
 
 The reviewer:
@@ -91,11 +91,11 @@ Authorization membership: `review-code` launches reviewers; `review-code-triage-
 
 ## Adapter defaults
 
-Adapters: `~/.claude/agents/reviewer.md` and `~/.codex/agents/reviewer.toml`. Read model for `Review pass:` and effort for launch announcements. Claude uses `model:`/`effort:`; Codex uses `model =`/`model_reasoning_effort =`. Prompt posture supplements withheld tools (`./probe-engines.md`); live security remains authoritative.
+The install root is the directory holding the kit's `skills/`: `~/.claude` or `~/.codex` for a `setup.ts` install, or the plugin root for a Claude Code plugin install. Adapters: `agents/reviewer.md` under the Claude install root, launched as `agents-kit:reviewer` from the plugin, and `~/.codex/agents/reviewer.toml`. Read model for `Review pass:` and effort for launch announcements. Claude uses `model:`/`effort:`; Codex uses `model =`/`model_reasoning_effort =`. Prompt posture supplements withheld tools (`./probe-engines.md`); live security remains authoritative.
 
 Inherit the parent session's permissions; omit sandbox, approval, and network overrides from the Codex adapter. Verification writes require permission from the parent; the reviewer's no-edit posture still applies.
 
-Unresolved pins require user retuning in the installed definition and removal of its sibling `.agents-kit-reviewer` marker (`./executor-routing.md` § *Write-mode engine registry*). Report and fall back inline; make no installation edits. A kit adapter cites installed reviewer-contract.md in its body. Other same-name definitions are user agents: do not launch them with this packet; report `adapter not installed`.
+Unresolved pins in a `setup.ts` install require user retuning in the installed definition and removal of its sibling `.agents-kit-reviewer` marker (`./executor-routing.md` § *Write-mode engine registry*). A plugin install has no durable retune: each update replaces its cached definition. Report and fall back inline; make no installation edits. A kit adapter cites installed reviewer-contract.md in its body. Other same-name definitions are user agents: do not launch them with this packet; report `adapter not installed`.
 
 ## Degrade rule
 

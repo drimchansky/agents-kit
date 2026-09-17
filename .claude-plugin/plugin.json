@@ -1,0 +1,10 @@
+{
+  "name": "agents-kit",
+  "displayName": "Agents Kit",
+  "description": "Skills, reviewer and executor agents, and a persistent task-folder workflow: plan, implement, review, triage, and fix code.",
+  "author": {
+    "name": "Nikita Chernov"
+  },
+  "homepage": "https://github.com/drimchansky/agents-kit",
+  "repository": "https://github.com/drimchansky/agents-kit"
+}

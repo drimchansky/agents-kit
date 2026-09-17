@@ -60,7 +60,7 @@ The effective root is the tree the object lives on, and every git command in thi
 - the absolute effective working root
 - the kind, `pr` or `paths`
 - the PR context Setup gathered and every extracted URL, or an explicit `none`
-- the absolute installed paths of `references/engineering/review.md`, the checklist directory beside it, `references/engineering/rules.md`, and `CORE_RULES.md` (`~/.claude/` on Claude, `~/.codex/` on Codex)
+- the absolute paths of `references/engineering/review.md`, the checklist directory beside it, `references/engineering/rules.md`, and `CORE_RULES.md` under the install root (`./references/workflow/reviewer-contract.md` § *Adapter defaults*)
 - the user's own context and constraints, verbatim, or `none`
 - this skill's § *Review Focus*, verbatim
 - the instruction that the reviewer builds the change map and the blast-radius search itself, and runs the project's verification scripts over the reviewed set, in the per-reviewer form `./references/workflow/reviewer-contract.md` § *Launch packet* fixes under `-n N`

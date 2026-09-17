@@ -56,8 +56,8 @@ Read files from disk on every invocation; introduce no cache, manifest, CLI, or 
 
 ## Resolving `<kit-root>`
 
-For `node <kit-root>/scripts/<name>.ts`, use the source checkout from config's `kitRoot`, expanding tilde before joining the path. A deployed `~/.claude` or `~/.codex` home cannot substitute: installations contain no scripts directory.
+For `node <kit-root>/scripts/<name>.ts`, use the source checkout from config's `kitRoot`, expanding tilde before joining the path. Without that key, a Claude Code plugin install root (`./reviewer-contract.md` § *Adapter defaults*) serves, since the plugin ships `scripts/`. A `setup.ts` home cannot substitute: it contains no scripts directory.
 
-- Missing config or key: ask for the checkout path, rather than infer one from the installation.
+- Missing config or key outside a plugin install: ask for the checkout path, rather than infer one from the installation.
 - No available checkout: report the helper unavailable and use only the citing skill's stated fallback; otherwise stop.
 - Read `references/scripts/<name>.md` for CLI/stdout contracts. Skills cite `./references/scripts/<name>.md`; references cite `../scripts/<name>.md`. Maintainer rationale stays in root `AGENTS.md` § *Source contracts*, under `scripts/<name>.ts`.

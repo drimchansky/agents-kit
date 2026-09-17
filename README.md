@@ -62,6 +62,19 @@ A set of skills, agent definitions, and a task workflow for Claude Code and Code
    git pull && node setup.ts
    ```
 
+### As a Claude Code plugin
+
+If you only use Claude Code, you can install the kit as a plugin without cloning it:
+
+```text
+/plugin marketplace add drimchansky/agents-kit
+/plugin install agents-kit@agents-kit
+```
+
+Plugin skills are namespaced, so `review-code` runs as `/agents-kit:review-code`, and the agents load as `agents-kit:reviewer` and `agents-kit:executor`. Each commit on `main` is a new plugin version. Update with `/plugin update agents-kit@agents-kit`, or turn on auto-update for the marketplace in `/plugin`; it starts off for third-party marketplaces. Helper scripts, such as `review-pr-loop`'s dedupe, still need Node 23.6 or newer.
+
+Use one install method per machine. With both `setup.ts` and the plugin in `~/.claude`, every skill and agent is listed twice.
+
 ---
 
 ## The task workflow

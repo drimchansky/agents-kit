@@ -21,14 +21,14 @@ Every phase runs inline under its cited contracts. Print one progress line (`./r
 
 Resolve and existence-check targets, then print one setup line with paths and labels. Read `./references/workflow/task-store.md` § *The root registry*.
 
-- **Kit root:** use the source checkout, with an argument holding `setup.ts` overriding configuration. When resolving the configured checkout, apply `./references/workflow/task-store.md` § *Resolving `<kit-root>`*. An installed home cannot substitute. <!-- cold -->
+- **Kit root:** use the source checkout, with an argument holding `setup.ts` overriding configuration. When resolving the configured checkout, apply `./references/workflow/task-store.md` § *Resolving `<kit-root>`* without its plugin fallback. No installed home or plugin root can substitute: later phases act on the checkout's task store and Git state. <!-- cold -->
 - **Task roots:** use all configured `taskRoots` with their labels; other path arguments add task roots. Name each absent registered path as skipped and continue with the rest.
 
 Without configuration, name `~/.config/agents-kit/config.json` and `/init-config`, then continue on the kit's canonical root (`./references/workflow/task-layout.md` § *One task, one flat folder*). With no kit root either, say so and stop. Do not guess task roots.
 
 Keep run state under `~/.local/state/agents-kit/`, including `.maintain-last-run` and session-findings files. Neither task roots nor the configuration directory hold this state.
 
-Phase 2 always checks `~/.claude` and `~/.codex`; these are fixed install homes, not arguments or questions. Report an absent home as uninstalled.
+Phase 2 always checks `~/.claude` and `~/.codex`; these are fixed install homes, not arguments or questions. Report an absent home as uninstalled. When `${CLAUDE_PLUGIN_ROOT}` is an absolute path, the plugin manages `~/.claude`: leave it out of the install check and report it as plugin-managed.
 
 ## Phase 1 — Format-conformance sweep (kit)
 
@@ -107,7 +107,7 @@ When the health helper or Node is unavailable, skip both script probes and state
 
 On one confirmation, move exactly the previewed batch; declining moves nothing. A plain `mv` may perform the contracted whole-folder move. Change no contents or internal `./` links.
 
-**Gate — rerun `setup.ts`.** Preview drifted paths grouped by home. Before confirmation, warn that `node <kit-root>/setup.ts` replaces installed skills and references beneath live sessions, including this one. Run only on confirmation and only as a whole installation; there is no per-path mode. Declining leaves both homes unchanged. Retain drift findings in Output either way.
+**Gate — rerun `setup.ts`.** Withhold this gate when the plugin manages `~/.claude`: `setup.ts` always writes both homes, so every skill would be listed twice. Report any Codex drift with that reason. Preview drifted paths grouped by home. Before confirmation, warn that `node <kit-root>/setup.ts` replaces installed skills and references beneath live sessions, including this one. Run only on confirmation and only as a whole installation; there is no per-path mode. Declining leaves both homes unchanged. Retain drift findings in Output either way.
 
 **Gate — remove the worktree husks.** Preview each eligible path, branch, and merge proof; label branch-only entries as having no worktree. Confirm **per item**, never as a batch. Exclude terminal-but-unmerged entries. On confirmation, use the resolved path, checks, order, and unforced commands in `./references/workflow/task-delivery-edges.md` § *Removal*. Branch-only candidates run `git branch -d` alone. Report refusals without forcing cleanup. If worktree removal succeeded before branch deletion failed, report partial cleanup and the surviving branch. Declining removes nothing. With no removable candidate, skip this gate and its contract load. <!-- cold -->
 
@@ -167,7 +167,7 @@ Use lists, not tables. Confine writes to the resolved kit/task roots, listed lin
   - `duplicate-slug`: each colliding folder and its peers, labelled by root; propose no move or rename.
   - `nested-task`: claimed folder and hidden task descendants; propose no move.
   - `coverage`: when unreadable is non-zero, name every absolute `unreadablePaths` entry as unseen coverage and attribute it by path.
-- **Installs:** one line per home with drift count, clean, or never installed, plus installation outcome. Name unreadable paths and qualify coverage; unreadable content cannot support a bare clean verdict.
+- **Installs:** one line per home with drift count, clean, never installed, or plugin-managed, plus installation outcome. Name unreadable paths and qualify coverage; unreadable content cannot support a bare clean verdict.
 - **Git:** one line per read tree, identified by its path, with dirty paths or clean. Add this run's subsequent writes, including archive moves, findings, and marker, explicitly labelled as such; no second status read is needed.
 - **Worktrees:** each husk's path or `no worktree (branch only)`, branch, merge proof or `terminal, unmerged (report only)`, and outcome. Use removed, declined, partially removed with surviving branch, or not removable with reason. Include out-of-scope and ambiguous entries, naming competing folders; report none when no source yields a husk.
 - **Active kit tasks:** Phase 3's list for handoff, without analysis.

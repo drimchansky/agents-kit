@@ -22,6 +22,7 @@ Write one idea per sentence, aiming for about 20 words. Avoid em-dash chains and
 - `references/<domain>/` owns domain guidance.
 - `references/templates/` owns the five copy-ready task-file shapes. Each file's contracting workflow reference owns its rules.
 - `setup.ts` owns installation and distribution. Its § *Source contracts* subsection owns CLI, stdout, exit behavior, and rationale.
+- `.claude-plugin/` owns the Claude Code plugin and its single-plugin marketplace. The plugin root is the repository root, so skill `./AGENTS.md` and `./references` links resolve inside the plugin cache. Neither manifest pins `version`, so every commit is a new version for `/plugin update`.
 - `scripts/` owns zero-dependency Node helpers. For a helper skills run, `references/scripts/<name>.md` owns CLI and stdout contracts, installed with other references. Its § *Source contracts* subsection owns rationale and mirror notes. For maintainer-only helpers, that subsection owns all three. Sources carry no comments; change a contract at its owner in the same edit.
 - `tests/` owns verification. Its § *Source contracts* subsection explains suite commands and dependencies; § *Change routing* maps scripts to suites. `tests/dup-allow.json` records intentional prose mirrors, each entry explaining why its copy stays.
 - `.agents/tasks/` owns task artifacts and active work context.
