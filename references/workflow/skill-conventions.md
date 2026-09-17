@@ -61,6 +61,7 @@ Close both host mechanisms together: SKILL.md frontmatter `disable-model-invocat
 
 - `implement` — explicit invocation required by user preference.
 - `fix-findings` — explicit invocation required by user preference.
+- `explore` — explicit invocation required by user preference.
 - `update-pr-description` — replaces a live PR body.
 - `review-pr-loop` — posts selected reviews with no per-pass picker, and approves a clean PR or comments when the reviewer owns it.
 - `archive-task` — files a task into `Archive/`.
