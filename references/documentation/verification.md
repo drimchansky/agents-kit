@@ -1,6 +1,6 @@
 # Documentation Verification
 
-For documentation tasks run by `implement-task`, `implement`, `review-task`, `resume-task`, and `reconcile-task`. Apply the shared loop in `../workflow/execution-loop.md`.
+For documentation tasks run by `implement-task`, `implement`, `review-task`, `resume-task`, and `reconcile-task`, and for documentation fixes run by `fix-findings`. Apply the shared loop in `../workflow/execution-loop.md`.
 
 ## Documentation mapping to the shared verification tiers
 
@@ -24,7 +24,7 @@ Each check needs observable evidence: counts, opened sources, fetched pages, or 
 
 At each consumer-declared health boundary, run and record the link/cross-reference sweep across the integrated deliverable set. Include its dossiers and outbound drafts. This boundary supplements the per-unit whole-deliverable sweep.
 
-Run only mechanical documentation checks; no engineering typecheck, lint, test, stack detection, or build commands.
+Run only mechanical documentation checks for the documentation portion. A mixed `fix-findings` run applies engineering checks separately to changed code (`../engineering/verification.md` § *Two verification tiers*).
 
 Run `review-docs` at checkpoints and before publishing (`./rules.md` § *Before presenting a doc*). Treat coherence/register findings as judgment, separate from both verification tiers and integration assertions.
 

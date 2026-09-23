@@ -8,7 +8,7 @@ Use coordinator-managed scratch copies seeded from the immutable baseline. Repla
 
 Establish a green control before isolating (`./execution-recovery.md` § *Evidence lifecycle*):
 
-- **Failed health command:** use the baseline proven green by the comparison below. Test only failed commands over their resolved targets, excluding targets absent from each replayed state.
+- **Failed health check:** use the baseline proven green by the comparison below. Repeat only failed code commands or documentation sweeps over their resolved targets, excluding targets absent from each replayed state.
 - **Failed final-integrated outcome:** use the baseline plus that finding's change set and dependency closure. Run its full outcome tier on this control and every replayed group containing it. If the control fails, bucket that finding Fix failed without implicating another group.
 
 A group failing alone implicates that dependency group. Groups passing alone but failing together implicate the smallest supported interaction group. Revert the whole ambiguous group when evidence cannot distinguish its members; do not blame recency. Record whether the evidence implicates one fix, a dependency group, or an interaction group.
@@ -31,15 +31,15 @@ A choice still open at report time lists under **Awaiting decision** (`fix-findi
 
 ## Red boundary: comparison, disposition, recovery
 
-First rerun only failed commands against the immutable baseline. Name the targets each boundary invocation resolved on the shared tree; do not re-evaluate its selector against baseline sources (`./execution-recovery.md` § *Evidence lifecycle*). Exclude targets absent from the baseline. An empty target set makes that comparison inconclusive.
+First repeat only failed checks against the immutable baseline. Name the targets each boundary invocation resolved on the shared tree; do not re-evaluate its selector against baseline sources (`./execution-recovery.md` § *Evidence lifecycle*). For documentation sweeps, repeat the same link and cross-reference procedure on the resolved deliverables. Exclude targets absent from the baseline. An empty target set makes that comparison inconclusive.
 
-Run this comparison in a coordinator-managed scratch copy, with the dependencies and build state its commands need. Keep the shared tree in place. Reuse or link derived state only when no retained change set affects it; otherwise re-derive it from baseline sources. An unexecutable command or unreconstructable state makes the comparison inconclusive. The comparison is not another full health recipe.
+Run this comparison in a coordinator-managed scratch copy, with the dependencies and build state its checks need. Keep the shared tree in place. Reuse or link derived state only when no retained change set affects it; otherwise re-derive it from baseline sources. An unexecutable check or unreconstructable state makes the comparison inconclusive. The comparison is not another full health recipe.
 
-Apply the evidence per failed command; selective isolation requires a green control for that predicate:
+Apply the evidence per failed check; selective isolation requires a green control for that predicate:
 
-- **Matching baseline failure:** retain outcome-proved survivors as **Health uncertifiable**, naming the command, targets, and final-outcome evidence. State that the tree lacks a certifying boundary; direct the user to the skill's re-review next step.
-- **Inconclusive comparison:** restore the immutable baseline within `fix-findings` § *Content baseline and immediate outcomes*' attribution bound. Bucket every still-retained attempted fix Fix failed, naming why comparison could not run. Retain no changed-code survivor.
-- **Green baseline control:** use § *Dependency-safe recovery* with the failed commands. Rebuild baseline plus survivors, re-prove their final outcomes, and run a fresh complete health boundary referenced to the immutable pre-run baseline. Repeat if red. If recovery cannot converge this session, restore the baseline within the same attribution bound and bucket all remaining attempts Fix failed with the unresolved-health reason.
+- **Matching baseline failure:** retain outcome-proved survivors as **Health uncertifiable**, naming the check, targets, and final-outcome evidence. State that the tree lacks a certifying boundary; direct the user to the skill's re-review next step.
+- **Inconclusive comparison:** restore the immutable baseline within `fix-findings` § *Content baseline and immediate outcomes*' attribution bound. Bucket every still-retained attempted fix Fix failed, naming why comparison could not run. Retain no changed-work-product survivor.
+- **Green baseline control:** use § *Dependency-safe recovery* with the failed checks. Rebuild baseline plus survivors, re-prove their final outcomes, and run a fresh complete health boundary referenced to the immutable pre-run baseline. Repeat if red. If recovery cannot converge this session, restore the baseline within the same attribution bound and bucket all remaining attempts Fix failed with the unresolved-health reason.
 
 Collection rollback preserves Decided, Awaiting decision, Untouched, and earlier immediate-failure buckets. Only recovery earns another health boundary; the happy path keeps its single pass.
 

@@ -307,7 +307,7 @@ Semantic registries remain maintained for these reasons:
 - `references/workflow/execution-loop.md` introduction: keys the consumer sections of execution-bindings.md.
 - `references/workflow/domain-packs.md` § *The split*: classifies methodology-only spine skills rather than enumerating citations.
 - `references/engineering/verification.md` gate-runner parenthetical: domain resolution reaches consumers without a direct citation. Fix-findings, implement-task, and implement also cite it directly.
-- `references/documentation/verification.md` gate-runner parenthetical: likewise reached by domain resolution. Review-docs cites it to distinguish its judgment pass from mechanical tiers, not to run those tiers.
+- `references/documentation/verification.md` gate-runner parenthetical: reached by domain resolution and fix-findings' per-fix routing. Review-docs cites it to distinguish its judgment pass from mechanical tiers, not to run those tiers.
 - `references/engineering/exploration.md` loader gloss: refine-idea reaches the recipe through ideation.md's § *Ground in what exists*, without citing this path.
 - `references/engineering/execution.md` loader sentence: implement and fix-findings resolve the execution recipe through the shared loop.
 

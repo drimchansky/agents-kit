@@ -51,10 +51,10 @@ Integration assertions exercise the named end-to-end outcomes a consumer declare
 A boundary is mandatory when the consumer's cadence reaches it:
 
 1. Run the domain health recipe over the closure of the delta since the reference its `verification.md` defines, or the whole relevant surface where no reference applies or this boundary's reference carries no in-session green result.
-2. If any launched command fails, apply Stop-the-Line.
-3. If every launched command passes, record integrated-health evidence per the **Record** binding, to the shape the domain fixes (for code, `../engineering/verification.md` § *What a boundary records*). A command the domain licenses the boundary not to launch (for code, `../engineering/boundary-scope.md` § *Infra-bound commands*) is recorded rather than run and leaves the boundary green.
+2. If any required check fails, apply Stop-the-Line.
+3. If every required check passes, record integrated-health evidence per the **Record** binding, to the shape the domain fixes (for code, `../engineering/verification.md` § *What a boundary records*). A command the domain licenses the boundary not to launch (for code, `../engineering/boundary-scope.md` § *Infra-bound commands*) is recorded rather than run and leaves the boundary green.
 
-Never reuse a previous boundary after any code change, including a rollback: re-run the recipe on the state that remains. Across runs, reuse would need durable evidence naming the exact work-product identity the boundary evaluated; no consumer's **Record** binding persists one, so a later run reaching a completion claim always runs a fresh boundary.
+Never reuse a previous boundary after any work-product change, including a rollback: re-run the recipe on the state that remains. Across runs, reuse would need durable evidence naming the exact work-product identity the boundary evaluated; no consumer's **Record** binding persists one, so a later run reaching a completion claim always runs a fresh boundary.
 
 A parallel merge is not a health boundary. Each incorporated unit is proved and recorded first (`./executor-contract.md` § *Write-mode routing*); once all units and serial fallbacks have settled and every executor worktree is removed, the consumer's binding places the one boundary that covers the accumulated tree.
 

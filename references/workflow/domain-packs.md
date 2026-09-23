@@ -39,8 +39,9 @@ Default to `engineering` when that header is absent, preserving existing tasks. 
 ## Which skills resolve a domain vs. load a fixed pack
 
 - **Spine skills** resolve the task's Domain, except three that may lack a task folder. `explore` resolves only when relevant and may answer domain-neutrally. `implement` infers from the request. `decompose-task` infers from the source document and stamps each materialized part's seeded `CONTEXT.md`.
-- **Engineering-only skills** load `references/engineering/`: `commit`, `rebase`, `review-code`, `update-pr-description`, `publish-pr-review`, `triage-findings`, `verify-issue`, `fix-findings`, `review-code-triage-verify`, `triage-findings-verify`, and `review-pr-loop`. **Exception:** `commit` reads only the neutral core because it writes no code. Its SKILL.md states the applicable Git-mutation rule inline. Pack membership does not require every pack file.
+- **Engineering-only skills** load `references/engineering/`: `commit`, `rebase`, `review-code`, `update-pr-description`, `publish-pr-review`, `triage-findings`, `verify-issue`, `review-code-triage-verify`, `triage-findings-verify`, and `review-pr-loop`. **Exception:** `commit` reads only the neutral core because it writes no code. Its SKILL.md states the applicable Git-mutation rule inline. Pack membership does not require every pack file.
 - **Documentation-contributed skills** load `references/documentation/`: `review-docs` checks accuracy against code and whole-document quality; `prepare-diagram` produces Mermaid diagrams.
+- **Mixed-domain findings:** `fix-findings` applies the engineering pack, documentation pack, or both to each chosen fix according to its edit surface. A finding's anchor does not determine the domain.
 - **Pack-free skills** read the neutral core and resolve no pack themselves:
   - `archive-task`, `backlog-task`, and `maintain` operate on task envelopes and store artifacts. Read `task-layout.md`, its filing/role-file satellites, and `task-lifecycle.md`. Archive uses location and terminal-state rules; backlog uses location and unstarted-entry rules; maintain uses format and registry rules.
   - `prepare-ticket` writes a domain-neutral upstream artifact before a Domain marker exists; apply `ticket-format.md` and `task-layout.md`.
@@ -60,7 +61,7 @@ For a spine skill acting on a task:
 3. Layer `references/<domain>/rules.md` over the core.
 4. Load the corresponding pack file as each phase requires it.
 
-Fixed-pack skills skip resolution. `commit` and pack-free skills run only step 1; delegated skills retain their own loads as specified above.
+Fixed-pack skills skip resolution. `fix-findings` resolves per chosen fix without a task Domain header. `commit` and pack-free skills run only step 1; delegated skills retain their own loads as specified above.
 
 ## Missing-pack fallback
 

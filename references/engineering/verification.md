@@ -1,6 +1,6 @@
 # Engineering Verification
 
-What "verify" means when the domain is code: the recipe behind the neutral verification tiers, Stop-the-Line, health boundaries, and the acceptance gate in `./acceptance-gate.md` (`implement-task`, `implement`, `review-task`, `resume-task`, `reconcile-task`, `fix-findings`). `../workflow/execution-loop.md` owns *that* you verify and gate; this file owns *what to run*.
+What "verify" means when the domain is code: the recipe behind the neutral verification tiers, Stop-the-Line, health boundaries, and the acceptance gate in `./acceptance-gate.md` (`implement-task`, `implement`, `review-task`, `resume-task`, `reconcile-task`, and code fixes in `fix-findings`). `../workflow/execution-loop.md` owns *that* you verify and gate; this file owns *what to run*.
 
 ## Two verification tiers
 

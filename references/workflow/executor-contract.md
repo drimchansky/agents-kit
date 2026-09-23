@@ -10,7 +10,7 @@ The coordinator supplies:
 - Exact edit paths, or the unit's stated scope.
 - Context unavailable to the executor, with absolute paths. For reachable files, give paths and non-obvious facts; otherwise provide verbatim content.
 - Relevant `../../CORE_RULES.md` § *Ask Before Assuming* text verbatim, plus prior user decisions and agreed boundaries.
-- Domain guidance: universal per-unit sections verbatim, including code-style Comments for code; overlays/triggered pack files as absolute paths, or explicit `none`.
+- Domain guidance: universal per-unit sections verbatim, including code-style Comments for code and documentation's link sweep for documents; overlays/triggered pack files as absolute paths, or explicit `none`.
 - Per-unit checks as commands/procedures beside the criterion (`./execution-loop.md` § *Two verification tiers*), or `none`. Code units check touched comments against the packet and format touched files (`../engineering/verification.md` § *Two verification tiers*).
 - One absolute effective root and its placement (`./executor-routing.md` § *Write-mode engine registry*).
 - Consumer label selecting a binding below. Supply all context; interpreting the packet requires no skill/consumer-definition fetch.
@@ -42,7 +42,7 @@ Report each unit in packet order; label unreached units `not started`. Include e
 - `Commands run`: every command/tool action materially reading, changing, or verifying the unit.
 - `Changes`: each changed `file:line` and its change.
 - `Comments added or edited`: each comment and its non-obvious invariant.
-- `Verification`: each criterion/check's exact command or procedure, unmodified output, exit status, and absolute execution root. All four are required evidence.
+- `Verification`: each criterion/check's exact command or procedure, raw output or observable results, exit status or pass/fail result, and absolute execution root. All four are required evidence.
 - `Sources consulted`: external sources, linked where available.
 - `Blockers or attempted scope escapes`: denials, missing capabilities, host failures, outside edits considered, and pending impactful choices.
   For choices, give researched viable options, material trade-offs, a reasoned recommendation, and the held dependent work.
@@ -69,7 +69,7 @@ Registered `./executor-routing.md` consumers delegate unless an announced, recor
 
 **Placement decides whose proof counts.** Shared-tree native units, serial or segment, supply their outcome proof when all four check fields exist, roots match, and the surface check passes. Accept without rerunning except in the closed set below. Worktree proof predates incorporation and requires full integrated re-proof at parallel-batch gate 3.
 
-**Re-prove shared-tree outcomes only when:** a check lacks any required field; its exit status contradicts passing-looking output; its root differs; the surface check is unavailable; or this is the run's first delegated unit. Run the full outcome tier (`./execution-loop.md` § *Two verification tiers*) and record that proof instead. A first delegated unit in a worktree pays this calibration through its integrated re-proof; the subsequent first shared-tree unit needs no extra calibration. Invisible changes have not landed.
+**Re-prove shared-tree outcomes only when:** a check lacks any required field; its reported status contradicts its output or observations; its root differs; the surface check is unavailable; or this is the run's first delegated unit. Run the full outcome tier (`./execution-loop.md` § *Two verification tiers*) and record that proof instead. A first delegated unit in a worktree pays this calibration through its integrated re-proof; the subsequent first shared-tree unit needs no extra calibration. Invisible changes have not landed.
 
 **Surface check.** Use declared paths, else resolve the stated scope to paths before launch; no resolvable paths makes the check unavailable. Capture the shared tree before launch, once per segment:
 
@@ -109,8 +109,8 @@ One session-framed item; no task folder exists.
 One Confirmed finding's immediate working-tree fix.
 
 - **Unit:** the fix, verified by the reported problem no longer reproducing. § *Write-mode routing* decides immediate proof ownership. The coordinator rechecks all retained findings on the final tree and owns retained-collection health.
-- **Packet:** finding verbatim with source severity/file:line, root cause, chosen fix, expected surface from its blast radius, processing order, and dependencies. Domain is always engineering.
-- **Edit surface:** working-tree code within the packet's surface. No staging, commits, other Git mutation, or source replies/resolution/push. The coordinator's chat is the sole record.
+- **Packet:** finding verbatim with source severity/file:line, root cause, chosen fix, expected surface from its blast radius, processing order, and dependencies. Supply engineering, documentation, or both domain recipes according to the chosen edit surface, not the finding anchor.
+- **Edit surface:** selected working-tree code and documentation within the packet's surface. No staging, commits, other Git mutation, findings-report edits, source replies/resolution/push, or live-page writes. The coordinator's chat is the sole record.
 - **Outside the delegation surface:** the coordinator applies ask-routed fixes from its approved diff inline. Withdrawn and Inconclusive findings receive no edits.
 - **Fallback:** serial re-execution for batch fixes, inline for serial delegates. Report failed executors, discard their worktrees, and re-execute on the integrated tree. Recovery baselines, captures, restoration, ordered changes, and rebuilds follow `./fix-findings-recovery.md` and fix-findings § *Content baseline and immediate outcomes*. Exclude Git reset, checkout, and reverse-patch recovery. Independent survivors continue after one failure.
 - **Merge order:** severity within dependency order. Ordered changes document recovery, not Git staging or commits.
