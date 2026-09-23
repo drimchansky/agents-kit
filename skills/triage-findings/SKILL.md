@@ -30,6 +30,8 @@ Fetch all three comment sources:
 - **Review threads:** `node <kit-root>/scripts/pr-comments.ts <pr-number-or-url>`, with `<kit-root>` per `./references/workflow/task-store.md` § *Resolving `<kit-root>`* <!-- cold -->. Read its JSON per `./references/scripts/pr-comments.md`. Resolution status has no other source: if the kit root, the script, `node`, or `gh` is unavailable, say so and stop. `paginationComplete: false` means a prefix of the review: report the gap under **Inaccessible context**, never as a clean fetch.
 - **Review summary bodies** and **general PR comments:** `gh pr view <target> --json reviews,comments`. They carry no resolution state; treat a non-empty body as **open** unless a later comment clearly supersedes it.
 
+In PR mode with one PR selected, label the terminal session for that PR from `pullRequest.url` per `./references/workflow/terminal-session.md`.
+
 **Session findings.** Take each finding as the review emitted it: severity, `file:line`, recommendation. Do not re-review or re-rank.
 
 **File or pasted text.** Parse the findings-shaped list, preserving wording and any severity prefix or marker. With no discernible findings, say so and stop.

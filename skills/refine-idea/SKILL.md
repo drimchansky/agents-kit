@@ -23,6 +23,8 @@ Turn a raw idea into a sharp concept worth building: divergent exploration, conv
 
 The slug is 2–5 lowercase kebab-case words capturing the gist (`weekly-digest-email`, `replace-cache-invalidation`). Derive it; do not ask. Create the folder when missing. If a `CONTEXT.md` already exists there, read it first and ask whether to overwrite or pick a different slug.
 
+Label the terminal session for the resolved folder per `./references/workflow/terminal-session.md`.
+
 `CONTEXT.md` holds the chosen direction, its assumptions, the scope decisions made, and the external references the user adds later. Refine through conversation, then write the final version once.
 
 **When the folder holds a `ticket.md`**, read it first as the primary input. `## Problem Statement` cites `./ticket.md` rather than restating it, and `CONTEXT.md` adds the grounding this refinement produces (`./references/workflow/one-home.md` § *One home per fact*).

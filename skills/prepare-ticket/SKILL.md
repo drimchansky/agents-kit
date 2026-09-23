@@ -22,7 +22,7 @@ If scope, done, or an essential constraint prevents testable criteria, ask up to
 
 ### 3. Destination
 
-- **Task folder/slug or task-start intent:** resolve-or-create under `./references/workflow/task-layout.md` and destination precedence under `./references/workflow/task-destinations.md`. Use the supplied folder/slug or derive a 2–5-word kebab-case slug. Write its role-named ticket.md. Read an existing ticket and ask whether to update or choose another slug.
+- **Task folder/slug or task-start intent:** resolve-or-create under `./references/workflow/task-layout.md` and destination precedence under `./references/workflow/task-destinations.md`. Use the supplied folder/slug or derive a 2–5-word kebab-case slug. Write its role-named ticket.md. Read an existing ticket and ask whether to update or choose another slug. Label the terminal session for the resolved folder per `./references/workflow/terminal-session.md`.
 - **Standalone target file:** use that path; if it exists, read it and confirm update versus another path.
 - **Neither path nor task intent:** suggest `<kebab-case-title>.md` or task seeding, and confirm before writing.
 

@@ -27,6 +27,8 @@ Quote `observations.md` with its dates as cached observations, never live state.
 
 Use **resolve-current-or-ask** in `./references/workflow/task-layout.md` § *Discovery rules for skills*. Accept a full `plan.md` path directly; ask on ambiguous resolution.
 
+Label the terminal session for the resolved folder per `./references/workflow/terminal-session.md`.
+
 For a folder under Backlog, offer activation using `./references/workflow/implement-task-edges.md` § *Activating a backlogged task*. Only explicit confirmation permits the whole-folder move. <!-- cold -->
 
 ### 2. Load Artifacts

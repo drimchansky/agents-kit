@@ -35,6 +35,8 @@ Establish ground truth per `./references/workflow/execution-loop.md` § *Ground 
 
 **Resolve the folder** per the **resolve-current-or-ask** rules in `./references/workflow/task-layout.md`. A folder under `Backlog/` takes the activation offer in `./references/workflow/implement-task-edges.md` § *Activating a backlogged task*. <!-- cold -->
 
+Label the terminal session for the resolved folder per `./references/workflow/terminal-session.md`.
+
 **Then load it** in the order `./references/workflow/task-layout.md` § *Reading a resolved folder* fixes:
 
 - The report's exit 1 is a folder with no readable `plan.md`: say so and suggest `plan-task`.

@@ -13,12 +13,13 @@ Turn one **approved** source (an ADR, an accepted RFC, an epic-scale ask) into a
 
 Phase 1 writes nothing. Phase 2's write surface is exactly the confirmed part folders, each new `<parent>/<NN->slug/` with its `ticket.md` and seeded `CONTEXT.md`. No source-doc edits, no writes into existing task folders, no Jira writes (every mapped ticket body is paste-ready for the user), no git mutation.
 
-Phase 2 runs `../prepare-ticket/SKILL.md`'s full protocol per part with four overrides:
+Phase 2 runs `../prepare-ticket/SKILL.md`'s full protocol per part with five overrides:
 
 - **Core Rules blocks**: this skill's block covers the pipeline; the inner AGENTS.md read does not repeat.
 - **Clarifying questions**: `prepare-ticket`'s per-ticket round folds into Phase 1's single batched confirmation. A gap discovered only at drafting time is asked then, not guessed.
 - **Next pointers**: the inner skill's handoff suggestions are dropped; this skill's Output owns **Next**.
 - **Destination resolution**: the part folder Phase 2 step 1 just created *is* the task folder. Write `ticket.md` into it directly, bypassing `task-destinations.md`'s *Destination paths* inference, which would nest a new slug inside the empty directory.
+- **Terminal label**: skip `prepare-ticket`'s session label, which would relabel the session once per part.
 
 ## When to Use
 

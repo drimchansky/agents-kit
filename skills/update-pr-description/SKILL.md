@@ -17,6 +17,7 @@ Applies the PR body drafted by `/review-code -d`. Invocation authorizes replacin
 - Recover this conversation's most recent body-only fenced description from `/review-code -d` or `/review-code-triage-verify -d`. If absent, request `/review-code -d` followed by this skill. Do not draft one here.
 - If any `<…>` placeholder remains, stop for the user's value. Do not delete it, invent it, infer it from the branch, or publish it.
 - Find an open PR by the draft's own Reviewed head through `./references/workflow/pr-lookup.md`, taking its stop outcome. Request `baseRefName` alongside its standard fields. Do not use the current branch or an intervening review's head. A head absent from GitHub requires a push and rerun; an existing head without an exact open PR requires fresh `/review-code -d`.
+- Label the terminal session for the selected PR per `./references/workflow/terminal-session.md`.
 - Recompute `git merge-base <baseRefName> <head-sha>`, fetching the declared base first if potentially stale. Require equality with the draft's Reviewed merge-base. On mismatch, request fresh `/review-code -d`, or correction of a wrongly retargeted PR before that review.
 
 ## Process

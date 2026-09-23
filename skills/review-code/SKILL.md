@@ -52,6 +52,8 @@ The effective root is the tree the object lives on, and every git command in thi
 - If a PR exists: read its title, description, and review threads, and extract every URL from them. The URLs travel to the reviewer, which fetches them; the session fetches them only on the inline fallback.
 - With no PR, proceed on the commits and the user's context. A path set has neither: its context is whatever the user gave.
 
+Label the terminal session for the reviewed object per `./references/workflow/terminal-session.md`, taking a PR from its `url` where Setup gathered PR context and reading a `branch` object's name at the effective root.
+
 ## Review pass
 
 **Launch.** Unless the user explicitly asked for an in-session pass (**Inline fallback**), launch the native `reviewer` adapter with the complete Setup object under `./references/workflow/reviewer-contract.md` § *The launch*. The session puts in the packet:

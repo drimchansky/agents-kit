@@ -19,6 +19,8 @@ Validate a plan against current reality and report feasibility, gaps, and questi
 
 Resolve the folder using **resolve-or-ask** in `./references/workflow/task-layout.md`; accept a full `plan.md` path directly.
 
+Label the terminal session for the resolved folder per `./references/workflow/terminal-session.md`.
+
 Read `plan.md`, `goals.md`, and `CONTEXT.md` in full, plus `ticket.md` and `result.md` when present. The plan is the review subject. This whole-file read overrides `./references/workflow/task-layout.md` § *Reading a resolved folder*'s read order.
 
 Before assessment, read applicable `GROUP_CONTEXT.md` files from disk, root-to-task, using `./references/workflow/task-store.md` § *Shared group context*. Resolve the chain from the folder's current location on every run. Outside registered roots, no group context applies.
