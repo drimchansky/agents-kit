@@ -1,6 +1,6 @@
 ---
 name: review-pr-loop
-description: "Use when asked to watch a PR and keep reviewing it until it is clean: reviews the PR at its current head against its CI results, publishes the Critical/Major findings without asking each pass, then waits for the next push to settle and reviews again. A pass with no Critical or Major findings and passing checks approves the PR from your account, or comments on your own PR. Adds a worktree on the PR branch when no checkout holds it, and removes it after a clean ending. Claude Code only."
+description: "Use when asked to watch a PR and keep reviewing it until it is clean: reviews the PR at its current head against its CI results, publishes the Critical/Major findings without asking each pass, then waits for the next push to settle and reviews again. A pass with no Critical or Major findings and passing checks approves the PR from your account, or comments on your own PR. Adds a worktree on the PR branch when no checkout holds it, and removes it after a clean ending."
 argument-hint: '[PR number or URL; defaults to the PR of the checked-out branch]'
 disable-model-invocation: true
 ---
@@ -18,7 +18,7 @@ The PR's checks stand in for the project's verification scripts, so no pass runs
 
 ## Host
 
-The watches need a background shell, which on Claude Code is `run_in_background` (`./references/workflow/delegated-waiting.md` § *Per-host primitives*). Codex establishes no such surface: stop there naming `/review-code` then `/publish-pr-review` as the manual pass.
+Launch and collect the check poll and watch through `./references/workflow/delegated-waiting.md` § *Shell commands*. If the host's named shell tools are unavailable, stop under § *Output* and name the missing capability.
 
 ## Setup
 
@@ -73,7 +73,7 @@ Minor findings and improvements are never posted and never hold the loop open. A
 
 ## Check poll
 
-Write this program to the session scratch directory and start it with `run_in_background`, substituting the resolved number, host, and repository. Wait on its completion signal (`./references/workflow/delegated-waiting.md` § *How to wait*). Remove the scratch file once collected. The poll settles only when the `--json bucket` read reports no check in bucket `pending`. One failed check beside running ones therefore keeps it polling. A read returning no JSON settles it too, leaving a PR with no checks and a failed `gh` call to step 3.
+Write this program to a temporary scratch file, substituting the resolved number, host, and repository. Launch it as `sh <scratch-file>` and collect it in the selected checkout (`./references/workflow/delegated-waiting.md` § *Shell commands*). Remove the scratch file once collected. A nonzero exit or missing `settled`/`pending` outcome stops the loop. The poll settles only when the `--json bucket` read reports no check in bucket `pending`. One failed check beside running ones therefore keeps it polling. A read returning no JSON settles it too, leaving a PR with no checks and a failed `gh` call to step 3.
 
 ```sh
 export GH_HOST=<host> GH_REPO=<host>/<owner>/<repo>
@@ -90,7 +90,7 @@ It polls every minute and gives up after 30 minutes, which a check awaiting manu
 
 ## The watch
 
-Write this program to the session scratch directory and start it with `run_in_background`, substituting the resolved number, host, repository, and the head the pass reviewed. Wait on its completion signal, running nothing against the PR while it is in flight, and report one progress line per check-in. Remove the scratch file once collected.
+Write this program to a temporary scratch file, substituting the resolved number, host, repository, and the head the pass reviewed. Launch it as `sh <scratch-file>` and collect it in the selected checkout (`./references/workflow/delegated-waiting.md` § *Shell commands*). Run nothing against the PR while it is in flight, and report one progress line per check-in. Remove the scratch file once collected. A nonzero exit or missing `updated:`/`closed:`/`error:`/`stalled:` outcome stops the loop.
 
 ```sh
 export GH_HOST=<host> GH_REPO=<host>/<owner>/<repo>
@@ -132,6 +132,7 @@ The loop ends at the first of these, and nothing else:
 - a dedupe read with inaccessible context and no review submitted
 - the completed 10th pass, whether it submitted a review, suppressed duplicates, or observed a moved head
 - the watch reporting `closed:`, `error:`, or `stalled:`
+- the check poll or watch failing to launch, collect, or return a valid outcome
 - a Sync stop: wrong branch, uncommitted work, a failed fetch, a refused fast-forward, or a head that still differs from the re-read `headRefOid`
 - a selected-PR read failing or reporting a non-OPEN state during Sync or CI
 - a `review-code` or `publish-pr-review` stop other than its named head-moved outcome

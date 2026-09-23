@@ -9,6 +9,21 @@ import { fileURLToPath } from "node:url";
 const TESTS_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_DIR = resolve(TESTS_DIR, "..");
 const SKILL = join(REPO_DIR, "skills", "review-pr-loop", "SKILL.md");
+const WAITING = join(REPO_DIR, "references", "workflow", "delegated-waiting.md");
+
+test("both hosts have a shell collection path for the check poll and watch", () => {
+  const skill = readFileSync(SKILL, "utf8");
+  const waiting = readFileSync(WAITING, "utf8");
+  const shell = waiting.split("## Shell commands\n")[1]?.split("\n## ")[0];
+  assert.ok(shell, "shared shell launch contract exists");
+  assert.match(shell, /Claude Code[\s\S]*run_in_background/);
+  assert.match(shell, /Codex[\s\S]*exec_command[\s\S]*session_id[\s\S]*write_stdin[\s\S]*exit_code/);
+  for (const heading of ["Check poll", "The watch"]) {
+    const section = skill.split(`## ${heading}\n`)[1]?.split("\n## ")[0];
+    assert.match(section ?? "", /delegated-waiting\.md[^\n]*Shell commands/, heading);
+  }
+  assert.doesNotMatch(skill, /Claude Code only|Codex establishes no such surface/);
+});
 
 function watchProgram(): string {
   const source = readFileSync(SKILL, "utf8");

@@ -1,10 +1,10 @@
 # Delegated Waiting
 
-How an agent waits for asynchronous work it launched and has not yet collected: delegated agents, and backgrounded shell commands where the host names a surface for them. What a wait's outcome means stays with the launching contract.
+How an agent collects asynchronous work it launched: delegated agents and shell commands. What an outcome means stays with the launching contract.
 
 ## How to wait
 
-**Wait on the harness's own completion signal.** Every launch surface below reports its own completion. Carry on with whatever does not depend on the launched result and let the signal be the collection point. When nothing independent is left, stop and let the signal resume the work; that pause is the wait.
+**Use the launch surface's completion mechanism.** Carry on with independent work while a launch runs. When none remains, receive its notification or collect its command session through the host primitive below.
 
 **Report where each launch stands.** At every check-in while something is outstanding, give one line per launch: launched, still running, collected. An unreported wait cannot be called off.
 
@@ -18,5 +18,12 @@ How an agent waits for asynchronous work it launched and has not yet collected: 
 
 ## Per-host primitives
 
-- **Claude Code**: a subagent launched through the `Agent` tool runs in the background and its completion arrives as a notification; a `Bash` command with `run_in_background` does the same on exit. For a condition, use a `run_in_background` command that exits once the condition holds, or `Monitor` where each occurrence is worth a notification.
-- **Codex**: a subagent on the multi-agent surface notifies on completion the same way; `wait_agent` additionally blocks for a bounded window when the result is on the critical path. It takes `timeout_ms` and returns empty on expiry; an empty return is not a finished agent, so re-enter the call or leave it to the notification. Codex's backgrounded-shell surface is not established here.
+- **Claude Code**: a subagent launched through the `Agent` tool runs in the background and notifies on completion. For a condition, use `Monitor` where each occurrence is worth a notification.
+- **Codex**: a subagent on the multi-agent surface notifies on completion; `wait_agent` additionally blocks for a bounded window when the result is on the critical path. It takes `timeout_ms` and returns empty on expiry; an empty return is not a finished agent, so re-enter the call or leave it to the notification.
+
+## Shell commands
+
+Run each command in the working root its launching contract names. Collect its output and exit status before interpreting its outcome.
+
+- **Claude Code**: launch with `Bash` and `run_in_background`. Its completion notification supplies the exit status and names the output file. Read that file before interpreting the outcome. For a condition, run a background command that exits when the condition holds.
+- **Codex**: launch with `exec_command({cmd:<command>, workdir:<root>, yield_time_ms:1000})`. An immediate `exit_code` completes the command. When it returns `session_id`, call `write_stdin({session_id, chars:"", yield_time_ms:300000})` on that same session until an `exit_code` arrives. Preserve output from each response. Empty output while `session_id` persists means it is still running; do not relaunch or end the turn expecting a notification.
