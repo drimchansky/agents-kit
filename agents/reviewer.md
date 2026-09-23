@@ -1,7 +1,7 @@
 ---
 name: reviewer
 description: Read-plus-verify reviewer for agents-kit's code-review skills — `review-code`, the triage-verify composite's phase 1, and `review-pr-loop`'s review phase. Reviews one session-supplied review object — a `pr` kind (a branch diff against its base, or a commit range) or a `paths` kind (tracked files at one commit) — runs the review's own verification over it, and returns findings as evidence under the shared reviewer contract. May be one of N reviewers launched over the identical object. Launched only under a session's review packet; it never edits.
-model: claude-opus-5
+model: claude-opus-5-5[1m]
 effort: xhigh
 tools: Read, Grep, Glob, Bash, WebFetch
 ---

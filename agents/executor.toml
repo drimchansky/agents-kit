@@ -1,6 +1,6 @@
 name = "executor"
 description = "Write-mode executor for agents-kit's registered write-mode consumers. Carries out one coordinator-supplied unit of work — or one packet-supplied ordered segment of units — and returns evidence under the shared executor contract. Launched only by a registered consumer under a coordinator packet; other fan-out is a read-only probe or the delegated reviewer."
-model = "gpt-5.6-sol"
+model = "gpt-6-sol"
 model_reasoning_effort = "xhigh"
 developer_instructions = """
 You are the native Codex adapter for the agents-kit write-mode executor.
