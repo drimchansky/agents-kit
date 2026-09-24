@@ -5,7 +5,7 @@ A set of skills, agent definitions, and a task workflow for Claude Code and Code
 - **Two hosts, one install.** `node setup.ts` copies the skills, references, core rules, and native agent definitions into `~/.claude` and `~/.codex`. A rerun reclaims only what the kit installed and leaves your own skills untouched.
 - **Zero dependencies.** Plain Node 23.6 or newer running `.ts` directly under type stripping. No `package.json`, no build step, no `node_modules`.
 - **Persistent task folders.** A task is `.agents/tasks/<slug>/` holding `ticket.md`, `CONTEXT.md`, `goals.md`, `plan.md`, `result.md`. Plan it in one session, implement it in the next, resume or reconcile it from either host.
-- **34 skills** covering the whole loop: idea, ticket, plan, implement, review, triage, fix, commit, rebase, PR, plus daily statuses, proofreading, translation, diagrams, and Notion pages.
+- **35 skills** covering the whole loop: idea, ticket, plan, implement, review, triage, fix, commit, rebase, PR, plus daily statuses, release announcements, proofreading, translation, diagrams, and Notion pages.
 - **Domain packs.** Methodology is domain-neutral; engineering and documentation rules load as packs from `references/<domain>/`, and a new domain is a sibling directory, not a skill rewrite.
 
 ---
@@ -132,6 +132,7 @@ Each skill is `skills/<name>/SKILL.md`, invoked as `/<name>` in Claude Code and 
 **Writing**
 
 - `prepare-daily-status` — prepare or refresh a daily update from Slack, Jira, Granola, GitHub, Notion, Calendar, and an incident tracker; sends or edits Slack messages only on request.
+- `prepare-release-announcement` — draft a production release announcement from task folders, Jira tickets, or release context; posts or edits Slack messages only on request.
 - `proofread` — check a message or document; `-f` also verifies facts.
 - `translate` — translate text between languages.
 - `review-docs` — audit existing documentation against the codebase.
@@ -164,7 +165,7 @@ Two native agent definitions ship with the kit, installed as `agents/*.md` for C
 - `references/templates/` — copy-ready shapes of the five task files.
 - `references/scripts/` — the CLI and stdout contract of every helper a skill runs at run time.
 
-Inside an installed skill, `./AGENTS.md` links to `CORE_RULES.md` and `./references` links to the installed `references/`, so a skill reads the same files wherever it runs. The five lean utilities, `create-notion-page`, `prepare-daily-status`, `proofread`, `review-note`, and `translate`, load only the core's Ask Before Assuming section. Four ship the `./AGENTS.md` link alone; `proofread` also links `./references` for the shared user-facing message contract.
+Inside an installed skill, `./AGENTS.md` links to `CORE_RULES.md` and `./references` links to the installed `references/`, so a skill reads the same files wherever it runs. The six lean utilities, `create-notion-page`, `prepare-daily-status`, `prepare-release-announcement`, `proofread`, `review-note`, and `translate`, load only the core's Ask Before Assuming section. Four ship the `./AGENTS.md` link alone. `proofread` also links `./references` for the shared user-facing message contract, and `prepare-release-announcement` for task discovery and group context.
 
 ---
 

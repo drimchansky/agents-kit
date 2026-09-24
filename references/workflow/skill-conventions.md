@@ -77,6 +77,7 @@ Deliberate non-members:
 - `create-notion-page` drafts and creates a parentless page in the user's Private section, visible only to them and cheap to delete. It shares nothing and changes no permissions.
 - `commit` and `rebase` use the explicit-request authorization below.
 - `prepare-daily-status` drafts in chat; an explicit send or update request authorizes its Slack write. Selecting the skill does not authorize delivery.
+- `prepare-release-announcement` prepares chat copy and requires a user request for Slack delivery or revision. Its drafting capability remains discoverable.
 
 Other skills produce local work or chat output, or confirm their own write, as `decompose-task` does.
 
