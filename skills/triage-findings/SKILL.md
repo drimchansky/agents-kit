@@ -11,7 +11,7 @@ argument-hint: '[source: PR number/URL, file path, or pasted findings; defaults 
 
 Gather findings from a source, filter to the ones still unaddressed, cluster them by concern, and display the batches.
 
-This skill only reads and displays: no code edits, no `gh pr comment` or `gh pr review`, no thread resolution, no edit to the findings file. `/fix-findings` takes these batches as a source.
+This skill only reads and displays: no code edits, no `gh pr comment` or `gh pr review`, no thread resolution, no edit to the findings file. `/fix-findings` takes these batches as a source and commits each one.
 
 ## Sources
 

@@ -151,4 +151,4 @@ One final response when the loop ends.
 - **Findings:** on any ending other than clean, render the last non-discarded review's original Critical and Major entries in `review-code`'s Findings format. Dedupe never removes them from this report. Omit on a clean ending, before any review completed, or when the ending discarded a stale head's Findings.
 - **Inaccessible context:** failed or incomplete selected-PR, CI, and dedupe reads, with the reason. Omit when none.
 
-**Next:** `/fix-findings` addresses what was posted, then `/commit` and a push; rerun `/review-pr-loop` to keep watching. `/review-code` alone gives a fresh pass that runs the local scripts and posts nothing. `git worktree remove <path>` removes a worktree the loop left in place.
+**Next:** `/fix-findings` addresses what was posted and commits it, then push; rerun `/review-pr-loop` to keep watching. `/review-code` alone gives a fresh pass that runs the local scripts and posts nothing. `git worktree remove <path>` removes a worktree the loop left in place.

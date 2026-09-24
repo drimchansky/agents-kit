@@ -49,4 +49,4 @@ Lists, not tables.
 - **Batches** and **Verified:** per `./references/workflow/verify-pipeline.md` § *Output: Batches and the Verified line*, `Batches` taking a short quote as its no-anchor locator.
 - **Inaccessible context** (only if any): sources or links triage could not fetch, with the reason.
 
-**Next:** `/implement-task` or `/fix-findings` applies the confirmed fixes, `/commit` commits them, and `/review-code` reviews them before merge.
+**Next:** `/fix-findings` applies the confirmed fixes and commits each batch; `/implement-task` applies them through a task plan, then `/commit`. `/review-code` reviews them before merge.

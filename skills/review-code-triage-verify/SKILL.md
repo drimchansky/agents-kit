@@ -60,4 +60,4 @@ Lists, not tables.
 - **Reviewed:** the provenance line exactly as `review-code` specs it, in its kind's form; `/publish-pr-review` reads it to anchor and to pick its currency-check base.
 - **Review pass** and **Divergence:** forwarded from the review phase as `review-code` specs each.
 
-**Next:** on a `pr` object, `/publish-pr-review` posts the tier you select (**Findings**, **Minor findings**, or **Improvements**), or a short approval when all three are empty; with `-d`, `/update-pr-description` applies the drafted description. A `paths` object sits on no PR. Either way, `/fix-findings` or `/implement-task` addresses the batches, then `/commit`.
+**Next:** on a `pr` object, `/publish-pr-review` posts the tier you select (**Findings**, **Minor findings**, or **Improvements**), or a short approval when all three are empty; with `-d`, `/update-pr-description` applies the drafted description. A `paths` object sits on no PR. Either way, `/fix-findings` addresses the batches and commits each one; `/implement-task` addresses them through a task plan, then `/commit`.

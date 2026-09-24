@@ -13,7 +13,7 @@ This skill does not load the engineering pack; its own check gate below governs 
 
 Draft the message for what is already staged, scan that change against the guard below, verify it, then commit. A user's request to commit, by `/commit` or in natural language, is the explicit permission `references/engineering/rules.md` requires. Model selection of this skill alone is not. This skill stages nothing, pushes nothing, and creates no branches. Ordinary mode creates a new commit from the staged change; amend mode replaces only the captured latest commit. Tool permissions never widen those limits.
 
-When `implement-task` runs this skill for a checkpoint commit (`./references/workflow/task-delivery.md` § *Checkpoint commits*), the user's full-plan request is that permission, and the mode is always ordinary. <!-- cold -->
+When `implement-task` runs this skill for a checkpoint commit (`./references/workflow/task-delivery.md` § *Checkpoint commits*), the user's full-plan request is that permission, and the mode is always ordinary. When `fix-findings` runs it for a batch commit (`../fix-findings/SKILL.md` § *Batch commits*), the user's typed invocation is that permission, and the mode is likewise always ordinary. <!-- cold -->
 
 ## Amend mode
 
@@ -70,7 +70,7 @@ Read the preconditions off this snapshot; amend mode rebuilds it.
 
 Select the narrowest scope that is demonstrably sound for the staged paths, including dependent packages and related tests; for an amendment, derive it from the complete prospective replacement. Treat both sides of a rename and the former path of a deletion as affected. Widen to the package or workspace when the runner cannot compute dependents, and to the whole configured surface when a manifest, lockfile, tool configuration, or other shared input changes. The checks must evaluate the index contents behind the snapshot digest: when a runner would consume differing unstaged or untracked bytes, use a safe isolated view of the index if one is available. Never stage, stash, reset, or overwrite the user's work to make that view; if the staged bytes cannot be checked without doing so, report the mismatch and stop. Record each command, its scope, and its result for step 4. Only after every applicable check passes, continue to step 3.
 
-A caller that names an integrated-health boundary which passed on this tree (a checkpoint commit, `./references/workflow/task-delivery.md` § *Checkpoint commits*) may stand it in for the gate only when `git status --porcelain` lists staged entries alone, so the verified tree is the index; record that reuse in step 4. Otherwise run the gate. <!-- cold -->
+A caller that names an integrated-health boundary which passed on this tree (a checkpoint commit, `./references/workflow/task-delivery.md` § *Checkpoint commits*, or a `fix-findings` batch commit, `../fix-findings/SKILL.md` § *Batch commits*) may stand it in for the gate only when `git status --porcelain` lists staged entries alone, so the verified tree is the index; record that reuse in step 4. Otherwise run the gate. <!-- cold -->
 
 3. **Select device access, re-check the index, then commit**, in three sub-steps. The re-check in 3b runs immediately before the commit and before any hand-over.
 

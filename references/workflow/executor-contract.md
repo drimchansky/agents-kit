@@ -108,9 +108,9 @@ One session-framed item; no task folder exists.
 
 One Confirmed finding's immediate working-tree fix.
 
-- **Unit:** the fix, verified by the reported problem no longer reproducing. § *Write-mode routing* decides immediate proof ownership. The coordinator rechecks all retained findings on the final tree and owns retained-collection health.
+- **Unit:** the fix, verified by the reported problem no longer reproducing. § *Write-mode routing* decides immediate proof ownership. The coordinator rechecks every finding retained so far on each concern batch's final tree and owns that batch's health and commit.
 - **Packet:** finding verbatim with source severity/file:line, root cause, chosen fix, expected surface from its blast radius, processing order, and dependencies. Supply engineering, documentation, or both domain recipes according to the chosen edit surface, not the finding anchor.
-- **Edit surface:** selected working-tree code and documentation within the packet's surface. No staging, commits, other Git mutation, findings-report edits, source replies/resolution/push, or live-page writes. The coordinator's chat is the sole record.
+- **Edit surface:** selected working-tree code and documentation within the packet's surface. No staging, commits, other Git mutation, findings-report edits, source replies/resolution/push, or live-page writes. The coordinator's chat report and each concern batch's commit are the record.
 - **Outside the delegation surface:** the coordinator applies ask-routed fixes from its approved diff inline. Withdrawn and Inconclusive findings receive no edits.
 - **Fallback:** serial re-execution for batch fixes, inline for serial delegates. Report failed executors, discard their worktrees, and re-execute on the integrated tree. Recovery baselines, captures, restoration, ordered changes, and rebuilds follow `./fix-findings-recovery.md` and fix-findings § *Content baseline and immediate outcomes*. Exclude Git reset, checkout, and reverse-patch recovery. Independent survivors continue after one failure.
-- **Merge order:** severity within dependency order. Ordered changes document recovery, not Git staging or commits.
+- **Merge order:** concern-batch order, then severity within dependency order. Ordered changes document recovery and bound what each batch commit stages.

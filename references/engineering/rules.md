@@ -6,7 +6,7 @@ The engineering domain pack's rules overlay, loaded on top of `../../CORE_RULES.
 
 - Don't introduce new dependencies without justification
 - Don't remove or rename public APIs without checking all consumers
-- Don't commit, stage changes, or otherwise mutate Git state unless explicitly asked; `../workflow/task-delivery.md` owns the task lifecycle sanction and the checkpoint-commit sanction an explicit engineering full-plan request grants
+- Don't commit, stage changes, or otherwise mutate Git state unless explicitly asked; `../workflow/task-delivery.md` owns the task lifecycle sanction and the checkpoint-commit sanction an explicit engineering full-plan request grants; `skills/fix-findings/SKILL.md` § *Batch commits* owns the batch-commit sanction its typed invocation grants
 
 ## Before presenting changes
 
