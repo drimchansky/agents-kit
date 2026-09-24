@@ -32,7 +32,7 @@ Execute the sibling review skill end to end against the object its Setup resolve
 
 The adopt, spot-check, and final-verdict steps do not run. The phase holds every finding the standing returns carried, pooled by location and deduped by distinct claim per `./agent-fanout.md` § *Merge contract*, with its `cited by k/N` marker where more than one reviewer ran. Forward that set with its drop record, never the first return alone; the drops land on the `Review pass:` line. The `-x` probe's verify-before-adopt step is suppressed the same way: its `Cross-check:` line is recorded and its novel candidates reach the triage phase as candidates. Each candidate takes exactly one verdict in the verify phase.
 
-**No findings from a usable review pass** makes the triage and verify phases vacuous: skip them and render the Output without **Batches**, its Verified line reading `Verified: no findings to verify`.
+**No findings from a usable review pass** makes the triage and verify phases vacuous: skip them and render **Batches** as `none`, its Verified line reading `Verified: no findings to verify`.
 
 ### The triage phase
 
@@ -46,7 +46,7 @@ Each probe prompt follows the verify shape, carrying the batch's findings verbat
 
 ## Merge and degrade
 
-Merge per the fan-out merge contract. **Not an issue** makes the finding **Withdrawn**; a confirmation leaves it **Confirmed**. Where the findings came from the session's own review, re-check the spot before accepting a **Not an issue**; on rejection the finding stands with a note on what the probe missed. Never silently drop either way. A candidate the probe raises on its own is verified against the same review object before adoption, then enters its batch's zone with its verdict.
+Merge per the fan-out merge contract. **Not an issue** makes the finding **Withdrawn**; a confirmation leaves it **Confirmed**. Where the findings came from the session's own review, re-check the spot before accepting a **Not an issue**. On rejection, the finding takes the verdict the re-check supports: **Confirmed**, or **Inconclusive** with what is missing. Either verdict carries a note on what the probe missed. Never silently drop either way. A candidate the probe raises on its own is verified against the same review object before adoption, then enters its batch's zone with its verdict. A **Confirmed** verdict the session assigns carries the root cause and fix options from its own re-check.
 
 **Degrade:** a failed or dead verify probe never blocks the pipeline: verify that batch inline by the same `verify-issue` protocol and mark its verdicts `verified inline (probe failed: <reason>)`. A called-off batch (the user's decision) is marked `verified inline (probe called off)`. An explicit policy refusal follows `../engineering/security.md` § *Review Validation Boundaries* instead: preserve completed evidence, do not route the refused validation through the inline fallback, and mark an affected finding **Inconclusive** when the returned evidence establishes what is missing, otherwise **Unverified** with only the exact error code and message; continue independent batches.
 
@@ -57,6 +57,10 @@ Every member's Output carries both:
 - **Batches:** one section per concern zone, ordered by its most severe member. Each finding renders once as a finding entry (`./user-facing-messages.md` § *Blocks*): its canonical severity marker, a legacy prefix normalized first, then `file:line` (or the locator its own file names), the original text, then its verdict: **Confirmed** (root cause, fix options targeted → thorough), **Withdrawn** (the probe's evidence), **Inconclusive** (what's missing), or **Unverified** (the reason). A finding outside open shows its bucket in place of a verdict.
 - **Review pass** and **Divergence** (`review-code-triage-verify` only): forwarded from the review phase as the review skill specs each. The `Review pass:` line is owed on either path; a `Divergence` entry other than `None` is surfaced, never dropped.
 - **Verified:** one mandatory line: `Verified: <n> confirmed · <n> withdrawn · <n> inconclusive · <n> unverified — <k> native probes`. ` · <n> triaged out` joins the counts only when triage landed findings outside open; `, <m> inline fallbacks` joins the probe count only when a batch was verified inline.
+
+## Reading Batches downstream
+
+A skill consuming a member's **Batches** reads each entry with its verdict or bucket, and assigns neither anew. A **Withdrawn** entry is settled: no consumer treats it as open, edits for it, or publishes it. An entry showing a triage bucket in place of a verdict keeps that bucket. Each consumer's own section decides which verdicts it acts on.
 
 ## Shared checklist
 

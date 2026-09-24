@@ -47,17 +47,16 @@ First re-confirm the reviewed identity in the form its kind takes:
 
 Setup's working-tree check still passes on every kind. Any mismatch is drift: stop and report.
 
-Fan out under `./references/workflow/agent-fanout.md`, `./references/workflow/probe-engines.md`, and `./references/workflow/probe-shape-verify.md`, per `./references/workflow/verify-pipeline.md`. The review object is the reviewed diff from Setup's base to the reviewed head on a `pr` object, and the reviewed paths at the reviewed head SHA on a `paths` one. An adopted probe candidate also enters the publishable list its severity names.
+Fan out under `./references/workflow/agent-fanout.md`, `./references/workflow/probe-engines.md`, and `./references/workflow/probe-shape-verify.md`, per `./references/workflow/verify-pipeline.md`. The review object is the reviewed diff from Setup's base to the reviewed head on a `pr` object, and the reviewed paths at the reviewed head SHA on a `paths` one.
 
 ## Output
 
 Lists, not tables.
 
 - **Summary:** what changed, intent, and the overall assessment restated after verification; the session owns the final call. On a `paths` object the assessment is the health verdict `review-code` fixes.
-- **Batches** and **Verified:** per `./references/workflow/verify-pipeline.md` § *Output: Batches and the Verified line*; `Batches` takes the whole reviewed object as its no-anchor locator and carries one entry per distinct claim with its `cited by k/N` marker.
-- **Findings** and **Minor findings:** the publishable lists, Major/Critical and Minor, in `review-code`'s Findings format: every surviving finding with severity, `file:line`, and original text verbatim, never capped. A non-Confirmed verdict rides as a closing note, `(Inconclusive: <what's missing>)` or `(Unverified: <reason>)`, and counts as part of the finding's text downstream. Withdrawn findings are excluded; their evidence lives in Batches. Write `none` for an empty list.
+- **Batches** and **Verified:** per `./references/workflow/verify-pipeline.md` § *Output: Batches and the Verified line*; `Batches` takes the whole reviewed object as its no-anchor locator and carries one entry per distinct claim with its `cited by k/N` marker. Batches is the only render of the findings: no separate Findings list follows it.
 - **Cross-check** (only with `-x`), **Improvements**, **Inaccessible context** (only if any), **PR description** (only with `-d`): forwarded from the review phase as `review-code` specs them. Improvements pass through unverified.
 - **Reviewed:** the provenance line exactly as `review-code` specs it, in its kind's form; `/publish-pr-review` reads it to anchor and to pick its currency-check base.
 - **Review pass** and **Divergence:** forwarded from the review phase as `review-code` specs each.
 
-**Next:** on a `pr` object, `/publish-pr-review` posts the tier you select (**Findings**, **Minor findings**, or **Improvements**), or a short approval when all three are empty; with `-d`, `/update-pr-description` applies the drafted description. A `paths` object sits on no PR. Either way, `/fix-findings` addresses the batches and commits each one; `/implement-task` addresses them through a task plan, then `/commit`.
+**Next:** on a `pr` object, `/publish-pr-review` posts the tier you select (Critical/Major or Minor from the Batches entries `../publish-pr-review/SKILL.md` step 1 selects, or **Improvements**), or a short approval when all three are empty and nothing is unsettled; with `-d`, `/update-pr-description` applies the drafted description. A `paths` object sits on no PR. Either way, `/fix-findings` addresses the batches and commits each one; `/implement-task` addresses them through a task plan, then `/commit`.

@@ -19,7 +19,7 @@ Edit selected working-tree work products, and stage and commit each concern batc
 Resolve findings in this order (`../triage-findings/SKILL.md` § *Sources*):
 
 1. Use the explicit argument: PR number or URL, existing file, pasted text, or a session pointer. A named subset selects matching entries from the latest session findings.
-2. Otherwise use the latest session findings. Select Confirmed and Unverified entries from a verify composite; select all actionable entries from a plain code or documentation review or triage batch.
+2. Otherwise use the latest session findings. Select Confirmed and Unverified entries from a verify composite's **Batches**, read per `./references/workflow/verify-pipeline.md` § *Reading Batches downstream*; select all actionable entries from a plain code or documentation review or triage batch.
 3. With no findings, name the accepted source forms and stop. Do not infer the current branch's PR.
 
 Keep the source's concern batches and their order (`../triage-findings/SKILL.md` § *Batch*, or a verify composite's **Batches**). An unbatched source is one concern batch.

@@ -32,7 +32,7 @@ Fetch all three comment sources:
 
 In PR mode with one PR selected, label the terminal session for that PR from `pullRequest.url` per `./references/workflow/terminal-session.md`.
 
-**Session findings.** Take each finding as the review emitted it: severity, `file:line`, recommendation. Do not re-review or re-rank.
+**Session findings.** Take each finding as the review emitted it: severity, `file:line`, recommendation. Do not re-review or re-rank. A verify composite's findings are its **Batches**, read per `./references/workflow/verify-pipeline.md` § *Reading Batches downstream*.
 
 **File or pasted text.** Parse the findings-shaped list, preserving wording and any severity prefix or marker. With no discernible findings, say so and stop.
 
@@ -41,6 +41,7 @@ In PR mode with one PR selected, label the terminal session for that PR from `pu
 Every finding lands in exactly one bucket: **open**, **verify**, or **addressed**. Never drop one silently.
 
 - PR thread `isResolved: true` → **addressed** (counted only).
+- A verify composite's **Withdrawn** entry → **addressed**, citing the verdict.
 - Unresolved thread whose last comment is the PR author acknowledging the fix → **Verify**.
 - Any anchored finding whose code changed after it was produced (thread `isOutdated: true`, blame on those lines, or a quoted snippet that no longer matches) → **Verify**. Code unchanged, or nothing to establish "after" by → **open**.
 - No anchor and no resolution state → **open**, unless its own source shows it superseded → **addressed**.
