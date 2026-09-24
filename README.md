@@ -5,7 +5,7 @@ A set of skills, agent definitions, and a task workflow for Claude Code and Code
 - **Two hosts, one install.** `node setup.ts` copies the skills, references, core rules, and native agent definitions into `~/.claude` and `~/.codex`. A rerun reclaims only what the kit installed and leaves your own skills untouched.
 - **Zero dependencies.** Plain Node 23.6 or newer running `.ts` directly under type stripping. No `package.json`, no build step, no `node_modules`.
 - **Persistent task folders.** A task is `.agents/tasks/<slug>/` holding `ticket.md`, `CONTEXT.md`, `goals.md`, `plan.md`, `result.md`. Plan it in one session, implement it in the next, resume or reconcile it from either host.
-- **33 skills** covering the whole loop: idea, ticket, plan, implement, review, triage, fix, commit, rebase, PR, plus proofreading, translation, diagrams, and Notion pages.
+- **34 skills** covering the whole loop: idea, ticket, plan, implement, review, triage, fix, commit, rebase, PR, plus daily statuses, proofreading, translation, diagrams, and Notion pages.
 - **Domain packs.** Methodology is domain-neutral; engineering and documentation rules load as packs from `references/<domain>/`, and a new domain is a sibling directory, not a skill rewrite.
 
 ---
@@ -99,7 +99,7 @@ A task's `CONTEXT.md` names a **domain**. That selects a pack under `references/
 
 ## Skills
 
-Each skill is `skills/<name>/SKILL.md`, invoked as `/<name>` in Claude Code and by mentioning `$<name>` in Codex. Six are gated so the model never invokes them on its own; you have to name them.
+Each skill is `skills/<name>/SKILL.md`, invoked as `/<name>` in Claude Code and by mentioning `$<name>` in Codex. Nine are gated so the model never invokes them on its own; you have to name them.
 
 **Task workflow**
 
@@ -116,13 +116,13 @@ Each skill is `skills/<name>/SKILL.md`, invoked as `/<name>` in Claude Code and 
 
 **Code**
 
-- `implement` — build, fix, or change something directly, without a task folder.
-- `explore` — walk through code, a library, a protocol, or a concept.
+- `implement` — build, fix, or change something directly, without a task folder. Gated.
+- `explore` — walk through code, a library, a protocol, or a concept. Gated.
 - `verify-issue` — confirm or refute a reported bug.
 - `review-code` — review a PR, branch, commit range, or set of paths. Flags: `-n N` independent reviewers, `-x` cross-vendor second review, `-d` draft a PR description.
 - `review-code-triage-verify` — review, batch the findings by concern, verify each batch in an isolated probe, one verdict per finding.
 - `triage-findings`, `triage-findings-verify` — batch findings you already have, optionally verifying each batch.
-- `fix-findings` — apply a set of findings; confirmed ones automatically, the rest after you approve their diffs. Commits each concern batch; never pushes.
+- `fix-findings` — apply a set of findings; confirmed ones automatically, the rest after you approve their diffs. Commits each concern batch; never pushes. Gated.
 - `publish-pr-review` — post `review-code`'s findings to the PR as inline comments, by severity tier.
 - `review-pr-loop` — review a PR against its CI checks rather than local scripts, post the Critical/Major findings, wait for the next push to settle, repeat until a pass is clean, then approve the PR from your account. Gated.
 - `update-pr-description` — replace a PR body with the description `review-code -d` drafted. Gated.
@@ -131,6 +131,7 @@ Each skill is `skills/<name>/SKILL.md`, invoked as `/<name>` in Claude Code and 
 
 **Writing**
 
+- `prepare-daily-status` — prepare or refresh a daily update from Slack, Jira, Granola, GitHub, Notion, Calendar, and an incident tracker; sends or edits Slack messages only on request.
 - `proofread` — check a message or document; `-f` also verifies facts.
 - `translate` — translate text between languages.
 - `review-docs` — audit existing documentation against the codebase.
@@ -163,7 +164,7 @@ Two native agent definitions ship with the kit, installed as `agents/*.md` for C
 - `references/templates/` — copy-ready shapes of the five task files.
 - `references/scripts/` — the CLI and stdout contract of every helper a skill runs at run time.
 
-Inside an installed skill, `./AGENTS.md` links to `CORE_RULES.md` and `./references` links to the installed `references/`, so a skill reads the same files wherever it runs. The four lean utilities, `create-notion-page`, `proofread`, `review-note`, and `translate`, load only the core's Ask Before Assuming section. Three ship the `./AGENTS.md` link alone; `proofread` also links `./references` for the shared user-facing message contract.
+Inside an installed skill, `./AGENTS.md` links to `CORE_RULES.md` and `./references` links to the installed `references/`, so a skill reads the same files wherever it runs. The five lean utilities, `create-notion-page`, `prepare-daily-status`, `proofread`, `review-note`, and `translate`, load only the core's Ask Before Assuming section. Four ship the `./AGENTS.md` link alone; `proofread` also links `./references` for the shared user-facing message contract.
 
 ---
 
