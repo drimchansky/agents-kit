@@ -1,6 +1,6 @@
 ---
 name: prepare-daily-status
-description: Prepare or refresh a personal daily work status from Slack, Jira, Granola, GitHub, Notion, Calendar, and an incident tracker. Use for daily updates and stand-up reports; send or edit a Slack message only when requested.
+description: Prepare or refresh a personal daily work status from the user's daily doc, enriched with Slack, Jira, Granola, GitHub, Notion, Calendar, and an incident tracker. Use for daily updates and stand-up reports; send or edit a Slack message only when requested.
 ---
 
 ## Core Rules
@@ -9,29 +9,41 @@ Read and apply `./AGENTS.md` § *Ask Before Assuming*.
 
 # Prepare Daily Status
 
-Produce a concise first-person update grounded in the user's activity. Preserve the session's template, status definitions, and delivery choices.
+Produce a concise first-person update from the user's daily doc, enriched and checked against their recorded activity. Preserve the session's template, status definitions, and delivery choices.
 Use lists rather than Markdown tables in chat and in the message.
 
 ## Scope and authorization
 
 Draft in chat unless the user requests Slack delivery. Skill selection alone grants no permission to send or edit messages.
 An explicit send or update request authorizes that delivery without another approval step. A later revision edits the posted message only on an update request.
-Keep source collection read-only. Reporting a discrepancy does not authorize changing Jira, GitHub, or the source template.
+Keep source collection read-only, including the daily doc. Reporting a discrepancy does not authorize changing Jira, GitHub, or the source template.
 
 Resolve the reporting date, timezone, user identities, and any supplied template from session context and connected profiles.
 Default to the preceding working day because daily updates summarize the last workday; use another period when requested.
 Check Calendar for leave or holidays when choosing that day.
 The report date is today's local date; the activity date is the day being summarized. Preserve both on refresh.
-Use current records for present status and plans, separating them from events inside the reporting window.
+Use current records for present status, separating it from events inside the reporting window.
 A refresh keeps the original reporting window and incorporates later state changes. Ask when the day or destination is ambiguous.
+
+## Read the daily doc
+
+The user supplies the daily doc as a link, path, or pasted text. Read it with the matching connector or file tool.
+Use its entries for the reporting window and any plans for today.
+When no doc is supplied or it lacks the activity date, ask for it or for approval to draft from other sources alone.
+With that approval, the gathered evidence supplies the task list.
+Continue gathering other sources while awaiting that answer.
+Re-read the doc on refresh because the user may have edited it.
+
+The doc settles what the user did, plans, and is blocked on. Keep its tasks, emphasis, and intent.
+Other sources enrich its items with links, current status labels, event times, collaborators, and outcomes.
 
 ## Gather context
 
-Check Slack, Jira, Granola, GitHub, Notion, Calendar, and the connected incident tracker through available tools.
+Enrich the doc from Slack, Jira, Granola, GitHub, Notion, Calendar, and the connected incident tracker through available tools.
 Reuse evidence already read in the session; refresh mutable states before delivery.
-Gather independent sources in parallel with read-only agents when available. Give each agent one source, the shared identity, date window, and attribution rules.
-Request dated facts, current states, citations, and coverage limits. Keep drafting and delivery with the coordinating agent.
-Merge their evidence by task, retaining source links and event times. Count the same work once across messages, meetings, documents, and tracker records.
+Gather independent sources in parallel with read-only agents when available. Give each agent one source, the shared identity, date window, attribution rules, and the doc's task list.
+Request dated facts, current states, citations, coverage limits, and relevant work the doc omits. Keep drafting and delivery with the coordinating agent.
+Merge their evidence into the doc's items by task, retaining source links and event times. Count the same work once across messages, meetings, documents, and tracker records.
 Follow pagination and investigate relevant linked threads, issues, PRs, documents, and incidents.
 
 - **Slack:** read the supplied template and the user's messages in the reporting window. Read relevant thread replies for decisions and follow-ups.
@@ -56,9 +68,11 @@ Distinguish PR previews, shared-dev deployments, merges, production deployments,
 
 ## Resolve discrepancies before drafting
 
-Compare task states across sources using the registry below and the user's explicit workflow conventions.
+Compare the doc's claims and task states across sources using the registry below and the user's explicit workflow conventions.
+Fresh records set current status labels. The doc's account of the work stands unless evidence contradicts it.
 Surface material conflicts in chat before generating or refreshing the status. Link the conflicting records and explain the proposed interpretation.
-For example, an implemented PR awaiting review conflicts with a Jira ticket still in Backlog.
+For example, the doc records a merge while GitHub shows the PR open. An implemented PR awaiting review also conflicts with a Jira ticket still in Backlog.
+With a doc, list relevant work that other sources show but it omits as linked candidates. Include only candidates the user confirms.
 Resolve factual conflicts from fresh evidence or the user's correction. Ask the smallest question when a material conflict remains, holding the draft and send.
 Continue independent research while awaiting an answer. Keep reconciliation notes out of the daily message.
 
@@ -77,6 +91,8 @@ Use labels beside relevant tasks inside the daily sections. The registry is refe
 - **Deployed to dev:** deployment to the shared development environment is confirmed.
 - **Deployed to prod:** production deployment is confirmed; verification is pending.
 - **Finished:** deployed to prod and verified, or Jira Done under the user's stated convention.
+
+Work that reached Finished on the report date keeps its label from the end of the activity date; the next report records its completion.
 
 Put blocked work under Blockers with its dependency, owner, and needed decision or action.
 
@@ -111,6 +127,7 @@ _Activity: [activity date] · [timezone]. Statuses refreshed [local date and tim
 _Automatically generated. Context checked: [sources actually checked]. Today’s priority and next steps are inferred from the open work and agreed follow-ups._
 ```
 
+Take today's priority, next steps, and blockers from the doc; infer only what it leaves out.
 Fill the date line for the actual reporting period. Omit Other when empty and state no blockers only when supported.
 Keep the automatic-generation disclosure. Include the inference sentence only when priorities or next steps were inferred.
 Do not invent commitments or repeat each task's full description across sections. Link the task or PR where it makes the update verifiable.

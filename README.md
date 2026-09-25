@@ -131,7 +131,7 @@ Each skill is `skills/<name>/SKILL.md`, invoked as `/<name>` in Claude Code and 
 
 **Writing**
 
-- `prepare-daily-status` — prepare or refresh a daily update from Slack, Jira, Granola, GitHub, Notion, Calendar, and an incident tracker; sends or edits Slack messages only on request.
+- `prepare-daily-status` — prepare or refresh a daily update from your daily doc, enriched with Slack, Jira, Granola, GitHub, Notion, Calendar, and an incident tracker; sends or edits Slack messages only on request.
 - `prepare-release-announcement` — draft a production release announcement from task folders, Jira tickets, or release context; posts or edits Slack messages only on request.
 - `proofread` — check a message or document; `-f` also verifies facts.
 - `translate` — translate text between languages.
