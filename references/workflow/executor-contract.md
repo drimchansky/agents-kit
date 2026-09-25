@@ -11,7 +11,7 @@ The coordinator supplies:
 - Context unavailable to the executor, with absolute paths. For reachable files, give paths and non-obvious facts; otherwise provide verbatim content.
 - Relevant `../../CORE_RULES.md` § *Ask Before Assuming* text verbatim, plus prior user decisions and agreed boundaries.
 - Domain guidance: universal per-unit sections verbatim, including code-style Comments for code and documentation's link sweep for documents; overlays/triggered pack files as absolute paths, or explicit `none`.
-- Per-unit checks as commands/procedures beside the criterion (`./execution-loop.md` § *Two verification tiers*), or `none`. Code units check touched comments against the packet and format touched files (`../engineering/verification.md` § *Two verification tiers*).
+- Per-unit checks as commands/procedures beside the criterion (`./execution-loop.md` § *Two verification tiers*), or `none`. Code units check touched comments against the packet and format touched files (`../engineering/verification.md` § *Two verification tiers*). Every check leaves the runner's cache on (`../engineering/boundary-scope.md` § *Never disable the runner's cache*).
 - One absolute effective root and its placement (`./executor-routing.md` § *Write-mode engine registry*).
 - Consumer label selecting a binding below. Supply all context; interpreting the packet requires no skill/consumer-definition fetch.
 
@@ -108,7 +108,7 @@ One session-framed item; no task folder exists.
 
 One Confirmed finding's immediate working-tree fix.
 
-- **Unit:** the fix, verified by the reported problem no longer reproducing. § *Write-mode routing* decides immediate proof ownership. The coordinator rechecks every finding retained so far on each concern batch's final tree and owns that batch's health and commit.
+- **Unit:** the fix, verified by the reported problem no longer reproducing. § *Write-mode routing* decides immediate proof ownership. The coordinator re-proves the retained findings each concern batch's final sweep selects, plus any deferred finding its boundary did not certify, on its final tree (`fix-findings` § *Content baseline and immediate outcomes*) and owns that batch's health and commit.
 - **Packet:** finding verbatim with source severity/file:line, root cause, chosen fix, expected surface from its blast radius, processing order, and dependencies. Supply engineering, documentation, or both domain recipes according to the chosen edit surface, not the finding anchor.
 - **Edit surface:** selected working-tree code and documentation within the packet's surface. No staging, commits, other Git mutation, findings-report edits, source replies/resolution/push, or live-page writes. The coordinator's chat report and each concern batch's commit are the record.
 - **Outside the delegation surface:** the coordinator applies ask-routed fixes from its approved diff inline. Withdrawn and Inconclusive findings receive no edits.

@@ -19,7 +19,7 @@ Read any per-surface checklist the step touches (`react.md`, `security.md`, …)
 
 After every code unit, prove its stated outcome immediately and validate only the comments that unit touched. That evidence says the unit's behavior holds, not that the accumulated tree is healthy.
 
-The consumer's binding (`../workflow/execution-bindings.md`) chooses health boundaries. At each one, run every exposed typecheck, lint, test, and distinct build command at the scope `verification.md` § *Two verification tiers* sets and `./boundary-scope.md` computes. Any later work-product edit makes that evidence pending again, so the final shared tree must pass a boundary before a changed-code run is presented as complete. Report a test command as passing only when it ran. Named integration assertions have their own cadence and evidence; neither substitutes for integrated health.
+The consumer's binding (`../workflow/execution-bindings.md`) chooses health boundaries. At each one, run every command class `verification.md` § *Two verification tiers* lists, at the scope it sets and `./boundary-scope.md` computes. Any later work-product edit makes that evidence pending again, so the final shared tree must pass a boundary before a changed-code run is presented as complete. Report a test command as passing only when it ran. Named integration assertions have their own cadence and evidence; neither substitutes for integrated health.
 
 ## Prove-It pattern (bug-fix steps)
 

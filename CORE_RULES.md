@@ -56,7 +56,7 @@ Include observations that matter to someone acting on the work. Omit incidental 
 - Use parallel agents for independent exploration, searches, or source gathering. Spawning skills supply their fan-out contracts, prompt shapes, engines, and executor rules.
 - Keep dependent edits sequential, including edits to the same artifact.
 - Define each parallel investigation and how its results will merge.
-- Before presenting changes, run domain verification and remove scratch artifacts.
+- Before presenting changes, run domain verification and remove scratch artifacts, except those the domain pack keeps.
 - Batch related changes across surfaces instead of making one edit per message.
 
 ## Shell Commands

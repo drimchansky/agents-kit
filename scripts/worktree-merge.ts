@@ -22,13 +22,15 @@ import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 const ALWAYS_PRUNED = new Set([".git", "node_modules"]);
 const MANIFEST_VERSION = 2;
 const EXEC_MASK = 0o111;
+const OWNER_EXEC = 0o100;
 
 const USAGE = [
   "usage: node scripts/worktree-merge.ts baseline <tree> --out <manifest> [--prune <path>]...",
-  "       node scripts/worktree-merge.ts check <worktree> --baseline <manifest> --surface <path>... [--prune <path>]...",
+  "       node scripts/worktree-merge.ts check <worktree> --baseline <manifest> --surface <path>... [--prune <path>]... [--out <manifest>]",
   "       node scripts/worktree-merge.ts apply <worktree> --baseline <manifest> --into <tree> --surface <path>... --receipt <file> [--prune <path>]...",
   "       node scripts/worktree-merge.ts remove <worktree> --receipt <file>",
   "       node scripts/worktree-merge.ts discard <worktree>",
+  "       node scripts/worktree-merge.ts index <tree> --baseline <manifest> [--base <rev>]...",
 ].join("\n");
 
 type FileEntry = { readonly t: "f"; readonly h: string; readonly x: boolean };
@@ -154,6 +156,7 @@ interface Walked {
   readonly entries: Record<string, Entry>;
   readonly gitignore: boolean;
   readonly ignoredDropped: readonly string[];
+  readonly ignoredKept: readonly string[];
 }
 
 function walk(
@@ -203,11 +206,13 @@ function walk(
   }
   const entries: Record<string, Entry> = {};
   const ignoredDropped: string[] = [];
+  const ignoredKept: string[] = [];
   for (const { path, full, stat } of leaves) {
     if (keep.has(path) || !ignored?.has(path)) entries[path] = entryFor(full, stat);
     else ignoredDropped.push(path);
+    if (keep.has(path) && ignored?.has(path)) ignoredKept.push(path);
   }
-  return { entries, gitignore: ignored !== undefined, ignoredDropped };
+  return { entries, gitignore: ignored !== undefined, ignoredDropped, ignoredKept };
 }
 
 function sameEntry(a: Entry, b: Entry): boolean {
@@ -275,6 +280,9 @@ function cmdBaseline(tree: string, out: string, rawPrunes: readonly string[]): s
 }
 
 interface Checked {
+  readonly root: string;
+  readonly current: Record<string, Entry>;
+  readonly ignoredKept: readonly string[];
   readonly changes: readonly Change[];
   readonly divergentIgnored: readonly string[];
   readonly escapes: readonly Change[];
@@ -309,7 +317,7 @@ function checkWorktree(
   const root = canonical(worktree);
 
   const allPrunes = [...manifest.prunes, ...prunes.map((prune) => normalizePrune(prune, manifest.root))];
-  const { entries: current, ignoredDropped } = walk(
+  const { entries: current, ignoredDropped, ignoredKept } = walk(
     root,
     allPrunes,
     manifest.gitignore ? "required" : "off",
@@ -324,6 +332,9 @@ function checkWorktree(
   const escapes = changes.filter((change) => !inSurface(change.path, normalized));
   const lines = changes.map((change) => `${change.op.padEnd(8)} ${change.path}${inSurface(change.path, normalized) ? "" : "  ESCAPE"}`);
   return {
+    root,
+    current,
+    ignoredKept,
     changes,
     divergentIgnored: divergent,
     escapes,
@@ -344,13 +355,25 @@ function cmdCheck(
   manifestFile: string,
   surfaces: readonly string[],
   prunes: readonly string[],
+  out: string | undefined,
 ): string[] {
   const checked = checkWorktree(worktree, readManifest(manifestFile), surfaces, prunes);
   if (checked.escapes.length > 0) {
     process.stdout.write(`${checked.lines.join("\n")}\n`);
     decided(`surface escape: ${checked.escapes.map((change) => change.path).join(", ")}`);
   }
-  return [...checked.lines];
+  if (out === undefined) return [...checked.lines];
+  const kept = new Set(checked.ignoredKept);
+  const entries = Object.fromEntries(Object.entries(checked.current).filter(([path]) => !kept.has(path)));
+  const manifest: Manifest = {
+    version: MANIFEST_VERSION,
+    root: checked.root,
+    gitignore: checked.gitignore,
+    prunes: [...new Set(checked.prunes)],
+    entries,
+  };
+  writeJson(resolve(out), manifest);
+  return [...checked.lines, `baseline ${checked.root} -> ${resolve(out)}`, `paths ${Object.keys(entries).length}`];
 }
 
 function symlinkAncestor(root: string, path: string): string | undefined {
@@ -658,21 +681,114 @@ function cmdDiscard(worktree: string): string[] {
   return [`discarded ${target}`];
 }
 
+function gitBytes(root: string, args: readonly string[]): Buffer {
+  try {
+    return execFileSync("git", ["-C", root, ...args], { stdio: "pipe", maxBuffer: Infinity });
+  } catch (error) {
+    const stderr = String((error as { stderr?: Buffer }).stderr ?? "").trim();
+    unrunnable(`git ${args.join(" ")} failed in ${root}: ${stderr || (error as Error).message}`);
+  }
+}
+
+function nulList(bytes: Buffer): string[] {
+  return bytes.toString("utf8").split("\0").filter((record) => record !== "");
+}
+
+function blobId(format: string, bytes: Buffer): string {
+  return createHash(format).update(`blob ${bytes.length}\0`).update(bytes).digest("hex");
+}
+
+function namedExactly(root: string, path: string, listings: Map<string, readonly string[]>): boolean {
+  let dir = root;
+  for (const name of path.split("/")) {
+    let names = listings.get(dir);
+    if (names === undefined) {
+      try {
+        names = readdirSync(dir).map((entry) => entry.normalize("NFC"));
+      } catch {
+        return true;
+      }
+      listings.set(dir, names);
+    }
+    if (!names.includes(name.normalize("NFC"))) return false;
+    dir = join(dir, name);
+  }
+  return true;
+}
+
+function cmdIndex(tree: string, manifestFile: string, bases: readonly string[]): string[] {
+  const root = canonical(tree);
+  const top = checkoutHolding(root);
+  if (top === undefined || canonical(top) !== root) unrunnable(`${root} is not the top level of a Git checkout`);
+  const manifest = readManifest(manifestFile);
+  if (manifest.root !== root) unrunnable(`the manifest measured ${manifest.root}, not ${root}`);
+  if (!manifest.gitignore) unrunnable(`the manifest measured ${root} without its git-ignore filter`);
+
+  const format = gitBytes(root, ["rev-parse", "--show-object-format"]).toString("utf8").trim();
+  const index = new Map<string, { readonly mode: string; readonly id: string }>();
+  for (const record of nulList(gitBytes(root, ["ls-files", "-s", "-z"]))) {
+    const tab = record.indexOf("\t");
+    const [mode, id, stage] = record.slice(0, tab).split(" ");
+    const path = record.slice(tab + 1);
+    if (stage !== "0") decided(`the index holds an unmerged path: ${path}`);
+    index.set(path, { mode, id });
+  }
+  const intentToAdd = new Set(nulList(gitBytes(root, ["diff-files", "-z", "--name-only", "--diff-filter=A"])));
+
+  const problems: string[] = [];
+  for (const [path, { mode, id }] of index) {
+    const measured = manifest.entries[path];
+    if (intentToAdd.has(path)) problems.push(`intent-to-add path the commit would omit: ${path}`);
+    else if (isPruned(path, manifest.prunes)) problems.push(`pruned path in the index: ${path}`);
+    else if (!measured) problems.push(`index path the manifest never measured: ${path}`);
+    else {
+      const full = join(root, ...path.split("/"));
+      const stat = leafAt(full);
+      if (!stat) {
+        problems.push(`index path missing from the tree: ${path}`);
+        continue;
+      }
+      const bytes = stat.isSymbolicLink() ? readlinkSync(full, { encoding: "buffer" }) : readFileSync(full);
+      const here: Entry = stat.isSymbolicLink()
+        ? { t: "l", d: bytes.toString("utf8") }
+        : { t: "f", h: createHash("sha256").update(bytes).digest("hex"), x: (stat.mode & EXEC_MASK) !== 0 };
+      const hereMode = here.t === "l" ? "120000" : stat.mode & OWNER_EXEC ? "100755" : "100644";
+      if (!sameEntry(here, measured)) problems.push(`tree changed since the manifest: ${path}`);
+      else if (mode !== hereMode || id !== blobId(format, bytes)) problems.push(`index differs from the measured bytes: ${path}`);
+    }
+  }
+  for (const path of Object.keys(manifest.entries)) {
+    if (!index.has(path)) problems.push(`measured path absent from the index: ${path}`);
+  }
+  const listings = new Map<string, readonly string[]>();
+  for (const base of bases) {
+    for (const path of nulList(gitBytes(root, ["ls-tree", "-r", "-z", "--name-only", base, "--"]))) {
+      if (isPruned(path, manifest.prunes)) problems.push(`pruned path tracked in ${base}: ${path}`);
+      else if (!index.has(path) && presentInTree(root, path) && namedExactly(root, path, listings)) {
+        problems.push(`deleted from the index but present in the tree: ${path}`);
+      }
+    }
+  }
+  if (problems.length > 0) decided([...new Set(problems)].join("\n"));
+  return [`index ${root}`, `paths ${index.size} · matches ${resolve(manifestFile)}`];
+}
+
 interface Args {
   readonly command: string;
   readonly positional: string;
   readonly values: Record<string, string[]>;
 }
 
-const REPEATABLE = new Set(["--surface", "--prune"]);
+const REPEATABLE = new Set(["--surface", "--prune", "--base"]);
 const SINGLE = new Set(["--out", "--baseline", "--into", "--receipt"]);
 
 const COMMAND_OPTIONS: Record<string, readonly string[]> = {
   baseline: ["--out", "--prune"],
-  check: ["--baseline", "--surface", "--prune"],
+  check: ["--baseline", "--surface", "--prune", "--out"],
   apply: ["--baseline", "--into", "--surface", "--receipt", "--prune"],
   remove: ["--receipt"],
   discard: [],
+  index: ["--baseline", "--base"],
 };
 
 function parseArgs(argv: readonly string[]): Args {
@@ -719,7 +835,13 @@ function main(argv: readonly string[]): string[] {
     case "baseline":
       return cmdBaseline(args.positional, one(args, "--out"), prunes);
     case "check":
-      return cmdCheck(args.positional, one(args, "--baseline"), many(args, "--surface", true), prunes);
+      return cmdCheck(
+        args.positional,
+        one(args, "--baseline"),
+        many(args, "--surface", true),
+        prunes,
+        args.values["--out"]?.[0],
+      );
     case "apply":
       return cmdApply(
         args.positional,
@@ -733,6 +855,8 @@ function main(argv: readonly string[]): string[] {
       return cmdRemove(args.positional, one(args, "--receipt"));
     case "discard":
       return cmdDiscard(args.positional);
+    case "index":
+      return cmdIndex(args.positional, one(args, "--baseline"), many(args, "--base", false));
 
     default:
       unrunnable(`unknown command ${args.command}\n${USAGE}`);

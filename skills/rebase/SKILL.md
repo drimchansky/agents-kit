@@ -43,6 +43,6 @@ Before `git rebase --continue`, recheck operation identity, HEAD, todo, index, a
 
 Confirm original branch, removed rebase metadata, and destination ancestry. With the old boundary known, `git range-diff OLD_BOUNDARY_SHA..ORIGINAL_TIP_SHA DESTINATION_SHA..HEAD`; inspect every changed, added, or dropped patch. Otherwise compare identifiable picks and report incomplete-range verification; do not guess a boundary. Check merge topology separately. Explain upstream-equivalent omissions; equal commit counts prove nothing.
 
-Check required signatures on new commits, separating missing signatures from missing local trust. Run applicable non-fixing repository checks over the rebased result and conflict resolutions; report unavailable/failing validation separately from rebase completion.
+Check required signatures on new commits, separating missing signatures from missing local trust. Run applicable non-fixing repository checks over the rebased result and conflict resolutions, leaving the runner's cache on (`./references/engineering/boundary-scope.md` § *Never disable the runner's cache*); report unavailable/failing validation separately from rebase completion.
 
 Report branch, destination, old/new tips, replayed/omitted commits with reasons, checks, and final worktree status. If paused, name the stopped commit, blocker, and next safe action. An active rebase is not success; pending validation stays explicit. Publishing requires its own request.

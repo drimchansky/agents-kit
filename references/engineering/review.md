@@ -116,7 +116,7 @@ For large diffs (20+ files): review types and interfaces first, then group remai
 
 `review-code` always runs the project's verification scripts, launched early, except under a caller that substitutes its own evidence; that exception holds on the delegated and inline paths alike:
 
-- **Launch as soon as the reviewed set is known:** the lint, typecheck, and test scripts the project exposes, on the changed files; what the project does not expose is skipped, not simulated.
+- **Launch as soon as the reviewed set is known:** the lint, typecheck, and test scripts the project exposes, on the changed files, with the runner's cache left on (`./boundary-scope.md` § *Never disable the runner's cache*); what the project does not expose is skipped, not simulated.
 - **Run them in the background where the host supports it**, waiting per `../workflow/delegated-waiting.md` § *How to wait* (a foreground `sleep` is not a wait, per its § *What is not a wait*); otherwise in the foreground at that same early point.
 - **Collect before output:** merge failures and warnings into the findings, each with file location and severity.
 

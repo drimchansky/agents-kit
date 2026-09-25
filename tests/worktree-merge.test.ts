@@ -49,6 +49,10 @@ function git(cwd: string, ...args: readonly string[]): string {
   return result.stdout ?? "";
 }
 
+function commit(cwd: string, ...args: readonly string[]): void {
+  git(cwd, "-c", "user.email=t@t", "-c", "user.name=t", "-c", "commit.gpgsign=false", "commit", ...args);
+}
+
 let caseCounter = 0;
 
 function newCase(): { readonly dir: string; readonly path: (name: string) => string } {
@@ -397,7 +401,7 @@ test("check prunes .git and node_modules whatever their type, and remove takes a
   write(join(shared, "node_modules", "dep", "index.js"), "x\n");
   git(shared, "init", "-q");
   git(shared, "add", "-A");
-  git(shared, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "seed");
+  commit(shared, "-qm", "seed");
   const worktree = path("worktree");
   git(shared, "worktree", "add", "-q", worktree, "HEAD");
 
@@ -426,7 +430,7 @@ test("check measures no git-ignored file on either side, and still measures a fo
   git(shared, "init", "-q");
   git(shared, "add", "-A");
   git(shared, "add", "-f", "local.json");
-  git(shared, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "seed");
+  commit(shared, "-qm", "seed");
 
   assert.strictEqual(git(shared, "check-ignore", "--no-index", "local.json").trim(), "local.json");
 
@@ -453,7 +457,7 @@ test("check and apply refuse a tree that cannot reproduce the baseline's git-ign
   write(join(shared, "dist", "out.js"), "built\n");
   git(shared, "init", "-q");
   git(shared, "add", "-A");
-  git(shared, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "seed");
+  commit(shared, "-qm", "seed");
 
   const manifest = baseline(dir, shared);
   const parsed = JSON.parse(readFileSync(manifest, "utf8"));
@@ -483,7 +487,7 @@ test("baseline reads a git-ignore answer longer than the default reply buffer", 
   write(join(shared, "src", "app.ts"), "export const app = 1;\n");
   git(shared, "init", "-q");
   git(shared, "add", "-A");
-  git(shared, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "seed");
+  commit(shared, "-qm", "seed");
   const deep = join(shared, "cache", "a".repeat(100));
   mkdirSync(deep, { recursive: true });
   for (let i = 0; i < 12000; i++) writeFileSync(join(deep, `f${i}`), "");
@@ -499,7 +503,7 @@ test("check keeps measuring a staged force-added ignored path the worktree holds
   write(join(shared, "src", "app.ts"), "export const app = 1;\n");
   git(shared, "init", "-q");
   git(shared, "add", "-A");
-  git(shared, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "seed");
+  commit(shared, "-qm", "seed");
   write(join(shared, "local.json"), "{}\n");
   git(shared, "add", "-f", "local.json");
 
@@ -533,7 +537,7 @@ test("check reports and apply refuses a git-ignored path that differs inside the
   write(join(shared, ".claude", "settings.local.json"), '{ "allow": [] }\n');
   git(shared, "init", "-q");
   git(shared, "add", "-A");
-  git(shared, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "seed");
+  commit(shared, "-qm", "seed");
 
   const manifest = baseline(dir, shared);
   const parsed = JSON.parse(readFileSync(manifest, "utf8"));
@@ -571,7 +575,7 @@ test("baseline tolerates an unreadable directory the repository ignores, and ref
   write(join(shared, "vendor", "blocked", "y"), "kept\n");
   git(shared, "init", "-q");
   git(shared, "add", "-A");
-  git(shared, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "seed");
+  commit(shared, "-qm", "seed");
 
   chmodSync(join(shared, "cache", "blocked"), 0o000);
   try {
@@ -594,7 +598,7 @@ test("check on the baseline's own tree never reports a divergent ignored path", 
   write(join(shared, "dist", "out.js"), "built\n");
   git(shared, "init", "-q");
   git(shared, "add", "-A");
-  git(shared, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "seed");
+  commit(shared, "-qm", "seed");
 
   const manifest = baseline(dir, shared);
   write(join(shared, "dist", "out.js"), "rebuilt\n");
@@ -677,7 +681,7 @@ test("apply names the split uncomputable when the post-copy verification cannot 
   write(join(shared, "src", "app.ts"), "export const app = 1;\n");
   git(shared, "init", "-q");
   git(shared, "add", "-A");
-  git(shared, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "seed");
+  commit(shared, "-qm", "seed");
 
   const worktree = path("worktree");
   git(shared, "worktree", "add", "-q", worktree, "HEAD");
@@ -903,7 +907,7 @@ test("discard removes a linked worktree or a plain scratch directory that earned
   write(join(shared, "src", "app.ts"), "a\n");
   git(shared, "init", "-q");
   git(shared, "add", "-A");
-  git(shared, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "seed");
+  commit(shared, "-qm", "seed");
   const worktree = path("worktree");
   git(shared, "worktree", "add", "-q", worktree, "HEAD");
   write(join(worktree, "src", "escaped.ts"), "never merged\n");
@@ -958,4 +962,244 @@ test("apply refuses an added path the shared tree now holds a directory at", () 
   mkdirSync(join(shared, "src", "gen"));
   run(0, ["apply", worktree, "--baseline", manifest, "--into", shared, "--surface", "src", "--receipt", receipt]);
   assert.strictEqual(readFileSync(join(shared, "src", "gen"), "utf8"), "generated\n");
+});
+
+function seededRepo(root: string, ...init: readonly string[]): void {
+  write(join(root, ".gitignore"), "local.env\n");
+  write(join(root, "src", "app.ts"), "export const app = 1;\n");
+  write(join(root, "local.env"), "SECRET=1\n");
+  git(root, "init", "-q", ...init);
+  git(root, "add", "-A");
+  git(root, "add", "-f", "local.env");
+  commit(root, "-qm", "seed");
+}
+
+test("index accepts an index holding exactly the measured bytes", () => {
+  const { dir, path } = newCase();
+  const tree = path("tree");
+  seededRepo(tree);
+  write(join(tree, "src", "app.ts"), "export const app = 2;\n");
+  write(join(tree, "src", "new.ts"), "export const fresh = 1;\n");
+  symlinkSync("app.ts", join(tree, "src", "link.ts"));
+  git(tree, "add", "-A");
+  const manifest = baseline(dir, tree);
+
+  const result = run(0, ["index", tree, "--baseline", manifest, "--base", "HEAD"]);
+  assert.match(result.stdout, /^paths 5 · matches /m);
+});
+
+test("index accepts a SHA-256 repository's index holding exactly the measured bytes", () => {
+  const { dir, path } = newCase();
+  const tree = path("tree");
+  seededRepo(tree, "--object-format=sha256");
+  assert.strictEqual(git(tree, "rev-parse", "--show-object-format").trim(), "sha256");
+  write(join(tree, "src", "app.ts"), "export const app = 2;\n");
+  symlinkSync("app.ts", join(tree, "src", "link.ts"));
+  git(tree, "add", "-A");
+  const manifest = baseline(dir, tree);
+
+  const result = run(0, ["index", tree, "--baseline", manifest, "--base", "HEAD"]);
+  assert.match(result.stdout, /^paths 4 · matches /m);
+});
+
+test("index refuses an index that differs from the tree the manifest measured", () => {
+  const { dir, path } = newCase();
+  const tree = path("tree");
+  seededRepo(tree);
+  write(join(tree, "src", "app.ts"), "export const app = 2;\n");
+  write(join(tree, "src", "untracked.ts"), "u\n");
+  write(join(tree, "tool.sh"), "#!/bin/sh\n");
+  chmodSync(join(tree, "tool.sh"), 0o755);
+  git(tree, "-c", "core.fileMode=false", "add", "tool.sh");
+  git(tree, "update-index", "--skip-worktree", "src/app.ts");
+  const manifest = baseline(dir, tree);
+
+  const { stderr } = run(1, ["index", tree, "--baseline", manifest]);
+  assert.match(stderr, /^index differs from the measured bytes: src\/app\.ts$/m, "skip-worktree hides the edit from status");
+  assert.match(stderr, /^index differs from the measured bytes: tool\.sh$/m, "the executable bit was staged off");
+  assert.match(stderr, /^measured path absent from the index: src\/untracked\.ts$/m);
+
+  git(tree, "update-index", "--no-skip-worktree", "src/app.ts");
+  git(tree, "add", "-A");
+  write(join(tree, "src", "app.ts"), "export const app = 3;\n");
+  assert.match(run(1, ["index", tree, "--baseline", manifest]).stderr, /^tree changed since the manifest: src\/app\.ts$/m);
+});
+
+test("index refuses an index path the tree no longer holds", () => {
+  const { dir, path } = newCase();
+  const tree = path("tree");
+  seededRepo(tree);
+  const manifest = baseline(dir, tree);
+  rmSync(join(tree, "src", "app.ts"));
+
+  assert.strictEqual(run(1, ["index", tree, "--baseline", manifest]).stderr, "index path missing from the tree: src/app.ts\n");
+});
+
+test("index refuses a deletion the tree still holds, against every base it is given", () => {
+  const { dir, path } = newCase();
+  const tree = path("tree");
+  seededRepo(tree);
+  git(tree, "rm", "-q", "--cached", "local.env");
+  commit(tree, "-qm", "untrack local.env");
+  write(join(tree, "src", "app.ts"), "export const app = 2;\n");
+  git(tree, "add", "src/app.ts");
+  const manifest = baseline(dir, tree);
+
+  run(0, ["index", tree, "--baseline", manifest, "--base", "HEAD"]);
+  assert.match(
+    run(1, ["index", tree, "--baseline", manifest, "--base", "HEAD", "--base", "HEAD^1"]).stderr,
+    /^deleted from the index but present in the tree: local\.env$/m,
+    "an amendment replaces HEAD, so its original parent is a base too",
+  );
+});
+
+test("index accepts a base-tracked file the index replaced with a directory", () => {
+  const { dir, path } = newCase();
+  const tree = path("tree");
+  seededRepo(tree);
+  write(join(tree, "cfg"), "flat\n");
+  git(tree, "add", "cfg");
+  commit(tree, "-qm", "track cfg");
+  unlinkSync(join(tree, "cfg"));
+  write(join(tree, "cfg", "x"), "nested\n");
+  git(tree, "add", "-A");
+  const manifest = baseline(dir, tree);
+
+  const result = run(0, ["index", tree, "--baseline", manifest, "--base", "HEAD"]);
+  assert.match(result.stdout, /^paths 4 · matches /m);
+});
+
+test("index refuses a pruned or unmeasured path and a manifest of another tree", () => {
+  const { dir, path } = newCase();
+  const tree = path("tree");
+  seededRepo(tree);
+  write(join(tree, "dist", "out.js"), "built\n");
+  git(tree, "add", "-f", "dist/out.js");
+  const pruned = join(dir, "pruned.json");
+  run(0, ["baseline", tree, "--out", pruned, "--prune", "dist"]);
+  assert.match(run(1, ["index", tree, "--baseline", pruned]).stderr, /^pruned path in the index: dist\/out\.js$/m);
+
+  commit(tree, "-qm", "track dist");
+  git(tree, "rm", "-q", "dist/out.js");
+  run(0, ["baseline", tree, "--out", pruned, "--prune", "dist"]);
+  assert.strictEqual(
+    run(1, ["index", tree, "--baseline", pruned, "--base", "HEAD"]).stderr,
+    "pruned path tracked in HEAD: dist/out.js\n",
+  );
+
+  write(join(tree, "src", "late.ts"), "export const late = 1;\n");
+  git(tree, "add", "src/late.ts");
+  assert.strictEqual(
+    run(1, ["index", tree, "--baseline", pruned]).stderr,
+    "index path the manifest never measured: src/late.ts\n",
+  );
+
+  const other = path("other");
+  seededRepo(other);
+  const foreign = baseline(dir, other);
+  assert.match(run(2, ["index", tree, "--baseline", foreign]).stderr, /^the manifest measured .*other, not .*tree$/m);
+
+  const loose = path("loose");
+  write(join(loose, "a.txt"), "a\n");
+  assert.match(run(2, ["index", loose, "--baseline", pruned]).stderr, /is not the top level of a Git checkout/);
+  assert.match(run(2, ["index", join(tree, "src"), "--baseline", pruned]).stderr, /is not the top level of a Git checkout/);
+  assert.match(run(2, ["index", tree, "--baseline", pruned, "--base", "nope"]).stderr, /git ls-tree .* failed/);
+  assert.match(run(2, ["index", tree, "--baseline", pruned, "--surface", "src"]).stderr, /index does not take --surface/);
+});
+
+test("index refuses a manifest of its tree measured without the git-ignore filter", () => {
+  const { dir, path } = newCase();
+  const tree = path("tree");
+  write(join(tree, "src", "app.ts"), "export const app = 1;\n");
+  const manifest = baseline(dir, tree);
+  git(tree, "init", "-q");
+  git(tree, "add", "-A");
+
+  assert.strictEqual(
+    run(2, ["index", tree, "--baseline", manifest]).stderr,
+    `the manifest measured ${tree} without its git-ignore filter\n`,
+  );
+});
+
+test("index refuses an index holding an unmerged path", () => {
+  const { dir, path } = newCase();
+  const tree = path("tree");
+  seededRepo(tree);
+  write(join(tree, "src", "app.ts"), "export const app = 2;\n");
+  commit(tree, "-qam", "theirs");
+  write(join(tree, "src", "app.ts"), "export const app = 3;\n");
+  commit(tree, "-qam", "ours");
+  git(tree, "read-tree", "-m", "HEAD~2", "HEAD", "HEAD~1");
+  const manifest = baseline(dir, tree);
+
+  assert.strictEqual(run(1, ["index", tree, "--baseline", manifest]).stderr, "the index holds an unmerged path: src/app.ts\n");
+});
+
+test("index refuses an intent-to-add path the commit would omit", () => {
+  const { dir, path } = newCase();
+  const tree = path("tree");
+  seededRepo(tree);
+  write(join(tree, "src", "__init__.py"), "");
+  git(tree, "add", "-N", "src/__init__.py");
+  const manifest = baseline(dir, tree);
+
+  assert.strictEqual(
+    run(1, ["index", tree, "--baseline", manifest, "--base", "HEAD"]).stderr,
+    "intent-to-add path the commit would omit: src/__init__.py\n",
+  );
+});
+
+test("index accepts a case-only rename and a base path under a symlinked directory", () => {
+  const { dir, path } = newCase();
+  const tree = path("tree");
+  seededRepo(tree);
+  write(join(tree, "lib", "a.txt"), "a\n");
+  git(tree, "add", "lib/a.txt");
+  commit(tree, "-qm", "track lib");
+  git(tree, "mv", "src/app.ts", "src/App.ts");
+  rmSync(join(tree, "lib"), { recursive: true });
+  write(join(tree, "vendor", "a.txt"), "a\n");
+  symlinkSync("vendor", join(tree, "lib"));
+  git(tree, "add", "-A");
+  const manifest = baseline(dir, tree);
+
+  const result = run(0, ["index", tree, "--baseline", manifest, "--base", "HEAD"]);
+  assert.match(result.stdout, /^paths 5 · matches /m);
+});
+
+test("index takes the staged executable bit from the owner's permission, as Git does", () => {
+  const { dir, path } = newCase();
+  const tree = path("tree");
+  seededRepo(tree);
+  write(join(tree, "tool.sh"), "#!/bin/sh\n");
+  chmodSync(join(tree, "tool.sh"), 0o654);
+  git(tree, "add", "tool.sh");
+  assert.match(git(tree, "ls-files", "-s", "tool.sh"), /^100644 /);
+  const manifest = baseline(dir, tree);
+
+  run(0, ["index", tree, "--baseline", manifest, "--base", "HEAD"]);
+});
+
+test("check --out writes the manifest baseline would write for the tree it measured", () => {
+  const { dir, path } = newCase();
+  const tree = path("tree");
+  seededRepo(tree);
+  const reference = baseline(dir, tree);
+  write(join(tree, "src", "app.ts"), "export const app = 2;\n");
+  git(tree, "rm", "-q", "--cached", "local.env");
+  const next = join(dir, "next.json");
+
+  const result = run(0, ["check", tree, "--baseline", reference, "--surface", ".", "--prune", "dist", "--out", next]);
+  assert.match(result.stdout, /^modified src\/app\.ts$/m);
+  assert.match(result.stdout, /^delta 1 · escapes 0$/m, "the kept measure of local.env reads no delta");
+  assert.match(result.stdout, /^paths 2$/m, "the written manifest drops local.env, now ignored and untracked");
+  const fresh = join(dir, "fresh.json");
+  run(0, ["baseline", tree, "--out", fresh, "--prune", "dist"]);
+  assert.deepStrictEqual(JSON.parse(readFileSync(next, "utf8")), JSON.parse(readFileSync(fresh, "utf8")));
+
+  write(join(tree, "notes.md"), "outside the surface\n");
+  const refused = join(dir, "refused.json");
+  run(1, ["check", tree, "--baseline", next, "--surface", "src", "--out", refused]);
+  assert.ok(!existsSync(refused), "a refused check writes no manifest");
+  assert.match(run(2, ["baseline", tree, "--out", refused, "--surface", "src"]).stderr, /baseline does not take --surface/);
 });

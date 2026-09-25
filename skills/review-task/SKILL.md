@@ -108,7 +108,7 @@ Check failure modes and boundaries, actor transitions, required inputs, dependen
 
 For Due/Lead time, confirm each lead time fits its own and dependent deadlines, including early starts for long-lead work. For Touches, verify coverage and claimed disjointness against actual edits; engineering traps are in `./references/engineering/planning.md` (Declaring edit surfaces).
 
-Check cadence against `plan-task` § *Add Checkpoints*. Flag missing, misplaced, vague, or health-shaped assertions. Each engineering checkpoint names an end-to-end outcome; suite/typecheck/lint/build belong at the adjacent health boundary (`./references/engineering/planning.md` § *Checkpoints*).
+Check cadence against `plan-task` § *Add Checkpoints*. Flag missing, misplaced, vague, or health-shaped assertions. Each engineering checkpoint names an end-to-end outcome; integrated health checks belong at the adjacent health boundary (`./references/engineering/planning.md` § *Checkpoints*).
 
 For code, also apply that file's Common gaps to check in a code plan, including UI states, navigation, data, analytics, and patterns.
 

@@ -31,7 +31,7 @@ A choice still open at report time lists under **Awaiting decision** (`fix-findi
 
 ## Red boundary: comparison, disposition, recovery
 
-First repeat only failed checks against the immutable concern-batch baseline. Name the targets each boundary invocation resolved on the shared tree; do not re-evaluate its selector against baseline sources (`./execution-recovery.md` § *Evidence lifecycle*). For documentation sweeps, repeat the same link and cross-reference procedure on the resolved deliverables. Exclude targets absent from the baseline. An empty target set makes that comparison inconclusive.
+First re-prove every deferred finding (`fix-findings` § *Content baseline and immediate outcomes*). A failure takes § *Dependency-safe recovery* with the failed tier as the predicate; a recovery that changes the tree earns a fresh boundary instead of this comparison. Then repeat only failed checks against the immutable concern-batch baseline. Name the targets each boundary invocation resolved on the shared tree; do not re-evaluate its selector against baseline sources (`./execution-recovery.md` § *Evidence lifecycle*). For documentation sweeps, repeat the same link and cross-reference procedure on the resolved deliverables. Exclude targets absent from the baseline. An empty target set makes that comparison inconclusive.
 
 Run this comparison in a coordinator-managed scratch copy, with the dependencies and build state its checks need. Keep the shared tree in place. Reuse or link derived state only when no retained change set affects it; otherwise re-derive it from baseline sources. An unexecutable check or unreconstructable state makes the comparison inconclusive. The comparison is not another full health recipe.
 

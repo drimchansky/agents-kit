@@ -35,7 +35,7 @@ Unflagged type stripping also works from 22.18. A single supported floor avoids 
 
 Annotations are erased, not validated. The engineering pack's typecheck, lint, and build recipe has no target here (`references/engineering/rules.md` § *Before presenting changes*). Its test command does: `node --test "tests/*.test.ts"` covers the whole verification surface.
 
-No linter, formatter, or graph-aware runner exposes a narrowing class. `references/engineering/boundary-scope.md` therefore skips the manifest and delta; every boundary runs that whole-tree command. Adding a checker would introduce `package.json`, a lockfile, and `node_modules` into a Markdown-and-TypeScript tree. That dependency cost is why checking was declined; weigh it again if revisiting the decision.
+No linter, formatter, or graph-aware runner exposes a narrowing class, so every boundary runs that whole-tree command. `references/engineering/boundary-scope.md` § *Reference and delta* still writes each boundary's manifest; here it narrows nothing and serves only the commit gate's reuse. Adding a checker would introduce `package.json`, a lockfile, and `node_modules` into a Markdown-and-TypeScript tree. That dependency cost is why checking was declined; weigh it again if revisiting the decision.
 
 ## Source contracts
 
@@ -223,6 +223,14 @@ Normalize receipt and removal worktree paths through `realpath`. This makes `/pr
 
 `checkoutHolding`'s Git-error discrimination mirrors `commit-scan.ts`: distinguish no checkout from a failed run. Update both in the same edit.
 
+**Why `index` hashes live bytes rather than reading blobs.** One read of each file yields both the manifest's SHA-256 and the index's blob id. That proves the index equals the measured bytes without `git cat-file` holding every blob in memory. A file changed since the manifest fails the comparison instead of passing on stale bytes.
+
+**Why `index` asks `diff-files` for intent-to-add entries.** `ls-files -s` lists one at stage 0 with the empty blob, so an empty file matches its bytes, yet `git commit` omits it. `diff-files --diff-filter=A` lists only such entries: a real index entry shows as modified, deleted, or type-changed, never added.
+
+**Why the base check reads directory listings.** On a case-insensitive filesystem, `lstat` resolves a base path's old case after a case-only rename. That rename would read as a deletion still on disk. Compare each component against its parent's listing, NFC-normalized for macOS's decomposed names. An unreadable listing counts as present, keeping the refusal.
+
+**Why `check --out` drops the paths only its baseline measured.** A check keeps measuring a path its baseline measured, even one now ignored and untracked, so no false deletion appears. A fresh `baseline` drops that path. Keeping it in the written manifest would make `index` report it absent from the index and forfeit reuse.
+
 ### `tests/`
 
 Suites use zero dependencies and Node type stripping, like their sources.
@@ -306,7 +314,7 @@ Semantic registries remain maintained for these reasons:
 - `references/workflow/reconciliation.md` direction membership: keys the skill mappings in reconciliation-docs-to-reality.md and reconciliation-session-to-docs.md.
 - `references/workflow/execution-loop.md` introduction: keys the consumer sections of execution-bindings.md.
 - `references/workflow/domain-packs.md` § *The split*: classifies methodology-only spine skills rather than enumerating citations.
-- `references/engineering/verification.md` gate-runner parenthetical: domain resolution reaches consumers without a direct citation. Fix-findings, implement-task, and implement also cite it directly.
+- `references/engineering/verification.md` gate-runner parenthetical: domain resolution reaches consumers without a direct citation. Fix-findings, implement-task, and implement also cite it directly. Commit cites § *What a boundary records* only to read a boundary's `manifest written` line, not to run the recipe.
 - `references/documentation/verification.md` gate-runner parenthetical: reached by domain resolution and fix-findings' per-fix routing. Review-docs cites it to distinguish its judgment pass from mechanical tiers, not to run those tiers.
 - `references/engineering/exploration.md` loader gloss: refine-idea reaches the recipe through ideation.md's § *Ground in what exists*, without citing this path.
 - `references/engineering/execution.md` loader sentence: implement and fix-findings resolve the execution recipe through the shared loop.

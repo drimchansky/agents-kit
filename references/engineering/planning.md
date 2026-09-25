@@ -38,7 +38,7 @@ When unsure, leave `Touches:` off; an undeclared step runs serially.
 
 ## Checkpoints
 
-Cadence and shape are the planning spine's (`plan-task` § *Add Checkpoints*). A code checkpoint asserts one thing: a named end-to-end flow still works ("user can log in and see dashboard", not "core flow"). The integrated suite, typecheck, lint, and build run at the checkpoint's adjacent health boundary (`./verification.md` § *Two verification tiers*), not as authored assertions.
+Cadence and shape are the planning spine's (`plan-task` § *Add Checkpoints*). A code checkpoint asserts one thing: a named end-to-end flow still works ("user can log in and see dashboard", not "core flow"). Integrated health checks run at the checkpoint's adjacent health boundary (`./verification.md` § *Two verification tiers*), not as authored assertions.
 
 ## Scaling plan depth
 

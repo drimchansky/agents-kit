@@ -6,8 +6,8 @@ What "verify" means when the domain is code: the recipe behind the neutral verif
 
 `../workflow/execution-loop.md` § *Two verification tiers* defines the tiers; this is the code recipe:
 
-- **Unit outcome**: immediately run the unit's stated verify criterion (the consumer's **Source** binding, `../workflow/execution-bindings.md`). Then validate every comment the unit added or edited against `code-style.md` → Comments, that unit's comments only, and fix what it prohibits. Then, where the project exposes a formatter, run it over the touched files only and fix the drift before recording the outcome. This is not integrated-health evidence.
-- **Integrated health**: at every consumer-declared health boundary, run every exposed typecheck, lint, test, and distinct build command over the **dependency closure of the delta** since this run's last green boundary. **A boundary whose reference carries no in-session green result runs the whole relevant surface instead.** Discovery is unchanged (manifests, documented verification commands, CI configuration) and every discovered command still runs; only its scope narrows. Record as unavailable a check class the project exposes no command for. Scope computation is `./boundary-scope.md`, read at a boundary.
+- **Unit outcome**: immediately run the unit's stated verify criterion (the consumer's **Source** binding, `../workflow/execution-bindings.md`). Then validate every comment the unit added or edited against `code-style.md` → Comments, that unit's comments only, and fix what it prohibits. Then, where the project exposes a formatter, run it over the touched files only and fix the drift before recording the outcome. Every command this tier launches leaves the runner's cache on (`./boundary-scope.md` § *Never disable the runner's cache*). This is not integrated-health evidence.
+- **Integrated health**: at every consumer-declared health boundary, run every exposed typecheck, lint, formatting, test, and distinct build command over the **dependency closure of the delta** since this run's last green boundary. **A boundary whose reference carries no in-session green result runs the whole relevant surface instead.** Discovery is unchanged (manifests, documented verification commands, CI configuration) and every discovered command still runs; only its scope narrows. Record as unavailable a check class the project exposes no command for. Scope computation is `./boundary-scope.md`, read at a boundary.
 
 A unit criterion that happens to invoke a health command does not exempt the next boundary. A rollback is a work-product edit like any other.
 
@@ -17,9 +17,10 @@ How `fix-findings` pays these tiers across a batch, and what a red boundary reru
 
 The shape of a recorded code-domain boundary, cited by every consumer's `**Health:**` field. In order:
 
-- **The reference**: the `worktree-merge.ts` manifest the delta was taken against and the tree it captured. A boundary that took none records why instead, and no delta: `whole surface: reference carries no in-session green result`, `reference skipped: no narrowing class exposed`, `reference skipped: no kit root`.
+- **The reference**: the `worktree-merge.ts` manifest the delta was taken against and the tree it captured. A boundary that took none records why instead, and no delta: `whole surface: reference carries no in-session green result`, `whole surface: previous boundary wrote no manifest`, `reference skipped: no kit root`, `reference skipped: helper failed: <reason>` (`./boundary-scope.md` § *Reference and delta*).
 - **The delta**: its size in paths.
 - **Per command**: its scope (delta, closure, or whole tree) and its result. A widened scope names the `./boundary-scope.md` § *Widening* trigger; a class reaching its closure as a cached whole-tree run says so. An infra-bound command records that file's `not run in-session: needs <X>; carried by CI required check <name>` / `uncovered` form instead of a result, leaving the boundary green.
+- **The manifest written**: on a green boundary whose commands left the tree unchanged, the path of the manifest taken before they ran and its `git hash-object` id (`./boundary-scope.md` § *Reference and delta*), the line a later `commit` gate reads to reuse this boundary; `none: checks changed the tree` where the post-run check found a delta; `none: no kit root` where no kit root resolved; `none: helper failed: <reason>` where no manifest could be written or the post-run check exited 2. A red boundary records no such line.
 
 ## Stop-the-Line (when either tier fails)
 
