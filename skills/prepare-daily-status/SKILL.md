@@ -16,6 +16,7 @@ Use lists rather than Markdown tables in chat and in the message.
 
 Draft in chat unless the user requests Slack delivery. Skill selection alone grants no permission to send or edit messages.
 An explicit send or update request authorizes that delivery without another approval step. A later revision edits the posted message only on an update request.
+An explicit request to review in Slack authorizes a Slack draft only; sending it needs a send request.
 Keep source collection read-only, including the daily doc. Reporting a discrepancy does not authorize changing Jira, GitHub, or the source template.
 
 Resolve the reporting date, timezone, user identities, and any supplied template from session context and connected profiles.
@@ -29,12 +30,13 @@ A refresh keeps the original reporting window and incorporates later state chang
 
 The user supplies the daily doc as a link, path, or pasted text. Read it with the matching connector or file tool.
 Use its entries for the reporting window and any plans for today.
-When no doc is supplied or it lacks the activity date, ask for it or for approval to draft from other sources alone.
+When no doc is supplied, it cannot be read, or it lacks the activity date, ask for it or for approval to draft from other sources alone.
 With that approval, the gathered evidence supplies the task list.
 Continue gathering other sources while awaiting that answer.
 Re-read the doc on refresh because the user may have edited it.
 
 The doc settles what the user did, plans, and is blocked on. Keep its tasks, emphasis, and intent.
+Omit personal arrangements the doc lists, such as the user's own tooling, templates, or admin; keep team-facing work.
 Other sources enrich its items with links, current status labels, event times, collaborators, and outcomes.
 
 ## Gather context
@@ -69,7 +71,9 @@ Distinguish PR previews, shared-dev deployments, merges, production deployments,
 ## Resolve discrepancies before drafting
 
 Compare the doc's claims and task states across sources using the registry below and the user's explicit workflow conventions.
-Fresh records set current status labels. The doc's account of the work stands unless evidence contradicts it.
+Label the task, not a PR. A merged or deployed PR moves the label only when it is the task's last remaining implementation PR.
+Check the doc first: its label stands when Jira agrees or the doc is newer. Otherwise fresh records set it.
+The doc's account of the work stands unless evidence contradicts it.
 Surface material conflicts in chat before generating or refreshing the status. Link the conflicting records and explain the proposed interpretation.
 For example, the doc records a merge while GitHub shows the PR open. An implemented PR awaiting review also conflicts with a Jira ticket still in Backlog.
 With a doc, list relevant work that other sources show but it omits as linked candidates. Include only candidates the user confirms.
@@ -102,7 +106,7 @@ Use a supplied template after applying the user's corrections. Otherwise use thi
 
 ```markdown
 **Daily status — [report date]**
-_Activity: [activity date] · [timezone]. Statuses refreshed [local date and time]._
+_Activity: [activity date] · [timezone] · Generated automatically_
 
 **Today’s priority**
 
@@ -124,12 +128,12 @@ _Activity: [activity date] · [timezone]. Statuses refreshed [local date and tim
 
 • Relevant additional context.
 
-_Automatically generated. Context checked: [sources actually checked]. Today’s priority and next steps are inferred from the open work and agreed follow-ups._
+_Today’s priority and next steps are inferred from the open work and agreed follow-ups._
 ```
 
 Take today's priority, next steps, and blockers from the doc; infer only what it leaves out.
 Fill the date line for the actual reporting period. Omit Other when empty and state no blockers only when supported.
-Keep the automatic-generation disclosure. Include the inference sentence only when priorities or next steps were inferred.
+Keep the date line's generation marker. Include the inference sentence only when priorities or next steps were inferred.
 Do not invent commitments or repeat each task's full description across sections. Link the task or PR where it makes the update verifiable.
 Check every claim against the evidence, including whose work it was and whether it happened in the reporting window or reflects today's state.
 
@@ -140,6 +144,8 @@ For an explicit send of an already settled status, recheck its status labels and
 Update any changed label in the draft and name it in the delivery report.
 Read a supplied Slack permalink to resolve its channel and parent thread. Reply in that thread unless the user requests a channel post.
 For a DM, resolve the user's existing conversation or identity. Do not reuse a previous day's stand-up thread for a new report.
+When the user asks to review in Slack, create a draft in the destination thread instead of sending a preview.
 When editing, read the current message and preserve intervening user changes. Verify ownership and that the message is the intended update.
+When the tools cannot edit a posted message, say so and offer a new message. Name the superseded messages for the user to delete.
 Use the session's Slack tools and respect their message-size limits. After an uncertain write result, check the destination before retrying.
 Return the tool-confirmed message link after delivery. Update a reusable template only when the user requests that change.
