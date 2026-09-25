@@ -30,7 +30,7 @@ For each unit of work:
 ### Two verification tiers
 
 - **Unit outcome**: immediately satisfy the unit's stated verify criterion **plus every per-unit check the domain's `verification.md` adds to this tier** (the engineering pack's comment validation, the documentation pack's link and cross-ref sweep). The criterion alone is not the tier, and no later health boundary restores what this tier owns. The criterion is stated *before* the unit is implemented, never written afterwards to match what was built.
-- **Integrated health**: at the consumer's next **Health boundary**, confirm the accumulated work has not regressed the integrated whole, by the domain recipe over the closure of the delta since the reference its `verification.md` defines, or over the whole relevant surface where no reference applies or this boundary's reference carries no in-session green result. For code, `../engineering/verification.md`.
+- **Integrated health**: at the consumer's next **Health boundary**, confirm the accumulated work has not regressed the integrated whole, by the domain recipe at the scope § *Health boundaries* resolves. For code, `../engineering/verification.md`.
 
 Every change that could affect the health recipe invalidates prior integrated-health evidence. Never present a run whose work product changed as complete on stale health evidence.
 
@@ -50,7 +50,7 @@ Integration assertions exercise the named end-to-end outcomes a consumer declare
 
 A boundary is mandatory when the consumer's cadence reaches it:
 
-1. Run the domain health recipe over the closure of the delta since the reference its `verification.md` defines, or the whole relevant surface where no reference applies or this boundary's reference carries no in-session green result.
+1. Run the domain health recipe over the closure of the delta since the reference its `verification.md` defines, or the whole relevant surface where no reference applies or this boundary's reference carries no in-session green result. A command the domain scopes narrower than that surface runs at the domain's scope (for code, `../engineering/boundary-scope.md` § *Infra-bound commands*).
 2. If any required check fails, apply Stop-the-Line.
 3. If every required check passes, record integrated-health evidence per the **Record** binding, to the shape the domain fixes (for code, `../engineering/verification.md` § *What a boundary records*). A command the domain licenses the boundary not to launch (for code, `../engineering/boundary-scope.md` § *Infra-bound commands*) is recorded rather than run and leaves the boundary green.
 

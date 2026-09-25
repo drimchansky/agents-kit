@@ -77,7 +77,7 @@ After a concern batch's immediate outcomes settle, re-prove on its final integra
 
 When a concern batch retains fixes, run one integrated boundary after its final outcome sweep. Run no up-front, per-finding, or per-parallel-batch health recipe. Use `./references/engineering/verification.md` § *Two verification tiers* for changed code. Use `./references/documentation/verification.md` § *Integrated health — declared boundaries* for changed documentation. Run both recipes for mixed work.
 
-The concern-batch baseline is the engineering reference. The first concern batch's baseline has no in-session green result, so its boundary runs the whole relevant code surface. A later concern batch may reference the preceding green boundary only when its baseline holds exactly the bytes that boundary evaluated. Its boundary then covers the delta's closure; otherwise it runs the whole relevant code surface. Sweep every retained local documentation deliverable and in-scope companion document for links and cross-references.
+The concern-batch baseline is the engineering reference. It carries no in-session green result for the first concern batch. A later concern batch's baseline carries the preceding boundary's green result only when it holds exactly the bytes that boundary evaluated. The recipe's scope follows from that reference. Sweep every retained local documentation deliverable and in-scope companion document for links and cross-references.
 
 A finding is **Fixed** only when its final-integrated outcome passes and every applicable check in its concern batch's boundary is green on that batch's unchanged final tree. Report the commit outcome under **Commits** (§ *Output*); landing is not a Fixed condition.
 

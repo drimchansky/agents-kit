@@ -10,7 +10,7 @@ The engineering domain pack's rules overlay, loaded on top of `../../CORE_RULES.
 
 ## Before presenting changes
 
-- Have current integrated health for the final changed surface: the recipe `./verification.md` § *Two verification tiers* names, at the scope it resolves, at the consumer's declared health boundary (`../workflow/execution-loop.md` § *Health boundaries*) or, under no such consumer, at presentation itself. That scope is the final delta's closure where the boundary's reference carries a verdict and the whole surface where it does not; never narrower.
+- Have current integrated health for the final changed surface: the recipe `./verification.md` § *Two verification tiers* names, at the scope it resolves, at the consumer's declared health boundary (`../workflow/execution-loop.md` § *Health boundaries*) or, under no such consumer, at presentation itself. That scope is the final delta's closure where the boundary's reference carries a verdict and the whole surface where it does not, except where `./boundary-scope.md` § *Infra-bound commands* scopes an infra-bound command; never narrower.
 - If changing exports or shared code, grep for all consumers and verify compatibility
 - Remove debug artifacts (console.log, commented-out code, temporary variables)
 
