@@ -29,7 +29,15 @@ Preserve the caller's branch, index, and working tree. Use a separate worktree o
 
 **Resolve the object.** Consume flags and `-n`'s value before reading the object; `--` terminates the object's own tokens, so `-- <path>… -n 3` names one path set and a count. With no argument the object is the current branch's diff against its base: run **Determine base branch** and take `<base>...HEAD`.
 
-With an argument, select the form before applying it. A bare positional token naming a directory the recognition set in `./references/workflow/task-layout.md` § *One task, one flat folder* claims is task context, not a review object: stop and ask which work the folder tracks (a branch, a range, or a PR), offering the branch its `result.md` `**Pointers:**` line records (repository per `./references/workflow/task-delivery.md` § *Branch and worktree creation* → **Which repository**) and naming `/review-task` alongside; with no recorded branch, ask with no default. Probe what remains bare both ways: as pathspecs (`git ls-files --error-unmatch -- <tokens>`), and as a rev or range by splitting the token on `...` or `..` and running `git rev-parse --verify <endpoint>^{commit}` on each side. A token that resolves both ways stops and asks. Everything after a `--` is a path set, and no other probe runs. Only once a form is selected does its own failure stop the review; an argument no form claims stops with a question.
+With an argument, select the form before applying it. A bare positional token naming a directory the recognition set in `./references/workflow/task-layout.md` § *One task, one flat folder* claims is task context.
+
+Compare its `result.md` `**Pointers:**` branch with `git branch --show-current` from the session's own checkout. A project-local folder also requires equal `git rev-parse --path-format=absolute --git-common-dir` output at that checkout and the folder. Externally stored folders use the session repository.
+
+When the recorded branch equals the nonempty current branch in that repository, select the no-argument branch object. Immediately run **Determine base branch** and announce `reviewing <branch> vs <base> (from task folder <slug>)` in chat. Then continue Setup's remaining identity and context work with that object's branch kind, base, and PR context.
+
+Otherwise, stop and ask which work the folder tracks (a branch, a range, or a PR), offering the branch its `result.md` `**Pointers:**` line records (repository per `./references/workflow/task-delivery.md` § *Branch and worktree creation* → **Which repository**) and naming `/review-task` alongside; with no recorded branch, ask with no default.
+
+Probe what remains bare both ways: as pathspecs (`git ls-files --error-unmatch -- <tokens>`), and as a rev or range by splitting the token on `...` or `..` and running `git rev-parse --verify <endpoint>^{commit}` on each side. A token that resolves both ways stops and asks. Everything after a `--` is a path set, and no other probe runs. Only once a form is selected does its own failure stop the review; an argument no form claims stops with a question.
 
 The selected form is one of:
 
