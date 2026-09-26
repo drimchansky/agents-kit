@@ -37,6 +37,16 @@ type FileEntry = { readonly t: "f"; readonly h: string; readonly x: boolean };
 type LinkEntry = { readonly t: "l"; readonly d: string };
 type Entry = FileEntry | LinkEntry;
 
+function entryDictionary(pairs: Iterable<readonly [string, Entry]>): Record<string, Entry> {
+  const entries: Record<string, Entry> = Object.create(null);
+  for (const [path, entry] of pairs) entries[path] = entry;
+  return entries;
+}
+
+function ownEntry(entries: Record<string, Entry>, path: string): Entry | undefined {
+  return Object.hasOwn(entries, path) ? entries[path] : undefined;
+}
+
 interface Manifest {
   readonly version: number;
   readonly root: string;
@@ -204,7 +214,7 @@ function walk(
   for (const entry of unreadable) {
     if (!ignored?.has(entry.path)) unrunnable(`cannot read ${entry.dir}: ${entry.reason}`);
   }
-  const entries: Record<string, Entry> = {};
+  const entries = entryDictionary([]);
   const ignoredDropped: string[] = [];
   const ignoredKept: string[] = [];
   for (const { path, full, stat } of leaves) {
@@ -223,12 +233,12 @@ function sameEntry(a: Entry, b: Entry): boolean {
 function delta(baseline: Record<string, Entry>, current: Record<string, Entry>): Change[] {
   const changes: Change[] = [];
   for (const [path, entry] of Object.entries(current)) {
-    const before = baseline[path];
-    if (!before) changes.push({ path, op: "added" });
+    const before = ownEntry(baseline, path);
+    if (before === undefined) changes.push({ path, op: "added" });
     else if (!sameEntry(entry, before)) changes.push({ path, op: "modified" });
   }
   for (const path of Object.keys(baseline)) {
-    if (!current[path]) changes.push({ path, op: "deleted" });
+    if (!Object.hasOwn(current, path)) changes.push({ path, op: "deleted" });
   }
   return changes.sort((a, b) => a.path.localeCompare(b.path, "en"));
 }
@@ -262,7 +272,7 @@ function readManifest(file: string): Manifest {
   ) {
     unrunnable(`not a worktree-merge manifest: ${file}`);
   }
-  return manifest;
+  return { ...manifest, entries: entryDictionary(Object.entries(manifest.entries)) };
 }
 
 function writeJson(file: string, value: unknown): void {
@@ -323,7 +333,7 @@ function checkWorktree(
     manifest.gitignore ? "required" : "off",
     new Set(Object.keys(manifest.entries)),
   );
-  const baseline = Object.fromEntries(
+  const baseline = entryDictionary(
     Object.entries(manifest.entries).filter(([path]) => !isPruned(path, allPrunes)),
   );
   const changes = delta(baseline, current);
@@ -364,7 +374,7 @@ function cmdCheck(
   }
   if (out === undefined) return [...checked.lines];
   const kept = new Set(checked.ignoredKept);
-  const entries = Object.fromEntries(Object.entries(checked.current).filter(([path]) => !kept.has(path)));
+  const entries = entryDictionary(Object.entries(checked.current).filter(([path]) => !kept.has(path)));
   const manifest: Manifest = {
     version: MANIFEST_VERSION,
     root: checked.root,
@@ -459,7 +469,7 @@ function applyTargets(worktree: string, into: string, manifest: Manifest): { fro
 function assertBaselineIntact(shared: string, manifest: Manifest, checked: Checked): void {
   const deletedPaths = new Set(checked.changes.filter((change) => change.op === "deleted").map((change) => change.path));
   const conflicts = checked.changes.filter((change) => {
-    const before = manifest.entries[change.path];
+    const before = ownEntry(manifest.entries, change.path);
     if (before !== undefined) {
       const now = treeEntryAt(shared, change.path);
       return now === undefined || !sameEntry(before, now);
@@ -525,7 +535,7 @@ function splitVerified(from: string, shared: string, checked: Checked): { landed
       (actual ? missed : landed).push(change);
       continue;
     }
-    const written = worktreeEntries[change.path];
+    const written = ownEntry(worktreeEntries, change.path);
     const expected: Entry | undefined =
       written?.t === "l" ? { t: "l", d: mirrorLinkTarget(written.d, from, shared) } : written;
     (expected && actual && sameEntry(expected, actual) ? landed : missed).push(change);
@@ -737,10 +747,10 @@ function cmdIndex(tree: string, manifestFile: string, bases: readonly string[]):
 
   const problems: string[] = [];
   for (const [path, { mode, id }] of index) {
-    const measured = manifest.entries[path];
+    const measured = ownEntry(manifest.entries, path);
     if (intentToAdd.has(path)) problems.push(`intent-to-add path the commit would omit: ${path}`);
     else if (isPruned(path, manifest.prunes)) problems.push(`pruned path in the index: ${path}`);
-    else if (!measured) problems.push(`index path the manifest never measured: ${path}`);
+    else if (measured === undefined) problems.push(`index path the manifest never measured: ${path}`);
     else {
       const full = join(root, ...path.split("/"));
       const stat = leafAt(full);

@@ -213,6 +213,8 @@ Markdown mirrors follow § *`scripts/health-check.ts`*.
 
 Contract: `references/scripts/worktree-merge.md`.
 
+**Why filename dictionaries have no prototype.** `__proto__` assignment on an ordinary object changes its prototype instead of storing a file entry. Null-prototype dictionaries preserve literal filenames during walks, manifest reloads, and filtered reconstruction. Own-property checks distinguish missing filenames from inherited names such as `constructor`. JSON fields and version remain unchanged.
+
 **Why a path is cleared before it is copied onto.** `copyFileSync` follows a destination symlink into its target. Clear links with `unlinkSync`; `rmSync` rejects directory-targeting links unless recursive. Recursive removal would still remove only the link, but unlinking avoids depending on that behavior for either target shape.
 
 Reject options unsupported by their subcommand. `discard` takes none, preventing a mistyped `remove` from becoming an ungated deletion. Dispatch also guards commands absent from the parser, so adding a subcommand in only one place reports it instead of throwing `TypeError`.

@@ -39,7 +39,7 @@ An ignored worktree path inside the surface differing from the shared tree is `i
 
 A manifest records its baseline's prunes in `prunes`: root-relative, `/`-separated, trailing slash stripped. Every later `check` against it applies them together with its own `--prune` paths.
 
-**What an entry is.** Record symlink targets without following them. Directories are not entries; empty directories carry no delta. File-to-directory changes therefore delete the original file. Apply deletions before writes and clear a destination before copying its replacement. Refuse a destination with a symlink ancestor below the shared root unless the change set removes that ancestor. Repoint absolute links into the transient worktree to equivalent shared-tree paths.
+**What an entry is.** Every measured filename is a literal own key, including `__proto__` and `constructor`, across saved manifests and reloads. Record symlink targets without following them. Directories are not entries; empty directories carry no delta. File-to-directory changes therefore delete the original file. Apply deletions before writes and clear a destination before copying its replacement. Refuse a destination with a symlink ancestor below the shared root unless the change set removes that ancestor. Repoint absolute links into the transient worktree to equivalent shared-tree paths.
 
 After successful copying, remove emptied directories upward from deleted paths, deepest-first. Stop at a non-empty or non-plain directory, or outside the declared surface. Skip this pass after copy failure. Cleanup errors are tolerated; directory removals appear in neither delta nor receipt.
 

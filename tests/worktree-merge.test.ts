@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   chmodSync,
   cpSync,
@@ -81,6 +82,13 @@ function seededPair(dir: string): { readonly shared: string; readonly worktree: 
 function baseline(dir: string, tree: string, extra: readonly string[] = []): string {
   const manifest = join(dir, "baseline.json");
   run(0, ["baseline", tree, "--out", manifest, ...extra]);
+  return manifest;
+}
+
+function checkedManifest(dir: string, tree: string): string {
+  const reference = baseline(dir, tree);
+  const manifest = join(dir, "checked.json");
+  run(0, ["check", tree, "--baseline", reference, "--surface", ".", "--out", manifest]);
   return manifest;
 }
 
@@ -1203,3 +1211,226 @@ test("check --out writes the manifest baseline would write for the tree it measu
   assert.ok(!existsSync(refused), "a refused check writes no manifest");
   assert.match(run(2, ["baseline", tree, "--out", refused, "--surface", "src"]).stderr, /baseline does not take --surface/);
 });
+
+test("baseline saves a root __proto__ file as an own entry with its content hash", () => {
+  const { dir, path } = newCase();
+  const tree = path("tree");
+  const bytes = Buffer.from([0, 255, 10, 128, 65]);
+  mkdirSync(tree);
+  writeFileSync(join(tree, "__proto__"), bytes);
+
+  const manifest = JSON.parse(readFileSync(baseline(dir, tree), "utf8"));
+  assert.strictEqual(manifest.version, 2);
+  assert.ok(Object.hasOwn(manifest.entries, "__proto__"));
+  assert.deepStrictEqual(manifest.entries["__proto__"], {
+    t: "f",
+    h: createHash("sha256").update(bytes).digest("hex"),
+    x: false,
+  });
+});
+
+for (const producer of ["baseline", "check --out"]) {
+  for (const name of ["__proto__", "constructor"]) {
+    for (const operation of ["added", "deleted"]) {
+      test(`${producer} reload classifies a root ${name} file as ${operation}`, () => {
+        const { dir } = newCase();
+        const { shared, worktree } = seededPair(dir);
+        if (operation === "deleted") write(join(shared, name), "baseline bytes\n");
+        let manifest = baseline(dir, shared);
+        if (producer === "check --out") {
+          const next = join(dir, "next.json");
+          run(0, ["check", shared, "--baseline", manifest, "--surface", ".", "--out", next]);
+          manifest = next;
+        }
+        if (operation === "added") write(join(worktree, name), "worker bytes\n");
+
+        const result = run(0, ["check", worktree, "--baseline", manifest, "--surface", "."]);
+        assert.strictEqual(result.stdout, `${operation.padEnd(8)} ${name}\ndelta 1 · escapes 0\n`);
+      });
+    }
+  }
+}
+
+test("check reports a worker-only root __proto__ file outside src as an escape", () => {
+  const { dir } = newCase();
+  const { shared, worktree } = seededPair(dir);
+  const manifest = baseline(dir, shared);
+  write(join(worktree, "__proto__"), "worker output\n");
+
+  const result = run(1, ["check", worktree, "--baseline", manifest, "--surface", "src"]);
+  assert.strictEqual(result.stdout, "added    __proto__  ESCAPE\ndelta 1 · escapes 1\n");
+  assert.strictEqual(result.stderr, "surface escape: __proto__\n");
+});
+
+test("check --out preserves collision filenames and matches a fresh baseline with identical prunes", () => {
+  const { dir, path } = newCase();
+  const tree = path("tree");
+  write(join(tree, "__proto__"), "prototype bytes\n");
+  write(join(tree, "constructor"), "constructor bytes\n");
+  write(join(tree, "cache", "state"), "pruned\n");
+  const reference = baseline(dir, tree, ["--prune", "cache"]);
+  const next = path("next.json");
+  run(0, ["check", tree, "--baseline", reference, "--surface", ".", "--out", next]);
+  const fresh = path("fresh.json");
+  run(0, ["baseline", tree, "--out", fresh, "--prune", "cache"]);
+  const parsed = JSON.parse(readFileSync(next, "utf8"));
+  assert.deepStrictEqual(parsed, JSON.parse(readFileSync(fresh, "utf8")));
+  assert.deepStrictEqual(Object.keys(parsed.entries).sort(), ["__proto__", "constructor"]);
+  assert.ok(Object.hasOwn(parsed.entries, "__proto__"));
+  assert.ok(Object.hasOwn(parsed.entries, "constructor"));
+  assert.strictEqual(
+    run(0, ["check", tree, "--baseline", next, "--surface", "."]).stdout,
+    "delta 0 · escapes 0\n",
+  );
+});
+
+for (const producer of ["baseline", "check --out"]) {
+  test(`apply from ${producer} incorporates collision additions before receipt-gated removal`, () => {
+    const { dir } = newCase();
+    const { shared, worktree } = seededPair(dir);
+    const manifest = producer === "baseline" ? baseline(dir, shared) : checkedManifest(dir, shared);
+    const receipt = join(dir, "receipt.json");
+    const prototypeBytes = Buffer.from([0, 255, 10, 128, 65]);
+    const constructorBytes = Buffer.from([255, 0, 66, 13, 10]);
+    writeFileSync(join(worktree, "__proto__"), prototypeBytes);
+    writeFileSync(join(worktree, "constructor"), constructorBytes);
+
+    const result = run(0, [
+      "apply", worktree, "--baseline", manifest, "--into", shared,
+      "--surface", "__proto__", "--surface", "constructor", "--receipt", receipt,
+    ]);
+    assert.deepStrictEqual(result.stdout.split("\n").slice(0, 4), [
+      "added    __proto__", "added    constructor", "delta 2 · escapes 0", "applied 2 · verified",
+    ]);
+    assert.deepStrictEqual(readFileSync(join(shared, "__proto__")), prototypeBytes);
+    assert.deepStrictEqual(readFileSync(join(shared, "constructor")), constructorBytes);
+    assert.deepStrictEqual(JSON.parse(readFileSync(receipt, "utf8")), {
+      version: 2,
+      worktree,
+      into: shared,
+      verified: true,
+      applied: [{ path: "__proto__", op: "added" }, { path: "constructor", op: "added" }],
+    });
+
+    unlinkSync(join(shared, "__proto__"));
+    assert.strictEqual(
+      run(1, ["remove", worktree, "--receipt", receipt]).stderr,
+      "applied paths are no longer as recorded: __proto__\n",
+    );
+    assert.ok(existsSync(worktree));
+    assert.deepStrictEqual(readFileSync(join(worktree, "__proto__")), prototypeBytes);
+    writeFileSync(join(shared, "__proto__"), prototypeBytes);
+    run(0, ["remove", worktree, "--receipt", receipt]);
+    assert.ok(!existsSync(worktree));
+    assert.deepStrictEqual(readFileSync(join(shared, "__proto__")), prototypeBytes);
+    assert.deepStrictEqual(readFileSync(join(shared, "constructor")), constructorBytes);
+  });
+
+  test(`apply from ${producer} records and incorporates a baseline constructor deletion`, () => {
+    const { dir } = newCase();
+    const { shared, worktree } = seededPair(dir);
+    write(join(shared, "constructor"), "baseline bytes\n");
+    const manifest = producer === "baseline" ? baseline(dir, shared) : checkedManifest(dir, shared);
+    const receipt = join(dir, "receipt.json");
+
+    const result = run(0, [
+      "apply", worktree, "--baseline", manifest, "--into", shared,
+      "--surface", "constructor", "--receipt", receipt,
+    ]);
+    assert.deepStrictEqual(result.stdout.split("\n").slice(0, 3), [
+      "deleted  constructor", "delta 1 · escapes 0", "applied 1 · verified",
+    ]);
+    assert.ok(!existsSync(join(shared, "constructor")));
+    const parsed = JSON.parse(readFileSync(receipt, "utf8"));
+    assert.strictEqual(parsed.verified, true);
+    assert.deepStrictEqual(parsed.applied, [{ path: "constructor", op: "deleted" }]);
+    run(0, ["remove", worktree, "--receipt", receipt]);
+    assert.ok(!existsSync(worktree));
+  });
+
+  for (const name of ["__proto__", "constructor"]) {
+    for (const refusal of ["escape", "added conflict", "modified conflict"]) {
+      test(`apply from ${producer} refuses a ${name} ${refusal} before writes or a receipt`, () => {
+        const { dir } = newCase();
+        const { shared, worktree } = seededPair(dir);
+        if (refusal === "modified conflict") {
+          for (const root of [shared, worktree]) write(join(root, name), "baseline bytes\n");
+        }
+        const manifest = producer === "baseline" ? baseline(dir, shared) : checkedManifest(dir, shared);
+        const receipt = join(dir, "receipt.json");
+        write(join(worktree, name), "worker bytes\n");
+        write(join(worktree, "src", "app.ts"), "worker source\n");
+        if (refusal !== "escape") write(join(shared, name), "concurrent bytes\n");
+
+        const result = run(1, [
+          "apply", worktree, "--baseline", manifest, "--into", shared,
+          "--surface", refusal === "escape" ? "src" : ".", "--receipt", receipt,
+        ]);
+        const op = refusal === "modified conflict" ? "modified" : "added";
+        assert.ok(result.stdout.split("\n").includes(
+          `${op.padEnd(8)} ${name}${refusal === "escape" ? "  ESCAPE" : ""}`,
+        ));
+        assert.match(result.stderr, refusal === "escape" ? /surface escape, nothing applied/ : /conflict, nothing applied/);
+        assert.ok(!existsSync(receipt));
+        assert.strictEqual(readFileSync(join(shared, "src", "app.ts"), "utf8"), "export const app = 1;\n");
+        if (refusal === "escape") assert.ok(!existsSync(join(shared, name)));
+        else assert.strictEqual(readFileSync(join(shared, name), "utf8"), "concurrent bytes\n");
+        assert.strictEqual(readFileSync(join(worktree, name), "utf8"), "worker bytes\n");
+      });
+    }
+  }
+}
+
+for (const producer of ["baseline", "check --out"]) {
+  test(`index from ${producer} accepts exact measured collision filenames`, () => {
+    const { dir, path } = newCase();
+    const tree = path("tree");
+    seededRepo(tree);
+    for (const name of ["__proto__", "constructor"]) {
+      writeFileSync(join(tree, name), Buffer.from([0, 255, 10, 128, 65]));
+    }
+    git(tree, "add", "__proto__", "constructor");
+    const manifest = producer === "baseline" ? baseline(dir, tree) : checkedManifest(dir, tree);
+
+    const result = run(0, ["index", tree, "--baseline", manifest, "--base", "HEAD"]);
+    assert.strictEqual(result.stdout, `index ${tree}\npaths 5 · matches ${manifest}\n`);
+    assert.strictEqual(result.stderr, "");
+  });
+
+  for (const name of ["__proto__", "constructor"]) {
+    test(`index from ${producer} refuses an unmeasured collision filename ${name}`, () => {
+      const { dir, path } = newCase();
+      const tree = path("tree");
+      seededRepo(tree);
+      const manifest = producer === "baseline" ? baseline(dir, tree) : checkedManifest(dir, tree);
+      write(join(tree, name), "added after measurement\n");
+      git(tree, "add", name);
+
+      assert.strictEqual(
+        run(1, ["index", tree, "--baseline", manifest]).stderr,
+        `index path the manifest never measured: ${name}\n`,
+      );
+    });
+
+    test(`index from ${producer} refuses changed bytes and a missing index entry for ${name}`, () => {
+      const { dir, path } = newCase();
+      const tree = path("tree");
+      seededRepo(tree);
+      write(join(tree, name), "measured bytes\n");
+      git(tree, "add", name);
+      const manifest = producer === "baseline" ? baseline(dir, tree) : checkedManifest(dir, tree);
+      write(join(tree, name), "later bytes\n");
+      assert.strictEqual(
+        run(1, ["index", tree, "--baseline", manifest]).stderr,
+        `tree changed since the manifest: ${name}\n`,
+      );
+
+      write(join(tree, name), "measured bytes\n");
+      git(tree, "rm", "--cached", name);
+      assert.strictEqual(
+        run(1, ["index", tree, "--baseline", manifest]).stderr,
+        `measured path absent from the index: ${name}\n`,
+      );
+    });
+  }
+}
