@@ -22,7 +22,7 @@ Offer activation to the container's parent, naming both locations. Execution can
 
 Creation placement, naming, sanction, and degrade: `./task-delivery.md`. Re-entry, removal, and branch-convention proposals: `./task-delivery-edges.md`.
 
-**Creation** runs at implement-task §3 before executing status, under § *Branch and worktree creation*. Resolve the repository through Which repository, not task-folder placement. Skip silently for documentation/bureaucratic tasks or missing repositories. Announce a resolved repository containing none of the plan's paths. Neither skip records a pointer or degrade. Failed creation announces and records the degrade, then continues on the current checkout.
+**Creation** runs at implement-task §3 before executing status, under § *Branch and worktree creation*. Resolve the repository through Which repository, not task-folder placement. Skip silently for documentation/bureaucratic tasks or missing repositories. Announce a resolved repository containing none of the plan's paths. Neither skip records a pointer or degrade. Creation failures follow `./task-delivery.md` § *Branch and worktree creation* → **When creation is unavailable**.
 
 **Re-entry** runs at §1 when Pointers records a branch (`./task-delivery-edges.md` § *Re-entry on resume*). A merged or missing branch stops work: ask whether to create fresh follow-up or treat delivery as complete. With no recorded branch, including a prior degrade, apply §3 creation as a first delivery run.
 

@@ -26,6 +26,12 @@ Treat a declaration absent from both files as absent. Branch names, history, and
 
 **Resolving `<default-branch>`.** Read `git symbolic-ref --short refs/remotes/origin/HEAD` and strip `origin/`. If unset, use `git remote show origin`'s HEAD branch. Without a remote, use the main checkout's current branch; ask if ambiguous. Removal uses this same resolution.
 
+With no recorded branch pointer, check whether the intended branch already exists. If so, ask whether to reuse it, continue on the current checkout, or stop.
+
+On confirmed reuse, locate its worktree by branch identity and re-enter it when present. Otherwise run `git worktree add <main-checkout-path>.worktrees/<slug> <branch>` without `-b`; apply the refusal handling below.
+
+Before failed recovery falls back onto `<default-branch>`, apply the continue-or-stop gate below. Record the branch pointer only after successful re-entry or recreation.
+
 ```
 git worktree add -b <branch> <main-checkout-path>.worktrees/<slug> <base>
 ```
@@ -38,7 +44,15 @@ Announce branch, path, and base as creation happens. Add `` branch `<branch>` ``
 
 This sanction covers creation plus `./task-delivery-edges.md`'s re-entry and removal, not checkpoint commits. Touch no other ref, except the scoped `git fetch origin <default-branch>` in Removal's merged predicate, also reached during re-entry. That fetch moves only the default branch's remote-tracking ref.
 
-**When creation is unavailable.** On any creation failure, announce and record the degrade, then continue in the current checkout as shared tree. Never retry with force, relocate the worktree to another writable path, or stop execution over this delivery failure.
+**When creation is unavailable.** A sandbox or permission refusal requests the host's per-command approval once before degrading, when that path is available. Refusal evidence is `Operation not permitted` (EPERM), `Permission denied` (EACCES), `Read-only file system` (EROFS), or a host sandbox-violation report. Also count a failed filesystem write whose path the active host policy explicitly makes unwritable, even without permission text. Generic `cannot lock ref` text alone does not establish refusal. Explicit ref/path conflicts remain ordinary creation failures.
+
+Request the exact refused `git worktree add` command. If that attempt already created the branch, request `git worktree add <main-checkout-path>.worktrees/<slug> <branch>` without `-b` instead. The justification names the user-invoked task branch/worktree sanction above; propose no persistent approval rule. Codex uses `sandbox_permissions="require_escalated"` for this request.
+
+When approval is unavailable or denied, or the approved creation fails, make no further creation attempt or approval request. Never retry with force or relocate the worktree to another writable path.
+
+Before this refusal degrades onto `<default-branch>`, resolved above, ask the user to continue on the current checkout or stop. Edit no file and run no plan step before the answer. A stop answer leaves existing files unchanged. A refusal on a non-default branch degrades without a question.
+
+Every permitted degrade announces and records the failure, then continues in the current checkout as shared tree. Other creation failures take that degrade without approval or a question.
 
 ## Checkpoint commits
 
