@@ -15,7 +15,9 @@ import {
   TERMINAL_STATUSES,
   UNSTARTED_STATUS,
 } from "./lifecycle-constants.ts";
-import { resultSize } from "./task-state.ts";
+import { resultSize, taskState } from "./task-state.ts";
+import { sameDiagnostic, validateGoalStructure, type StructureDiagnostic } from "./goal-structure.ts";
+import { readTaskMarkdown, type TaskMarkdown } from "./task-repair.ts";
 
 process.stdout.on("error", (err: NodeJS.ErrnoException) => {
   if (err.code !== "EPIPE") throw err;
@@ -25,8 +27,6 @@ const DEFAULT_STALE_DAYS = 30;
 const DAY_MS = 86_400_000;
 const CURRENT_STATE = /^##[ \t]+Current state\b/im;
 const COMPLETED_LINE = /^[ \t]*(?:[-*+][ \t]+)?\*\*Completed:\*\*[ \t]*\d{4}-\d{2}-\d{2}\b/i;
-const GOALS_HEADING = /^##[ \t]+Goals\b/;
-const GOAL_ID = /^G\d+$/;
 const STEP_HEADING = /^#{2,6}[ \t]+Step\b/i;
 const RECORD_TITLE = /^(?:Step|Full Run)\b/;
 const TICKET_FILE = "ticket.md";
@@ -216,7 +216,8 @@ interface ScannedLine {
 
 function* scanLines(text: string): Generator<ScannedLine> {
   let fence: { indent: number; char: string; len: number } | null = null;
-  for (const line of text.split("\n")) {
+  for (const raw of text.split("\n")) {
+    const line = raw.replace(/\r$/, "");
     const marker = line.match(FENCE);
     if (marker) {
       const [, pad, run, rest] = marker;
@@ -918,31 +919,59 @@ function citationFindings(task: Task, ctx: CitationContext): UnrootedFinding[] {
   return out;
 }
 
-function goalIdFindings(task: Task): UnrootedFinding[] {
-  const out: UnrootedFinding[] = [];
-  if (!task.goals?.text) return out;
-  const seen = new Set<string>();
-  let inGoals = false;
-  for (const line of liveLines(task.goals.text)) {
-    if (HEADING.test(line)) {
-      inGoals = GOALS_HEADING.test(line);
-      continue;
-    }
-    if (!inGoals) continue;
-
-    const bullet = line.match(/^[-*+][ \t]+(\S+)/);
-    if (!bullet) continue;
-    const id = bullet[1];
-    if (!GOAL_ID.test(id)) {
-      out.push({ check: "goal-id", path: task.path, detail: `malformed goal ID in ${task.goals.file}: ${clip(line)}` });
-      continue;
-    }
-    if (seen.has(id)) {
-      out.push({ check: "goal-id", path: task.path, detail: `duplicate goal ID ${id} in ${task.goals.file}` });
-    }
-    seen.add(id);
+function hasEntry(path: string): boolean {
+  try {
+    lstatSync(path);
+    return true;
+  } catch {
+    return false;
   }
-  return out;
+}
+
+function goalIdFindings(task: Task): UnrootedFinding[] {
+  const goalsText = task.goals?.text ?? null;
+  const goalsFile = task.goals?.file ?? "goals.md";
+  if (goalsText === null && !hasEntry(join(task.dir, goalsFile))) return [];
+  let markdown: TaskMarkdown;
+  try { markdown = readTaskMarkdown(task.dir); }
+  catch (err) {
+    unreachable("dir", task.dir, task.path, err as ErrorLike);
+    markdown = { documents: Object.fromEntries(task.artifacts.map((artifact) => [artifact.file, artifact.text])), gaps: ["."], nested: [], failures: [] };
+  }
+  for (const failure of markdown.failures) {
+    unreachable(failure.kind, join(task.dir, failure.path), join(task.path, failure.path), { code: failure.code });
+  }
+  const gaps = goalsText === null && !markdown.gaps.includes(goalsFile) ? [...markdown.gaps, goalsFile] : markdown.gaps;
+  const scanned = validateGoalStructure(goalsText, markdown.documents, { unreadableMarkdown: gaps, nestedTasks: markdown.nested }).diagnostics;
+  const planFile = task.plan?.file ?? "plan.md";
+  const planText = markdown.documents[planFile];
+  const cited = planText === undefined || goalsText === null
+    ? []
+    : taskState({ taskDir: task.dir, planText, resultText: null, goalsText }).structure.diagnostics.filter((diagnostic) =>
+      diagnostic.file === "plan.md"
+      && (diagnostic.code === "retired-goal-reference" || diagnostic.code === "unknown-goal-reference"))
+      .map((diagnostic) => ({ ...diagnostic, file: planFile }))
+      .filter((diagnostic) => !scanned.some((existing) => sameDiagnostic(existing, diagnostic)));
+  return [...scanned, ...cited]
+    .filter((diagnostic) => diagnostic.code !== "missing-goals-file")
+    .map((diagnostic) => ({
+      check: "goal-id",
+      path: task.path,
+      detail: goalIdDetail(diagnostic, goalsFile),
+    }));
+}
+
+function goalIdDetail(diagnostic: StructureDiagnostic, goalsFile: string): string {
+  switch (diagnostic.code) {
+    case "duplicate-goal-id":
+      return `duplicate goal ID ${diagnostic.detail} in ${goalsFile}`;
+    case "malformed-goal-id":
+      return `malformed goal ID in ${goalsFile}: ${clip(diagnostic.detail)}`;
+    case "incomplete-reference-scan":
+      return `incomplete-reference-scan in ${diagnostic.file}`;
+    default:
+      return `${diagnostic.code} ${diagnostic.detail} in ${diagnostic.file}:${diagnostic.line}`;
+  }
 }
 
 function hasCurrentState(text: string): boolean {

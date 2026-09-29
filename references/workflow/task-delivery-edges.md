@@ -10,12 +10,24 @@ Keep `<task-dir>` at its resolved location, under the main checkout for project-
 
 ## Re-entry on resume
 
+Check `./implement-task-edges.md` § *Verification-only continuation* before this branch-re-entry procedure. It does not authorize branch creation for observation.
+
 Read the result's Pointers branch and match `branch refs/heads/<branch>` in `git worktree list --porcelain` from the main checkout. Match branch identity, not a derived path; the user may have moved the worktree. Take the first applicable case:
 
 - **Branch merged under § *Removal*, or gone**: report and create nothing. Ask whether to start a fresh follow-up branch or treat the task as delivered. Check this before adopting a surviving worktree.
 - **Live branch, matched worktree**: re-enter and name the working location.
 - **Live branch, no worktree**: announce and recreate on that existing branch: `git worktree add <main-checkout-path>.worktrees/<slug> <branch>`, without `-b`.
 - **No recorded branch**: apply `./task-delivery.md` § *Branch and worktree creation* as a first run.
+
+## Verification source after delivery
+
+Before later `in-review → done` finalization, `implement-task` and both reconciliation directions select the fresh health surface by domain and affected target (`../engineering/acceptance-gate.md` § *Resolve live targets*). Documentation runs its domain health on the current deliverable set. Engineering work with a supported absence of affected deployed runtimes runs engineering health on the current work product and retains its evidence-backed live-check N/A disposition. Neither case requires a deployment identity merely because the task is in-review.
+
+For each affected deployable engineering target, identify its implementation repository and delivered source commit behind the intended build from the result's delivery pointer and release path. A removed-branch marker or a green workload alone does not identify source. Correlate that commit and build with the observed release before claiming a live check passed. Use the same source to select the fresh finalization health surface, even after main advances past the merge.
+
+For a checkout, require empty `git status --porcelain` and `git rev-parse HEAD^{tree}` equal to the delivered commit's tree ID before running the fresh finalization health boundary. Read that tree ID from the local object when present, otherwise from a read-only host query such as `gh api repos/<owner>/<repo>/commits/<sha> --jq .commit.tree.sha`, and record which. Tree identity lets the task worktree qualify after a squash, rebase, or merge whose result equals its own tree. A checkout whose tree differs, such as main after it advanced past the merge, is not a substitute. Where the commit object is available locally and permissions allow, a branchless scratch extraction from `git archive <delivered-commit>` may provide that source; prove the object identity and record the snapshot provenance. Run the same fresh boundary there only when its health recipe supports the extracted source. Do not create or move a branch, fetch into Git refs, or detach an existing checkout merely to observe delivery.
+
+For deployable engineering work, an unidentified delivered source or unavailable matching health surface keeps `in-review` with source health pending. Name what would establish the proof, its owner, and the next action. A check that actually fails on the proven source is failed work, not pending source proof; follow the consumer's existing failure path. Keep § *Removal*'s predicates and permissions unchanged.
 
 ## Removal
 
@@ -67,8 +79,4 @@ On explicit confirmation, write `Task branches follow <observed>/<slug>.` with t
 
 ## The live-verification gate
 
-Where the repository declares live verification (`./task-delivery.md` § *Repo delivery declarations*), `plan-task` must draft a `G<n> (external)` goal naming the live outcome and yardstick (`./acceptance-criteria.md`). Surface a missing goal in hand-authored goals to the user; never silently add it.
-
-`implement-task` tags the written goal pending external and parks at in-review while verification is outstanding (`./task-lifecycle.md`). A later run gates the user's reported live state against the accepted proxy before done.
-
-This mechanism checks written goals only. Missing, predating, or deliberately omitted live goals can still finalize without a live check; implement-task does not independently enforce the declaration at acceptance. The mandate applies to the goals draft. No declared gate means no additional goal or status vocabulary.
+Every engineering plan resolves live targets and checks through `../engineering/acceptance-gate.md`, even without a repository declaration or a live goal. `plan-task` records the target mapping and verification in the plan; `implement-task` independently checks it before completion. An `(external)` goal still receives its own Acceptance verdict (`./acceptance-criteria.md`). A check without a goal ID remains a named pending check in result In review, not an invented goal.

@@ -16,6 +16,8 @@ For each approach, assess **alignment** (fit with existing codebase patterns), *
 
 Each step is a verifiable piece of work with a concrete way to confirm it worked before moving on. Order steps as vertical slices, not horizontal layers: each step delivers a complete capability (schema + API + UI for one thing), which surfaces integration risk early and keeps the system demoable. Use horizontal ordering only when a foundational layer (shared types, a migration) has no vertical seam.
 
+Before sizing steps, assess whether the effort has independently useful outcomes with their own verification and delivery dependencies (`../workflow/decomposition.md`). Propose sibling tasks for such seams; do not split a tightly coupled fix by component or goal count. Honor an explicit one-task request with bounded vertical steps and checkpoints in that folder.
+
 A step's **Verify** is a concrete engineering check: run a test, check a behavior, see output, verify types pass.
 
 Step sizing:

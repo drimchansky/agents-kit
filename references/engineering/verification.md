@@ -15,6 +15,8 @@ How `fix-findings` pays these tiers across a batch, and what a red boundary reru
 
 ## What a boundary records
 
+Write a concise outcome for each command and its decisive diagnostic or stable evidence location. Record one boundary once in its owning result section; do not paste full output or repeat the same health run in every step. Keep every field below so a later reader can assess the checked tree and the commit gate can reuse its manifest.
+
 The shape of a recorded code-domain boundary, cited by every consumer's `**Health:**` field. In order:
 
 - **The reference**: the `worktree-merge.ts` manifest the delta was taken against and the tree it captured. A boundary that took none records why instead, and no delta: `whole surface: reference carries no in-session green result`, `whole surface: previous boundary wrote no manifest`, `reference skipped: no kit root`, `reference skipped: helper failed: <reason>` (`./boundary-scope.md` § *Reference and delta*).

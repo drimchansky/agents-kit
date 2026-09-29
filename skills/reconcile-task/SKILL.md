@@ -34,7 +34,7 @@ Label the terminal session for the resolved folder per `./references/workflow/te
 
 ### 2. Load Artifacts
 
-Open the folder per `./references/workflow/task-layout.md` § *Reading a resolved folder* and read it in full; it is the baseline the session is diffed against:
+Open the folder per `./references/workflow/task-layout.md` § *Reading a resolved folder*, report structural repair, then read it in full; the repaired state is the baseline the session is diffed against. An explicit read-only request suppresses repair and all reconciliation writes. Do not treat unresolved structure as complete coverage:
 
 - **The inherited group chain**: every applicable `GROUP_CONTEXT.md`, root to task. A constraint the session changed, or one the docs contradict, is a finding. Name the selected root and cite each file by its path from it; a correction whose home is a group file is a judged edit under § *The upstream ask is writable, and never rewritten quietly*.
 - `goals.md`: the `## Goals` list by `G<n>` and the highest ID in use.
@@ -76,7 +76,7 @@ The rule is `./references/workflow/reconciliation.md` § *Strengthen only on ver
 
 Apply the findings per `./references/workflow/reconciliation.md` (the append-only `## Reconciliation` record, § *The record*, included) and `./references/workflow/reconciliation-session-to-docs.md` § *`reconcile-task` — session findings*, whose route values are the shared file's § *The mapping legend*; **verify** means Step 5's gate. Every edit maps to a Step 3 or Step 4 finding. A **verify** row waits on Step 5 passing. Every **judged** row follows the shared § *Consent model: findings apply, the record carries them* and retains its required record.
 
-End every run by refreshing the result's `## Current state` per the shared file's § *Current state refresh*. Then test the size trigger with `node <kit-root>/scripts/task-state.ts --compaction-plan <task folder>` and read the verdict off its JSON (`./references/scripts/task-state.md`; `<kit-root>` per `./references/workflow/task-store.md` § *Resolving `<kit-root>`*). On `due`, raise the compaction proposal per `./references/workflow/reconciliation-compaction.md` § *Compaction (size trigger)*, which owns its consent and what may collapse; read it only then. When the script is unavailable, say the trigger went untested; never report it as under the trigger. A `maintain` `oversized-task` or `oversized-record` finding is raised alongside the proposal and cut only on the same confirmation, narrative never evidence. <!-- cold -->
+When a result exists or is owed for another change, end the run by refreshing its `## Current state` per the shared file's § *Current state refresh*. Do not create one solely to log structural repair. For an existing result, test the size trigger with `node <kit-root>/scripts/task-state.ts --compaction-plan <task folder>` and read the verdict off its JSON (`./references/scripts/task-state.md`; `<kit-root>` per `./references/workflow/task-store.md` § *Resolving `<kit-root>`*). On `due`, raise the compaction proposal per `./references/workflow/reconciliation-compaction.md` § *Compaction (size trigger)*, which owns its consent and what may collapse; read it only then. When the script is unavailable, say the trigger went untested; never report it as under the trigger. A `maintain` `oversized-task` or `oversized-record` finding is raised alongside the proposal and cut only on the same confirmation, narrative never evidence. <!-- cold -->
 
 ## Output Template
 

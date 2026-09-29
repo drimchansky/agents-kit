@@ -310,8 +310,7 @@ test("a step's path set unions its Touches paths with the paths its What names",
   );
 });
 
-test("plan parsing skips fenced content and reads both path fields of one step", () => {
-  const steps = parsePlanSteps(`## Steps
+const FENCED_PLAN = `## Steps
 
 ${FENCE}
 ### Step 9 — illustrative only
@@ -323,13 +322,25 @@ ${FENCE}
 
 - [ ] **What:** rework \`src/a.ts\` and the \`docs/\` tree
 - **Touches:** \`src/b.ts\`, \`SCRIPTS.md\`
-`);
+`;
+
+test("plan parsing skips fenced content and reads both path fields of one step", () => {
+  const steps = parsePlanSteps(FENCED_PLAN);
 
   assert.deepStrictEqual(
     steps.map((step) => step.number),
     ["1"],
   );
   assert.deepStrictEqual(steps[0].paths, ["src/a.ts", "docs", "src/b.ts", "SCRIPTS.md"]);
+});
+
+test("a CRLF plan still opens and closes its fences and reads its step headings", () => {
+  const steps = parsePlanSteps(FENCED_PLAN.replaceAll("\n", "\r\n"));
+
+  assert.deepStrictEqual(
+    steps.map((step) => [step.number, step.paths]),
+    [["1", ["src/a.ts", "docs", "src/b.ts", "SCRIPTS.md"]]],
+  );
 });
 
 test("the Pointers line yields the watermark, the branch, and whether the branch is recorded removed", () => {

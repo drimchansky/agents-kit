@@ -51,7 +51,7 @@ Installed runs do not load this file. `setup.ts` installs `CORE_RULES.md` instea
 
 **Piped stdout is asynchronous.** After emitting JSON, let the module end so buffered output flushes. Calling `process.exit` would truncate reports exceeding the pipe buffer, often 64 KB. Swallow EPIPE from readers closing early so that unawaited stream error does not change the promised status.
 
-**No script calls `process.exit` to set status.** Write the non-zero reason before assigning `process.exitCode`, preserving both the explanation and pending output. `task-move.ts`, `task-state.ts`, `pr-comments.ts`, `commit-scan.ts`, and `sweep-scope.ts` throw an `Exit` carrying the code. `worktree-merge.ts` throws `Refused` or `Unrunnable`. One handler at each module's end reports every refusal. `dup-check.ts` handles thrown `Refused` as status 2, but assigns status 1 after writing its findings report.
+**No script calls `process.exit` to set status.** Write the non-zero reason before assigning `process.exitCode`, preserving both the explanation and pending output. `task-move.ts`, `task-state.ts`, `pr-comments.ts`, `commit-scan.ts`, and `sweep-scope.ts` throw an `Exit` carrying the code. `worktree-merge.ts` throws `Refused` or `Unrunnable`. One handler at each module's end reports every refusal. `dup-check.ts` handles thrown `Refused` as status 2, but assigns status 1 after writing its findings report. `task-state.ts --repair` also writes its JSON report first, carrying the reason in `unresolved` or `error`. It then assigns status 1 or 2 directly instead of throwing `Exit`.
 
 ### `setup.ts`
 
@@ -127,6 +127,10 @@ node scripts/dup-check.ts [--allow FILE] <kit-root>
 
 **Exit status.** Zero means no surviving groups or stale entries; 1 means either kind of finding. Status 2 covers missing/invalid roots, unknown options, unreadable directories or corpus files, and malformed or unreadable existing allow-files. Allow-file defects include invalid JSON, non-array data, missing fields, repeated sentences, or invalid `files`. Unexpected failures also exit 2, not 1. Unlike reporting scripts, this check refuses unreadable corpus files: skipping one could falsely report an incompletely scanned corpus as clean.
 
+### `scripts/goal-structure.ts`
+
+This pure module parses goal definitions and scans task-local Markdown references for task-state and health-check. Keep definition parsing shared so health-check's `goal-id` findings and task-state coverage cannot disagree about malformed or duplicate IDs. Measure offsets on the original line, not the CR-stripped text, or CRLF repairs will target the wrong characters. The reference scanner excludes illustrative Markdown and link destinations; repair uses its offsets to update exactly the references validation recognizes. Inline and reference-style link labels retain destination classification so an outside or unproved target cannot become a local remap. Nested labels resolve to their enclosing link, and a label, code span, or quotation left open across a line break marks its tokens ambiguous for the same reason. Retired IDs come only from goals.md's `## Retired` list. Validation therefore needs no Git history, so untracked stores and moved folders validate alike.
+
 ### `scripts/health-check.ts`
 
 Contract: `references/scripts/health-check.md`.
@@ -149,7 +153,7 @@ The store scan initially takes the contiguous path characters around a filename.
 
 Measure depth and fallback paths from the root holding the target, not the citing task. Slug uniqueness spans all roots. Measuring from the citer would falsely label targets in another root outside the store, producing an unfixable recommendation. Name the target's root when different; reserve outside-store notes for targets no walked root contains. This requires finishing all root walks before citation checking. `dead-citation` and `citation-form` stay separate because broken targets permit mechanical repair, while nonconformant forms require deciding which task was intended.
 
-**Markdown mirrors.** `task-state.ts` mirrors these readers; `task-move.ts` mirrors fences and status. `commit-scan.ts` mirrors fences, headings, step titles, and checkboxes. `sweep-scope.ts` mirrors fences, headings, link targets, and trailing noise. Change each affected mirror in the same edit. They must agree on anchors, terminal status, nominated steps, sweep section bounds, and link grammar.
+**Markdown mirrors.** `task-state.ts` mirrors these readers; `task-move.ts` mirrors fences and status. `commit-scan.ts` mirrors fences, headings, step titles, and checkboxes. `sweep-scope.ts` mirrors fences, headings, link targets, and trailing noise. `goal-structure.ts` mirrors fences and headings; its reference scan mirrors health-check's citation blockquote skip, including lazy continuation lines. Unlike health-check, that scan also ends a quote at a fence line. Change each affected mirror in the same edit. They must agree on anchors, terminal status, nominated steps, sweep section bounds, and link grammar. Every mirror strips a trailing CR from each line so CRLF task files still match headings and fences.
 
 Both citation readers import `angledTargetText` from `lifecycle-constants.ts`. Shared code prevents the angle-target padding rule from drifting again. Health-check first blanks inline code and skips blockquotes, then percent-decodes targets to resolve paths. Sweep-scope instead percent-encodes interior spaces so URLs match its ledger. Preserve these deliberate differences while keeping the shared literal angle-target interpretation.
 
@@ -208,6 +212,14 @@ Contract: `references/scripts/task-state.md`.
 Markdown mirrors follow § *`scripts/health-check.ts`*.
 
 **Why the entry check goes through `realpath`.** Only a direct run reads task files. Tests import the pure layer, so a module-scope walk would introduce filesystem effects on import. The symlinked-invocation mismatch and normalization are the same as § *`scripts/pr-comments.ts`* describes.
+
+The `structure` report adds reliability and diagnostics without changing the existing coverage fields. The direct CLI scans supplementary task Markdown before reporting; pure callers can supply those documents. `--repair` is the only writing mode. Default and compaction invocations remain read-only. Its command and output contract live in `references/scripts/task-state.md`.
+
+### `scripts/task-repair.ts`
+
+The repair entry point remains separate from task-state's pure readers. Task-state hands repair its full structure report as the validator, so a remap cannot open a coverage gap; importing task-state here would form a cycle. A fresh numeric ID requires a tracked goals file and reachable, non-shallow Git history reaching its creation. Scan historical goal bullets across that history, and reserve IDs listed under `## Retired`; current maximum alone cannot prove non-reuse. Normalize physical paths before looking up a nested task in Git history, since macOS aliases `/var` to `/private/var`.
+
+Read every task-local Markdown file before proposing a remap, because an unread file could hold a reference the remap would miss. Write only the four core role files: other documents may be authored, published, or already sent, so their references block a remap instead. Its walk also feeds task-state's ordinary CLI and health-check's `goal-id`, so all three read the same documents and scan gaps. The walk skips subfolders holding a role file; health-check reports those as `nested-task`, except a subfolder named Archive or Backlog, which its walk treats as a lifecycle container. Compare normalized goal identities so decoration cannot hide duplicate definitions. No persistent transaction record exists, so a crash between renames leaves old references for the next structural scan to diagnose. Staging-file sweeping keys on the writer PID so a concurrent repair's files survive. The staging, inventory, and rollback mechanics live in `references/scripts/task-state.md`.
 
 ### `scripts/worktree-merge.ts`
 
@@ -268,6 +280,8 @@ Run the suite covering each changed surface:
 - `scripts/health-check.ts`: `node --test tests/health-check.test.ts`.
 - `scripts/task-move.ts`: `node --test tests/task-move.test.ts`.
 - `scripts/task-state.ts`: `node --test tests/task-state.test.ts`, plus health-check and sweep-scope suites for its exported helpers.
+- `scripts/goal-structure.ts`: task-state, health-check, sweep-scope, and templates suites; its reference classification also governs task-repair.
+- `scripts/task-repair.ts`: task-state, health-check, and sweep-scope suites, because task-state imports it for the direct CLI.
 - `scripts/commit-scan.ts`: `node --test tests/commit-scan.test.ts`.
 - `scripts/sweep-scope.ts`: `node --test tests/sweep-scope.test.ts`.
 - `scripts/session-triage.ts`: `node --test tests/session-triage.test.ts`.
@@ -275,7 +289,7 @@ Run the suite covering each changed surface:
 - `scripts/dup-check.ts` or its `corpus.ts` import: `node --test tests/dup-check.test.ts`.
 - `scripts/worktree-merge.ts`: `node --test tests/worktree-merge.test.ts`.
 - `scripts/lifecycle-constants.ts`: health-check, task-move, task-state, commit-scan, and sweep-scope suites, which import it.
-- `references/templates/` and the two scripts its suite drives: `node --test tests/templates.test.ts`.
+- `references/templates/` and the three scripts its suite drives: `node --test tests/templates.test.ts`.
 - Invocation-gate changes: `node --test tests/invocation-gate.test.ts`. This checks SKILL.md frontmatter, `agents/openai.yaml` policy, and the roster in `references/workflow/skill-conventions.md` together.
 
 Change CLI, stdout, exit, and caller-facing contracts at their owners in the same edit. Use `references/scripts/<name>.md` for run-time helpers; use § *Source contracts* for maintainer-only contracts, installer behavior, and suite dependencies. Helper rationale belongs in its subsection there. Skills invoking helpers cite the contract path.
@@ -335,7 +349,9 @@ These seven homes carry eight mirror notes because scripts cannot consume prose 
 - `scripts/task-move.ts`: `PLAN_VOCAB`, `TERMINAL_STATUSES`, `UNSTARTED_STATUS`, `ARCHIVE_DIR`, `BACKLOG_DIR`, `TASK_STORE_DIR`, `holdsRoleFile`, `classifyWalkEntry`.
 - `scripts/task-state.ts`: `PLAN_VOCAB`, `RESULT_MAX_KB`.
 - `scripts/commit-scan.ts` and `scripts/sweep-scope.ts`: `holdsRoleFile`.
+- `scripts/task-repair.ts`: `holdsRoleFile`, `WALK_SKIP_DIRS`.
+- `scripts/goal-structure.ts`: `holdsRoleFile`.
 
-Both walkers receive recognition and prunes through `classifyWalkEntry`. Direct `holdsRoleFile` callers test the supplied task folder; sweep-scope also distinguishes deliverables from role files. No script imports `WALK_SKIP_DIRS` directly. Task-move imports `TASK_STORE_DIR` for `boundingRoot`'s `.agents/tasks` bound, not as a prune. Compare this registry to actual import symbols when changing it.
+Both walkers receive recognition and prunes through `classifyWalkEntry`. Commit-scan and sweep-scope call `holdsRoleFile` on the supplied task folder; sweep-scope also distinguishes deliverables from role files. Task-repair calls it on each subfolder to skip nested tasks, and imports `WALK_SKIP_DIRS` for the same prune. Goal-structure calls it to tell a deliverable from the role files. Task-move imports `TASK_STORE_DIR` for `boundingRoot`'s `.agents/tasks` bound, not as a prune. Compare this registry to actual import symbols when changing it.
 
 - `references/workflow/reconciliation-commits.md` § *The watermark*, `task-delivery.md` § *Branch and worktree creation*, and `task-delivery-edges.md` § *Removal*: update commit-scan's pointer patterns with their prose. The shapes are `SHA <sha>`, `` branch `<branch>` ``, and `(removed …)`. Free prose offers no other structure for locating the floor and ref. Three owner notes cover one importer; stale patterns would produce `no-watermark` or scan HEAD instead of the recorded task branch.

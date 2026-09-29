@@ -8,19 +8,22 @@ argument-hint: '[task folder path] [-x (cross-vendor grounding probe)] — passe
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 
-One command for the review-and-fix pipeline: validate the plan against reality (`review-task`), then reconcile its findings. Settle the review's Questions or present them for input. The assessment is a snapshot of pre-reconcile state.
+One command for the review-and-fix pipeline: validate the plan against reality (`review-task`), then reconcile its findings. Settle the review's Questions or present them for input. The assessment is a snapshot after loader repair and before reconciliation edits.
 
-Phase 1 runs `../review-task/SKILL.md`'s full protocol; Phase 2 runs the reference contract it names. Three overrides apply pipeline-wide:
+Phase 1 runs `../review-task/SKILL.md`'s full protocol; Phase 2 runs the reference contract it names. Four overrides apply pipeline-wide:
 
 - **Core Rules blocks**: this block covers the pipeline; the inner AGENTS.md read does not repeat. `review-task`'s domain-pack step still runs.
-- **Chat display**: the assessment prints in full at the end of Phase 1, before any edit.
+- **Chat display**: the assessment prints in full at the end of Phase 1, before any reconciliation edit.
 - **Next pointers**: the inner skill's follow-ups are dropped; this Output owns **Next**.
+- **Loader baseline**: Phase 1 runs the inner skill's repairing load once and reports its structural repair before assessment. Phase 2 retains that repaired baseline and does not rerun repair.
 
 A phase departs from its skill or contract only where its section below says so.
 
 The write surface is exactly what `./references/workflow/reconciliation-docs-to-reality.md` § *Write surface* fixes: the task files plus `ticket.md` and an applicable `GROUP_CONTEXT.md`, on the added terms of `./references/workflow/reconciliation.md` § *The upstream ask is writable, and never rewritten quietly*. `./references/workflow/reconciliation-docs-to-reality.md` § *Write surface* names every never-edited file. This pipeline fixes the docs, not the world (`./references/workflow/reconciliation.md` § *Docs, not the world*), and never implements or redesigns: a step that needs rethinking is flag-only and goes back to `plan-task`, per the mapping's *Infeasible or conflicts-with-existing steps* row.
 
-User invocation authorizes settled corrections under `./references/workflow/reconciliation.md` § *Consent model: findings apply, the record carries them*. Unresolved impactful choices are presented with their options; those still unanswered remain Awaiting decision. A model-invoked run has no write consent and asks before each fix.
+User invocation authorizes settled corrections under `./references/workflow/reconciliation.md` § *Consent model: findings apply, the record carries them*. Unresolved impactful choices are presented with their options; those still unanswered remain Awaiting decision. A model-invoked run asks before each reconciliation fix; the shared structural-loader exception still applies.
+
+An explicit read-only request passes through to Phase 1 and suppresses Phase 2 writes, including the reference ledger and any result record. Report findings and proposed corrections in chat only.
 
 ## Flags
 
@@ -36,13 +39,13 @@ User invocation authorizes settled corrections under `./references/workflow/reco
 
 Execute `../review-task/SKILL.md` end to end against the resolved task folder, passing `-x` through when given, and print its assessment in full: every output section, including the always-rendered Goal Quality, Acceptance Coverage, and Cross-File Drift sections and its numbered Questions. `review-task` sweeps no citations of its own (the **docs → reality** direction definition opening `./references/workflow/reconciliation.md`); the folder's cited links are Phase 2's.
 
-The assessment prints before any edit and is never regenerated afterwards (§ *Sequence and output*). If Phase 2 fails hard, the assessment stands as printed.
+The assessment prints before any reconciliation edit and is never regenerated afterwards (§ *Sequence and output*). If Phase 2 fails hard, the assessment stands as printed.
 
 ## Phase 2 — Reconcile
 
-Apply the assessment's findings per `./references/workflow/reconciliation.md` and `./references/workflow/reconciliation-docs-to-reality.md`, read before editing. This pipeline's finding-type → edit mapping is the direction file's § *`review-task-reconcile` — assessment findings*.
+Apply the assessment's findings per `./references/workflow/reconciliation.md` and `./references/workflow/reconciliation-docs-to-reality.md`, read before reconciliation edits. This pipeline's finding-type → edit mapping is the direction file's § *`review-task-reconcile` — assessment findings*.
 
-Run the reference sweep, `./references/workflow/reconciliation-sweep.md`, in this phase, its `## References` block printed before any edit. It is this pipeline's only source of dead-link and reference-answered-question findings.
+Run the reference sweep, `./references/workflow/reconciliation-sweep.md`, in this phase, its `## References` block printed before any reconciliation edit. It is this pipeline's only source of dead-link and reference-answered-question findings.
 
 Route every numbered Question through § *Consent model: findings apply, the record carries them*. Reuse `review-task`'s researched options, trade-offs, and recommendation without repeating research. An entry whose options exceed the finding is redesign and goes to `plan-task`. A ruling never attests work; advances still require § *Strengthen only on verified evidence*. Disproved findings need no action. A deliverable's `**Published:**` line remains Yours to apply.
 
@@ -53,6 +56,6 @@ Findings that need real work (a step to rethink, code changes) stay unfixed, lis
 Lists, never tables.
 
 - **Assessment**: the full review output as `review-task` specs it, printed at the end of Phase 1 from pre-reconcile state, including the Plan Summary's `Cross-check:` line when `-x` was passed.
-- **References** and **Reconciliation applied**: rendered per `./references/workflow/reconciliation-sweep.md` § *Output and routing* (before any Phase 2 edit) and `./references/workflow/reconciliation.md` § *Sequence and output* (the change list, and what a run with nothing actionable writes).
+- **References** and **Reconciliation applied**: rendered per `./references/workflow/reconciliation-sweep.md` § *Output and routing* (before any Phase 2 reconciliation edit) and `./references/workflow/reconciliation.md` § *Sequence and output* (the change list, and what a run with nothing actionable writes).
 
 **Next:** answer Awaiting decision when present; otherwise use `/implement-task <slug>` when ready or `/plan-task <slug>` for redesign.

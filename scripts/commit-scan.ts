@@ -86,7 +86,8 @@ class Exit extends Error {
 
 function* liveLines(text: string): Generator<string> {
   let fence: { indent: number; char: string; len: number } | null = null;
-  for (const line of text.split("\n")) {
+  for (const raw of text.split("\n")) {
+    const line = raw.replace(/\r$/, "");
     const marker = line.match(FENCE);
     if (marker) {
       const [, pad, run, rest] = marker;

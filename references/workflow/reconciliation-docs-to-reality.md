@@ -5,8 +5,8 @@ Reconcile printed findings against disk through `resume-task-reconcile` or `revi
 ## Write surface
 
 - `plan.md`: use the five shared openings under § *Repairs weaken; advances go through the shared engine*.
-- `result.md`: append under `./reconciliation.md` § *The record*; apply § *Current state refresh*. Finalization writes Acceptance and required In review.
-- `CONTEXT.md`: auto-annotate References/Open Questions under `./task-lifecycle.md`; judge prose changes under `./reconciliation.md` § *Grounding docs change on evidence, never silently*.
+- `result.md`: append under `./reconciliation.md` § *The record*; apply § *Current state refresh*, including factual delivery changes after done. Finalization writes Acceptance and required In review.
+- `CONTEXT.md`: annotate References/Open Questions and settle answered questions under `./reconciliation.md` § *Annotation formats*, within `./task-lifecycle.md`'s reconciliation carve-out. Judge prose changes under `./reconciliation.md` § *Grounding docs change on evidence, never silently*.
 - `goals.md`: **judged** changes under that grounding rule and durable IDs, nominated only by § *`review-task-reconcile` — assessment findings*.
 - `observations.md`: the sweep rewrites it.
 - `ticket.md` and applicable `GROUP_CONTEXT.md`: apply `./reconciliation.md` § *The upstream ask is writable, and never rewritten quietly*. Ticket edits are the auto broken-link annotation, or a judged rewrite when fetched requester wording shows the ask moved (§ *Cited reference changed*). Never fit a ticket to what disk holds; that drift is **Needs work**, naming `plan-task`.
@@ -26,7 +26,7 @@ Use brief drift, assessment cross-file findings, or either sweep. Routes: `./rec
 - **Unbacked `- [x]` step**, work gone or result absent: **auto**-uncheck, drop its link, and cite the dropped anchor in Reconciliation. Preserve prior records, What/Verify, and numbering.
 - **Lifecycle repairs** — **auto** downward repairs; invent no Acceptance, cause, or pending goal.
   - `done` without Acceptance: take `done → executing` and remove `**Completed:**`.
-  - `executing` without result: checked steps or verified work warrant a skeleton result (`implement-task`'s init header) holding the Reconciliation section, with the plan's Result link pointed at it. With no evidence, take `executing → to-do`, restore the Result placeholder, create nothing. Judge ambiguity downward.
+  - `executing` without result: checked steps or verified work warrant a skeleton result (`implement-task`'s init header) holding the Reconciliation section, with the plan's Result link pointed at it. With no evidence, take `executing → to-do`, restore `**Result:** not yet started`, create nothing. Judge ambiguity downward.
   - `blocked`/`in-review` without result: **flag only**.
   - `done` without result: repair to `executing`, then apply its missing-result rule above.
   - Unknown status: **judged**: choose the weakest evidence-supported status (`./task-lifecycle.md`); record the original verbatim.
@@ -41,7 +41,7 @@ Use Drift since plan, Commits since watermark, Open questions, and the sweep. Br
 
 - **A `met` goal no longer holds** — **auto**: take `done → executing` or `in-review → executing`; remove Completed. Leave checkboxes unchanged. Record `G<n>`, supersede Acceptance, and name `implement-task` under Not reconciled.
 - **Commit-nominated candidate** — **verify** the full step tier (`./execution-loop.md` § *Two verification tiers*). Pass: check and link this Reconciliation (`./reconciliation-commits.md` § *The record*; same-day suffix: `./reconciliation.md` § *The record*). Otherwise leave pending, name `implement-task`, and explain non-rerunnable criteria.
-- **Verified advances would close the plan** — **verify** every goal and fresh health through the shared advance engine. Failure: stay executing; refer to `implement-task`. Pass: append Acceptance verdicts and enter done, or in-review with its required section for an external-only remainder (`./task-lifecycle.md`).
+- **Verified advances would close the plan** — **verify** every goal, applicable engineering live check, and fresh health through `./reconciliation.md` § *Strengthen only on verified evidence*. On `in-review → done`, use its delivered-source selector for deployable engineering; documentation and supported local-only work use current work-product health. Missing matching source stays pending in-review; a check that actually fails is unmet work. Failed work: stay executing; refer to `implement-task`. Pending downstream verification: enter in-review and record each pending check per `./task-lifecycle.md` § *Companion result file*. All pass or supported N/A: append Acceptance and enter done (`./task-lifecycle.md`). A previously done plan read for factual delivery refresh is not a new completion claim.
 - **`[info]` findings** — make no edit or completion claim; they verify no pending work.
 - **Watermark writes** — **auto** under `./reconciliation-commits.md` § *Degenerate cases* and § *The record*.
 - **External blocker cleared** — apply `./reconciliation.md` § *Cited reference changed*. Refresh Pointers; flag pause-only citations without editing pauses. Change no status; name `implement-task` under Not reconciled.
@@ -52,6 +52,8 @@ Use Drift since plan, Commits since watermark, Open questions, and the sweep. Br
 Use assessment and sweep findings. References take `./reconciliation.md` § *Annotation formats*; cross-file drift takes Shared repairs.
 
 Route numbered Questions using assessment evidence under `./reconciliation.md` § *Consent model: findings apply, the record carries them*. Reuse the assessment's researched options. Apply evidence-settled answers at home and record declined options; leave unresolved impactful choices pending. Stay within findings. Disproved findings route nowhere.
+
+For a settled question, keep the original wording, options, and basis in dated history. Put only current guidance and a citation at its live home (`./one-home.md` § *One home per fact*). A to-do task without result keeps the dated decision anchor in context or plan; neither composite creates result solely for that decision.
 
 - **Scope partition not total** — **judged**: use verified step reach and prior decisions to settle delivered/deferred placement. Leave an unresolved impactful partition choice pending. Retire only requirements dropped by ticket/context, under `./reconciliation.md` § *Grounding docs change on evidence, never silently*; repair retired-ID citations below.
 - **Ticket criterion maps to no goal** — **judged**: add a goal with the next free `G<n>`. Remove ticket criteria only on changed-ask evidence (§ *Write surface*), never because work is missing.

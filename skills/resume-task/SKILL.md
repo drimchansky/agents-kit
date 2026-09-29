@@ -1,6 +1,6 @@
 ---
 name: resume-task
-description: Use when asked to resume, catch up on, brief, hand off, status of, or check progress on a task folder (canonically under `.agents/tasks/`) — produces a chat-only briefing. Read-only.
+description: Use when asked to resume, catch up on, brief, hand off, status of, or check progress on a task folder (canonically under `.agents/tasks/`) — produces a chat-only briefing. Writes only proven goal-identifier repairs.
 argument-hint: '[task folder path]'
 ---
 
@@ -9,7 +9,7 @@ argument-hint: '[task folder path]'
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core. This skill mostly observes; pull in deeper pack files only if you dig into a step's work. If the domain has no pack, run the neutral methodology and say so.
 
-Brief an existing task's status, completed work, drift, and next action in chat only. This skill edits no task file, code, or Git state and executes no plan work. Its sole write exception is a user-confirmed Backlog activation move (`./references/workflow/implement-task-edges.md` § *Activating a backlogged task*).
+Brief an existing task's status, completed work, drift, and next action in chat only. This skill loads the task through `./references/workflow/task-layout.md` § *Reading a resolved folder*, whose repairing load may correct proven goal identifiers on user or model invocation alike; an explicit read-only request prevents it. Beyond that repair it edits no task file, code, or Git state, and executes no plan work. Its one other write is a user-confirmed Backlog activation move (`./references/workflow/implement-task-edges.md` § *Activating a backlogged task*).
 
 Run no reference sweep. The reconcilers sweep cited links (`./references/workflow/reconciliation-sweep.md` § *Scope*); this citation marks the boundary and is not loaded on any path. <!-- cold -->
 
@@ -33,18 +33,18 @@ For a folder under Backlog, offer activation using `./references/workflow/implem
 
 ### 2. Load Artifacts
 
-Apply `./references/workflow/task-layout.md` § *Reading a resolved folder*, including current inherited group grounding. Report exit 1 as no readable `plan.md` and suggest `plan-task`.
+Apply `./references/workflow/task-layout.md` § *Reading a resolved folder*, including current inherited group grounding. Report its repair, or `structure.diagnostics` from a read-only load, before using the report. When no readable `plan.md` exists, say so and suggest `plan-task`. Do not present coverage as complete when structure is unreliable.
 
 Then read what the brief needs beyond the report:
 
 - `goals.md`: the full Goals list by `G<n>`, including unresolved markers.
 - `result.md`: orient from `currentState`, then read the latest Step or Full Run. Capture every Blocked and In review block and any Acceptance section verbatim. Treat the digest as derived, unverified metadata. Ignore its legacy Status header (`./references/workflow/task-lifecycle.md` § *`result.md` — no status field*).
-- `CONTEXT.md`: the Domain header and Open Questions only.
-- `plan.md`: the next step's Due, Lead time, and touched paths, plus Open Questions for the brief. Take status and goal-file state from the report.
+- `CONTEXT.md`: the Domain header, Open Questions, and dated decision anchors cited by current guidance.
+- `plan.md`: the next step's Due, Lead time, and touched paths, plus Open Questions and cited dated decision anchors. Take status and goal-file state from the report.
 - `ticket.md`, when present: the ask and acceptance criteria.
 - `observations.md`, when present: dated cached observations (`./references/workflow/task-observations.md`). Absence is normal. <!-- cold -->
 
-Flag missing context as an incomplete scaffold and missing goals as preventing acceptance. Check `./references/workflow/task-lifecycle.md` § *Status values* and § *Companion result file* for missing companions or required sections. Report `skipped` as abandoned; a missing result there is expected. Report a valid blocked pause with its cause and in-review with its awaited external goals.
+Flag missing context as an incomplete scaffold and missing goals as preventing acceptance. Check `./references/workflow/task-lifecycle.md` § *Status values* and § *Companion result file* for missing companions or required sections. Report `skipped` as abandoned; a missing result there is expected. Report a valid blocked pause with its cause and in-review with its awaited external goals and engineering live checks.
 
 ### 3. Reconstruct State from Checkboxes
 
@@ -56,13 +56,13 @@ Observe current artifacts even when the result is recent; history alone cannot v
 
 - **Done/shipped**: claims in Shipped blocks or checked steps. Verify each still holds; lost behavior is drift.
 - **Pending**: unchecked work may be absent without drift. An already-existing pending artifact warrants `info`.
-- **Current state**: compare the gloss and Next against markers and completed actions. Tag stale claims `warn`. Check local branch/SHA pointers against the repository. Fetch no external-system pointer; quote its dated observation or state it was not checked.
+- **Current state**: compare the gloss and Next against markers and completed actions, including delivery after `done`. Tag stale claims `warn` even if Pointers are current. Check local branch/SHA pointers against the repository. Fetch no external-system pointer; quote its dated observation or state it was not checked. A stale digest alone proves no lifecycle or acceptance change (`./references/workflow/reconciliation.md` § *Current state refresh*).
 
 Compare current inherited constraints with ticket scope, context direction and assumptions, pending steps, shipped claims, and met goals. Quote both conflicting statements and sources. Cite group paths from the selected root and task sections, step numbers, or goal IDs. Tag contradictions `warn`, or `block` when a pending step cannot run as written. A changed chain alone creates no finding. Propose no edits to group files or the plan (`./references/workflow/task-store.md` § *Shared group context*).
 
 For code claims, apply `./references/engineering/exploration.md` § *Blast-radius / drift verification (used by review and resume)*. Other domains use their own artifacts and verification recipe.
 
-With Acceptance present, re-check every `met` goal on a done plan. The one reduced check requires a watermark, no commits after it, and a clean tree: re-run the cheapest met goal's verifying action and name the branch. On an executing plan, spot-check reachable met goals. Missing Acceptance on done is `block`; a met goal that no longer holds is `warn`. Carry `pending external` as outstanding with what is awaited; it is neither drift nor unmet.
+With Acceptance present, re-check every `met` goal on a done plan. The one reduced check requires a watermark, no commits after it, and a clean tree: re-run the cheapest met goal's verifying action and name the branch. On an executing plan, spot-check reachable met goals. Missing Acceptance on done is `block`; a met goal that no longer holds is `warn`. Carry `pending external` and engineering pending checks as outstanding with what is awaited; neither is drift nor unmet. Historically completed tasks follow `./references/engineering/acceptance-gate.md` § *Acceptance-gate recipe*.
 
 Tag findings `info` (FYI), `warn` (review before resuming), or `block` (update required before execution). Always render Drift since plan, with `No drift detected.` when clean.
 

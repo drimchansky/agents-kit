@@ -68,6 +68,6 @@ Do not drop or paraphrase the `Next:` line. The "Not Doing" list is the most val
 
 ## CONTEXT.md Structure
 
-Copy `./references/templates/CONTEXT.md` and fill it from the two-phase pass: the "How Might We" problem statement, the recommended direction, the key assumptions, the MVP scope, and the "Not Doing" list. Keep the one-pager to about a page.
+Copy `./references/templates/CONTEXT.md` and fill it from the two-phase pass: the "How Might We" problem statement, the recommended direction, the key assumptions, the MVP scope, and the "Not Doing" list. Take the optional sections' exact headings and bullet shapes from `./references/workflow/context-schema.md` § *Field notes*. Add each optional section only when the pass establishes content for it; leave no empty heading or prompt. Keep the one-pager to about a page.
 
 Infer `**Domain:**` from the idea (`engineering` for a code change, `relocation` or `negotiation` otherwise). Default to `engineering` only for code or ambiguity within a coding context; when the effort is clearly non-code and the domain is unclear, ask rather than stamp a wrong label.

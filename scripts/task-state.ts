@@ -4,32 +4,30 @@ import { readFileSync, realpathSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { PLAN_VOCAB, RESULT_MAX_KB } from "./lifecycle-constants.ts";
+import { GOAL_FIELD, markdownLines, parseGoalDefinitions, sameDiagnostic, SCOPE_HEADING, validateGoalStructure, type StructureReport } from "./goal-structure.ts";
+import { readTaskMarkdown, repairTask, type StructureValidator, type TaskMarkdown } from "./task-repair.ts";
 
 const PLAN_FILE = "plan.md";
 const RESULT_FILE = "result.md";
 const GOALS_FILE = "goals.md";
 const COMPACTION_FLAG = "--compaction-plan";
+const REPAIR_FLAG = "--repair";
 const USAGE = [
   "usage: node scripts/task-state.ts <task-dir>",
   "       node scripts/task-state.ts --compaction-plan <task-dir>",
+  "       node scripts/task-state.ts --repair <task-dir>",
 ].join("\n");
-const FENCE = /^([ \t]*)(`{3,}|~{3,})[ \t]*(.*)$/;
 const HEADING = /^#{1,6}[ \t]+(.+?)[ \t]*#*$/;
 const STEP_TITLE = /^Step[ \t]+(\d+[a-z]*)\b[ \t]*[—–:-]?[ \t]*(.*)$/i;
 const CHECKPOINT_TITLE = /^Checkpoint after Step[ \t]+(\d+[a-z]*)\b/i;
 const CURRENT_STATE_TITLE = /^current state\b/i;
-const SCOPE_HEADING = /^##[ \t]+Scope\b/;
-const GOALS_HEADING = /^##[ \t]+Goals\b/;
 const CHECKBOX = /^[ \t]*-[ \t]+\[([ xX])\]/;
 const WHAT_FIELD = /^[ \t]*-[ \t]+\[[ xX]\][ \t]*\*\*What:?\*\*:?[ \t]*(.*)$/i;
 const VERIFY_FIELD = /^[ \t]*[-*+]?[ \t]*\*\*Verify:?\*\*:?[ \t]*(.*)$/i;
-const GOAL_FIELD = /^[ \t]*[-*+]?[ \t]*\*\*Goal:?\*\*:?[ \t]*(.*)$/i;
 const DEPENDS_FIELD = /^[ \t]*[-*+]?[ \t]*\*\*Depends on:?\*\*:?[ \t]*(.*)$/i;
 const OUTCOME_FIELD = /^[ \t]*[-*+]?[ \t]*\*\*Outcome:?\*\*:?[ \t]*(.*)$/i;
 const GOAL_ID = /\bG\d+\b/g;
 const GOAL_ESCAPE = /^[ \t]*none[ \t]*\(infra\/refactor\)[ \t]*$/i;
-const GOAL_BULLET = /^[-*+][ \t]+(\S+)/;
-const GOAL_ID_EXACT = /^G\d+$/;
 const STEP_REF = /\bStep[ \t]+(\d+[a-z]*)\b/gi;
 const BARE_STEP_REF = /\b(\d+[a-z]*)\b/g;
 const RESULT_LINK = /\(\[result\]\(([^()]*)\)\)/g;
@@ -120,6 +118,7 @@ export interface TaskState {
   readonly nextPendingStepBody: StepBody | null;
   readonly checkpoints: readonly CheckpointState[];
   readonly goalCoverage: GoalCoverage;
+  readonly structure: StructureReport;
   readonly currentState: string | null;
 }
 
@@ -128,6 +127,9 @@ export interface TaskStateInput {
   readonly planText: string;
   readonly resultText: string | null;
   readonly goalsText: string | null;
+  readonly otherMarkdown?: Readonly<Record<string, string>>;
+  readonly unreadableMarkdown?: readonly string[];
+  readonly nestedTasks?: readonly string[];
 }
 
 const warnings: string[] = [];
@@ -138,20 +140,7 @@ interface ScannedLine {
 }
 
 function* scanLines(text: string): Generator<ScannedLine> {
-  let fence: { indent: number; char: string; len: number } | null = null;
-  for (const line of text.split("\n")) {
-    const marker = line.match(FENCE);
-    if (marker) {
-      const [, pad, run, rest] = marker;
-      if (!fence) fence = { indent: pad.length, char: run[0], len: run.length };
-      else if (pad.length <= fence.indent && run[0] === fence.char && run.length >= fence.len && rest === "") {
-        fence = null;
-      }
-      yield { line, live: false };
-      continue;
-    }
-    yield { line, live: fence === null };
-  }
+  for (const line of markdownLines(text)) yield { line: line.text, live: line.live };
 }
 
 function* liveLines(text: string): Generator<string> {
@@ -259,6 +248,7 @@ function stepRefsIn(value: string): string[] {
 
 interface DraftStep {
   readonly number: string;
+  readonly line: number;
   readonly title: string;
   checked: boolean;
   link: ResultLink | null;
@@ -278,14 +268,21 @@ function fieldText(value: string | undefined): string | null {
   return trimmed === "" ? null : trimmed;
 }
 
+interface FieldCitation {
+  readonly id: string;
+  readonly line: number;
+}
+
 interface ParsedPlan {
   readonly steps: readonly DraftStep[];
   readonly checkpoints: readonly string[];
   readonly delivered: ReadonlySet<string>;
   readonly deferred: ReadonlySet<string>;
+  readonly fieldCitations: readonly FieldCitation[];
 }
 
-function readScopeLine(line: string, delivered: Set<string>, deferred: Set<string>): void {
+function readScopeLine(line: string, delivered: Set<string>, deferred: Set<string>): string[] {
+  const cited = new Set<string>();
   const marks: { index: number; end: number; into: Set<string> }[] = [];
   for (const label of SCOPE_LABELS) {
     for (const match of line.matchAll(label.match)) {
@@ -299,8 +296,12 @@ function readScopeLine(line: string, delivered: Set<string>, deferred: Set<strin
   marks.sort((a, b) => a.index - b.index);
   for (const [position, mark] of marks.entries()) {
     const span = line.slice(mark.end, marks[position + 1]?.index ?? line.length);
-    for (const id of goalIdsIn(span)) mark.into.add(id);
+    for (const id of goalIdsIn(span)) {
+      mark.into.add(id);
+      cited.add(id);
+    }
   }
+  return [...cited];
 }
 
 function parsePlan(text: string): ParsedPlan {
@@ -308,9 +309,12 @@ function parsePlan(text: string): ParsedPlan {
   const checkpoints: string[] = [];
   const delivered = new Set<string>();
   const deferred = new Set<string>();
+  const fieldCitations: FieldCitation[] = [];
   let step: DraftStep | null = null;
   let inScope = false;
-  for (const line of liveLines(text)) {
+  for (const source of markdownLines(text)) {
+    if (!source.live) continue;
+    const line = source.text;
     const heading = headingText(line);
     if (heading !== null) {
       step = null;
@@ -324,6 +328,7 @@ function parsePlan(text: string): ParsedPlan {
       if (!stepHeading) continue;
       step = {
         number: stepHeading[1].toLowerCase(),
+        line: source.number,
         title: stepHeading[2].trim(),
         checked: false,
         link: null,
@@ -341,7 +346,7 @@ function parsePlan(text: string): ParsedPlan {
       continue;
     }
     if (inScope) {
-      readScopeLine(line, delivered, deferred);
+      for (const id of readScopeLine(line, delivered, deferred)) fieldCitations.push({ id, line: source.number });
       continue;
     }
     if (step === null) continue;
@@ -364,6 +369,7 @@ function parsePlan(text: string): ParsedPlan {
       step.sawGoal = true;
       step.goals = goalIdsIn(goal[1]);
       step.goalEscape = step.goals.length === 0 && GOAL_ESCAPE.test(goal[1]);
+      for (const id of step.goals) fieldCitations.push({ id, line: source.number });
       continue;
     }
     const depends = line.match(DEPENDS_FIELD);
@@ -372,7 +378,7 @@ function parsePlan(text: string): ParsedPlan {
       step.dependsOn = stepRefsIn(depends[1]);
     }
   }
-  return { steps, checkpoints, delivered, deferred };
+  return { steps, checkpoints, delivered, deferred, fieldCitations };
 }
 
 function checkpointOutcomes(text: string): Map<string, string> {
@@ -412,30 +418,14 @@ function currentStateBlock(text: string): string | null {
   return open ? block.join("\n").replace(/\s+$/, "") : null;
 }
 
-function goalIds(text: string): string[] {
-  const ids: string[] = [];
-  const seen = new Set<string>();
-  let inGoals = false;
-  for (const line of liveLines(text)) {
-    if (HEADING.test(line)) {
-      inGoals = GOALS_HEADING.test(line);
-      continue;
-    }
-    if (!inGoals) continue;
-    const id = line.match(GOAL_BULLET)?.[1];
-    if (id === undefined || !GOAL_ID_EXACT.test(id) || seen.has(id)) continue;
-    seen.add(id);
-    ids.push(id);
-  }
-  return ids;
-}
-
 export function taskState(input: TaskStateInput): TaskState {
   const plan = parsePlan(input.planText);
   const slugs = input.resultText === null ? null : headingSlugs(input.resultText);
   const outcomes = input.resultText === null ? new Map<string, string>() : checkpointOutcomes(input.resultText);
-  const ids = input.goalsText === null ? [] : goalIds(input.goalsText);
+  const parsedGoals = input.goalsText === null ? null : parseGoalDefinitions(input.goalsText);
+  const ids = parsedGoals === null ? [] : [...new Set(parsedGoals.definitions.map((goal) => goal.id))];
   const known = new Set(ids);
+  const retired = new Set(parsedGoals?.retired.map((goal) => goal.id) ?? []);
 
   const steps: StepState[] = plan.steps.map((step) => ({
     number: step.number,
@@ -456,6 +446,36 @@ export function taskState(input: TaskStateInput): TaskState {
   }));
 
   const pending = steps.findIndex((step) => !step.checked);
+  const validated = validateGoalStructure(input.goalsText, {
+    "plan.md": input.planText,
+    ...(input.resultText === null ? {} : { "result.md": input.resultText }),
+    ...(input.goalsText === null ? {} : { "goals.md": input.goalsText }),
+    ...input.otherMarkdown,
+  }, {
+    missingAnchors: plan.steps.filter((step, index) => steps[index].anchorResolves === false).map((step) => ({ step: step.number, line: step.line })),
+    unreadableMarkdown: input.unreadableMarkdown,
+    nestedTasks: input.nestedTasks,
+  });
+  const scannedUnknown = new Set(validated.diagnostics
+    .filter((item) => item.code === "unknown-goal-reference" && item.file === PLAN_FILE)
+    .map((item) => `${item.line}\0${item.detail}`));
+  const coverageDiagnostics = [
+    ...(input.goalsText === null ? [] : plan.fieldCitations)
+      .filter((citation) => !known.has(citation.id) && !scannedUnknown.has(`${citation.line}\0${citation.id}`))
+      .map((citation) => ({
+        code: retired.has(citation.id) ? "retired-goal-reference" as const : "unknown-goal-reference" as const,
+        file: PLAN_FILE, line: citation.line, detail: citation.id,
+      })),
+    ...plan.steps.filter((step) => !step.goalEscape && step.goals.length === 0).map((step) => ({
+      code: "orphan-step" as const, file: "plan.md", line: step.line, detail: `Step ${step.number}`,
+    })),
+    ...ids.filter((id) => !plan.delivered.has(id) && !plan.deferred.has(id)).map((id) => ({
+      code: "missing-goal-partition" as const, file: "plan.md", line: 0, detail: id,
+    })),
+    ...ids.filter((id) => plan.delivered.has(id) && plan.deferred.has(id)).map((id) => ({
+      code: "conflicting-goal-partition" as const, file: "plan.md", line: 0, detail: id,
+    })),
+  ];
 
   return {
     taskDir: input.taskDir,
@@ -487,6 +507,7 @@ export function taskState(input: TaskStateInput): TaskState {
         inBoth: ids.filter((id) => plan.delivered.has(id) && plan.deferred.has(id)),
       },
     },
+    structure: { reliable: validated.reliable && coverageDiagnostics.length === 0, diagnostics: [...validated.diagnostics, ...coverageDiagnostics] },
     currentState: input.resultText === null ? null : currentStateBlock(input.resultText),
   };
 }
@@ -507,6 +528,7 @@ export type KeepRule =
   | "decision-log"
   | "acceptance"
   | "health-boundary"
+  | "live-verification"
   | "reconciliation"
   | "compacted"
   | "pause";
@@ -530,6 +552,7 @@ const KEEP_SECTIONS: readonly { readonly rule: KeepRule; readonly match: RegExp 
   { rule: "decision-log", match: /^decision log\b/i },
   { rule: "acceptance", match: /^acceptance\b/i },
   { rule: "health-boundary", match: /^health boundar(?:y|ies)\b/i },
+  { rule: "live-verification", match: /^live verification\b/i },
   { rule: "reconciliation", match: /^reconciliation\b/i },
   { rule: "compacted", match: COMPACTED_HEADING },
 ];
@@ -675,21 +698,69 @@ function main(): void {
 
   const args = process.argv.slice(2);
   const compacting = args[0] === COMPACTION_FLAG;
-  const positional = compacting ? args.slice(1) : args;
+  const repairing = args[0] === REPAIR_FLAG;
+  const positional = compacting || repairing ? args.slice(1) : args;
   if (positional.length !== 1) throw new Exit(2, USAGE);
   const taskDir = resolve(positional[0]);
 
-  if (compacting) {
+  if (repairing) {
+    const validate: StructureValidator = (documents, options) => {
+      const direct = (file: string): string | null => documents[file] ?? readOptional(join(taskDir, file));
+      const planText = direct(PLAN_FILE);
+      return planText === null
+        ? validateGoalStructure(documents[GOALS_FILE] ?? null, documents, options)
+        : taskState({
+          taskDir,
+          planText,
+          resultText: direct(RESULT_FILE),
+          goalsText: direct(GOALS_FILE),
+          otherMarkdown: documents,
+          unreadableMarkdown: options.unreadableMarkdown ?? [],
+          nestedTasks: options.nestedTasks,
+        }).structure;
+    };
+    const repaired = repairTask(taskDir, {}, validate);
+    const documents = repaired.documents;
+    const read = (file: string): string | null => repaired.failed ? null : documents[file] ?? readOptional(join(taskDir, file));
+    const planText = read(PLAN_FILE);
+    const state = planText === null ? null : taskState({
+      taskDir,
+      planText,
+      resultText: read(RESULT_FILE),
+      goalsText: read(GOALS_FILE),
+      otherMarkdown: documents,
+      unreadableMarkdown: repaired.gaps,
+      nestedTasks: repaired.nested,
+    });
+    const unresolved = [...repaired.report.unresolved];
+    for (const issue of state?.structure.diagnostics ?? []) {
+      if (!unresolved.some((existing) => sameDiagnostic(existing, issue))) unresolved.push(issue);
+    }
+    process.stdout.write(JSON.stringify({ ...repaired.report, unresolved, state }) + "\n");
+    if (repaired.failed) process.exitCode = 2;
+    else if (unresolved.length > 0) process.exitCode = 1;
+  } else if (compacting) {
     process.stdout.write(JSON.stringify(compactionPlan(taskDir)) + "\n");
   } else {
     const planText = readOptional(join(taskDir, PLAN_FILE));
     if (planText === null) throw new Exit(1, `${taskDir} has no readable ${PLAN_FILE}.`);
+    let markdown: TaskMarkdown;
+    try { markdown = readTaskMarkdown(taskDir); }
+    catch (err) {
+      warnings.push(`incomplete Markdown scan ${taskDir}: ${(err as Error).message}`);
+      markdown = { documents: Object.create(null), gaps: ["."], nested: [], failures: [] };
+    }
+    const resultText = markdown.documents[RESULT_FILE] ?? readOptional(join(taskDir, RESULT_FILE));
+    const goalsText = markdown.documents[GOALS_FILE] ?? readOptional(join(taskDir, GOALS_FILE));
 
     const state = taskState({
       taskDir,
       planText,
-      resultText: readOptional(join(taskDir, RESULT_FILE)),
-      goalsText: readOptional(join(taskDir, GOALS_FILE)),
+      resultText,
+      goalsText,
+      otherMarkdown: markdown.documents,
+      unreadableMarkdown: markdown.gaps,
+      nestedTasks: markdown.nested,
     });
     process.stdout.write(JSON.stringify(state) + "\n");
   }

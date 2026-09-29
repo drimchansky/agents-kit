@@ -1,6 +1,6 @@
 ---
 name: review-task
-description: Use when asked to review, validate, or sanity-check a task's plan — confirms the direction is right and still in sync with CONTEXT.md, the goals, and current reality, and surfaces any drift between task artifacts (ticket, CONTEXT, goals, plan, result) and the work itself. Read-only.
+description: Use when asked to review, validate, or sanity-check a task's plan — confirms the direction is right and still in sync with CONTEXT.md, the goals, and current reality, and surfaces any drift between task artifacts (ticket, CONTEXT, goals, plan, result) and the work itself. Writes only proven goal-identifier repairs.
 argument-hint: '[task folder path] [-x (cross-vendor grounding probe)]'
 ---
 
@@ -9,7 +9,7 @@ argument-hint: '[task folder path] [-x (cross-vendor grounding probe)]'
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for (`exploration.md`, `verification.md`, …). If the domain has no pack, run the neutral methodology and say so.
 
-Validate a plan against current reality and report feasibility, gaps, and questions. This skill is read-only: implement nothing, redesign nothing, and write no file. Route steps needing rethinking to `plan-task`.
+Validate a plan against current reality and report feasibility, gaps, and questions. It loads the task through `./references/workflow/task-layout.md` § *Reading a resolved folder*, whose repairing load may correct proven goal identifiers on user or model invocation alike; an explicit read-only request prevents it. Beyond that repair it implements nothing, redesigns nothing, and writes no file. Route steps needing rethinking to `plan-task`.
 
 ## Flags
 
@@ -21,7 +21,7 @@ Resolve the folder using **resolve-or-ask** in `./references/workflow/task-layou
 
 Label the terminal session for the resolved folder per `./references/workflow/terminal-session.md`.
 
-Read `plan.md`, `goals.md`, and `CONTEXT.md` in full, plus `ticket.md` and `result.md` when present. The plan is the review subject. This whole-file read overrides `./references/workflow/task-layout.md` § *Reading a resolved folder*'s read order.
+Run the loader in `./references/workflow/task-layout.md` § *Reading a resolved folder* first and report its repair, or `structure.diagnostics` from a read-only load. Then read `plan.md`, `goals.md`, and `CONTEXT.md` in full, plus `ticket.md` and `result.md` when present. The plan is the review subject. This whole-file read overrides only the loader's selective-read rule.
 
 Before assessment, read applicable `GROUP_CONTEXT.md` files from disk, root-to-task, using `./references/workflow/task-store.md` § *Shared group context*. Resolve the chain from the folder's current location on every run. Outside registered roots, no group context applies.
 
@@ -76,7 +76,7 @@ For each non-good goal, name the exact failing checklist dimension and suggest a
 
 ### 5. Check Acceptance Coverage
 
-Run `node <kit-root>/scripts/task-state.ts <task folder>` and use `goalCoverage`. Resolve `<kit-root>` through `./references/workflow/task-store.md` § *Resolving `<kit-root>`*; CLI contract: `./references/scripts/task-state.md`. If the root, script, or Node is unavailable, say so and map `**Goal:**` citations by hand. <!-- cold -->
+Use the loader report's `goalCoverage` and `structure` from Locate the Plan. If the root, script, or Node was unavailable, say so and map `**Goal:**` citations by hand. Do not report complete coverage when `structure.reliable` is false (`./references/scripts/task-state.md`). <!-- cold -->
 
 Coverage is citation-driven, with one content judgment for partial delivery:
 
@@ -96,7 +96,7 @@ Compare these pairs for substantive contradictions:
 - **context ↔ goals**: compare goals against Not Doing, MVP Scope, Recommended Direction, and Key Assumptions.
 - **context ↔ plan**: compare scope and assumptions, including unsettled assumptions treated as settled. Flag duplicated grounding content, verbatim or reworded. Suggest keeping its home and replacing copies with citations, preserving interleaved plan-time deltas (`./references/workflow/one-home.md`). Citations with refinements or re-verification notes are conformant. The reconcile composite routes this as a judgment item.
 - **goals ↔ plan**: inspect `scopePartition.missingFromPartition` and `inBoth` from Step 5. Every goal must belong to exactly one delivered/deferred partition.
-- **plan ↔ result**, when present: compare recorded completion with checkboxes and step numbers. Check the companion requirements in `./references/workflow/task-lifecycle.md` § *Companion result file*.
+- **plan ↔ result**, when present: compare recorded completion with checkboxes and step numbers. Compare Current state's narrative and Next with dated result evidence and current Pointers, including post-completion delivery. Report a stale digest without changing lifecycle or Acceptance. Check the companion requirements in `./references/workflow/task-lifecycle.md` § *Companion result file*.
 - **inherited group context ↔ task artifacts**: compare constraints against ticket scope, goals, context, and every step. Quote both statements and sources; cite the group path from the selected root. Report only task-local consequences; propose no edit above the folder. A contradiction-free chain produces no finding.
 - **status fields**: validate only the plan's lifecycle vocabulary and required companion sections (`./references/workflow/task-lifecycle.md`). Ignore legacy Status headers in context or result. Absence of result is conformant only for `to-do` or `skipped`; this check still runs when the plan/result pair cannot.
 
@@ -110,7 +110,13 @@ For Due/Lead time, confirm each lead time fits its own and dependent deadlines, 
 
 Check cadence against `plan-task` § *Add Checkpoints*. Flag missing, misplaced, vague, or health-shaped assertions. Each engineering checkpoint names an end-to-end outcome; integrated health checks belong at the adjacent health boundary (`./references/engineering/planning.md` § *Checkpoints*).
 
+For an engineering plan, assess `## Live verification` against `./references/engineering/acceptance-gate.md` § *Resolve live targets*. Trace frontend, backend, and deployed library consumers independently; check preprod/prod dispositions, expected-release identity, workload health, live behavior, and browser journeys where applicable. Flag unknown targets, missing access, or an unsupported `not applicable` disposition as pending, even if no live goal is cited.
+
+Historically completed plans follow `./references/engineering/acceptance-gate.md` § *Acceptance-gate recipe*.
+
 For code, also apply that file's Common gaps to check in a code plan, including UI states, navigation, data, analytics, and patterns.
+
+Assess whether large work contains independently useful, verifiable delivery seams and identify dependencies (`./references/workflow/decomposition.md`). Name candidate sibling outcomes when a split would improve delivery; keep a tightly coupled fix together. An explicit one-task request remains one folder: flag unbounded steps or missing checkpoints and propose bounded steps instead. Treat the cut as a proposal for `plan-task`, never create folders during review.
 
 ### 8. Check Pattern Consistency
 
@@ -156,7 +162,7 @@ Always render this section, grouped by artifact pair; write `no drift detected` 
 
 ### Gaps
 
-Group missing execution details by category.
+Group missing execution details by category. Include delivery-boundary candidates and dependencies when a useful split exists; for an explicit one-task request, report step and checkpoint improvements within the existing folder.
 
 ### Questions
 

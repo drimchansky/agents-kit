@@ -14,6 +14,7 @@ import {
   readdirSync,
   rmSync,
   statSync,
+  symlinkSync,
   utimesSync,
   writeFileSync,
 } from "node:fs";
@@ -732,6 +733,110 @@ test("a duplicate and malformed G-IDs are reported across bullet markers; a vali
     ],
     "goal-id details for the malformed and duplicate IDs",
   );
+});
+
+test("goal references in task Markdown share the structural validator and archived tasks stay exempt", () => {
+  const root = join(TEST_ROOT, "goal-reference-store");
+  const live = join(root, "live");
+  const archived = join(root, "Archive", "old");
+  mkdirSync(live, { recursive: true });
+  mkdirSync(archived, { recursive: true });
+  for (const dir of [live, archived]) {
+    writeFileSync(join(dir, "goals.md"), "## Goals\n- G1 — delivered\n");
+    writeFileSync(join(dir, "plan.md"), "**Status:** to-do\n## Scope\n- delivered: G1\n");
+    writeFileSync(join(dir, "CONTEXT.md"), "G9 is a stale reference.\n");
+  }
+  const { report } = runCheck([root]);
+  assert.deepStrictEqual(findingDetails(report, "goal-id", "goal-reference-store/live"), [
+    "unknown-goal-reference G9 in CONTEXT.md:1",
+  ]);
+  assert.deepStrictEqual(findingDetails(report, "goal-id", "goal-reference-store/Archive/old"), []);
+});
+
+test("goal-id validates citation fields in canonical and legacy plan filenames without duplicate diagnostics", () => {
+  const root = join(TEST_ROOT, "goal-reference-plan-filenames");
+  for (const planFile of ["plan.md", "task.plan.md"]) {
+    const dir = join(root, planFile);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, "goals.md"), "## Goals\n- G1 — delivered\n\n## Retired\n- G2 — previous outcome\n");
+    writeFileSync(join(dir, planFile), "**Status:** to-do\n## Scope\n- delivered: G1, `G9`\n## Steps\n### Step 1 — Work\n- [ ] **What:** work\n- **Goal:** G1, `G8`, G7, G2\n");
+  }
+  const { report } = runCheck([root]);
+  for (const planFile of ["plan.md", "task.plan.md"]) {
+    assert.deepStrictEqual(findingDetails(report, "goal-id", `goal-reference-plan-filenames/${planFile}`).sort(), [
+      `retired-goal-reference G2 in ${planFile}:7`,
+      `unknown-goal-reference G7 in ${planFile}:7`,
+      `unknown-goal-reference G8 in ${planFile}:7`,
+      `unknown-goal-reference G9 in ${planFile}:3`,
+    ], planFile);
+  }
+});
+
+test("goal-id reads the same task Markdown and scan gaps as task-state", () => {
+  const root = join(TEST_ROOT, "goal-reference-walk");
+  const live = join(root, "live");
+  mkdirSync(join(live, "notes"), { recursive: true });
+  mkdirSync(join(live, "child"), { recursive: true });
+  writeFileSync(join(live, "goals.md"), "## Goals\n- G1 — delivered\n");
+  writeFileSync(join(live, "plan.md"), "**Status:** to-do\n## Scope\n- delivered: G1\n");
+  writeFileSync(join(live, "notes", "extra.md"), "G9 is a stale reference.\n");
+  writeFileSync(join(live, "child", "goals.md"), "## Goals\n- G7 — another task's outcome\n");
+  writeFileSync(join(TEST_ROOT, "goal-walk-outside.md"), "G8 lives outside.\n");
+  symlinkSync(join(TEST_ROOT, "goal-walk-outside.md"), join(live, "linked.md"));
+  const { report } = runCheck([root]);
+  assert.deepStrictEqual(findingDetails(report, "goal-id", "goal-reference-walk/live").sort(), [
+    "incomplete-reference-scan in linked.md",
+    "unknown-goal-reference G9 in notes/extra.md:1",
+  ]);
+});
+
+test("goal-id reports a goals file it cannot read as an incomplete scan", () => {
+  const root = join(TEST_ROOT, "goal-reference-linked-goals");
+  const live = join(root, "live");
+  mkdirSync(live, { recursive: true });
+  writeFileSync(join(live, "plan.md"), "**Status:** to-do\n## Scope\n- delivered: G1\n");
+  writeFileSync(join(TEST_ROOT, "goal-linked-goals.md"), "## Goals\n- G1 — delivered\n");
+  symlinkSync(join(TEST_ROOT, "goal-linked-goals.md"), join(live, "goals.md"));
+  const { report } = runCheck([root]);
+  assert.deepStrictEqual(findingDetails(report, "goal-id", "goal-reference-linked-goals/live"), [
+    "incomplete-reference-scan in goals.md",
+  ]);
+});
+
+test("goal-id counts a nested Markdown read failure as unreadable", (t: TestContext) => {
+  const root = join(TEST_ROOT, "goal-reference-locked");
+  const live = join(root, "live");
+  mkdirSync(join(live, "notes"), { recursive: true });
+  writeFileSync(join(live, "goals.md"), "## Goals\n- G1 — delivered\n");
+  writeFileSync(join(live, "plan.md"), "**Status:** to-do\n## Scope\n- delivered: G1\n");
+  const locked = join(live, "notes", "locked.md");
+  writeFileSync(locked, "G1\n");
+  chmodSync(locked, 0o000);
+  t.after(() => chmodSync(locked, 0o644));
+  if (isReadable(locked)) {
+    t.skip("the unreadable-file case needs a user that chmod 000 actually stops");
+    return;
+  }
+  const { report } = runCheck([root]);
+  assert.deepStrictEqual(findingDetails(report, "goal-id", "goal-reference-locked/live"), [
+    "incomplete-reference-scan in notes/locked.md",
+  ]);
+  assert.strictEqual(report.unreadable, 1);
+  assert.deepStrictEqual(report.unreadablePaths, [locked]);
+});
+
+test("a CRLF plan resolves its checked-step anchors, so a fenced-only heading is a dead anchor", () => {
+  const root = join(TEST_ROOT, "crlf-anchors");
+  const live = join(root, "live");
+  mkdirSync(live, { recursive: true });
+  writeFileSync(join(live, "goals.md"), "## Goals\r\n- G1 — delivered\r\n");
+  writeFileSync(join(live, "plan.md"), "**Status:** executing\r\n## Scope\r\n- delivered: G1\r\n## Steps\r\n### Step 1 — Work\r\n- [x] **What:** work ([result](./result.md#step-1--work))\r\n- **Goal:** G1\r\n");
+  writeFileSync(join(live, "result.md"), "## Current state\r\nPending.\r\n\r\n---\r\n\r\n```\r\n### Step 1 — Work\r\n```\r\n");
+  const { report } = runCheck([root]);
+  assert.deepStrictEqual(findingDetails(report, "dead-anchor", "crlf-anchors/live"), [
+    "Step 1: anchor not found: #step-1--work in ./result.md",
+  ]);
+  assert.deepStrictEqual(findingDetails(report, "no-current-state", "crlf-anchors/live"), []);
 });
 
 test("a live result with no ## Current state block is reported", () => {

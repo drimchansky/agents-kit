@@ -23,9 +23,9 @@ Phase 2 runs `../prepare-ticket/SKILL.md`'s full protocol per part with five ove
 
 ## When to Use
 
-**Use when** an approved design doc needs to become several tickets and task folders, or a large effort should enter the workflow as ordered siblings and the cut deserves a proposal.
+**Use when** an approved design doc has independently useful, verifiable delivery seams that may deserve several tickets and task folders, or a large effort's cut deserves a proposal.
 
-**Skip when** the work fits one ticket → `prepare-ticket`, then `plan-task`; the source is undecided → `refine-idea`, since decomposing it hardens open questions into tickets; the sibling folders already exist → `plan-task` / `implement-task`.
+**Skip when** the work is tightly coupled or the user explicitly requests one task → `prepare-ticket`, then `plan-task` with bounded steps and checkpoints; the source is undecided → `refine-idea`, since decomposing it hardens open questions into tickets; the sibling folders already exist → `plan-task` / `implement-task`.
 
 ## Process
 
@@ -43,7 +43,7 @@ Run `decomposition.md` § *Materialization contract* per part:
 
 1. Create `<parent>/<NN->slug/`.
 2. Draft `ticket.md` by running `../prepare-ticket/SKILL.md` against the part's confirmed acceptance sketch, to the bar in `./references/workflow/ticket-format.md`.
-3. Seed `CONTEXT.md` from `./references/templates/CONTEXT.md` per `./references/workflow/context-schema.md`, its sections filled as the contract's step 3 says: `## Problem Statement` citing `./ticket.md`, `## References` carrying the source pointer, the Jira key, and the shared facts cited to the group file that holds them, `## Recommended Direction` holding only what the source decides, `## Open Questions` carrying the proposal's gate-nothing items that touch this part, every other heading a placeholder.
+3. Seed `CONTEXT.md` from `./references/templates/CONTEXT.md` per `./references/workflow/context-schema.md`: `## Problem Statement` cites `./ticket.md`; `## References` carries the source pointer, mapped Jira key, and applicable inherited facts by group-file citation. Add `## Recommended Direction` only for a settled part direction and `## Open Questions` only for items that touch this part. Omit every empty section and template prompt.
 
 ## Output
 

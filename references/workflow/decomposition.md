@@ -1,8 +1,8 @@
 # Decomposition: One Approved Ask into Sibling Tasks
 
-How an approved ADR, an accepted RFC, or an epic-scale ask becomes an ordered set of sibling task folders, each entering the workflow as its own ticket-first task. `plan-task` § *Multi-part efforts* and `task-siblings.md` say when a split is needed and where siblings live; this file says how to choose and land the cut.
+How an approved ADR, an accepted RFC, or an epic-scale ask can become ordered sibling task folders, each entering the workflow as its own ticket-first task. `plan-task` § *Multi-part efforts* and `task-siblings.md` say when to propose a split and where confirmed siblings live; this file says how to choose and land the cut.
 
-The source has already settled *what* to build (`refine-idea` is the tool when it has not); each part then gets its own `plan-task` → `implement-task` lifecycle. The method proposes first and materializes only after confirmation: the cut is the user's call.
+The source has already settled *what* to build (`refine-idea` is the tool when it has not); each confirmed part then gets its own `plan-task` → `implement-task` lifecycle. The method proposes first and materializes only after confirmation: the cut is the user's call. An explicit one-task request stays in one folder with bounded steps and checkpoints.
 
 ## Source intake
 
@@ -29,6 +29,8 @@ Propose 2–3 genuinely different cuts when more than one is viable, with a reco
 - **Demoable**: ends in behavior exercised or an artifact verifiable. "Code exists" is not done.
 - **One ticket ↔ one folder**: a part too big for one plan splits further; a part smaller than its own ticket folds into its nearest neighbor.
 - **No leftovers bucket**: a "misc" part's contents belong to real parts or are out of scope.
+
+Assess delivery independence before proposing folders. A monitoring effort may support three candidate outcomes: existing alerts reach the intended recipient with working runbooks; application operations emit verified signals; a dashboard renders those signals and distinguishes stale data. Alert delivery can land before new instrumentation when it uses existing rules. The dashboard depends on the instrumentation it displays. A parser fix and its regression test prove one behavior together and stay in one task.
 
 ## Ordering and numbering
 
@@ -58,12 +60,12 @@ Per confirmed part, in order:
 
 1. **Folder**: `<parent>/NN-<slug>/` (plain `<slug>/` when unordered), after the cross-root collision check `task-layout.md` § *Discovery rules for skills* binds to every **resolve-or-create** member. A folder already present at the confirmed path is a stop-and-ask: never write into an existing task folder, never silently overwrite a file.
 2. **`ticket.md`**: the acceptance sketch sharpened to the full bar in `ticket-format.md`, self-contained, its References citing the source doc.
-3. **`CONTEXT.md` seed**: the full schema skeleton per `context-schema.md`, every heading present:
+3. **`CONTEXT.md` seed**: use `context-schema.md`'s minimal shape, adding optional headings only when populated:
     - `**Domain:**` inferred per part; a clearly non-code part with no clear domain is asked in the confirmation round.
     - `## Problem Statement` cites `./ticket.md`.
     - `## References` carries the source pointer (the source task's slug and doc role, a root-relative path for a store-level doc, or a URL; for a pasted source, a dated *pasted into session* note), the part's Jira key when mapped, and the shared facts the part needs. A fact an applicable ancestor `GROUP_CONTEXT.md` holds is cited there by root-relative path (`./task-store.md` § *Shared group context*); one no group holds is duplicated into the folder (`./one-home.md` § *One home per fact*).
-    - `## Recommended Direction` holds only what the source decides for this part, cited to its section.
-    - `## Open Questions` carries the proposal's gate-nothing items that touch this part.
+    - `## Recommended Direction` holds only what the source decides for this part, cited to its section, when such a decision exists.
+    - `## Open Questions` carries only the proposal's gate-nothing items that touch this part, when any exist.
 4. **Handoff**: the report ends with `Next: /plan-task <first-part>`, the token `task-layout.md` § *One task, one flat folder* fixes (bare slug where one resolves, folder path otherwise), plus one line per remaining part.
 
 Each seeded folder is then a normal task folder: `plan-task` respects the existing `CONTEXT.md` and `ticket.md` and sharpens the ticket's criteria into `goals.md`.

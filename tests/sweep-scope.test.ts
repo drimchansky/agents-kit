@@ -332,6 +332,28 @@ ${FENCE}
   assert.deepStrictEqual(scope.citations.map((citation) => citation.url), [SHARED]);
 });
 
+test("a CRLF file still closes its fences and opens the References section after them", () => {
+  const context = [
+    "# Context: fenced CRLF",
+    "",
+    "## Open Questions",
+    "",
+    `${FENCE}markdown`,
+    `- an illustration citing ${PAUSE_ONLY}`,
+    FENCE,
+    "",
+    "## References",
+    "",
+    `- [The spec](${CONTEXT_ONLY}) — the grounding doc`,
+    "",
+  ].join("\r\n");
+  const scope = report(folder("fenced-crlf", { context }));
+  assert.deepStrictEqual(
+    scope.citations.map((citation) => [citation.url, citation.occurrences.map((occurrence) => occurrence.surface)]),
+    [[CONTEXT_ONLY, ["context-references"]]],
+  );
+});
+
 test("a deeper-level heading does not open a surface", () => {
   const dir = folder("nested-heading", {
     result: `# Result: nested

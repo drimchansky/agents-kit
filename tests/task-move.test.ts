@@ -213,6 +213,15 @@ test("a status inside a fenced block is not read as the plan's own", () => {
   assertUnmoved(src);
 });
 
+test("a status inside a CRLF plan's fenced block is not read as the plan's own", () => {
+  const parent = area("archive-fenced-crlf");
+  const body = "# a task\r\n\r\n```\r\n**Status:** done\r\n```\r\n\r\n**Status:** executing\r\n";
+  const src = writeTask(join(parent, "fenced"), { [PLAN]: body });
+  const { stderr } = runMove(1, [src, "--to", "archive"]);
+  assertIncludes(stderr, "`executing`", "the CRLF fence opens and closes around the illustrative status");
+  assertUnmoved(src);
+});
+
 test("an indented marker run inside a fence does not close it", () => {
   const parent = area("archive-fence-indent");
   const body = "# a task\n\nAn example:\n\n```markdown\n    ```\n**Status:** done\n```\n\n## Steps\n";

@@ -2,12 +2,16 @@
 
 Compaction: `./reconciliation-compaction.md`.
 
-- **Docs → reality** (`./reconciliation-docs-to-reality.md`): resume-task-reconcile and review-task-reconcile compare docs with built work. Read-only resume-task/review-task may follow claim citations, but cannot sweep reference lists.
+Load and report structural repair before either reconciliation direction assesses task content (`./task-layout.md` § *Reading a resolved folder*). For resume/review composites, Phase 1 assesses the repaired task once; Phase 2 uses that same baseline and does not rerun repair. An explicit read-only request applies to every nested phase and prevents all task writes.
+
+- **Docs → reality** (`./reconciliation-docs-to-reality.md`): resume-task-reconcile and review-task-reconcile compare docs with built work. Standalone resume-task/review-task may follow claim citations, but cannot sweep reference lists.
 - **Session → docs** (`./reconciliation-session-to-docs.md`): reconcile-task records session discoveries without a write flag.
 
 ## Consent model: findings apply, the record carries them
 
 User-invoked reconciliation applies obvious fixes, evidence-settled factual corrections, previously approved changes, and routine judgments within agreed scope. Model-invoked runs ask before fixing (`./skill-conventions.md` § *The invocation gate*).
+
+The loader's proven identifier repair runs before this consent gate because it changes no finding's meaning. Explicit read-only requests and skipped plans suppress it (`./task-layout.md` § *Reading a resolved folder*).
 
 An **obvious** fix needs no interpretation, alternatives, or invented annotation. A **judged** finding admits several defensible edits. Apply evidence-settled facts, prior decisions, and routine details within agreed scope, recording rejected readings and the selection basis (§ *The record*).
 
@@ -45,7 +49,9 @@ Judge scope/acceptance changes: goals, step scope, and CONTEXT's Recommended Dir
 
 Assign new goals the next free G<n>; preserve existing and retired IDs (`./task-goals.md`). Goals have no Status or Description section.
 
-Goal edits establish no achievement. Advance only under § *Strengthen only on verified evidence*. Grading a goal met in its editing run voids that run's verdicts; re-derive them next run.
+Semantic goal edits establish no achievement. Advance only under § *Strengthen only on verified evidence*. Grading a goal met in its semantic editing run voids that run's verdicts; re-derive them next run. Proven identifier-only repairs may be graded against unchanged acceptance wording in the same run when repair completed without unresolved structure.
+
+A marker-only settlement that preserves the goal's acceptance outcome leaves earlier Acceptance intact; it establishes no new `met` verdict.
 
 ## The upstream ask is writable, and never rewritten quietly
 
@@ -62,9 +68,9 @@ Both directions may check steps, mark goals met, or advance to-do→executing, e
 
 Re-prove nominated claims in-session: full unit outcomes (`./execution-loop.md` § *Two verification tiers*) or goal acceptance, using resolved-domain verification.md (`../engineering/verification.md` for code). Findings/conversational claims are not proof. Flag unverifiable claims without advancement.
 
-Before any advance to done or in-review, pass fresh integrated health even without product edits (`./execution-loop.md` § *Health boundaries*). Follow `../engineering/verification.md` § *Two verification tiers* or `../documentation/verification.md` § *Integrated health — declared boundaries*. Record Health below. Non-final advances need only unit outcomes.
+Before any advance to done or in-review, pass fresh integrated health even without product edits (`./execution-loop.md` § *Health boundaries*). For `in-review → done`, select the health surface under `./task-delivery-edges.md` § *Verification source after delivery*. Both reconciliation directions use the intended delivered revision for affected deployable engineering targets, even when main has advanced. Documentation and supported local-only engineering work use their current work product and resolved-domain recipe. Missing required source or a matching health surface leaves verification pending in-review; a check run on proven source that fails is failed work. Follow `../engineering/verification.md` § *Two verification tiers* or `../documentation/verification.md` § *Integrated health — declared boundaries*. Record Health below. Non-final advances need only unit outcomes. For engineering advances, independently resolve every applicable live check under `../engineering/acceptance-gate.md`, even when old goals omit it or Scope defers a goal. A pending check blocks done and is recorded per `./task-lifecycle.md` § *Companion result file*, without creating a goal. A failed live check is unmet work, not downstream waiting.
 
-Use in-review only for an external-only remainder awaiting user confirmation, receipt, or reported live state. These proxies count as external-goal evidence (`./acceptance-criteria.md`); finalization still requires fresh health.
+Use in-review only when implementation is satisfied and downstream verification remains: external-goal confirmation or an engineering live check awaiting rollout, access, or environment availability. External-goal proxies follow `./acceptance-criteria.md`; engineering release and browser checks follow `../engineering/acceptance-gate.md`. Finalization still requires fresh health. A task already done at run start retains its historical completion on a read-only refresh unless an independent regression or changed acceptance claim calls for repair.
 
 ## Skipped plans are exempt
 
@@ -98,8 +104,10 @@ Re-report untagged findings while disk or Reconciliation shows them. Report unre
 
 - Append all edits to an existing/repaired result's `## Reconciliation — YYYY-MM-DD`; suffix same-day repeats `(2)`, then increment. Preserve prior sections, including Acceptance; supersede by new entry/status flip.
 - Refresh Current state in place (`./task-authorship.md`). Decision log accepts appended dated pointers only.
-- Without an existing or owed result (to-do plan), the printed change list is the record; create no result solely for logging.
-- Judged edits include `— chose <reading> over <reading>: <deciding evidence>`, plus the required grounding quotes and external-surface details.
+- Without an existing or owed result (to-do plan), the printed change list records the edit; create no result solely for logging. Preserve settled decision evidence under a dated heading in the owning context or plan, and cite it from the concise current guidance (`./one-home.md` § *One home per fact*).
+- Report loader repairs in the change list using their `applied` files and `mappings`; do not create a result or reconciliation record solely to log structural repair.
+- Judged edits include `— chose <reading> over <reading>: <deciding evidence>`, plus the required grounding quotes and external-surface details. Where a result exists, cite its dated record from concise current guidance instead of retaining alternatives in the live goal or direction.
+- Summarize each new outcome, verification result, material failure or deviation, and its evidence location. Record a shared health boundary once with its required reference, delta, command results, and manifest evidence (`../engineering/verification.md` § *What a boundary records*). Keep the commit scan's watermark and explicit 20-commit cap (`./reconciliation-commits.md` § *The record*). Do not copy tool transcripts, repeated command tails, or request/response narration; preserve older evidence unless compaction is separately confirmed (`./reconciliation-compaction.md`).
 
 ```markdown
 ## Reconciliation — YYYY-MM-DD
@@ -129,7 +137,7 @@ Code boundaries: `../engineering/verification.md` § *What a boundary records*. 
 Annotate only direction-writable surfaces:
 
 - **Broken external link, auto:** append `— _broken as of YYYY-MM-DD (404)_` on context References/Open Questions, plan steps/Open Questions, or ticket citing lines. Replace known redirects with target URLs. Exclude Never-annotated surfaces, prior results, goals, and group URLs (`./reconciliation-sweep.md` § *Scope*).
-- **Answered open question:** append `— _answered YYYY-MM-DD: <answer> ([source](url) when there is one)_` beside context/plan Open Questions. Unambiguous quotation/paraphrase is auto; otherwise judge and record close alternatives. Group questions follow upstream-ask terms. Resolve goals' unresolved markers through the direction's goal row, not annotations.
+- **Answered open question:** replace the unresolved prompt with concise current guidance and a dated answer citing its decision record. Preserve the original question, options, rejected readings, and selection basis in dated result history or under a dated heading in the owning context/plan when no result exists (`./one-home.md` § *One home per fact*). Unambiguous quotation/paraphrase is auto; otherwise judge and record close alternatives. Group questions follow upstream-ask terms. Resolve goals' unresolved markers through the direction's goal row, not annotations.
 
 Correct broken-link/Pointers gone/moved notes are no-ops. Re-date only changed failures; avoid duplicates. Carried tags cause no edits (`./reconciliation-sweep.md` § *Tags*); flag-only findings still re-report.
 
@@ -150,10 +158,10 @@ Fetched contradictions permit judged context rewrites with evidence and rejected
 Finish result writes by refreshing Current state (`./task-authorship.md`) within the resulting plan status.
 
 - Live executing/blocked/in-review plans re-derive every field and name the concrete next action. Preserve the watermark unless `./reconciliation-commits.md` permits advancement.
-- Plans already done at run start freeze narrative and Next. Refresh world-truth Pointers, including moved/merged references, and Updated (`./one-home.md` § *One home per fact*).
-- A newly terminal plan writes its final digest before freezing; done→executing repair refreshes the now-live block fully.
+- Plans already done at run start refresh narrative and Next when confirmed facts change, including a PR merged after the earlier digest said no PR existed. Keep the distinction between accepted scope and later delivery, and name the actual remaining action or `none` when none remains. Refresh Pointers and Updated from the same evidence (`./one-home.md` § *One home per fact*).
+- A newly terminal plan writes its final digest; done→executing repair refreshes the now-live block fully.
 
-Only direction repair rules or verified advancement move status/checkboxes. The digest follows and asserts no stronger state.
+Only direction repair rules or verified advancement move status/checkboxes. A factual digest correction alone never changes lifecycle, checkboxes, or prior Acceptance; it requires evidence, not a parsed pointer's inferred status. The digest follows and asserts no stronger state.
 
 ## The `plan.md` write surface
 
@@ -161,7 +169,7 @@ Use these openings as the direction permits, plus session direction's two additi
 
 - **Checkboxes/result links:** unchecking clears the trailing link; verified checking links its evidence section. Every checked step requires that link.
 - **Status:** advance under verified-evidence rules; repair through `./reconciliation-docs-to-reality.md` § *Repairs weaken; advances go through the shared engine*.
-- **Result header:** link a skeleton result or restore the pre-execution placeholder under docs→reality repair.
+- **Result header:** link a skeleton result or restore `**Result:** not yet started` under docs→reality repair.
 - **Annotations:** broken links in steps/Open Questions; answers in Open Questions, under Annotation formats.
 - **Step content:** judge Verify, gaps, Scope, goal citations, and restated grounding only within the finding's scope (§ *One home per fact*). Flag broader redesign Needs work for plan-task.
 
@@ -169,8 +177,8 @@ Preserve existing step numbers in both directions. Permitted insertions use Step
 
 ## Sequence and output
 
-1. Print the full report from pre-reconcile state and preserve it after edits. Reconcile-task sweeps before composing and renders References inline.
-2. Sweep before edits (`./reconciliation-sweep.md`). Composites print References at reconciliation start. Tags supply finding evidence; the ledger rewrite lands with the check.
+1. Print the full report from post-loader, pre-reconciliation state and preserve it after reconciliation edits. Reconcile-task sweeps before composing and renders References inline.
+2. Sweep before reconciliation edits (`./reconciliation-sweep.md`). Composites print References at reconciliation start, after reported loader repair. Tags supply finding evidence; the ledger rewrite lands with the check.
 3. Apply obvious fixes by file: owed result, plan, then context.
 4. Apply settled judged fixes in that order, then goals, ticket, and groups. Record each judged edit as it lands.
 5. Present unresolved impactful choices after reusing their existing research. Apply answered edits in the same order; keep unanswered ones under Awaiting decision.

@@ -4,12 +4,12 @@ The shape of a **ticket**: a self-contained statement of a task someone can pick
 
 ## What a ticket is
 
-A ticket names the functional output required, what the product does for its user once the work is done, in product terms. How it gets built lives in the plan, never in the ticket. Aim for the smallest text a competent stranger could act on.
+A ticket names the functional output required and what a user, caller, or operator gains once the work is done. How it gets built lives in the plan, never in the ticket. Aim for the smallest text a competent stranger could act on.
 
 ## Hard rules
 
 - **Self-contained.** No "as discussed", no reference to anything visible only in the originating session. Spell out names, paths, and terms, or link them.
-- **Product-oriented.** "User can export the current filter as CSV" is the output; "add a `formatCsv()` helper" is a mechanism for the plan. Prescribe an implementation only when the requester did.
+- **Outcome-oriented.** "User can export the current filter as CSV" is the output; "add a `formatCsv()` helper" is a mechanism for the plan. Internal work may name an operator outcome. Prescribe an implementation only when the requester did.
 - **Minimal.** Context is the smallest *why* that makes the work make sense. Link a spec rather than pasting it. Cut any sentence that does not help the reader act.
 - **Criteria are testable.** Each acceptance criterion is one observable outcome in a plain sentence, held to `./acceptance-criteria.md`.
 - **Criteria are plain bullets.** Write each acceptance criterion as a `-` list item, never a `- [ ]` task checkbox: criteria state outcomes, not progress.
@@ -28,8 +28,8 @@ Copy-ready shape: `../templates/ticket.md`.
 
 ## Acceptance Criteria — the bar
 
-Each criterion is one observable outcome in product terms ("the downloaded CSV's row count matches the on-screen count"), meeting the goal bar in `./acceptance-criteria.md`.
+Each criterion leads with one observable benefit or behavior for its user, caller, or operator ("the downloaded CSV's row count matches the on-screen count"), meeting the goal bar in `./acceptance-criteria.md`. Keep requested thresholds and edge behavior with that outcome.
 
 ## Ticket → goals
 
-Inside a task folder the ticket is upstream of `goals.md`. `plan-task` sharpens each ticket criterion into one or more `G<n>` goals, precise and testable rather than a mirror of the product language (`./acceptance-criteria.md`). Every ticket criterion maps to at least one goal, and no goal contradicts the ticket's stated scope. `review-task` checks that consistency.
+Inside a task folder the ticket is upstream of `goals.md`. `plan-task` sharpens each ticket criterion into one or more `G<n>` goals that retain the actor's outcome and add the precision needed for acceptance (`./acceptance-criteria.md`). Every ticket criterion maps to at least one goal, and no goal contradicts the ticket's stated scope. `review-task` checks that consistency.

@@ -1,6 +1,8 @@
 # Multi-Part Efforts: Sibling Folders
 
-Split an effort exceeding one plan into complete sibling tasks. Each has its own context, goals, plan, result, optional ticket, and lifecycle (`./task-layout.md`).
+Propose sibling tasks when an effort has delivery seams that can land and be verified independently (`./decomposition.md`). Each confirmed sibling has its own context, goals, plan, result, optional ticket, and lifecycle (`./task-layout.md`). Goal count or file count alone does not require a split. A tightly coupled fix stays in one folder.
+
+When the user explicitly requests one task, keep one folder and one plan. Use the useful seams to bound its steps by verifiable outcomes, dependencies, and checkpoints.
 
 When parts have a blocking order, express it only through `NN-` folder prefixes:
 

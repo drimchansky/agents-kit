@@ -3,6 +3,7 @@ import { readFileSync, readdirSync, realpathSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { angledTargetText, holdsRoleFile } from "./lifecycle-constants.ts";
+import { carriesStatusHeader } from "./goal-structure.ts";
 import { compactionSections, slugAllocator, taskState } from "./task-state.ts";
 
 const CONTEXT_FILE = "CONTEXT.md";
@@ -16,14 +17,12 @@ const USAGE = "usage: node scripts/sweep-scope.ts <task-dir>";
 const FENCE = /^([ \t]*)(`{3,}|~{3,})[ \t]*(.*)$/;
 const HEADING = /^#{1,6}[ \t]+(.+?)[ \t]*#*$/;
 const HEADING_LEVEL = /^(#{1,6})[ \t]/;
-const QUOTE = /^[ \t]*>/;
 const REFERENCES_HEADING = /^references\b/i;
 const OPEN_QUESTIONS_HEADING = /^open questions\b/i;
 const CURRENT_STATE_HEADING = /^current state\b/i;
 const STEP_HEADING = /^Step[ \t]+\d+[a-z]*\b/i;
 const POINTERS_FIELD = /^[ \t]*[-*+]?[ \t]*\*\*Pointers:?\*\*/i;
 const PUBLISHED_FIELD = /^[ \t]*[-*+]?[ \t]*\*\*Published:?\*\*/i;
-const STATUS_FIELD = /^[ \t]*[-*+]?[ \t]*\*\*Status\b[^:*\n]*:?\*\*/i;
 const LEDGER_TAG = /^[ \t]*-[ \t]+\[(info|warn|block)\]/i;
 const LINK_TARGET = /\]\([ \t]*(?:<([^<>\n]*)>|((?:[^()\s>]|\([^()\s]*\))+))/g;
 const BARE_URL = /[A-Za-z][A-Za-z0-9+.-]*:\/\/(?:[^\s<>()[\]"'`]|\([^()\s]*\))+/g;
@@ -90,7 +89,8 @@ class Exit extends Error {
 
 function* liveLines(text: string): Generator<string> {
   let fence: { indent: number; char: string; len: number } | null = null;
-  for (const line of text.split("\n")) {
+  for (const raw of text.split("\n")) {
+    const line = raw.replace(/\r$/, "");
     const marker = line.match(FENCE);
     if (marker) {
       const [, pad, run, rest] = marker;
@@ -148,18 +148,6 @@ export function ledgerTags(text: string): ReadonlyMap<string, Tag> {
     }
   }
   return tags;
-}
-
-function carriesStatusHeader(text: string): boolean {
-  for (const line of liveLines(text)) {
-    if (QUOTE.test(line)) continue;
-    if (headingText(line) !== null) {
-      if ((line.match(HEADING_LEVEL)?.[1].length ?? 0) > 1) return false;
-      continue;
-    }
-    if (STATUS_FIELD.test(line)) return true;
-  }
-  return false;
 }
 
 interface Scoped {

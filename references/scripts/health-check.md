@@ -23,6 +23,8 @@ Age uses the newest `.md` mtime; unreadable files contribute nothing, potentiall
 
 `duplicate-slug` spans all roots recursively: one finding per colliding folder, retaining its root and naming peers by absolute directory.
 
+**`goal-id` validates goal definitions and task-local references** with `scripts/goal-structure.ts`. It reads task Markdown through `scripts/task-repair.ts`'s walk, the one `scripts/task-state.ts` uses. It includes subfolders and reports scan gaps as `incomplete-reference-scan`, including a goals file that exists but cannot be read. Walk read failures also enter `unreadablePaths`; symlinks and non-UTF-8 files are gaps without being read failures. Reference findings read `<code> <id> in <file>:<line>`; scan gaps read `incomplete-reference-scan in <file>`. `goal-id` also reports task-state's plan Scope and step Goal citations: retired IDs as `retired-goal-reference`, and unknown IDs the prose scan skips, such as one in inline code. It reads these through `scripts/task-state.ts`'s `taskState`, so the two tools agree on `task-state.md`'s retired-goal rule.
+
 **The two citation checks read every `.md` file sitting directly in the task folder.**
 
 For `dead-citation`, read inline Markdown links with no `<scheme>:` prefix and no bare `#fragment`. Remove fragments, percent-decode targets, and resolve each segment by exact directory-listing case, regardless of filesystem case folding. Leading `/` resolves from the walked root; other link targets resolve from the task folder. Reference-style definitions are not read.

@@ -6,10 +6,12 @@ Quality bar for the goals in `goals.md`, each a `G<n>` bullet (`- G1 — <outcom
 
 - [ ] **Testable**: verifiable by a command, a flow, an inspected state, or the best available proxy for a one-shot outcome; not "feels right"
 - [ ] **Specific**: names a concrete artifact, behavior, or yardstick; no hedge words ("works", "robust", "fast enough")
-- [ ] **Outcome-oriented**: user- or caller-visible behavior, not implementation steps
+- [ ] **Outcome-oriented**: lead with the benefit or observable behavior for a user, caller, or operator; internal work may name an operational outcome without inventing an end-user benefit
 - [ ] **Singular**: one observable claim per bullet
 - [ ] **Bounded**: the reader can tell what is in and out without guessing
-- [ ] **Stated as behavior**: "user can X" beats "X is implemented"; "GET /foo returns 200 with `{shape}`" beats "the endpoint exists"
+- [ ] **Stated as behavior**: name what the actor can do or observe before the implementation detail; "GET /foo returns 200 with `{shape}`" beats "the endpoint exists"
+
+Keep thresholds, compatibility obligations, and failure behavior in the goal as acceptance details. Put commands, typecheck assertions, fixture setup, and test recipes in the plan step's `Verify`, not in the goal. A document goal names what a reader can decide or use from the document, with required content and format as acceptance details.
 
 ## Verifying outcomes that can't be re-run
 
@@ -28,6 +30,8 @@ A goal confirmed only outside the agent's session and after implementation, a hu
 - At the acceptance gate an `(external)` goal not confirmable in-session is tagged `pending external`, and the task parks at `in-review` until a later run confirms it (`./task-lifecycle.md`).
 - No marker means agent-verifiable.
 
+For engineering tasks, the deployment and browser gate in `../engineering/acceptance-gate.md` applies independently of `(external)` goals. Add a goal only when the requested outcome warrants one; omission of a live goal does not waive live verification.
+
 ## Anti-patterns
 
 - "The CSV export works" → "User can export the current filter as CSV; the file's row count matches the on-screen count"
@@ -35,6 +39,8 @@ A goal confirmed only outside the agent's session and after implementation, a hu
 - "Handles errors gracefully" → "On API failure, the UI shows the server error message and the export button re-enables"
 - "Auth is implemented and tokens are validated" → split into "Login flow returns a JWT" + "Requests with an expired JWT receive 401"
 - "Add a `formatCsv()` helper" → a plan step, not a goal; restate as the outcome it delivers
+- "The client spec records both flag values" → "Callers' PnL selection reaches every positions request as the chosen `include_pnl` boolean"; put the two-call assertion in `Verify`
+- "The ADR has numbered sections" → "Reviewers can decide the Phase-1 consumption contract from the ADR, including its wire shape, coverage, and named open items"; keep required format beside that outcome
 
 ## Common Mistakes
 

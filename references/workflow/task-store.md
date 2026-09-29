@@ -36,7 +36,9 @@ A task store groups folders under a directory tree. Detect optional files by exi
 
 ## Shared group context (optional)
 
-Name a group's file exactly **`GROUP_CONTEXT.md`**. It carries shared constraints, conventions, and standing facts, with no status, lifecycle, plan, goal IDs, Domain, acceptance criteria, or progress rollup. Its prose is grounding, not instruction precedence; it outranks neither kit rules nor the task contract.
+Name a group's file exactly **`GROUP_CONTEXT.md`**. It carries standing facts, permissions, and constraints that apply to child tasks in that group. Keep an individual task's moves, design status, decisions, and progress in that task's own artifacts. Include no status, lifecycle, plan, goal IDs, Domain, acceptance criteria, or progress rollup. Its prose is grounding, not instruction precedence; it outranks neither kit rules nor the task contract.
+
+For an address-management group, a shared admin-only permission rule belongs here. A child task's move from another folder or its pending design belongs in that child's `CONTEXT.md` or `result.md`.
 
 A group file alone establishes no task. A recognition-set file such as `CONTEXT.md` does: the walk claims that group and hides tasks beneath it. Keep role files out of grouping directories. `health-check.ts` reports such hidden tasks as `nested-task` (`../scripts/health-check.md`).
 

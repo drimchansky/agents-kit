@@ -161,7 +161,7 @@ Use lists, not tables. Confine writes to the resolved kit/task roots, listed lin
   - `dead-anchor`: checked step with unresolved result evidence.
   - `dead-citation`: citing file and target as written, including plain store-document paths. A dead checked-step link also appears under dead-anchor; it is one defect detected twice.
   - `citation-form`: one line per citing file with a count, not one per link. Keep replacement details in the JSON worklist.
-  - `goal-id`: file and malformed or duplicate ID.
+  - `goal-id`: the reported defect: a malformed or duplicate definition, or `<code> <id> in <file>:<line>` for an unknown, retired, malformed, outside, or ambiguous reference, or `incomplete-reference-scan in <file>` for an unread file.
   - `no-current-state`: live result lacking its Current-state block.
   - `oversized-result`, `oversized-task`, `oversized-record`: affected result, folder, or section and measured budget. Propose no compaction or rewrite here.
   - `duplicate-slug`: each colliding folder and its peers, labelled by root; propose no move or rename.

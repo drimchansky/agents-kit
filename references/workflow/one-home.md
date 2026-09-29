@@ -9,13 +9,13 @@ Within a task folder, record each fact in one file and cite it from siblings:
 - **Acceptance**: `goals.md`, cited by `G<n>` (`./task-goals.md`).
 - **Execution**: `plan.md` holds steps, Verify criteria, checkpoints, execution risks, and planning-time findings, decisions, and questions absent from context.
 - **History**: `result.md` records what happened.
-- **Answers**: annotate the file holding the question, not both context and plan.
+- **Answers**: put current guidance beside the question or requirement. Preserve a settled choice's original wording, rejected alternatives, and selection basis under a dated decision heading (`./context-schema.md` § *Field notes*) in the owning context or plan when no result exists; cite that anchor from current guidance. With a result, keep the decision evidence in its dated history and cite it. A later result Decision log points to the original anchor rather than copying the choice.
 
 **External-system facts** separate durable identifiers from observed state. Keep identifiers on the citing surface: delivery identifiers in result Current-state Pointers, awaited items in active Blocked/In review, grounding URLs in context References, execution URLs in plan steps, upstream URLs in ticket References, and published URLs in deliverable Published (`./doc-task-files.md`).
 
 State such as open, merged, green, or deployed is world-truth. For fetchable citations on actionable surfaces, put dated observations in `observations.md` (`./reconciliation-sweep.md` § *Scope*, `./task-observations.md`). Bare branch/SHA pointers have no URL-keyed ledger line; derive their state from the repository.
 
-Elsewhere, system state appears only timestamped in the Current-state digest or a dated log entry, never as undated durable prose. Only reconciliation's sweep refreshes reference state and rewrites the ledger (`./reconciliation-sweep.md` § *Ledger*). `resume-task` quotes cached dates and checks on-disk claims without sweeping citations.
+Elsewhere, system state appears only timestamped in the Current-state digest or a dated log entry, never as undated durable prose. Refresh a stale digest from confirmed evidence, including delivery after a task reached done; preserve the original Acceptance and plan lifecycle (`./reconciliation.md` § *Current state refresh*). Only reconciliation's sweep refreshes reference state and rewrites the ledger (`./reconciliation-sweep.md` § *Ledger*). `resume-task` quotes cached dates and checks on-disk claims without sweeping citations.
 
 **Citations:**
 
@@ -25,6 +25,6 @@ Elsewhere, system state appears only timestamped in the Current-state digest or 
 
 `review-task` flags duplicated grounding, verbatim or reworded. Keep its home and replace the sibling copy with a citation.
 
-Across independent sibling tasks, duplicate needed grounding into each context when no applicable shared home exists (`./task-siblings.md`). In a registered ancestor chain, a group-wide constraint belongs in `GROUP_CONTEXT.md` (`./task-store.md` § *Shared group context*). Name and source the inherited fact by root-relative path so each task remains complete; do not copy it into every folder.
+Across independent sibling tasks, duplicate needed grounding into each context when no applicable shared home exists (`./task-siblings.md`). In a registered ancestor chain, put standing constraints needed by child tasks in `GROUP_CONTEXT.md` (`./task-store.md` § *Shared group context*). Keep each child's own decisions and progress at its task home. Name and source inherited facts by root-relative path so each task remains complete; do not copy them into every folder.
 
 Apply the same rule to the kit's prose corpus, defined in root `AGENTS.md` § *Source contracts*, `scripts/corpus.ts`. Use `scripts/dup-check.ts` to find cross-file restatements; its contract and deliberate-copy allow-file rules are in that section's `scripts/dup-check.ts` subsection.

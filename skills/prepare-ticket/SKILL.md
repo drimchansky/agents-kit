@@ -8,13 +8,13 @@ argument-hint: '[task description] [optional task folder, slug, or target file p
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 
-Write a self-contained, product-facing ticket to a file. Resolve no domain pack: the ticket precedes Domain grounding. Read `./references/workflow/ticket-format.md`, `./references/workflow/task-layout.md`, and `./references/workflow/task-destinations.md` before drafting.
+Write a self-contained outcome ticket to a file. Resolve no domain pack: the ticket precedes Domain grounding. Read `./references/workflow/ticket-format.md`, `./references/workflow/task-layout.md`, and `./references/workflow/task-destinations.md` before drafting.
 
 ## Process
 
 ### 1. Understand the task
 
-Identify the requested functional outcome in one sentence. In a codebase, locate relevant components/files/names for accurate vocabulary and useful path citations. Keep the ticket in product terms; prescribe implementation only when the user did. Include minimal sufficient context for a reader without this session, linking specifications instead of pasting them. Add no unrequested requirement.
+Identify the requested functional outcome in one sentence. In a codebase, locate relevant components/files/names for accurate vocabulary and useful path citations. Name the user, caller, or operator benefit; prescribe implementation only when the user did. Include minimal sufficient context for a reader without this session, linking specifications instead of pasting them. Add no unrequested requirement.
 
 ### 2. Clarify only if thin
 

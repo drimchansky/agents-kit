@@ -44,7 +44,7 @@ Apply `./references/workflow/execution-loop.md` and `./references/workflow/execu
 - **Source:** one framed item and its predeclared criterion.
 - **Record:** §5's chat report; no task file or status.
 - **Blocked:** stop at the failed item without skipping ahead; report failure, attempts, and what is needed or awaited.
-- **Acceptance:** verify the frame live in chat. Gaps trigger Stop-the-Line, not caveats.
+- **Acceptance:** verify the frame live in chat. For engineering, also apply `./references/engineering/acceptance-gate.md` independently of framed criteria. Report local implementation separately when downstream live verification is pending; gaps in observed behavior trigger Stop-the-Line.
 - **Health boundaries:** end-of-run assertion gate before acceptance, every inspection pause, and after a merged batch before dependent work. A tail batch shares the final boundary. Run the domain's integrated recipe at its resolved scope (`./references/engineering/verification.md` for code). Between boundaries, prove each item's full outcome tier, including domain per-unit checks (`./references/workflow/execution-loop.md` § *Two verification tiers*).
 - **Integration assertions:** exercise the whole ask end to end once before acceptance. Work needing more gates belongs in plan-task.
 
@@ -64,7 +64,7 @@ Launch under `./references/workflow/executor-contract.md` § *Bindings*, impleme
 
 ### 4. Confirm the Ask Is Met
 
-In order: exercise the whole end-to-end outcome, run the integrated-health boundary at the domain's resolved scope, then apply `./references/workflow/execution-acceptance.md` to each framed item against live behavior. Record assertion and health separately. Close gaps or stop explicitly; do not reframe the ask to claim completion.
+In order: exercise the whole end-to-end outcome, run the integrated-health boundary at the domain's resolved scope, then apply `./references/workflow/execution-acceptance.md` to each framed item against live behavior. For engineering, resolve every live target through `./references/engineering/acceptance-gate.md` even if the frame omitted deployment. Record assertion and health separately. Report local success with each pending check's fields (`./references/workflow/task-lifecycle.md` § *Companion result file*) when delivery awaits rollout or access; close observed failures before claiming completion.
 
 ### 5. Report
 
@@ -78,5 +78,6 @@ Use chat lists; apply `./references/workflow/execution-acceptance.md` § *Before
 - **Sources:** framework URLs and unsourced patterns with reasons; omit when none.
 - **Deviations:** changes from the frame and reasons; omit when none.
 - **Follow-ups:** remaining work; omit when none.
+- **Delivery:** for engineering, each applicable target's live evidence or supported N/A; otherwise each pending check with the fields `./references/workflow/task-lifecycle.md` § *Companion result file* lists. State that overall delivery remains pending when any check is open.
 
 Append Noticed but not touching where material. Point to `/commit`, `/review-code`, or `/plan-task` as appropriate.

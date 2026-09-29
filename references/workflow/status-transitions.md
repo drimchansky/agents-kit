@@ -7,7 +7,7 @@ Forward vocabulary and companion-result requirements: `./task-lifecycle.md`.
 `resume-task-reconcile` and `review-task-reconcile` repair overstated claims through these transitions (`./reconciliation.md`):
 
 - `done → executing`: completed claims fail, a `met` goal regresses, or Acceptance is missing. Record the repair in Reconciliation.
-- `in-review → executing`: implementation claims behind an agent-verifiable `met` goal no longer hold. Record the repair in Reconciliation.
+- `in-review → executing`: implementation claims behind an agent-verifiable `met` goal or a live check no longer hold. Record the repair in Reconciliation.
 - `executing → to-do`: no result exists and no evidence shows work happened. Create no result; the printed change list records the repair.
 
 Repairs only weaken; never set `skipped`, `blocked`, or `in-review`. Judged content edits leave state unchanged (`./reconciliation-docs-to-reality.md` § *Repairs weaken; advances go through the shared engine*).
@@ -18,7 +18,7 @@ Reconciliation never sets `skipped` or edits a skipped plan (`./reconciliation.m
 
 ## Terminal vs. live states
 
-**Terminal** states are `done` (completed) and `skipped` (abandoned). **Live** states are `to-do`, `executing`, `blocked`, and `in-review`. An in-review task awaits external verification and is not finished.
+**Terminal** states are `done` (completed) and `skipped` (abandoned). **Live** states are `to-do`, `executing`, `blocked`, and `in-review`. An in-review task awaits downstream verification and is not finished.
 
 Terminal exits are docs → reality's `done → executing` repair and `implement-task`'s user-confirmed `skipped → executing` revive. These are explicit acts outside forward progression. Moving from Archive is **un-archive**, separate from revive (`./task-archiving.md`).
 
