@@ -46,7 +46,13 @@ Before execution, known dependencies are source- or user-declared dependencies a
 Route a consequential change in a document's claim, decision, or intended audience to Ask, even when its wording looks simple (`./AGENTS.md` § *Ask Before Assuming*).
 Treat a file named only as a proposed remedy as outside the reviewed files for Auto. Route that fix to Ask.
 
-**Batch ask-routed findings.** Ask once, before the first concern batch runs, covering every concern batch. Show each finding, concrete diffs and material trade-offs for its viable fixes, and your recommendation. Wait for the user's decisions before applying those edits. Approval of a claim without its diff is insufficient. A finding still unanswered when the run reports lists under Awaiting decision (§ *Output*).
+**Batch ask-routed findings before execution.** Classify all selected findings across every concern batch before applying any fixes. Prepare proposed diffs without editing work products. Show each Ask finding, concrete diffs and material trade-offs for its viable fixes, and your recommendation.
+
+Use the host's interactive question tool when permitted and available; otherwise ask in chat and wait. Batch related questions within the tool's limits.
+
+Hold all fix edits, executor launches, staging, and commits until every initial Ask finding has an explicit user decision. This includes Auto fixes. A decision may approve a shown diff, skip, defer, or reject the finding. Approval of a claim without its diff is insufficient. With no Ask findings, proceed directly.
+
+If the run ends while waiting, report unanswered findings under Awaiting decision. Report held Auto and approved fixes under Untouched as `not attempted` (§ *Output*).
 
 Post-approval choices follow `./references/workflow/fix-findings-recovery.md` § *Approved decisions and changed evidence*.
 
