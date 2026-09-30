@@ -1,6 +1,6 @@
 ---
 name: review-pr-loop
-description: "Use when asked to watch a PR and keep reviewing it until it is clean: reviews the PR at its current head against its CI results, publishes the Critical/Major findings without asking each pass, then waits for the next push to settle and reviews again. A pass with no Critical or Major findings and passing checks approves the PR from your account, or comments on your own PR. Adds a worktree on the PR branch when no checkout holds it, and removes it after a clean ending."
+description: "Use when asked to watch a PR and keep reviewing it until it is clean: reviews the PR at its current head against its CI results, publishes all findings and improvements until its first review submits successfully and Critical/Major findings afterward, then waits for the next push to settle and reviews again. A pass with no Critical or Major findings and passing checks approves the PR from your account, or comments on your own PR. Adds a worktree on the PR branch when no checkout holds it, and removes it after a clean ending."
 argument-hint: '[PR number or URL; defaults to the PR of the checked-out branch]'
 disable-model-invocation: true
 ---
@@ -10,7 +10,7 @@ disable-model-invocation: true
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core.
 
-Composite over one PR: review it (`review-code`), read its checks, publish the Critical/Major tier (`publish-pr-review`), watch the head until the next push settles, and repeat until a pass is clean.
+Composite over one PR: review it (`review-code`), read its checks, publish all tiers until the first successful submission and Critical/Major afterward (`publish-pr-review`), watch the head, and repeat until a pass is clean.
 
 Your typed invocation is the standing consent for every review this run posts, on the PR Setup resolves and no other. It replaces `publish-pr-review` step 4's per-pass picker, which **Publish** pre-selects; model invocation is closed on both hosts (`./references/workflow/skill-conventions.md` § *The invocation gate*). Edit no code, title, PR state, or merge. The only writes to the repository are the one worktree Setup adds where no checkout holds the review branch, the local `<review-branch>` it creates with that worktree where none exists, that branch's upstream config on a fork PR, the `refs/pull/<number>/head` fetches in Setup and **Sync**, **Sync**'s fast-forward of that branch, and that worktree's removal on a clean ending.
 
@@ -39,7 +39,7 @@ Launch and collect the check poll and watch through `./references/workflow/deleg
 
 Every Setup stop uses § *Output*, including stops after worktree creation. Report `Passes: none — Setup stopped: <reason>` and name any added worktree left in place.
 
-The cap is 10 passes.
+The cap is 10 passes. Start with no full-tier review submitted; only a successful **Publish** submission changes that state.
 
 ## The pass
 
@@ -53,23 +53,23 @@ Announce pass `i` as one progress line (`./references/workflow/user-facing-messa
    - Every check in bucket `fail` or `cancel` becomes a Major finding appended to the review's Findings, its check name the locator, its description the text, and its link the evidence. Having no `file:line`, each rides in the review body rather than an inline comment (`../publish-pr-review/SKILL.md` step 3).
    - Checks the poll leaves pending, a PR reporting none, and a failed `gh` call are context: name each in the pass display, post none of them, and take the CI state as unknown.
 
-**Head moved.** A named expected/live head mismatch before submission discards that pass's stale Findings and submits nothing. Record the expected head and every value already known, using `not run` for later phases. Unless this was pass 10, start § *The watch* with the discarded pass's expected head as `<reviewed-head>`; its `updated:` opens the next pass. Refresh the selected PR in Sync; never carry the observed head forward as review state.
+**Head moved.** A named expected/live head mismatch before submission discards that pass's stale Findings and Improvements and submits nothing. Record the expected head and every value already known, using `not run` for later phases. Unless this was pass 10, start § *The watch* with the discarded pass's expected head as `<reviewed-head>`; its `updated:` opens the next pass. Refresh the selected PR in Sync; never carry the observed head forward as review state.
 
-4. **Decide.** Preserve the original Critical/Major set, including CI findings, for the final report. A non-empty set goes through **Dedupe**. An empty set with every check in bucket `pass` or `skipping` goes directly to **Publish** with all three supplied tiers empty. An empty set with unknown CI submits nothing and ends the loop, naming the unavailable check context.
+4. **Decide.** Until a full-tier review has been submitted, select all Critical/Major and Minor findings, Improvements, and CI findings. Afterward, select only Critical/Major findings, including CI findings. Preserve each original selected tier for the final report. Mark the pass clean when the original Critical/Major tier is empty and every check is `pass` or `skipping`. Mark it unknown when that tier is empty and CI is unknown; otherwise it waits for another head. A non-empty selected set goes through **Dedupe**. An empty clean set goes directly to **Publish** with all three supplied tiers empty. An empty unknown set submits nothing and ends the loop, naming the unavailable check context.
 
-5. **Dedupe.** Run this only for a non-empty original set. Resolve `<kit-root>` per `./references/workflow/task-store.md` § *Resolving `<kit-root>`*. Fetch review threads with `node <kit-root>/scripts/pr-comments.ts <PR-URL>` and read its JSON per `./references/scripts/pr-comments.md`. Fetch review bodies and general comments with `gh pr view <number> --json reviews,comments` per `../triage-findings/SKILL.md` § *Fetch*. Resolve the authenticated login on the selected host with `gh api user --jq .login`.
+5. **Dedupe.** Run this only for a non-empty original selected set. Resolve `<kit-root>` per `./references/workflow/task-store.md` § *Resolving `<kit-root>`*. Fetch review threads with `node <kit-root>/scripts/pr-comments.ts <PR-URL>` and read its JSON per `./references/scripts/pr-comments.md`. Fetch review bodies and general comments with `gh pr view <number> --json reviews,comments` per `../triage-findings/SKILL.md` § *Fetch*. Resolve the authenticated login on the selected host with `gh api user --jq .login`.
 
    Missing tools, failed reads or identity resolution, `paginationComplete: false`, or any incomplete thread comments stop the loop. Report the gap under **Inaccessible context** and submit nothing.
 
    Classify fetched candidates through `../triage-findings/SKILL.md` § *Classify addressed vs unaddressed*. Only its open findings authored by the authenticated login may suppress an entry. Match an anchored entry on normalized path and claim. Match other unanchored entries on locator and claim. Suppress a CI entry only when a standing review body contains both its check name and claim. Keep every entry without both parts of its match.
 
-   If every original entry is suppressed, repeat CI's selected PR read before reporting no submission. A head mismatch takes **Head moved**; another failure stops. Otherwise report found and suppressed counts, then end on pass 10 or start § *The watch*. If entries remain, supply only those entries as tier 1 to **Publish**, with tiers 2 and 3 empty. Retain the original review's **Reviewed** provenance.
+   If every original selected entry is suppressed, repeat CI's selected PR read before proceeding. A head mismatch takes **Head moved**; another failure stops. Report found and suppressed counts by selected tier. A clean pass goes to **Publish** with all three supplied tiers empty. An unknown pass ends without submission; otherwise end on pass 10 or start § *The watch*. If entries remain, supply each retained entry in its original tier to **Publish**. Retain the original review's **Reviewed** provenance.
 
-6. **Publish.** Execute `../publish-pr-review/SKILL.md` over the supplied tiers. Pass `review-pr-loop using review-code` as workflow identity and `Critical/Major only` as publication scope, including the clean route. Pin `Critical/Major only` for retained entries and `Post approval — 0 comments` for the clean route. The supplied tiers override its normal step 1 source; all counts and payloads derive from them. Its preconditions, live recheck, and own-PR COMMENT substitution still run. Print its step 6 report.
+6. **Publish.** Execute `../publish-pr-review/SKILL.md` over the supplied tiers. Pass `review-pr-loop using review-code` as workflow identity. Set publication scope to `Critical/Major + Minor + Improvements` until a full-tier review has been submitted, and `Critical/Major only` afterward, including clean routes. Pass a COMMENT override when the original Critical/Major tier was non-empty or CI is unknown. Pin the matching cumulative tier for retained entries and `Post approval — 0 comments` for a clean pass with every entry suppressed or absent. The supplied tiers override its normal step 1 source; all counts and payloads derive from them. Its preconditions, live recheck, and own-PR COMMENT substitution still run. Print its step 6 report.
 
-   A named head-moved outcome takes **Head moved**. Any other stop ends the loop. After a submitted findings review, end on pass 10; otherwise start § *The watch*. A submitted clean verdict ends the loop.
+   A named head-moved outcome takes **Head moved**. Any other stop ends the loop. After a successful submission, mark the full-tier review submitted if this pass selected all tiers. A submitted clean pass ends the loop, including one with retained Minor findings or Improvements. An unknown pass ends after any submission, naming its unavailable CI context. Otherwise end on pass 10 or start § *The watch*.
 
-Minor findings and improvements are never posted and never hold the loop open. A pass renders no finding text in chat; the PR carries it.
+Minor findings and Improvements do not hold the loop open. After a full-tier submission, they are outside the selected set. A pass renders no finding text in chat; the PR carries it.
 
 ## Check poll
 
@@ -127,8 +127,8 @@ It polls every minute and reports only a changed head that has stood five minute
 
 The loop ends at the first of these, and nothing else:
 
-- a clean pass, every check in bucket `pass` or `skipping`, its verdict submitted
-- a pass with no findings whose CI state is unknown and no review submitted
+- a clean pass with no original Critical/Major entries and passing or skipping checks, its verdict submitted
+- a pass with no original Critical/Major entries and unknown CI, after any retained lower-tier entries were submitted
 - a dedupe read with inaccessible context and no review submitted
 - the completed 10th pass, whether it submitted a review, suppressed duplicates, or observed a moved head
 - the watch reporting `closed:`, `error:`, or `stalled:`
@@ -147,8 +147,8 @@ One final response when the loop ends.
 
 - **Headline:** why it ended, with the PR number, title, and URL when Setup resolved them.
 - **Worktree:** the path Setup added, where it added one. A clean ending removes it; any other ending leaves it in place for `/fix-findings`.
-- **Passes:** one line per pass. Name its number, reviewed head, CI state, Critical/Major found and suppressed counts, inline and body post counts, and verdict. A pass stopped during review context uses its expected head and `not run` for CI and counts. For no submission, use verdict `none` and name the reason, including unknown CI, already reported, inaccessible dedupe context, or head moved.
-- **Findings:** on any ending other than clean, render the last non-discarded review's original Critical and Major entries in `review-code`'s Findings format. Dedupe never removes them from this report. Omit on a clean ending, before any review completed, or when the ending discarded a stale head's Findings.
+- **Passes:** one line per pass. Name its number, reviewed head, CI state, found and suppressed counts by selected tier, inline and body post counts, and verdict. A pass stopped during review context uses its expected head and `not run` for CI and counts. For no submission, use verdict `none` and name the reason, including unknown CI, already reported, inaccessible dedupe context, or head moved.
+- **Findings:** on any ending other than clean, render the last non-discarded review's original selected entries in `review-code`'s Findings and Improvements formats. Dedupe never removes them from this report. Omit on a clean ending, before any review completed, or when the ending discarded a stale head's review entries.
 - **Inaccessible context:** failed or incomplete selected-PR, CI, and dedupe reads, with the reason. Omit when none.
 
 **Next:** `/fix-findings` addresses what was posted and commits it, then push; rerun `/review-pr-loop` to keep watching. `/review-code` alone gives a fresh pass that runs the local scripts and posts nothing. `git worktree remove <path>` removes a worktree the loop left in place.
