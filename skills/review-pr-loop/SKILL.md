@@ -65,7 +65,7 @@ Announce pass `i` as one progress line (`./references/workflow/user-facing-messa
 
    If every original entry is suppressed, repeat CI's selected PR read before reporting no submission. A head mismatch takes **Head moved**; another failure stops. Otherwise report found and suppressed counts, then end on pass 10 or start § *The watch*. If entries remain, supply only those entries as tier 1 to **Publish**, with tiers 2 and 3 empty. Retain the original review's **Reviewed** provenance.
 
-6. **Publish.** Execute `../publish-pr-review/SKILL.md` over the supplied tiers. Pin `Critical/Major only` for retained entries and `Post approval — 0 comments` for the clean route. The supplied tiers override its normal step 1 source; all counts and payloads derive from them. Its preconditions, live recheck, and own-PR COMMENT substitution still run. Print its step 6 report.
+6. **Publish.** Execute `../publish-pr-review/SKILL.md` over the supplied tiers. Pass `review-pr-loop using review-code` as workflow identity and `Critical/Major only` as publication scope, including the clean route. Pin `Critical/Major only` for retained entries and `Post approval — 0 comments` for the clean route. The supplied tiers override its normal step 1 source; all counts and payloads derive from them. Its preconditions, live recheck, and own-PR COMMENT substitution still run. Print its step 6 report.
 
    A named head-moved outcome takes **Head moved**. Any other stop ends the loop. After a submitted findings review, end on pass 10; otherwise start § *The watch*. A submitted clean verdict ends the loop.
 
