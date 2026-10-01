@@ -88,7 +88,9 @@ Severity reflects user and production impact, not code aesthetics. Each level re
 
 - **Critical:** breaks functionality, data loss, a security vulnerability, or a blocking accessibility barrier. Must fix before merge.
 - **Major:** causes problems over time: missing tests for complex logic, performance regressions, types that hide bugs, unverified consumers. Should fix before merge.
-- **Minor:** simplification, minor duplication, non-blocking naming. Fix if convenient.
+- **Minor:** a small located defect: needless complexity, minor duplication, a misleading name. Fix if convenient.
+
+An **Improvement** is not a finding. It is a non-blocking suggestion with no defect behind it: an optional enhancement, a follow-up, or a refactor beyond the change. It carries no severity and lists under **Improvements**, `file:line` optional. It never affects § *Approval Bar*. § *What NOT to Flag* excludes equally valid alternatives from both lists.
 
 Legacy text prefixes are valid input; `../workflow/user-facing-messages.md` § *Markers* maps each to its marker before rendering.
 

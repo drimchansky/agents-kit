@@ -315,7 +315,7 @@ Derivable enumerations remain removed; find their consumers by reverse search:
 - `references/workflow/agent-fanout.md`: review and maintain citers. The semantic write-mode registry is in `executor-routing.md`, beside `executor-contract.md` § *Bindings*.
 - `references/workflow/verify-pipeline.md`: composite callers cite its path. Its header names the three supporting contracts.
 - `references/workflow/task-store.md` § *Resolving `<kit-root>`*: helper callers cite the section at invocation; each chooses its unavailable-helper behavior.
-- `references/engineering/rules.md`: loaders cite the overlay. Preserve the semantic `commit` exception: it cites Git discipline but does not load the overlay. Citation alone cannot establish membership.
+- `references/engineering/rules.md`: loaders cite the overlay. `commit` cites its Git discipline but does not load the overlay. Preserve that semantic exception in `references/workflow/domain-packs.md` § *Which skills resolve a domain vs. load a fixed pack*. Citation alone cannot establish membership.
 - `references/documentation/rules.md`: loaders cite it; no semantic exception accompanies the list.
 - `references/engineering/review.md` § *Findings output shape*: search finds review skills and `reviewer-contract.md` § *The return*, plus composites through review-code.
 

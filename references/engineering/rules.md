@@ -1,6 +1,6 @@
 # Engineering Rules
 
-The engineering domain pack's rules overlay, loaded on top of `../../CORE_RULES.md` for any task with `**Domain:** engineering` (the default), and unconditionally by the engineering-only skills, each of which cites it. `commit` is the one engineering-contributed skill that does not load this overlay: it writes no code, so the Git-discipline line below applies directly and its own SKILL.md carries the staged-change check gate instead of the changed-code health-boundary protocol.
+Rules layered over `../../CORE_RULES.md` for engineering tasks and the engineering-only skills.
 
 ## Code & Git discipline
 
@@ -10,7 +10,7 @@ The engineering domain pack's rules overlay, loaded on top of `../../CORE_RULES.
 
 ## Before presenting changes
 
-- Have current integrated health for the final changed surface: the recipe `./verification.md` § *Two verification tiers* names, at the scope it resolves, at the consumer's declared health boundary (`../workflow/execution-loop.md` § *Health boundaries*) or, under no such consumer, at presentation itself. That scope is the final delta's closure where the boundary's reference carries a verdict and the whole surface where it does not, except where `./boundary-scope.md` § *Infra-bound commands* scopes an infra-bound command; never narrower.
+- Have current integrated health for the final changed surface: run `./verification.md` § *Two verification tiers* at the consumer's declared health boundary (`../workflow/execution-loop.md` § *Health boundaries*), or at presentation itself under no such consumer. That file sets the scope; never run narrower.
 - If changing exports or shared code, grep for all consumers and verify compatibility
 - Remove debug artifacts (console.log, commented-out code, temporary variables)
 
@@ -37,6 +37,10 @@ Methodology bodies the neutral spine loads by phase:
 - `execution.md`: stack detection, doc sourcing, the Prove-It bug pattern, the verification cadence
 - `verification.md`: the unit-outcome and integrated-health tiers, with the satellites `boundary-scope.md`, `acceptance-gate.md`, and `batched-fixes.md`
 - `review.md`: code-review lenses, complexity signals, severity calibration
+
+Git-operation reference:
+
+- `git-hardware-signing.md`: signer discovery, touch warnings, and device access for signed commits and rebases
 
 Per-surface checklists, consulted for what a change touches:
 
