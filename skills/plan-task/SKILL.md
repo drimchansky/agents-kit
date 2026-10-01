@@ -41,8 +41,6 @@ Restate the task, separating explicit requirements from assumptions. Ask about c
 
 Resolve per the **resolve-or-create** rules in `./references/workflow/task-layout.md`; a new folder lands by `./references/workflow/task-destinations.md`. Reuse an existing active folder the slug or path resolves to; several plausible matches → list them and ask. Confirm the slug only when it differs meaningfully from what the user typed. For a new folder, fix its path here but create it, with its `CONTEXT.md`, only once Step 7 keeps one task, so a route to `decompose-task` leaves no stray folder.
 
-Label the terminal session for the resolved folder per `./references/workflow/terminal-session.md`.
-
 For an existing folder, run `./references/workflow/task-layout.md` § *Reading a resolved folder* before drafting goals, including its pre-plan `--repair` path. Report applied mappings and unresolved diagnostics. If `state` is null because no plan exists, inspect `goals.md` and task-local references using the repair diagnostics before assigning new IDs. Under an explicit read-only request, inspect existing goal definitions and references manually; the default CLI needs a plan and cannot validate this pre-plan case. Do not draft from an ambiguous identity or treat a failed repair as valid intake.
 
 Read `CONTEXT.md` and `ticket.md`. Surface a missing `./ticket.md` citation in chat rather than editing it in.

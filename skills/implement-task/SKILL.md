@@ -35,8 +35,6 @@ Establish ground truth per `./references/workflow/execution-loop.md` § *Ground 
 
 **Resolve the folder** per the **resolve-current-or-ask** rules in `./references/workflow/task-layout.md`. A folder under `Backlog/` takes the activation offer in `./references/workflow/implement-task-edges.md` § *Activating a backlogged task*. <!-- cold -->
 
-Label the terminal session for the resolved folder per `./references/workflow/terminal-session.md`.
-
 **Then load it** in the order `./references/workflow/task-layout.md` § *Reading a resolved folder* fixes:
 
 - Report the loader's `applied`, `mappings`, and `unresolved` before relying on its returned `state`. A null `state` with no readable plan goes to `plan-task`; a failed repair stops execution. Unresolved structure cannot count as complete goal coverage.

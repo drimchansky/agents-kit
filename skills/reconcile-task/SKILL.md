@@ -30,8 +30,6 @@ This skill applies settled task-doc corrections and presents unresolved impactfu
 
 Resolve per the **resolve-current-or-ask** rules in `./references/workflow/task-layout.md` § *Discovery rules for skills*; a full `plan.md` path is taken directly.
 
-Label the terminal session for the resolved folder per `./references/workflow/terminal-session.md`.
-
 ### 2. Load Artifacts
 
 Open the folder per `./references/workflow/task-layout.md` § *Reading a resolved folder*, report structural repair, then read it in full; the repaired state is the baseline the session is diffed against. An explicit read-only request suppresses repair and all reconciliation writes. Do not treat unresolved structure as complete coverage:
