@@ -106,4 +106,4 @@ Subject to Safety blocks, announce an explicit user request or an unavailable or
 - `adapter not installed`: absent kit adapter or definition missing this contract citation.
 - `adapter not registered`: kit file exists but launch reports unknown agent type.
 - `unresolved model pin`: the pinned model does not resolve on this host.
-- `reviewer failed`: no return, ordinary non-security error, or malformed report.
+- `reviewer failed`: no return, ordinary non-security error, or malformed report. A consumer's deliberate cancellation is not a failure (`../../skills/review-pr-loop/SKILL.md` § *Review head checks*).

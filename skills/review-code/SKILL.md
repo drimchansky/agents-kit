@@ -27,6 +27,8 @@ Preserve the caller's branch, index, and working tree. Use a separate worktree o
 
 `review-pr-loop` may supply a selected PR number, host, repository, and expected head for a no-argument branch review. Use that number for both branch-context reads, with every `gh` call scoped to the supplied host and repository. Require each read to return `OPEN` at the expected head. A head mismatch reports only `Review stopped: head moved (<expected-head> -> <live-head>)`; lookup failure, another state, or another identity stops without falling back to branch discovery.
 
+With supplied loop context, apply `../review-pr-loop/SKILL.md` § *Review head checks* throughout this skill, including cancellation and late-return handling. <!-- cold -->
+
 **Resolve the object.** Consume flags and `-n`'s value before reading the object; `--` terminates the object's own tokens, so `-- <path>… -n 3` names one path set and a count. With no argument the object is the current branch's diff against its base: run **Determine base branch** and take `<base>...HEAD`.
 
 With an argument, select the form before applying it. A bare positional token naming a directory the recognition set in `./references/workflow/task-layout.md` § *One task, one flat folder* claims is task context.
@@ -79,7 +81,7 @@ A packet with a missing or ambiguous item is completed by reading or asking, nev
 
 With `-n N`, send the N packets in one message, on the primitive `./references/workflow/delegated-waiting.md` § *Per-host primitives* names for this host. They differ on the verification-scripts instruction alone.
 
-**Wait.** While the reviewer is in flight the session runs no command against the tree: no diff reads, no scripts, no scratch runs. Wait per `./references/workflow/delegated-waiting.md` § *How to wait*, reporting where each launch stands at each check-in as one progress line per launch; under `-n N` that holds until the last of the N is in. The `-x` probe is read-only and may overlap the wait.
+**Wait.** While the reviewer is in flight the session runs no command against the tree: no diff reads, no scripts, no scratch runs. The loop's supplied PR context permits its remote head checks during this wait. Wait per `./references/workflow/delegated-waiting.md` § *How to wait*, reporting where each launch stands at each check-in as one progress line per launch; under `-n N` that holds until the last of the N is in. The `-x` probe is read-only and may overlap the wait.
 
 **Settle.** The return is evidence, not a verdict; this skill assigns the verdicts per `./references/workflow/reviewer-contract.md` § *The settle*. First classify an explicit safety signal under that contract's § *Safety blocks*; it takes the **Blocked output** below, not an inline retry. Then the two intake checks, in order: the `Identity` echo against the identity Setup resolved (a mismatch means the reviewer resolved a different object: stop and report, settle nothing, launch nothing), then every return heading present (a malformed return takes the inline fallback with reason `reviewer failed`). Then adopt, spot-check, and assign the final verdicts as that section orders; `Summary` and `Improvements` pass through uncited; merge the `-x` probe.
 

@@ -18,8 +18,8 @@ How an agent collects asynchronous work it launched: delegated agents and shell 
 
 ## Per-host primitives
 
-- **Claude Code**: a subagent launched through the `Agent` tool runs in the background and notifies on completion. For a condition, use `Monitor` where each occurrence is worth a notification.
-- **Codex**: a subagent on the multi-agent surface notifies on completion; `wait_agent` additionally blocks for a bounded window when the result is on the critical path. It takes `timeout_ms` and returns empty on expiry; an empty return is not a finished agent, so re-enter the call or leave it to the notification.
+- **Claude Code**: a subagent launched through the `Agent` tool runs in the background and notifies on completion. For a condition, use `Monitor` where each occurrence is worth a notification. `TaskStop` stops a running background task by its ID.
+- **Codex**: a subagent on the multi-agent surface notifies on completion; `wait_agent` additionally blocks for a bounded window when the result is on the critical path. It takes `timeout_ms` and returns empty on expiry; an empty return is not a finished agent, so re-enter the call or leave it to the notification. `close_agent` shuts a subagent down and returns its status before shutdown. A host exposing `interrupt_agent` instead stops the agent's current turn, returns its previous status, and leaves the agent available.
 
 ## Shell commands
 

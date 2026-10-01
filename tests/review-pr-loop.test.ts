@@ -25,10 +25,10 @@ test("both hosts have a shell collection path for the check poll and watch", () 
   assert.doesNotMatch(skill, /Claude Code only|Codex establishes no such surface/);
 });
 
-function watchProgram(): string {
+function embeddedProgram(heading: string): string {
   const source = readFileSync(SKILL, "utf8");
-  const match = source.match(/## The watch[\s\S]*?```sh\n([\s\S]*?)```/);
-  assert.ok(match, "embedded watch program is present");
+  const match = source.split(`## ${heading}\n`)[1]?.match(/```sh\n([\s\S]*?)```/);
+  assert.ok(match, `embedded program under ${heading} is present`);
   return match[1]
     .replaceAll("<host>/<owner>/<repo>", "example.com/acme/widgets")
     .replaceAll("<host>", "example.com")
@@ -37,6 +37,15 @@ function watchProgram(): string {
 }
 
 function runWatch(responses: readonly string[], sleepMultiplier = 1, readAdvances: readonly number[] = []) {
+  return runProgram(embeddedProgram("The watch"), responses, sleepMultiplier, readAdvances);
+}
+
+function runProgram(
+  program: string,
+  responses: readonly string[],
+  sleepMultiplier = 1,
+  readAdvances: readonly number[] = [],
+) {
   const root = mkdtempSync(join(tmpdir(), "review-pr-loop-watch-"));
   const bin = join(root, "bin");
   const clock = join(root, "clock");
@@ -68,7 +77,7 @@ function runWatch(responses: readonly string[], sleepMultiplier = 1, readAdvance
   chmodSync(sleep, 0o755);
   chmodSync(gh, 0o755);
   try {
-    const result = spawnSync("sh", ["-c", watchProgram()], {
+    const result = spawnSync("sh", ["-c", program], {
       cwd: REPO_DIR,
       encoding: "utf8",
       env: {
@@ -156,4 +165,37 @@ test("watch reports a GitHub read failure", () => {
   assert.equal(result.stdout, "error: gh pr view failed");
   assert.equal(result.clock, 60);
   assert.equal(result.calls, 1);
+});
+
+test("check poll exits early when the head moves", () => {
+  const result = runProgram(embeddedProgram("Check poll"), ["reviewed", "1", "pushed"]);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, "moved: pushed");
+  assert.equal(result.clock, 60);
+  assert.equal(result.calls, 3);
+});
+
+test("check poll settles on the reviewed head once no check is pending", () => {
+  const result = runProgram(embeddedProgram("Check poll"), ["reviewed", "1", "reviewed", "0"]);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, "settled");
+  assert.equal(result.clock, 60);
+  assert.equal(result.calls, 4);
+});
+
+test("check poll falls through to the checks read when the head read fails", () => {
+  const result = runProgram(embeddedProgram("Check poll"), ["ERROR", "2", "reviewed", "0"]);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, "settled");
+  assert.equal(result.clock, 60);
+  assert.equal(result.calls, 4);
+});
+
+test("check poll gives up as pending after 30 minutes", () => {
+  const responses = Array.from({ length: 31 }, () => ["reviewed", "1"]).flat();
+  const result = runProgram(embeddedProgram("Check poll"), responses);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, "pending");
+  assert.equal(result.clock, 1800);
+  assert.equal(result.calls, 62);
 });

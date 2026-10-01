@@ -12,6 +12,8 @@ A tiny sequential phase may stay a flag; state that exception in the skill.
 
 Whole-phase iteration stays composite; state its cap, exit criterion, and per-pass display rules there. Write permissions do not determine classification.
 
+A composite may supervise an in-flight phase through caller-supplied context; state that exception in the composite.
+
 ### The diagnostic
 
 - Entirely before or after the base protocol, with its output complete and printed at the boundary: composite. Keep the base skill whole; the composite orders phases.
@@ -29,7 +31,7 @@ Scattered flag conditionals suggest a misclassified phase. A modal flag modifies
 - `resume-task-reconcile` — print the resume brief, then reconcile docs to it.
 - `review-task-reconcile` — print the plan assessment, then reconcile docs and incorporate answers.
 - `decompose-task` — propose ordered sibling parts from an approved source; after confirmation, materialize each through `prepare-ticket` and seeded `CONTEXT.md`.
-- `review-pr-loop` — review a PR, publish all findings and improvements until the first successful submission and Critical/Major afterward, then watch its head. Whole-phase iteration: the cap is 10 passes, a pass with no original Critical/Major findings and passing checks ends after APPROVE or COMMENT on the reviewer's own PR, and a closed PR ends it too. Each pass displays progress, provenance when a review completes, and a publish or no-submission report. It pins `publish-pr-review`'s supplied tiers and selection, its own gate carrying that consent, and substitutes the PR's checks for the review phase's verification scripts. A head move before submission starts a fresh pass within the cap.
+- `review-pr-loop` — review a PR and publish available findings before waiting for checks, then watch its head. Whole-phase iteration: the cap is 10 passes, a pass with no original Critical/Major findings and passing checks ends after APPROVE or COMMENT on the reviewer's own PR, and a closed PR ends it too. Each pass displays progress, provenance when a review completes, and every submission or its no-submission reason. It pins `publish-pr-review`'s supplied tiers and selection, its own gate carrying that consent, and substitutes the PR's checks for the review phase's verification scripts. Its head checks run inside the review phase under § *The rule*'s supervision exception.
 
 Pass each phase's modal flags through unchanged, except the `review-code-triage-verify` settle override below.
 
@@ -63,7 +65,7 @@ Close both host mechanisms together: SKILL.md frontmatter `disable-model-invocat
 - `fix-findings` — explicit invocation required by user preference; its typed invocation also authorizes a commit per concern batch with no per-commit confirmation.
 - `explore` — explicit invocation required by user preference.
 - `update-pr-description` — replaces a live PR body.
-- `review-pr-loop` — posts selected reviews with no per-pass picker, and approves a clean PR or comments when the reviewer owns it.
+- `review-pr-loop` — posts selected reviews with no per-submission picker, and approves a clean PR or comments when the reviewer owns it.
 - `archive-task` — files a task into `Archive/`.
 - `backlog-task` — files a task into `Backlog/`.
 - `maintain` — sweeps and rewrites installed state across every registered root.
