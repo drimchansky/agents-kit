@@ -1,5 +1,7 @@
 # Privacy
 
+Cookies, headers, logout clearing, and log scrubbing: `security.md`.
+
 ## Data Minimization
 
 - [ ] Minimize granularity; offer guest access when accounts are unnecessary.
@@ -9,16 +11,6 @@
 
 - [ ] Explain non-obvious fields inline; explain permissions before prompting, excluding page-load requests.
 - [ ] Deletion takes ≤creation steps; no prechecked consent, unequal Accept/Reject styling, or buried rejection.
-
-## Storage Choices
-
-- [ ] Apply `security.md` cookie protections; SameSite=Lax for sessions (`forms.md` for credentials).
-- [ ] Logout clears cookies/storage/cache through Clear-Site-Data; use subresources when cache clearing would block navigation rendering.
-- [ ] Edge-scrub PII/tokens/secret queries before logs/analytics storage.
-
-## Headers
-
-- [ ] Apply `security.md` headers, also disabling accelerometer; retain stricter referrer policy where configured.
 
 ## Third-Party Embeds
 
@@ -33,7 +25,3 @@
 ## User Rights
 
 - [ ] Export all account data, preferably machine-readable; offer self-service deletion/identity correction without degrading unrelated service for opt-outs.
-
-## Common Mistakes
-
-Check [Transparency](#transparency), [Storage Choices](#storage-choices), [Third-Party Embeds](#third-party-embeds), and [Fingerprinting](#fingerprinting).

@@ -44,17 +44,16 @@ Git-operation reference:
 
 Per-surface checklists, consulted for what a change touches:
 
-- `accessibility.md`: landmarks, ARIA, keyboard/focus, contrast, live regions, native dialogs, motion, forms a11y
+- `accessibility.md`: semantics, keyboard, targets, error announcement, native dialogs and overlays, live regions, motion
 - `code-style.md`: function shape, parameter limits, comment discipline (non-obvious current invariants only; no narration or duplication; scoped validation; public-API docs excepted)
-- `css.md`: layout, responsive, container queries, `:has()`, `@scope`, theming, color, cascade layers
+- `css.md`: native-first features, responsive floor, Tailwind, tokens, cascade layers, color
 - `design-to-code.md`: building UI from a design source (Figma node, mockup, prototype), with or without a design-context tool
-- `forms.md`: semantics, autocomplete, validation timing, tap sizing, AJAX, multi-page forms
-- `html.md`: document semantics, landmarks, native overlays, resource prioritization, media
+- `forms.md`: control choice, hints, autocomplete, validation timing, tap sizing, submission
 - `interactions.md`: motion, enter/exit, icon transitions, tactile feedback, surfaces, typography
-- `performance.md`: Core Web Vitals, rendering, data fetching, containment, resource hints, bundle, memory
-- `privacy.md`: data minimization, transparency, storage choices, privacy headers, embeds, fingerprinting
-- `react.md`: version-aware components, hooks, context, effects, derived state
-- `security.md`: injection, authn/authz, data exposure, CSRF/cookies, security headers, cross-origin comms
+- `performance.md`: measuring first, main-thread yielding, LCP, CLS
+- `privacy.md`: data minimization, transparency, embeds, fingerprinting, user rights
+- `react.md`: version-aware components, hooks, context, derived state
+- `security.md`: injection, authn/authz, data exposure, CSRF/cookies, postMessage/iframes, security headers, audit triage, review validation boundaries
 - `tanstack-query.md`: version-aware hooks, `queryOptions`, query keys, mutation side effects
 - `testing.md`: behavior over implementation, mocking discipline, Arrange-Act-Assert, error paths
 - `typescript.md`: strict types, discriminated unions, narrowing, `satisfies`, `as const`, naming

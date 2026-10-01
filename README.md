@@ -160,7 +160,7 @@ Two native agent definitions ship with the kit, installed as `agents/*.md` for C
 
 - `CORE_RULES.md` — the domain-neutral rules every workflow skill loads first: scope discipline, ask before assuming, push back when warranted, build only what's asked.
 - `references/workflow/` — the cross-skill methodology: task layout and lifecycle, context schema, execution loop, reconciliation, agent fan-out, probe shapes, reviewer and executor contracts, and the user-facing message contract.
-- `references/engineering/` — the engineering pack: code style, TypeScript, React, CSS, HTML, forms, accessibility, performance, security, privacy, testing, verification, review.
+- `references/engineering/` — the engineering pack: code style, TypeScript, React, CSS, forms, accessibility, performance, security, privacy, testing, verification, review.
 - `references/documentation/` — the documentation pack: rules, verification, ADR and RFC formats, Mermaid cheatsheets.
 - `references/templates/` — copy-ready shapes of the five task files.
 - `references/scripts/` — the CLI and stdout contract of every helper a skill runs at run time.

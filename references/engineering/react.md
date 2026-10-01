@@ -19,7 +19,6 @@ Check installed-major docs (`./execution.md` § *Detect stack and sources*):
 ## Hooks
 
 - [ ] Extract reused/complex logic; accurate dependencies without exhaustive-deps suppression.
-- [ ] Refs for non-rendering values; reducers for previous-state transitions; compute during render instead of effects where possible.
 
 ## Context and Providers
 
@@ -27,10 +26,8 @@ Check installed-major docs (`./execution.md` § *Detect stack and sources*):
 
 ## Performance
 
-- [ ] Measure with DevTools Profiler; memo only expensive same-prop renders.
-- [ ] useMemo/useCallback only for memoized children/expensive computation; static objects/arrays outside components.
+- [ ] Measure with DevTools Profiler; memo/useMemo/useCallback only for measured expensive renders or memoized children.
 
 ## Patterns
 
-- [ ] Error boundaries; controlled forms except ref-based non-React integration.
 - [ ] Children before render props/compound components; prop spreads only in thin wrappers.

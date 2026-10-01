@@ -1,6 +1,6 @@
 # Interactions
 
-[Interface details](https://github.com/jakubkrehel/make-interfaces-feel-better); motion properties: `css.md`; touch targets: `accessibility.md`.
+[Interface details](https://github.com/jakubkrehel/make-interfaces-feel-better); display/overlay transitions: `css.md`; touch targets: `accessibility.md`.
 
 ## Motion Mechanics
 
