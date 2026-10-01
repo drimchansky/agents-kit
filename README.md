@@ -171,7 +171,7 @@ Inside an installed skill, `./AGENTS.md` links to `CORE_RULES.md` and `./referen
 
 ## Maintaining the kit
 
-`AGENTS.md` is the maintainer guide: who owns which contract, how changes route, and why each script is shaped the way it is. The sources carry no comments, so that file and `references/scripts/` are where the reasoning lives.
+`AGENTS.md` is the maintainer guide: who owns which contract, how changes route, and why the installer and the shared script conventions are shaped the way they are. `scripts/AGENTS.md` and `tests/AGENTS.md` record the same for each helper and suite. The sources carry no comments, so these three files and `references/scripts/` are where the reasoning lives.
 
 Run the whole verification surface:
 

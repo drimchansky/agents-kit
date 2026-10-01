@@ -62,4 +62,4 @@ For `node <kit-root>/scripts/<name>.ts`, use the source checkout from config's `
 
 - Missing config or key outside a plugin install: ask for the checkout path, rather than infer one from the installation.
 - No available checkout: report the helper unavailable and use only the citing skill's stated fallback; otherwise stop.
-- Read `references/scripts/<name>.md` for CLI/stdout contracts. Skills cite `./references/scripts/<name>.md`; references cite `../scripts/<name>.md`. Maintainer rationale stays in root `AGENTS.md` § *Source contracts*, under `scripts/<name>.ts`.
+- Read `references/scripts/<name>.md` for CLI/stdout contracts. Skills cite `./references/scripts/<name>.md`; references cite `../scripts/<name>.md`. Maintainer rationale stays in `scripts/AGENTS.md`, under `scripts/<name>.ts`.
