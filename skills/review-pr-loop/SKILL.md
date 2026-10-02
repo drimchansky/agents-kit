@@ -1,6 +1,6 @@
 ---
 name: review-pr-loop
-description: "Use when asked to watch a PR and keep reviewing it until it is clean: publishes available findings before waiting for CI, including all tiers until its first successful submission and Critical/Major afterward, then watches for the next push. A pass with no Critical or Major findings and passing checks approves the PR from your account, or comments on your own PR. Adds a worktree on the PR branch when no checkout holds it, and removes it after a clean ending."
+description: "Use when asked to watch a PR and keep reviewing it until it is clean: publishes available findings before waiting for CI, including all tiers until a full-tier review of yours stands on the PR and Critical/Major afterward, then watches for the next push. A pass with no Critical or Major findings and passing checks approves the PR from your account, or comments on your own PR. Adds a worktree on the PR branch when no checkout holds it, and removes it after a clean ending."
 argument-hint: '[PR number or URL; defaults to the PR of the checked-out branch]'
 disable-model-invocation: true
 ---
@@ -35,10 +35,11 @@ Launch and collect the check poll and watch through `./references/workflow/deleg
 - Every pass, the check poll, and the watch run in that checkout, the one Setup found or the one it added.
 - Require `git status --porcelain` empty there. Uncommitted work would enter every review and diverge from the head the checks ran on.
 - Carry the selected number, host, repository, and expected head into every pass, sibling skill, helper, and watch (`./references/workflow/pr-lookup.md`). Each live read uses that selected PR rather than rediscovering one from the branch.
+- Read whether every tier was already published here. Resolve the authenticated login on the selected host with `gh api user --jq .login`, then read `gh pr view <number> --json reviews`. A review by that login with non-null `submittedAt` whose `Published:` line names `Critical/Major + Minor + Improvements` (`../publish-pr-review/SKILL.md` step 3) counts as a submitted full-tier review, whichever head or run posted it. A failed read stops Setup.
 
 Every Setup stop uses § *Output*, including stops after worktree creation. Report `Passes: none — Setup stopped: <reason>` and name any added worktree left in place.
 
-The cap is 10 passes. Start with no full-tier review submitted; only a successful **Publish** submission changes that state.
+The cap is 10 passes. Start with the full-tier state Setup read. Otherwise only a successful **Publish** submission that selected all tiers sets it.
 
 ## The pass
 
@@ -56,9 +57,9 @@ Announce pass `i` as one progress line (`./references/workflow/user-facing-messa
 
 4. **Decide.** Until a full-tier review has been submitted, select all Critical/Major and Minor findings, Improvements, and CI findings. Afterward, select only Critical/Major findings, including CI findings. Accumulate this pass's original selected entries by tier, including CI findings, for approval gating and the final report. Exclude entries already submitted or suppressed in this pass from later batches, without counting them again. Mark the pass clean only when that original Critical/Major tier is empty and a nonempty check snapshot contains only `pass` or `skipping`. A non-empty batch goes through **Dedupe**. An empty clean batch goes directly to **Publish** with all three supplied tiers empty. Otherwise go to **Continue** without submitting an empty review.
 
-5. **Dedupe.** Run this only for a non-empty batch. Resolve `<kit-root>` per `./references/workflow/task-store.md` § *Resolving `<kit-root>`*. Fetch review threads with `node <kit-root>/scripts/pr-comments.ts <PR-URL>` and read its JSON per `./references/scripts/pr-comments.md`. Fetch review bodies and general comments with `gh pr view <number> --json reviews,comments` per `../triage-findings/SKILL.md` § *Fetch*. Resolve the authenticated login on the selected host with `gh api user --jq .login`.
+5. **Dedupe.** Run this only for a non-empty batch. Resolve `<kit-root>` per `./references/workflow/task-store.md` § *Resolving `<kit-root>`*. Fetch review threads with `node <kit-root>/scripts/pr-comments.ts <PR-URL>` and read its JSON per `./references/scripts/pr-comments.md`. Fetch review bodies and general comments with `gh pr view <number> --json reviews,comments` per `../triage-findings/SKILL.md` § *Fetch*. Use the authenticated login Setup resolved.
 
-   Missing tools, failed reads or identity resolution, `paginationComplete: false`, or any incomplete thread comments stop the loop. Report the gap under **Inaccessible context** and submit no further review.
+   Missing tools, failed reads, `paginationComplete: false`, or any incomplete thread comments stop the loop. Report the gap under **Inaccessible context** and submit no further review.
 
    Classify fetched candidates through `../triage-findings/SKILL.md` § *Classify addressed vs unaddressed*. Only its open findings authored by the authenticated login may suppress an entry. Match an anchored entry on normalized path and claim. Match other unanchored entries on locator and claim. Suppress a CI entry only when a standing review body contains both its check name and claim. Keep every entry without both parts of its match.
 
@@ -170,5 +171,5 @@ One final response when the loop ends.
 Close it with one Handoff block for the whole loop (`./references/workflow/user-facing-messages.md` § *Blocks*):
 
 - **Done:** why the loop ended and the submissions it posted, pointing at the **Headline** and **Passes**; on an unclean ending, the findings still standing, pointing at **Findings**.
-- **Know:** CI left pending or unknown, a review **Head moved** made stale, and failed reads, pointing at **Inaccessible context**. Name a worktree left in place, pointing at **Worktree**.
+- **Know:** CI left pending or unknown, a review **Head moved** made stale, and failed reads, pointing at **Inaccessible context**. Name an earlier full-tier review that held this run to Critical/Major. Name a worktree left in place, pointing at **Worktree**.
 - **Next:** with findings posted, the options are `/fix-findings`, which addresses what was posted and commits it before you push, and `/review-code` alone, a fresh pass that runs the local scripts and posts nothing. Rerun `/review-pr-loop` to keep watching once fixes are pushed or a stop's cause is cleared. `git worktree remove <path>` removes a worktree the loop left in place.
