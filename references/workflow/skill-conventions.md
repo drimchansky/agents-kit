@@ -80,6 +80,7 @@ Deliberate non-members:
 - `commit` and `rebase` use the explicit-request authorization below.
 - `prepare-daily-status` drafts in chat; an explicit send, update, or Slack-review request authorizes its matching Slack write. Selecting the skill does not authorize delivery.
 - `prepare-release-announcement` prepares chat copy and requires a user request for Slack delivery or revision. Its drafting capability remains discoverable.
+- `prepare-epic` drafts to a confirmed file. An explicit push request authorizes creating the tracker epic; selecting the skill does not authorize that write.
 
 Other skills produce local work or chat output, or confirm their own write, as `decompose-task` does.
 

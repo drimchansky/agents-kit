@@ -5,7 +5,7 @@
 A task store groups folders under a directory tree. Detect optional files by existence and continue silently when absent. Derive listings by walking registered roots (`./task-layout.md` § *Discovery rules for skills*); keep no standing listing artifact.
 
 - **`DECISIONS.md`**: numbered, dated decisions applying beyond one task, at a root or area. Cite `Decision #N — <root-relative path>` as plain text (`./one-home.md`). Keep task-local decisions inside the task. A self-contained inline copy of a project decision names `DECISIONS.md` as its source.
-- **`DOC_CONVENTIONS.md`**: organization-specific people/mention tables, house style, and published-page handling. Walk ancestors from the task to its containing registered root; the nearest file wins. For an unregistered task, stop at its project root. Without a file, apply only generic kit formats. Documentation work consumes these conventions.
+- **`DOC_CONVENTIONS.md`**: organization-specific people/mention tables, house style, published-page handling, and tracker project and field rules. Walk ancestors from the task to its containing registered root; the nearest file wins. For an unregistered task, stop at its project root. A start outside any task stops at its containing registered root, else its project root; outside both, walk nothing. Without a file, apply only generic kit formats. Documentation work and tracker writes consume these conventions.
 - **`GROUP_CONTEXT.md`**: ordinary task work inherits the applicable ancestor chain under § *Shared group context*, on every invocation.
 
 ## The root registry (optional)

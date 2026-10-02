@@ -45,6 +45,7 @@ Default to `engineering` when that header is absent, preserving existing tasks. 
 - **Pack-free skills** read the neutral core and resolve no pack themselves:
   - `archive-task`, `backlog-task`, and `maintain` operate on task envelopes and store artifacts. Read `task-layout.md`, its filing/role-file satellites, and `task-lifecycle.md`. Archive uses location and terminal-state rules; backlog uses location and unstarted-entry rules; maintain uses format and registry rules.
   - `prepare-ticket` writes a domain-neutral upstream artifact before a Domain marker exists; apply `ticket-format.md` and `task-layout.md`.
+  - `prepare-epic` writes a domain-neutral epic description as a standalone file, not a task role file; read `task-layout.md` and `task-store.md` to resolve source tasks and conventions.
   - `resume-task-reconcile` and `review-task-reconcile` leave domain resolution to their Phase 1 skills, `resume-task` and `review-task`.
   - `init-config` writes the machine's root registry and touches no task.
 

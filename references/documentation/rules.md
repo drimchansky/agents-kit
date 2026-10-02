@@ -34,4 +34,4 @@ Apply engineering's grounding practice only. Documentation tasks use `./verifica
 
 The pack has no exploration, planning, execution, or review files. State that fallback and use the neutral methodology for those phases.
 
-Discover organizational conventions through `../workflow/task-store.md` § *Store-level artifacts*. Keep people tables, house style, and published-page handling in that store document.
+Discover organizational conventions through `../workflow/task-store.md` § *Store-level artifacts*. Keep people tables, house style, published-page handling, and tracker rules in that store document.

@@ -5,7 +5,7 @@ A set of skills, agent definitions, and a task workflow for Claude Code and Code
 - **Two hosts, one install.** `node setup.ts` copies the skills, references, core rules, and native agent definitions into `~/.claude` and `~/.codex`. A rerun reclaims only what the kit installed and leaves your own skills untouched.
 - **Zero dependencies.** Plain Node 23.6 or newer running `.ts` directly under type stripping. No `package.json`, no build step, no `node_modules`.
 - **Persistent task folders.** A task is `.agents/tasks/<slug>/` holding `ticket.md`, `CONTEXT.md`, `goals.md`, `plan.md`, `result.md`. Plan it in one session, implement it in the next, resume or reconcile it from either host.
-- **35 skills** covering the whole loop: idea, ticket, plan, implement, review, triage, fix, commit, rebase, PR, plus daily statuses, release announcements, proofreading, translation, diagrams, and Notion pages.
+- **36 skills** covering the whole loop: idea, ticket, plan, implement, review, triage, fix, commit, rebase, PR, plus daily statuses, release announcements, proofreading, translation, diagrams, and Notion pages.
 - **Domain packs.** Methodology is domain-neutral; engineering and documentation rules load as packs from `references/<domain>/`, and a new domain is a sibling directory, not a skill rewrite.
 
 ---
@@ -104,6 +104,7 @@ Each skill is `skills/<name>/SKILL.md`, invoked as `/<name>` in Claude Code and 
 **Task workflow**
 
 - `prepare-ticket` — turn a described task into a self-contained ticket with acceptance criteria, optionally seeding a task folder.
+- `prepare-epic` — draft an epic description from a description, a PRD or ADR, or task folders; creates the tracker epic only on request.
 - `refine-idea` — sharpen a vague idea before planning.
 - `decompose-task` — split an approved design doc into ordered sibling task folders; proposes first, writes on confirmation.
 - `plan-task` — write `goals.md` and `plan.md` for a task, scaffolding `CONTEXT.md` when missing.
