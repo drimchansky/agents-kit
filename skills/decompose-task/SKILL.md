@@ -17,7 +17,7 @@ Phase 2 runs `../prepare-ticket/SKILL.md`'s full protocol per part with four ove
 
 - **Core Rules blocks**: this skill's block covers the pipeline; the inner AGENTS.md read does not repeat.
 - **Clarifying questions**: `prepare-ticket`'s per-ticket round folds into Phase 1's single batched confirmation. A gap discovered only at drafting time is asked then, not guessed.
-- **Next pointers**: the inner skill's handoff suggestions are dropped; this skill's Output owns **Next**.
+- **Handoff**: `prepare-ticket`'s Handoff blocks are dropped; this skill's Output composes one block for the whole run.
 - **Destination resolution**: the part folder Phase 2 step 1 just created *is* the task folder. Write `ticket.md` into it directly, bypassing `task-destinations.md`'s *Destination paths* inference, which would nest a new slug inside the empty directory.
 
 ## When to Use
@@ -50,4 +50,9 @@ Lists, never tables. Report; do not paste the tickets.
 
 - **Materialized parts**: per part, folder path, ticket title, and, when a Jira mapping exists, the disposition (*absorb into `<KEY>`*, the ticket body doubling as that key's paste-ready description, or *needs-new* with the parent named).
 - **Assumptions and open items**: anything inferred while drafting, plus the gate-nothing items carried from the proposal.
-- **Next:** `/plan-task <first-part>`, the token `./references/workflow/task-layout.md` § *One task, one flat folder* fixes (bare slug where one resolves, folder path otherwise), then one line per remaining part in order.
+
+Close with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
+
+- **Done:** the parts materialized, pointing at **Materialized parts**.
+- **Know:** Jira dispositions the user applies by hand, since this skill writes no Jira, and inferred details a part's criteria rest on, pointing at **Assumptions and open items**.
+- **Next:** the parts in order, ending with `/plan-task <first-part>`. Its token follows `./references/workflow/task-layout.md` § *One task, one flat folder*: the bare slug where one resolves, the folder path otherwise.

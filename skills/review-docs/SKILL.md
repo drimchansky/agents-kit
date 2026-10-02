@@ -86,6 +86,15 @@ Number unresolved ambiguities; cite the passage, explain why its meaning matters
 
 Name verified sections requiring no changes.
 
+### Handoff
+
+Close the audit with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
+
+- **Done:** the claim verdicts, gaps, and quality findings, pointing at **Accuracy Assessment**, **Gaps**, and **Quality**.
+- **Know:** claims left unchecked, commands checked only by definition, and a skipped or contradicting Cross-check.
+- **Awaiting you:** point at **Questions** whose answers gate a fix.
+- **Next:** an explicit request naming the findings to apply, which this skill then edits without committing; or `/fix-findings`, which applies them and commits each concern batch. The request form, such as `apply findings 1 and 3`, is that route's paste-ready line.
+
 ## Applying Fixes (only on explicit request)
 
 Run only after the user saw findings and explicitly requested edits. Ambiguous reactions such as thanks/ok are not edit authorization; ask.
@@ -101,3 +110,11 @@ Fold source/session answers into the relevant text and remove answered questions
 ### Verify after editing
 
 Re-grep every written path, symbol, and command; fix unresolved references. Cross-check versions and trace every example. Compare the actual diff with approved findings before reporting completion.
+
+Report the edits under **Applied**, one line per edit naming its approved finding.
+
+Close that report with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
+
+- **Done:** the count of edits applied, pointing at **Applied**.
+- **Know:** approved findings left unapplied, and new accuracy gaps placed in Open Questions or chat.
+- **Next:** `/commit` once the edits are staged.

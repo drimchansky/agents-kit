@@ -9,13 +9,13 @@ disable-model-invocation: true
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 
-Run four phases in order: kit task-format sweep, health sweep, active-task listing, and session analysis. Work on task envelopes, lifecycle bookkeeping, store artifacts, and session logs. Resolve no Domain pack, invoke no sibling skill, and reconcile no task content; hand that work to `resume-task-reconcile` in **Next**.
+Run four phases in order: kit task-format sweep, health sweep, active-task listing, and session analysis. Work on task envelopes, lifecycle bookkeeping, store artifacts, and session logs. Resolve no Domain pack, invoke no sibling skill, and reconcile no task content; hand that work to `resume-task-reconcile` in the Handoff's Next.
 
 Report first. Only the `.maintain-last-run` marker updates without confirmation, as derived run metadata. Preview and confirm every other mutation separately, or hand it off: format fixes, archive moves, installation, worktree removals, findings-file writes, and folder removals. Detection authorizes reporting, never automatic document edits or deletion.
 
 The only Git writes are confirmed removal of spent task worktrees and their branches, or recorded branches whose worktrees are gone. The removal predicate may first run `git fetch origin <default-branch>`, updating only that remote-tracking ref. Never add, commit, push, checkout, stash, or revert in any repository. Report dirty paths for the user to handle.
 
-Every phase runs inline under its cited contracts. Print one progress line (`./references/workflow/user-facing-messages.md` § *Blocks*) per phase and retain every confirmation gate. Consolidate findings in **Output**, with one **Next**. Apply only the phase-specific overrides below.
+Every phase runs inline under its cited contracts. Print one progress line (`./references/workflow/user-facing-messages.md` § *Blocks*) per phase and retain every confirmation gate. Consolidate findings in **Output**, closed by one Handoff block. Apply only the phase-specific overrides below.
 
 ## Setup — resolve targets
 
@@ -180,9 +180,12 @@ Use lists, not tables. Confine writes to the resolved kit/task roots, listed lin
   - `findings file`: written path or declined, nothing written.
   - `marker`: updated date or not updated with skipped/partial-read reason.
 - **Deferred (not yet wired):** memory GC, including deduplication of memory silos and the `MEMORY.md` index, awaits a procedure. Run no store-index refresh; no standing listing artifact exists (`./references/workflow/task-store.md` § *Store-level artifacts*).
-- **Next:** give one consolidated handoff using the routes below.
 
-Ask the user to review `git diff` and commit their changes in the kit and each affected root's repository. Include every Git-reported path and this run's writes; this skill commits nothing.
+Close with one Handoff block for the whole run (`./references/workflow/user-facing-messages.md` § *Blocks*):
+
+- **Done:** the findings reported and the confirmed changes applied, each pointing at its bucket.
+- **Know:** that this run's writes sit uncommitted, pointing at **Git** for the paths. Ask the user to review `git diff` and commit them in the kit and each affected root's repository; this skill commits nothing. Name skipped phases or probes and partial coverage.
+- **Next:** the routes below that this run's findings reach.
 
 Use a bare slug only where `./references/workflow/task-layout.md` § *One task, one flat folder* resolves it. For grouped tasks in an unregistered canonical root, use paths. Resolve duplicate-slug ambiguity before other slug-based handoffs.
 

@@ -138,3 +138,10 @@ Then run Step 5 and Step 6 (independent settled edits first, then choices), and 
 ```
 
 (or, when nothing was actionable: `Nothing to reconcile.`, with no file beyond the sweep's `observations.md` rewrite written)
+
+After the change list or `Nothing to reconcile.`, close with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
+
+- **Done:** the reconciled task docs, by file, and any external-surface edit, pointing at **Reconciliation applied**.
+- **Know:** `block` and `warn` rows under **References**, **Yours to apply** rows awaiting the user's paste, and a compaction trigger left untested.
+- **Awaiting you:** point at the **Awaiting decision** rows under **Not reconciled:**, and name a compaction proposal awaiting confirmation.
+- **Next:** the skill each **Needs work** row names, such as `/implement-task <slug>`.

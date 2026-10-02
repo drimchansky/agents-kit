@@ -129,4 +129,9 @@ Use lists; omit empty buckets. Preserve the finding's original text and severity
 - **Fix failed:** reverted fixes and unattempted dependents, with the reason and what would unblock them. Distinguish one fix, a dependency group, and an interaction group. Name an unestablished control or unconverged health recovery when applicable. Say `not attempted` for skipped dependents, not `reverted`. Include execution and immediate-evidence details as for Fixed.
 - **Untouched:** excluded findings, non-open triage buckets, barred verdicts, moved anchors, and non-actionable complaints, each with its reason. After a stop, list later concern batches' findings as `not attempted`, naming the concern batch that stopped the run.
 
-**Next:** name the landed commits; the fixes are unreviewed. `/review-code` or `/review-code-triage-verify` reviews the committed range, and `/review-docs` reviews changed documentation, before merge or publication. For uncommitted fixes, the user resolves what stopped them, stages any still unstaged, and runs `/commit`. Pushes, source replies, thread resolution, and live-page updates remain separate user actions.
+Close with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
+
+- **Done:** the landed commits and fixed findings as outcomes, pointing at **Commits** and **Fixed**.
+- **Know:** the landed fixes are unreviewed. Point at **Delivery** for pending checks, and at **Health uncertifiable**, **Retained, failing**, or **Fix failed** when they hold entries. Name fixes left uncommitted and what stopped them. Pushes, source replies, thread resolution, and live-page updates remain separate user actions.
+- **Awaiting you:** point at **Awaiting decision**.
+- **Next:** review the landed fixes before merge or publication. For code, the options are `/review-code` and `/review-code-triage-verify` over `<start>..HEAD`, `<start>` being HEAD before the first batch commit. Documentation-only fixes take `/review-docs` on each changed document; with mixed fixes, Know names that second review. For uncommitted fixes, the user resolves what stopped them, stages any still unstaged, and runs `/commit`.

@@ -81,7 +81,7 @@ Unavailable kit root, script, or Node also renders Unscanned with the reason; ne
 
 ### 5. Produce the Brief
 
-Print the template to chat with a concrete next action. Stop after the brief; execution belongs to `implement-task`.
+Print the template to chat; its closing Handoff follows `./references/workflow/user-facing-messages.md` § *Blocks*. Stop after the brief; execution belongs to `implement-task`.
 
 ## Output Template
 
@@ -144,9 +144,11 @@ Unscanned — the task acts on <repo>, which the scan cannot reach from a store-
 
 <Deduplicate context/plan questions and unresolved goals. Replace questions the result already answers with their answers.>
 
-## Where to start
-
-<2–3 sentences naming the first file, command, or drift item to resolve.>
+**Handoff**
+- **Done:** <a goal-identifier repair the load applied; otherwise omit>
+- **Know:** <`block` and `warn` drift and stale Current-state claims that change the next action, in brief>
+- **Awaiting you:** <point at Open questions where one blocks the next step>
+- **Next:** <the first file, step, or drift item to take up, ending with its paste-ready command, such as `/implement-task <token>`>
 ```
 
 Omit empty sections except Drift since plan. Commits since watermark follows Step 4's rendering conditions.

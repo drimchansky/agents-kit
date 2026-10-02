@@ -13,8 +13,9 @@ or tests. Verify by reading; where the protocol suggests running a command, reas
 statically instead.
 Where that protocol and the answer shape below differ on what to report, the shape
 below governs. The protocol's own report headings (Severity, Scope, Misunderstanding,
-Suggestion, What was checked, Best guess) do not appear in your answer, and its
-per-option Tradeoffs field appears only where a tradeoff decides between two options.
+Suggestion, What was checked, Best guess) and its closing Handoff do not appear in your
+answer, and its per-option Tradeoffs field appears only where a tradeoff decides between
+two options.
 Its scope step still runs; report what it turns up in the form below.
 
 The findings came from a review of <the diff <base>...HEAD | the diff

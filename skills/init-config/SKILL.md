@@ -66,4 +66,9 @@ Use lists:
 - **Excluded** and **Unreadable**: paths and reasons; omit empty classes.
 - **Written**: `wrote <path>` or `declined (nothing written)`.
 - **Verified**: totals and zero-task roots.
-- **Next:** `/maintain` after adding a root; otherwise state no handoff.
+
+Close with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
+
+- **Done:** the config written or declined, pointing at **Written** and **Delta**.
+- **Know:** absent roots kept, an omitted kitRoot, and an unreadable count that makes the totals lower bounds.
+- **Next:** `/maintain` when the write added a root.

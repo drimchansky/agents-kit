@@ -27,7 +27,7 @@ Scattered flag conditionals suggest a misclassified phase. A modal flag modifies
 
 - `review-code-triage-verify` — review a PR, branch, range, or path set; batch findings; verify each batch.
 - `triage-findings-verify` — batch existing findings, then verify each batch.
-- `maintain` — format sweep, health sweep, active-task listing, then session analysis. Its phases run inline without invoking sibling skills. It reconciles no task content; **Next** hands that to `resume-task-reconcile`. This composite has no base skill.
+- `maintain` — format sweep, health sweep, active-task listing, then session analysis. Its phases run inline without invoking sibling skills. It reconciles no task content; its Handoff's Next hands that to `resume-task-reconcile`. This composite has no base skill.
 - `resume-task-reconcile` — print the resume brief, then reconcile docs to it.
 - `review-task-reconcile` — print the plan assessment, then reconcile docs and incorporate answers.
 - `decompose-task` — propose ordered sibling parts from an approved source; after confirmation, materialize each through `prepare-ticket` and seeded `CONTEXT.md`.
@@ -46,7 +46,7 @@ Pass each phase's modal flags through unchanged, except the `review-code-triage-
 ## Adding a behavior
 
 1. Apply the diagnostic.
-2. For a composite, create a skill whose phases execute sibling skills, or run inline when no sibling provides that phase. Apply pipeline overrides: one Core Rules block, one Output, and composite-controlled **Next**. For a flag, update the host skill's Flags and `argument-hint`.
+2. For a composite, create a skill whose phases execute sibling skills, or run inline when no sibling provides that phase. Apply pipeline overrides: one Core Rules block and one Output, closed by one Handoff in place of the inner skills' blocks (`./user-facing-messages.md` § *Blocks*). For a flag, update the host skill's Flags and `argument-hint`.
 3. Register the behavior under **Current members**.
 
 ## The invocation gate

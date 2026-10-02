@@ -56,3 +56,9 @@ Lists, not tables.
 - **Batches:** one section per concern zone, ordered by most severe member. Each entry is a finding entry (`./references/workflow/user-facing-messages.md` § *Blocks*): its canonical severity marker, its anchor (GitHub permalink, `path:line`, or a short quote), the original text, and who raised it, citing every source that raised it.
 - **Verify** (only if any): likely-handled findings with the reason (author said done, code changed, thread outdated).
 - **Inaccessible context** (only if any): sources or links that could not be fetched, with the reason. Do not fabricate what is behind them.
+
+Close with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
+
+- **Done:** the open findings batched by concern, pointing at **Overview** and **Batches**.
+- **Know:** likely-handled findings to confirm, pointing at **Verify**, and a partial or failed fetch, pointing at **Inaccessible context**.
+- **Next:** `/fix-findings` applies the batches and commits each one, asking approval for unverified fixes. `/triage-findings-verify <source>` first verifies each open batch in a read-only probe.

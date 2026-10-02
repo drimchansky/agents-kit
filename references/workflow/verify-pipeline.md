@@ -8,7 +8,7 @@ Each phase executes its skill file in full, under three overrides:
 
 - **Core Rules blocks:** the composite's own block covers the pipeline; inner skills do not repeat the AGENTS.md read.
 - **Chat display:** findings render once, in the final Output; phases print only what their own section allows.
-- **Next pointers:** inner skills' follow-up suggestions are dropped; the composite's Output owns **Next**.
+- **Handoff:** inner skills' Handoff blocks are dropped; the composite's Output composes one block for the pipeline (`./user-facing-messages.md` § *Blocks*).
 
 A phase departs from its skill only where the composite's own section says so.
 

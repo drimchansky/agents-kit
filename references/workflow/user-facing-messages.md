@@ -1,6 +1,6 @@
 # User-Facing Messages: Markers, Blocks, and Surface Adapters
 
-The presentation contract for what a person reads: final chat responses, one-line progress updates, GitHub PR review comments, PR descriptions, and paste-ready Jira task drafts. It fixes visual grammar and ordering only. Each skill's Output owns its content and composes the blocks it needs; workflow contracts keep meaning, gates, and evidence rules and cite this file. Questions, approvals, refusals, errors, and internal reviewer, executor, and probe returns are outside it.
+The presentation contract for what a person reads: final chat responses, one-line progress updates, GitHub PR review comments, PR descriptions, and paste-ready Jira task drafts. It fixes visual grammar and ordering; for the Handoff block it also fixes what each slot admits. Each skill's Output owns its content and composes the blocks it needs; workflow contracts keep meaning, gates, and evidence rules and cite this file. Questions, approvals, refusals, errors, and internal reviewer, executor, and probe returns are outside it.
 
 ## Markers
 
@@ -25,10 +25,29 @@ Each item carries exactly one marker, at its start. A finding whose source suppl
 - **Finding entry.** The marker, the locator in backticks (`file:line`, or the locator the workflow names), the finding text with its recommendation and impact verbatim, then the verdict or note when the workflow carries one. One entry per issue, never collapsed, ordered by severity where the workflow fixes no other order. Example: 🟡 Major `src/export.ts:42`: rows load into memory before streaming; stream from the cursor; large tenants time out. Confirmed: the loop awaits `toArray()`.
 - **Progress line.** Launched or still-running work takes `🔵 In progress: <action> <target>`. Example: `🔵 In progress: reviewer on abc1234...HEAD`. Collected work takes `✅ Complete: <what finished>`.
 - **Fact ledger.** One line per checked claim, each claim once, quoted: `✅ Verified: "<claim>" (<evidence>)`, `❌ Incorrect: "<claim>" is <corrected fact> (<evidence>)`, `⚠️ Unverified: "<claim>" (<missing evidence>)`.
+- **Handoff.** Chat only: the last element of the final response that renders the skill's Output, whatever ended the run. A response that only asks a question, requests approval, refuses, or reports an error renders no Output and carries none. A `**Handoff**` lead line opens it, then one `- **<Slot>:**` item per non-empty slot, in the order Done, Know, Awaiting you, Next. Omit an empty slot. The skill names what fills each slot. A skill that another skill runs as a step prints no block; the run the user invoked composes one for the whole run, a composite's pipeline included (`./skill-conventions.md` § *Adding a behavior*).
+    - **Done:** at most three bullets. Each names an outcome of the run and points at the body section holding its detail, repeating none of its entries.
+    - **Know:** only items that change the user's next action. Draw them from what was verified versus not run, surprises and risks, and where the work sits: branch, uncommitted changes, PR, task slug.
+    - **Awaiting you:** decisions that block further work, kept apart from optional next steps. Where the body carries an Awaiting decision bucket, point at it and repeat none of its options.
+    - **Next:** two or more alternative routes render as nested options lettered A, B, C. Each option gives its pros and cons; exactly one carries `(recommended: <reason>)`. A single route collapses to one line; invent no alternative (`../../CORE_RULES.md` § *Ask Before Assuming*). Steps that all apply, or that follow in order, are not alternatives: list them plainly ahead of any lettered options, each with its own command in backticks. The paste-ready command for the recommended or sole route sits on the slot's last line, in backticks. A task-bound command carries the handoff token `./task-layout.md` § *One task, one flat folder* fixes.
+
+Example, closing an implementation run:
+
+```markdown
+**Handoff**
+- **Done:**
+    - CSV export streams rows from the cursor (see Changes).
+    - A regression test covers a 50k-row tenant (see Verification).
+- **Know:** Unit suite green; the e2e suite was not run. Changes sit uncommitted on `feat/csv-export`.
+- **Next:**
+    - A. Run the e2e suite before committing (recommended: the change touches the download flow it covers). Pros: catches a browser regression before it lands. Cons: about fifteen minutes.
+    - B. Commit now. Pros: review starts sooner. Cons: a regression needs a follow-up commit.
+    - `npm run test:e2e`
+```
 
 ## Surface adapters
 
-**Final chat.** A headline first where the skill's Output declares one, then the blocks in the skill's Output order. Lists, never tables (`../../CORE_RULES.md` § *Communication*). Findings render as finding entries with canonical markers, a legacy prefix normalized first.
+**Final chat.** A headline first where the skill's Output declares one, then the blocks in the skill's Output order, then the Handoff block where the skill closes with one. Lists, never tables (`../../CORE_RULES.md` § *Communication*). Findings render as finding entries with canonical markers, a legacy prefix normalized first.
 
 **Intermediate progress.** One progress line per update while delegated or long-running work is in flight (`./delegated-waiting.md` § *How to wait*). Per-finding text and verdicts wait for the final response; aggregate counts may appear in progress lines.
 

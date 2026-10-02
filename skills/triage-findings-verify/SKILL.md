@@ -49,4 +49,8 @@ Lists, not tables.
 - **Batches** and **Verified:** per `./references/workflow/verify-pipeline.md` § *Output: Batches and the Verified line*, `Batches` taking a short quote as its no-anchor locator.
 - **Inaccessible context** (only if any): sources or links triage could not fetch, with the reason.
 
-**Next:** `/fix-findings` applies the confirmed fixes and commits each batch; `/implement-task` applies them through a task plan, then `/commit`. `/review-code` reviews them before merge.
+Close with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
+
+- **Done:** the open findings batched and verified, pointing at **Overview**, **Batches**, and the **Verified** line.
+- **Know:** entries the probes left unsettled, as Inconclusive or Unverified; batches verified inline in place of a probe; findings in the `verify` bucket, which no probe checked; a source triage could not fetch, pointing at **Inaccessible context**.
+- **Next:** the options are `/fix-findings`, which applies the confirmed fixes and commits each batch, and `/implement-task`, which applies them through a task plan, then `/commit`. Either way, `/review-code` reviews the fixes before merge.

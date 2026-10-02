@@ -66,7 +66,7 @@ Per confirmed part, in order:
     - `## References` carries the source pointer (the source task's slug and doc role, a root-relative path for a store-level doc, or a URL; for a pasted source, a dated *pasted into session* note), the part's Jira key when mapped, and the shared facts the part needs. A fact an applicable ancestor `GROUP_CONTEXT.md` holds is cited there by root-relative path (`./task-store.md` § *Shared group context*); one no group holds is duplicated into the folder (`./one-home.md` § *One home per fact*).
     - `## Recommended Direction` holds only what the source decides for this part, cited to its section, when such a decision exists.
     - `## Open Questions` carries only the proposal's gate-nothing items that touch this part, when any exist.
-4. **Handoff**: the report ends with `Next: /plan-task <first-part>`, the token `task-layout.md` § *One task, one flat folder* fixes (bare slug where one resolves, folder path otherwise), plus one line per remaining part.
+4. **Handoff**: the report closes with the Handoff block (`./user-facing-messages.md` § *Blocks*). Its Next names the parts in order and ends with `/plan-task <first-part>`, the token `task-layout.md` § *One task, one flat folder* fixes (bare slug where one resolves, folder path otherwise).
 
 Each seeded folder is then a normal task folder: `plan-task` respects the existing `CONTEXT.md` and `ticket.md` and sharpens the ticket's criteria into `goals.md`.
 

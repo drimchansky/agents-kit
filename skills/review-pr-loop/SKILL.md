@@ -167,4 +167,8 @@ One final response when the loop ends.
 - **Findings:** on any ending other than clean, render the latest review's original selected entries in `review-code`'s Findings and Improvements formats. Dedupe never removes them from this report. Omit on a clean ending, before any review completed, or when the latest review was interrupted or marked stale by **Head moved**.
 - **Inaccessible context:** failed or incomplete selected-PR, CI, and dedupe reads, with the reason. Omit when none.
 
-**Next:** `/fix-findings` addresses what was posted and commits it, then push; rerun `/review-pr-loop` to keep watching. `/review-code` alone gives a fresh pass that runs the local scripts and posts nothing. `git worktree remove <path>` removes a worktree the loop left in place.
+Close it with one Handoff block for the whole loop (`./references/workflow/user-facing-messages.md` § *Blocks*):
+
+- **Done:** why the loop ended and the submissions it posted, pointing at the **Headline** and **Passes**; on an unclean ending, the findings still standing, pointing at **Findings**.
+- **Know:** CI left pending or unknown, a review **Head moved** made stale, and failed reads, pointing at **Inaccessible context**. Name a worktree left in place, pointing at **Worktree**.
+- **Next:** with findings posted, the options are `/fix-findings`, which addresses what was posted and commits it before you push, and `/review-code` alone, a fresh pass that runs the local scripts and posts nothing. Rerun `/review-pr-loop` to keep watching once fixes are pushed or a stop's cause is cleared. `git worktree remove <path>` removes a worktree the loop left in place.

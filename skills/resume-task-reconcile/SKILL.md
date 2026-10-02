@@ -14,7 +14,7 @@ Phase 1 runs `../resume-task/SKILL.md`'s full protocol; Phase 2 runs the referen
 
 - **Core Rules blocks**: this block covers the pipeline; the inner AGENTS.md read does not repeat. `resume-task`'s domain-pack step still runs.
 - **Chat display**: the brief prints in full at the end of Phase 1, before any reconciliation edit.
-- **Next pointers**: the inner skill's follow-ups are dropped; this Output owns **Next**.
+- **Handoff**: the inner skill's block is dropped; this Output composes one block from the reconciled state.
 - **Loader baseline**: Phase 1 runs the inner skill's repairing load once and reports its structural repair before briefing. Phase 2 retains that repaired baseline and does not rerun repair.
 
 Any other departure from the inner skill or the contract is named in the phase's section below.
@@ -33,7 +33,7 @@ An explicit read-only request passes through to Phase 1 and suppresses Phase 2 w
 
 ## Phase 1 — Brief
 
-Execute `../resume-task/SKILL.md` end to end against the resolved task folder and print its brief in full: every template section, including the always-rendered "Drift since plan" heading and, wherever the commit scan resolves a repository, "Commits since watermark". The brief sweeps no citations (the **docs → reality** direction definition opening `./references/workflow/reconciliation.md`); the cited links are Phase 2's.
+Execute `../resume-task/SKILL.md` end to end against the resolved task folder and print its brief in full: every template section except its Handoff, including the always-rendered "Drift since plan" heading and, wherever the commit scan resolves a repository, "Commits since watermark". The brief sweeps no citations (the **docs → reality** direction definition opening `./references/workflow/reconciliation.md`); the cited links are Phase 2's.
 
 The brief prints before any reconciliation edit and is never regenerated afterwards (`./references/workflow/reconciliation.md` § *Sequence and output*). If Phase 2 fails hard, the brief stands as printed.
 
@@ -51,7 +51,12 @@ Findings that need real work (code changes, re-running the acceptance gate, clea
 
 Lists, never tables.
 
-- **Brief**: the full briefing as `resume-task` specs it, printed at the end of Phase 1 from pre-reconcile state. Its "Where to start" section is part of that snapshot; the **Next** line below accounts for the reconciled state.
+- **Brief**: the full briefing as `resume-task` specs it, printed at the end of Phase 1 from pre-reconcile state, without its closing Handoff.
 - **References** and **Reconciliation applied**: the sweep's tagged entries, then the change list, per `./references/workflow/reconciliation-sweep.md` § *Output and routing* and `./references/workflow/reconciliation.md` § *Sequence and output* (the latter covering a run with nothing actionable). References lands at the start of Phase 2, before any reconciliation edit.
 
-**Next:** answer Awaiting decision when present; otherwise use the skill named against Needs work, or the brief's first action.
+Close with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
+
+- **Done:** the task docs reconciled, by file, pointing at **Reconciliation applied**, and a goal-identifier repair Phase 1's load applied.
+- **Know:** `block` and `warn` rows under **References**, brief drift that reconciliation left standing, and **Yours to apply** rows.
+- **Awaiting you:** point at the **Awaiting decision** rows under **Not reconciled:**.
+- **Next:** the skill named against a **Needs work** row; otherwise the first step or drift item the reconciled docs leave open, such as `/implement-task <slug>`.

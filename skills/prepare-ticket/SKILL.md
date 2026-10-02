@@ -40,6 +40,13 @@ Apply `./references/workflow/ticket-format.md` and `./references/workflow/accept
 
 Write only to the confirmed destination; do not silently overwrite existing content. Report briefly in chat without pasting the ticket:
 
-- **Ticket:** path/title. For seeded tasks, add `Next: /plan-task <slug>`, or `/refine-idea <slug>` if still needing refinement. Use the resolvable slug or absolute folder path under `./references/workflow/task-layout.md` § *One task, one flat folder*.
+- **Ticket:** path/title.
 - **Assumptions:** inferred details.
 - **Open questions:** undecided matters, kept in chat rather than a ready ticket.
+
+Then close with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
+
+- **Done:** the ticket written, with its seeded task folder, pointing at **Ticket**.
+- **Know:** inferred details a criterion depends on, pointing at **Assumptions**.
+- **Awaiting you:** point at **Open questions**.
+- **Next:** for a seeded task, `/plan-task <slug>`, or `/refine-idea <slug>` if it still needs refinement. Use the resolvable slug or absolute folder path under `./references/workflow/task-layout.md` § *One task, one flat folder*.

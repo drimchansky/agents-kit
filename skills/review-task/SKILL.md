@@ -173,3 +173,12 @@ Close with `Question research:` per `./references/workflow/probe-shape-options-r
 ### Confirmed
 
 List the aspects verified and ready to execute.
+
+### Handoff
+
+Close the review with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
+
+- **Done:** step verdicts and goal coverage, pointing at **Feasibility Assessment** and **Acceptance Coverage**; drift found, pointing at **Cross-File Drift**; a goal-identifier repair the loader applied.
+- **Know:** what limits the evidence: hand-mapped coverage, unrepaired diagnostics from a read-only load, a skipped or contradicting `Cross-check:`, and research the `Question research:` line counts as skipped.
+- **Awaiting you:** point at **Questions**, which already carries the researched options.
+- **Next:** `/implement-task <token>` when no step needs redesign, `/plan-task <token>` when one does, or `/review-task-reconcile <token>` to write drift and gap corrections back.

@@ -136,3 +136,10 @@ Place each Step 8 checkpoint after the step it follows, under a `### Checkpoint 
 For engineering, include the resolved `## Live verification` section from Step 7. Repository declarations can fill its mapping but are not a prerequisite.
 
 The plan starts at `to-do`; `implement-task` flips each `- [ ]` and drives the status (`./references/workflow/task-lifecycle.md`). If the user drops the plan before execution begins, set `**Status:**` to `skipped` rather than deleting it, and add a `result.md` only if the reason is worth recording.
+
+After writing both files, close the chat with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
+
+- **Done:** `goals.md` and `plan.md` written, each pointing at its file, plus a scaffolded `CONTEXT.md` or the loader's applied repair.
+- **Know:** unresolved loader diagnostics, live-verification targets left pending, a missing `./ticket.md` citation, and an answer to a CONTEXT open question that awaits a reconciler.
+- **Awaiting you:** goals marked `_(unresolved: …)_` and `## Open Questions` entries that gate a step, pointing at their files.
+- **Next:** `/review-task <token>` for a Large or Complex plan, or one with integration points, shared changes, or new patterns; `/implement-task <token>` otherwise. Both carry the handoff token (`./references/workflow/task-layout.md` § *One task, one flat folder*).

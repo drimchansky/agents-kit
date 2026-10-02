@@ -91,7 +91,7 @@ With `-n N` above 1, the standing returns' findings pool by location before anyt
 
 A composite driving this skill through `./references/workflow/verify-pipeline.md` § *The review phase* stops the settle after the intake checks, since its verify phase assigns each verdict; any other composite runs the settle in full. The `-d` draft is Output's and is forwarded unchanged. <!-- cold -->
 
-**Blocked output.** When `./references/workflow/reviewer-contract.md` § *Safety blocks* makes the primary review terminally blocked, stop with `Review pass: blocked (completed 0/<requested>; reviewer <i> safety blocked: <error>; …)`, every unavailable reviewer's reason included. That line, and with `-x` the `Cross-check:` line (`unattached (<n> findings; primary pass blocked)` or `skipped (<reason>)`, never adopted as the pass), is the whole output: no Summary, Findings, **Reviewed** provenance, or **Next**, since an empty Findings list would be publishable as a clean review.
+**Blocked output.** When `./references/workflow/reviewer-contract.md` § *Safety blocks* makes the primary review terminally blocked, stop with `Review pass: blocked (completed 0/<requested>; reviewer <i> safety blocked: <error>; …)`, every unavailable reviewer's reason included. That line, and with `-x` the `Cross-check:` line (`unattached (<n> findings; primary pass blocked)` or `skipped (<reason>)`, never adopted as the pass), is the whole output: no Summary, Findings, **Reviewed** provenance, or Handoff, since an empty Findings list would be publishable as a clean review.
 
 **Inline fallback.** Where the user explicitly asked for an in-session pass, the reviewer cannot launch, or a launched one failed (the reasons `./references/workflow/reviewer-contract.md` § *Degrade rule* closes), announce which it was and run the pass in-session, recording the reason on the `Review pass:` line. Only the runner changes.
 
@@ -135,7 +135,11 @@ Apply the full review process from `./references/engineering/review.md`; its len
 - **Inaccessible context** (only if any): links that could not be fetched, with URL and reason, and which findings might shift with that context.
 - **PR description** (only with `-d`): a ready-to-paste description (body only), per § *PR description*.
 
-**Next:** on a `pr` object, `/publish-pr-review` posts the severity tier you select (Critical/Major, Minor, or **Improvements**) as inline comments, or a short approval if all three are empty (a clean `range` posts that as a comment). A `paths` object sits on no PR; its findings go to `/fix-findings`.
+End with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
+
+- **Done:** the assessment and finding counts by severity, pointing at **Summary** and **Findings**; with `-d`, the drafted description, pointing at **PR description**.
+- **Know:** what limits the review's coverage: an inline or degraded **Review pass**, a denied or skipped script, **Divergence** entries, a **Cross-check** disagreement, or **Inaccessible context** that could shift findings. Name the reviewed object and its PR, if any.
+- **Next:** on a `pr` object, `/publish-pr-review` posts the severity tier you select (Critical/Major, Minor, or **Improvements**) as inline comments, or a short approval if all three are empty (a clean `range` posts that as a comment). A `paths` object sits on no PR; its findings go to `/fix-findings`. With `-d`, add that `/update-pr-description` applies the draft to the PR once findings are addressed.
 
 ## PR description
 
@@ -168,5 +172,3 @@ Add a CSV export button to the contacts table. Rows stream from the
 server so large accounts don't load every contact into memory. The
 toolbar became a shared component to host the new button.
 ```
-
-**Next:** `/update-pr-description` applies this to the PR once findings are addressed.

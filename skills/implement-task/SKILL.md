@@ -160,6 +160,15 @@ In **both** branches, rewrite `## Current state` last, after the removal, so `**
 
 **Reaching `done` from `in-review`** on a later run: `./references/workflow/implement-task-edges.md` § *Reaching done from in-review*. <!-- cold -->
 
+### 9. Hand Off
+
+Close each completed run with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*), composed after §8's *Before presenting* summary. A step-by-step pause and a **Blocked** stop close with it too.
+
+- **Done:** the steps and checkpoints this run completed and the plan status reached, each pointing at its `result.md` section.
+- **Know:** goals short of `met` and verification still outstanding, pointing at `## Acceptance` or `**In review:**`. Name the task branch and worktree, checkpoint commits, uncommitted changes, and a refused removal's reason. Name each surface a grounding correction changed.
+- **Awaiting you:** what the result's `**Blocked:**` section needs or awaits, pointing at it and repeating none of its options or recommendation.
+- **Next:** `/implement-task <token>` continues after a pause or an `executing` stop, resumes once a blocker clears, and re-gates an `in-review` plan once its awaited verification is reported. Once implementation is complete (`in-review` or `done`) and the task branch is unmerged, `/commit` takes staged changes and `/review-code` reviews the branch once committed. A `done` plan whose work merged takes `/archive-task <token>`.
+
 ## Correcting Grounding Where It's Wrong
 
 When execution disproves a factual claim, correct its owning surface: `CONTEXT.md`, `goals.md`, `ticket.md`, or an applicable `GROUP_CONTEXT.md`.

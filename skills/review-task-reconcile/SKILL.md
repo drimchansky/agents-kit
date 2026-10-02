@@ -14,7 +14,7 @@ Phase 1 runs `../review-task/SKILL.md`'s full protocol; Phase 2 runs the referen
 
 - **Core Rules blocks**: this block covers the pipeline; the inner AGENTS.md read does not repeat. `review-task`'s domain-pack step still runs.
 - **Chat display**: the assessment prints in full at the end of Phase 1, before any reconciliation edit.
-- **Next pointers**: the inner skill's follow-ups are dropped; this Output owns **Next**.
+- **Handoff**: `review-task`'s block is dropped; this Output composes one block for both phases.
 - **Loader baseline**: Phase 1 runs the inner skill's repairing load once and reports its structural repair before assessment. Phase 2 retains that repaired baseline and does not rerun repair.
 
 A phase departs from its skill or contract only where its section below says so.
@@ -37,7 +37,7 @@ An explicit read-only request passes through to Phase 1 and suppresses Phase 2 w
 
 ## Phase 1 — Review
 
-Execute `../review-task/SKILL.md` end to end against the resolved task folder, passing `-x` through when given, and print its assessment in full: every output section, including the always-rendered Goal Quality, Acceptance Coverage, and Cross-File Drift sections and its numbered Questions. `review-task` sweeps no citations of its own (the **docs → reality** direction definition opening `./references/workflow/reconciliation.md`); the folder's cited links are Phase 2's.
+Execute `../review-task/SKILL.md` end to end against the resolved task folder, passing `-x` through when given, and print its assessment in full: every output section except its Handoff, including the always-rendered Goal Quality, Acceptance Coverage, and Cross-File Drift sections and its numbered Questions. `review-task` sweeps no citations of its own (the **docs → reality** direction definition opening `./references/workflow/reconciliation.md`); the folder's cited links are Phase 2's.
 
 The assessment prints before any reconciliation edit and is never regenerated afterwards (§ *Sequence and output*). If Phase 2 fails hard, the assessment stands as printed.
 
@@ -55,7 +55,12 @@ Findings that need real work (a step to rethink, code changes) stay unfixed, lis
 
 Lists, never tables.
 
-- **Assessment**: the full review output as `review-task` specs it, printed at the end of Phase 1 from pre-reconcile state, including the Plan Summary's `Cross-check:` line when `-x` was passed.
+- **Assessment**: the full review output as `review-task` specs it, printed at the end of Phase 1 from pre-reconcile state, including the Plan Summary's `Cross-check:` line when `-x` was passed. Its Handoff section does not print.
 - **References** and **Reconciliation applied**: rendered per `./references/workflow/reconciliation-sweep.md` § *Output and routing* (before any Phase 2 reconciliation edit) and `./references/workflow/reconciliation.md` § *Sequence and output* (the change list, and what a run with nothing actionable writes).
 
-**Next:** answer Awaiting decision when present; otherwise use `/implement-task <slug>` when ready or `/plan-task <slug>` for redesign.
+Close with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
+
+- **Done:** the docs reconciled and the Questions answered into them, pointing at **Reconciliation applied**, and a goal-identifier repair Phase 1's load applied.
+- **Know:** `block` and `warn` rows under **References**, **Yours to apply** rows, and what limited the assessment's evidence, such as a skipped or contradicting `Cross-check:`.
+- **Awaiting you:** point at the **Awaiting decision** rows, which hold the review's unanswered Questions.
+- **Next:** `/implement-task <slug>` when the plan is ready, or `/plan-task <slug>` when a **Needs work** row calls for redesign.

@@ -80,4 +80,8 @@ Use chat lists; apply `./references/workflow/execution-acceptance.md` § *Before
 - **Follow-ups:** remaining work; omit when none.
 - **Delivery:** for engineering, each applicable target's live evidence or supported N/A; otherwise each pending check with the fields `./references/workflow/task-lifecycle.md` § *Companion result file* lists. State that overall delivery remains pending when any check is open.
 
-Append Noticed but not touching where material. Point to `/commit`, `/review-code`, or `/plan-task` as appropriate.
+Append Noticed but not touching where material, then close with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
+
+- **Done:** the shipped items and the whole-ask outcome, pointing at **Shipped** and **Asserted**.
+- **Know:** checks not run or still pending, pointing at **Health** and **Delivery**; **Deviations** from the frame; where the uncommitted changes sit.
+- **Next:** `/commit` once the changes are staged, `/review-code` over the branch once committed, or `/plan-task` when **Follow-ups** need a plan.

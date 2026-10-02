@@ -44,25 +44,13 @@ Run **Phase 1 (Diverge)** and **Phase 2 (Converge)** from `./references/workflow
 
 ### Phase 3 — Sharpen
 
-Write the one-pager to the resolved folder's `CONTEXT.md`, then post this summary so the user can paste the next command. The handoff token is the bare slug where it resolves and the folder's absolute path otherwise (`./references/workflow/task-layout.md` § *One task, one flat folder*):
+Write the one-pager to the resolved folder's `CONTEXT.md`, then close the chat with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
 
-```
-Context: <task-folder>/CONTEXT.md
-Slug: <slug>
+- **Done:** the recommended direction and the weightiest "Not Doing" entry, each pointing at its `CONTEXT.md` section.
+- **Know:** the `CONTEXT.md` path and the slug.
+- **Next:** the one paste-ready command, carrying the handoff token (`./references/workflow/task-layout.md` § *One task, one flat folder*): `/plan-task <slug>` where the slug resolves, `/plan-task <abs-path>/` otherwise.
 
-Next: /plan-task <slug>
-```
-
-or, by path:
-
-```
-Context: <abs-path>/CONTEXT.md
-Slug: <slug>
-
-Next: /plan-task <abs-path>/
-```
-
-Do not drop or paraphrase the `Next:` line. The "Not Doing" list is the most valuable part: make trade-offs explicit.
+Do not drop or paraphrase the `/plan-task` command. The "Not Doing" list is the most valuable part: make trade-offs explicit.
 
 ## CONTEXT.md Structure
 
