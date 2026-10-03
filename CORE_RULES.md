@@ -61,9 +61,8 @@ Include observations that matter to someone acting on the work. Omit incidental 
 
 ## Shell Commands
 
-Prefer purpose-built tools; use shell commands when no tool covers the job. Keep shell forms simple enough for the permission layer to inspect.
+Prefer the host's purpose-built tools, file reading and search included, over shell equivalents: they are permitted by default and return structured results. Use shell commands when no tool covers the job. Keep shell forms simple enough for the permission layer to inspect.
 
-- Default to `Read` / `Grep` / `Glob` over shell equivalents.
 - Inline literal values instead of assigning single-use variables: `sqlite3 path/to.db "SELECT …"`.
 - Run discovery first, then act on its output. Do not capture discovery into a variable and act in the same command.
 - Collapse repeated searches into one pattern, such as `grep -rnE "a|b|c"`.

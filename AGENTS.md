@@ -97,9 +97,10 @@ Run the suite covering each changed surface:
 - `scripts/pr-comments.ts`: `node --test tests/pr-comments.test.ts`.
 - `scripts/dup-check.ts` or its `corpus.ts` import: `node --test tests/dup-check.test.ts`.
 - `scripts/worktree-merge.ts`: `node --test tests/worktree-merge.test.ts`.
-- `scripts/lifecycle-constants.ts`: health-check, task-move, task-state, commit-scan, and sweep-scope suites, which import it.
+- `scripts/lifecycle-constants.ts`: health-check, task-move, task-state, commit-scan, sweep-scope, and templates suites, which cover its seven importers.
 - `references/templates/` and the three scripts its suite drives: `node --test tests/templates.test.ts`.
-- Invocation-gate changes: `node --test tests/invocation-gate.test.ts`. This checks SKILL.md frontmatter, `agents/openai.yaml` policy, and the roster in `references/workflow/skill-conventions.md` together.
+- `skills/review-pr-loop/SKILL.md` or `references/workflow/delegated-waiting.md`: `node --test tests/review-pr-loop.test.ts`.
+- Invocation-gate changes: `node --test tests/invocation-gate.test.ts`. This checks SKILL.md frontmatter, each gated skill's `skills/<name>/agents/openai.yaml` policy, and the roster in `references/workflow/skill-conventions.md` together.
 
 Change CLI, stdout, exit, and caller-facing contracts at their owners in the same edit. Use `references/scripts/<name>.md` for run-time helpers. Use `scripts/AGENTS.md` for maintainer-only helper contracts, § *Source contracts* for installer behavior, and `tests/AGENTS.md` for suite dependencies. Helper rationale belongs in its `scripts/AGENTS.md` section. Skills invoking helpers cite the contract path.
 
@@ -117,10 +118,10 @@ Edit the authoritative owner. Update dependent consumers only when their consume
 - **Keep semantic registries.** Each states which uncited consumer or authored classification prevents deriving its membership.
 - **Mark sanctioned copies.** Name the copy and its mirror obligation at the owner; a change updates every affected copy together.
 
-Derivable enumerations remain removed; find their consumers by reverse search:
+These owners keep no derivable citation list; find their consumers by reverse search:
 
-- `references/workflow/task-layout.md` and `ticket-format.md`: former "Cited by" headers.
-- `references/workflow/decomposition.md`: the former decompose-task citer sentence. A split of responsibilities is separate from membership.
+- `references/workflow/task-layout.md` and `ticket-format.md`: no "Cited by" header.
+- `references/workflow/decomposition.md`: no citer sentence. A split of responsibilities is separate from membership.
 - `references/workflow/agent-fanout.md`: review and maintain citers. The semantic write-mode registry is in `executor-routing.md`, beside `executor-contract.md` § *Bindings*.
 - `references/workflow/verify-pipeline.md`: composite callers cite its path. Its header names the three supporting contracts.
 - `references/workflow/task-store.md` § *Resolving `<kit-root>`*: helper callers cite the section at invocation; each chooses its unavailable-helper behavior.
@@ -152,15 +153,16 @@ Sanctioned copies require these mirror updates:
 - `references/workflow/task-store.md` § *The root registry*: update that module's walk prunes and ordering with their prose.
 - `references/workflow/task-archiving.md` and `task-backlog.md`, each under § *Recognizing the directory is case-insensitive*: update the module's container names together.
 
-These seven homes carry eight mirror notes because scripts cannot consume prose definitions at run time. The per-constant import registry stays here, since no single home covers the other homes' values:
+These seven homes carry eight mirror notes because scripts cannot consume prose definitions at run time. The per-symbol import registry stays here, since no single home covers the other homes' values:
 
-- `scripts/health-check.ts`: `PLAN_VOCAB`, `LIVE_STATUSES`, `TERMINAL_STATUSES`, `UNSTARTED_STATUS`, `RECORD_MAX_KB`, `RESULT_MAX_KB`, `TASK_MAX_KB`, `ARCHIVE_DIR`, `BACKLOG_DIR`, `classifyWalkEntry`.
+- `scripts/health-check.ts`: `PLAN_VOCAB`, `LIVE_STATUSES`, `TERMINAL_STATUSES`, `UNSTARTED_STATUS`, `RECORD_MAX_KB`, `RESULT_MAX_KB`, `TASK_MAX_KB`, `ARCHIVE_DIR`, `BACKLOG_DIR`, `classifyWalkEntry`, `angledTargetText`.
 - `scripts/task-move.ts`: `PLAN_VOCAB`, `TERMINAL_STATUSES`, `UNSTARTED_STATUS`, `ARCHIVE_DIR`, `BACKLOG_DIR`, `TASK_STORE_DIR`, `holdsRoleFile`, `classifyWalkEntry`.
 - `scripts/task-state.ts`: `PLAN_VOCAB`, `RESULT_MAX_KB`.
-- `scripts/commit-scan.ts` and `scripts/sweep-scope.ts`: `holdsRoleFile`.
+- `scripts/commit-scan.ts`: `holdsRoleFile`.
+- `scripts/sweep-scope.ts`: `holdsRoleFile`, `angledTargetText`.
 - `scripts/task-repair.ts`: `holdsRoleFile`, `WALK_SKIP_DIRS`.
 - `scripts/goal-structure.ts`: `holdsRoleFile`.
 
-Both walkers receive recognition and prunes through `classifyWalkEntry`. Commit-scan and sweep-scope call `holdsRoleFile` on the supplied task folder; sweep-scope also distinguishes deliverables from role files. Task-repair calls it on each subfolder to skip nested tasks, and imports `WALK_SKIP_DIRS` for the same prune. Goal-structure calls it to tell a deliverable from the role files. Task-move imports `TASK_STORE_DIR` for `boundingRoot`'s `.agents/tasks` bound, not as a prune. Compare this registry to actual import symbols when changing it.
+Both walkers receive recognition and prunes through `classifyWalkEntry`. Commit-scan and sweep-scope call `holdsRoleFile` on the supplied task folder; sweep-scope also distinguishes deliverables from role files. Task-repair calls it on each subfolder to skip nested tasks, and imports `WALK_SKIP_DIRS` for the same prune. Goal-structure calls it to tell a deliverable from the role files. Task-move imports `TASK_STORE_DIR` for `boundingRoot`'s `.agents/tasks` bound, not as a prune. Health-check and sweep-scope import `angledTargetText` to share angle-target trimming, which no prose home defines (`scripts/AGENTS.md` § *`scripts/health-check.ts`*). Compare this registry to actual import symbols when changing it.
 
 - `references/workflow/reconciliation-commits.md` § *The watermark*, `task-delivery.md` § *Branch and worktree creation*, and `task-delivery-edges.md` § *Removal*: update commit-scan's pointer patterns with their prose. The shapes are `SHA <sha>`, `` branch `<branch>` ``, and `(removed …)`. Free prose offers no other structure for locating the floor and ref. Three owner notes cover one importer; stale patterns would produce `no-watermark` or scan HEAD instead of the recorded task branch.

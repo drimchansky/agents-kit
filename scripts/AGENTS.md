@@ -90,6 +90,8 @@ This module holds machine-readable copies of the task values whose prose homes r
 
 `holdsRoleFile` accepts names rather than a path, avoiding duplicate reads when callers already listed the directory. Suffix matching excludes the bare suffix itself, which is a dotfile rather than a role file.
 
+`angledTargetText` is a shared helper, not a prose-home copy; its rationale is under § *`scripts/health-check.ts`*.
+
 ## `scripts/pr-comments.ts`
 
 Contract: `references/scripts/pr-comments.md`.
