@@ -7,7 +7,7 @@ This is a tool I build for myself, not a product. Behavior changes whenever my w
 - **Two hosts, one install.** `node setup.ts` copies the skills, references, core rules, and native agent definitions into `~/.claude` and `~/.codex`. A rerun reclaims only what the kit installed and leaves other skills untouched.
 - **Zero dependencies.** Plain Node 23.6 or newer running `.ts` directly under type stripping. No `package.json`, no build step, no `node_modules`.
 - **Persistent task folders.** A task is `.agents/tasks/<slug>/` holding `ticket.md`, `CONTEXT.md`, `goals.md`, `plan.md`, `result.md`. Plan it in one session, implement it in the next, resume or reconcile it from either host.
-- **36 skills** covering the whole loop: idea, ticket, plan, implement, review, triage, fix, commit, rebase, PR, plus daily statuses, release announcements, proofreading, translation, diagrams, and Notion pages.
+- **37 skills** covering the whole loop: idea, ticket, plan, implement, review, triage, fix, commit, rebase, PR, plus daily statuses, release announcements, knowledge sessions, proofreading, translation, diagrams, and Notion pages.
 - **Domain packs.** Methodology is domain-neutral; engineering and documentation rules load as packs from `references/<domain>/`, and a new domain is a sibling directory, not a skill rewrite.
 
 ---
@@ -142,6 +142,7 @@ Each skill is `skills/<name>/SKILL.md`, invoked as `/<name>` in Claude Code and 
 - `translate` — translate text between languages.
 - `review-docs` — audit existing documentation against the codebase.
 - `review-note` — validate and deepen a personal knowledge-base note.
+- `run-knowledge-session` — run an hour of reading notes, factual upkeep, and new-topic exploration with automatic selection and optional recall practice.
 - `prepare-diagram` — generate a Mermaid diagram for a code flow, architecture, or process.
 - `create-notion-page` — draft and create a Notion page through the session's Notion tools.
 

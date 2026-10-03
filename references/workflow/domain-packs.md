@@ -49,8 +49,8 @@ Default to `engineering` when that header is absent, preserving existing tasks. 
   - `resume-task-reconcile` and `review-task-reconcile` leave domain resolution to their Phase 1 skills, `resume-task` and `review-task`.
   - `init-config` writes the machine's root registry and touches no task.
 
-The lean utilities `create-notion-page`, `prepare-daily-status`, `prepare-release-announcement`, `proofread`, `review-note`, and `translate` read only `./AGENTS.md` § *Ask Before Assuming* from the core and resolve no domain pack.
-All six also read `./user-facing-messages.md` § *Plain wording* only and link `./references`.
+The lean utilities `create-notion-page`, `prepare-daily-status`, `prepare-release-announcement`, `proofread`, `review-note`, `run-knowledge-session`, and `translate` read only `./AGENTS.md` § *Ask Before Assuming* from the core and resolve no domain pack.
+All seven also read `./user-facing-messages.md` § *Plain wording* only and link `./references`.
 `prepare-release-announcement` also uses it for `task-layout.md` and `task-store.md`; `proofread` uses § *Blocks* with `-f`.
 
 A composite's delegated skills retain their own pack loads unless explicitly overridden. `maintain` invokes no sibling skill; its Phase 4 read-only probes resolve no pack either.

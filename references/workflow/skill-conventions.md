@@ -23,6 +23,10 @@ Scattered flag conditionals suggest a misclassified phase. A modal flag modifies
 
 ## Current members
 
+### Standalone protocols
+
+- `run-knowledge-session` — selection, reading, discussion, note corrections, and topic discovery form one learning session. Its stages interleave without complete sibling-skill phase outputs.
+
 ### Composites — sequential phases
 
 - `review-code-triage-verify` — review a PR, branch, range, or path set; batch findings; verify each batch.
