@@ -2,7 +2,6 @@
 name: fix-findings
 description: Use when asked to fix code or documentation findings from a session review, PR comments, or a pasted or saved list. Applies eligible Confirmed fixes automatically; other actionable fixes require batched diff approval. Commits each concern batch through the commit skill; never pushes or replies to sources.
 argument-hint: '[source]'
-disable-model-invocation: true
 ---
 
 ## Core Rules
@@ -10,9 +9,11 @@ disable-model-invocation: true
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. Apply `./references/engineering/rules.md` to code fixes and `./references/documentation/rules.md` to documentation fixes. Apply both to a mixed fix.
 
+**Model invocation:** requires a confirmed proposal (`./references/workflow/skill-conventions.md` § *The invocation gate*).
+
 Apply selected code and documentation findings and report the rest untouched. Consume a verify composite's root cause and ordered fix options without repeating its investigation.
 
-Edit selected working-tree work products, and stage and commit each concern batch's fixes under § *Batch commits*. Make no other Git mutation, findings-report edit, source reply, thread resolution, push, or live-page write. Transient coordinator-managed executor worktrees are the exception allowed by `./references/workflow/parallel-batch.md` § *Coordinator-side parallel batch*. <!-- cold -->
+Edit selected working-tree work products, and stage and commit each concern batch's fixes under § *Batch commits*. Each Confirmed auto-path fix runs through a delegated write-mode executor (§ *Execution strategy: every auto-path fix delegates*). Make no other Git mutation, findings-report edit, source reply, thread resolution, push, or live-page write. Transient coordinator-managed executor worktrees are the exception allowed by `./references/workflow/parallel-batch.md` § *Coordinator-side parallel batch*. <!-- cold -->
 
 ## Source
 
@@ -47,6 +48,8 @@ Route a consequential change in a document's claim, decision, or intended audien
 Treat a file named only as a proposed remedy as outside the reviewed files for Auto. Route that fix to Ask.
 
 **Batch ask-routed findings before execution.** Classify all selected findings across every concern batch before applying any fixes. Prepare proposed diffs without editing work products. Show each Ask finding, concrete diffs and material trade-offs for its viable fixes, and your recommendation.
+
+A model-invoked run (`./references/workflow/skill-conventions.md` § *The invocation gate*) proposes the whole run as one question once that classification stands: the findings it will fix, the Auto fixes it will apply unasked, the executors it will launch for them, and a commit per concern batch. It holds every edit, launch, staging, and commit until that answer. A user-invoked run has passed it; the Ask round below runs through either door.
 
 Use the host's interactive question tool when permitted and available; otherwise ask in chat and wait. Batch related questions within the tool's limits.
 
@@ -91,7 +94,7 @@ On red, use `./references/workflow/fix-findings-recovery.md` § *Red boundary: c
 
 ### Batch commits
 
-Your typed invocation is the explicit commit request `./references/engineering/rules.md` § *Code & Git discipline* requires, for every concern batch this run fixes. Model invocation is closed on both hosts (`./references/workflow/skill-conventions.md` § *The invocation gate*). An explicit no-commit instruction turns batch commits off, and so does a shared tree outside any Git checkout. A matching baseline failure turns batch commits off from its concern batch to the end of the run. With batch commits off, fixes stay unstaged and the report says so.
+Your invocation by command, or by a confirmed proposal that named a commit per concern batch, is the explicit commit request `./references/engineering/rules.md` § *Code & Git discipline* requires, for every concern batch this run fixes (`./references/workflow/skill-conventions.md` § *The invocation gate*). A proposal that left the commits unnamed grants none: propose them before the first batch commit, or run with batch commits off. An explicit no-commit instruction turns batch commits off, and so does a shared tree outside any Git checkout. A matching baseline failure turns batch commits off from its concern batch to the end of the run. With batch commits off, fixes stay unstaged and the report says so.
 
 With batch commits on, read the index before the first fix edit. Staged content stops the run before any edit, naming the staged paths, because `commit` commits the whole index.
 

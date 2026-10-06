@@ -4,7 +4,7 @@ Move whole folders through `scripts/task-move.ts` into a sibling Archive or Back
 
 ## 1. Resolve the target task folder
 
-Use **resolve-or-ask** from `./task-layout.md` § *Discovery rules for skills* at run time. Resolve ambiguity before invoking the helper; pass the absolute folder path as `SRC`, not the unresolved slug.
+Use **resolve-current-or-ask** from `./task-layout.md` § *Discovery rules for skills* at run time. Resolve ambiguity before invoking the helper; pass the absolute folder path as `SRC`, not the unresolved slug.
 
 Validate SRC by contents under the direction's recognition rule, wherever it sits. Refuse any folder containing its own Archive or Backlog directory, matched case-insensitively: it is a task parent and must not move with its children.
 

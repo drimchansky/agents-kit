@@ -1,7 +1,7 @@
 ---
 name: resume-task
 description: Use when asked to resume, catch up on, brief, hand off, status of, or check progress on a task folder (canonically under `.agents/tasks/`) — produces a chat-only briefing. Writes only proven goal-identifier repairs.
-argument-hint: '[task folder path]'
+argument-hint: "[task slug or path; defaults to the session's task]"
 ---
 
 ## Core Rules
@@ -146,9 +146,9 @@ Unscanned — the task acts on <repo>, which the scan cannot reach from a store-
 
 **Handoff**
 - **Done:** <a goal-identifier repair the load applied; otherwise omit>
-- **Know:** <`block` and `warn` drift and stale Current-state claims that change the next action, in brief>
+- **Know:** <the task's handoff token; `block` and `warn` drift and stale Current-state claims that change the next action, in brief>
 - **Awaiting you:** <point at Open questions where one blocks the next step>
-- **Next:** <the first file, step, or drift item to take up, ending with its paste-ready command, such as `/implement-task <token>`>
+- **Next:** <the first file, step, or drift item to take up, ending with its paste-ready command, such as `/implement-task`>
 ```
 
 Omit empty sections except Drift since plan. Commits since watermark follows Step 4's rendering conditions.

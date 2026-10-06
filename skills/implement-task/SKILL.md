@@ -1,7 +1,7 @@
 ---
 name: implement-task
 description: Use when asked to implement, execute, run, or carry out a task's plan from a task folder (canonically under `.agents/tasks/`) — by task folder path, or the current task if one is already in context.
-argument-hint: '[task folder path]'
+argument-hint: "[task slug or path; defaults to the session's task]"
 ---
 
 ## Core Rules
@@ -11,7 +11,7 @@ argument-hint: '[task folder path]'
 
 Executes a task folder's `plan.md`: implements each step, records it in `result.md` as it goes, marks the step done in the plan with a link to that record, and runs an acceptance gate against `goals.md` before flipping the plan to `done`.
 
-This skill mutates the plan and the result file freely, and the grounding surfaces (`CONTEXT.md`, `goals.md`, `ticket.md`, an inherited `GROUP_CONTEXT.md`) only as § *Correcting Grounding Where It's Wrong* licenses. The sole exception is the loader's proven identifier repair in `CONTEXT.md` and `goals.md`, which changes no meaning (`./references/workflow/task-authorship.md` § *Files*). It authors a doc task's deliverable as the plan directs and never writes a deliverable's `**Published:**` line. Its Git writes are the task's own branch and worktree (§1, §3, §8), the branch-scoped `git fetch origin <default-branch>` the **merged** predicate runs, and checkpoint commits only under the sanction §2 establishes. Nothing is pushed or amended. Its one write outside the task folder and the work product is the repository's own `AGENTS.md` / `CLAUDE.md`, for the branch convention a creation-path run proposes, **only on the user's explicit confirmation** and stated when written: `./references/workflow/task-delivery-edges.md` § *Proposing an observed branch convention*. <!-- cold -->
+This skill mutates the plan and the result file freely, and the grounding surfaces (`CONTEXT.md`, `goals.md`, `ticket.md`, an inherited `GROUP_CONTEXT.md`) only as § *Correcting Grounding Where It's Wrong* licenses. The sole exception is the loader's proven identifier repair in `CONTEXT.md` and `goals.md`, which changes no meaning (`./references/workflow/task-authorship.md` § *Files*). It authors a doc task's deliverable as the plan directs and never writes a deliverable's `**Published:**` line. Its Git writes are the task's own branch and worktree (§1, §3, §8), the branch-scoped `git fetch origin <default-branch>` the **merged** predicate runs, and checkpoint commits only under the sanction §2 establishes. Nothing is pushed or amended. Each step runs through a delegated write-mode executor (`./references/workflow/executor-routing.md` § *The registry and its authorization*). Its one write outside the task folder and the work product is the repository's own `AGENTS.md` / `CLAUDE.md`, for the branch convention a creation-path run proposes, **only on the user's explicit confirmation** and stated when written: `./references/workflow/task-delivery-edges.md` § *Proposing an observed branch convention*. <!-- cold -->
 
 Per-file authorship is `./references/workflow/task-authorship.md` § *Files*; the plan changes only by checkbox flips, appended result links, `**Status:**`, and §6 revisions.
 
@@ -33,7 +33,7 @@ Establish ground truth per `./references/workflow/execution-loop.md` § *Ground 
 
 ### 1. Locate and Load the Task
 
-**Resolve the folder** per the **resolve-current-or-ask** rules in `./references/workflow/task-layout.md`. A folder under `Backlog/` takes the activation offer in `./references/workflow/implement-task-edges.md` § *Activating a backlogged task*. <!-- cold -->
+**Resolve the folder** per the **resolve-current-or-ask** rules in `./references/workflow/task-layout.md`, and announce the resolved folder before this run's first write. A folder under `Backlog/` takes the activation offer in `./references/workflow/implement-task-edges.md` § *Activating a backlogged task*. <!-- cold -->
 
 **Then load it** in the order `./references/workflow/task-layout.md` § *Reading a resolved folder* fixes:
 
@@ -55,7 +55,7 @@ Ask the user, or infer from the request:
 - **Step-by-step**: one step, update both files, pause. Default for risky or large plans.
 - **Full plan**: every step end-to-end, then one combined result (§5). Default for plans of three steps or fewer, or an explicit "run the whole thing".
 
-Step-by-step pauses after each step's unit outcome and health boundary (§4). Automatic parallel batches remain full-plan only. Establish checkpoint-commit authorization under `./references/workflow/task-delivery.md` § *Checkpoint commits*, independently of execution mode or requested step range. <!-- cold -->
+Step-by-step pauses after each step's unit outcome and health boundary (§4). Automatic parallel batches remain full-plan only. Establish checkpoint-commit authorization under `./references/workflow/task-delivery.md` § *Checkpoint commits*, independently of execution mode or requested step range. A confirmed proposal that left the checkpoint commits unnamed asks for them here, before §3's capture. <!-- cold -->
 
 ### 3. Initialize Execution State
 
@@ -165,9 +165,9 @@ In **both** branches, rewrite `## Current state` last, after the removal, so `**
 Close each completed run with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*), composed after §8's *Before presenting* summary. A step-by-step pause and a **Blocked** stop close with it too.
 
 - **Done:** the steps and checkpoints this run completed and the plan status reached, each pointing at its `result.md` section.
-- **Know:** goals short of `met` and verification still outstanding, pointing at `## Acceptance` or `**In review:**`. Name the task branch and worktree, checkpoint commits, uncommitted changes, and a refused removal's reason. Name each surface a grounding correction changed.
+- **Know:** goals short of `met` and verification still outstanding, pointing at `## Acceptance` or `**In review:**`. Name the task's handoff token, the task branch and worktree, checkpoint commits, uncommitted changes, and a refused removal's reason. Name each surface a grounding correction changed.
 - **Awaiting you:** what the result's `**Blocked:**` section needs or awaits, pointing at it and repeating none of its options or recommendation.
-- **Next:** `/implement-task <token>` continues after a pause or an `executing` stop, resumes once a blocker clears, and re-gates an `in-review` plan once its awaited verification is reported. Once implementation is complete (`in-review` or `done`) and the task branch is unmerged, `/commit` takes staged changes and `/review-code` reviews the branch once committed. A `done` plan whose work merged takes `/archive-task <token>`.
+- **Next:** `/implement-task` continues after a pause or an `executing` stop, resumes once a blocker clears, and re-gates an `in-review` plan once its awaited verification is reported. Once implementation is complete (`in-review` or `done`) and the task branch is unmerged, `/commit` takes staged changes and `/review-code` reviews the branch once committed. A `done` plan whose work merged takes `/archive-task`.
 
 ## Correcting Grounding Where It's Wrong
 

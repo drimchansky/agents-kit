@@ -9,7 +9,7 @@ Load and report structural repair before either reconciliation direction assesse
 
 ## Consent model: findings apply, the record carries them
 
-User-invoked reconciliation applies obvious fixes, evidence-settled factual corrections, previously approved changes, and routine judgments within agreed scope. Model-invoked runs ask before fixing (`./skill-conventions.md` § *The invocation gate*).
+User-invoked reconciliation, by command or by a confirmed proposal that named the settled corrections, applies obvious fixes, evidence-settled factual corrections, previously approved changes, and routine judgments within agreed scope. Model-invoked runs, and a confirmed proposal that left those corrections unnamed, ask before each fix (`./skill-conventions.md` § *The invocation gate*).
 
 The loader's proven identifier repair runs before this consent gate because it changes no finding's meaning. Explicit read-only requests and skipped plans suppress it (`./task-layout.md` § *Reading a resolved folder*).
 

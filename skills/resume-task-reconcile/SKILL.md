@@ -1,7 +1,7 @@
 ---
 name: resume-task-reconcile
 description: Use when asked to catch up on a task and write findings back. Prints the pre-reconcile brief, applies settled corrections, presents unresolved impactful choices, and re-checks cited links. Writes task docs only; never code or Git.
-argument-hint: '[task folder path]'
+argument-hint: "[task slug or path; defaults to the session's task]"
 ---
 
 ## Core Rules
@@ -15,13 +15,13 @@ Phase 1 runs `../resume-task/SKILL.md`'s full protocol; Phase 2 runs the referen
 - **Core Rules blocks**: this block covers the pipeline; the inner AGENTS.md read does not repeat. `resume-task`'s domain-pack step still runs.
 - **Chat display**: the brief prints in full at the end of Phase 1, before any reconciliation edit.
 - **Handoff**: the inner skill's block is dropped; this Output composes one block from the reconciled state.
-- **Loader baseline**: Phase 1 runs the inner skill's repairing load once and reports its structural repair before briefing. Phase 2 retains that repaired baseline and does not rerun repair.
+- **Loader baseline**: the run announces the resolved folder before its first write, the repairing load included. Phase 1 runs the inner skill's repairing load once and reports its structural repair before briefing. Phase 2 retains that repaired baseline and does not rerun repair.
 
 Any other departure from the inner skill or the contract is named in the phase's section below.
 
 This pipeline writes only what `./references/workflow/reconciliation-docs-to-reality.md` § *Write surface* allows: the task files, plus `ticket.md` and an applicable `GROUP_CONTEXT.md` on the added terms of `./references/workflow/reconciliation.md` § *The upstream ask is writable, and never rewritten quietly*. `./references/workflow/reconciliation-docs-to-reality.md` § *Write surface* names every never-edited file and bounds what a reconcile may re-run. It fixes the docs, not the world (`./references/workflow/reconciliation.md` § *Docs, not the world*), and creates no `BRIEF.md` or scratch briefing file.
 
-User invocation authorizes settled corrections under `./references/workflow/reconciliation.md` § *Consent model: findings apply, the record carries them*. Unresolved impactful choices are presented with their options; those still unanswered remain Awaiting decision. A model-invoked run asks before each reconciliation fix; the shared structural-loader exception still applies.
+User invocation authorizes settled corrections under `./references/workflow/reconciliation.md` § *Consent model: findings apply, the record carries them*. Unresolved impactful choices are presented with their options; those still unanswered remain Awaiting decision. A model-invoked run, and a confirmed proposal that left the settled corrections unnamed, asks before each reconciliation fix; the shared structural-loader exception still applies.
 
 An explicit read-only request passes through to Phase 1 and suppresses Phase 2 writes, including the reference ledger and any result record. Report findings and proposed corrections in chat only.
 
@@ -57,6 +57,6 @@ Lists, never tables.
 Close with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
 
 - **Done:** the task docs reconciled, by file, pointing at **Reconciliation applied**, and a goal-identifier repair Phase 1's load applied.
-- **Know:** `block` and `warn` rows under **References**, brief drift that reconciliation left standing, and **Yours to apply** rows.
+- **Know:** the task's handoff token, `block` and `warn` rows under **References**, brief drift that reconciliation left standing, and **Yours to apply** rows.
 - **Awaiting you:** point at the **Awaiting decision** rows under **Not reconciled:**.
-- **Next:** the skill named against a **Needs work** row; otherwise the first step or drift item the reconciled docs leave open, such as `/implement-task <slug>`.
+- **Next:** the skill named against a **Needs work** row; otherwise the first step or drift item the reconciled docs leave open, such as `/implement-task`.

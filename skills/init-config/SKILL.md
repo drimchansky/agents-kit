@@ -2,12 +2,13 @@
 name: init-config
 description: Use when asked to create, update, or repair this machine's agents-kit config — discovers the task roots on disk, compares them against `~/.config/agents-kit/config.json`, and previews the delta for confirmation before writing. Never writes unasked, never discards a hand-authored entry.
 argument-hint: '[search directories — defaults to the usual project parents]'
-disable-model-invocation: true
 ---
 
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
+
+**Model invocation:** requires a confirmed proposal (`./references/workflow/skill-conventions.md` § *The invocation gate*).
 
 Writes only `~/.config/agents-kit/config.json`, after confirmation of its complete proposed contents. Discovery is read-only. Never mutate Git or write outside `~/.config/agents-kit/`, including the state directory. Resolve no task or domain pack.
 
@@ -22,6 +23,8 @@ Use for machine config setup, refresh, repair, or task-root registration. Root s
 Read `./references/workflow/task-store.md` § *The root registry* for the schema, then the existing config before proposing changes. Report unreadability or invalid JSON with the error line; treat contents as unknown, not empty. Offer a replacement only for confirmation against the user's visible original. Report unknown keys and preserve their entries unchanged.
 
 ### 2. Discover the roots on disk
+
+A model-invoked run (`./references/workflow/skill-conventions.md` § *The invocation gate*) first proposes the run as one question: the directories it will search and `~/.config/agents-kit/config.json` as the file it writes. It walks nothing before the answer; a user-invoked run has passed it.
 
 Search invocation directories, or existing `~/Documents`, `~/Developer`, `~/Projects`, `~/repos`, `~/src`, `~/Work`, plus the current project. Full-home search requires an explicit `~` argument because it is expensive.
 
@@ -48,7 +51,7 @@ Without config, every discovered root is new. Preview changed entries and the co
 
 ### 4. Gate the write
 
-Ask once after displaying the full proposal. On confirmation, create the config directory if needed and write exactly the approved file. Declining writes nothing; say so.
+Ask once after displaying the full proposal; this preview of the payload computed here runs through either door (`./references/workflow/skill-conventions.md` § *The invocation gate*). On confirmation, create the config directory if needed and write exactly the approved file. Declining writes nothing; say so.
 
 Re-read, parse, and compare the written file against approval. Report an unparseable write immediately and print previous contents.
 

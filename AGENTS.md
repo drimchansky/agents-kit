@@ -100,7 +100,7 @@ Run the suite covering each changed surface:
 - `scripts/lifecycle-constants.ts`: health-check, task-move, task-state, commit-scan, sweep-scope, and templates suites, which cover its seven importers.
 - `references/templates/` and the three scripts its suite drives: `node --test tests/templates.test.ts`.
 - `skills/review-pr-loop/SKILL.md` or `references/workflow/delegated-waiting.md`: `node --test tests/review-pr-loop.test.ts`.
-- Invocation-gate changes: `node --test tests/invocation-gate.test.ts`. This checks SKILL.md frontmatter, each gated skill's `skills/<name>/agents/openai.yaml` policy, and the roster in `references/workflow/skill-conventions.md` together.
+- Invocation-gate changes: `node --test tests/invocation-gate.test.ts`. This checks that no SKILL.md frontmatter or `agents/` policy file closes a host door, and that the `**Confirm-gated skills:**` roster in `references/workflow/skill-conventions.md` matches the skills carrying the `**Model invocation:**` line.
 
 Change CLI, stdout, exit, and caller-facing contracts at their owners in the same edit. Use `references/scripts/<name>.md` for run-time helpers. Use `scripts/AGENTS.md` for maintainer-only helper contracts, § *Source contracts* for installer behavior, and `tests/AGENTS.md` for suite dependencies. Helper rationale belongs in its `scripts/AGENTS.md` section. Skills invoking helpers cite the contract path.
 
@@ -134,7 +134,7 @@ Semantic registries remain maintained for these reasons:
 - `references/workflow/task-lifecycle.md` propagate list: `resume-task-reconcile` and `review-task-reconcile` act on status fields without citing this file.
 - `references/workflow/context-schema.md` consumer registry: readers use section names without citing the schema. They include review-task, implement-task, resume-task, reconcile-task, reconciliation's annotation rows, reconciliation-sweep's scope rows, and the reconcile composites. Producers refine-idea, plan-task, and decompose-task cite it and remain derivable.
 - `references/workflow/skill-conventions.md` § *Current members*: entries author classification reasons. Register each new member there.
-- That file's § *The invocation gate*: gated skills are searchable, but deliberate non-members and placement criteria are authored. Record every opened or closed gate.
+- That file's § *The invocation gate*: confirm-gated skills are searchable by their `**Model invocation:**` line, but the skills gating their own write another way and the placement criteria are authored. Record every confirm gate added or removed.
 - `references/workflow/executor-contract.md` § *Bindings*: defines each consumer's unit, packet, edit surface, fallback, and merge order.
 - `references/workflow/reviewer-contract.md` § *Consumers*: defines authorized reviewer launchers and consumers, checked by § *Launch packet*.
 - `references/workflow/reconciliation.md` direction membership: keys the skill mappings in reconciliation-docs-to-reality.md and reconciliation-session-to-docs.md.
@@ -148,6 +148,7 @@ Semantic registries remain maintained for these reasons:
 Sanctioned copies require these mirror updates:
 
 - `references/engineering/code-style.md` § *Comments*: `agents/executor.md` and `agents/executor.toml` embed the same condensed discipline for direct access. When that section changes, update both host adapters; its owner carries one mirror note covering both.
+- `references/workflow/skill-conventions.md` § *The invocation gate*: `README.md` § *Skills* copies the confirm-gated count and each skill's `Confirm-gated.` label, which the reverse-search set does not reach; update them with the roster.
 - `references/workflow/task-lifecycle.md` § *Status values*, `status-transitions.md` § *Terminal vs. live states*, and `reconciliation-compaction.md` § *Compaction (size trigger)*: update the status vocabulary, terminal set, and compaction trigger in `scripts/lifecycle-constants.ts` with their prose.
 - `references/workflow/task-layout.md` § *One task, one flat folder*: update that module's recognition set and folder/record budgets together.
 - `references/workflow/task-store.md` § *The root registry*: update that module's walk prunes and ordering with their prose.

@@ -2,7 +2,6 @@
 name: review-pr-loop
 description: "Use when asked to watch a PR and keep reviewing it until it is clean: publishes available findings before waiting for CI, including all tiers until a full-tier review of yours stands on the PR and Critical/Major afterward, then watches for the next push. A pass with no Critical or Major findings and passing checks approves the PR from your account, or comments on your own PR. Adds a worktree on the PR branch when no checkout holds it, and removes it after a clean ending."
 argument-hint: '[PR number or URL; defaults to the PR of the checked-out branch]'
-disable-model-invocation: true
 ---
 
 ## Core Rules
@@ -10,9 +9,11 @@ disable-model-invocation: true
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core.
 
+**Model invocation:** requires a confirmed proposal (`./references/workflow/skill-conventions.md` § *The invocation gate*).
+
 Composite over one PR: review it (`review-code`), publish available findings (`publish-pr-review`), settle CI, then watch the head until a pass is clean.
 
-Your typed invocation is the standing consent for every review this run posts, on the PR Setup resolves and no other. **Publish** pre-selects `publish-pr-review` step 4's picker for each submission, including a second submission within one pass. Model invocation is closed on both hosts (`./references/workflow/skill-conventions.md` § *The invocation gate*). Edit no code, title, PR state, or merge. The only writes to the repository are the one worktree Setup adds where no checkout holds the review branch, the local `<review-branch>` it creates with that worktree where none exists, that branch's upstream config on a fork PR, the `refs/pull/<number>/head` fetches in Setup and **Sync**, **Sync**'s fast-forward of that branch, and that worktree's removal on a clean ending.
+Standing consent comes from your invocation by command, or by a confirmed proposal that named the PR, the repository writes below, the reviews this run posts, and the approval or own-PR comment a clean pass submits. That consent covers every review this run posts, that approval or comment included, and every write below. It holds on the PR Setup resolves and no other (`./references/workflow/skill-conventions.md` § *The invocation gate*). **Publish** pre-selects `publish-pr-review` step 4's picker for each submission, including a second submission within one pass. Edit no code, title, PR state, or merge. The only writes to the repository are the one worktree Setup adds where no checkout holds the review branch, the local `<review-branch>` it creates with that worktree where none exists, that branch's upstream config on a fork PR, the `refs/pull/<number>/head` fetches in Setup and **Sync**, **Sync**'s fast-forward of that branch, and that worktree's removal on a clean ending.
 
 The PR's checks stand in for the project's verification scripts, so no pass runs lint, typecheck, or tests locally (`./references/engineering/review.md` § *Verification Scripts*).
 
@@ -23,6 +24,14 @@ Launch and collect the check poll and watch through `./references/workflow/deleg
 ## Setup
 
 - Resolve the PR once. With a number or URL, read that PR; with no argument, read the checked-out branch's. Use `gh pr view <target> --json number,title,url,state,headRefOid,headRefName,baseRefName,isCrossRepository`. Require `OPEN`, naming any other state and stopping.
+- A model-invoked run (`./references/workflow/skill-conventions.md` § *The invocation gate*) proposes the run here as one question. Nothing is searched, fetched, added, or posted before the confirmation; a user-invoked run has passed it. The question names:
+  - the PR by number and title;
+  - the home search below, where the current checkout is not this repository;
+  - the worktree it would add where no checkout holds the branch, with the local branch and fork upstream config that come with it;
+  - the `refs/pull/<number>/head` fetches and fast-forwards each pass makes;
+  - the worktree's removal on a clean ending;
+  - the reviews it will post;
+  - on a clean pass, the approval it submits from your account, or the comment that replaces it on your own PR.
 - Parse `<host>/<owner>/<repo>` from the selected PR URL. Set `GH_HOST=<host>` and `GH_REPO=<host>/<owner>/<repo>` for every later `gh` call, background process, helper, and sibling skill. Do not change GitHub CLI configuration.
 - Name the review branch: `headRefName` for a same-repository PR, and `pr-<number>` for a fork PR (`isCrossRepository` true), whose branch name can collide with yours.
 - Require a local checkout whose remote normalizes to the exact selected `<host>/<owner>/<repo>`. Normalize HTTPS, `ssh://`, and SCP-style SSH URLs, plus an optional `.git` suffix. For an SSH URL, replace its host with the `hostname` that `ssh -G <host>` reports, as `gh` does, so a config alias matches its real host. Try the current checkout first. If it does not match, search with `find "$HOME" -maxdepth 5 -type d -name '<repo>' -not -path '*/node_modules/*' -not -path '*/.*'`. Keep each hit where `git -C <hit> remote -v` has that exact normalized identity. Reduce each kept hit to the first entry of its `git worktree list --porcelain`, then deduplicate. Continue in the one path that survives, announcing `🔵 In progress: checkout <path>` as one progress line (`./references/workflow/user-facing-messages.md` § *Blocks*). Where several survive, ask which one, offering those paths. Where none does, ask for a path and offer none. Every offered path came from the search.

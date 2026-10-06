@@ -1,13 +1,14 @@
 ---
 name: backlog-task
 description: Use when asked to backlog or park an unstarted task — move a task with no plan yet (or a plan still at `to-do`) into its parent's `Backlog/` (canonically `.agents/tasks/Backlog/`) to keep the active list to work in flight.
-argument-hint: '[task folder slug or path]'
-disable-model-invocation: true
+argument-hint: "[task slug or path; defaults to the session's task]"
 ---
 
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
+
+**Model invocation:** requires a confirmed proposal (`./references/workflow/skill-conventions.md` § *The invocation gate*).
 
 Park a whole unstarted task folder through `scripts/task-move.ts`. Edit no task content or status and perform no Git mutation, including staging, commit, checkout, stash, or `git mv`. Location alone records parking.
 
@@ -17,7 +18,7 @@ Resolve no domain pack; parking has the same protocol for every domain. Read `./
 
 **Use when** a task has deliberately not started and should leave the active list.
 
-**Skip when** work is live: pause through blocked; parking does not pause execution. Finished or abandoned work goes to `archive-task`. Un-parking is a manual move or the activation offered by implement-task/resume-task; this skill is inbound only. With no canonical root and no named path, report nothing to park.
+**Skip when** work is live: pause through blocked; parking does not pause execution. Finished or abandoned work goes to `archive-task`. Un-parking is a manual move or the activation offered by implement-task/resume-task; this skill is inbound only.
 
 ## Process
 
@@ -27,8 +28,10 @@ Apply `./references/workflow/task-relocation.md` § *1. Resolve the target task 
 
 - **Already parked**: an immediate parent named Backlog, case-insensitively, means report and stop (`./references/workflow/task-backlog.md`).
 - **Already archived**: refuse under `./references/workflow/task-archiving.md`'s whole-path-to-store rule. The user must un-archive before retrying. Never transfer Archive directly into Backlog. The opposite terminal-task exit is archive-task's own operation.
-- **Nothing named**: list active folders with plan Status or `no plan yet`, then ask.
+- **Nothing named**: use the one task this session established. With several, or none, list active folders with plan Status or `no plan yet`, then ask. On a model-invoked run, ask for the task before that listing; it walks every registered root (`./references/workflow/skill-conventions.md` § *The invocation gate*).
 - **Recognition**: use `./references/workflow/task-layout.md` § *One task, one flat folder*'s full set, including legacy forms. A ticket/context/goals-only task qualifies; a directory without a recognized file does not. No plan is required merely to hand a recognized task to the entry gate.
+
+Before Step 2, name the resolved SRC and its Backlog destination, and let a model-invoked run (`./references/workflow/skill-conventions.md` § *The invocation gate*) ask that as its proposal, moving nothing until the confirmation; a user-invoked run has passed it and moves after the announcement.
 
 ### 2. Run the move
 

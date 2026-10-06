@@ -48,9 +48,8 @@ A token containing a path separator is a path; a bare kebab-case token is a slug
 
 **When no task was named:**
 
-- **resolve-or-create** (`refine-idea`, `plan-task`, `prepare-ticket`, `decompose-task`): derive a slug and check active, archived, and backlogged folders across every registered root and the canonical root before creating. A match is reported with its root, never worked around. Active means existing; Backlog means existing and planned in place (`./task-backlog.md`); archived-only asks whether to un-archive or start fresh. Creation destination still follows `./task-destinations.md`.
-- **resolve-current-or-ask** (`implement-task`, `resume-task`, `reconcile-task`): use the task already established in this session. Otherwise list active tasks across all roots, grouped by label, and ask.
-- **resolve-or-ask** (`review-task`, `archive-task`, `backlog-task`): list those active tasks and ask.
+- **resolve-or-create** (`refine-idea`, `plan-task`, `prepare-ticket`, `decompose-task`): derive a slug and check active, archived, and backlogged folders across every registered root and the canonical root before creating. A match is reported with its root, never worked around. Active means existing; Backlog means existing and planned in place (`./task-backlog.md`); archived-only asks whether to un-archive or start fresh. Creation destination still follows `./task-destinations.md`. `plan-task` given no argument takes the task this session established, as resolve-current-or-ask does, only when the request names no other work, and otherwise derives the slug from the request; the other members keep their argument semantics.
+- **resolve-current-or-ask** (`implement-task`, `resume-task`, `reconcile-task`, `review-task`, `archive-task`, `backlog-task`): use the task already established in this session, when exactly one was. Otherwise list active tasks across all roots, grouped by label, and ask.
 
 Archived and backlogged tasks are excluded from default listings. Tasks outside canonical/registered roots require paths. So do tasks under groups in an unregistered canonical root: its shallow discovery cannot resolve their slugs or list them. Register the root to enable recursive discovery.
 

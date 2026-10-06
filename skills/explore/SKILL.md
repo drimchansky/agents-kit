@@ -2,13 +2,14 @@
 name: explore
 description: Use when asked to explore, explain, walk through, describe, teach, or analyze a topic — code, a library or API, a protocol, a system, a concept, or a domain question.
 argument-hint: '[topic, file path, or any other source of information]'
-disable-model-invocation: true
 ---
 
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. Load the domain pack: take the task's `**Domain:**` (default `engineering`; infer from the request when there's no `CONTEXT.md`) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for. If the domain has no pack, run the neutral methodology and say so.
+
+**Model invocation:** requires a confirmed proposal (`./references/workflow/skill-conventions.md` § *The invocation gate*).
 
 Explain the requested topic at the depth needed. For code, apply `./references/engineering/exploration.md`; methodology otherwise follows the resolved domain. Verify potentially outdated APIs, behavior, versions, and conventions through authoritative web sources.
 
@@ -22,6 +23,8 @@ Explain the requested topic at the depth needed. For code, apply `./references/e
 - **Pre-plan:** existing constraints, affected consumers, alternatives, open questions.
 
 Start at the highest relevant level, then drill down. Ask when scope is unclear; answer the actual question.
+
+The subject at its resolved scope is this skill's proposal. A model-invoked run (`./references/workflow/skill-conventions.md` § *The invocation gate*) asks whether to explore it before gathering; a user-invoked run has passed it. Neither writes anything.
 
 ## Gather Context
 

@@ -2,12 +2,13 @@
 name: maintain
 description: Use when asked to maintain agents-kit and its task store. Reports format, health, install drift, uncommitted work, leftover worktrees, and recent session misbehavior across registered roots. Auto-applies only its run marker; every other change requires confirmation. Never commits.
 argument-hint: '[kit path and/or task-root path — defaults to the registered roots]'
-disable-model-invocation: true
 ---
 
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
+
+**Model invocation:** requires a confirmed proposal (`./references/workflow/skill-conventions.md` § *The invocation gate*).
 
 Run four phases in order: kit task-format sweep, health sweep, active-task listing, and session analysis. Work on task envelopes, lifecycle bookkeeping, store artifacts, and session logs. Resolve no Domain pack, invoke no sibling skill, and reconcile no task content; hand that work to `resume-task-reconcile` in the Handoff's Next.
 
@@ -19,7 +20,7 @@ Every phase runs inline under its cited contracts. Print one progress line (`./r
 
 ## Setup — resolve targets
 
-Resolve and existence-check targets, then print one setup line with paths and labels. Read `./references/workflow/task-store.md` § *The root registry*.
+Resolve and existence-check targets, then print one setup line with paths and labels: the kit root, every task root, and the two install homes `~/.claude` and `~/.codex`. That line is the sweep's scope proposal; it also names the `.maintain-last-run` write under `~/.local/state/agents-kit/` and the `git fetch origin <default-branch>` the removal predicate may run in the kit repository. A model-invoked run (`./references/workflow/skill-conventions.md` § *The invocation gate*) asks it as a question and sweeps nothing before the confirmation; a user-invoked run has passed it. The per-item write confirms above stay through either door. Read `./references/workflow/task-store.md` § *The root registry*.
 
 - **Kit root:** use the source checkout, with an argument holding `setup.ts` overriding configuration. When resolving the configured checkout, apply `./references/workflow/task-store.md` § *Resolving `<kit-root>`* without its plugin fallback. No installed home or plugin root can substitute: later phases act on the checkout's task store and Git state. <!-- cold -->
 - **Task roots:** use all configured `taskRoots` with their labels; other path arguments add task roots. Name each absent registered path as skipped and continue with the rest.

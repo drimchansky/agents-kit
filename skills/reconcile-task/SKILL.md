@@ -1,7 +1,7 @@
 ---
 name: reconcile-task
 description: Use when asked to reconcile, sync, capture, or write back important session findings into a task folder. Applies settled corrections, presents unresolved impactful choices, and re-checks cited tickets, PRs, and docs.
-argument-hint: '[task folder path]'
+argument-hint: "[task slug or path; defaults to the session's task]"
 ---
 
 ## Core Rules
@@ -28,7 +28,7 @@ This skill applies settled task-doc corrections and presents unresolved impactfu
 
 ### 1. Resolve the Task Folder
 
-Resolve per the **resolve-current-or-ask** rules in `./references/workflow/task-layout.md` § *Discovery rules for skills*; a full `plan.md` path is taken directly.
+Resolve per the **resolve-current-or-ask** rules in `./references/workflow/task-layout.md` § *Discovery rules for skills*; a full `plan.md` path is taken directly. Announce the resolved folder before this run's first write.
 
 ### 2. Load Artifacts
 
@@ -117,7 +117,7 @@ Print the findings report **first**, from pre-reconcile state, never regenerated
 (or, when none in scope: `No external references in sweep scope.` — this heading always renders)
 
 ## Not reconciled
-- Needs work — <finding> — via `/implement-task <slug>`
+- Needs work — <finding> — via `/implement-task`
 - Yours to apply — <finding> — a deliverable's `**Published:**` line; proposed text: <…>
 - Awaiting decision — <finding> — <researched options, material trade-offs, recommendation, and held edits>
 
@@ -142,6 +142,6 @@ Then run Step 5 and Step 6 (independent settled edits first, then choices), and 
 After the change list or `Nothing to reconcile.`, close with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
 
 - **Done:** the reconciled task docs, by file, and any external-surface edit, pointing at **Reconciliation applied**.
-- **Know:** `block` and `warn` rows under **References**, **Yours to apply** rows awaiting the user's paste, and a compaction trigger left untested.
+- **Know:** the task's handoff token, `block` and `warn` rows under **References**, **Yours to apply** rows awaiting the user's paste, and a compaction trigger left untested.
 - **Awaiting you:** point at the **Awaiting decision** rows under **Not reconciled:**, and name a compaction proposal awaiting confirmation.
-- **Next:** the skill each **Needs work** row names, such as `/implement-task <slug>`.
+- **Next:** the skill each **Needs work** row names, such as `/implement-task`.

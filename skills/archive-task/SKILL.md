@@ -1,13 +1,14 @@
 ---
 name: archive-task
 description: Use when asked to archive a finished task — move a completed (`done`) or abandoned (`skipped`) task folder into its parent's `Archive/` (canonically `.agents/tasks/Archive/`) to keep the active list short.
-argument-hint: '[task folder slug or path]'
-disable-model-invocation: true
+argument-hint: "[task slug or path; defaults to the session's task]"
 ---
 
 ## Core Rules
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
+
+**Model invocation:** requires a confirmed proposal (`./references/workflow/skill-conventions.md` § *The invocation gate*).
 
 Archive a whole finished task folder through `scripts/task-move.ts`. This skill changes no task content or status and mutates no Git state. No staging, commits, checkout, stash, or `git mv`.
 
@@ -17,7 +18,7 @@ Load no domain pack; filing is domain-independent. Read `./references/workflow/t
 
 **Use when** removing finished or abandoned tasks from their parent's active list.
 
-**Skip when** work is live; finish or abandon it through its lifecycle first. Un-archiving is the user's own move; this skill is one-way. With no canonical task root and no named path, report nothing to archive.
+**Skip when** work is live; finish or abandon it through its lifecycle first. Un-archiving is the user's own move; this skill is one-way.
 
 ## Process
 
@@ -26,7 +27,9 @@ Load no domain pack; filing is domain-independent. Read `./references/workflow/t
 Apply `./references/workflow/task-relocation.md` § *1. Resolve the target task folder*: resolve an exact absolute SRC and refuse task parents. This direction requires a top-level `plan.md`.
 
 - Already archived under `./references/workflow/task-archiving.md`'s whole-path-to-store rule: report it and stop. Recognize the container case-insensitively, including above a grouping directory.
-- With nothing named, list active folders with their plan Status and ask which; do not guess.
+- With nothing named, use the one task this session established. With several, or none, list active folders with their plan Status and ask which. A model-invoked run asks for the task before that listing, which walks every registered root (`./references/workflow/skill-conventions.md` § *The invocation gate*). Do not guess.
+
+Before the move, name the resolved SRC and its Archive destination. A model-invoked run (`./references/workflow/skill-conventions.md` § *The invocation gate*) asks that as its proposal, and nothing moves before the confirmation; a user-invoked run has passed it and moves after the announcement.
 
 ### 2. Run the move
 

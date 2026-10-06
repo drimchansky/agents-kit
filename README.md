@@ -1,8 +1,10 @@
 # Agents Kit
 
-A set of skills, agent definitions, and a task workflow for Claude Code and Codex. One command installs the same kit into both `~/.claude` and `~/.codex`, and every task gets a folder on disk (ticket, context, goals, plan, result) that any later session on either host can pick up, review, or finish. You stop re-explaining a task to each new session, and the rules an agent follows live in one place instead of in scattered prompts.
+My personal set of skills, agent definitions, and a task workflow for Claude Code and Codex. One command installs the same kit into both `~/.claude` and `~/.codex`, and every task gets a folder on disk (ticket, context, goals, plan, result) that any later session on either host can pick up, review, or finish. I stop re-explaining a task to each new session, and the rules an agent follows live in one place instead of in scattered prompts.
 
-- **Two hosts, one install.** `node setup.ts` copies the skills, references, core rules, and native agent definitions into `~/.claude` and `~/.codex`. A rerun reclaims only what the kit installed and leaves your own skills untouched.
+This is a tool I build for myself, not a product. Behavior changes whenever my workflow does: `main` is the only branch, there is no semver and no changelog, and the integrations and defaults follow my own stack. If you want something stable, fork it rather than depend on it.
+
+- **Two hosts, one install.** `node setup.ts` copies the skills, references, core rules, and native agent definitions into `~/.claude` and `~/.codex`. A rerun reclaims only what the kit installed and leaves other skills untouched.
 - **Zero dependencies.** Plain Node 23.6 or newer running `.ts` directly under type stripping. No `package.json`, no build step, no `node_modules`.
 - **Persistent task folders.** A task is `.agents/tasks/<slug>/` holding `ticket.md`, `CONTEXT.md`, `goals.md`, `plan.md`, `result.md`. Plan it in one session, implement it in the next, resume or reconcile it from either host.
 - **36 skills** covering the whole loop: idea, ticket, plan, implement, review, triage, fix, commit, rebase, PR, plus daily statuses, release announcements, proofreading, translation, diagrams, and Notion pages.
@@ -10,7 +12,9 @@ A set of skills, agent definitions, and a task workflow for Claude Code and Code
 
 ---
 
-## Getting started
+## Trying it
+
+These are the steps I run on a fresh machine. They should work elsewhere, but nothing is tested outside my setup.
 
 **Requirements:** Node 23.6 or newer, and Claude Code and/or the Codex CLI.
 
@@ -56,7 +60,7 @@ A set of skills, agent definitions, and a task workflow for Claude Code and Code
 
    It previews the delta to `~/.config/agents-kit/config.json` and writes only after you confirm.
 
-4. To update, pull and rerun the installer:
+4. To update to whatever `main` is today, pull and rerun the installer:
 
    ```sh
    git pull && node setup.ts
@@ -71,7 +75,7 @@ If you only use Claude Code, you can install the kit as a plugin without cloning
 /plugin install agents-kit@agents-kit
 ```
 
-Plugin skills are namespaced, so `review-code` runs as `/agents-kit:review-code`, and the agents load as `agents-kit:reviewer` and `agents-kit:executor`. Each commit on `main` is a new plugin version. Update with `/plugin update agents-kit@agents-kit`, or turn on auto-update for the marketplace in `/plugin`; it starts off for third-party marketplaces. Helper scripts, such as `review-pr-loop`'s dedupe, still need Node 23.6 or newer.
+Plugin skills are namespaced, so `review-code` runs as `/agents-kit:review-code`, and the agents load as `agents-kit:reviewer` and `agents-kit:executor`. Each commit on `main` is a new plugin version, so an update pulls in every change with no release boundary. Update with `/plugin update agents-kit@agents-kit`, or turn on auto-update for the marketplace in `/plugin` if tracking `main` as it moves is acceptable; it starts off for third-party marketplaces. Helper scripts, such as `review-pr-loop`'s dedupe, still need Node 23.6 or newer.
 
 Use one install method per machine. With both `setup.ts` and the plugin in `~/.claude`, every skill and agent is listed twice.
 
@@ -99,7 +103,7 @@ A task's `CONTEXT.md` names a **domain**. That selects a pack under `references/
 
 ## Skills
 
-Each skill is `skills/<name>/SKILL.md`, invoked as `/<name>` in Claude Code and by mentioning `$<name>` in Codex. Nine are gated so the model never invokes them on its own; you have to name them.
+Each skill is `skills/<name>/SKILL.md`, invoked as `/<name>` in Claude Code and by mentioning `$<name>` in Codex. Nine are confirm-gated: you start one by typing its command, or by confirming a proposal the model makes before its first write; on a loose request the model proposes the run and acts only after you confirm.
 
 **Task workflow**
 
@@ -113,26 +117,26 @@ Each skill is `skills/<name>/SKILL.md`, invoked as `/<name>` in Claude Code and 
 - `resume-task` — brief you on a task's state. Read-only.
 - `reconcile-task` — write back into the task folder what the session learned, and recheck cited links.
 - `resume-task-reconcile`, `review-task-reconcile` — the briefing or the review, then the reconcile, in one command.
-- `backlog-task`, `archive-task` — park an unstarted task, or file a finished one. Gated.
+- `backlog-task`, `archive-task` — park an unstarted task, or file a finished one. Confirm-gated.
 
 **Code**
 
-- `implement` — build, fix, or change something directly, without a task folder. Gated.
-- `explore` — walk through code, a library, a protocol, or a concept. Gated.
+- `implement` — build, fix, or change something directly, without a task folder. Confirm-gated.
+- `explore` — walk through code, a library, a protocol, or a concept. Confirm-gated.
 - `verify-issue` — confirm or refute a reported bug.
 - `review-code` — review a PR, branch, commit range, or set of paths. Flags: `-n N` independent reviewers, `-x` cross-vendor second review, `-d` draft a PR description.
 - `review-code-triage-verify` — review, batch the findings by concern, verify each batch in an isolated probe, one verdict per finding.
 - `triage-findings`, `triage-findings-verify` — batch findings you already have, optionally verifying each batch.
-- `fix-findings` — apply a set of findings; confirmed ones automatically, the rest after you approve their diffs. Commits each concern batch; never pushes. Gated.
+- `fix-findings` — apply a set of findings; confirmed ones automatically, the rest after you approve their diffs. Commits each concern batch; never pushes. Confirm-gated.
 - `publish-pr-review` — post `review-code`'s findings to the PR as inline comments, by severity tier.
-- `review-pr-loop` — publish available findings before waiting for CI, selecting all tiers until a full-tier review of yours stands on the PR, from this run or an earlier one, and Critical/Major afterward. Checks for pushes during review and restarts after the new head settles. Uses CI instead of local scripts and approves once a pass is clean with passing checks. Gated.
-- `update-pr-description` — replace a PR body with the description `review-code -d` drafted. Gated.
+- `review-pr-loop` — publish available findings before waiting for CI, selecting all tiers until a full-tier review of yours stands on the PR, from this run or an earlier one, and Critical/Major afterward. Checks for pushes during review and restarts after the new head settles. Uses CI instead of local scripts and approves once a pass is clean with passing checks. Confirm-gated.
+- `update-pr-description` — replace a PR body with the description `review-code -d` drafted. Confirm-gated.
 - `commit` — commit staged changes after inspecting them and running the applicable checks. Never stages, never pushes.
 - `rebase` — rebase onto a confirmed base, or resume a paused rebase, preserving signing.
 
 **Writing**
 
-- `prepare-daily-status` — prepare or refresh a daily update from your daily doc, enriched with Slack, Jira, Granola, GitHub, Notion, Calendar, and an incident tracker; sends or edits Slack messages only on request.
+- `prepare-daily-status` — prepare or refresh a daily update from my daily doc, enriched with Slack, Jira, Granola, GitHub, Notion, Calendar, and an incident tracker; sends or edits Slack messages only on request.
 - `prepare-release-announcement` — draft a production release announcement from task folders, Jira tickets, or release context; posts or edits Slack messages only on request.
 - `proofread` — check a message or document; `-f` also verifies facts.
 - `translate` — translate text between languages.
@@ -143,8 +147,8 @@ Each skill is `skills/<name>/SKILL.md`, invoked as `/<name>` in Claude Code and 
 
 **Kit**
 
-- `init-config` — discover task roots on disk and reconcile them into `~/.config/agents-kit/config.json`. Gated.
-- `maintain` — the monthly ritual: task health, install drift, uncommitted work, leftover worktrees, and agent misbehavior triaged from recent sessions. Report-first. Gated.
+- `init-config` — discover task roots on disk and reconcile them into `~/.config/agents-kit/config.json`. Confirm-gated.
+- `maintain` — the monthly ritual: task health, install drift, uncommitted work, leftover worktrees, and agent misbehavior triaged from recent sessions. Report-first. Confirm-gated.
 
 ---
 
@@ -161,7 +165,7 @@ Two native agent definitions ship with the kit, installed as `agents/*.md` for C
 
 - `CORE_RULES.md` — the domain-neutral rules every workflow skill loads first: scope discipline, ask before assuming, push back when warranted, build only what's asked.
 - `references/workflow/` — the cross-skill methodology: task layout and lifecycle, context schema, execution loop, reconciliation, agent fan-out, probe shapes, reviewer and executor contracts, and the user-facing message contract.
-- `references/engineering/` — the engineering pack: code style, TypeScript, React, CSS, forms, accessibility, performance, security, privacy, testing, verification, review.
+- `references/engineering/` — the engineering pack for the stack I work in: code style, TypeScript, React, CSS, forms, accessibility, performance, security, privacy, testing, verification, review.
 - `references/documentation/` — the documentation pack: rules, verification, ADR and RFC formats, Mermaid cheatsheets.
 - `references/templates/` — copy-ready shapes of the five task files.
 - `references/scripts/` — the CLI and stdout contract of every helper a skill runs at run time.

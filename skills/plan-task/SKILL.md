@@ -1,7 +1,7 @@
 ---
 name: plan-task
 description: Use when asked to plan, design, architect, scope, or break down a feature or change before implementation.
-argument-hint: '[task or feature description, task folder or destination path]'
+argument-hint: "[task or feature description, task folder or destination path; defaults to the session's task]"
 ---
 
 ## Core Rules
@@ -39,7 +39,7 @@ Restate the task, separating explicit requirements from assumptions. Ask about c
 
 ### 2. Resolve the Task Folder and Read CONTEXT.md
 
-Resolve per the **resolve-or-create** rules in `./references/workflow/task-layout.md`; a new folder lands by `./references/workflow/task-destinations.md`. Reuse an existing active folder the slug or path resolves to; several plausible matches → list them and ask. Confirm the slug only when it differs meaningfully from what the user typed. For a new folder, fix its path here but create it, with its `CONTEXT.md`, only once Step 7 keeps one task, so a route to `decompose-task` leaves no stray folder.
+Resolve per the **resolve-or-create** rules in `./references/workflow/task-layout.md`; a new folder lands by `./references/workflow/task-destinations.md`. With no argument and a request that names no other work, use the one task this session established, such as the folder `refine-idea` or `prepare-ticket` just wrote; with several, list them and ask. Otherwise derive the slug from the request, asking when it is unclear whether the request continues the established task. Reuse an existing active folder the slug or path resolves to; several plausible matches → list them and ask. Confirm the slug only when it differs meaningfully from what the user typed. For a new folder, fix its path here but create it, with its `CONTEXT.md`, only once Step 7 keeps one task, so a route to `decompose-task` leaves no stray folder.
 
 For an existing folder, run `./references/workflow/task-layout.md` § *Reading a resolved folder* before drafting goals, including its pre-plan `--repair` path. Report applied mappings and unresolved diagnostics. If `state` is null because no plan exists, inspect `goals.md` and task-local references using the repair diagnostics before assigning new IDs. Under an explicit read-only request, inspect existing goal definitions and references manually; the default CLI needs a plan and cannot validate this pre-plan case. Do not draft from an ambiguous identity or treat a failed repair as valid intake.
 
@@ -140,6 +140,6 @@ The plan starts at `to-do`; `implement-task` flips each `- [ ]` and drives the s
 After writing both files, close the chat with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
 
 - **Done:** `goals.md` and `plan.md` written, each pointing at its file, plus a scaffolded `CONTEXT.md` or the loader's applied repair.
-- **Know:** unresolved loader diagnostics, live-verification targets left pending, a missing `./ticket.md` citation, and an answer to a CONTEXT open question that awaits a reconciler.
+- **Know:** the task's handoff token, unresolved loader diagnostics, live-verification targets left pending, a missing `./ticket.md` citation, and an answer to a CONTEXT open question that awaits a reconciler.
 - **Awaiting you:** goals marked `_(unresolved: …)_` and `## Open Questions` entries that gate a step, pointing at their files.
-- **Next:** `/review-task <token>` for a Large or Complex plan, or one with integration points, shared changes, or new patterns; `/implement-task <token>` otherwise. Both carry the handoff token (`./references/workflow/task-layout.md` § *One task, one flat folder*).
+- **Next:** `/review-task` for a Large or Complex plan, or one with integration points, shared changes, or new patterns; `/implement-task` otherwise. Both resolve the session's task, so the command prints bare and Know carries the handoff token (`./references/workflow/user-facing-messages.md` § *Blocks*).

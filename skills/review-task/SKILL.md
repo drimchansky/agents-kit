@@ -1,7 +1,7 @@
 ---
 name: review-task
 description: Use when asked to review, validate, or sanity-check a task's plan — confirms the direction is right and still in sync with CONTEXT.md, the goals, and current reality, and surfaces any drift between task artifacts (ticket, CONTEXT, goals, plan, result) and the work itself. Writes only proven goal-identifier repairs.
-argument-hint: '[task folder path] [-x (cross-vendor grounding probe)]'
+argument-hint: "[task slug or path; defaults to the session's task] [-x (cross-vendor grounding probe)]"
 ---
 
 ## Core Rules
@@ -17,7 +17,7 @@ Validate a plan against current reality and report feasibility, gaps, and questi
 
 ## Locate the Plan
 
-Resolve the folder using **resolve-or-ask** in `./references/workflow/task-layout.md`; accept a full `plan.md` path directly.
+Resolve the folder using **resolve-current-or-ask** in `./references/workflow/task-layout.md`; accept a full `plan.md` path directly.
 
 Run the loader in `./references/workflow/task-layout.md` § *Reading a resolved folder* first and report its repair, or `structure.diagnostics` from a read-only load. Then read `plan.md`, `goals.md`, and `CONTEXT.md` in full, plus `ticket.md` and `result.md` when present. The plan is the review subject. This whole-file read overrides only the loader's selective-read rule.
 
@@ -179,6 +179,6 @@ List the aspects verified and ready to execute.
 Close the review with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
 
 - **Done:** step verdicts and goal coverage, pointing at **Feasibility Assessment** and **Acceptance Coverage**; drift found, pointing at **Cross-File Drift**; a goal-identifier repair the loader applied.
-- **Know:** what limits the evidence: hand-mapped coverage, unrepaired diagnostics from a read-only load, a skipped or contradicting `Cross-check:`, and research the `Question research:` line counts as skipped.
+- **Know:** the task's handoff token, then what limits the evidence: hand-mapped coverage, unrepaired diagnostics from a read-only load, a skipped or contradicting `Cross-check:`, and research the `Question research:` line counts as skipped.
 - **Awaiting you:** point at **Questions**, which already carries the researched options.
-- **Next:** `/implement-task <token>` when no step needs redesign, `/plan-task <token>` when one does, or `/review-task-reconcile <token>` to write drift and gap corrections back.
+- **Next:** `/implement-task` when no step needs redesign, `/plan-task` when one does, or `/review-task-reconcile` to write drift and gap corrections back.

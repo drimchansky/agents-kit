@@ -2,7 +2,6 @@
 name: implement
 description: Use when asked to implement, build, fix, or change something directly — described in the session or pointing at a file, issue, or diff — with no task folder or plan.
 argument-hint: '[what to implement]'
-disable-model-invocation: true
 ---
 
 ## Core Rules
@@ -10,7 +9,9 @@ disable-model-invocation: true
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. Load the domain pack: take the task's `**Domain:**` (default `engineering`; infer from the request when there's no `CONTEXT.md`) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for (`execution.md`, `verification.md`, …). If the domain has no pack, run the neutral methodology and say so.
 
-Carries out the framed change and reports in chat. The work product is the only durable disk change: write no task-folder files or statuses. Durable plans/results belong to `plan-task` followed by `implement-task`.
+**Model invocation:** requires a confirmed proposal (`./references/workflow/skill-conventions.md` § *The invocation gate*).
+
+Carries out the framed change and reports in chat. The work product is the only durable disk change: write no task-folder files or statuses. Durable plans/results belong to `plan-task` followed by `implement-task`. Each framed item runs through a delegated write-mode executor (`./references/workflow/executor-routing.md` § *The registry and its authorization*).
 
 ## References
 
@@ -32,6 +33,8 @@ State each requested item and its verify criterion before implementation. The fr
 - Keep adjacent work under Noticed but not touching (`./AGENTS.md`).
 - Ask about ambiguity affecting scope; otherwise state the interpretation. Show the frame before work beyond one obvious change.
 - Escalate to plan-task when framing spans several modules, requires approach comparison, or exceeds a handful of items.
+
+The frame is this skill's proposal. A model-invoked run (`./references/workflow/skill-conventions.md` § *The invocation gate*) asks it as one question naming the items and the executor edits they will make, and edits and launches nothing before the confirmation; a user-invoked run has passed it.
 
 ### 2. Ground Truth
 
@@ -84,4 +87,4 @@ Append Noticed but not touching where material, then close with the Handoff bloc
 
 - **Done:** the shipped items and the whole-ask outcome, pointing at **Shipped** and **Asserted**.
 - **Know:** checks not run or still pending, pointing at **Health** and **Delivery**; **Deviations** from the frame; where the uncommitted changes sit.
-- **Next:** `/commit` once the changes are staged, `/review-code` over the branch once committed, or `/plan-task` when **Follow-ups** need a plan.
+- **Next:** `/commit` once the changes are staged, `/review-code` over the branch once committed, or `/plan-task <follow-up>` when **Follow-ups** need a plan, carrying the follow-up as its argument so the command does not resolve the session's task.

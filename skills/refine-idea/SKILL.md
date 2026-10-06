@@ -47,8 +47,8 @@ Run **Phase 1 (Diverge)** and **Phase 2 (Converge)** from `./references/workflow
 Write the one-pager to the resolved folder's `CONTEXT.md`, then close the chat with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
 
 - **Done:** the recommended direction and the weightiest "Not Doing" entry, each pointing at its `CONTEXT.md` section.
-- **Know:** the `CONTEXT.md` path and the slug.
-- **Next:** the one paste-ready command, carrying the handoff token (`./references/workflow/task-layout.md` § *One task, one flat folder*): `/plan-task <slug>` where the slug resolves, `/plan-task <abs-path>/` otherwise.
+- **Know:** the task's handoff token and the `CONTEXT.md` path.
+- **Next:** the one paste-ready command, `/plan-task`, printed bare because it resolves the session's task; Know carries the slug or folder path (`./references/workflow/user-facing-messages.md` § *Blocks*).
 
 Do not drop or paraphrase the `/plan-task` command. The "Not Doing" list is the most valuable part: make trade-offs explicit.
 

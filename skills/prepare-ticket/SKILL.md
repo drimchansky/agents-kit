@@ -47,6 +47,6 @@ Write only to the confirmed destination; do not silently overwrite existing cont
 Then close with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
 
 - **Done:** the ticket written, with its seeded task folder, pointing at **Ticket**.
-- **Know:** inferred details a criterion depends on, pointing at **Assumptions**.
+- **Know:** the seeded task's handoff token, and inferred details a criterion depends on, pointing at **Assumptions**.
 - **Awaiting you:** point at **Open questions**.
-- **Next:** for a seeded task, `/plan-task <slug>`, or `/refine-idea <slug>` if it still needs refinement. Use the resolvable slug or absolute folder path under `./references/workflow/task-layout.md` § *One task, one flat folder*.
+- **Next:** for a seeded task, `/plan-task`, which resolves the session's task, or `/refine-idea <slug>` if it still needs refinement, carrying the resolvable slug or absolute folder path under `./references/workflow/task-layout.md` § *One task, one flat folder*.

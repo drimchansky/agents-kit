@@ -97,7 +97,7 @@ Close the audit with the Handoff block (`./references/workflow/user-facing-messa
 
 ## Applying Fixes (only on explicit request)
 
-Run only after the user saw findings and explicitly requested edits. Ambiguous reactions such as thanks/ok are not edit authorization; ask.
+Run only after the user saw findings and explicitly requested edits. A bare acknowledgement is not that request (`./references/workflow/skill-conventions.md` § *The invocation gate*); ask.
 
 - Map every edit to an approved finding; omit invented or unsupported detail.
 - Rewrite stale prose in place, preserving Confirmed and unrequested sections, voice, and structure.

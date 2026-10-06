@@ -13,7 +13,7 @@ This skill does not load the engineering pack; its own check gate below governs 
 
 Draft the message for what is already staged, scan that change against the guard below, verify it, then commit. A user's request to commit, by `/commit` or in natural language, is the explicit permission `references/engineering/rules.md` requires. Model selection of this skill alone is not. This skill stages nothing, pushes nothing, and creates no branches. Ordinary mode creates a new commit from the staged change; amend mode replaces only the captured latest commit. Tool permissions never widen those limits.
 
-When `implement-task` runs this skill for a checkpoint commit (`./references/workflow/task-delivery.md` § *Checkpoint commits*), the user's task implementation request supplies that permission. The mode is always ordinary. When `fix-findings` runs it for a batch commit (`../fix-findings/SKILL.md` § *Batch commits*), the user's typed invocation is that permission, and the mode is likewise always ordinary. <!-- cold -->
+When `implement-task` runs this skill for a checkpoint commit (`./references/workflow/task-delivery.md` § *Checkpoint commits*), the user's task implementation request supplies that permission. That request arrives by command, in natural language, or by a confirmed proposal that named the checkpoint commits. The mode is always ordinary. When `fix-findings` runs it for a batch commit (`../fix-findings/SKILL.md` § *Batch commits*), the user's invocation, by command or by a confirmed proposal that named a commit per concern batch, is that permission, and the mode is likewise always ordinary. <!-- cold -->
 
 ## Amend mode
 
@@ -70,8 +70,8 @@ Read the preconditions off this snapshot; amend mode rebuilds it.
 
 **Boundary reuse**, only when this session recorded a code boundary or a caller named a manifest. A boundary that passed in this session covers each discovered check whose command its record lists. It does so only when its manifest proves the index holds exactly the bytes that boundary evaluated. Reuse requires both:
 
-- **Its manifest.** A user-typed run takes the `manifest written` line of this session's last recorded code boundary: a path and its id (`./references/engineering/verification.md` § *What a boundary records*). <!-- cold -->
-  That boundary must be green, and no code boundary this session may have recorded a command `not run in-session`. A manifest path in a user-typed argument counts only when it names that same manifest. `git -C <tree> hash-object <manifest>` must still print the recorded id, since a later boundary may overwrite the path (`./references/engineering/boundary-scope.md` § *Reference and delta*). <!-- cold -->
+- **Its manifest.** A user-invoked run (either door of `./references/workflow/skill-conventions.md` § *The invocation gate*) takes the `manifest written` line of this session's last recorded code boundary: a path and its id (`./references/engineering/verification.md` § *What a boundary records*). <!-- cold -->
+  That boundary must be green, and no code boundary this session may have recorded a command `not run in-session`. A manifest path in a user-invoked run's argument counts only when it names that same manifest. `git -C <tree> hash-object <manifest>` must still print the recorded id, since a later boundary may overwrite the path (`./references/engineering/boundary-scope.md` § *Reference and delta*). <!-- cold -->
 - **The helper's proof.** `node <kit-root>/scripts/worktree-merge.ts index <tree> --baseline <manifest> --base HEAD` exits 0, `<tree>` being the repository's top level (`git rev-parse --show-toplevel`). Before the first commit, pass no `--base`. In amend mode, also pass `--base HEAD^1` where HEAD has a parent, since the replacement's change runs from the original parent.
   Resolve `<kit-root>` per `./references/workflow/task-store.md` § *Resolving `<kit-root>`*; CLI contract: `./references/scripts/worktree-merge.md`. <!-- cold -->
 
