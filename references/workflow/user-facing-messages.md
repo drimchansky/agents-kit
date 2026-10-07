@@ -1,6 +1,31 @@
 # User-Facing Messages: Markers, Blocks, and Surface Adapters
 
-The presentation contract for what a person reads: final chat responses, one-line progress updates, GitHub PR review comments, PR descriptions, and paste-ready Jira task drafts. It fixes visual grammar and ordering; for the Handoff block it also fixes what each slot admits. Each skill's Output owns its content and composes the blocks it needs; workflow contracts keep meaning, gates, and evidence rules and cite this file. Questions, approvals, refusals, errors, and internal reviewer, executor, and probe returns are outside it.
+Markers, Blocks, and Surface adapters govern final chat responses, progress updates, PR comments and descriptions, and Jira drafts. They fix visual grammar and ordering; Handoff also fixes what each slot admits. Each skill's Output owns its content. Those sections exclude questions, approvals, refusals, errors, and internal returns. Plain wording has its own applicability below.
+
+## Plain wording
+
+Apply to newly authored prose for people: goals, tickets, `CONTEXT.md`, `result.md`'s Current state, chat, PR text, Slack and Jira drafts, and writing-utility output. This includes questions, approvals, refusals, and errors. It adds no marker or Handoff requirements.
+
+- Before saving or returning a draft, revise its wording under these rules. State the actor's action or observable result directly. Prefer ordinary verbs and literal relationships to nominalizations and unnecessary abstractions.
+- Remove repetition, artificial contrasts, staged emphasis, candor framing, and closing restatements when they add no meaning.
+- Replace structural metaphors with the relationship they describe. Keep necessary technical terms; use context rather than a replacement dictionary.
+- Compare the revised draft with its source. Preserve facts, conditions, permissions, comparisons, uncertainty, negation, thresholds, identifiers, and logical scope. Add no claims or recommendations.
+- Preserve quotations, commands, code, required formats, recorded decisions, delivery identifiers, and explicitly requested tone or language. When adapting source text, preserve its intended tone and simplify wording the request does not require verbatim.
+
+Leave commit messages, kit instruction prose, and raw executor, reviewer, and probe returns unchanged. Text protected by a verbatim-copy rule stays verbatim; § *Finding entry wording* defines the first-report exception for new review findings.
+
+Wording examples; § *Blocks* still governs Handoff structure:
+
+- Handoff Know: “Release is approval-gated; the staging test result is not yet verified.” → “Release requires approval. The staging test result has not been verified.”
+- PR comment: “The retry seam may double-submit on timeout; gate retries on idempotency to protect the payment path.” → “Retries after a timeout may submit the payment twice. Require idempotency before retrying.”
+
+## Finding entry wording
+
+When preparing a new review finding for people, keep the raw return and draft a separate finding under § *Plain wording*. Compare it with its source before accepting the wording: preserve severity, locator, recommendation, impact, certainty, and every distinct claim. Change wording without inferring a new fix or cause.
+
+Prepare once before triage, verification, or publication, even when chat display waits. Apply this also to candidates first raised during verification, before the session verifies and adopts them. Preparation assigns no verdict and adopts no candidate.
+
+Downstream copy rules preserve the prepared text. Their existing marker, corroboration, and verdict transformations still apply. Existing findings imported from a report, PR, file, or pasted list retain their wording.
 
 ## Markers
 
@@ -22,7 +47,7 @@ Each item carries exactly one marker, at its start. A finding whose source suppl
 ## Blocks
 
 - **Headline.** Optional. One sentence, outcome first.
-- **Finding entry.** The marker, the locator in backticks (`file:line`, or the locator the workflow names), the finding text with its recommendation and impact verbatim, then the verdict or note when the workflow carries one. One entry per issue, never collapsed, ordered by severity where the workflow fixes no other order. Example: 🟡 Major `src/export.ts:42`: rows load into memory before streaming; stream from the cursor; large tenants time out. Confirmed: the loop awaits `toArray()`.
+- **Finding entry.** The marker, the locator in backticks (`file:line`, or the locator the workflow names), the text retained under § *Finding entry wording* with its recommendation and impact verbatim, then the verdict or note when the workflow carries one. One entry per issue, never collapsed, ordered by severity where the workflow fixes no other order. Example: 🟡 Major `src/export.ts:42`: rows load into memory before streaming; stream from the cursor; large tenants time out. Confirmed: the loop awaits `toArray()`.
 - **Progress line.** Launched or still-running work takes `🔵 In progress: <action> <target>`. Example: `🔵 In progress: reviewer on abc1234...HEAD`. Collected work takes `✅ Complete: <what finished>`.
 - **Fact ledger.** One line per checked claim, each claim once, quoted: `✅ Verified: "<claim>" (<evidence>)`, `❌ Incorrect: "<claim>" is <corrected fact> (<evidence>)`, `⚠️ Unverified: "<claim>" (<missing evidence>)`.
 - **Handoff.** Chat only: the last element of the final response that renders the skill's Output, whatever ended the run. A response that only asks a question, requests approval, refuses, or reports an error renders no Output and carries none. A `**Handoff**` lead line opens it, then one `- **<Slot>:**` item per non-empty slot, in the order Done, Know, Awaiting you, Next. Omit an empty slot. The skill names what fills each slot. A skill that another skill runs as a step prints no block; the run the user invoked composes one for the whole run, a composite's pipeline included (`./skill-conventions.md` § *Adding a behavior*).

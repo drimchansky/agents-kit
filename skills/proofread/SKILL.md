@@ -7,6 +7,7 @@ argument-hint: '[-f (fact verification)] [message or file path]'
 ## Core Rules
 
 Read and apply `./AGENTS.md` § *Ask Before Assuming*.
+Read and apply `./references/workflow/user-facing-messages.md` § *Plain wording* only.
 
 # Proofread
 

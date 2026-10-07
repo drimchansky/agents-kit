@@ -170,7 +170,7 @@ Two native agent definitions ship with the kit, installed as `agents/*.md` for C
 - `references/templates/` — copy-ready shapes of the five task files.
 - `references/scripts/` — the CLI and stdout contract of every helper a skill runs at run time.
 
-Inside an installed skill, `./AGENTS.md` links to `CORE_RULES.md` and `./references` links to the installed `references/`, so a skill reads the same files wherever it runs. The six lean utilities, `create-notion-page`, `prepare-daily-status`, `prepare-release-announcement`, `proofread`, `review-note`, and `translate`, load only the core's Ask Before Assuming section. Four ship the `./AGENTS.md` link alone. `proofread` also links `./references` for the shared user-facing message contract, and `prepare-release-announcement` for task discovery and group context.
+Every installed skill links `./AGENTS.md` to `CORE_RULES.md` and `./references` to the installed references. Lean utilities read only Ask Before Assuming from the core, plus Plain wording from the message contract. [Domain-pack load policy](./references/workflow/domain-packs.md#which-skills-resolve-a-domain-vs-load-a-fixed-pack) defines each skill's reads.
 
 ---
 

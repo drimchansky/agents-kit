@@ -7,6 +7,7 @@ argument-hint: '[what the page should contain] [optional destination: page or da
 ## Core Rules
 
 Read and apply `./AGENTS.md` § *Ask Before Assuming*.
+Read and apply `./references/workflow/user-facing-messages.md` § *Plain wording* only.
 
 # Create Notion Page
 

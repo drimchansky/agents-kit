@@ -10,6 +10,7 @@ Quality bar for the goals in `goals.md`, each a `G<n>` bullet (`- G1 — <outcom
 - [ ] **Singular**: one observable claim per bullet
 - [ ] **Bounded**: the reader can tell what is in and out without guessing
 - [ ] **Stated as behavior**: name what the actor can do or observe before the implementation detail; "GET /foo returns 200 with `{shape}`" beats "the endpoint exists"
+- [ ] **Plain wording**: states the action and conditions directly under `./user-facing-messages.md` § *Plain wording*. Compare the goal with its source. Retain each condition and technical qualifier in the goal when shortening its wording.
 
 Keep thresholds, compatibility obligations, and failure behavior in the goal as acceptance details. Put commands, typecheck assertions, fixture setup, and test recipes in the plan step's `Verify`, not in the goal. A document goal names what a reader can decide or use from the document, with required content and format as acceptance details.
 
@@ -41,6 +42,12 @@ For engineering tasks, the deployment and browser gate in `../engineering/accept
 - "Add a `formatCsv()` helper" → a plan step, not a goal; restate as the outcome it delivers
 - "The client spec records both flag values" → "Callers' PnL selection reaches every positions request as the chosen `include_pnl` boolean"; put the two-call assertion in `Verify`
 - "The ADR has numbered sections" → "Reviewers can decide the Phase-1 consumption contract from the ADR, including its wire shape, coverage, and named open items"; keep required format beside that outcome
+
+### Plain wording examples
+
+- "The callers' positions-response surface preserves the `include_pnl=false` PnL-exclusion boundary." → "Callers receive no PnL in positions responses when `include_pnl=false`."
+- "Operators' release authority is gated on p95 export latency under 2s for the largest tenant in staging." → "Operators may release only after p95 export latency is under 2s for the largest tenant in staging."
+- "Reviewers can distinguish the unverified timeout-to-duplicate-payment causal path in the ADR from a confirmed failure." → "Reviewers can distinguish the ADR's unverified claim that a timeout may cause duplicate payments from a confirmed failure."
 
 ## Common Mistakes
 

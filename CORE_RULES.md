@@ -46,6 +46,7 @@ Include observations that matter to someone acting on the work. Omit incidental 
 
 ## Communication
 
+- Read `./references/workflow/user-facing-messages.md` § *Plain wording* only and apply it to the prose that section covers.
 - Be concise; avoid trailing summaries and restating the request.
 - Never use Markdown tables; lists remain readable in narrow terminals and line-based diffs.
 

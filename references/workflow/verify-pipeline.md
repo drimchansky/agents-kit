@@ -32,6 +32,8 @@ Execute the sibling review skill end to end against the object its Setup resolve
 
 The adopt, spot-check, and final-verdict steps do not run. The phase holds every finding the standing returns carried, pooled by location and deduped by distinct claim per `./agent-fanout.md` § *Merge contract*, with its `cited by k/N` marker where more than one reviewer ran. Forward that set with its drop record, never the first return alone; the drops land on the `Review pass:` line. The `-x` probe's verify-before-adopt step is suppressed the same way: its `Cross-check:` line is recorded and its novel candidates reach the triage phase as candidates. Each candidate takes exactly one verdict in the verify phase.
 
+The review skill's **Prepare finding wording** still runs before triage, including for inline findings and `-x` candidates (`./user-facing-messages.md` § *Finding entry wording*). Forward the prepared findings; retain raw reviewer and probe returns separately.
+
 **No findings from a usable review pass** makes the triage and verify phases vacuous: skip them and render **Batches** as `none`, its Verified line reading `Verified: no findings to verify`.
 
 ### The triage phase
@@ -46,7 +48,7 @@ Each probe prompt follows the verify shape, carrying the batch's findings verbat
 
 ## Merge and degrade
 
-Merge per the fan-out merge contract. **Not an issue** makes the finding **Withdrawn**; a confirmation leaves it **Confirmed**. Where the findings came from the session's own review, re-check the spot before accepting a **Not an issue**. On rejection, the finding takes the verdict the re-check supports: **Confirmed**, or **Inconclusive** with what is missing. Either verdict carries a note on what the probe missed. Never silently drop either way. A candidate the probe raises on its own is verified against the same review object before adoption, then enters its batch's zone with its verdict. A **Confirmed** verdict the session assigns carries the root cause and fix options from its own re-check.
+Merge per the fan-out merge contract. **Not an issue** makes the finding **Withdrawn**; a confirmation leaves it **Confirmed**. Where the findings came from the session's own review, re-check the spot before accepting a **Not an issue**. On rejection, the finding takes the verdict the re-check supports: **Confirmed**, or **Inconclusive** with what is missing. Either verdict carries a note on what the probe missed. Never silently drop either way. Prepare a candidate first raised by a verification probe under `./user-facing-messages.md` § *Finding entry wording*. Verify that prepared claim against the same review object before adoption, then enter it in its batch's zone with its verdict. A **Confirmed** verdict the session assigns carries the root cause and fix options from its own re-check.
 
 **Degrade:** a failed or dead verify probe never blocks the pipeline: verify that batch inline by the same `verify-issue` protocol and mark its verdicts `verified inline (probe failed: <reason>)`. A called-off batch (the user's decision) is marked `verified inline (probe called off)`. An explicit policy refusal follows `../engineering/security.md` § *Review Validation Boundaries* instead: preserve completed evidence, do not route the refused validation through the inline fallback, and mark an affected finding **Inconclusive** when the returned evidence establishes what is missing, otherwise **Unverified** with only the exact error code and message; continue independent batches.
 

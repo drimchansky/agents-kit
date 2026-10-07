@@ -11,7 +11,7 @@ A ticket names the functional output required and what a user, caller, or operat
 - **Self-contained.** No "as discussed", no reference to anything visible only in the originating session. Spell out names, paths, and terms, or link them.
 - **Outcome-oriented.** "User can export the current filter as CSV" is the output; "add a `formatCsv()` helper" is a mechanism for the plan. Internal work may name an operator outcome. Prescribe an implementation only when the requester did.
 - **Minimal.** Context is the smallest *why* that makes the work make sense. Link a spec rather than pasting it. Cut any sentence that does not help the reader act.
-- **Criteria are testable.** Each acceptance criterion is one observable outcome in a plain sentence, held to `./acceptance-criteria.md`.
+- **Criteria are testable.** Each acceptance criterion is one observable outcome in a plain sentence, meeting `./acceptance-criteria.md` § *Each goal is*, including Plain wording.
 - **Criteria are plain bullets.** Write each acceptance criterion as a `-` list item, never a `- [ ]` task checkbox: criteria state outcomes, not progress.
 - **Only what's asked.** Capture the scope as described. A genuine gap is a question for the requester, not a guessed line item.
 - **Lists, never tables.** Write the ticket in the language of the request.
