@@ -73,6 +73,14 @@ _Updated: YYYY-MM-DD_
 
 ---
 
+## Final implementation commit — YYYY-MM-DD
+
+**Health:** <link to the final implementation boundary's owning section; record shared evidence once>
+**Commit:** <SHA `<sha>`; `none — no task changes`; `failed — <reason>`; or `not run — final health failed`; omit this section when final commits were not authorized>
+**Notes:** <failure, signing hand-over, or dated resume settlement; otherwise omit>
+
+---
+
 ## Acceptance
 
 **Verified against:** [./goals.md](./goals.md)

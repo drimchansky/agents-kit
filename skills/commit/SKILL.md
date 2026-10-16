@@ -13,7 +13,7 @@ This skill does not load the engineering pack; its own check gate below governs 
 
 Draft the message for what is already staged, scan that change against the guard below, verify it, then commit. A user's request to commit, by `/commit` or in natural language, is the explicit permission `references/engineering/rules.md` requires. Model selection of this skill alone is not. This skill stages nothing, pushes nothing, and creates no branches. Ordinary mode creates a new commit from the staged change; amend mode replaces only the captured latest commit. Tool permissions never widen those limits.
 
-When `implement-task` runs this skill for a checkpoint commit (`./references/workflow/task-delivery.md` § *Checkpoint commits*), the user's task implementation request supplies that permission. That request arrives by command, in natural language, or by a confirmed proposal that named the checkpoint commits. The mode is always ordinary. When `fix-findings` runs it for a batch commit (`../fix-findings/SKILL.md` § *Batch commits*), the user's invocation, by command or by a confirmed proposal that named a commit per concern batch, is that permission, and the mode is likewise always ordinary. <!-- cold -->
+When `implement-task` runs this skill for a checkpoint or final commit (`./references/workflow/task-delivery.md` § *Checkpoint and final commits*), the user's task implementation request supplies that permission. That request arrives by command, in natural language, or by a confirmed proposal that named the applicable commit gate. The mode is always ordinary. When `fix-findings` runs it for a batch commit (`../fix-findings/SKILL.md` § *Batch commits*), the user's invocation, by command or by a confirmed proposal that named a commit per concern batch, is that permission, and the mode is likewise always ordinary. <!-- cold -->
 
 ## Amend mode
 
@@ -77,7 +77,7 @@ Read the preconditions off this snapshot; amend mode rebuilds it.
 
 On any other outcome, or with the helper unavailable, reuse covers nothing. Record the reuse in step 4 as `reused boundary <manifest>`, with that boundary's commands and scopes, beside the checks the gate runs.
 
-When a caller runs this skill, it passes the manifest's path and id in the argument (a checkpoint commit, `./references/workflow/task-delivery.md` § *Checkpoint commits*; a `fix-findings` batch commit, `../fix-findings/SKILL.md` § *Batch commits*). A caller's boundary may carry a command `not run in-session`, since its checkpoint record or fix-findings report already names it with its CI carrier or `uncovered`. <!-- cold -->
+When a caller runs this skill, it passes the manifest's path and id in the argument (a checkpoint or final commit, `./references/workflow/task-delivery.md` § *Checkpoint and final commits*; a `fix-findings` batch commit, `../fix-findings/SKILL.md` § *Batch commits*). A caller's boundary may carry a command `not run in-session`, since its task result or fix-findings report already names it with its CI carrier or `uncovered`. <!-- cold -->
 
 Run every applicable test, lint, formatting, typecheck, build, and other required check that reuse leaves uncovered, in non-watch, non-fixing mode: the formatter's check mode, never `--write` or `--fix`, and never update snapshots or stage a check's output; leave the runner's cache on (`./references/engineering/boundary-scope.md` § *Never disable the runner's cache*). A configured applicable command that is missing, cannot run, or exits non-zero blocks both commit and hand-over; report it and stop with the message file kept.
 
