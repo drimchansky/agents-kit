@@ -26,6 +26,7 @@ Scattered flag conditionals suggest a misclassified phase. A modal flag modifies
 ### Standalone protocols
 
 - `run-knowledge-session` — selection, reading, discussion, note corrections, and topic discovery form one learning session. Its stages interleave without complete sibling-skill phase outputs.
+- `squash-push` — captures one rewrite range and remote expectation for squashing and publishing. Both mutations depend on that inspected state, without a complete sibling-skill output between them.
 
 ### Composites — sequential phases
 
@@ -92,14 +93,14 @@ Skills that gate their own write another way stay off the roster:
 
 - `publish-pr-review` offers counted severity tiers, including comment counts and posting nothing. Its selection gates the PR write, except under `review-pr-loop`, whose own gate carries that consent.
 - `create-notion-page` drafts and creates a parentless page in the user's Private section, visible only to them and cheap to delete. It shares nothing and changes no permissions.
-- `commit` and `rebase` use the explicit-request authorization below.
+- `commit`, `rebase`, and `squash-push` use the explicit-request authorization below.
 - `prepare-daily-status` drafts in chat; an explicit send, update, or Slack-review request authorizes its matching Slack write. Selecting the skill does not authorize delivery.
 - `prepare-release-announcement` prepares chat copy and requires a user request for Slack delivery or revision. Its drafting capability remains discoverable.
 - `prepare-epic` drafts to a confirmed file. An explicit push request authorizes creating the tracker epic; selecting the skill does not authorize that write.
 
 Other skills produce local work or chat output, or preview their own write, as `decompose-task` does.
 
-`skills/commit/SKILL.md` and `skills/rebase/SKILL.md` require an explicit request for their Git operation, including natural language. Skill selection alone authorizes neither write. An explicit request to implement an engineering task grants checkpoint and final commits under `./task-delivery.md` § *Checkpoint and final commits*; through the second door, only the commit gates a proposal named. When `implement-task` runs `commit` there, that request is the explicit request `commit` requires. A `fix-findings` run grants concern-batch commits only under `skills/fix-findings/SKILL.md` § *Batch commits*. There, the invocation through either door is the explicit request `commit` requires. Through the second door, the proposal must have named the batch commits. Those sanctions change nothing on this roster.
+`skills/commit/SKILL.md`, `skills/rebase/SKILL.md`, and `skills/squash-push/SKILL.md` require an explicit request for their Git operations, including natural language. Skill selection alone authorizes none of those writes. An explicit request to implement an engineering task grants checkpoint and final commits under `./task-delivery.md` § *Checkpoint and final commits*; through the second door, only the commit gates a proposal named. When `implement-task` runs `commit` there, that request is the explicit request `commit` requires. A `fix-findings` run grants concern-batch commits only under `skills/fix-findings/SKILL.md` § *Batch commits*. There, the invocation through either door is the explicit request `commit` requires. Through the second door, the proposal must have named the batch commits. Those sanctions change nothing on this roster.
 
 An open skill using invocation as consent states the user/model split beside that permission. Apply `./reconciliation.md` § *Consent model: findings apply, the record carries them* for reconcilers, or `./executor-routing.md` § *The registry and its authorization* for write-mode consumers.
 
