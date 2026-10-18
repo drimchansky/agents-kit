@@ -42,9 +42,11 @@ The slug is 2–5 lowercase kebab-case words capturing the gist (`weekly-digest-
 
 Run **Phase 1 (Diverge)** and **Phase 2 (Converge)** from `./references/workflow/ideation.md`, then Phase 3 below. Testable goals are `plan-task`'s, not written here.
 
+Show an **Open questions** list at the end of each substantive refinement reply, except for Phase 3's Handoff ordering. Carry forward all unresolved questions, removing answered ones and adding newly surfaced ones. List blockers first. When empty, write `Open questions: None.`
+
 ### Phase 3 — Sharpen
 
-Write the one-pager to the resolved folder's `CONTEXT.md`, then close the chat with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
+Write the one-pager to the resolved folder's `CONTEXT.md`. Repeat the Open questions list immediately before the required Handoff block that closes the chat (`./references/workflow/user-facing-messages.md` § *Blocks*):
 
 - **Done:** the recommended direction and the weightiest "Not Doing" entry, each pointing at its `CONTEXT.md` section.
 - **Know:** the task's handoff token and the `CONTEXT.md` path.
