@@ -9,7 +9,7 @@ Read [CORE_RULES.md](./CORE_RULES.md) first. Apply its shared rules before task-
 Keep run-time prose focused on the actions a frontier model needs. Remove these four classes when editing skills and references:
 
 1. **Weak-model scaffolding.** Delete Don't Rationalize, Verification, Red flags, and CRITICAL blocks. Preserve each protocol invariant in the step it guards. Keep the Core Rules load block and contract sections with longer titles, such as Verification cadence.
-2. **Rationale and design history.** Cut explanatory paragraphs, audit history, and mirror commentary. Defaults retain a one-clause reason. Maintainer rationale stays with its owner: `scripts/AGENTS.md` for a helper, `tests/AGENTS.md` for a suite, § *Source contracts* for the installer and shared conventions. Record any missing mirror obligation under Consumer lists.
+2. **Rationale and design history.** Cut explanatory paragraphs, audit history, and mirror commentary. Maintainer rationale stays with its owner: `scripts/AGENTS.md` for a helper, `tests/AGENTS.md` for a suite, § *Source contracts* for the installer and shared conventions. Record any missing mirror obligation under Consumer lists.
 3. **Defensive edge enumeration.** Replace branch lists with their invariant. Keep a branch when omitting it risks a wrong write, Git mutation, deletion, or false report.
 4. **Ownership and citation plumbing.** Remove ownership preambles and loading commentary. Put the relevant link or section pointer beside its action; retain cold markers.
 

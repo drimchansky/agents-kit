@@ -20,9 +20,8 @@ Applies to every diff. Comments the diff adds or edits are held to `code-style.m
 
 ### Abstraction Justification
 
-- **Premature extraction:** under ~20 lines rarely needs its own module. Inline until a second or third consumer proves it, unless the unit owns a boundary such as state, hooks, or lifecycle (`react.md` → Components).
+- **Premature extraction:** apply `../../CORE_RULES.md` → Build Only What's Asked. For component boundaries, consult `react.md` → Components.
 - **Wrapper types:** aliases that re-wrap a library's types without adding information.
-- **One-use helpers:** functions extracted for "reusability" but called from one place.
 
 ### Complexity Signals
 

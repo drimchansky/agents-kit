@@ -6,7 +6,7 @@
 
 ## Comments
 
-Prefer fewer comments because restatements drift. Apply prohibitions as invariants and preferences with judgment to new/touched comments regardless of existing density.
+Prefer fewer comments. Apply prohibitions as invariants and preferences with judgment to new/touched comments regardless of existing density.
 
 - [ ] Prefer clear code/names, types, runtime checks, tests, and fixtures over implementation comments.
 - [ ] Comment only non-obvious current constraints: security/concurrency/performance, protocol/platform/API quirks, units/formats, external limits, surprising trade-offs. Explain why and the prevented failure.
@@ -17,7 +17,7 @@ Prefer fewer comments because restatements drift. Apply prohibitions as invarian
 - [ ] Links: official docs/enduring public resources/versioned repo content; pin canonical source.
 - [ ] No outside-repo internal/discussion links or ticket codes (Notion/Jira/wikis/public/private issue/PR threads); summarize inline.
 - [ ] Update/remove comments invalidated or obsoleted by changed behavior; no unrelated comment audits.
-- [ ] Comment-only findings require material correctness/security/API-compatibility/maintenance misinformation about changed code; verbosity/style alone never qualifies.
+- [ ] Review comment-only findings under `review.md` → Touched Comments.
 - [ ] Exceptions: public-API docs, required legal/generated markers, tool directives. Keep accurate/minimal; explain non-obvious suppressions. API docs stay on exports (`typescript.md` → Naming).
 - [ ] No commented-out code.
 
