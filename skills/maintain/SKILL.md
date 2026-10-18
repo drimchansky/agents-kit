@@ -120,7 +120,7 @@ Use paths for grouped tasks whose slugs cannot resolve in an unregistered canoni
 
 ## Phase 4 — Session analysis (Claude + Codex logs)
 
-Inspect recent session signals: refused calls, sandbox/hook blocks, schema rejection, retry loops, and interruptions. The fixed corpora are `~/.claude/projects` and `~/.codex/sessions`, not arguments or questions. Report a missing corpus as an uninstalled host. Reads are detection-only.
+Inspect recent tool signals and conversational friction, including user corrections without tool failures. The fixed corpora are `~/.claude/projects` and `~/.codex/sessions`, not arguments or questions. Report a missing corpus as an uninstalled host. Reads are detection-only.
 
 **Window.** Read the single ISO date in `~/.local/state/agents-kit/.maintain-last-run`. If absent, empty, or unparseable, use 30 days before today. Report the start date and its source.
 
@@ -130,18 +130,22 @@ Inspect recent session signals: refused calls, sandbox/hook blocks, schema rejec
 node <kit-root>/scripts/session-triage.ts --since <window-start> ~/.claude/projects ~/.codex/sessions
 ```
 
-Apply `./references/scripts/session-triage.md`; use its ranking rather than recomputing it. Leave `--top` at its default. `flagged` is the ranked top slice; `remainderPaths` names the remainder. If Node or the helper is absent, report the skipped phase.
+Apply `./references/scripts/session-triage.md`; use its grouped `flagged` and `sampled` selections. Leave `--top` at its default. Report the helper's bounds and omissions. If Node or the helper is absent, report the skipped phase.
 
 Compute kit share from `sessions`, expanding `~` in the resolved kit root. A project equals that root, starts with that root plus `/`, or sits under `<kit-root>.worktrees/` to count as kit work. Everything else, including `null`, counts elsewhere. Worktree placement follows `./references/workflow/task-delivery.md` § *Branch and worktree creation*.
 
-**Deep-read.** Launch one read-only probe for each emitted `flagged` session under `./references/workflow/agent-fanout.md` and `./references/workflow/probe-engines.md`. Do not widen the list. Apply two bindings:
+**Deep-read.** Launch one read-only probe for each `flagged` or `sampled` conversation under `./references/workflow/agent-fanout.md` and `./references/workflow/probe-engines.md`. Supply every member path; do not widen the selection. Apply these bindings:
 
 - Use only the **native** engine. Never send transcripts through a cross-vendor probe; they must stay with the machine's configured vendor.
-- Supply the absolute transcript path, matched classes and counts, and demand cited findings. Each finding names the misbehavior, what failed, minimal evidence, and a suggested kit fix only when a kit contract caused it. Before returning, replace credentials, secrets, tokens, PII, proprietary payloads, and sensitive path components with `[redacted]`. When redaction erases the useful signal, cite the record/line and paraphrase. The parent checks sanitization again before preview, chat, or file output. A probe finding nothing actionable returns `benign`.
+- Supply the absolute paths, evidence locators, classes, candidate kinds, diagnostics, and selection source. These are review hypotheses.
+- Read the user's request, prior authorization and decisions, assistant response, subsequent recovery, and eventual outcome. Include relevant context before the window. Ignore copied fork history as a new user intervention.
+- Classify each reviewed episode as kit-rule defect, execution mistake, environment limitation, expected decision, or already fixed. Cite the governing kit rule for a kit-rule defect. Preserve uncertainty when context cannot establish a verdict.
+- A phrase, clarification, or recovered tool error alone establishes no failure. Identify an actual deviation, its consequence, and whether it still needs action.
+- Demand cited findings with minimal evidence and a suggested kit fix only when a kit contract caused it. Before returning, replace credentials, secrets, tokens, PII, proprietary payloads, and sensitive path components with `[redacted]`. When redaction erases the useful signal, cite the record/line and paraphrase. The parent checks sanitization again before preview, chat, or file output. A probe finding nothing actionable returns `benign` with its classification; unresolved context returns `uncertain`.
 
-Name every unread flagged session by path: probes without a finding or benign verdict, including failed or missing returns, plus every `remainderPaths` entry. Report the script's `remainder` count; do not silently cap the report.
+Name every unread selected conversation's member paths: failed or missing probe returns, plus every `remainderPaths` entry. Report uncertain reviews separately. Report `remainder` as conversation groups and `sampleOmitted` as unreviewed sample-eligible groups; do not silently cap paths or claim complete conversational coverage.
 
-**Gate — write the findings file.** Preview the findings themselves: class, session, sanitized evidence, and suggested fix. Refuse the write until every excerpt passes the parent's redaction check. Offer one file, `~/.local/state/agents-kit/session-findings-YYYY-MM-DD.md`, with today's date, the window, findings, and benign/remainder counts. Check existence first; confirmation explicitly authorizes overwrite when the file already exists.
+**Gate — write the findings file.** Preview the findings themselves: classification, conversation paths, sanitized evidence, and suggested fix. Refuse the write until every excerpt passes the parent's redaction check. Offer one file, `~/.local/state/agents-kit/session-findings-YYYY-MM-DD.md`, with today's date, the window, findings, review outcomes, uncertainty, and remainder/sample omissions. Check existence first; confirmation explicitly authorizes overwrite when the file already exists.
 
 On confirmation, create the state directory if needed and write only that file. Declining writes no findings file; findings still appear in the gate and Output.
 
@@ -173,11 +177,11 @@ Use lists, not tables. Confine writes to the resolved kit/task roots, listed lin
 - **Worktrees:** each husk's path or `no worktree (branch only)`, branch, merge proof or `terminal, unmerged (report only)`, and outcome. Use removed, declined, partially removed with surviving branch, or not removable with reason. Include out-of-scope and ambiguous entries, naming competing folders; report none when no source yields a husk.
 - **Active kit tasks:** Phase 3's list for handoff, without analysis.
 - **Sessions:** window, findings, or skipped reason.
-  - `window`: start/date source, scanned and flagged counts; non-zero skippedUnknownRecords; unreadable transcript/directory paths; unrecognized paths; missing corpora.
-  - `kit share`: `N of M sessions ran in the kit checkout, R elsewhere (P%)`. N comes from the project comparison, M is scanned, R is M − N, and P is kit percentage.
-  - `findings`: one entry per actionable deep-read session, with host/path, classes/counts, sanitized excerpt or cited paraphrase, and suggested fix. Use `no kit fix — one-off` when appropriate.
-  - `triage-flagged-but-benign`: every deep-read benign session.
-  - `remainder`: paths of failed/missing probe returns and beyond-top sessions, with the script's remainder count.
+  - `window`: start/date source, scanned files, recognized conversation groups, flagged and sampled counts; telemetry count and diagnostics by kind/path/line; unreadable transcript/directory paths; unrecognized paths; missing corpora. Report unknown and malformed records distinctly from telemetry. Qualify uncertainty instead of reporting a clean scan.
+  - `kit share`: `N of M transcript files ran in the kit checkout, R elsewhere (P%)`. N comes from the project comparison, M is scanned, R is M − N, and P is kit percentage.
+  - `findings`: one entry per actionable conversation, with classification, host/member paths, classes/candidates, sanitized excerpt or cited paraphrase, consequence, and suggested fix. Use `no kit fix — execution mistake` or `no kit fix — environment limitation` when appropriate.
+  - `review outcomes`: every benign or uncertain conversation, selection source, classification, and cited reason. Keep expected decisions and already-fixed episodes visible without presenting them as open kit defects.
+  - `remainder`: all member paths of failed/missing probe returns and beyond-top groups, with the helper's remainder count and sampleOmitted count. Distinguish completed uncertain reviews from unread work.
   - `findings file`: written path or declined, nothing written.
   - `marker`: updated date or not updated with skipped/partial-read reason.
 - **Deferred (not yet wired):** memory GC, including deduplication of memory silos and the `MEMORY.md` index, awaits a procedure. Run no store-index refresh; no standing listing artifact exists (`./references/workflow/task-store.md` § *Store-level artifacts*).
