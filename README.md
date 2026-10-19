@@ -7,7 +7,7 @@ This is a tool I build for myself, not a product. Behavior changes whenever my w
 - **Two hosts, one install.** `node setup.ts` copies the skills, references, core rules, and native agent definitions into `~/.claude` and `~/.codex`. A rerun reclaims only what the kit installed and leaves other skills untouched.
 - **Zero dependencies.** Plain Node 23.6 or newer running `.ts` directly under type stripping. No `package.json`, no build step, no `node_modules`.
 - **Persistent task folders.** A task is `.agents/tasks/<slug>/` holding `ticket.md`, `CONTEXT.md`, `goals.md`, `plan.md`, `result.md`. Plan it in one session, implement it in the next, resume or reconcile it from either host.
-- **38 skills** covering the whole loop: idea, ticket, plan, implement, review, triage, fix, commit, rebase, squash, PR, plus daily statuses, release announcements, knowledge sessions, proofreading, translation, diagrams, and Notion pages.
+- **39 skills** covering the whole loop: idea, ticket, plan, implement, review, triage, fix, commit, rebase, squash, PR, plus daily statuses, release announcements, meeting-notes sync, knowledge sessions, proofreading, translation, diagrams, and Notion pages.
 - **Domain packs.** Methodology is domain-neutral; engineering and documentation rules load as packs from `references/<domain>/`, and a new domain is a sibling directory, not a skill rewrite.
 
 ---
@@ -103,7 +103,7 @@ A task's `CONTEXT.md` names a **domain**. That selects a pack under `references/
 
 ## Skills
 
-Each skill is `skills/<name>/SKILL.md`, invoked as `/<name>` in Claude Code and by mentioning `$<name>` in Codex. Nine are confirm-gated: you start one by typing its command, or by confirming a proposal the model makes before its first write; on a loose request the model proposes the run and acts only after you confirm.
+Each skill is `skills/<name>/SKILL.md`, invoked as `/<name>` in Claude Code and by mentioning `$<name>` in Codex. Ten are confirm-gated: you start one by typing its command, or by confirming a proposal the model makes before its first write; on a loose request the model proposes the run and acts only after you confirm.
 
 **Task workflow**
 
@@ -138,6 +138,7 @@ Each skill is `skills/<name>/SKILL.md`, invoked as `/<name>` in Claude Code and 
 **Writing**
 
 - `prepare-daily-status` — prepare or refresh a daily update from my daily doc, enriched with Slack, Jira, Granola, GitHub, Notion, Calendar, and an incident tracker; sends or edits Slack messages only on request.
+- `sync-meeting-notes` — archive past meetings with their Granola summaries and create prep notes for upcoming Calendar events in a meeting-notes folder. Confirm-gated.
 - `prepare-release-announcement` — draft a production release announcement from task folders, Jira tickets, or release context; posts or edits Slack messages only on request.
 - `proofread` — check a message or document; `-f` also verifies facts.
 - `translate` — translate text between languages.

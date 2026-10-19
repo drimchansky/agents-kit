@@ -27,6 +27,7 @@ Scattered flag conditionals suggest a misclassified phase. A modal flag modifies
 
 - `run-knowledge-session` — selection, reading, discussion, note corrections, and topic discovery form one learning session. Its stages interleave without complete sibling-skill phase outputs.
 - `squash-push` — captures one rewrite range and remote expectation for squashing and publishing. Both mutations depend on that inspected state, without a complete sibling-skill output between them.
+- `sync-meeting-notes` — archiving past meetings and creating incoming notes share one resolved folder, its naming and pairing rules, and one proposal covering both write sets. Both phases feed one Report, without a complete sibling-skill output between them.
 
 ### Composites — sequential phases
 
@@ -84,6 +85,7 @@ A sweep beyond the current project, across registered roots or into installed st
 - `review-pr-loop` — a publishing write with no preview of its own; the proposal is its § *Setup*.
 - `archive-task` — a filing write with no preview of its own; the proposal is its § *1. Resolve the target task folder*.
 - `backlog-task` — a filing write with no preview of its own; the proposal is its § *1. Resolve the target task folder*.
+- `sync-meeting-notes` — a filing write with no preview of its own; the proposal is its § *Resolve the folder*.
 - `maintain` — a sweep beyond the current project; the proposal is its § *Setup — resolve targets*.
 - `init-config` — a sweep beyond the current project; the proposal is its § *2. Discover the roots on disk*.
 
