@@ -41,7 +41,7 @@ No linter, formatter, or graph-aware runner exposes a narrowing class, so every 
 
 Run-time helper contracts live in `references/scripts/<name>.md`. This section holds shared conventions and installation behavior. `scripts/AGENTS.md` holds maintainer-only helper contracts, helper rationale, and mirrors. `tests/AGENTS.md` holds suite commands and dependencies. Read the nested file before editing under its directory; not every host loads it from the repository root. Callers read decisions in these places before assembling commands; sources contain no comments.
 
-Installed runs do not load this file. `setup.ts` installs `CORE_RULES.md` instead, and each skill's `./AGENTS.md` resolves there. References cite sections here and in the nested files as plain root-relative text. A `./` link would resolve to the wrong file.
+Installed runs do not load this file. `setup.ts` installs `CORE_RULES.md` instead, and shared-rule skills' `./AGENTS.md` links resolve there. References cite sections here and in the nested files as plain root-relative text. A `./` link would resolve to the wrong file.
 
 ### Shared conventions
 
@@ -65,7 +65,7 @@ node setup.ts
 
 **Why the staging dirs.** Skills stage under `skills/.agents-kit-staging.*`; references stage under the home's `.agents-kit-references.staging.*`. Each staging directory contains its marker before atomic rename, preventing a visible unmarked payload. An interrupted run leaves staging directories that the next sweep removes under both prefixes. `CORE_RULES.md` and agent definitions instead use `touchMarker` followed by `copyFileSync` at their visible paths. They use neither staging nor rename, so interruption mid-copy can leave a partial marked file.
 
-**Why a home is refused.** Kit skills symlink `./AGENTS.md` and `./references` to install-root siblings. User-owned replacements would redirect every skill into non-kit content, so the installer refuses that entire home. A kit-owned `skills/` symlink is reclaimed, including links into this repository, dangling leftovers, or moved clones. Other `skills/` symlinks are refused because installing through them would dangle the per-skill links.
+**Why a home is refused.** Skills using shared rules symlink `./AGENTS.md` and `./references` to install-root siblings. User-owned replacements would redirect those loads into non-kit content, so the installer refuses that entire home. A kit-owned `skills/` symlink is reclaimed, including links into this repository, dangling leftovers, or moved clones. Other `skills/` symlinks are refused because installing through them would dangle the per-skill links.
 
 **Why the copy modes differ.** Skills use `verbatimSymlinks` to preserve relative targets. Without it, `cpSync` rewrites them as absolute checkout paths instead of resolving inside the installed home. References contain no symlinks and use `dereference`. References and core rules remain available during the skills loop; each is replaced only at its own installation site. The references replacement is staged before removing its predecessor.
 
@@ -148,7 +148,6 @@ Semantic registries remain maintained for these reasons:
 Sanctioned copies require these mirror updates:
 
 - `references/engineering/code-style.md` § *Comments*: `agents/executor.md` and `agents/executor.toml` embed the same condensed discipline for direct access. When that section changes, update both host adapters; its owner carries one mirror note covering both.
-- `references/workflow/skill-conventions.md` § *The invocation gate*: `README.md` § *Skills* copies the confirm-gated count and each skill's `Confirm-gated.` label, which the reverse-search set does not reach; update them with the roster.
 - `references/workflow/task-lifecycle.md` § *Status values*, `status-transitions.md` § *Terminal vs. live states*, and `reconciliation-compaction.md` § *Compaction (size trigger)*: update the status vocabulary, terminal set, and compaction trigger in `scripts/lifecycle-constants.ts` with their prose.
 - `references/workflow/task-layout.md` § *One task, one flat folder*: update that module's recognition set and folder/record budgets together.
 - `references/workflow/task-store.md` § *The root registry*: update that module's walk prunes and ordering with their prose.

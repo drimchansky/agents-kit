@@ -4,6 +4,8 @@ Classify new or changed variations as composites or flags. Keep protocols and wr
 
 Different deliverables keep separate skill contracts, as `implement-task` and `implement` do.
 
+Apply `./domain-packs.md` § *Utility skills* for utility loading and membership.
+
 ## The rule
 
 Default to **composites for sequential phases and flags for modal or interleaved behavior**, because complete phase outputs provide composition boundaries.
@@ -22,6 +24,11 @@ A composite may supervise an in-flight phase through caller-supplied context; st
 Scattered flag conditionals suggest a misclassified phase. A modal flag modifies one phase.
 
 ## Current members
+
+### Utilities
+
+- `format-dictation` — formatting commands and conservative transcription corrections produce only the edited dictation.
+- `proofread` — proofreading feedback, changed-text output, and optional fact verification form one writing utility with a modal flag.
 
 ### Standalone protocols
 
@@ -47,7 +54,7 @@ Pass each phase's modal flags through unchanged, except the `review-code-triage-
 - `-x` (`review-code`, `review-docs`, `review-task`) — use a cross-vendor read-only probe (`./probe-cross-check.md`), merging before verdicts finalize. A composite passes it to its review phase. Document one Flags entry, one launch line, and one `Cross-check:` output line per skill. `review-code-triage-verify` suppresses the review's standalone reviewer settle and, with `-x`, the probe's verify-before-adopt step. Its phase 3 verifies every candidate (`./reviewer-contract.md` § *The settle*).
 - `-d` (`review-code`) — draft a PR description from the review's existing change map.
 - `-n N` (`review-code`) — launch N independent reviewers within the review pass and pool returns before finalizing findings.
-- `-f` (`proofread`) — verify facts during analysis, merging incorrect ones into its errors list before finalization and rendering every checked claim once in its Facts ledger (`./user-facing-messages.md` § *Blocks*).
+- `-f` (`proofread`) — verify facts during analysis, merging incorrect ones into its errors list before finalization. Render checked claims through `skills/proofread/SKILL.md` § *Output Format*.
 
 ## Adding a behavior
 
@@ -89,7 +96,7 @@ A sweep beyond the current project, across registered roots or into installed st
 - `maintain` — a sweep beyond the current project; the proposal is its § *Setup — resolve targets*.
 - `init-config` — a sweep beyond the current project; the proposal is its § *2. Discover the roots on disk*.
 
-Update this roster in the same change that adds or removes a skill's `**Model invocation:**` line. `README.md` § *Skills* carries the confirm-gated count and each `Confirm-gated.` label as a sanctioned copy per `AGENTS.md` § *Consumer lists*; update them with the roster.
+Update this roster in the same change that adds or removes a skill's `**Model invocation:**` line.
 
 Skills that gate their own write another way stay off the roster:
 

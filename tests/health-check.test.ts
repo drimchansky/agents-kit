@@ -1395,12 +1395,12 @@ test("an unmarked shared payload is a conflict, not a clean home", () => {
   const { report } = runCheck(["--installs", KIT, CONFLICT_HOME]);
   assert.strictEqual(
     findingDetail(report, "install-drift", ".claude/CORE_RULES.md"),
-    "present but not kit-owned — every kit skill resolves into it; move it aside and rerun setup.ts",
+    "present but not kit-owned — skills using shared rules resolve into it; move it aside and rerun setup.ts",
     "an unmarked CORE_RULES.md is reported rather than treated as the user's business",
   );
   assert.strictEqual(
     findingDetail(report, "install-drift", ".claude/references"),
-    "present but not kit-owned — every kit skill resolves into it; move it aside and rerun setup.ts",
+    "present but not kit-owned — skills using shared rules resolve into it; move it aside and rerun setup.ts",
     "an unmarked references/ is reported the same way",
   );
 });

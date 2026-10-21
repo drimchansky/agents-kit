@@ -4,22 +4,20 @@ description: Use when asked to proofread, check, review, or polish a message, em
 argument-hint: '[-f (fact verification)] [message or file path]'
 ---
 
-## Core Rules
-
-Read and apply `./AGENTS.md` § *Ask Before Assuming*.
-Read and apply `./references/workflow/user-facing-messages.md` § *Plain wording* only.
-
 # Proofread
 
 Suggest improvements while preserving the author's tone, voice, style, formatting, and structure.
 
 ## Flags
 
-- `-f`: verify checkable names, dates, numbers, and technical terms. Check session context/files/tool output first, then web sources for unsettled claims. Emit one progress line per web-checked claim: `🔵 In progress: checking "<claim>" against <source>` (`./references/workflow/user-facing-messages.md` § *Blocks*). Render every checked claim once in the **Facts** ledger of § *Output Format* (`./references/workflow/user-facing-messages.md` § *Blocks*). State unverifiable claims without guessing. Off by default because short proofreads rarely need research. <!-- cold -->
+- `-f`: verify checkable names, dates, numbers, and technical terms. Check session context, supplied files, and tool output first.
+  Use authoritative web sources for unsettled claims when accessible; state missing evidence without guessing.
+  Emit one progress line per web-checked claim, before its first lookup: `🔵 In progress: checking "<claim>" against <source>`.
+  Record each checked claim once under **Facts**, using the formats below. Fact verification is off by default.
 
 ## Analysis Criteria
 
-1. **Grammar & Mechanics:** spelling, typos, punctuation, grammar.
+1. **Grammar & Mechanics:** spelling, typos, punctuation, grammar, and accidental sentence-capitalization errors.
 2. **Structure & Flow:** progression, clarity, readability, repetition, buried points.
 3. **Consistency:** contradictory claims or terminology.
 4. **Facts:** flag known errors; further verification is opt-in with `-f`.
@@ -28,12 +26,30 @@ Suggest improvements while preserving the author's tone, voice, style, formattin
 
 Fix real problems, leaving clear wording alone. Explain each suggestion briefly and distinguish required corrections from optional improvements. Preserve blunt or casual voice; do not formalize it. If clean, say so without inventing changes. Use lists, not tables.
 
+Resolve routine choices from the supplied text and context. Preserve the author's decisions and explicit preferences.
+When an unsettled choice could change intent, ask the smallest clarifying question and hold that change.
+Use available context to explain the viable interpretations and recommend one when evidence supports it.
+
+Write concise, concrete feedback without unnecessary repetition, abstractions, or staged contrasts.
+Compare proposed revisions with the source, preserving facts, conditions, permissions, uncertainty, negation, comparisons, thresholds, identifiers, and logical scope.
+Keep quotations, commands, code, required formats, and the requested tone and language intact.
+Add no unsupported claims or recommendations to the author's text.
+
 ## Output Format
 
 **Errors**, when present: Quote/location → Fix → Why.
 
 **Improvements**, when present: Quote/location → Suggestion → Why.
 
-**Facts**, only with `-f`: render the shared fact ledger (`./references/workflow/user-facing-messages.md` § *Blocks*). <!-- cold --> An incorrect claim also lands in Errors so the Updated version carries the correction. Without `-f`, no ledger.
+**Facts**, only with `-f`: one line per checked claim, each claim quoted once in this section:
+Replace only the placeholders in these line formats.
+
+- `✅ Verified: "<claim>" (<evidence>)`
+- `❌ Incorrect: "<claim>" is <corrected fact> (<evidence>)`
+- `⚠️ Unverified: "<claim>" (<missing evidence>)`
+
+Cite the session fact, file, tool output, or source link supporting each verdict.
+Also list incorrect claims under **Errors** and correct them in **Updated version**.
+Omit **Facts** without `-f`.
 
 Give one-line overall assessment. For changed text, include **Updated version** with all fixes/improvements and original formatting/structure. Omit it when unchanged.

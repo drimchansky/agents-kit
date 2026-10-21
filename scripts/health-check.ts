@@ -1154,7 +1154,7 @@ function sharedPayloadConflict(home: string, display: string, rel: string): Inst
   return {
     check: "install-drift",
     path: join(display, rel),
-    detail: "present but not kit-owned — every kit skill resolves into it; move it aside and rerun setup.ts",
+    detail: "present but not kit-owned — skills using shared rules resolve into it; move it aside and rerun setup.ts",
   };
 }
 

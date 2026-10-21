@@ -73,7 +73,7 @@ function refuseConflicts(homeDir: string): boolean {
   }
   if (conflicts.length === 0) return false;
   console.error(
-    `Skipping ${homeDir}: user-owned ${conflicts.join(" and ")} found — kit skills resolve ./references and ./AGENTS.md against install-root copies, so installing would leave every kit skill broken. Move it aside and rerun.`,
+    `Skipping ${homeDir}: user-owned ${conflicts.join(" and ")} found — skills using shared rules resolve ./references and ./AGENTS.md against install-root copies, so installing would break those skills. Move it aside and rerun.`,
   );
   skippedHomes = true;
   return true;

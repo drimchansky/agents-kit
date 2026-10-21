@@ -49,10 +49,18 @@ Default to `engineering` when that header is absent, preserving existing tasks. 
   - `resume-task-reconcile` and `review-task-reconcile` leave domain resolution to their Phase 1 skills, `resume-task` and `review-task`.
   - `init-config` writes the machine's root registry and touches no task.
 
-The lean utilities `create-notion-page`, `prepare-daily-status`, `prepare-release-announcement`, `proofread`, `review-note`, `run-knowledge-session`, `sync-meeting-notes`, and `translate` read only `./AGENTS.md` § *Ask Before Assuming* from the core and resolve no domain pack.
-All eight also read `./user-facing-messages.md` § *Plain wording* and link `./references`.
+The skills `create-notion-page`, `prepare-daily-status`, `prepare-release-announcement`, `review-note`, `run-knowledge-session`, `sync-meeting-notes`, and `translate` read only `./AGENTS.md` § *Ask Before Assuming* from the core and resolve no domain pack.
+All seven also read `./user-facing-messages.md` § *Plain wording* and link `./references`.
 
 A composite's delegated skills retain their own pack loads unless explicitly overridden. `maintain` invokes no sibling skill; its Phase 4 read-only probes resolve no pack either.
+
+## Utility skills
+
+A utility skill keeps its complete task instructions and output contract in its own `SKILL.md`.
+It requires no shared global rules, references, sibling skills, or supporting instruction files, and resolves no domain pack.
+Ship it without `AGENTS.md` or `references` links. Utility status describes loading; its protocol may still expose flags.
+
+The initial members are `format-dictation` and `proofread`.
 
 ## Load order
 
