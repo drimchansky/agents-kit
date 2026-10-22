@@ -43,3 +43,15 @@ Tasks normally live in `.agents/tasks/<slug>/`, with `CONTEXT.md`, `goals.md`, `
 Small changes can go straight to `implement` without a task folder. Use `init-config` to register task folders elsewhere and `maintain` to check task and installation health.
 
 [Workflow details](./references/workflow/task-layout.md) · [Maintainer guide](./AGENTS.md)
+
+## Private runbook
+
+Ask `init-config` to configure one dedicated runbook directory inside your private notes for personal and work topics. Use an absolute or home-relative path. It previews the complete configuration before writing and preserves unrelated settings. The optional [`runbookRoot` setting](./references/workflow/task-store.md#the-root-registry-optional) is separate from task-discovery roots.
+
+Then explicitly request initialization with `implement`, for example:
+
+> As documentation work, initialize my configured runbook (`<runbook path>`): its README.md index and the focused entries `<entry files>` for `<selected topics>`, using only `<selected source paths or links>`. Follow the runbook reference. Preserve existing notes and unrelated content, and retain missing or conflicting facts explicitly.
+
+The [runbook reference](./references/workflow/runbook.md) defines entry and source conventions. Store access methods and credential-manager references, keeping credential values outside the runbook. `init-config` changes configuration only; the initialization request creates the selected index and entries.
+
+Kit skill runs that load the full [core rules](./CORE_RULES.md), such as task workflows, `implement`, and `explore`, consult the index when personal or work knowledge becomes relevant. They then read the applicable entries. They retain evidence dates and uncertainty; current infrastructure claims still need fresh verification. An absent setting opts out silently. A needed unavailable source is reported without searching the vault.

@@ -488,6 +488,42 @@ test("a bare slug resolves against a registered root, containers included", () =
   assertMoved(stdout, src, join(store, "Archive", "parked-and-finished"));
 });
 
+test("runbookRoot does not add task-discovery roots or change registered and canonical discovery", () => {
+  for (const form of ["absolute", "home-relative"]) {
+    const home = area(`runbook-${form}-home`);
+    const project = area(`runbook-${form}-project`);
+    const store = area(`runbook-${form}-store`);
+    const runbook = join(home, "Notes", "runbook");
+    const decoy = writeTask(join(runbook, "registered"));
+    const excluded = writeTask(join(runbook, "runbook-only"));
+    const registered = writeTask(join(store, "group", "registered"));
+    const canonical = writeTask(join(project, ".agents", "tasks", "canonical"));
+    const env = registryEnv(home, [store]);
+    const config = join(home, ".config", "agents-kit", "config.json");
+    const contents = JSON.stringify({
+      ...JSON.parse(readFileSync(config, "utf8")),
+      runbookRoot: form === "absolute" ? runbook : "~/Notes/runbook",
+    });
+    writeFileSync(config, contents);
+
+    const { stderr } = runMove(2, ["runbook-only", "--to", "archive"], { cwd: project, env });
+    assertIncludes(stderr, "no task folder named runbook-only", "a runbook directory is not a task root");
+    assertUnmoved(excluded);
+    assertMoved(
+      runMove(0, ["registered", "--to", "archive"], { cwd: project, env }).stdout,
+      registered,
+      join(store, "group", "Archive", "registered"),
+    );
+    assertUnmoved(decoy);
+    assertMoved(
+      runMove(0, ["canonical", "--to", "archive"], { cwd: project, env }).stdout,
+      canonical,
+      join(project, ".agents", "tasks", "Archive", "canonical"),
+    );
+    assert.strictEqual(readFileSync(config, "utf8"), contents, "task moves preserve configuration bytes");
+  }
+});
+
 test("a bare slug resolves through nested grouping directories in a registered root", () => {
   const home = area("slug-deep-home");
   const store = area("slug-deep-store");

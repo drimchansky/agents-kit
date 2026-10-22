@@ -14,6 +14,8 @@ Spot-checking a prior `met` goal (drift or resume): open the file or run the com
 
 For each affected deployable target, inspect repository instructions, manifests, CI/release configuration, and dependency consumers. Resolve the repository, expected source/build identity, preprod and prod environments, Argo CD application/context, Kubernetes context/namespace/workload, and frontend URL where applicable. A library change includes deployed consumers affected by that change. A mixed repository is resolved per affected target, not by its repository label.
 
+Relevant configured runbook entries can supply mapping evidence (`../workflow/runbook.md`). Stored observations do not satisfy the live checks below.
+
 For each target and environment, record either the verification to perform or an evidence-backed `not applicable` reason. A repository declaration can supply mapping details but does not enable or disable this gate. A local-only tool or library with no affected deployed consumer can be `not applicable`; name the evidence that rules out a deployed runtime. An environment supported as absent can be `not applicable`. Unknown target mapping, missing tools or credentials, unavailable expected environments, and unproven absence stay pending, recorded per `../workflow/task-lifecycle.md` § *Companion result file*. Lack of access is never evidence of non-applicability.
 
 The resolved target classification also selects later finalization health under `../workflow/task-delivery-edges.md` § *Verification source after delivery*. Supported non-deployable work still owes fresh engineering health on its current work product.

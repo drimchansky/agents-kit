@@ -56,6 +56,7 @@ Include observations that matter to someone acting on the work. Omit incidental 
 ## Workflow
 
 - Read project and task context before starting: `CONTEXT.md`, project docs, and `AGENTS.md` / `CLAUDE.md`.
+- When stored personal or work knowledge becomes relevant, consult `./references/workflow/runbook.md`.
 - Create a pull request, including a draft, or change a PR's state (ready for review, review request, merge), only when the user explicitly requests that action. Other task requests do not grant that permission.
 - Use parallel agents when independent investigations justify their coordination cost. Follow skills that require delegation, including their fan-out contracts, prompt shapes, engines, and executor rules.
 - Keep dependent edits sequential, including edits to the same artifact.

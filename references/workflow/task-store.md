@@ -19,18 +19,21 @@ A task store groups folders under a directory tree. Detect optional files by exi
     { "path": "~/Work/tasks", "label": "work" },
     { "path": "~/Documents/Repositories/agents-kit/.agents/tasks", "label": "kit" }
   ],
-  "kitRoot": "~/Documents/Repositories/agents-kit"
+  "kitRoot": "~/Documents/Repositories/agents-kit",
+  "runbookRoot": "~/Documents/Notes/runbook"
 }
 ```
 
 - Registration expands listing and slug discovery. It grants no creation destination; apply `./task-destinations.md`. It also participates in inherited-root selection below.
-- Skip a missing path and report it once per run. It is not an error.
+- Skip a missing task-root path and report it once per run. It is not an error.
 - Expand `~` wherever the registry is read. Before passing roots as script arguments, expand them to absolute paths; walkers accept no literal tilde. Scripts reading the registry themselves, such as `task-move.ts`, expand their own entries.
 - Group task prompts by `label`. Labels are display grouping, not selectors or filtering syntax.
 - Walk each registered root recursively to unbounded depth. Prune `node_modules`, dotted entries except `.agents`, and non-real directories, including symlinks. Test Archive/Backlog containers case-insensitively before task recognition: descend through them regardless of misplaced role files. Then recognize folders under `./task-layout.md` § *One task, one flat folder* and stop at each recognized task. Descend through other directories. An inner registered root is searched independently even when the outer root's prunes hide it.
 - Keep configuration apart from run state. `~/.config/agents-kit/` holds config; derived markers and findings belong in `~/.local/state/agents-kit/`.
 - `kitRoot` identifies a source checkout holding `setup.ts`, `CORE_RULES.md`, and `references/`, not an installed agent home.
-- Every key is optional. Missing/empty taskRoots means canonical-only discovery; absent kitRoot means no registered source checkout. A file with neither is inert. Record no derivable defaults or preferences here.
+- `runbookRoot` identifies one dedicated private runbook directory, separate from task-discovery roots. When present, it must be a nonempty string containing an absolute or `~/...` path; other relative paths and non-string values are invalid. Expand tilde and resolve directory identity before use. Entry and lookup behavior belongs to `./runbook.md`.
+- Absent `runbookRoot` opts out silently. When runbook context is needed, report malformed configuration or a missing or unreadable configured source. Do not infer its path from task roots.
+- Every key is optional. Missing/empty taskRoots means canonical-only discovery; absent kitRoot means no registered source checkout. A file with none of these keys is inert. Record no derivable defaults or preferences here.
 
 `WALK_SKIP_DIRS`, `TASK_STORE_DIR`, and `classifyWalkEntry` in `scripts/lifecycle-constants.ts` preserve the prunes and their ordering, a sanctioned copy per `AGENTS.md` § *Consumer lists*.
 
