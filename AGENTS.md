@@ -47,11 +47,11 @@ Installed runs do not load this file. `setup.ts` installs `CORE_RULES.md` instea
 
 **Zero dependencies; direct Node type stripping.** The supported floor is stated in § *The `.ts` sources are unchecked by design*.
 
-**Exit conventions.** `task-move.ts`, `task-state.ts`, `pr-comments.ts`, `dup-check.ts`, and `worktree-merge.ts` share 0/1/2. Zero completes the job; 1 reports a decided outcome; 2 means the run could not reach that decision. `commit-scan.ts` and `sweep-scope.ts` use only 0 and 2 because their reports are not decided outcomes. `health-check.ts` and `session-triage.ts` always exit 0, keeping reports parseable when part of the corpus is unreadable.
+**Exit conventions.** `task-move.ts`, `task-state.ts`, `pr-comments.ts`, `dup-check.ts`, `worktree-merge.ts`, and `secretary-state.ts` share 0/1/2. Zero completes the job; 1 reports a decided outcome; 2 means the run could not reach that decision. `commit-scan.ts` and `sweep-scope.ts` use only 0 and 2 because their reports are not decided outcomes. `health-check.ts` and `session-triage.ts` always exit 0, keeping reports parseable when part of the corpus is unreadable.
 
 **Piped stdout is asynchronous.** After emitting JSON, let the module end so buffered output flushes. Calling `process.exit` would truncate reports exceeding the pipe buffer, often 64 KB. Swallow EPIPE from readers closing early so that unawaited stream error does not change the promised status.
 
-**No script calls `process.exit` to set status.** Write the non-zero reason before assigning `process.exitCode`, preserving both the explanation and pending output. `task-move.ts`, `task-state.ts`, `pr-comments.ts`, `commit-scan.ts`, and `sweep-scope.ts` throw an `Exit` carrying the code. `worktree-merge.ts` throws `Refused` or `Unrunnable`. One handler at each module's end reports every refusal. `dup-check.ts` handles thrown `Refused` as status 2, but assigns status 1 after writing its findings report. `task-state.ts --repair` also writes its JSON report first, carrying the reason in `unresolved` or `error`. It then assigns status 1 or 2 directly instead of throwing `Exit`.
+**No script calls `process.exit` to set status.** Write the non-zero reason before assigning `process.exitCode`, preserving both the explanation and pending output. `task-move.ts`, `task-state.ts`, `pr-comments.ts`, `commit-scan.ts`, `sweep-scope.ts`, and `secretary-state.ts` throw an `Exit` carrying the code. `worktree-merge.ts` throws `Refused` or `Unrunnable`. One handler at each module's end reports every refusal. `dup-check.ts` handles thrown `Refused` as status 2, but assigns status 1 after writing its findings report. `task-state.ts --repair` also writes its JSON report first, carrying the reason in `unresolved` or `error`. It then assigns status 1 or 2 directly instead of throwing `Exit`.
 
 ### `setup.ts`
 
@@ -97,9 +97,11 @@ Run the suite covering each changed surface:
 - `scripts/pr-comments.ts`: `node --test tests/pr-comments.test.ts`.
 - `scripts/dup-check.ts` or its `corpus.ts` import: `node --test tests/dup-check.test.ts`.
 - `scripts/worktree-merge.ts`: `node --test tests/worktree-merge.test.ts`.
+- `scripts/secretary-state.ts` or `references/scripts/secretary-state.md`: `node --test tests/secretary-state.test.ts`, plus the start-secretary suite, which runs the skill's helper commands.
 - `scripts/lifecycle-constants.ts`: health-check, task-move, task-state, commit-scan, sweep-scope, and templates suites, which cover its seven importers.
 - `references/templates/` and the three scripts its suite drives: `node --test tests/templates.test.ts`.
 - `skills/review-pr-loop/SKILL.md` or `references/workflow/delegated-waiting.md`: `node --test tests/review-pr-loop.test.ts`.
+- `skills/start-secretary/SKILL.md`, `references/workflow/secretary-contract.md`, `README.md` § *Secretary*, `agents/secretary.md`, `references/workflow/skill-conventions.md`, or `references/workflow/domain-packs.md`: `node --test tests/start-secretary.test.ts`.
 - Invocation-gate changes: `node --test tests/invocation-gate.test.ts`. This checks that no SKILL.md frontmatter or `agents/` policy file closes a host door, and that the `**Confirm-gated skills:**` roster in `references/workflow/skill-conventions.md` matches the skills carrying the `**Model invocation:**` line.
 
 Change CLI, stdout, exit, and caller-facing contracts at their owners in the same edit. Use `references/scripts/<name>.md` for run-time helpers. Use `scripts/AGENTS.md` for maintainer-only helper contracts, § *Source contracts* for installer behavior, and `tests/AGENTS.md` for suite dependencies. Helper rationale belongs in its `scripts/AGENTS.md` section. Skills invoking helpers cite the contract path.
@@ -137,6 +139,7 @@ Semantic registries remain maintained for these reasons:
 - That file's § *The invocation gate*: confirm-gated skills are searchable by their `**Model invocation:**` line, but the skills gating their own write another way and the placement criteria are authored. Record every confirm gate added or removed.
 - `references/workflow/executor-contract.md` § *Bindings*: defines each consumer's unit, packet, edit surface, fallback, and merge order.
 - `references/workflow/reviewer-contract.md` § *Consumers*: defines authorized reviewer launchers and consumers, checked by § *Launch packet*.
+- `references/workflow/secretary-contract.md` § *Consumers*: defines the one authorized secretary launcher.
 - `references/workflow/reconciliation.md` direction membership: keys the skill mappings in reconciliation-docs-to-reality.md and reconciliation-session-to-docs.md.
 - `references/workflow/execution-loop.md` introduction: keys the consumer sections of execution-bindings.md.
 - `references/workflow/domain-packs.md` § *The split*: classifies methodology-only spine skills rather than enumerating citations.
@@ -166,3 +169,4 @@ These seven homes carry eight mirror notes because scripts cannot consume prose 
 Both walkers receive recognition and prunes through `classifyWalkEntry`. Commit-scan and sweep-scope call `holdsRoleFile` on the supplied task folder; sweep-scope also distinguishes deliverables from role files. Task-repair calls it on each subfolder to skip nested tasks, and imports `WALK_SKIP_DIRS` for the same prune. Goal-structure calls it to tell a deliverable from the role files. Task-move imports `TASK_STORE_DIR` for `boundingRoot`'s `.agents/tasks` bound, not as a prune. Health-check and sweep-scope import `angledTargetText` to share angle-target trimming, which no prose home defines (`scripts/AGENTS.md` § *`scripts/health-check.ts`*). Compare this registry to actual import symbols when changing it.
 
 - `references/workflow/reconciliation-commits.md` § *The watermark*, `task-delivery.md` § *Branch and worktree creation*, and `task-delivery-edges.md` § *Removal*: update commit-scan's pointer patterns with their prose. The shapes are `SHA <sha>`, `` branch `<branch>` ``, and `(removed …)`. Free prose offers no other structure for locating the floor and ref. Three owner notes cover one importer; stale patterns would produce `no-watermark` or scan HEAD instead of the recorded task branch.
+- `references/workflow/task-store.md` § *The root registry*: update `scripts/secretary-state.ts`'s `runbookRoot` resolution in `openStore` with the `runbookRoot` bullets. A stale copy would accept a path the registry rejects or refuse one it allows.

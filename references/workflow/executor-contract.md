@@ -59,7 +59,7 @@ After mid-segment executor failure, completed units passing intake stand. Relaun
 
 ## Write-mode routing
 
-Registered `./executor-routing.md` consumers delegate unless an announced, recorded `./write-mode-posture.md` exception applies. Others use `./agent-fanout.md`, except reviews under `./reviewer-contract.md`.
+Registered `./executor-routing.md` consumers delegate unless an announced, recorded `./write-mode-posture.md` exception applies. Others use `./agent-fanout.md`, except reviews under `./reviewer-contract.md` and the secretary under `./secretary-contract.md`.
 
 **Coordinator-only judgment:** unit framing, health boundaries, report buckets, statuses, intake, and consequential-choice selection under the user's decision.
 

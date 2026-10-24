@@ -5,7 +5,7 @@ My personal collection of skills, agents, and a task workflow for Claude Code an
 ## What's included
 
 - **Skills** for planning, implementation, code review, Git, writing, and knowledge upkeep. [Browse the skills](./skills/).
-- **Agents** that carry out implementation steps and review changes independently.
+- **Agents** that carry out implementation steps, review changes, and check your private runbook independently.
 - **Shared rules and references** for engineering, documentation, and task management.
 - **Task folders** that keep context, plans, and results available across sessions.
 
@@ -55,3 +55,21 @@ Then explicitly request initialization with `implement`, for example:
 The [runbook reference](./references/workflow/runbook.md) defines entry and source conventions. Store access methods and credential-manager references, keeping credential values outside the runbook. `init-config` changes configuration only; the initialization request creates the selected index and entries.
 
 Kit skill runs that load the full [core rules](./CORE_RULES.md), such as task workflows, `implement`, and `explore`, consult the index when personal or work knowledge becomes relevant. They then read the applicable entries. They retain evidence dates and uncertainty; current infrastructure claims still need fresh verification. An absent setting opts out silently. A needed unavailable source is reported without searching the vault.
+
+## Secretary
+
+The secretary checks your configured runbook's entries against their cited sources and each other. It reports findings and proposed updates in the conversation. Start it with `/start-secretary` in Claude Code. Asking for it in conversation also works; it then describes the run and waits for you to say "go".
+
+It needs the `runbookRoot` setting from [Private runbook](#private-runbook) and the kit's helper script. Run `init-config` to record your kit checkout as `kitRoot`; a plugin install provides the helper without it. A missing requirement reports `Secretary: unavailable` with its cause and starts nothing. On Codex it reports unavailable.
+
+**Reviews.** A review covers the whole runbook. One is due when none has finished yet, and 24 hours after the last one finished. Findings cover inconsistencies, mistakes, missing information, stale claims, and sources it could not read. Claims resting on an unread source stay marked unverified. Each proposal changes one file and shows its evidence and replacement text.
+
+**Session.** Between reviews, the secretary keeps one wake armed in this session for the next due review. The wake fires while the session is open and idle. Starting again in the same session reports the running secretary instead of launching another. A start in a new session lists earlier pending proposals and reviews only when one is due. The secretary ends when you ask it to stop or the session closes. Resuming the session restores a wake that has not fired yet, and the secretary continues. The secretary also stops when a review does not complete, the next wake cannot be armed, or a wake finds its records unavailable. Examples include a helper error, records still busy after about two seconds, and a rebuild that cannot finish. Each case reports `Secretary: inactive — <cause>`. Run `/start-secretary` to start it again.
+
+**Decisions.** Reply with a proposal's `<proposal>@<revision>` and accept, reject, or defer, for example `accept p4@1`. Only your own message decides. The secretary is told never to record a decision, but it can run commands, and the helper cannot tell who recorded one. Each report names any decision this session did not record. A message naming no revision or an outdated one records nothing, and you are asked again. The secretary is told to change the runbook only by applying an accepted revision, and only its one target. It can run commands, so a direct edit is not blocked, and no report detects one. Before writing, the secretary rechecks the target and its sources. A changed target or materially changed evidence holds the write and produces a new revision for you to decide.
+
+**Stopping.** Ask in the conversation to stop the secretary. It confirms `Secretary: stopped` only after cancelling the wake and any review or update in flight. Results arriving after the stop change nothing. An accepted update left interrupted is settled at the next start.
+
+**History.** Activity records live under `~/.local/state/agents-kit/secretary/runbook/<runbook-id>/`, outside the runbook. Each review outcome, proposal, decision, and applied change is a separate event that is never rewritten. Corrections are added as new events. Read the records with `node <kit-root>/scripts/secretary-state.ts status` or `history` rather than opening the files. A missing or stale summary is rebuilt from history at the next start, keeping every event and pending proposal. The secretary is told to record no credential values. As a backstop, the helper refuses payloads matching known credential shapes, such as private keys, cloud and chat tokens, and URLs with inline passwords. Changing `runbookRoot` starts a separate history.
+
+[Skill](./skills/start-secretary/SKILL.md) · [Secretary contract](./references/workflow/secretary-contract.md) · [Helper commands](./references/scripts/secretary-state.md)
