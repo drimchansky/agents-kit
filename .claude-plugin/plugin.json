@@ -1,7 +1,7 @@
 {
   "name": "agents-kit",
   "displayName": "Agents Kit",
-  "description": "A personal kit of skills, reviewer and executor agents, and a persistent task-folder workflow. Tracks main; no stability promise.",
+  "description": "A personal kit of skills, reviewer, executor, and secretary agents, and a persistent task-folder workflow. Tracks main; no stability promise.",
   "author": {
     "name": "Nikita Chernov"
   },

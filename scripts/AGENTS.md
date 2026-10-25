@@ -102,6 +102,60 @@ Contract: `references/scripts/pr-comments.md`.
 
 **Why the entry check goes through `realpath`.** Only direct execution may fetch; tests import the pure layer without network effects. Node leaves `process.argv[1]` as typed but resolves `import.meta.url`. Without normalization, a symlinked invocation compares unequal, looks like an import, and silently does nothing.
 
+## `scripts/secretary-state.ts`
+
+Contract: `references/scripts/secretary-state.md`.
+
+**Why commands can require an expected runbook.** Proposal IDs are local to each store. A coordinator-side status check cannot prevent configuration changing before the following decision or apply. The retained physical root is checked inside each command before record access; its store ID follows deterministically from that root. The option stays optional for standalone inspection and recovery, while an active run supplies it throughout.
+
+**Why record access secures the root.** Proposal bodies copy runbook content into a separate tree. The caller's umask can otherwise expose private entries. Securing the existing store root protects existing descendants without an unbounded traversal; new entries receive private creation modes.
+
+**Why events are linked into place.** `linkSync` fails with `EEXIST` instead of replacing a name, so a wrong seq or an unlocked writer cannot overwrite history. `renameSync` would replace silently. A crashed append leaves only an ignored `.tmp-*` file. Writes skip `fsync`, as other helpers do. Power loss can therefore truncate a just-linked file, which then reads as malformed instead of vanishing.
+
+**Why the newest day directory holds the highest seq.** The tail lookup lists only the newest non-empty directory, and seq lookups binary-search day ranges. A backward clock keeps writing into the newest directory, so ranges never interleave. Each read stays bounded by one day's listing and a logarithmic probe, independent of total history.
+
+**Why the helper assigns proposal ids.** An id derives from its first revision's seq, so a rejected id never returns. Revisions increase under the lock. A decision must name the latest revision; otherwise acceptance of an older body could authorize a newer one.
+
+**Why one target holds one pending proposal.** Each body replaces the whole target, so two pending proposals for one target conflict as soon as either applies. A daily review would otherwise file a fresh duplicate for every undecided finding. Refusing the second points the review at the existing proposal's next revision.
+
+**Why the checkpoint keeps each target's latest rejection.** A rejection removes its proposal from pending, and a decision names no target or body. Without this pointer, each review would scan every decision to avoid re-proposing a rejected body. One entry per target bounds that read by file count. An older rejected body for the same target is no longer remembered.
+
+**Why status takes the mutation lock.** Append publishes its event before replacing the checkpoint. An unlocked status between those writes would report a live append as `checkpoint-behind`.
+
+**Why one history call reads at most 1000 events.** A sparse filter could otherwise read the whole history in one call. The cap bounds disk reads as well as output; `next` resumes after the last event read.
+
+**Why the credential guard scans decoded strings.** A raw-text scan misses shapes hidden behind JSON escapes such as `AKIA`. Field names are scanned too. A generic `password=` rule is absent on purpose. It would refuse Vault key names such as `ACCOUNTING_DB_READONLY_PASSWORD`, which are the references records should hold. The `url-password` rule skips a password part that is wholly one placeholder: uppercase `$NAME`, `${…}`, `${{…}}`, `{{…}}`, `<name>`, or `{…}`. Placeholders such as `<from-vault>`, `${PGPASSWORD:-postgres}`, or `${{secrets.DB_PASSWORD}}` pass. A real password shaped exactly like `$UPPERCASE` therefore passes too, since it matches the shell-variable form. Any other password containing `$`, braces, or angle brackets is still refused. The `api-key` rule requires a digit and an uppercase letter after `sk-`, so kebab-case names such as `sk-payments-service-staging-eu` pass. The `jwt` rule requires no word character or `-` before `eyJ`. With `\b`, each `-eyJ` inside a long run starts a new match, so the scan takes quadratic time.
+
+**Why stale-lock reclaim claims the owner record.** Renaming the lock directory aside could move a live lock that changed hands after its owner was read, and leave `lock/` free for a third process. Renaming `owner.json` to a unique claim file keeps `lock/` in place: one contender wins that rename, and others see no owner record and wait. Only the dead owner's token in the claim lets the winner set the lock aside and remove it; any other token goes back unchanged. A crash during a claim leaves a lock that reports busy rather than one two processes hold. Publication renames a prepared directory that already holds `owner.json`, so no live lock is ever ownerless. Release also sets the lock aside before removing it, so a recursive delete never reaches a successor's lock.
+
+**Why a started attempt holds a lease.** A coordinator cannot list another session's agents. A closed session leaves its attempt active with no stop event. Without a lease, a second session would either duplicate a live job or wait forever on a dead one. Review and apply jobs share one lease, so a review never runs beside a runbook write. The fixed hour bounds that uncertainty: inside it a competing start is refused as possibly live, and after it a new start supersedes. The lease guards starts only. An attempt running past its lease can still complete until another start supersedes it.
+
+**Why proposals carry the attempt.** A stopped or superseded secretary can still return and try to record its results. Requiring the active attempt on each proposal, correction, completion, apply, and hold makes the helper refuse those late writes. A stopped review therefore adds no pending work and marks no review done; a stopped apply writes nothing. Decisions carry no attempt, because they come from the user through the coordinator rather than from a job.
+
+**Why the checkpoint keeps every started token.** A reused token would let a late result from an earlier job pass as the active attempt's. The list grows by one short token per job.
+
+**Why apply records an intent before writing.** A crash between the intent and the result leaves the target either untouched or fully replaced, because the replacement is one rename or link. Comparing the target's hash with the intent's `before` and `after` tells those apart. Settlement writes nothing: it records an already-landed body as applied, or an untouched target as held. The recovered hold ends that attempt, letting a fresh job recheck mutable evidence before retrying the accepted write. A third hash means someone else changed the target, so it becomes a conflict. A failure the helper observes after the intent settles by the same hashes at once, so only a crash leaves an intent for a later apply. Only `Exit` and system errors settle; any other exception stays a crash, which is how the suite simulates one.
+
+**Why apply stages privately and validates before publication.** A sibling temporary file can expose private entries through traversable runbook directories. Private creation prevents that exposure before mode restoration, including after a crash. Capturing the new target's final mode before writing preserves the creation umask. Checking the staged file's device, inode, and bytes before publication rejects substitutions that could replace the target with unaccepted content.
+
+**Why apply cleans only its current temporary file.** Runbook entries may use the same filename pattern as temporary files. A matching name establishes no ownership. Cleanup retains the exact path and identity captured when this invocation created its temporary file. Crash leftovers remain because no durable record proves their ownership. Created-directory cleanup checks each remaining ancestor before removal. Changed identities leave cleanup unresolved, preserving files reached through a replaced parent.
+
+**Why an unsettled intent blocks revisions and decisions.** A new revision replaces the pointer and would erase the record of a half-finished write. A changed decision would let that write land without the acceptance it was recorded under. Only apply can settle the intent.
+
+**Why a conflicted revision needs a new one.** A conflict ends that revision's apply authority, so accepting or applying it again is refused. A concurrent save may restore the original target bytes after replacement, leaving `before` current despite the conflict. The next revision may keep the same body, evidence, and `before`, but clears acceptance and requires a fresh decision. A held revision keeps its acceptance, because a hold for unreadable evidence may succeed on a later attempt.
+
+**Why recovery saves progress apart from the checkpoint.** Append trusts `state.json` as the reduction of every event up to its position. A partial reduction written there would let appends resume on missing pending work. `recovery.json` holds the partial reduction, so `state.json` changes only when replay reaches the tail. Each call still saves its progress, so total replay work stays proportional to history even across interruptions.
+
+**Why an ahead checkpoint replays from seq 1.** A checkpoint past the history tail describes events that do not exist, so none of its reduction can be trusted. A missing or malformed checkpoint gives no position either. Skipping to the newest event would drop every proposal and decision recorded before it.
+
+**Why a malformed checkpoint reports not ready.** The checkpoint is derived state, and writes skip `fsync`, so power loss can truncate it. Reporting `checkpoint-malformed` lets recovery rebuild it from history instead of leaving the store unusable.
+
+**Why apply walks the target with `lstat`.** `realpath` would follow a symlinked component and report a path outside the runbook as inside it. Refusing every symlink component, rechecking each directory's device and inode before the replacement, and reading through `O_NOFOLLOW` keep the write inside the physical runbook. Final verification, recovered-success verification, and failure settlement keep those identities and recheck them around their reads, so an outside file cannot satisfy the accepted hash. Node has no `openat`, so a swap within that last check remains possible but needs a concurrent local writer. The final hash check and the rename are separate calls, so an editor save between them is lost; Node has no compare-and-swap rename. Temporary-file validation and publication also use separate calls, leaving a race with another writer changing the staged path or contents.
+
+**Why the wake minute avoids :00 and :30.** Claude Code may fire a one-shot cron on those minutes up to 90 seconds early, before the due instant. Moving them two minutes later keeps every fire at or after `at`. The one-minute lead covers a wake instant only seconds away. A five-field cron names no year, so a minute that passes before the coordinator arms it would next match a year later.
+
+`openStore` copies the `runbookRoot` rules of `references/workflow/task-store.md` § *The root registry*: a nonempty string, absolute or `~/`, resolved to physical identity. Change both together.
+
 ## `scripts/session-triage.ts`
 
 Contract: `references/scripts/session-triage.md`.
