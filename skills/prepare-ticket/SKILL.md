@@ -18,9 +18,17 @@ Identify the requested functional outcome in one sentence. In a codebase, locate
 
 ### 2. Clarify only if thin
 
-If scope, done, or an essential constraint prevents testable criteria, ask up to three focused questions before drafting. Batch any destination question with them. A sufficiently specified request proceeds directly; unresolved requirements stay questions rather than guesses.
+If scope, done, or an essential constraint prevents testable criteria, ask up to three focused questions before drafting. When the request already rules out a split, such as an explicit one-task request, batch any destination question with them. A sufficiently specified request proceeds directly; unresolved requirements stay questions rather than guesses.
 
-### 3. Destination
+### 3. Assess decomposition
+
+Before creating a folder or writing files, assess delivery independence under `./references/workflow/decomposition.md` § *Part-quality bar*. An explicit one-task request or tightly coupled work continues at Destination.
+
+For work warranting several tickets and decided under `./references/workflow/decomposition.md` § *Source intake*, run `../decompose-task/SKILL.md` with the request as its source. That skill owns the chat-only proposal, confirmation, creation, and final report. Only a confirmed split ends this single-ticket flow. Every other outcome continues at Destination, with undecided matters kept under **Open questions**. <!-- cold -->
+
+Pass a parent directory when the request supplies one: a non-task directory or missing path as given, or a task folder's own parent. The proposal states that a supplied task folder stays as it is. A file target passes none, so `decompose-task` selects the default container. For a file target, or a request with neither path nor task intent, the proposal also states that each part becomes a task folder with `ticket.md` and a seeded `CONTEXT.md`.
+
+### 4. Destination
 
 - **Task folder/slug or task-start intent:** resolve-or-create under `./references/workflow/task-layout.md` and destination precedence under `./references/workflow/task-destinations.md`. Use the supplied folder/slug or derive a 2–5-word kebab-case slug. Write its role-named ticket.md. Read an existing ticket and ask whether to update or choose another slug.
 - **Standalone target file:** use that path; if it exists, read it and confirm update versus another path.
@@ -28,15 +36,15 @@ If scope, done, or an essential constraint prevents testable criteria, ask up to
 
 Before drafting a seeded task's ticket, read applicable GROUP_CONTEXT root-to-task under `./references/workflow/task-store.md` § *Shared group context*. Standalone files load none. Grounding may sharpen context or implied criteria, never add requirements or copied paragraphs. The ticket must remain usable without the store.
 
-### 4. Draft the ticket
+### 5. Draft the ticket
 
 Fill `./references/templates/ticket.md` under `./references/workflow/ticket-format.md`: Title, Context, Description, Acceptance Criteria. Use In scope/Out of scope where needed. Include References only for requester-supplied links/specs/ticket IDs. Write in the request's language using lists, not tables.
 
-### 5. Hold criteria to the bar
+### 6. Hold criteria to the bar
 
 Apply `./references/workflow/ticket-format.md` and `./references/workflow/acceptance-criteria.md`. Each criterion is a single, specific, bounded, testable outcome in plain behavioral language. Replace vague success claims with observable results.
 
-### 6. Write and report
+### 7. Write and report
 
 Write only to the confirmed destination; do not silently overwrite existing content. Report briefly in chat without pasting the ticket:
 
@@ -47,6 +55,6 @@ Write only to the confirmed destination; do not silently overwrite existing cont
 Then close with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
 
 - **Done:** the ticket written, with its seeded task folder, pointing at **Ticket**.
-- **Know:** the seeded task's handoff token, and inferred details a criterion depends on, pointing at **Assumptions**.
+- **Know:** the seeded task's handoff token, a split the user declined, and inferred details a criterion depends on, pointing at **Assumptions**.
 - **Awaiting you:** point at **Open questions**.
 - **Next:** for a seeded task, `/plan-task`, which resolves the session's task, or `/refine-idea <slug>` if it still needs refinement, carrying the resolvable slug or absolute folder path under `./references/workflow/task-layout.md` § *One task, one flat folder*.
