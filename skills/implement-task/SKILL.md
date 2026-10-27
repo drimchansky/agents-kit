@@ -1,7 +1,7 @@
 ---
 name: implement-task
 description: Use when asked to implement, execute, run, or carry out a task's plan from a task folder (canonically under `.agents/tasks/`) — by task folder path, or the current task if one is already in context.
-argument-hint: "[task slug or path; defaults to the session's task]"
+argument-hint: "[task slug or path; defaults to the session's task] [-e native|codex|claude]"
 ---
 
 ## Core Rules
@@ -14,6 +14,10 @@ Executes a task folder's `plan.md`: implements each step, records it in `result.
 This skill mutates the plan and the result file freely, and the grounding surfaces (`CONTEXT.md`, `goals.md`, `ticket.md`, an inherited `GROUP_CONTEXT.md`) only as § *Correcting Grounding Where It's Wrong* licenses. The sole exception is the loader's proven identifier repair in `CONTEXT.md` and `goals.md`, which changes no meaning (`./references/workflow/task-authorship.md` § *Files*). It authors a doc task's deliverable as the plan directs and never writes a deliverable's `**Published:**` line. Its Git writes are the task's own branch and worktree (§1, §3, §8), the branch-scoped `git fetch origin <default-branch>` the **merged** predicate runs, and checkpoint and final commits under the sanction §2 establishes. Nothing is pushed or amended. Each step runs through a delegated write-mode executor (`./references/workflow/executor-routing.md` § *The registry and its authorization*). Its one write outside the task folder and the work product is the repository's own `AGENTS.md` / `CLAUDE.md`, for the branch convention a creation-path run proposes, **only on the user's explicit confirmation** and stated when written: `./references/workflow/task-delivery-edges.md` § *Proposing an observed branch convention*. <!-- cold -->
 
 Per-file authorship is `./references/workflow/task-authorship.md` § *Files*; the plan changes only by checkbox flips, appended result links, `**Status:**`, and §6 revisions.
+
+## Flags
+
+- `-e native|codex|claude`: executor for this run's steps, selected through `./references/workflow/executor-routing.md` § *Selection*.
 
 ## Inputs
 
@@ -95,9 +99,9 @@ Run the loop in `./references/workflow/execution-loop.md`: the five beats, the t
 
 #### Execution strategy: every step delegates
 
-Execute each step through an **executor** per `./references/workflow/executor-contract.md` and its `implement-task` binding, whose **Segment bound** fixes the launch shape; engine `native` places a serially delegated step or segment on the shared tree.
+Execute each step through the selected engine in `./references/workflow/executor-routing.md`, under `./references/workflow/executor-contract.md` and its `implement-task` binding. Its **Segment bound** fixes the launch shape; serial steps and segments use the shared tree.
 
-**Every step goes to an executor** per `./references/workflow/write-mode-posture.md`, which fixes what a launch packet owes and the three exceptions that keep a step here. Capture the `baseline` manifest of the shared tree before launching, one per segment. **Deviation is measured against the mode's default launch on `native`**, which is what `**Executed:**` (§5) records. While an executor is in flight the coordinator waits, with no step of its own and no shared-tree edit (`./references/workflow/delegated-waiting.md` § *How to wait*). Then take each report through the contract's § *Write-mode routing* intake, which decides whether the outcome tier is re-proved here, and record the step (§5); a failure there is Stop-the-Line at that step, and a pending impactful choice takes the contract's third outcome: ask, hold the step and its dependents, and keep the plan `executing` while the answer arrives in this run. A choice still open when the run ends takes this binding's **Blocked** (`./references/workflow/execution-bindings.md`): the plan enters `blocked` and `**Blocked:**` records the choice, its options and recommendation, and the held step, so §1's resume branch finds it.
+**Every step goes to an executor** per `./references/workflow/write-mode-posture.md`, which fixes what a launch packet owes and the three exceptions that keep a step here. Capture the `baseline` manifest of the shared tree before launching, one per segment. **Deviation is measured against the mode's default launch on `native`**; `**Executed:**` (§5) records it and any explicit selection. While an executor is in flight the coordinator waits, with no step of its own and no shared-tree edit (`./references/workflow/delegated-waiting.md` § *How to wait*). Then take each report through the contract's § *Write-mode routing* intake, which decides whether the outcome tier is re-proved here, and record the step (§5); a failure there is Stop-the-Line at that step, and a pending impactful choice takes the contract's third outcome: ask, hold the step and its dependents, and keep the plan `executing` while the answer arrives in this run. A choice still open when the run ends takes this binding's **Blocked** (`./references/workflow/execution-bindings.md`): the plan enters `blocked` and `**Blocked:**` records the choice, its options and recommendation, and the held step, so §1's resume branch finds it.
 
 **Inline is an exception, announced and recorded** in `**Executed:**` (§5), on one of the posture file's three exceptions. A failed or hung executor is reported and takes the binding's **Fallback**; on a segment, § *Segment launches* governs what stands and what relaunches. <!-- cold -->
 
@@ -109,11 +113,11 @@ Eligible independent steps run concurrently through the same contract and bindin
 
 Copy the applicable sections from `./references/templates/result.md`: per-step or bounded Full Run records, checkpoint and Final implementation commit blocks, the `## Decision log` line, §7's `## Acceptance`, and its `## Live verification` record for engineering work.
 
-Each new Step or Full Run section fits `RECORD_MAX_KB` (`./references/workflow/task-layout.md` § *One task, one flat folder*). Summarize the accepted executor report or coordinator re-proof: changed outcome, decisive check and status, material deviation or failure, and a stable evidence path, anchor, or short diagnostic. `**Verified:**` opens with `executor` / `coordinator` and its re-run case. Keep command results, not output tails or request/response transcripts; the executor's full return contract stays in `./references/workflow/executor-contract.md` § *Evidence report*.
+Each new Step or Full Run section fits `RECORD_MAX_KB` (`./references/workflow/task-layout.md` § *One task, one flat folder*). Summarize the accepted evidence: changed outcome, required checks and statuses, material deviation or failure, and a stable evidence path, anchor, or short diagnostic. `**Verified:**` names `executor` / `coordinator` per check, distinguishing assigned coordinator checks from re-proofs and retaining pending/open checks. Keep command results, not output tails or request/response transcripts; check definitions and proof follow `./references/workflow/executor-contract.md` § *Evidence report* and § *Write-mode routing*.
 
 `**Health:**` records the boundary to the domain's shape (`./references/engineering/verification.md` § *What a boundary records* for code); it is omitted on a step merged from a parallel batch and on one that ended at an authored checkpoint, whose section carries it.
 
-`**Executed:**` is omitted for a step that ran the mode's default launch on `native`: per-step serial in step-by-step, its checkpoint-bounded segment in full-plan. Otherwise it names the deviation: "parallel batch (<engine>), merged in plan order at/before <the §4 merge point>", "serial delegation (<engine>)", or "inline (<not specifiable / delegation unavailable / executor failed> — <detail>)". The full-run variant prefixes each entry `Step N`, as does `**Grounding corrected:**`, and writes "Steps M–N segment (<engine>)" for a relaunched segment.
+`**Executed:**` records explicit selection, external launch evidence, and announced fallback under `./references/workflow/executor-routing.md` § *External launches and recovery*. Omit it only when `native` was selected by default and ran the mode's unchanged default launch: per-step serial in step-by-step, its checkpoint-bounded segment in full-plan. Otherwise name the engine and launch form: "parallel batch (<engine>), merged in plan order at/before <the §4 merge point>", "serial delegation (<engine>)", or "inline (<not specifiable / delegation unavailable / executor failed> — <detail>)". The full-run variant prefixes each entry `Step N`, as does `**Grounding corrected:**`, and writes "Steps M–N segment (<engine>)" for a relaunched segment.
 
 In full-plan mode, use one combined Full Run section for serial steps when it fits `RECORD_MAX_KB`; every folded step links to its `#full-run--<date>` anchor (double hyphen). If it cannot fit while naming each outcome and its evidence, write per-step sections and link each step to its own anchor. Merged parallel-batch steps always keep their per-step sections. Preserve existing anchors and history; do not compact old records as part of writing new ones (`./references/workflow/reconciliation-compaction.md`).
 

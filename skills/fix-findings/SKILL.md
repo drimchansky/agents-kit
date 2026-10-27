@@ -1,7 +1,7 @@
 ---
 name: fix-findings
 description: Use when asked to fix code or documentation findings from a session review, PR comments, or a pasted or saved list. Applies eligible Confirmed fixes automatically; other actionable fixes require batched diff approval. Commits each concern batch through the commit skill; never pushes or replies to sources.
-argument-hint: '[source]'
+argument-hint: '[source] [-e native|codex|claude]'
 ---
 
 ## Core Rules
@@ -14,6 +14,10 @@ argument-hint: '[source]'
 Apply selected code and documentation findings and report the rest untouched. Consume a verify composite's root cause and ordered fix options without repeating its investigation.
 
 Edit selected working-tree work products, and stage and commit each concern batch's fixes under § *Batch commits*. Each Confirmed auto-path fix runs through a delegated write-mode executor (§ *Execution strategy: every auto-path fix delegates*). Make no other Git mutation, findings-report edit, source reply, thread resolution, push, or live-page write. Transient coordinator-managed executor worktrees are the exception allowed by `./references/workflow/parallel-batch.md` § *Coordinator-side parallel batch*. <!-- cold -->
+
+## Flags
+
+- `-e native|codex|claude`: executor for eligible Auto fixes (`./references/workflow/executor-routing.md` § *Selection*).
 
 ## Source
 
@@ -123,7 +127,7 @@ The coordinator retains the auto/ask decision, batched ask, immediate-evidence i
 Use lists; omit empty buckets. Preserve the finding's original text and severity in each entry.
 
 - **Commits:** one line per concern batch in processing order. Give the landed SHA and message title, `<sha> landed; post-hook re-proof failed: <check>`, `none — nothing to stage`, or why its commit did not land and what stays staged. Name uncommitted changes outside the checkout. Say when batch commits were off, naming the concern batch and baseline-failing check that turned them off, or that no checkout exists.
-- **Fixed:** changed `file:line`; concern batch; immediate proof source (`executor`, or `coordinator` with its re-run reason); final-integrated evidence (its post-batch re-proof, or the green boundary that ran its regression test); current engineering health per `./references/engineering/verification.md` § *What a boundary records* and documentation sweep evidence where applicable. Identify fixes made on user approval. Record delegation, engine, and parallel batch, or the coordinator's posture exception or ask routing.
+- **Fixed:** changed `file:line`; concern batch; immediate evidence for each required check, naming its proof owner and coordinator assignment/re-run reason where applicable (`./references/workflow/executor-contract.md` § *Write-mode routing*); final-integrated evidence (its post-batch re-proof, or the green boundary that ran its regression test); current engineering health per `./references/engineering/verification.md` § *What a boundary records* and documentation sweep evidence where applicable. Identify fixes made on user approval. Record selected engine and launch/fallback evidence under `./references/workflow/executor-routing.md` § *External launches and recovery*, plus parallel batch, inline exception, or ask routing.
 - **Delivery:** for code fixes, each affected target's live evidence or supported N/A; otherwise name each pending check (`./references/workflow/task-lifecycle.md` § *Companion result file*). A pending rollout or missing access does not undo a locally Fixed finding or its landed batch commit, but overall delivery remains pending. An observed regression or wrong release is reported as failed delivery requiring follow-up.
 - **Health uncertifiable:** surviving changes and the same immediate and final outcome evidence, plus the baseline-failing check and its resolved targets. Apply target exclusions from `./references/workflow/execution-recovery.md` § *Evidence lifecycle*. State that no boundary certifies the tree.
 - **Retained, failing:** never-reverted fixes whose current outcome or health evidence fails. Name the commit SHA, or `uncommitted`, the failed check, and what would unblock them.

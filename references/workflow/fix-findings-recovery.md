@@ -45,13 +45,13 @@ Collection rollback preserves earlier concern batches and the Decided, Awaiting 
 
 ## Delegation mechanics
 
-Launch an **executor** on `native` under `./executor-contract.md` § *Bindings* and `./executor-routing.md` § *Write-mode engine registry*. Use the Confirmed auto-path surface from `fix-findings` § *Execution strategy: every auto-path fix delegates*.
+Launch an **executor** through the selected route in `./executor-routing.md`, under `./executor-contract.md` § *Bindings*. Retain that selection for delegated recovery. Use the Confirmed auto-path surface from `fix-findings` § *Execution strategy: every auto-path fix delegates*.
 
-Supply the binding's complete packet: finding verbatim, root cause, chosen option, expected surface, order, dependencies, always-applicable pack guidance verbatim, surface-specific guidance paths, and per-unit checks. Include the binding's edit-surface restriction; staging and commits stay with the coordinator. The executor receives this packet without session history.
+Supply the binding's complete packet: finding verbatim, root cause, chosen option, expected surface, order, dependencies, always-applicable pack guidance verbatim, surface-specific guidance paths, and required checks (`./executor-contract.md` § *Launch packet*). Include the binding's edit-surface restriction; staging and commits stay with the coordinator. The executor receives this packet without session history.
 
 Apply `./executor-contract.md` § *Write-mode routing* to every returned report. Reject failed criteria and scope escapes; re-prove immediate outcomes when intake requires it. Only then capture the ordered change set. The coordinator performs final-integrated checks and health.
 
-Record delegation, engine, and parallel batch in the finding's Fixed or Fix failed entry. For an inline exception, announce and record the applicable `./write-mode-posture.md` exception.
+Record delegation, selected engine, external receipt evidence, and announced fallback per `./executor-routing.md` § *External launches and recovery* in the finding's Fixed or Fix failed entry. Include parallel placement where used. For an inline exception, announce and record the applicable `./write-mode-posture.md` exception.
 
 **Parallel batches:** apply `./parallel-batch.md` § *Coordinator-side parallel batch*. Surfaces come from the chosen options' stated blast radii and must be pairwise disjoint. Follow the skill's dependency-respecting processing order for incorporation. Keep the shared tree frozen while executors run, check complete content/presence surfaces, and use the ordered merge gates.
 

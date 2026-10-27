@@ -1,7 +1,7 @@
 ---
 name: implement
 description: Use when asked to implement, build, fix, or change something directly — described in the session or pointing at a file, issue, or diff — with no task folder or plan.
-argument-hint: '[what to implement]'
+argument-hint: '[what to implement] [-e native|codex|claude]'
 ---
 
 ## Core Rules
@@ -12,6 +12,10 @@ argument-hint: '[what to implement]'
 **Model invocation:** requires a confirmed proposal (`./references/workflow/skill-conventions.md` § *The invocation gate*).
 
 Carries out the framed change and reports in chat. The work product is the only durable disk change: write no task-folder files or statuses. Durable plans/results belong to `plan-task` followed by `implement-task`. Each framed item runs through a delegated write-mode executor (`./references/workflow/executor-routing.md` § *The registry and its authorization*).
+
+## Flags
+
+- `-e native|codex|claude`: executor for the framed items; resolve under `./references/workflow/executor-routing.md` § *Selection*.
 
 ## References
 
@@ -57,13 +61,13 @@ Respect dependencies. Pause when the user requested inspection between items; ot
 
 Apply `./references/workflow/write-mode-posture.md`: every item delegates unless its stated exception applies. Fill packets with the original ask, item/criterion, established grounding, edit surface, and required contract fields before launch. Close gaps by reading, searching, or asking; only gaps discoverable solely through execution qualify for that exception.
 
-Launch under `./references/workflow/executor-contract.md` § *Bindings*, implement binding; native serial items use the shared tree (`./references/workflow/executor-routing.md` § *Write-mode engine registry*). Announce inline exceptions and record them under Executed.
+Launch the selected engine through `./references/workflow/executor-routing.md` under `./references/workflow/executor-contract.md` § *Bindings*, implement binding. Serial items use the shared tree. Announce inline exceptions and record them under Executed.
 
 **Parallel batches.** Apply `./references/workflow/parallel-batch.md` § *Coordinator-side parallel batch*. Require declared, pairwise-disjoint surfaces and independent items; undeclared items remain serial. Merge in frame order. Bound a tail batch at §4; otherwise finish merges and required re-proofs before one boundary preceding dependent work. Do not run health per merged item. <!-- cold -->
 
 **Judgment stays here.** Keep framing, evidence decisions, all health boundaries, and reporting with the coordinator. Capture a pre-launch baseline, then apply `./references/workflow/executor-contract.md` § *Write-mode routing* intake to every return. Read every evidence heading; route failures and escapes to failure handling. Re-prove outcomes when intake requires it.
 
-**Fallback is inline execution.** Report failed, hung, or unavailable executors and execute their items inline. Surface escapes or merge conflicts discard the worktree under the merge gates, then rerun inline or serially. Remove all coordinator-managed worktrees after incorporation; no executor writes a record or status.
+**Fallback is inline execution.** Report failed, hung, or unavailable executors and execute their items inline. Ask first when the failed executor was an explicitly selected external engine (`./references/workflow/executor-routing.md` § *External launches and recovery*). Surface escapes or merge conflicts discard the worktree under the merge gates, then rerun inline or serially. Remove all coordinator-managed worktrees after incorporation; no executor writes a record or status.
 
 ### 4. Confirm the Ask Is Met
 
@@ -74,10 +78,10 @@ In order: exercise the whole end-to-end outcome, run the integrated-health bound
 Use chat lists; apply `./references/workflow/execution-acceptance.md` § *Before presenting* and domain checks on the full changed surface. Health must cover final unchanged bytes. For code, check shared/export consumers and cite framework grounding; stop or record ungrounded patterns under the domain's rules.
 
 - **Shipped:** `file:line` (or the domain's equivalent) per change, with what changed.
-- **Verified:** per item, executor or coordinator evidence, any re-run case, and command/test/observed behavior.
+- **Verified:** per item and required check, proof owner, coordinator assignment/re-run case where applicable, command/test/observed behavior, status, and evidence. Retain pending/open checks under `./references/workflow/executor-contract.md` § *Write-mode routing*.
 - **Asserted:** whole-ask outcome and how exercised, separate from Health.
 - **Health:** every boundary under the domain's format (`./references/engineering/verification.md` § *What a boundary records*).
-- **Executed:** deviations from native serial delegation, with engine, frame-ordered parallel merges, or inline exception/reason; omit when none.
+- **Executed:** explicit engine selection and launch evidence under `./references/workflow/executor-routing.md` § *External launches and recovery*, frame-ordered parallel merges, or inline exception/reason and any announced fallback; omit only for default-selected native with unchanged default delegation.
 - **Sources:** framework URLs and unsourced patterns with reasons; omit when none.
 - **Deviations:** changes from the frame and reasons; omit when none.
 - **Follow-ups:** remaining work; omit when none.

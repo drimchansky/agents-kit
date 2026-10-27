@@ -52,6 +52,30 @@ node scripts/dup-check.ts [--allow FILE] <kit-root>
 
 **Exit status.** Zero means no surviving groups or stale entries; 1 means either kind of finding. Status 2 covers missing/invalid roots, unknown options, unreadable directories or corpus files, and malformed or unreadable existing allow-files. Allow-file defects include invalid JSON, non-array data, missing fields, repeated sentences, or invalid `files`. Unexpected failures also exit 2, not 1. Unlike reporting scripts, this check refuses unreadable corpus files: skipping one could falsely report an incompletely scanned corpus as clean.
 
+## `scripts/executor-run.ts`
+
+Contract: `references/scripts/executor-run.md`.
+
+**Why transport is a helper.** Literal stdin, fixed cwd, fresh output, complete logs, and process cancellation prevent shell recipes from losing evidence. Unit interpretation stays with the executor contract and coordinator.
+
+**Why children use owned process groups.** Detached POSIX groups contain the launcher-owned CLI and its ordinary descendants. Cancellation signals only those groups, then collects the child. `codex exec` runs its app server in-process, so the owned group holds no shared service.
+
+**Why output files are fresh.** Reusing a directory could present an earlier final reply after a failed launch. Creating the directory exclusively rejects that ambiguity before any vendor process starts.
+
+**Why the helper reopens no artifact during a run.** A vendor sandbox may let the executor write inside `outputDir`, for example under `/tmp`. The executor could then swap an artifact, or `outputDir` itself, for a symlink. A path the helper or the CLI opened after launch would follow it, redirecting an unsandboxed write. The helper opens the event log and `report.txt` before launch and writes both only through those descriptors. Codex's final reply comes from its event stream instead of a file the CLI writes.
+
+**Why approval uses exec configuration.** A root-level approval flag does not propagate into `codex exec`. The helper sets `approval_policy` through `exec -c`, which also overrides a conflicting saved default.
+
+**Why `agents/executor.md` edits run `tests/executor-run.test.ts`.** The Claude route builds its session-local agent from that adapter's text at run time. It requires top-of-file frontmatter fences, an exact `name: executor` line, and a `description:` value on the same line. The body also needs a line starting `Install root: ` followed by text. Breaking any of these refuses every Claude launch with status 2, before any CLI probe. The helper replaces the first `Install root:` line whole with one naming the request's `contractRoot`. Other text on that line never reaches the launched prompt. A block-scalar description such as `description: >-` still passes and ships `>-` as the agent description.
+
+**Why the Claude role takes a per-run name.** A managed agent outranks a `--agents` definition with the same name. With a fixed `executor` name, an organization's agent would run in place of the kit role while the receipt still named the kit adapter.
+
+**Why effort is pinned through `--settings`.** `CLAUDE_CODE_EFFORT_LEVEL` outranks `--effort` and the agent's `effort`, and an `env` block in any settings file sets it at startup. Removing the inherited variable alone leaves those files in force. The command-line settings layer outranks user, project, and local files; only managed settings sit above it. `maxEffortLevel` is the exception: the lowest cap from any scope applies, so the pin cannot raise a capped effort.
+
+**Why Claude runs with an empty fallback chain.** A saved `fallbackModel` chain can finish the packet on another model while the receipt names the requested one. `--settings` outranks user, project, and local files, and the highest source owns the chain whole. Managed chains, model-not-found fallback, and refusal fallback can still switch, so the helper also reads their `system` events. Claude Code 2.1.311 emits `model_fallback` for chain switches, which the Agent SDK reference does not document. A legacy model remap emits neither event and stays undetected.
+
+**Why the Claude role keeps startup instructions.** The session-local role replaces the default agent prompt. Bare mode or stripped startup instructions would also drop the repository instructions the executor contract applies.
+
 ## `scripts/goal-structure.ts`
 
 This pure module parses goal definitions and scans task-local Markdown references for task-state and health-check. Keep definition parsing shared so health-check's `goal-id` findings and task-state coverage cannot disagree about malformed or duplicate IDs. Measure offsets on the original line, not the CR-stripped text, or CRLF repairs will target the wrong characters. The reference scanner excludes illustrative Markdown and link destinations; repair uses its offsets to update exactly the references validation recognizes. Inline and reference-style link labels retain destination classification so an outside or unproved target cannot become a local remap. Nested labels resolve to their enclosing link, and a label, code span, or quotation left open across a line break marks its tokens ambiguous for the same reason. Retired IDs come only from goals.md's `## Retired` list. Validation therefore needs no Git history, so untracked stores and moved folders validate alike.

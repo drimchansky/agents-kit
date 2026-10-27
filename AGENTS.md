@@ -53,6 +53,8 @@ Installed runs do not load this file. `setup.ts` installs `CORE_RULES.md` instea
 
 **No script calls `process.exit` to set status.** Write the non-zero reason before assigning `process.exitCode`, preserving both the explanation and pending output. `task-move.ts`, `task-state.ts`, `pr-comments.ts`, `commit-scan.ts`, `sweep-scope.ts`, and `secretary-state.ts` throw an `Exit` carrying the code. `worktree-merge.ts` throws `Refused` or `Unrunnable`. One handler at each module's end reports every refusal. `dup-check.ts` handles thrown `Refused` as status 2, but assigns status 1 after writing its findings report. `task-state.ts --repair` also writes its JSON report first, carrying the reason in `unresolved` or `error`. It then assigns status 1 or 2 directly instead of throwing `Exit`.
 
+`executor-run.ts` uses process-specific 0/1/2 meanings defined in `references/scripts/executor-run.md`. It emits its receipt before assigning `process.exitCode`.
+
 ### `setup.ts`
 
 Installs skills, `references/`, `CORE_RULES.md`, and native agent definitions into `~/.claude` and `~/.codex`. Ownership markers let later runs reclaim installed items while preserving user content.
@@ -98,6 +100,7 @@ Run the suite covering each changed surface:
 - `scripts/dup-check.ts` or its `corpus.ts` import: `node --test tests/dup-check.test.ts`.
 - `scripts/worktree-merge.ts`: `node --test tests/worktree-merge.test.ts`.
 - `scripts/secretary-state.ts` or `references/scripts/secretary-state.md`: `node --test tests/secretary-state.test.ts`, plus the start-secretary suite, which runs the skill's helper commands.
+- `scripts/executor-run.ts`, `references/scripts/executor-run.md`, or `agents/executor.md`: `node --test tests/executor-run.test.ts`.
 - `scripts/lifecycle-constants.ts`: health-check, task-move, task-state, commit-scan, sweep-scope, and templates suites, which cover its seven importers.
 - `references/templates/` and the three scripts its suite drives: `node --test tests/templates.test.ts`.
 - `skills/review-pr-loop/SKILL.md` or `references/workflow/delegated-waiting.md`: `node --test tests/review-pr-loop.test.ts`.
