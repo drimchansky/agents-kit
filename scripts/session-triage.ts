@@ -4,7 +4,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 process.stdout.on("error", (err: NodeJS.ErrnoException) => {
-  if (err.code !== "EPIPE") throw err;
+  if (err.code !== "EPIPE" && err.code !== "ENOTCONN") throw err;
 });
 
 type SignalClass =

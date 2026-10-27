@@ -4,7 +4,7 @@ import { basename, join, relative, resolve, sep } from "node:path";
 import { SKILL_FILE, corpusFiles } from "./corpus.ts";
 
 process.stdout.on("error", (err: NodeJS.ErrnoException) => {
-  if (err.code !== "EPIPE") throw err;
+  if (err.code !== "EPIPE" && err.code !== "ENOTCONN") throw err;
 });
 
 const MIN_WORDS = 12;

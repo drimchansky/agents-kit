@@ -47,6 +47,10 @@ Report material out-of-scope discoveries at the end of your response, without fi
 
 Include observations that matter to someone acting on the work. Omit incidental hygiene; apply any domain-specific materiality bar.
 
+Include material out-of-scope dependency problems encountered during the work: libraries, tools, plugins, and skills. Put the dependency and its version, when known, in `[location]`. Describe the observed evidence and impact. Write `Suspected:` before an evidence-backed but unconfirmed cause, keeping it apart from the observed symptoms.
+
+Reporting authorizes no additional audits, upgrades, issue reports, or messages to the dependency's maintainers. Report a dependency problem that prevents the requested outcome as a blocker, not in this block.
+
 ## Communication
 
 - Read `./references/workflow/user-facing-messages.md` § *Plain wording* only and apply it to the prose that section covers.

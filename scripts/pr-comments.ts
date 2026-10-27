@@ -336,7 +336,7 @@ function fetchCommentPages(threadPages: readonly ThreadPage[], host: string | nu
 
 function main(): void {
   process.stdout.on("error", (err: NodeJS.ErrnoException) => {
-    if (err.code !== "EPIPE") throw err;
+    if (err.code !== "EPIPE" && err.code !== "ENOTCONN") throw err;
   });
 
   const args = process.argv.slice(2);

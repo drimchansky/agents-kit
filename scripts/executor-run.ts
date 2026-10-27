@@ -489,7 +489,7 @@ async function execute(path: string): Promise<Receipt> {
 }
 
 if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  process.stdout.on("error", (error: any) => { if (error.code !== "EPIPE") throw error; });
+  process.stdout.on("error", (error: any) => { if (error.code !== "EPIPE" && error.code !== "ENOTCONN") throw error; });
   const receipt: Pick<Receipt, "helperExitCode" | "diagnostics"> = process.argv.length === 3 ? await execute(process.argv[2]) :
     { helperExitCode: 2, diagnostics: ["usage: node executor-run.ts <launch-request.json>"] };
   process.stdout.write(JSON.stringify(receipt) + "\n");

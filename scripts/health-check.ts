@@ -20,7 +20,7 @@ import { sameDiagnostic, validateGoalStructure, type StructureDiagnostic } from 
 import { readTaskMarkdown, type TaskMarkdown } from "./task-repair.ts";
 
 process.stdout.on("error", (err: NodeJS.ErrnoException) => {
-  if (err.code !== "EPIPE") throw err;
+  if (err.code !== "EPIPE" && err.code !== "ENOTCONN") throw err;
 });
 
 const DEFAULT_STALE_DAYS = 30;

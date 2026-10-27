@@ -2018,7 +2018,7 @@ function report(value: unknown): void {
 
 function main(argv: readonly string[]): void {
   process.stdout.on("error", (err: NodeJS.ErrnoException) => {
-    if (err.code !== "EPIPE") throw err;
+    if (err.code !== "EPIPE" && err.code !== "ENOTCONN") throw err;
   });
   const [command, ...rest] = argv;
   switch (command) {
