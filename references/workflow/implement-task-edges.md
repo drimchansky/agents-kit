@@ -49,9 +49,9 @@ At a checkpoint, run its assertions after every batch step finishes, then one he
 
 ## An open criterion leg
 
-A browser, device, or human check unavailable in-session remains part of the criterion. Name it before launch as explicitly open under `./parallel-batch.md` § *Coordinator-side parallel batch* → **An unexecutable leg is carried open**. Removing it cannot turn partial proof into a pass.
+A check unavailable to both executor and coordinator remains part of the criterion. Assign checks through `./executor-contract.md` § *Launch packet* and take its § *Write-mode routing* → **Coordinator-owned checks** before leaving a leg open. Carry unavailable checks under `./parallel-batch.md` § *Coordinator-side parallel batch* → **An unexecutable leg is carried open**. Removing a leg cannot turn partial proof into a pass.
 
-Leave the step unchecked and record the open leg, assertion, and verifier. When it gates an external goal or engineering live check, park in-review with the pending goal verdict or named check. Resume through § *Reaching done from in-review*.
+Leave the step unchecked and retain the open check's definition, owner, and missing capability in its record. When it gates an external goal or engineering live check, park in-review with the pending goal verdict or named check. Resume through § *Reaching done from in-review*.
 
 When the user accepts an option containing their verification leg, keep it open until they report the outcome.
 

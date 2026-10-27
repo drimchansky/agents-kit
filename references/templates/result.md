@@ -19,7 +19,7 @@ _Updated: YYYY-MM-DD_
 
 ## Step N — <step title>
 
-**Verified:** <`executor` or `coordinator` with re-run case; criterion outcome, decisive command/observation with exit or pass/fail, and evidence path/anchor or short diagnostic. Summarize the report; do not copy output tails.>
+**Verified:** <per required check: `executor` or `coordinator`, coordinator assignment/re-run reason where applicable, command/observation, status, and evidence path/anchor or short diagnostic. Retain pending/open checks with their definition, owner, and missing capability. Summarize the report; do not copy output tails.>
 
 **Health:** <this step's boundary outcome and evidence location; omit when a checkpoint or batch record owns it>
 
@@ -30,7 +30,7 @@ _Updated: YYYY-MM-DD_
 
 **Sources:** <official-doc URLs grounding framework-specific code in this step, plus any pattern shipped without one and why; otherwise omit>
 
-**Executed:** <how this step deviated from the default launch; otherwise omit>
+**Executed:** <any explicit engine selection, and how this step deviated from the default launch; otherwise omit>
 
 **Deviations from plan:** <if any — what differed and why; otherwise omit>
 
@@ -42,7 +42,7 @@ _Updated: YYYY-MM-DD_
 
 ## Full Run — <date>
 
-**Verified:** <each step's outcome and decisive check with status and evidence location; group shared checks, retaining each step's identity and any failure. Summarize executor reports.>
+**Verified:** <each step's required checks with proof owner, coordinator assignment/re-run reason where applicable, status, and evidence location; retain pending/open definitions and missing capabilities. Group shared checks without losing step identity or failures. Summarize executor reports.>
 
 **Health:** <the full-plan tail boundary and any mid-run boundary once each, with outcome and evidence location>
 
@@ -52,7 +52,7 @@ _Updated: YYYY-MM-DD_
 
 **Sources:** <as above, across all steps; otherwise omit>
 
-**Executed:** <one `Step N …` entry per step that deviated from the default launch; otherwise omit>
+**Executed:** <one `Step N …` entry per step with an explicit engine selection or a deviation from the default launch; otherwise omit>
 
 **Deviations from plan:** <if any>
 

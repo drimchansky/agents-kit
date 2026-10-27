@@ -52,6 +52,7 @@ Pass each phase's modal flags through unchanged, except the `review-code-triage-
 ### Modal flags — interleaved behavior
 
 - `--amend` (`commit`) — replace the latest commit, changing message selection, state guards, and verification within the commit workflow. The long form matches Git and avoids its staging flag `-a`.
+- `-e native|codex|claude` (`implement`, `implement-task`, `fix-findings`) — select the write executor within execution and recovery (`./executor-routing.md` § *Selection*). It changes no deliverable or authorization gate.
 - `-x` (`review-code`, `review-docs`, `review-task`) — use a cross-vendor read-only probe (`./probe-cross-check.md`), merging before verdicts finalize. A composite passes it to its review phase. Document one Flags entry, one launch line, and one `Cross-check:` output line per skill. `review-code-triage-verify` suppresses the review's standalone reviewer settle and, with `-x`, the probe's verify-before-adopt step. Its phase 3 verifies every candidate (`./reviewer-contract.md` § *The settle*).
 - `-d` (`review-code`) — draft a PR description from the review's existing change map.
 - `-n N` (`review-code`) — launch N independent reviewers within the review pass and pool returns before finalizing findings.

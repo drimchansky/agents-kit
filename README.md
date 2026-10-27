@@ -44,6 +44,15 @@ Small changes can go straight to `implement` without a task folder. Use `init-co
 
 [Workflow details](./references/workflow/task-layout.md) · [Maintainer guide](./AGENTS.md)
 
+## Choose an executor
+
+`implement`, `implement-task`, and `fix-findings` accept `-e native|codex|claude`. New runs default to `native`; selection carries through the run's corrective relaunches.
+
+- Claude Code to Codex: `/implement-task <task> -e codex`
+- Codex to Claude: `$implement <change> -e claude`
+
+Use `-e native` to select the host's own executor. [Routing and fallback rules](./references/workflow/executor-routing.md#selection) define supported routes. Review `-x` remains a read-only cross-check.
+
 ## Private runbook
 
 Ask `init-config` to configure one dedicated runbook directory inside your private notes for personal and work topics. Use an absolute or home-relative path. It previews the complete configuration before writing and preserves unrelated settings. The optional [`runbookRoot` setting](./references/workflow/task-store.md#the-root-registry-optional) is separate from task-discovery roots.
