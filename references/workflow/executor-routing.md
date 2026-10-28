@@ -11,7 +11,7 @@ Resolve the write executor, its authorization, and its launch route before writi
 ## Selection
 
 Accept `-e native|codex|claude` with a required value, or an equivalent explicit natural-language selection.
-The flag is a standalone `-e` token in the argument-hint's trailing position, outside quoted or code text. Any other `-e` is request text.
+The flag is a standalone `-e` token among the invocation's trailing flags, outside quoted or code text. Any other `-e` is request text.
 Reject a flag with a missing or unknown value, or two flags with different values, before writes or executor launches.
 Reject same-vendor CLI nesting; the registry below admits only cross-vendor external routes. There is no `--executor` alias.
 

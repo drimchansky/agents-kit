@@ -2,6 +2,8 @@
 
 A `fix-findings` section citation refers to `skills/fix-findings/SKILL.md`.
 
+A coalesced boundary group stands in for its members' concern batch throughout this file, except the final sweep, which each member runs (`fix-findings` § *Integrated health boundary*).
+
 ## Dependency-safe recovery
 
 Use coordinator-managed scratch copies seeded from the immutable concern-batch baseline (`fix-findings` § *Content baseline and immediate outcomes*). Replay the concern batch's ordered change sets in dependency-closed groups and test the active failure predicate. Dependencies include explicit dependencies and overlapping or ordering-sensitive change sets (`fix-findings` § *The Gate: Auto vs Ask*). Do not replay a later overlapping fix without earlier bytes it embeds or requires.
@@ -41,7 +43,7 @@ Apply the evidence per failed check; selective isolation requires a green contro
 - **Inconclusive comparison:** restore the immutable concern-batch baseline within `fix-findings` § *Content baseline and immediate outcomes*' attribution bound. Bucket every still-retained attempted fix of this concern batch Fix failed, naming why comparison could not run. Retain no changed-work-product survivor.
 - **Green baseline control:** use § *Dependency-safe recovery* with the failed checks. Rebuild baseline plus survivors, re-prove their final outcomes, and run a fresh complete health boundary. Take its reference and scope from `fix-findings` § *Integrated health boundary*. Repeat if red. If recovery cannot converge this session, restore the concern-batch baseline within the same attribution bound. Bucket this concern batch's remaining attempts Fix failed with the unresolved-health reason.
 
-Collection rollback preserves earlier concern batches and the Decided, Awaiting decision, Untouched, and earlier immediate-failure buckets. Only recovery earns another health boundary; the happy path keeps one pass per concern batch.
+Collection rollback preserves earlier concern batches and the Decided, Awaiting decision, Untouched, and earlier immediate-failure buckets. Only recovery earns another health boundary; the happy path keeps one pass per concern batch, or per coalesced group.
 
 ## Delegation mechanics
 

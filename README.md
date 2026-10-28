@@ -35,7 +35,7 @@ Choose one installation method. Invoke skills as `/plan-task` in Claude Code, `/
 1. **Shape the work.** Use `refine-idea` for a rough idea or `prepare-ticket` for a concrete request.
 2. **Plan it.** `plan-task` records goals, steps, and verification. `review-task` checks the plan before execution.
 3. **Build it.** `implement-task` follows the plan, verifies the work, and records results.
-4. **Review it.** `review-code` examines the changes; `fix-findings` addresses issues.
+4. **Review it.** `review-code` examines the changes; `fix-findings` addresses issues, and `-1` runs one health boundary and one commit for the whole run.
 5. **File it.** `archive-task` moves finished tasks out of the active list. `backlog-task` parks unstarted work.
 
 Tasks normally live in `.agents/tasks/<slug>/`, with `CONTEXT.md`, `goals.md`, `plan.md`, and `result.md` as work progresses. Use `resume-task` to pick up later and `reconcile-task` to save decisions and findings.
