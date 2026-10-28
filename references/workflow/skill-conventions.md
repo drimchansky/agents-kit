@@ -45,7 +45,7 @@ Scattered flag conditionals suggest a misclassified phase. A modal flag modifies
 - `resume-task-reconcile` — print the resume brief, then reconcile docs to it.
 - `review-task-reconcile` — print the plan assessment, then reconcile docs and incorporate answers.
 - `decompose-task` — propose ordered sibling parts from an approved source; after confirmation, materialize each through `prepare-ticket` and seeded `CONTEXT.md`.
-- `review-pr-loop` — review a PR and publish available findings before waiting for checks, then watch its head. Whole-phase iteration: the cap is 10 passes, a pass with no original Critical/Major findings and passing checks ends after APPROVE or COMMENT on the reviewer's own PR, and a closed PR ends it too. Each pass displays progress, provenance when a review completes, and every submission or its no-submission reason. It pins `publish-pr-review`'s supplied tiers and selection, its own gate carrying that consent, and substitutes the PR's checks for the review phase's verification scripts. Its head checks run inside the review phase under § *The rule*'s supervision exception.
+- `review-pr-loop` — review a PR and publish available findings before waiting for checks, then watch its head. Whole-phase iteration: the cap is 10 passes; a clean pass ends after an evidence-eligible verdict, and a closed PR ends it too. Each pass displays progress, provenance, evidence state, and every submission or its no-submission reason. It pins `publish-pr-review`'s supplied tiers and selection, with publishing consent from its own gate. Engineer confirmation follows `../engineering/review-evidence.md`. PR checks substitute for verification scripts while evidence capture remains active. Its head checks run inside the review phase under § *The rule*'s supervision exception.
 
 Pass each phase's modal flags through unchanged, except the `review-code-triage-verify` settle override below.
 
@@ -103,7 +103,7 @@ Update this roster in the same change that adds or removes a skill's `**Model in
 
 Skills that gate their own write another way stay off the roster:
 
-- `publish-pr-review` offers counted severity tiers, including comment counts and posting nothing. Its selection gates the PR write, except under `review-pr-loop`, whose own gate carries that consent.
+- `publish-pr-review` offers counted severity tiers, including comment counts and posting nothing. Its selection gates the PR write, except under `review-pr-loop`, whose own gate carries publishing consent. Approval also follows `../engineering/review-evidence.md`. Its evidence question gates screenshot uploads.
 - `create-notion-page` drafts and creates a parentless page in the user's Private section, visible only to them and cheap to delete. It shares nothing and changes no permissions.
 - `commit`, `rebase`, and `squash-push` use the explicit-request authorization below.
 - `prepare-daily-status` drafts in chat; an explicit send, update, or Slack-review request authorizes its matching Slack write. Selecting the skill does not authorize delivery.

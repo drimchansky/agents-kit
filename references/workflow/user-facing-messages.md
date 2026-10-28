@@ -21,7 +21,7 @@ Wording examples; § *Blocks* still governs Handoff structure:
 
 ## Finding entry wording
 
-When preparing a new review finding for people, keep the raw return and draft a separate finding under § *Plain wording*. Compare it with its source before accepting the wording: preserve severity, locator, recommendation, impact, certainty, and every distinct claim. Change wording without inferring a new fix or cause.
+When preparing a new review finding for people, keep the raw return and draft a separate finding under § *Plain wording*. Compare it with its source before accepting the wording: preserve severity, locator, the `Pre-existing` label, recommendation, impact, certainty, and every distinct claim. Change wording without inferring a new fix or cause.
 
 Prepare once before triage, verification, or publication, even when chat display waits. Apply this also to candidates first raised during verification, before the session verifies and adopts them. Preparation assigns no verdict and adopts no candidate.
 
@@ -47,7 +47,7 @@ Each item carries exactly one marker, at its start. A finding whose source suppl
 ## Blocks
 
 - **Headline.** Optional. One sentence, outcome first.
-- **Finding entry.** The marker, the locator in backticks (`file:line`, or the locator the workflow names), the text retained under § *Finding entry wording* with its recommendation and impact verbatim, then the verdict or note when the workflow carries one. One entry per issue, never collapsed, ordered by severity where the workflow fixes no other order. Example: 🟡 Major `src/export.ts:42`: rows load into memory before streaming; stream from the cursor; large tenants time out. Confirmed: the loop awaits `toArray()`.
+- **Finding entry.** The marker, then `(Pre-existing)` where the finding carries that label (`../engineering/review.md` § *Pre-existing findings*), then the locator in backticks (`file:line`, or the locator the workflow names), the text retained under § *Finding entry wording* with its recommendation and impact verbatim, then the verdict or note when the workflow carries one. One entry per issue, never collapsed, ordered by severity where the workflow fixes no other order. Example: 🟡 Major `src/export.ts:42`: rows load into memory before streaming; stream from the cursor; large tenants time out. Confirmed: the loop awaits `toArray()`. A labeled entry opens 🟡 Major (Pre-existing) `src/export.ts:42`, then its text.
 - **Progress line.** Launched or still-running work takes `🔵 In progress: <action> <target>`. Example: `🔵 In progress: reviewer on abc1234...HEAD`. Collected work takes `✅ Complete: <what finished>`.
 - **Fact ledger.** One line per checked claim, each claim once, quoted: `✅ Verified: "<claim>" (<evidence>)`, `❌ Incorrect: "<claim>" is <corrected fact> (<evidence>)`, `⚠️ Unverified: "<claim>" (<missing evidence>)`.
 - **Handoff.** Chat only: the last element of the final response that renders the skill's Output, whatever ended the run. A response that only asks a question, requests approval, refuses, or reports an error renders no Output and carries none. A `**Handoff**` lead line opens it, then one `- **<Slot>:**` item per non-empty slot, in the order Done, Know, Awaiting you, Next. Omit an empty slot. The skill names what fills each slot. A skill that another skill runs as a step prints no block; the run the user invoked composes one for the whole run, a composite's pipeline included (`./skill-conventions.md` § *Adding a behavior*).
@@ -71,7 +71,7 @@ Example, closing an implementation run:
     - Commit it: `/commit`.
     - A. Review the branch before pushing (recommended: the change touches the download flow, and the review traces its callers): `/review-code`. Pros: catches a defect before it lands. Cons: about fifteen minutes.
     - B. Push right after the commit: `git push`. Pros: the work lands now. Cons: a defect found later needs a follow-up commit.
-    - Once committed, review `feat/csv-export` against `main` with `review-code`? It writes nothing. Say go.
+    - Once committed, review `feat/csv-export` against `main` with `review-code`? It saves evidence under `~/.local/state/agents-kit/review-evidence/` and may build and start the app in a disposable checkout. It posts nothing. Say go.
     - `/review-code`
 ```
 
@@ -81,7 +81,7 @@ Example, closing an implementation run:
 
 **Intermediate progress.** One progress line per update while delegated or long-running work is in flight (`./delegated-waiting.md` § *How to wait*). Per-finding text and verdicts wait for the final response; aggregate counts may appear in progress lines.
 
-**GitHub PR review comments.** Each inline comment body, and each body entry for an unanchored finding, opens with its marker: `🔴 Critical` or `🟡 Major` by the finding's severity, `🟢 Minor` for minor findings, `🔵 FYI` for improvements, then the preserved text and notes. Attribution, verdict, and tier gates stay with `skills/publish-pr-review/SKILL.md`.
+**GitHub PR review comments.** Each inline comment body, and each body entry for an unanchored finding, opens with its marker: `🔴 Critical` or `🟡 Major` by the finding's severity, `🟢 Minor` for minor findings, `🔵 FYI` for improvements. Any `(Pre-existing)` label follows the marker, then the preserved text and notes. Attribution, verdict, and tier gates stay with `skills/publish-pr-review/SKILL.md`.
 
 **PR descriptions.** The Task and link header first, then a concise body. No markers, no review verdict, no AI footer (`skills/review-code/SKILL.md` § *PR description*).
 

@@ -45,6 +45,8 @@ Record deferral reasons/review dates.
 
 Continue other lenses. Permitted source/context reading is analysis; executing code/crafted inputs is active validation, including read-only invocations.
 
+Session-owned user-visible evidence capture follows `./review-evidence.md` § *Capture*. The restrictions below continue to govern security-candidate reproduction.
+
 Validate only in authorized local environments and isolated scratch reproduction per `review.md` § *Verification Scripts*. Synthetic inputs, preset time/memory/input-size/count bounds; stop after capturing failure evidence. Never use real credentials/private data, destructive actions, production/external targets, persistence, broad discovery, or offensive tooling beyond reproducing the candidate.
 
 Skip unsafe/unauthorized/policy-refused reproduction; no rerouting through executors, probes, tools, or targets. Static evidence alone proves neither reproduction nor practical exploitability. Report observations, skip reasons, uncertainty, and impact preconditions; distinguish inference from observed evidence.

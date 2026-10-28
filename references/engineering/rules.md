@@ -36,7 +36,7 @@ Methodology bodies the neutral spine loads by phase:
 - `planning.md`: vertical slicing, step-size caps, checkpoint shape, when to plan
 - `execution.md`: stack detection, doc sourcing, the Prove-It bug pattern, the verification cadence
 - `verification.md`: the unit-outcome and integrated-health tiers, with the satellites `boundary-scope.md`, `acceptance-gate.md`, and `batched-fixes.md`
-- `review.md`: code-review lenses, complexity signals, severity calibration
+- `review.md`: code-review lenses, complexity signals, severity calibration, with the satellite `review-evidence.md` for risk tiers plus the evidence and sign-off gate
 
 Git-operation reference:
 

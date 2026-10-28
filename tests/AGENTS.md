@@ -15,6 +15,8 @@ Quote the glob for the runner to expand it. A bare directory would be resolved a
 
 **The `executor-run` suite uses isolated fake vendor CLIs.** Its PATH contains only fixture executables with an absolute Node interpreter. Missing-command cases use that same isolated PATH. Literal transport, process receipts, large logs, failure after edits, and owned cancellation need local temporary files and POSIX subprocesses; no credentials or live model calls are used.
 
+**The `review-evidence` suite checks shared approval contracts across review and publication callers.** It protects risk tiers, capture ordering, evidence forwarding, current-session confirmation, approval routes, and `Pre-existing` finding labels in the source instructions. It neither launches a model nor proves screenshot contents or human judgment.
+
 **The `setup-install` suite pins a rule about `references/` that reaches past its own assertions.** `setup.ts` copies references with `dereference`, materializing links. Health-check's `--installs` pass reports one-sided links as drift. A references symlink would therefore produce permanent installation drift; keep the tree symlink-free.
 
 **The live Codex doctor probe is opt-in.** Its environment diagnostics contact external services and can abort sandboxed suite runs. Run `AGENTS_KIT_LIVE_CODEX_DOCTOR=1 node --test tests/setup-install.test.ts` when live diagnostics are intended. Default runs retain installation and TOML checks and report the doctor probe as skipped.

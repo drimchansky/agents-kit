@@ -30,7 +30,7 @@ Fetch all three comment sources:
 - **Review threads:** `node <kit-root>/scripts/pr-comments.ts <pr-number-or-url>`, with `<kit-root>` per `./references/workflow/task-store.md` § *Resolving `<kit-root>`* <!-- cold -->. Read its JSON per `./references/scripts/pr-comments.md`. Resolution status has no other source: if the kit root, the script, `node`, or `gh` is unavailable, say so and stop. `paginationComplete: false` means a prefix of the review: report the gap under **Inaccessible context**, never as a clean fetch.
 - **Review summary bodies** and **general PR comments:** `gh pr view <target> --json reviews,comments`. They carry no resolution state; treat a non-empty body as **open** unless a later comment clearly supersedes it.
 
-**Session findings.** Take each finding as the review emitted it: severity, `file:line`, recommendation. Do not re-review or re-rank. A verify composite's findings are its **Batches**, read per `./references/workflow/verify-pipeline.md` § *Reading Batches downstream*.
+**Session findings.** Take each finding as the review emitted it: severity, any `Pre-existing` label, `file:line`, recommendation. Do not re-review or re-rank. A verify composite's findings are its **Batches**, read per `./references/workflow/verify-pipeline.md` § *Reading Batches downstream*.
 
 **File or pasted text.** Parse the findings-shaped list, preserving wording and any severity prefix or marker. With no discernible findings, say so and stop.
 
@@ -46,14 +46,14 @@ Every finding lands in exactly one bucket: **open**, **verify**, or **addressed*
 
 ## Batch
 
-Cluster open findings into named concern zones (error handling, naming, tests, …), keeping same-file findings together within a zone. Preserve each finding's wording and severity; do not rewrite or re-rank. A legacy text prefix is valid input and renders as its canonical marker (`./references/workflow/user-facing-messages.md` § *Markers*).
+Cluster open findings into named concern zones (error handling, naming, tests, …), keeping same-file findings together within a zone. Preserve each finding's wording, severity, and any `Pre-existing` label; do not rewrite or re-rank. A legacy text prefix is valid input and renders as its canonical marker (`./references/workflow/user-facing-messages.md` § *Markers*).
 
 ## Output
 
 Lists, not tables.
 
 - **Overview:** the source(s) triaged, and counts: N open, N to verify, N addressed.
-- **Batches:** one section per concern zone, ordered by most severe member. Each entry is a finding entry (`./references/workflow/user-facing-messages.md` § *Blocks*): its canonical severity marker, its anchor (GitHub permalink, `path:line`, or a short quote), the original text, and who raised it, citing every source that raised it.
+- **Batches:** one section per concern zone, ordered by most severe member. Each entry is a finding entry (`./references/workflow/user-facing-messages.md` § *Blocks*): its canonical severity marker, any `(Pre-existing)` label, its anchor (GitHub permalink, `path:line`, or a short quote), the original text, and who raised it, citing every source that raised it.
 - **Verify** (only if any): likely-handled findings with the reason (author said done, code changed, thread outdated).
 - **Inaccessible context** (only if any): sources or links that could not be fetched, with the reason. Do not fabricate what is behind them.
 

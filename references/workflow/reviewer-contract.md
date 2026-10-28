@@ -79,11 +79,11 @@ For fleets, check every return. Record unavailable members and reasons; pool sur
 After intake:
 
 - Adopt cited findings; re-derive or drop uncited ones. Pass Improvements through.
-- Spot-check only Critical/Major anchors against the object. Use `git show <head-sha>:<path>` for Divergence paths; Minor findings settle on citations.
+- Spot-check only Critical/Major anchors against the object. Also spot-check each Critical/Major `Pre-existing` label against the merge-base and the diff (`../engineering/review.md` § *Pre-existing findings*). Remove the label when the merge-base lacks the defect or the diff reaches or worsens it. Remove it too when either check is unclear. Keep the finding's severity; pooled returns that disagree on a label leave the entry unlabeled. Use `git show <head-sha>:<path>` for Divergence paths; Minor findings settle on citations.
 - Assign final verdicts and mark changed severities.
 - Merge `-x` before finalizing findings (`./probe-cross-check.md`).
 
-Composites running `./verify-pipeline.md` § *The review phase* suppress these post-intake steps because their verify phase assigns each finding's verdict. Intake still runs.
+Composites running `./verify-pipeline.md` § *The review phase* suppress these post-intake steps because their verify phase assigns each finding's verdict. Intake and the `Pre-existing` label spot-check still run.
 
 ## Consumers
 
