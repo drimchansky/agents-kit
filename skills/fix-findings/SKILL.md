@@ -29,7 +29,7 @@ Resolve findings in this order (`../triage-findings/SKILL.md` § *Sources*):
 
 Keep the source's concern batches and their order (`../triage-findings/SKILL.md` § *Batch*, or a verify composite's **Batches**). An unbatched source is one concern batch.
 
-Accept code and documentation findings. Classify each chosen fix by the work products it changes, not its finding anchor; a mixed fix uses both domains. Source-comment wording needs documentation checks for the claim and engineering checks for the changed code file. Keep external-page fixes Untouched under the working-tree write limit. Do not generate findings during this run or assign new severities or verdicts. Preserve each finding's wording, severity, anchor, root cause, and fix options as supplied.
+Accept code and documentation findings. Classify each chosen fix by the work products it changes, not its finding anchor; a mixed fix uses both domains. Source-comment wording needs documentation checks for the claim and engineering checks for the changed code file. Keep external-page fixes Untouched under the working-tree write limit. Do not generate findings during this run or assign new severities or verdicts. Preserve each finding's wording, severity, `Pre-existing` label, anchor, root cause, and fix options as supplied.
 
 From `/review-docs`, take actionable Stale, Missing context, Misleading, Gaps, and Quality entries (`../review-docs/SKILL.md` § *Findings Output*). Its Accurate and Confirmed sections require no fix; Questions need an answer before an edit. These entries have no Confirmed fix verdict unless a separate verify source supplies one.
 
@@ -46,7 +46,7 @@ Before execution, known dependencies are source- or user-declared dependencies a
 **Withdrawn and Inconclusive findings are never edited.** Put them in Untouched with their verdict. A fix requires a Confirmed verdict or the user's approval of its diff:
 
 - **Auto:** a Confirmed finding with one unambiguous targeted change, confined to reviewed files, with no new dependency or public API or behavior change beyond the finding. Default to this option because the review already established the problem and the change is bounded.
-- **Ask:** every other actionable finding, including unverified findings and Confirmed findings with design choices, meaningful option trade-offs, unsettled intent, or broader scope.
+- **Ask:** every other actionable finding, including unverified findings, findings labeled `Pre-existing` (`./references/engineering/review.md` § *Pre-existing findings*), and Confirmed findings with design choices, meaningful option trade-offs, unsettled intent, or broader scope.
 
 Route a consequential change in a document's claim, decision, or intended audience to Ask, even when its wording looks simple (`./AGENTS.md` § *Ask Before Assuming*).
 Treat a file named only as a proposed remedy as outside the reviewed files for Auto. Route that fix to Ask.
@@ -124,7 +124,7 @@ The coordinator retains the auto/ask decision, batched ask, immediate-evidence i
 
 ## Output
 
-Use lists; omit empty buckets. Preserve the finding's original text and severity in each entry.
+Use lists; omit empty buckets. Preserve the finding's original text, severity, and any `Pre-existing` label in each entry.
 
 - **Commits:** one line per concern batch in processing order. Give the landed SHA and message title, `<sha> landed; post-hook re-proof failed: <check>`, `none — nothing to stage`, or why its commit did not land and what stays staged. Name uncommitted changes outside the checkout. Say when batch commits were off, naming the concern batch and baseline-failing check that turned them off, or that no checkout exists.
 - **Fixed:** changed `file:line`; concern batch; immediate evidence for each required check, naming its proof owner and coordinator assignment/re-run reason where applicable (`./references/workflow/executor-contract.md` § *Write-mode routing*); final-integrated evidence (its post-batch re-proof, or the green boundary that ran its regression test); current engineering health per `./references/engineering/verification.md` § *What a boundary records* and documentation sweep evidence where applicable. Identify fixes made on user approval. Record selected engine and launch/fallback evidence under `./references/workflow/executor-routing.md` § *External launches and recovery*, plus parallel batch, inline exception, or ask routing.

@@ -1,6 +1,6 @@
 # Code Review
 
-Lenses, calibration, and discipline for any code review. Orchestration and the review objects live in `skills/review-code/SKILL.md`; everything below holds across a diff, a range, and a path set except § *Reviewing a path set*.
+Lenses, calibration, and discipline for any code review. Orchestration and the review objects live in `skills/review-code/SKILL.md`. Everything below holds across a diff, a range, and a path set, except § *Reviewing a path set* and two branch-and-range rules: § *Pre-existing findings* and the evidence step of § *Approval Bar*.
 
 Per-surface checklists sit beside this file (`accessibility.md`, `css.md`, `security.md`, `react.md`, …); consult the ones the reviewed set's domains trigger.
 
@@ -76,7 +76,7 @@ If sibling projects exist, flag naming divergence for equivalent concepts, reinv
 
 - Style preferences that do not violate project conventions.
 - Equally valid alternatives; "I would have done it differently" is not a finding.
-- Issues in unchanged code, unless the diff directly affects them.
+- Issues in unchanged code outside the changed files and their blast radius.
 - Nitpicks on code being deleted or moved.
 - Hypothetical future problems, unless the change creates a concrete risk.
 - Comment verbosity or style on its own; a comment-only finding clears one of the Touched Comments bars.
@@ -89,17 +89,25 @@ Severity reflects user and production impact, not code aesthetics. Each level re
 - **Major:** causes problems over time: missing tests for complex logic, performance regressions, types that hide bugs, unverified consumers. Should fix before merge.
 - **Minor:** a small located defect: needless complexity, minor duplication, a misleading name. Fix if convenient.
 
+§ *Pre-existing findings* exempts labeled findings from these merge consequences.
+
 An **Improvement** is not a finding. It is a non-blocking suggestion with no defect behind it: an optional enhancement, a follow-up, or a refactor beyond the change. It carries no severity and lists under **Improvements**, `file:line` optional. It never affects § *Approval Bar*. § *What NOT to Flag* excludes equally valid alternatives from both lists.
 
 Legacy text prefixes are valid input; `../workflow/user-facing-messages.md` § *Markers* maps each to its marker before rendering.
 
+## Pre-existing findings
+
+On a branch or range, a finding carries the `Pre-existing` label when its defect is present at the merge-base and the change neither introduces nor worsens it. Whoever assigns the label confirms both conditions. `git show <merge-base>:<path>` or `git blame` shows the defect at the merge-base. The diff adds no caller, input, or path reaching it, and does not worsen it. Report such defects found in the changed files and their blast radius, keeping severity by impact. A change that makes a defect newly reachable or worse owns the finding, so the label does not apply. A `Pre-existing` finding never blocks approval or merge. Fixing it is optional for the change. A path set has no baseline and assigns no label.
+
 ## Findings output shape
 
-One entry per issue, each carrying its severity, `file:line`, the recommendation, and the impact, the list ordered by severity. Minor findings take the same shape, listed individually and never collapsed, and the list is never capped, so `/fix-findings` can take findings one at a time. Each citing skill's Output says where the list sits and renders it as the finding entry `../workflow/user-facing-messages.md` § *Blocks* fixes; a reviewer's return keeps this abstract shape (`../workflow/reviewer-contract.md` § *The return*).
+One entry per issue, each carrying its severity, `file:line`, the recommendation, and the impact, the list ordered by severity. Each entry also carries the `Pre-existing` label where § *Pre-existing findings* assigns it. Minor findings take the same shape, listed individually and never collapsed, and the list is never capped, so `/fix-findings` can take findings one at a time. Each citing skill's Output says where the list sits and renders it as the finding entry `../workflow/user-facing-messages.md` § *Blocks* fixes; a reviewer's return keeps this abstract shape (`../workflow/reviewer-contract.md` § *The return*).
 
 ## Approval Bar
 
-Approve when the change definitely improves overall code health, even if imperfect. Block merge only when Critical findings remain. Major findings should be fixed before merge and are not rubber-stamped as "fix in follow-up". Minor findings approve-with-comment.
+Approve when the change definitely improves overall code health, even if imperfect. Block merge only when Critical findings remain. Major findings should be fixed before merge and are not rubber-stamped as "fix in follow-up". Minor findings approve-with-comment. § *Pre-existing findings* exempts labeled findings from this bar.
+
+For every branch/range review, the coordinating session, not a delegated reviewer, takes these steps: classify risk and applicability under `./review-evidence.md` §§ *Risk* and *Applicability*, then apply `./review-evidence.md` § *Approval eligibility* before recommending or publishing approval.
 
 ## Reviewing a path set
 
@@ -121,7 +129,7 @@ For large diffs (20+ files): review types and interfaces first, then group remai
 - **Run them in the background where the host supports it**, waiting per `../workflow/delegated-waiting.md` § *How to wait* (a foreground `sleep` is not a wait, per its § *What is not a wait*); otherwise in the foreground at that same early point.
 - **Collect before output:** merge failures and warnings into the findings, each with file location and severity.
 
-Beyond these scripts and the reproduction below, a review executes nothing; `security.md` § *Review Validation Boundaries* draws the line between reading and active validation. The session or its delegated reviewer (`../workflow/reviewer-contract.md`) runs them; a read-only probe runs neither (`../workflow/agent-fanout.md`).
+Beyond these scripts, the reproduction below, and session-owned capture under `./review-evidence.md` § *Capture*, a review executes nothing. `security.md` § *Review Validation Boundaries* draws the line between reading and active validation. The session or its delegated reviewer (`../workflow/reviewer-contract.md`) runs scripts and reproductions; a read-only probe runs neither (`../workflow/agent-fanout.md`).
 
 **Both execute-only actions exercise what is on disk, never the review object.** A script failure or reproduced failure at a reviewed path where the tree diverges from the object (an uncommitted change on either side of the index, or an untracked file in a tracked path's place) is **context, never an adopted finding**: report it as such and settle the candidate by the verify route in `../workflow/agent-fanout.md`. The runner records every such path, the reviewer under its return's `Divergence` heading (`../workflow/reviewer-contract.md` § *The return*) and the session on its inline pass; a matching tree records `None`. The review never requires the tree to match.
 
@@ -129,4 +137,4 @@ Beyond these scripts and the reproduction below, a review executes nothing; `sec
 
 ## Standard Verification Checklist
 
-Before finalizing, re-read the lenses above against the output: usage sites checked, severity by impact, no style-only or unchanged-code findings, regression tests or the gap flagged, touched comments validated, dead code listed, assumptions identified, findings in the shape § *Findings output shape* defines.
+Before finalizing, re-read the lenses above against the output: usage sites checked, severity by impact, no style-only findings, unchanged-code findings labeled `Pre-existing` unless the change owns them, regression tests or the gap flagged, touched comments validated, dead code listed, assumptions identified, findings in the shape § *Findings output shape* defines.

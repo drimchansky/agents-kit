@@ -1,6 +1,6 @@
 ---
 name: review-code-triage-verify
-description: Use when asked for a verified review of a PR or branch against its base, a commit range, or a set of paths as they stand. One command reviews the object, batches the findings by concern, verifies each batch in an isolated read-only probe, and displays one verdict per finding. Reads and displays only; never edits code or posts anywhere.
+description: Use when asked for a verified review of a PR, branch, range, or file set. Reviews, batches, and verifies findings; classifies change risk, retains evidence for user-visible changes, and requests engineer sign-off where risk or evidence requires it before approval. Capture may build and start the app in a disposable checkout and drive a browser. Edits no code and posts nowhere.
 argument-hint: '[scope; defaults to the current branch against its base] [-n N (independent reviewers, default 1)] [-x (cross-vendor second review)] [-d (draft PR description)]'
 ---
 
@@ -13,7 +13,7 @@ Full review pipeline: review the object (`review-code`), batch the findings by c
 
 `./references/workflow/verify-pipeline.md` carries the shared mechanics and the pipeline-wide overrides; the sections below carry only what is specific to this composite.
 
-The whole pipeline reads and displays. No phase edits code, posts to the PR, or writes to any source.
+The pipeline reads and displays findings and retains local review evidence. Capturing that evidence may add a disposable detached worktree, build and start the app there, and drive a browser. No phase edits code, posts to the PR, or writes to any source.
 
 ## Flags
 
@@ -32,6 +32,8 @@ A range needs one condition more: `b` is an ancestor of `HEAD`, and no commit in
 ## Phase 1 — Review
 
 Run `./references/workflow/verify-pipeline.md` § *The review phase* with `../review-code/SKILL.md` as the review skill. A usable phase prints three lines: its **Summary**, its **Reviewed** provenance line, and its **Review pass** line with every `reviewer <i> dropped` entry. A safety-blocked terminal phase prints only the blocked `Review pass:` line and any unattached `Cross-check:` evidence, then stops the composite.
+
+Retain the review phase's Evidence field and artifact directory. Suppress its sign-off question; this composite presents final evidence after verification.
 
 ## Phase 2 — Triage
 
@@ -53,7 +55,10 @@ Fan out under `./references/workflow/agent-fanout.md`, `./references/workflow/pr
 
 Lists, not tables.
 
-- **Summary:** what changed, intent, and the overall assessment restated after verification; the session owns the final call. On a `paths` object the assessment is the health verdict `review-code` fixes.
+After Phase 3, or after the vacuous triage/verify route with no findings, present the retained evidence and request sign-off under `./references/engineering/review-evidence.md` § *Presentation and sign-off*. Apply `./references/engineering/review-evidence.md` § *Approval eligibility* to the final assessment. Verification verdicts do not replace evidence or confirmation.
+
+- **Summary:** what changed, intent, and the code assessment restated after verification and evidence eligibility. On a `paths` object retain the health verdict `review-code` fixes.
+- **Evidence:** forward the retained field and artifact links, updating confirmation and eligibility from this composite's final presentation. The no-findings route still reports it.
 - **Batches** and **Verified:** per `./references/workflow/verify-pipeline.md` § *Output: Batches and the Verified line*; `Batches` takes the whole reviewed object as its no-anchor locator and carries one entry per distinct claim with its `cited by k/N` marker. Batches is the only render of the findings: no separate Findings list follows it.
 - **Cross-check** (only with `-x`), **Improvements**, **Inaccessible context** (only if any), **PR description** (only with `-d`): forwarded from the review phase as `review-code` specs them. Improvements pass through unverified.
 - **Reviewed:** the provenance line exactly as `review-code` specs it, in its kind's form; `/publish-pr-review` reads it to anchor and to pick its currency-check base.
@@ -62,5 +67,6 @@ Lists, not tables.
 Close with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
 
 - **Done:** the verified assessment and verdict counts, pointing at **Summary** and the **Verified** line; with `-d`, the drafted description, pointing at **PR description**.
-- **Know:** what the verdicts leave unsettled: Inconclusive and Unverified entries, and the unverified **Improvements** where the review returned any. Name what narrowed the review: batches verified inline, an inline or degraded **Review pass**, **Divergence** entries, a **Cross-check** disagreement, or **Inaccessible context**. Name the reviewed object and any PR it sits on.
-- **Next:** the options are `/publish-pr-review` on a `pr` object, `/fix-findings`, and `/implement-task`. `/publish-pr-review` posts the tier you select (Critical/Major or Minor from the Batches entries `../publish-pr-review/SKILL.md` step 1 selects, or **Improvements**), or a short approval when all three are empty and nothing is unsettled. `/fix-findings` addresses the batches and commits each one; `/implement-task` addresses them through a task plan, then `/commit`. A `paths` object sits on no PR, leaving the last two. With `-d`, also name `/update-pr-description`, which applies the drafted description.
+- **Know:** what the verdicts leave unsettled: Inconclusive and Unverified entries, and the unverified **Improvements** where the review returned any. Name what narrowed the review: batches verified inline, an inline or degraded **Review pass**, **Divergence** entries, a **Cross-check** disagreement, or **Inaccessible context**. Name the reviewed object, any PR it sits on, and retained evidence directory.
+- **Awaiting you:** evidence prerequisites from `./references/engineering/review-evidence.md` § *Approval eligibility*, pointing at **Evidence**.
+- **Next:** the options are `/publish-pr-review` on a `pr` object, `/fix-findings`, and `/implement-task`. Publication remains subject to evidence eligibility. `/fix-findings` addresses the batches and commits each one; `/implement-task` addresses them through a task plan, then `/commit`. A `paths` object sits on no PR, leaving the last two. With `-d`, also name `/update-pr-description`, which applies the drafted description.

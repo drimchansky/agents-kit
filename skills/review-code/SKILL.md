@@ -1,6 +1,6 @@
 ---
 name: review-code
-description: "Use when asked to review or give feedback on code: a PR or branch diff against its base, a commit range, or a set of paths as one commit has them."
+description: "Use when asked to review or give feedback on code: a PR or branch diff, a commit range, or files at one commit. Classifies change risk, captures evidence for user-visible changes (it may build and start the app in a disposable checkout and drive a browser), and requests engineer sign-off where risk or evidence requires it before approval."
 argument-hint: '[scope; defaults to the current branch against its base] [-n N (independent reviewers, default 1)] [-x (cross-vendor second review)] [-d (draft PR description)]'
 ---
 
@@ -23,7 +23,7 @@ Read `./references/engineering/review.md` before working; its lenses apply to ev
 
 ## Setup
 
-Preserve the caller's branch, index, and working tree. Use a separate worktree or clone when the review needs another checkout.
+Preserve the caller's branch, index, and working tree. Use a separate worktree or clone when the review needs another checkout. Evidence capture runs in its own disposable checkout (`./references/engineering/review-evidence.md` § *Capture*).
 
 `review-pr-loop` may supply a selected PR number, host, repository, and expected head for a no-argument branch review. Use that number for both branch-context reads, with every `gh` call scoped to the supplied host and repository. Require each read to return `OPEN` at the expected head. A head mismatch reports only `Review stopped: head moved (<expected-head> -> <live-head>)`; lookup failure, another state, or another identity stops without falling back to branch discovery.
 
@@ -57,8 +57,8 @@ The effective root is the tree the object lives on, and every git command in thi
 **Gather context:**
 
 - Read the object's own commit messages (`merge-base(a, b)..b` on a range).
-- On the no-argument object, and on a range whose `b` is the current branch's HEAD, check for an open PR with `gh pr view --json number,title,body,state,url,comments,reviews,baseRefName,headRefOid`, taking the result only when `state` is `OPEN`; it runs on no other range. With supplied loop context, target its number and apply the supplied-context guards above. Without that context, missing `gh` or no GitHub remote skips the lookup.
-- On a range with any other `b`, find the PR whose head is that SHA per `./references/workflow/pr-lookup.md`; this skill is its **no-stop consumer**: no match, no `gh`, or no remote means no PR context. <!-- cold -->
+- On the no-argument object, and on a range whose `b` is the current branch's HEAD, check for an open PR with `gh pr view --json number,title,body,state,url,comments,reviews,baseRefName,headRefOid,isCrossRepository`, taking the result as PR context only when `state` is `OPEN`; **Capture evidence** still reads `isCrossRepository` from a result in any state. It runs on no other range. With supplied loop context, target its number and apply the supplied-context guards above. Without that context, missing `gh` or a non-GitHub remote skips the lookup, and a repository with no remote completes it with no PR.
+- On a range with any other `b`, find the PR whose head is that SHA per `./references/workflow/pr-lookup.md`, naming `isCrossRepository` among its fields; this skill is its **no-stop consumer**: no match, no `gh`, or no remote means no PR context. <!-- cold -->
 - If a PR exists: read its title, description, and review threads, and extract every URL from them. The URLs travel to the reviewer, which fetches them; the session fetches them only on the inline fallback.
 - With no PR, proceed on the commits and the user's context. A path set has neither: its context is whatever the user gave.
 
@@ -81,7 +81,7 @@ With `-n N`, send the N packets in one message, on the primitive `./references/w
 
 **Wait.** While the reviewer is in flight the session runs no command against the tree: no diff reads, no scripts, no scratch runs. The loop's supplied PR context permits its remote head checks during this wait. Wait per `./references/workflow/delegated-waiting.md` § *How to wait*, reporting where each launch stands at each check-in as one progress line per launch; under `-n N` that holds until the last of the N is in. The `-x` probe is read-only and may overlap the wait.
 
-**Settle.** The return is evidence, not a verdict; this skill assigns the verdicts per `./references/workflow/reviewer-contract.md` § *The settle*. First classify an explicit safety signal under that contract's § *Safety blocks*; it takes the **Blocked output** below, not an inline retry. Then the two intake checks, in order: the `Identity` echo against the identity Setup resolved (a mismatch means the reviewer resolved a different object: stop and report, settle nothing, launch nothing), then every return heading present (a malformed return takes the inline fallback with reason `reviewer failed`). After intake and any pooling, take **Prepare finding wording** below. Then adopt, spot-check, and assign the final verdicts as that section orders; `Summary` and `Improvements` pass through uncited; merge the `-x` probe.
+**Settle.** The return is evidence, not a verdict; this skill assigns the verdicts per `./references/workflow/reviewer-contract.md` § *The settle*. First classify an explicit safety signal under that contract's § *Safety blocks*; it takes the **Blocked output** below, not an inline retry. Then the two intake checks, in order: the `Identity` echo against the identity Setup resolved (a mismatch means the reviewer resolved a different object: stop and report, settle nothing, launch nothing), then every return heading present (a malformed return takes the inline fallback with reason `reviewer failed`). After intake and any pooling, take **Capture evidence**, then **Prepare finding wording** below. Then adopt, spot-check, and assign the final verdicts as that section orders; `Summary` and `Improvements` pass through uncited; merge the `-x` probe.
 
 Under `-n N`, run the same classification and checks per return, and drop each unavailable reviewer instead of ending a pass that still has a usable return. Record each on `Review pass:` as `reviewer <i> dropped (<reason>)`: `identity mismatch`, `malformed return`, `no return`, `reviewer failed: <error>`, or `safety blocked: <error>`, preserving only the available error code and message. Settle on the standing returns and render their coverage as `completed <completed>/<requested>`. Only once none stands does the pass take a terminal path: any `identity mismatch` among the drops stops the review; otherwise any `safety blocked` drop takes the **Blocked output**; only ordinary failures fall to the inline fallback with reason `reviewer failed`.
 
@@ -89,9 +89,11 @@ Losing reviewer 1 costs the review its verification scripts: run them in-session
 
 With `-n N` above 1, the standing returns' findings pool by location before anything is adopted, per `./references/workflow/agent-fanout.md` § *Merge contract*. Mark each pooled entry `cited by k/N`, `k` the number of returns making that entry's claim and `N` the requested count; an `-x` probe's agreement belongs to the `Cross-check:` line. Adoption and the Critical and Major spot-check run once per pooled group; `Summary` is the session's read across the standing returns, their `Improvements` merged. `Change map` is reviewer 1's, or the lowest-numbered standing return's where reviewer 1 was dropped; `Divergence` and `Inaccessible context` are the union across the standing returns, plus Setup's index-versus-head record on a `paths` object. <!-- cold -->
 
-**Prepare finding wording.** Apply `./references/workflow/user-facing-messages.md` § *Finding entry wording* after intake and pooling, before findings leave this pass. Use it on inline findings and any later script or `-x` candidate before session verification and adoption. Preparation runs even when a composite suppresses standalone settlement.
+**Capture evidence.** Apply `./references/engineering/review-evidence.md` §§ *Risk*, *Applicability*, and *Capture* using the change map and affected callers. Run this session-owned phase once after all primary reviewers are collected; `-n` and `-x` do not duplicate it. Observed defects enter the candidate list before wording and settlement; capture gaps remain evidence limitations. Retain the resulting Evidence field for Output or the composite caller.
 
-A composite driving this skill through `./references/workflow/verify-pipeline.md` § *The review phase* runs intake, pooling, and wording preparation, then defers adoption, spot-checks, and verdicts to its verify phase; any other composite runs the settle in full. The `-d` draft is Output's and is forwarded unchanged. <!-- cold -->
+**Prepare finding wording.** Apply `./references/workflow/user-facing-messages.md` § *Finding entry wording* after capture, before findings leave this pass. Use it on inline findings and any later script or `-x` candidate before session verification and adoption. Preparation runs even when a composite suppresses standalone settlement.
+
+A composite driving this skill through `./references/workflow/verify-pipeline.md` § *The review phase* runs intake, pooling, evidence capture, the `Pre-existing` label spot-check, and wording preparation, then defers adoption, anchor spot-checks, and verdicts to its verify phase; any other composite runs the settle in full. The `-d` draft is Output's and is forwarded unchanged. <!-- cold -->
 
 **Blocked output.** When `./references/workflow/reviewer-contract.md` § *Safety blocks* makes the primary review terminally blocked, stop with `Review pass: blocked (completed 0/<requested>; reviewer <i> safety blocked: <error>; …)`, every unavailable reviewer's reason included. That line, and with `-x` the `Cross-check:` line (`unattached (<n> findings; primary pass blocked)` or `skipped (<reason>)`, never adopted as the pass), is the whole output: no Summary, Findings, **Reviewed** provenance, or Handoff, since an empty Findings list would be publishable as a clean review.
 
@@ -113,7 +115,7 @@ Read the links Setup extracted:
 
 Launch verification scripts per `./references/engineering/review.md` § *Verification Scripts*, always, unless the caller substitutes its own evidence: as soon as the reviewed set is determined, start them over it and review while they run; failures and warnings land as findings before output. `./references/workflow/agent-fanout.md` fixes the route a candidate raised there settles by. <!-- cold -->
 
-Then apply **Review Focus** below, take **Prepare finding wording**, and render the output.
+Then apply **Review Focus** below, take **Capture evidence** and **Prepare finding wording**, and render the output.
 
 ## Review Focus
 
@@ -127,7 +129,10 @@ Apply the full review process from `./references/engineering/review.md`; its len
 
 ## Output
 
-- **Summary:** what changed, intent, overall assessment (approve / request changes / needs discussion); on a delegated pass restated from the return's `Summary`, re-read against the settled verdicts. On a `paths` object the assessment is the health verdict from `./references/engineering/review.md` § *Reviewing a path set*.
+After settlement, a standalone run presents evidence and requests sign-off under `./references/engineering/review-evidence.md` § *Presentation and sign-off*. A composite caller owns that final presentation and question instead. Apply `./references/engineering/review-evidence.md` § *Approval eligibility* before rendering the assessment, including a delegated return that recommended approval.
+
+- **Summary:** what changed, intent, and the code assessment re-read against settled verdicts and approval eligibility. Pending evidence or sign-off is reported without an approval recommendation. On a `paths` object retain the health verdict from `./references/engineering/review.md` § *Reviewing a path set*.
+- **Evidence:** the field from `./references/engineering/review-evidence.md` § *Presentation and sign-off*, including artifact links or the applicability reason.
 - **Findings:** in the shape `./references/engineering/review.md` § *Findings output shape* defines, Minors included and never capped, each rendered as a finding entry with its canonical severity marker (`./references/workflow/user-facing-messages.md` § *Blocks*). With `-n N` above 1 each entry carries its `cited by k/N` marker.
 - **Reviewed:** the provenance line `Reviewed <kind> at <head-sha> (merge-base <base-sha>) by <model>`, `<kind>` being `branch` or `range`; on a `paths` object `Reviewed paths <paths-digest> at <head-sha> (<n> files) by <model>`. The model carries `×<completed>` where a fleet produced that many usable passes; `<model>` is the adapter's pinned model on a delegated pass and this session's own on the inline fallback. `/publish-pr-review` reads the line to anchor, re-check currency, and attribute.
 - **Review pass:** mandatory (`./references/workflow/reviewer-contract.md` § *Degrade rule* and § *Safety blocks*): `Review pass: delegated (<model>)`, `Review pass: inline (<reason>)`, or the **Blocked output** form. With `-n N` above 1: `delegated (<model> ×<completed>; completed <completed>/<requested>)`, every dropped return named as `reviewer <i> dropped (<reason>)`, and the script run named: `scripts: reviewer 1`, `scripts: session (reviewer 1 <reason>)`, or the safety-blocked form above. A denied check is named on this line at every N as `scripts: <check> denied: <error>`: on the fleet form's `scripts: reviewer 1`, or appended to the N = 1 form, `delegated (<model>; scripts: <check> denied: <error>)`.
@@ -140,8 +145,9 @@ Apply the full review process from `./references/engineering/review.md`; its len
 End with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
 
 - **Done:** the assessment and finding counts by severity, pointing at **Summary** and **Findings**; with `-d`, the drafted description, pointing at **PR description**.
-- **Know:** what limits the review's coverage: an inline or degraded **Review pass**, a denied or skipped script, **Divergence** entries, a **Cross-check** disagreement, or **Inaccessible context** that could shift findings. Name the reviewed object and its PR, if any.
-- **Next:** on a `pr` object, `/publish-pr-review` posts the severity tier you select (Critical/Major, Minor, or **Improvements**) as inline comments, or a short approval if all three are empty (a clean `range` posts that as a comment). A `paths` object sits on no PR; its findings go to `/fix-findings`. With `-d`, add that `/update-pr-description` applies the draft to the PR once findings are addressed.
+- **Know:** what limits the review's coverage: an inline or degraded **Review pass**, a denied or skipped script, **Divergence** entries, a **Cross-check** disagreement, or **Inaccessible context** that could shift findings. Name the reviewed object, its PR if any, and retained evidence directory.
+- **Awaiting you:** missing evidence or engineer confirmation, pointing at **Evidence** when approval remains pending.
+- **Next:** on a `pr` object, `/publish-pr-review` posts the selected severity tier, with approval subject to evidence eligibility. A `paths` object sits on no PR; its findings go to `/fix-findings`. With `-d`, add that `/update-pr-description` applies the draft to the PR once findings are addressed.
 
 ## PR description
 
