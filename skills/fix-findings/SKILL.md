@@ -1,7 +1,7 @@
 ---
 name: fix-findings
-description: Use when asked to fix code or documentation findings from a session review, PR comments, or a pasted or saved list. Applies eligible Confirmed fixes automatically; other actionable fixes require batched diff approval. Commits each concern batch through the commit skill; never pushes or replies to sources.
-argument-hint: '[source] [-e native|codex|claude]'
+description: Use when asked to fix code or documentation findings from a session review, PR comments, or a pasted or saved list. Applies eligible Confirmed fixes automatically; other actionable fixes require batched diff approval. Commits each concern batch through the commit skill, or the whole run as one commit under -1; never pushes or replies to sources.
+argument-hint: '[source] [-e native|codex|claude] [-1 (one health boundary and one commit for the whole run)]'
 ---
 
 ## Core Rules
@@ -13,11 +13,12 @@ argument-hint: '[source] [-e native|codex|claude]'
 
 Apply selected code and documentation findings and report the rest untouched. Consume a verify composite's root cause and ordered fix options without repeating its investigation.
 
-Edit selected working-tree work products, and stage and commit each concern batch's fixes under § *Batch commits*. Each Confirmed auto-path fix runs through a delegated write-mode executor (§ *Execution strategy: every auto-path fix delegates*). Make no other Git mutation, findings-report edit, source reply, thread resolution, push, or live-page write. Transient coordinator-managed executor worktrees are the exception allowed by `./references/workflow/parallel-batch.md` § *Coordinator-side parallel batch*. <!-- cold -->
+Edit selected working-tree work products, and stage and commit fixes under § *Batch commits*. Each Confirmed auto-path fix runs through a delegated write-mode executor (§ *Execution strategy: every auto-path fix delegates*). Make no other Git mutation, findings-report edit, source reply, thread resolution, push, or live-page write. Transient coordinator-managed executor worktrees are the exception allowed by `./references/workflow/parallel-batch.md` § *Coordinator-side parallel batch*. <!-- cold -->
 
 ## Flags
 
 - `-e native|codex|claude`: executor for eligible Auto fixes (`./references/workflow/executor-routing.md` § *Selection*).
+- `-1`: coalesce every concern batch into one health boundary and one commit (§ *Integrated health boundary*). It is a standalone `-1` token among the trailing flags, outside quoted, code, or pasted text; any other `-1` is request text. Without `-1`, the batches that begin with batch commits off still share one boundary.
 
 ## Source
 
@@ -53,7 +54,7 @@ Treat a file named only as a proposed remedy as outside the reviewed files for A
 
 **Batch ask-routed findings before execution.** Classify all selected findings across every concern batch before applying any fixes. Prepare proposed diffs without editing work products. Show each Ask finding, concrete diffs and material trade-offs for its viable fixes, and your recommendation.
 
-A model-invoked run (`./references/workflow/skill-conventions.md` § *The invocation gate*) proposes the whole run as one question once that classification stands: the findings it will fix, the Auto fixes it will apply unasked, the executors it will launch for them, and a commit per concern batch. It holds every edit, launch, staging, and commit until that answer. A user-invoked run has passed it; the Ask round below runs through either door.
+A model-invoked run (`./references/workflow/skill-conventions.md` § *The invocation gate*) proposes the whole run as one question once that classification stands: the findings it will fix, the Auto fixes it will apply unasked, the executors it will launch for them, and a commit per concern batch, or one commit for the run under `-1`. It holds every edit, launch, staging, and commit until that answer. A user-invoked run has passed it; the Ask round below runs through either door.
 
 Use the host's interactive question tool when permitted and available; otherwise ask in chat and wait. Batch related questions within the tool's limits.
 
@@ -68,10 +69,10 @@ Post-approval choices follow `./references/workflow/fix-findings-recovery.md` §
 Use `./references/workflow/execution-loop.md` with these bindings:
 
 - **Source:** one finding and its chosen fix option or approved diff. Its criterion is that the named problem no longer reproduces, checked against the finding's evidence. Use the supplied root cause and reproduction path when present. Run each applicable unit-outcome tier (`./references/workflow/execution-loop.md` § *Two verification tiers*). Code checks include touched comments and an available formatter; documentation checks include applicable claim checks and a whole-deliverable link sweep (`./references/documentation/verification.md` § *Unit outcome — every unit*).
-- **Record:** the chat report in § *Output* and each concern batch's commit (§ *Batch commits*). Make no task bookkeeping or status edit. Edit a task-folder document only when it is a selected finding's work product.
+- **Record:** the chat report in § *Output* and each concern batch's commit, or the run's one commit under `-1` (§ *Batch commits*). Make no task bookkeeping or status edit. Edit a task-folder document only when it is a selected finding's work product.
 - **Blocked:** restore an immediate failure's pre-fix state and report `fix failed (reverted): <reason>`. A pending impactful choice restores the same way and lists the finding Awaiting decision (§ *Content baseline and immediate outcomes*). Final-outcome failures use `./references/workflow/fix-findings-recovery.md` § *Dependency-safe recovery*. Independent findings may continue after recovery. <!-- cold -->
 - **Acceptance:** re-read every selected finding against the live tree and place it in exactly one report bucket. For code fixes, apply `./references/engineering/acceptance-gate.md` to affected deployable targets independently of the finding wording. A green local fix remains retained and eligible for its authorized batch commit while live delivery is pending; report local proof and pending delivery separately, without claiming overall completion.
-- **Health boundaries:** use § *Integrated health boundary* once per concern batch, after its serial and parallel fixes settle and before its commit. Red-boundary recovery follows `./references/workflow/fix-findings-recovery.md`. <!-- cold -->
+- **Health boundaries:** use § *Integrated health boundary* once per concern batch, or once per boundary group when coalesced, after its serial and parallel fixes settle and before its commit. Red-boundary recovery follows `./references/workflow/fix-findings-recovery.md`. <!-- cold -->
 - **Integration assertions:** none. Separate code and documentation reviews assess the changed surfaces.
 
 ### Content baseline and immediate outcomes
@@ -92,13 +93,15 @@ When a concern batch retains fixes, run one integrated boundary after its final 
 
 The concern-batch baseline is the engineering reference. It carries no in-session green result for the first concern batch. A later concern batch's baseline carries the preceding boundary's green result only when it holds exactly the bytes that boundary evaluated. The recipe's scope follows from that reference. Sweep every retained local documentation deliverable and in-scope companion document for links and cross-references.
 
+**Coalesced boundary.** Under `-1`, every concern batch joins one boundary group. Without `-1`, the batches that begin with batch commits off form one boundary group. A group runs no per-batch boundary; it runs one after its last member's final outcome sweep, over every member's retained fixes. Its reference is its first member's concern-batch baseline, the only baseline it captures. Its change sets are its members' recorded change sets in processing order. Wherever this skill or `./references/workflow/fix-findings-recovery.md` names a concern batch's baseline, change sets, or boundary, a member reads its group's. Each member still runs its own final outcome sweep on the shared tree at that member's end. Recovery, restoration, attribution, and the Fixed condition span the group, and a member's finding takes the current batch's recovery control. Deferral keeps member identity: a deferred finding carries to the group's boundary under a batch's conditions and holds no later member's start. Under `-1`, § *Batch commits* commits the group once.
+
 A finding is **Fixed** only when its final-integrated outcome passes and every applicable check in its concern batch's boundary is green on that batch's unchanged final tree. Report the commit outcome under **Commits** (§ *Output*); landing is not a Fixed condition.
 
 On red, use `./references/workflow/fix-findings-recovery.md` § *Red boundary: comparison, disposition, recovery*. A matching baseline failure retains Health uncertifiable survivors; an inconclusive comparison restores the concern-batch baseline; a green control permits isolation. Recovery that changes the tree requires a fresh boundary. <!-- cold -->
 
 ### Batch commits
 
-Your invocation by command, or by a confirmed proposal that named a commit per concern batch, is the explicit commit request `./references/engineering/rules.md` § *Code & Git discipline* requires, for every concern batch this run fixes (`./references/workflow/skill-conventions.md` § *The invocation gate*). A proposal that left the commits unnamed grants none: propose them before the first batch commit, or run with batch commits off. An explicit no-commit instruction turns batch commits off, and so does a shared tree outside any Git checkout. A matching baseline failure turns batch commits off from its concern batch to the end of the run. With batch commits off, fixes stay unstaged and the report says so.
+Your invocation by command, or by a confirmed proposal that named a commit per concern batch, is the explicit commit request `./references/engineering/rules.md` § *Code & Git discipline* requires, for every concern batch this run fixes (`./references/workflow/skill-conventions.md` § *The invocation gate*). Under `-1`, by command or by a confirmed proposal that named one commit for the run, that request covers one commit after the coalesced boundary, staging every batch's change sets and naming every concern in `commit`'s argument. A proposal that left the commits unnamed grants none: propose them before the first fix edit, or run with batch commits off. An explicit no-commit instruction turns batch commits off, and so does a shared tree outside any Git checkout. A matching baseline failure turns batch commits off from its concern batch to the end of the run. With batch commits off, fixes stay unstaged and the report says so.
 
 With batch commits on, read the index before the first fix edit. Staged content stops the run before any edit, naming the staged paths, because `commit` commits the whole index.
 
@@ -126,14 +129,14 @@ The coordinator retains the auto/ask decision, batched ask, immediate-evidence i
 
 Use lists; omit empty buckets. Preserve the finding's original text, severity, and any `Pre-existing` label in each entry.
 
-- **Commits:** one line per concern batch in processing order. Give the landed SHA and message title, `<sha> landed; post-hook re-proof failed: <check>`, `none — nothing to stage`, or why its commit did not land and what stays staged. Name uncommitted changes outside the checkout. Say when batch commits were off, naming the concern batch and baseline-failing check that turned them off, or that no checkout exists.
+- **Commits:** one line per concern batch in processing order, or one line for a coalesced run naming its concerns. Give the landed SHA and message title, `<sha> landed; post-hook re-proof failed: <check>`, `none — nothing to stage`, or why its commit did not land and what stays staged. Name uncommitted changes outside the checkout. Say when batch commits were off, naming the concern batch and baseline-failing check that turned them off, or that no checkout exists.
 - **Fixed:** changed `file:line`; concern batch; immediate evidence for each required check, naming its proof owner and coordinator assignment/re-run reason where applicable (`./references/workflow/executor-contract.md` § *Write-mode routing*); final-integrated evidence (its post-batch re-proof, or the green boundary that ran its regression test); current engineering health per `./references/engineering/verification.md` § *What a boundary records* and documentation sweep evidence where applicable. Identify fixes made on user approval. Record selected engine and launch/fallback evidence under `./references/workflow/executor-routing.md` § *External launches and recovery*, plus parallel batch, inline exception, or ask routing.
 - **Delivery:** for code fixes, each affected target's live evidence or supported N/A; otherwise name each pending check (`./references/workflow/task-lifecycle.md` § *Companion result file*). A pending rollout or missing access does not undo a locally Fixed finding or its landed batch commit, but overall delivery remains pending. An observed regression or wrong release is reported as failed delivery requiring follow-up.
 - **Health uncertifiable:** surviving changes and the same immediate and final outcome evidence, plus the baseline-failing check and its resolved targets. Apply target exclusions from `./references/workflow/execution-recovery.md` § *Evidence lifecycle*. State that no boundary certifies the tree.
 - **Retained, failing:** never-reverted fixes whose current outcome or health evidence fails. Name the commit SHA, or `uncommitted`, the failed check, and what would unblock them.
 - **Decided:** ask-routed findings without an applied fix, with the user's decision and reason: skipped, deferred, or rejected.
 - **Awaiting decision:** findings whose impactful choice has no answer yet, with the offered options, the recommendation, and the edits held for the answer. Their fixes are not applied; edits landed before the choice was returned were restored to the pre-fix capture (§ *Content baseline and immediate outcomes*).
-- **Fix failed:** reverted fixes and unattempted dependents, with the reason and what would unblock them. Distinguish one fix, a dependency group, and an interaction group. Name an unestablished control or unconverged health recovery when applicable. Say `not attempted` for skipped dependents, not `reverted`. Include execution and immediate-evidence details as for Fixed.
+- **Fix failed:** reverted fixes and unattempted dependents, with the reason and what would unblock them. Distinguish one fix, a dependency group, and an interaction group. Name an unestablished control or unconverged health recovery when applicable. Name a coalesced group whose restore reverted every member's fixes. Say `not attempted` for skipped dependents, not `reverted`. Include execution and immediate-evidence details as for Fixed.
 - **Untouched:** excluded findings, non-open triage buckets, barred verdicts, moved anchors, and non-actionable complaints, each with its reason. After a stop, list later concern batches' findings as `not attempted`, naming the concern batch that stopped the run.
 
 Close with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
