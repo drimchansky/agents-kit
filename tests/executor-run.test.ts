@@ -148,6 +148,10 @@ const stray = (output) => {
   fs.writeFileSync(dir + "/stray.pid", String(held.pid));
   held.unref();
 };
+const publish = (name, text) => {
+  fs.writeFileSync(dir + "/pending-" + name, text);
+  fs.renameSync(dir + "/pending-" + name, dir + "/" + name);
+};
 fs.appendFileSync(dir + "/calls.jsonl", JSON.stringify(args) + "\\n");
 if (args.includes("--help")) {
   console.log(["--no-daemon", "--ask-for-approval", "--json", "--color", "--cd", "--sandbox", "--model", "--config", "--output-last-message", "--print", "--output-format", "--verbose", "--input-format", "--agent", "--agents", "--effort", "--settings", "--permission-mode", "--permission-prompts", "--allowedTools"].filter(x => x !== scenario.missingFlag)
@@ -162,7 +166,7 @@ if (args.includes("--help")) {
     held.unref();
   }
   if (scenario.helpStall) {
-    fs.writeFileSync(dir + "/probe.ready", String(process.pid));
+    publish("probe.ready", String(process.pid));
     setInterval(() => {}, 1000);
   }
 } else if (scenario.unread) {
@@ -210,7 +214,7 @@ if (args.includes("--help")) {
         setInterval(() => {}, 1000);
       }
       const owned = cp.spawn(process.execPath, ["-e", "process.on('SIGTERM',()=>{}); console.log('ready'); setInterval(()=>{},1000)"], {stdio:["ignore","pipe","inherit"]});
-      owned.stdout.once("data", () => fs.writeFileSync(dir + "/owned.json", JSON.stringify({parent:process.pid,child:owned.pid})));
+      owned.stdout.once("data", () => publish("owned.json", JSON.stringify({parent:process.pid,child:owned.pid})));
       return;
     }
     if (scenario.large) {
@@ -429,8 +433,10 @@ async function cancelFixture(f: ReturnType<typeof fixture>, signal: NodeJS.Signa
   const closed = new Promise<number | null>((done) => child.on("close", (code) => done(code)));
   let owned: { parent: number; child: number } | undefined;
   try {
-    await until(() => existsSync(join(f.dir, "owned.json")));
-    owned = JSON.parse(readFileSync(join(f.dir, "owned.json"), "utf8"));
+    await until(() => {
+      try { owned = JSON.parse(readFileSync(join(f.dir, "owned.json"), "utf8")); return true; }
+      catch (error: any) { if (error.code === "ENOENT" || error instanceof SyntaxError) return false; throw error; }
+    });
     child.kill(signal);
     assert.equal(await closed, 1);
     assert.equal(stderr, "");

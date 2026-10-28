@@ -19,8 +19,8 @@ Rebuild the shared tree from the immutable concern-batch baseline plus survivor 
 
 A survivor requiring an implicated fix joins its failed group and names that prerequisite in Fix failed. A later overlapping fix survives only if independently replayable or re-executable and re-provable on the rebuilt base:
 
-- A Confirmed auto-path fix may be re-executed.
-- An ask-approved fix may only replay its approved change set verbatim. If that fails, obtain approval of a fresh diff, list it Awaiting decision while that approval is pending, or bucket it Fix failed (`fix-findings` § *The Gate: Auto vs Ask*).
+- An Auto fix may be re-executed.
+- An approved fix may only replay its recorded change set verbatim; the coordinator performs that replay. If that replay fails, ask for a fresh diff under `fix-findings` § *Content baseline and immediate outcomes*; a freshly approved diff re-executes through the selected executor.
 
 Re-prove all survivors on the rebuilt final tree. After recording evidence, remove scratch copies and captures under the skill's write-surface rule.
 
@@ -47,11 +47,11 @@ Collection rollback preserves earlier concern batches and the Decided, Awaiting 
 
 ## Delegation mechanics
 
-Launch an **executor** through the selected route in `./executor-routing.md`, under `./executor-contract.md` § *Bindings*. Retain that selection for delegated recovery. Use the Confirmed auto-path surface from `fix-findings` § *Execution strategy: every auto-path fix delegates*.
+Launch an **executor** through the selected route in `./executor-routing.md`, under `./executor-contract.md` § *Bindings*. Retain that selection for delegated recovery. Delegate the fixes named in `fix-findings` § *Execution strategy: every fix delegates*.
 
-Supply the binding's complete packet: finding verbatim, root cause, chosen option, expected surface, order, dependencies, always-applicable pack guidance verbatim, surface-specific guidance paths, and required checks (`./executor-contract.md` § *Launch packet*). Include the binding's edit-surface restriction; staging and commits stay with the coordinator. The executor receives this packet without session history.
+Supply every `./executor-contract.md` § *Launch packet* item plus the binding's **Packet** and **Edit surface** items. The executor receives this packet without session history.
 
-Apply `./executor-contract.md` § *Write-mode routing* to every returned report. Reject failed criteria and scope escapes; re-prove immediate outcomes when intake requires it. Only then capture the ordered change set. The coordinator performs final-integrated checks and health.
+Apply `./executor-contract.md` § *Write-mode routing* to every returned report, and the binding's approved-diff intake to an approved fix. Reject failed criteria and scope escapes; re-prove immediate outcomes when intake requires it. Only then capture the ordered change set. The coordinator performs final-integrated checks and health.
 
 Record delegation, selected engine, external receipt evidence, and announced fallback per `./executor-routing.md` § *External launches and recovery* in the finding's Fixed or Fix failed entry. Include parallel placement where used. For an inline exception, announce and record the applicable `./write-mode-posture.md` exception.
 

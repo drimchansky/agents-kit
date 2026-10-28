@@ -46,7 +46,7 @@ Small changes can go straight to `implement` without a task folder. Use `init-co
 
 ## Choose an executor
 
-`implement`, `implement-task`, and `fix-findings` accept `-e native|codex|claude`. New runs default to `native`; selection carries through the run's corrective relaunches.
+`implement`, `implement-task`, and `fix-findings` accept `-e native|codex|claude`. New runs default to `native`; selection carries through the run's corrective relaunches. With `-e codex` or `-e claude`, `fix-findings` launches the external CLI once per applied fix, Auto or approved ([delegation rule](./skills/fix-findings/SKILL.md#execution-strategy-every-fix-delegates)).
 
 - Claude Code to Codex: `/implement-task <task> -e codex`
 - Codex to Claude: `$implement <change> -e claude`

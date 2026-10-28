@@ -16,6 +16,7 @@ const CONTRACT = "references/workflow/reviewer-contract.md";
 const PIPELINE = "references/workflow/verify-pipeline.md";
 const TRIAGE = "skills/triage-findings/SKILL.md";
 const FIX = "skills/fix-findings/SKILL.md";
+const EXECUTOR = "references/workflow/executor-contract.md";
 
 function source(path: string): string {
   return readFileSync(join(ROOT, path), "utf8");
@@ -346,6 +347,17 @@ test("fix-findings keeps the Pre-existing label and asks before fixing a labeled
   assert.match(section(FIX, "Source"), /Preserve each finding's wording, severity, `Pre-existing` label, anchor, root cause, and fix options as supplied/);
   assert.match(section(FIX, "The Gate: Auto vs Ask"), /\*\*Ask:\*\* every other actionable finding, including unverified findings, findings labeled `Pre-existing`/);
   assert.match(section(FIX, "Output"), /Preserve the finding's original text, severity, and any `Pre-existing` label in each entry/);
+});
+
+test("fix-findings delegates approved Ask fixes and its executor binding applies none inline", () => {
+  const strategy = section(FIX, "Applying Fixes").split("\n### Execution strategy")[1]?.split("\n### ")[0];
+  assert.ok(strategy);
+  assert.match(strategy, /Delegate every fix the run applies, Auto or Ask[^\n]*An Ask fix settles when the user approves its concrete diff/);
+  const binding = section(EXECUTOR, "Bindings").split("\n### fix-findings\n")[1];
+  assert.ok(binding);
+  assert.match(binding, /delegated once its change is settled: an Auto fix, or an Ask fix after the user approves its concrete diff/);
+  assert.match(binding, /\*\*Outside the delegation surface:\*\* findings the run does not fix receive no edits/);
+  assert.doesNotMatch(binding, /coordinator applies[^\n]*inline/);
 });
 
 test("pending endings retain the worktree and report evidence even without findings", () => {
