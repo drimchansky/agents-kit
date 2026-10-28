@@ -13,7 +13,7 @@ Quote the glob for the runner to expand it. A bare directory would be resolved a
 
 **The `pr-comments` suite never reaches the real CLI or the network.** Cases use fixture pages, arguments rejected before fetching, or a fake `gh` first on PATH. Cases requiring live CLI or network access do not belong here.
 
-**The `executor-run` suite uses isolated fake vendor CLIs.** Its PATH contains only fixture executables with an absolute Node interpreter. Missing-command cases use that same isolated PATH. Literal transport, process receipts, large logs, failure after edits, and owned cancellation need local temporary files and POSIX subprocesses; no credentials or live model calls are used.
+**The `executor-run` suite uses isolated fake vendor CLIs.** Its PATH contains only fixture executables with an absolute Node interpreter. Missing-command cases use that same isolated PATH. Literal transport, process receipts, large logs, failure after edits, and owned cancellation need local temporary files and POSIX subprocesses; no credentials or live model calls are used. The fake CLI writes each polled sentinel under a temporary name and renames it into place. Otherwise a concurrent poll can read a created but still empty file.
 
 **The `review-evidence` suite checks shared approval contracts across review and publication callers.** It protects risk tiers, capture ordering, evidence forwarding, current-session confirmation, approval routes, and `Pre-existing` finding labels in the source instructions. It neither launches a model nor proves screenshot contents or human judgment.
 
