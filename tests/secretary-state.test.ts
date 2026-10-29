@@ -2908,3 +2908,236 @@ test("corrections require the active review attempt and refuse late results", ()
   start(store, "apply", at(4), OWNER, "apply");
   refused("apply", at(4), /runs the apply job, not review/);
 });
+
+
+test("configured cadence defaults, accepts a custom interval, and preserves unrelated settings", () => {
+  const { home, runbook } = fixture("cadence-config");
+  const config = (secretary?: unknown) => JSON.stringify({ runbookRoot: runbook, taskRoots: [], future: { enabled: true }, ...(secretary === undefined ? {} : { secretary }) });
+  for (const secretary of [undefined, {}, { duties: {} }, { duties: { "runbook-maintenance": {} } }, { future: true, duties: { future: null } }]) {
+    configure(home, config(secretary));
+    assert.strictEqual(openStore(home).intervalMinutes, REVIEW_INTERVAL_MS / MINUTE_MS);
+  }
+  configure(home, config({ duties: { "runbook-maintenance": { intervalMinutes: 17, future: "kept" }, future: [] } }));
+  assert.strictEqual(openStore(home).intervalMinutes, 17);
+  assert.strictEqual(report(home, ["status"]).lastSeq, 0);
+  configure(home, JSON.stringify({ secretary: { duties: { "runbook-maintenance": { intervalMinutes: 17 } } } }));
+  assert.match(runExpect(1, home, ["status"]).stderr, /no runbookRoot/);
+});
+
+test("invalid known cadence settings fail before records are accessed", () => {
+  const { home, runbook } = fixture("cadence-invalid");
+  const store = openStore(home);
+  const invalid = [null, [], "secretary", { duties: null }, { duties: [] }, { duties: { "runbook-maintenance": null } }, { duties: { "runbook-maintenance": [] } }];
+  for (const value of [null, "30", true, 0, -1, 1.5, Number.MAX_SAFE_INTEGER, Math.floor(8.64e15 / MINUTE_MS)]) {
+    invalid.push({ duties: { "runbook-maintenance": { intervalMinutes: value } } });
+  }
+  for (const secretary of invalid) {
+    configure(home, JSON.stringify({ runbookRoot: runbook, secretary }));
+    assert.match(runExpect(2, home, ["status"]).stderr, /secretary|intervalMinutes/);
+    assert.ok(!existsSync(store.dir));
+  }
+});
+
+
+test("custom complete and partial cadence uses one due review without changing history or proposal IDs", () => {
+  for (const outcome of ["complete", "partial"] as const) {
+    const { home, runbook } = fixture(`cadence-${outcome}`);
+    configure(home, JSON.stringify({ runbookRoot: runbook, secretary: { duties: { "runbook-maintenance": { intervalMinutes: 17 } } } }));
+    const store = openStore(home);
+    const reviewed = at(1);
+    assert.deepStrictEqual(status(store, null, at(0)).review, { due: true, dueAt: null, blockedBy: null, wake: null });
+    start(store, "review", at(0));
+    const proposed = append(store, "proposal", proposal("review"), at(0));
+    append(store, "review-completed", { attempt: "review", outcome, summary: "Checked.", unavailable: outcome === "partial" ? ["sources/locked.md"] : [] }, reviewed);
+    const before = digests(store);
+    const pending = status(store, null, reviewed).pending;
+    const dueAt = new Date(reviewed.getTime() + 17 * MINUTE_MS);
+    assert.strictEqual(status(store, null, reviewed).review?.wake?.at, dueAt.toISOString());
+    assert.strictEqual(status(store, null, new Date(dueAt.getTime() - 1)).review?.due, false);
+    const overdue = new Date(dueAt.getTime() + 100 * 17 * MINUTE_MS);
+    assert.deepStrictEqual(status(store, null, overdue).review, { due: true, dueAt: dueAt.toISOString(), blockedBy: null, wake: null });
+    configure(home, JSON.stringify({ runbookRoot: runbook, secretary: { duties: { "runbook-maintenance": { intervalMinutes: 31 } } } }));
+    const changed = openStore(home);
+    assert.strictEqual(changed.id, store.id);
+    assert.strictEqual(status(changed, null, reviewed).review?.dueAt, new Date(reviewed.getTime() + 31 * MINUTE_MS).toISOString());
+    assert.deepStrictEqual(status(changed, null, reviewed).pending, pending);
+    assert.deepStrictEqual(readEvent(changed, proposed.seq), proposed);
+    assert.deepStrictEqual(digests(changed), before);
+    start(changed, "one-overdue-review", overdue);
+    complete(changed, "one-overdue-review", overdue);
+    assert.strictEqual(status(changed, null, overdue).review?.due, false);
+    assert.strictEqual(status(changed, null, overdue).lastSeq, 5);
+    assertKept(before, changed);
+  }
+});
+
+
+test("explicit settings reject incomplete, mixed, invalid, and redirected roots before record writes", () => {
+  const { home, runbook } = fixture("explicit-refusals");
+  const store = openStore(home);
+  const settings = ["--runbook", runbook, "--interval-minutes", "17"];
+  for (const args of [
+    ["--runbook", runbook], ["--interval-minutes", "17"], [...settings, "--expect-runbook", runbook],
+    ["--runbook", "relative", "--interval-minutes", "17"],
+    ...["0", "-1", "1.5", "NaN", "Infinity", "1e3", String(Number.MAX_SAFE_INTEGER), String(Math.floor(8.64e15 / MINUTE_MS))].map((value) => ["--runbook", runbook, "--interval-minutes", value]),
+  ]) {
+    runExpect(2, home, ["append", "--type", "attempt-started", "--json", "-", ...args], JSON.stringify({ attempt: "never", owner: OWNER, job: "review" }));
+    assert.ok(!existsSync(store.dir));
+  }
+  const missing = join(home, "missing-runbook");
+  const unavailable = runExpect(2, home, ["status", "--runbook", missing, "--interval-minutes", "17"]).stderr;
+  assert.ok(unavailable.includes(`retained runbook ${missing} is unavailable`), unavailable);
+  assert.ok(!existsSync(join(home, ".local", "state", "agents-kit", "secretary")));
+  const alias = join(home, "alias");
+  symlinkSync(runbook, alias);
+  assert.match(runExpect(1, home, ["status", "--runbook", alias, "--interval-minutes", "17"]).stderr, /differs from retained physical/);
+  const original = `${runbook}-original`;
+  renameSync(runbook, original);
+  const other = join(home, "other");
+  mkdirSync(other);
+  symlinkSync(other, runbook);
+  assert.match(runExpect(1, home, ["recover", ...settings]).stderr, /differs from retained physical/);
+  assert.ok(!existsSync(store.dir));
+  assert.ok(!existsSync(openStore(home, { runbook: other, intervalMinutes: 17 }).dir));
+});
+
+
+for (const changedConfig of ["retargeted", "deleted", "malformed"] as const) {
+  test(`every explicit command family retains A after configuration is ${changedConfig}`, () => {
+    const { home, runbook } = fixture(`explicit-families-${changedConfig}`);
+    const original = openStore(home);
+    const otherRoot = join(home, "other-runbook");
+    mkdirSync(otherRoot);
+    configure(home, JSON.stringify({ runbookRoot: otherRoot, secretary: { duties: { "runbook-maintenance": { intervalMinutes: 43 } } } }));
+    const other = openStore(home);
+    const proposals = [original, other].map((store) => {
+      start(store, "seed", at(0));
+      const event = append(store, "proposal", proposal("seed"), at(0));
+      const rejected = append(store, "proposal", { ...proposal("seed"), target: "rejected.md" }, at(0));
+      assert.strictEqual(rejected.type, "proposal");
+      append(store, "decision", { proposal: rejected.payload.proposal, revision: 1, decision: "rejected", source: "user rejected" }, at(0));
+      complete(store, "seed", at(0));
+      assert.strictEqual(event.type, "proposal");
+      return event;
+    });
+    const [a, b] = proposals;
+    assert.strictEqual(a.payload.proposal, b.payload.proposal);
+    const otherBefore = digests(other);
+    const checkpointBefore = readFileSync(join(other.dir, "state.json"));
+    if (changedConfig === "deleted") rmSync(join(home, ".config", "agents-kit", "config.json"));
+    if (changedConfig === "malformed") configure(home, "{");
+    if (changedConfig === "retargeted") {
+      assert.strictEqual(report(home, ["status"]).id, other.id);
+      assert.strictEqual(openStore(home).intervalMinutes, 43);
+    } else runExpect(changedConfig === "deleted" ? 1 : 2, home, ["status"]);
+    const options = ["--runbook", runbook, "--interval-minutes", "17"];
+    const call = (args: readonly string[], payload?: unknown) => report(home, [...args, ...options], payload === undefined ? undefined : JSON.stringify(payload));
+    assert.strictEqual(call(["status"]).id, original.id);
+    assert.strictEqual((call(["rejected"]).rejected as unknown[]).length, 1);
+    assert.strictEqual((call(["history"]).events as SecretaryEvent[]).length, 5);
+    assert.deepStrictEqual(call(["event", "--seq", String(a.seq)]).event, a);
+    assert.strictEqual(call(["body", "--hash", a.payload.bodyHash]).text, proposal("seed").body);
+    assert.strictEqual(call(["recover"]).complete, true);
+    call(["append", "--type", "decision", "--json", "-"], { proposal: a.payload.proposal, revision: 1, decision: "accepted", source: "user accepted A" });
+    call(["append", "--type", "attempt-started", "--json", "-"], { attempt: "hold-a", owner: OWNER, job: "apply" });
+    const request = ["--proposal", a.payload.proposal, "--revision", "1"];
+    const held = call(["hold", "--attempt", "hold-a", ...request]).event as SecretaryEvent;
+    assert.strictEqual(held.type, "apply-result");
+    assert.strictEqual(held.payload.outcome, "held");
+    call(["append", "--type", "attempt-started", "--json", "-"], { attempt: "apply-a", owner: OWNER, job: "apply" });
+    const applied = call(["apply", "--attempt", "apply-a", ...request]).event as SecretaryEvent;
+    assert.strictEqual(applied.type, "apply-result");
+    assert.strictEqual(applied.payload.outcome, "applied");
+    call(["append", "--type", "attempt-started", "--json", "-"], { attempt: "stop-a", owner: OWNER, job: "review" });
+    call(["append", "--type", "attempt-stopped", "--json", "-"], { attempt: "stop-a", reason: "stopped" });
+    rmSync(join(original.dir, "state.json"));
+    assert.strictEqual(call(["status"]).ready, false);
+    assert.strictEqual(call(["recover"]).complete, true);
+    assert.strictEqual(call(["status"]).activeAttempt, null);
+    assert.strictEqual(readFileSync(join(runbook, "access", "staging.md"), "utf8"), proposal("seed").body);
+    assert.ok(!existsSync(join(otherRoot, "access", "staging.md")));
+    assert.deepStrictEqual(digests(other), otherBefore);
+    assert.deepStrictEqual(readFileSync(join(other.dir, "state.json")), checkpointBefore);
+  });
+}
+
+
+test("explicit settings recover an accepted interrupted apply after configuration disappears", () => {
+  const fx = seeded("explicit-interrupted-apply", { "access/staging.md": STAGING_V1 });
+  const id = reviewed(fx, "access/staging.md", STAGING_V2, 0);
+  accept(fx.store, id, 1, at(1));
+  start(fx.store, "apply-interrupted", at(2), OWNER, "apply");
+  const request = { attempt: "apply-interrupted", proposal: id, revision: 1 };
+  assert.throws(() => applyProposal(fx.store, request, at(2), { beforeReplace: () => { throw new Error("interrupted"); } }), /interrupted/);
+  rmSync(join(fx.home, ".config", "agents-kit", "config.json"));
+  const settings = { runbook: fx.runbook, intervalMinutes: 17 };
+  const retained = openStore(fx.home, settings);
+  const before = digests(retained);
+  const options = ["--runbook", fx.runbook, "--interval-minutes", "17"];
+  assert.match(runExpect(1, fx.home, ["apply", "--attempt", request.attempt, "--proposal", id, "--revision", "1", ...options]).stderr, /recorded held at seq/);
+  assert.strictEqual(pointer(retained, id, at(3))?.decision, "accepted");
+  assert.strictEqual(readFileSync(join(fx.runbook, "access", "staging.md"), "utf8"), STAGING_V1);
+  start(retained, "apply-fresh", at(4), OWNER, "apply");
+  runExpect(0, fx.home, ["apply", "--attempt", "apply-fresh", "--proposal", id, "--revision", "1", ...options]);
+  assert.strictEqual(readFileSync(join(fx.runbook, "access", "staging.md"), "utf8"), STAGING_V2);
+  assertKept(before, retained);
+});
+
+
+test("wake cron refuses upper-bound rounding and shift overflow while keeping its neighboring slot", () => {
+  const priorTZ = process.env.TZ;
+  process.env.TZ = "UTC";
+  try {
+    const upper = 8640000000000000;
+    const now = new Date(upper - HOUR_MS);
+    assert.strictEqual(wakeCron(new Date(upper - MINUTE_MS), now), "59 23 12 9 *");
+    for (const due of [upper - 1, upper]) {
+      assertExit(2, () => wakeCron(new Date(due), now), /unrepresentable wake/);
+    }
+  } finally {
+    if (priorTZ === undefined) delete process.env.TZ;
+    else process.env.TZ = priorTZ;
+  }
+});
+
+test("wake cron refuses minimum-lead overflow", () => {
+  const upper = 8640000000000000;
+  assertExit(2, () => wakeCron(new Date(upper - HOUR_MS), new Date(upper - 1)), /unrepresentable wake/);
+});
+
+test("configured and explicit intervals reject unrepresentable scheduled minutes before record access", (t) => {
+  const priorTZ = process.env.TZ;
+  process.env.TZ = "UTC";
+  t.after(() => {
+    if (priorTZ === undefined) delete process.env.TZ;
+    else process.env.TZ = priorTZ;
+  });
+  const { home, runbook } = fixture("cadence-slot-config");
+  const store = openStore(home);
+  const clock = START + 1000;
+  const interval = Math.floor((8640000000000000 - clock) / MINUTE_MS);
+  t.mock.method(Date, "now", () => clock);
+  configure(home, JSON.stringify({ runbookRoot: runbook, secretary: { duties: { "runbook-maintenance": { intervalMinutes: interval } } } }));
+  assertExit(2, () => openStore(home), /unrepresentable wake/);
+  assertExit(2, () => openStore(home, { runbook, intervalMinutes: interval }), /unrepresentable wake/);
+  assert.ok(!existsSync(store.dir));
+});
+
+test("stored review deadlines refuse an unrepresentable final wake without changing history", (t) => {
+  const priorTZ = process.env.TZ;
+  process.env.TZ = "UTC";
+  t.after(() => {
+    if (priorTZ === undefined) delete process.env.TZ;
+    else process.env.TZ = priorTZ;
+  });
+  const { home, runbook } = fixture("cadence-slot-stored");
+  const reviewed = START + 1000;
+  const interval = Math.floor((8640000000000000 - reviewed) / MINUTE_MS);
+  t.mock.method(Date, "now", () => START - HOUR_MS);
+  const store = openStore(home, { runbook, intervalMinutes: interval });
+  start(store, "review", new Date(START));
+  complete(store, "review", new Date(reviewed));
+  const before = digests(store);
+  assertExit(2, () => status(store, null, new Date(reviewed)), /unrepresentable wake/);
+  assert.deepStrictEqual(digests(store), before);
+});

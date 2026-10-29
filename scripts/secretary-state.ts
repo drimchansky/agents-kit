@@ -97,7 +97,7 @@ const USAGE = [
   "       node scripts/secretary-state.ts history [--after <seq>] [--type <type>] [--proposal <id>]",
   "       node scripts/secretary-state.ts event --seq <seq>",
   "       node scripts/secretary-state.ts body --hash <sha256> [--offset <n>] [--limit <n>]",
-].map((line) => `${line} [--expect-runbook <physical-root>]`).join("\n");
+].map((line) => `${line} [--expect-runbook <physical-root> | --runbook <physical-root> --interval-minutes <n>]`).join("\n");
 
 export class Exit extends Error {
   readonly code: number;
@@ -150,10 +150,37 @@ export interface Store {
   readonly runbook: string;
   readonly dir: string;
   readonly guarded: readonly string[];
+  readonly intervalMinutes?: number;
 }
 
-export function openStore(home: string, expectedRunbook?: string): Store {
-  if (expectedRunbook !== undefined && !isAbsolute(expectedRunbook)) fail("--expect-runbook takes an absolute physical runbook path.");
+function intervalMinutes(value: unknown, label: string): number {
+  const now = new Date(Date.now());
+  if (typeof value !== "number" || !Number.isSafeInteger(value) || value <= 0 || !Number.isSafeInteger(value * MINUTE_MS) || !Number.isFinite(new Date(now.getTime() + value * MINUTE_MS).getTime())) {
+    fail(`${label} must be a positive integer with safe milliseconds and a representable due date.`);
+  }
+  wakeCron(new Date(now.getTime() + value * MINUTE_MS), now);
+  return value;
+}
+
+function configuredInterval(config: Record<string, unknown>, file: string): number {
+  let current = config;
+  for (const key of ["secretary", "duties", "runbook-maintenance"]) {
+    if (!Object.hasOwn(current, key)) return REVIEW_INTERVAL_MS / MINUTE_MS;
+    const value = current[key];
+    if (!isRecord(value)) fail(`secretary.duties["runbook-maintenance"] in ${file} requires JSON objects at ${key}.`);
+    current = value;
+  }
+  return Object.hasOwn(current, "intervalMinutes")
+    ? intervalMinutes(current.intervalMinutes, `secretary.duties["runbook-maintenance"].intervalMinutes in ${file}`)
+    : REVIEW_INTERVAL_MS / MINUTE_MS;
+}
+
+interface RunbookSettings {
+  readonly runbook: string;
+  readonly intervalMinutes: number;
+}
+
+function configuredSettings(home: string): RunbookSettings {
   const file = join(home, ".config", "agents-kit", "config.json");
   const unconfigured = `no runbookRoot is configured in ${file}; the secretary has no runbook.`;
   let text: string;
@@ -171,26 +198,39 @@ export function openStore(home: string, expectedRunbook?: string): Store {
   }
   if (!isRecord(parsed)) fail(`${file} does not hold a JSON object.`);
   if (!Object.hasOwn(parsed, "runbookRoot")) refuse(unconfigured);
+  const interval = configuredInterval(parsed, file);
   const value = parsed.runbookRoot;
   if (typeof value !== "string" || value === "") fail(`runbookRoot in ${file} must be a nonempty path string.`);
   if (!isAbsolute(value) && !value.startsWith("~/")) fail(`runbookRoot in ${file} must be an absolute or ~/ path.`);
-  const expanded = value.startsWith("~/") ? join(home, value.slice(2)) : resolve(value);
+  return { runbook: value.startsWith("~/") ? join(home, value.slice(2)) : resolve(value), intervalMinutes: interval };
+}
+
+export function openStore(home: string, selection?: string | RunbookSettings): Store {
+  const expectedRunbook = typeof selection === "string" ? selection : undefined;
+  if (expectedRunbook !== undefined && !isAbsolute(expectedRunbook)) fail("--expect-runbook takes an absolute physical runbook path.");
+  const explicit = typeof selection === "object";
+  const settings = explicit ? selection : configuredSettings(home);
+  const interval = intervalMinutes(settings.intervalMinutes, explicit ? "--interval-minutes" : "intervalMinutes");
+  const expanded = settings.runbook;
+  if (!isAbsolute(expanded)) fail("--runbook takes an absolute physical runbook path.");
+  const subject = explicit ? "retained runbook" : "configured runbook";
   let physical: string;
   try {
     physical = realpathSync.native(expanded);
-    if (!statSync(physical).isDirectory()) fail(`configured runbook ${expanded} is not a directory.`);
+    if (!statSync(physical).isDirectory()) fail(`${subject} ${expanded} is not a directory.`);
     readdirSync(physical);
   } catch (err) {
     if (err instanceof Exit) throw err;
-    fail(`configured runbook ${expanded} is unavailable: ${describe(err)}`);
+    fail(`${subject} ${expanded} is unavailable: ${describe(err)}`);
   }
+  if (explicit && physical !== expanded) refuse(`runbook ${physical} differs from retained physical runbook ${expanded}; no records were accessed.`);
   if (expectedRunbook !== undefined && physical !== expectedRunbook) {
     refuse(`configured runbook ${physical} differs from expected runbook ${expectedRunbook}; no records were accessed.`);
   }
   const label = (basename(physical).replace(/[^A-Za-z0-9._-]+/g, "-") || "runbook").slice(0, RUNBOOK_LABEL_MAX_CHARS);
   const id = `${label}-${sha256(physical).slice(0, RUNBOOK_ID_HASH_CHARS)}`;
   const guarded = [join(home, ".local", "state", "agents-kit"), join(home, ".config", "agents-kit")];
-  return { id, runbook: physical, dir: join(home, ".local", "state", "agents-kit", "secretary", "runbook", id), guarded };
+  return { id, runbook: physical, intervalMinutes: interval, dir: join(home, ".local", "state", "agents-kit", "secretary", "runbook", id), guarded };
 }
 
 function historyDir(store: Store): string {
@@ -1695,11 +1735,13 @@ export function wakeCron(at: Date, now: Date): string {
   const earliest = Math.max(at.getTime(), now.getTime() + WAKE_LEAD_MS);
   let slot = new Date(Math.ceil(earliest / MINUTE_MS) * MINUTE_MS);
   if (slot.getMinutes() % EARLY_FIRE_MINUTES === 0) slot = new Date(slot.getTime() + EARLY_FIRE_SHIFT_MINUTES * MINUTE_MS);
+  if (!Number.isFinite(slot.getTime())) fail("unrepresentable wake minute after scheduling adjustments.");
   return `${slot.getMinutes()} ${slot.getHours()} ${slot.getDate()} ${slot.getMonth() + 1} *`;
 }
 
-function reviewState(checkpoint: Checkpoint, now: Date): ReviewState {
-  const dueMs = checkpoint.lastReview === null ? null : Date.parse(checkpoint.lastReview.at) + REVIEW_INTERVAL_MS;
+function reviewState(checkpoint: Checkpoint, now: Date, interval: number): ReviewState {
+  const dueMs = checkpoint.lastReview === null ? null : Date.parse(checkpoint.lastReview.at) + interval * MINUTE_MS;
+  if (dueMs !== null && !Number.isFinite(new Date(dueMs).getTime())) fail("review interval produces an unrepresentable due date.");
   const due = dueMs === null || now.getTime() >= dueMs;
   const active = checkpoint.activeAttempt;
   const blockedBy = active !== null && now.getTime() < leaseEnd(active) ? { ...active, leaseUntil: new Date(leaseEnd(active)).toISOString() } : null;
@@ -1760,7 +1802,7 @@ export function status(store: Store, cursor: string | null, now: Date): StatusRe
     processedSeq: checkpoint.processed.seq,
     lastReview: checkpoint.lastReview,
     activeAttempt: checkpoint.activeAttempt,
-    review: reviewState(checkpoint, now),
+    review: reviewState(checkpoint, now, store.intervalMinutes ?? REVIEW_INTERVAL_MS / MINUTE_MS),
     pendingTotal: checkpoint.pending.length,
   };
   const remaining = checkpoint.pending.filter((entry) => proposalNumber(entry.proposal) > after);
@@ -1951,7 +1993,7 @@ function parseOptions(args: readonly string[], allowed: readonly string[], requi
     const arg = args[index];
     const equals = arg.indexOf("=");
     const flag = arg.startsWith("--") && equals > 0 ? arg.slice(0, equals) : arg;
-    if (flag !== "--expect-runbook" && !allowed.includes(flag)) fail(arg.startsWith("-") ? `unknown option ${arg}.\n${USAGE}` : `unexpected argument ${arg}.\n${USAGE}`);
+    if (!["--expect-runbook", "--runbook", "--interval-minutes"].includes(flag) && !allowed.includes(flag)) fail(arg.startsWith("-") ? `unknown option ${arg}.\n${USAGE}` : `unexpected argument ${arg}.\n${USAGE}`);
     if (values.has(flag)) fail(`${flag} given twice.\n${USAGE}`);
     const value = flag === arg ? args[++index] : arg.slice(equals + 1);
     if (value === undefined) fail(`${flag} needs a value.\n${USAGE}`);
@@ -2016,6 +2058,16 @@ function report(value: unknown): void {
   process.stdout.write(`${JSON.stringify(value)}\n`);
 }
 
+function selectedStore(options: ReadonlyMap<string, string>): Store {
+  const runbook = options.get("--runbook");
+  const interval = options.get("--interval-minutes");
+  if (runbook === undefined && interval === undefined) return openStore(homedir(), options.get("--expect-runbook"));
+  if (runbook === undefined || interval === undefined) fail("--runbook and --interval-minutes must be supplied together.");
+  if (options.has("--expect-runbook")) fail("--expect-runbook cannot be combined with explicit runbook settings.");
+  if (!DIGITS.test(interval)) fail("--interval-minutes takes a positive integer.");
+  return openStore(homedir(), { runbook, intervalMinutes: intervalMinutes(Number(interval), "--interval-minutes") });
+}
+
 function main(argv: readonly string[]): void {
   process.stdout.on("error", (err: NodeJS.ErrnoException) => {
     if (err.code !== "EPIPE" && err.code !== "ENOTCONN") throw err;
@@ -2026,37 +2078,37 @@ function main(argv: readonly string[]): void {
       const options = parseOptions(rest, ["--type", "--json"], ["--type", "--json"]);
       const type = appendTypeOption(options.get("--type"));
       const payload = readPayload(options.get("--json") ?? "-");
-      report({ event: append(openStore(homedir(), options.get("--expect-runbook")), type, payload, new Date()) });
+      report({ event: append(selectedStore(options), type, payload, new Date()) });
       return;
     }
     case "apply": {
       const options = parseOptions(rest, ["--attempt", "--proposal", "--revision"], ["--attempt", "--proposal", "--revision"]);
       const request = applyRequest(options);
-      report({ event: applyProposal(openStore(homedir(), options.get("--expect-runbook")), request, new Date()) });
+      report({ event: applyProposal(selectedStore(options), request, new Date()) });
       return;
     }
     case "hold": {
       const options = parseOptions(rest, ["--attempt", "--proposal", "--revision"], ["--attempt", "--proposal", "--revision"]);
       const request = applyRequest(options);
-      report({ event: holdProposal(openStore(homedir(), options.get("--expect-runbook")), request, new Date()) });
+      report({ event: holdProposal(selectedStore(options), request, new Date()) });
       return;
     }
     case "recover": {
       const options = parseOptions(rest, [], []);
-      report(recover(openStore(homedir(), options.get("--expect-runbook"))));
+      report(recover(selectedStore(options)));
       return;
     }
     case "status": {
       const options = parseOptions(rest, ["--cursor"], []);
       const cursor = proposalOption(options.get("--cursor"), "--cursor");
-      report(status(openStore(homedir(), options.get("--expect-runbook")), cursor, new Date()));
+      report(status(selectedStore(options), cursor, new Date()));
       return;
     }
     case "rejected": {
       const options = parseOptions(rest, ["--cursor"], []);
       const cursor = options.get("--cursor") ?? null;
       if (cursor !== null && (cursor.length === 0 || cursor.length > TARGET_MAX_CHARS)) fail("--cursor takes a target from an earlier page.");
-      report(rejections(openStore(homedir(), options.get("--expect-runbook")), cursor));
+      report(rejections(selectedStore(options), cursor));
       return;
     }
     case "history": {
@@ -2066,12 +2118,12 @@ function main(argv: readonly string[]): void {
         type: eventTypeOption(options.get("--type")),
         proposal: proposalOption(options.get("--proposal"), "--proposal"),
       };
-      report(history(openStore(homedir(), options.get("--expect-runbook")), query));
+      report(history(selectedStore(options), query));
       return;
     }
     case "event": {
       const options = parseOptions(rest, ["--seq"], ["--seq"]);
-      report({ event: readEvent(openStore(homedir(), options.get("--expect-runbook")), integerOption(options.get("--seq"), "--seq", 1, 1)) });
+      report({ event: readEvent(selectedStore(options), integerOption(options.get("--seq"), "--seq", 1, 1)) });
       return;
     }
     case "body": {
@@ -2081,7 +2133,7 @@ function main(argv: readonly string[]): void {
       const offset = integerOption(options.get("--offset"), "--offset", 0, 0);
       const limit = integerOption(options.get("--limit"), "--limit", UTF8_CHAR_MAX_BYTES, BODY_CHUNK_MAX_BYTES);
       if (limit > BODY_CHUNK_MAX_BYTES) fail(`--limit takes at most ${BODY_CHUNK_MAX_BYTES} bytes.`);
-      report(readBody(openStore(homedir(), options.get("--expect-runbook")), hash, offset, limit));
+      report(readBody(selectedStore(options), hash, offset, limit));
       return;
     }
     default:
