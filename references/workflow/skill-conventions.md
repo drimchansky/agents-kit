@@ -34,7 +34,7 @@ Scattered flag conditionals suggest a misclassified phase. A modal flag modifies
 
 - `run-knowledge-session` — selection, reading, discussion, note corrections, and topic discovery form one learning session. Its stages interleave without complete sibling-skill phase outputs.
 - `squash-push` — captures one rewrite range and remote expectation for squashing and publishing. Both mutations depend on that inspected state, without a complete sibling-skill output between them.
-- `start-secretary` — setup, the pending readout, reviews, accepted applies, and reports share one resolved runbook, helper, and owner label. Host capabilities select automatic wakes or on-demand follow-ups within the conversation. The secretary's reply is a contract return, not a sibling skill's output.
+- `start-secretary` — setup, the pending readout, reviews, accepted applies, and reports share one retained startup configuration: runbook, interval, helper, owner label, and store identity. Host capabilities select automatic wakes or on-demand follow-ups within the conversation. The secretary's reply is a contract return, not a sibling skill's output.
 - `sync-meeting-notes` — archiving past meetings and creating incoming notes share one resolved folder, its naming and pairing rules, and one proposal covering both write sets. Both phases feed one Report, without a complete sibling-skill output between them.
 
 ### Composites — sequential phases
@@ -97,7 +97,7 @@ A sweep beyond the current project, across registered roots or into installed st
 - `backlog-task` — a filing write with no preview of its own; the proposal is its § *1. Resolve the target task folder*.
 - `sync-meeting-notes` — a filing write with no preview of its own; the proposal is its § *Resolve the folder*.
 - `maintain` — a sweep beyond the current project; the proposal is its § *Setup — resolve targets*.
-- `init-config` — a sweep beyond the current project; the proposal is its § *2. Discover the roots on disk*.
+- `init-config` — a sweep beyond the current project; the proposal is its § *2. Select setup and inspect inputs*.
 - `start-secretary` — a sweep beyond the current project, reading the configured runbook and its cited sources; the proposal is its § *Setup*.
 
 Update this roster in the same change that adds or removes a skill's `**Model invocation:**` line.

@@ -130,7 +130,11 @@ Contract: `references/scripts/pr-comments.md`.
 
 Contract: `references/scripts/secretary-state.md`.
 
-**Why commands can require an expected runbook.** Proposal IDs are local to each store. A coordinator-side status check cannot prevent configuration changing before the following decision or apply. The retained physical root is checked inside each command before record access; its store ID follows deterministically from that root. The option stays optional for standalone inspection and recovery, while an active run supplies it throughout.
+**Why active commands carry paired settings.** Proposal IDs are local to each store. A coordinator-side status check cannot prevent configuration changing before the following decision or apply. Explicit root and cadence bypass configuration and validate physical identity before record access. Legacy no-option and expected-root calls keep configuration-selected behavior; an alias still passes the expected-root check. The store ID continues to derive only from the physical root.
+
+**Why cadence stays outside the checkpoint.** The store carries the resolved interval as runtime data. Reopening with a new cadence changes due-state calculation without migrating events, proposals, approvals, or derived records. `REVIEW_INTERVAL_MS` remains the default export; `Store.intervalMinutes` is optional for existing API consumers.
+
+**Why cadence validation checks the final wake minute.** A representable due date can overflow during minute rounding or the wake shift. Validation uses one captured clock and the runtime cron calculation before record access. The final-slot guard also covers deadlines derived from stored reviews and minimum-lead overflow without imposing a cadence cap.
 
 **Why record access secures the root.** Proposal bodies copy runbook content into a separate tree. The caller's umask can otherwise expose private entries. Securing the existing store root protects existing descendants without an unbounded traversal; new entries receive private creation modes.
 
@@ -179,6 +183,8 @@ Contract: `references/scripts/secretary-state.md`.
 **Why the wake minute avoids :00 and :30.** Claude Code may fire a one-shot cron on those minutes up to 90 seconds early, before the due instant. Moving them two minutes later keeps every fire at or after `at`. The one-minute lead covers a wake instant only seconds away. A five-field cron names no year, so a minute that passes before the coordinator arms it would next match a year later.
 
 `openStore` copies the `runbookRoot` rules of `references/workflow/task-store.md` § *The root registry*: a nonempty string, absolute or `~/`, resolved to physical identity. Change both together.
+
+`configuredInterval`, `intervalMinutes`, and `REVIEW_INTERVAL_MS` copy the interval rules of `references/secretary/runbook-maintenance.md` § *Configuration*. They read `secretary.duties["runbook-maintenance"].intervalMinutes`, default to 1440 minutes, and reject malformed known objects. A value must be a positive integer with safe milliseconds and a representable due date and wake minute. Change both together.
 
 ## `scripts/session-triage.ts`
 

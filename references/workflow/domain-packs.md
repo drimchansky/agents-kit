@@ -47,7 +47,7 @@ Default to `engineering` when that header is absent, preserving existing tasks. 
   - `prepare-ticket` writes a domain-neutral upstream artifact before a Domain marker exists; apply `ticket-format.md` and `task-layout.md`.
   - `prepare-epic` writes a domain-neutral epic description as a standalone file, not a task role file; read `task-layout.md` and `task-store.md` to resolve source tasks and conventions.
   - `resume-task-reconcile` and `review-task-reconcile` leave domain resolution to their Phase 1 skills, `resume-task` and `review-task`.
-  - `init-config` writes the machine's root registry and touches no task.
+  - `init-config` writes machine paths and runbook-duty settings in the global configuration and touches no task.
   - `start-secretary` launches the secretary under `secretary-contract.md` and touches no task.
 
 The skills `create-notion-page`, `prepare-daily-status`, `prepare-release-announcement`, `review-note`, `run-knowledge-session`, `sync-meeting-notes`, and `translate` read only `./AGENTS.md` § *Ask Before Assuming* from the core and resolve no domain pack.
