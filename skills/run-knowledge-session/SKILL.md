@@ -11,7 +11,7 @@ Read and apply `./references/workflow/user-facing-messages.md` § *Plain wording
 # Run Knowledge Session
 
 Guide the user through reading, one focused note update, and exploration of a new question.
-Default to 60 minutes of user effort because this is a weekly learning habit; adapt when another budget is given.
+Default to 60 minutes of user effort; adapt to another supplied budget.
 Follow the user's pace across turns. Reading reviewed notes is valid participation; answers are not required to continue or complete a session.
 Use recall questions or exercises only when requested. A prepared agenda is not a completed learning session.
 

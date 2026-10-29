@@ -46,7 +46,7 @@ Before execution, known dependencies are source- or user-declared dependencies a
 
 **Withdrawn and Inconclusive findings are never edited.** Put them in Untouched with their verdict. A fix requires a Confirmed verdict or the user's approval of its diff:
 
-- **Auto:** a Confirmed finding with one unambiguous targeted change, confined to reviewed files, with no new dependency or public API or behavior change beyond the finding. Default to this option because the review already established the problem and the change is bounded.
+- **Auto:** a Confirmed finding with one unambiguous targeted change, confined to reviewed files, with no new dependency or public API or behavior change beyond the finding. Use this option by default.
 - **Ask:** every other actionable finding, including unverified findings, findings labeled `Pre-existing` (`./references/engineering/review.md` § *Pre-existing findings*), and Confirmed findings with design choices, meaningful option trade-offs, unsettled intent, or broader scope.
 
 Route a consequential change in a document's claim, decision, or intended audience to Ask, even when its wording looks simple (`./AGENTS.md` § *Ask Before Assuming*).

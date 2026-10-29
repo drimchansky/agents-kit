@@ -14,7 +14,7 @@ Creating a fresh folder directly under Backlog is permitted and needs no Archive
 
 **Recognizing the directory is case-insensitive.** Create `Backlog/`; recognize every existing spelling case-insensitively for scans, slug fallback, and already-parked checks. Only the task's immediate parent establishes parked state. `maintain` normalizes stray lowercase spelling.
 
-`BACKLOG_DIR` in `scripts/lifecycle-constants.ts` is a sanctioned copy per `AGENTS.md` § *Consumer lists*.
+`BACKLOG_DIR` in `scripts/lifecycle-constants.ts` is a sanctioned copy per `references/maintenance/repository.md` § *Consumer lists*.
 
 **Planning acts in place; execution activates first.** `refine-idea` and `plan-task` work on parked folders without moving them. `implement-task` and `resume-task` offer activation and proceed only after user confirmation moves the folder to its container's parent. Activation is a plain `mv`, offered or manual; a terminal task may instead archive out. Resolving a Backlog slug never activates it.
 

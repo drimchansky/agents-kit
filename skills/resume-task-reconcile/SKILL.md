@@ -8,7 +8,7 @@ argument-hint: "[task slug or path; defaults to the session's task]"
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 
-One command for the catch-up-and-fix pipeline: brief the task (`resume-task`), then write the brief's findings back into the task docs so they stop overstating what has been built. The brief is a snapshot after loader repair and before reconciliation edits; the reconcile runs against that same baseline.
+Brief through `resume-task`, then reconcile its findings against the same post-loader, pre-edit baseline.
 
 Phase 1 runs `../resume-task/SKILL.md`'s full protocol; Phase 2 runs the reference contract it names. Four overrides apply pipeline-wide:
 

@@ -21,4 +21,4 @@ Prefer fewer comments. Apply prohibitions as invariants and preferences with jud
 - [ ] Exceptions: public-API docs, required legal/generated markers, tool directives. Keep accurate/minimal; explain non-obvious suppressions. API docs stay on exports (`typescript.md` → Naming).
 - [ ] No commented-out code.
 
-Executor adapters carry a sanctioned copy per `AGENTS.md` § *Consumer lists*.
+Executor adapters carry a sanctioned copy per `references/maintenance/repository.md` § *Consumer lists*.

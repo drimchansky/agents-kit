@@ -83,6 +83,6 @@ Example, closing an implementation run:
 
 **GitHub PR review comments.** Each inline comment body, and each body entry for an unanchored finding, opens with its marker: `🔴 Critical` or `🟡 Major` by the finding's severity, `🟢 Minor` for minor findings, `🔵 FYI` for improvements. Any `(Pre-existing)` label follows the marker, then the preserved text and notes. Attribution, verdict, and tier gates stay with `skills/publish-pr-review/SKILL.md`.
 
-**PR descriptions.** The Task and link header first, then a concise body. No markers, no review verdict, no AI footer (`skills/review-code/SKILL.md` § *PR description*).
+**PR descriptions.** The Task and link header first, then a concise body. No markers, no review verdict, no AI footer (`./pr-description.md`, only when drafting a PR description).
 
 **Jira task drafts.** The ticket structure of `./ticket-format.md` in plain Markdown that pastes into the Jira editor: headings, paragraphs, and `-` bullets, Acceptance Criteria included (`./ticket-format.md` § *Hard rules*). No markers appear in a ticket body.

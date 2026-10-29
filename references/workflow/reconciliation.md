@@ -1,6 +1,6 @@
 # Reconciliation: Shared Contract
 
-Compaction: `./reconciliation-compaction.md`.
+For session → docs, load `./reconciliation-compaction.md` only when the size check reports `due`. Docs → reality never compacts.
 
 Load and report structural repair before either reconciliation direction assesses task content (`./task-layout.md` § *Reading a resolved folder*). For resume/review composites, Phase 1 assesses the repaired task once; Phase 2 uses that same baseline and does not rerun repair. An explicit read-only request applies to every nested phase and prevents all task writes.
 
@@ -107,7 +107,7 @@ Re-report untagged findings while disk or Reconciliation shows them. Report unre
 - Without an existing or owed result (to-do plan), the printed change list records the edit; create no result solely for logging. Preserve settled decision evidence under a dated heading in the owning context or plan, and cite it from the concise current guidance (`./one-home.md` § *One home per fact*).
 - Report loader repairs in the change list using their `applied` files and `mappings`; do not create a result or reconciliation record solely to log structural repair.
 - Judged edits include `— chose <reading> over <reading>: <deciding evidence>`, plus the required grounding quotes and external-surface details. Where a result exists, cite its dated record from concise current guidance instead of retaining alternatives in the live goal or direction.
-- Summarize each new outcome, verification result, material failure or deviation, and its evidence location. Record a shared health boundary once with its required reference, delta, command results, and manifest evidence (`../engineering/verification.md` § *What a boundary records*). Keep the commit scan's watermark and explicit 20-commit cap (`./reconciliation-commits.md` § *The record*). Do not copy tool transcripts, repeated command tails, or request/response narration; preserve older evidence unless compaction is separately confirmed (`./reconciliation-compaction.md`).
+- Summarize each new outcome, verification result, material failure or deviation, and its evidence location. Record a shared health boundary once with its required reference, delta, command results, and manifest evidence (`../engineering/verification.md` § *What a boundary records*). Keep the commit scan's watermark and explicit 20-commit cap (`./reconciliation-commits.md` § *The record*). Do not copy tool transcripts, repeated command tails, or request/response narration; preserve older evidence unless compaction is separately confirmed.
 
 ```markdown
 ## Reconciliation — YYYY-MM-DD

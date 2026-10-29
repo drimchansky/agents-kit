@@ -49,7 +49,7 @@ git branch -d <branch>
 
 Never force worktree removal or replace `-d` with `-D`. Record the actual outcome. After successful removal, retain the branch identifier as `` branch `<branch>` (removed YYYY-MM-DD) `` in Current-state Pointers.
 
-`scripts/commit-scan.ts` matches this removed marker, a sanctioned copy per `AGENTS.md` § *Consumer lists*.
+`scripts/commit-scan.ts` matches this removed marker, a sanctioned copy per `references/maintenance/repository.md` § *Consumer lists*.
 
 If worktree removal succeeds but branch deletion fails, record partial cleanup and name the surviving branch. Finalize anyway; do not force deletion to complete the record. A predicate or preflight refusal likewise records its reason, leaves both in place, and does not prevent finalization.
 

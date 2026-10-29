@@ -2,9 +2,9 @@
 
 The one posture for the write-mode consumers registered in `./executor-routing.md` § *The registry and its authorization*. No consumer states a posture, a packet-cost prior, or a cadence of its own.
 
-**Every unit delegates.** Each unit a registered consumer frames goes to an executor under the launch packet and gates `./executor-contract.md` fixes: one unit per launch, or several consecutive units in one launch where that file's § *Segment launches* and the consumer's binding sanction it. There is no size threshold, no last-unit branch, and no default to weigh. No binding restricts which units may delegate. A `fix-findings` unit is any fix the run applies, an Auto fix or an approved Ask fix (`fix-findings` § *Execution strategy: every fix delegates*). Delegation is not a judgment call.
+**Every unit delegates** under `./executor-contract.md`'s packet and gates, regardless of size or position. Launch one unit unless `./executor-contract.md` § *Segment launches* and the consumer's binding authorize a segment. A `fix-findings` unit includes Auto and approved Ask fixes (`fix-findings` § *Execution strategy: every fix delegates*). Only the exceptions below permit inline work.
 
-**Delegation owes a packet; the packet's cost is no reason to keep the unit.** Before launching, confirm every § *Launch packet* item is filled for this unit: its text and criterion, its edit surface, the context it cannot see for itself, the decision rule with prior decisions and boundaries, the dependency-problem template and paragraphs, the domain guidance, the required checks with their owners and passing conditions, the effective root and placement, the consumer label. Close a gap by reading, searching, or asking. A gap that can only be closed by running the unit is exception 1.
+Before launch, complete every `./executor-contract.md` § *Launch packet* item. Packet cost permits no inline exception. Close gaps by reading, searching, or asking; only execution-dependent gaps qualify for exception 1.
 
 ## The exceptions
 

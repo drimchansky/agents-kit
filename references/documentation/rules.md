@@ -1,10 +1,10 @@
 # Documentation Rules
 
-Apply with `../../CORE_RULES.md` for `**Domain:** documentation` and documentation-pack skills. Covers RFCs, ADRs, architecture notes, diagrams, outreach, replies, and other document deliverables.
+Apply with `../../CORE_RULES.md` for documentation tasks and pack skills, including RFCs, ADRs, architecture notes, diagrams, outreach, and replies.
 
 ## Send & publish discipline
 
-- Send, share, publish, move under a shared parent, lock/unlock, or change a live/shared page only on explicit request. Otherwise these remain user actions, including Slack, Jira, and email sends.
+- Send, share, publish, move under a shared parent, lock/unlock, or change live/shared pages only on explicit request. This includes Slack, Jira, and email.
 - Produce outbound content as paste-ready task-folder drafts. Record what went out using the dated line in `../workflow/doc-task-files.md`.
 - Run `proofread` before handing an outbound draft to the user.
 
@@ -19,9 +19,9 @@ Before publishing or staging a substantial doc, run `review-docs` for coherence 
 
 ## Repo grounding for code-subject docs
 
-Read the actual repositories for code subjects. Verify behavioral claims against code and cite files and symbols precisely. Record sources per `../workflow/execution-bindings.md`.
+For code subjects, read the repositories, verify behavior against code, and cite exact files/symbols. Record sources per `../workflow/execution-bindings.md`.
 
-Apply engineering's grounding practice only. Documentation tasks use `./verification.md`, without engineering gates, stack detection, or step sizing.
+Apply engineering grounding only; use `./verification.md` without engineering gates, stack detection, or step sizing.
 
 ## Documentation pack contents
 
@@ -32,6 +32,6 @@ Apply engineering's grounding practice only. Documentation tasks use `./verifica
 - `review-docs`: source accuracy and document quality.
 - `prepare-diagram`: Mermaid diagrams for code, documents, and described processes.
 
-The pack has no exploration, planning, execution, or review files. State that fallback and use the neutral methodology for those phases.
+For exploration, planning, execution, and review, report the absent recipe and use neutral methodology.
 
-Discover organizational conventions through `../workflow/task-store.md` § *Store-level artifacts*. Keep people tables, house style, published-page handling, and tracker rules in that store document.
+Discover people tables, house style, publishing, and tracker conventions through `../workflow/task-store.md` § *Store-level artifacts*. Keep them there.

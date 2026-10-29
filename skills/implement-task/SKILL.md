@@ -9,7 +9,7 @@ argument-hint: "[task slug or path; defaults to the session's task] [-e native|c
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for (`execution.md`, `verification.md`, …). If the domain has no pack, run the neutral methodology and say so.
 
-Executes a task folder's `plan.md`: implements each step, records it in `result.md` as it goes, marks the step done in the plan with a link to that record, and runs an acceptance gate against `goals.md` before flipping the plan to `done`.
+Execute `plan.md`, record outcomes in `result.md`, and link checked steps to their evidence. Gate `goals.md` before setting `done`.
 
 This skill mutates the plan and the result file freely, and the grounding surfaces (`CONTEXT.md`, `goals.md`, `ticket.md`, an inherited `GROUP_CONTEXT.md`) only as § *Correcting Grounding Where It's Wrong* licenses. The sole exception is the loader's proven identifier repair in `CONTEXT.md` and `goals.md`, which changes no meaning (`./references/workflow/task-authorship.md` § *Files*). It authors a doc task's deliverable as the plan directs and never writes a deliverable's `**Published:**` line. Its Git writes are the task's own branch and worktree (§1, §3, §8), the branch-scoped `git fetch origin <default-branch>` the **merged** predicate runs, and checkpoint and final commits under the sanction §2 establishes. Nothing is pushed or amended. Each step runs through a delegated write-mode executor (`./references/workflow/executor-routing.md` § *The registry and its authorization*). Its one write outside the task folder and the work product is the repository's own `AGENTS.md` / `CLAUDE.md`, for the branch convention a creation-path run proposes, **only on the user's explicit confirmation** and stated when written: `./references/workflow/task-delivery-edges.md` § *Proposing an observed branch convention*. <!-- cold -->
 
@@ -21,7 +21,7 @@ Per-file authorship is `./references/workflow/task-authorship.md` § *Files*; th
 
 ## Inputs
 
-In the resolved task folder, load structural repair before opening content in the order §1 fixes: `ticket.md` (optional), `CONTEXT.md`, `goals.md` (the acceptance contract, §7), `plan.md`, and `result.md` (this run's record, §3 and §5). The first three are semantically correctable only under § *Correcting Grounding Where It's Wrong*. A goal with edited acceptance wording is graded in a later run; a completed identifier-only repair does not defer grading.
+Apply §1's structural loading before task content: optional `ticket.md`, `CONTEXT.md`, `goals.md` (§7's acceptance), `plan.md`, and `result.md` (§§3/5). Semantic grounding edits require § *Correcting Grounding Where It's Wrong* and defer grading edited goals; completed identifier-only repairs do not.
 
 Read `./references/workflow/execution-loop.md` before working; §4 and §7 bind its six parameters. Then read the pack files Core Rules 2 names and any per-surface checklist the work touches.
 
@@ -103,7 +103,7 @@ Execute each step through the selected engine in `./references/workflow/executor
 
 **Every step goes to an executor** per `./references/workflow/write-mode-posture.md`, which fixes what a launch packet owes and the three exceptions that keep a step here. Capture the `baseline` manifest of the shared tree before launching, one per segment. **Deviation is measured against the mode's default launch on `native`**; `**Executed:**` (§5) records it and any explicit selection. While an executor is in flight the coordinator waits, with no step of its own and no shared-tree edit (`./references/workflow/delegated-waiting.md` § *How to wait*). Then take each report through the contract's § *Write-mode routing* intake, which decides whether the outcome tier is re-proved here, and record the step (§5); a failure there is Stop-the-Line at that step, and a pending impactful choice takes the contract's third outcome: ask, hold the step and its dependents, and keep the plan `executing` while the answer arrives in this run. A choice still open when the run ends takes this binding's **Blocked** (`./references/workflow/execution-bindings.md`): the plan enters `blocked` and `**Blocked:**` records the choice, its options and recommendation, and the held step, so §1's resume branch finds it.
 
-**Inline is an exception, announced and recorded** in `**Executed:**` (§5), on one of the posture file's three exceptions. A failed or hung executor is reported and takes the binding's **Fallback**; on a segment, § *Segment launches* governs what stands and what relaunches. <!-- cold -->
+**Inline is an exception, announced and recorded** in `**Executed:**` (§5), on one of the posture file's three exceptions. A failed or hung executor is reported and takes the binding's **Fallback**; on a segment, the contract's § *Segment launches* governs what stands and what relaunches. <!-- cold -->
 
 #### Automatic parallel batch (full-plan mode)
 
@@ -125,7 +125,7 @@ Keep shared health evidence once in the boundary's owning step, checkpoint, or F
 
 A failed checkpoint records the `**Asserted:**` and `**Health:**` results that ran (or `not run`), `**Outcome:** failed`, `**Commit:** not run — checkpoint failed` when commits were granted, and the failure details, then follows Stop-the-Line. Record checkpoint and final commit outcomes, including failure and resume settlement, per `./references/workflow/task-delivery.md` § *Checkpoint and final commits*. The Final implementation commit block points at the final health boundary's owning section; keep that evidence once.
 
-**At every plan `**Status:**` flip and at run end**, finalize included, rewrite `## Current state` on its contract, never claiming a stronger state than the plan's `**Status:**`, and carrying any commit watermark entry forward untouched, never advanced, dropped, or created here (`./references/workflow/reconciliation-commits.md` § *The watermark*). **When a step records a decision**, append the template's dated one-liner to `## Decision log`, creating that section directly below `## Current state`'s closing `---` when absent: a pointer to where the decision is recorded, never the decision text.
+**After each recorded unit, at every plan `**Status:**` flip, and at run end**, finalize included, rewrite `## Current state` on its contract, never claiming a stronger state than the plan's `**Status:**`, and carrying any commit watermark entry forward untouched, never advanced, dropped, or created here (`./references/workflow/reconciliation-commits.md` § *The watermark*). **When a step records a decision**, append the template's dated one-liner to `## Decision log`, creating that section directly below `## Current state`'s closing `---` when absent: a pointer to where the decision is recorded, never the decision text.
 
 ### 6. Plan Revisions Mid-Execution
 

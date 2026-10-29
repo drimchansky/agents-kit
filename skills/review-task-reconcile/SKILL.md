@@ -8,7 +8,7 @@ argument-hint: "[task slug or path; defaults to the session's task] [-x (cross-v
 
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 
-One command for the review-and-fix pipeline: validate the plan against reality (`review-task`), then reconcile its findings. Settle the review's Questions or present them for input. The assessment is a snapshot after loader repair and before reconciliation edits.
+Review through `review-task`, then reconcile its findings. Settle Questions or present them for input, preserving the post-loader, pre-edit assessment.
 
 Phase 1 runs `../review-task/SKILL.md`'s full protocol; Phase 2 runs the reference contract it names. Four overrides apply pipeline-wide:
 

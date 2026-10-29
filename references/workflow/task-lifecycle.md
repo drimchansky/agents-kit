@@ -6,7 +6,7 @@ Layout: `./task-layout.md`; authorship: `./task-authorship.md`; goals/observatio
 
 ## Status values
 
-`scripts/lifecycle-constants.ts` holds the plan vocabulary, a sanctioned copy per `AGENTS.md` § *Consumer lists*.
+`scripts/lifecycle-constants.ts` holds the plan vocabulary, a sanctioned copy per `references/maintenance/repository.md` § *Consumer lists*.
 
 Only `plan.md` carries task lifecycle status. A documentation deliverable uses its format sheet's separate vocabulary (`./doc-task-files.md`). Other closed sets are sweep tags (`./reconciliation-sweep.md` § *Tags*) and Acceptance verdicts (`./acceptance-criteria.md`, `./execution-acceptance.md` § *Acceptance discipline*).
 

@@ -11,7 +11,7 @@ argument-hint: '[what to implement] [-e native|codex|claude]'
 
 **Model invocation:** requires a confirmed proposal (`./references/workflow/skill-conventions.md` § *The invocation gate*).
 
-Carries out the framed change and reports in chat. The work product is the only durable disk change: write no task-folder files or statuses. Durable plans/results belong to `plan-task` followed by `implement-task`. Each framed item runs through a delegated write-mode executor (`./references/workflow/executor-routing.md` § *The registry and its authorization*).
+Implement framed changes and report in chat. Write work products only; task records/statuses belong to `plan-task` → `implement-task`. Delegate each item under `./references/workflow/executor-routing.md` § *The registry and its authorization*.
 
 ## Flags
 
@@ -59,7 +59,7 @@ Respect dependencies. Pause when the user requested inspection between items; ot
 
 #### Execution strategy: every item delegates
 
-Apply `./references/workflow/write-mode-posture.md`: every item delegates unless its stated exception applies. Fill packets with the original ask, item/criterion, established grounding, edit surface, and required contract fields before launch. Close gaps by reading, searching, or asking; only gaps discoverable solely through execution qualify for that exception.
+Apply `./references/workflow/write-mode-posture.md` to every item. Before launch, complete the contract's packet with the original ask, item/criterion, established grounding, and edit surface.
 
 Launch the selected engine through `./references/workflow/executor-routing.md` under `./references/workflow/executor-contract.md` § *Bindings*, implement binding. Serial items use the shared tree. Announce inline exceptions and record them under Executed.
 

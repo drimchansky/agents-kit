@@ -45,7 +45,7 @@ Apply `./references/documentation/mermaid-core.md` and the matching syntax/style
 
 ## Render-check
 
-Validate by default because syntax errors break the delivered diagram.
+Validate by default.
 
 1. Write scratch `.mmd` in the host's temp area.
 2. Run `npx -y @mermaid-js/mermaid-cli -i <in>.mmd -o <out>.svg`; require exit 0 and non-empty SVG. Parse failure exits 1 without output.
