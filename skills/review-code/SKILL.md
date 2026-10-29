@@ -14,8 +14,9 @@ Review the object Setup resolves (the current branch's diff against its base wit
 ## Flags
 
 - `-n N`: launch N independent reviewers over the identical review object and pool their returns into one findings list before verdicts are assigned. Default 1, no ceiling. N is a positive whole integer; anything else stops the review with a question, and a count that reads as a stray digit is confirmed before launching. Only reviewer 1 runs the project's verification scripts; every reviewer fetches the extracted links itself.
+  For `-n N` above 1, apply `./references/workflow/reviewer-fleet.md` at launch, intake, pooling, and Output. <!-- cold -->
 - `-x`: cross-check. Launch one independent cold review of the same object on the cross-vendor engine and merge it before findings are finalized (`./references/workflow/probe-cross-check.md`; shape `./references/workflow/probe-shape-cold-review.md`; contract `./references/workflow/agent-fanout.md`; engine `./references/workflow/probe-engines-cross-vendor.md`). Off by default. The probe is read-only; its outcome is recorded on the `Cross-check:` line. <!-- cold -->
-- `-d`: draft a ready-to-paste PR description (body only) per § *PR description*. The session drafts it on either pass; the reviewer returns none and is never told the flag is set. Off by default. Where that section refuses, render the one line `-d refused: <reason>` in Output's **PR description** slot.
+- `-d`: draft a body-only PR description under `./references/workflow/pr-description.md`. The session drafts on either pass; never tell the reviewer the flag is set or request a draft from it. Off by default. Render refusal as `-d refused: <reason>` in Output's **PR description** slot. <!-- cold -->
 
 ## References
 
@@ -77,17 +78,9 @@ The effective root is the tree the object lives on, and every git command in thi
 
 A packet with a missing or ambiguous item is completed by reading or asking, never launched short. Announce the launch as one progress line (`./references/workflow/user-facing-messages.md` § *Blocks*), `🔵 In progress: reviewer (<model>, <effort>) on <object>`, both pins read from the installed adapter (`./references/workflow/reviewer-contract.md` § *Adapter defaults*). With `-n N` above 1 that line names `reviewer ×N`.
 
-With `-n N`, send the N packets in one message, on the primitive `./references/workflow/delegated-waiting.md` § *Per-host primitives* names for this host. They differ on the verification-scripts instruction alone.
-
 **Wait.** While the reviewer is in flight the session runs no command against the tree: no diff reads, no scripts, no scratch runs. The loop's supplied PR context permits its remote head checks during this wait. Wait per `./references/workflow/delegated-waiting.md` § *How to wait*, reporting where each launch stands at each check-in as one progress line per launch; under `-n N` that holds until the last of the N is in. The `-x` probe is read-only and may overlap the wait.
 
 **Settle.** The return is evidence, not a verdict; this skill assigns the verdicts per `./references/workflow/reviewer-contract.md` § *The settle*. First classify an explicit safety signal under that contract's § *Safety blocks*; it takes the **Blocked output** below, not an inline retry. Then the two intake checks, in order: the `Identity` echo against the identity Setup resolved (a mismatch means the reviewer resolved a different object: stop and report, settle nothing, launch nothing), then every return heading present (a malformed return takes the inline fallback with reason `reviewer failed`). After intake and any pooling, take **Capture evidence**, then **Prepare finding wording** below. Then adopt, spot-check, and assign the final verdicts as that section orders; `Summary` and `Improvements` pass through uncited; merge the `-x` probe.
-
-Under `-n N`, run the same classification and checks per return, and drop each unavailable reviewer instead of ending a pass that still has a usable return. Record each on `Review pass:` as `reviewer <i> dropped (<reason>)`: `identity mismatch`, `malformed return`, `no return`, `reviewer failed: <error>`, or `safety blocked: <error>`, preserving only the available error code and message. Settle on the standing returns and render their coverage as `completed <completed>/<requested>`. Only once none stands does the pass take a terminal path: any `identity mismatch` among the drops stops the review; otherwise any `safety blocked` drop takes the **Blocked output**; only ordinary failures fall to the inline fallback with reason `reviewer failed`.
-
-Losing reviewer 1 costs the review its verification scripts: run them in-session before Output and record `scripts: session (reviewer 1 <reason>)`, unless the caller substitutes its own evidence, in which case run nothing and keep its `scripts:` rendering. If reviewer 1 was safety blocked, do not repeat the denied operation; run only checks the signal shows are independent and already authorized, recording `scripts: session independent checks only (reviewer 1 safety blocked: <error>)`, or `scripts: unavailable (reviewer 1 safety blocked: <error>)` where the signal does not distinguish the denied operation.
-
-With `-n N` above 1, the standing returns' findings pool by location before anything is adopted, per `./references/workflow/agent-fanout.md` § *Merge contract*. Mark each pooled entry `cited by k/N`, `k` the number of returns making that entry's claim and `N` the requested count; an `-x` probe's agreement belongs to the `Cross-check:` line. Adoption and the Critical and Major spot-check run once per pooled group; `Summary` is the session's read across the standing returns, their `Improvements` merged. `Change map` is reviewer 1's, or the lowest-numbered standing return's where reviewer 1 was dropped; `Divergence` and `Inaccessible context` are the union across the standing returns, plus Setup's index-versus-head record on a `paths` object. <!-- cold -->
 
 **Capture evidence.** Apply `./references/engineering/review-evidence.md` §§ *Risk*, *Applicability*, and *Capture* using the change map and affected callers. Run this session-owned phase once after all primary reviewers are collected; `-n` and `-x` do not duplicate it. Observed defects enter the candidate list before wording and settlement; capture gaps remain evidence limitations. Retain the resulting Evidence field for Output or the composite caller.
 
@@ -135,7 +128,7 @@ After settlement, a standalone run presents evidence and requests sign-off under
 - **Evidence:** the field from `./references/engineering/review-evidence.md` § *Presentation and sign-off*, including artifact links or the applicability reason.
 - **Findings:** in the shape `./references/engineering/review.md` § *Findings output shape* defines, Minors included and never capped, each rendered as a finding entry with its canonical severity marker (`./references/workflow/user-facing-messages.md` § *Blocks*). With `-n N` above 1 each entry carries its `cited by k/N` marker.
 - **Reviewed:** the provenance line `Reviewed <kind> at <head-sha> (merge-base <base-sha>) by <model>`, `<kind>` being `branch` or `range`; on a `paths` object `Reviewed paths <paths-digest> at <head-sha> (<n> files) by <model>`. The model carries `×<completed>` where a fleet produced that many usable passes; `<model>` is the adapter's pinned model on a delegated pass and this session's own on the inline fallback. `/publish-pr-review` reads the line to anchor, re-check currency, and attribute.
-- **Review pass:** mandatory (`./references/workflow/reviewer-contract.md` § *Degrade rule* and § *Safety blocks*): `Review pass: delegated (<model>)`, `Review pass: inline (<reason>)`, or the **Blocked output** form. With `-n N` above 1: `delegated (<model> ×<completed>; completed <completed>/<requested>)`, every dropped return named as `reviewer <i> dropped (<reason>)`, and the script run named: `scripts: reviewer 1`, `scripts: session (reviewer 1 <reason>)`, or the safety-blocked form above. A denied check is named on this line at every N as `scripts: <check> denied: <error>`: on the fleet form's `scripts: reviewer 1`, or appended to the N = 1 form, `delegated (<model>; scripts: <check> denied: <error>)`.
+- **Review pass:** mandatory (`./references/workflow/reviewer-contract.md` § *Degrade rule* and § *Safety blocks*): `Review pass: delegated (<model>)`, `Review pass: inline (<reason>)`, or the **Blocked output** form. A denied check appends `scripts: <check> denied: <error>` to the N = 1 form: `delegated (<model>; scripts: <check> denied: <error>)`.
 - **Divergence:** the diverging reviewed paths recorded per `./references/engineering/review.md` § *Verification Scripts* (the return's `Divergence` or the session's own record, plus Setup's index-versus-head record on a `paths` object); `None` when the tree and the index both carry the object.
 - **Cross-check** (only with `-x`): the probe's `Cross-check:` outcome line per `./references/workflow/agent-fanout.md`. <!-- cold -->
 - **Improvements** (optional): non-blocking suggestions; on a delegated pass the return's `Improvements`, passed through.
@@ -151,32 +144,4 @@ End with the Handoff block (`./references/workflow/user-facing-messages.md` § *
 
 ## PR description
 
-Only with `-d`, and only where the object has a PR of its own to carry the description: the current branch's diff, or a range whose `b` is that branch's HEAD and whose `merge-base(a, b)` is that branch's own base. Elsewhere the draft is refused with the one line the `-d` flag entry fixes, the review still rendering in full. On the branch the draft is made whether or not an open PR exists; with none, the `Task:` line falls to the placeholder below.
-
-The session drafts it on either pass, body only, no title, from the return's `Change map` and `Summary` and the links Setup extracted (the session's own map and fetched links on the inline fallback). Where the map leaves an intent unclear, read the diff. Print it in a fenced block, in the PR-description shape `./references/workflow/user-facing-messages.md` § *Surface adapters* fixes.
-
-Format:
-
-```
-Task: <primary ticket/issue link>
-<other relevant links — one per line, each prefixed with its kind: Docs:, Design:, Related PR:, Dashboard:, …>
-
-<description body>
-```
-
-- **Task line:** the primary ticket or issue link, sourced in order from a link the user gave, an issue-tracker URL among the extracted links, or a ticket key in the branch name or commit trailers. Never fabricate a URL; with none found, emit `Task: <add ticket link>`.
-- **Other links:** the remaining gathered URLs, one per line, most important first, each prefixed with a short kind label. Omit when there are none.
-- **Body:** use a short paragraph, or a few bullets if the PR has several distinct changes. State what changed and why, not how. Cover the substantive intents (feature, fix, refactor). Call out any refactor done only to enable the feature; mention tests, config, or scaffolding only when notable. Audience-facing and verdict-free.
-- If the repo defines `.github/PULL_REQUEST_TEMPLATE.md`, follow its sections, keeping the Task/links header at the top without duplicating a link the template has a field for.
-- No AI attribution footer, even if a harness default asks for one.
-
-Example:
-
-```
-Task: https://acme.atlassian.net/browse/CRM-123
-Docs: https://acme.notion.site/csv-export-spec
-
-Add a CSV export button to the contacts table. Rows stream from the
-server so large accounts don't load every contact into memory. The
-toolbar became a shared component to host the new button.
-```
+With `-d`, apply `./references/workflow/pr-description.md` for eligibility, source selection, format, and refusal. <!-- cold -->

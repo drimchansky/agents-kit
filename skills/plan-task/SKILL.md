@@ -9,7 +9,7 @@ argument-hint: "[task or feature description, task folder or destination path; d
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for (`exploration.md`, `planning.md`, …). If the domain has no pack, run the neutral methodology and say so.
 
-Write two files into the resolved task folder: `goals.md`, the acceptance contract, and `plan.md`, the execution contract `implement-task` runs. Then summarize briefly in chat and point at the files.
+Write `goals.md` (acceptance) and `plan.md` (execution) into the resolved task folder. Summarize in chat with file links.
 
 ## When to Use
 
@@ -39,13 +39,13 @@ Restate the task, separating explicit requirements from assumptions. Ask about c
 
 ### 2. Resolve the Task Folder and Read CONTEXT.md
 
-Resolve per the **resolve-or-create** rules in `./references/workflow/task-layout.md`; a new folder lands by `./references/workflow/task-destinations.md`. With no argument and a request that names no other work, use the one task this session established, such as the folder `refine-idea` or `prepare-ticket` just wrote; with several, list them and ask. Otherwise derive the slug from the request, asking when it is unclear whether the request continues the established task. Reuse an existing active folder the slug or path resolves to; several plausible matches → list them and ask. Confirm the slug only when it differs meaningfully from what the user typed. For a new folder, fix its path here but create it, with its `CONTEXT.md`, only once Step 7 keeps one task, so a route to `decompose-task` leaves no stray folder.
+Resolve under `./references/workflow/task-layout.md` § *Discovery rules for skills*, using **resolve-or-create** and its session-task rule. Ask when the request may continue an established task or several matches are plausible. Confirm a slug only when it differs meaningfully from the user's token. Place new work under `./references/workflow/task-destinations.md`, but create nothing until Step 7 retains one task.
 
-For an existing folder, run `./references/workflow/task-layout.md` § *Reading a resolved folder* before drafting goals, including its pre-plan `--repair` path. Report applied mappings and unresolved diagnostics. If `state` is null because no plan exists, inspect `goals.md` and task-local references using the repair diagnostics before assigning new IDs. Under an explicit read-only request, inspect existing goal definitions and references manually; the default CLI needs a plan and cannot validate this pre-plan case. Do not draft from an ambiguous identity or treat a failed repair as valid intake.
+For existing folders, apply `./references/workflow/task-layout.md` § *Reading a resolved folder*, including pre-plan and explicit read-only handling. Report repair before drafting; ambiguous identities or failed repair cannot establish valid intake.
 
 Read `CONTEXT.md` and `ticket.md`. Surface a missing `./ticket.md` citation in chat rather than editing it in.
 
-**Read inherited grounding** before Step 3: the ancestor `GROUP_CONTEXT.md` files, root to task, per `./references/workflow/task-store.md` § *Shared group context*. They bind the goals, approach, and steps, and add no goal the ask does not carry. `## References`, `## Exploration Findings`, and `## Approach` cite the group file behind an inherited fact rather than copying it (`./references/workflow/context-schema.md`). Outside a registered root nothing is inherited.
+Before Step 3, load inherited grounding under `./references/workflow/task-store.md` § *Shared group context*. It constrains goals, approach, and steps without adding requirements. Cite each inherited fact's group file in References, Exploration Findings, or Approach (`./references/workflow/context-schema.md`).
 
 **Scaffold a missing `CONTEXT.md`** (for a new folder, when Step 7 creates it) from `./references/templates/CONTEXT.md` per `./references/workflow/context-schema.md`: fill `Problem Statement` from the task description, or cite `./ticket.md` when present. Add `Key Assumptions to Validate` only for actual assumptions; leave no empty headings or template prompts.
 

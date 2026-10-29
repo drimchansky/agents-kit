@@ -9,7 +9,7 @@ argument-hint: "[task slug or path; defaults to the session's task]"
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core. This skill mostly observes; pull in deeper pack files only if you dig into a step's work. If the domain has no pack, run the neutral methodology and say so.
 
-Brief an existing task's status, completed work, drift, and next action in chat only. This skill loads the task through `./references/workflow/task-layout.md` § *Reading a resolved folder*, whose repairing load may correct proven goal identifiers on user or model invocation alike; an explicit read-only request prevents it. Beyond that repair it edits no task file, code, or Git state, and executes no plan work. Its one other write is a user-confirmed Backlog activation move (`./references/workflow/implement-task-edges.md` § *Activating a backlogged task*).
+Brief status, completed work, drift, and next action in chat. Apply `./references/workflow/task-layout.md` § *Reading a resolved folder*, including proven identifier repair on either invocation route and its read-only exemption. Beyond that repair and a user-confirmed Backlog activation (`./references/workflow/implement-task-edges.md` § *Activating a backlogged task*), edit no task file, code, or Git state; execute no plan work.
 
 Run no reference sweep. The reconcilers sweep cited links (`./references/workflow/reconciliation-sweep.md` § *Scope*); this citation marks the boundary and is not loaded on any path. <!-- cold -->
 

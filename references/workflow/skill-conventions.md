@@ -8,20 +8,20 @@ Apply `./domain-packs.md` § *Utility skills* for utility loading and membership
 
 ## The rule
 
-Default to **composites for sequential phases and flags for modal or interleaved behavior**, because complete phase outputs provide composition boundaries.
+Use **composites for sequential phases and flags for modal or interleaved behavior**. Complete phase outputs define composition boundaries.
 
-A tiny sequential phase may stay a flag; state that exception in the skill.
+A tiny sequential phase may remain a flag; document the exception.
 
-Whole-phase iteration stays composite; state its cap, exit criterion, and per-pass display rules there. Write permissions do not determine classification.
+Whole-phase iteration is composite; state its cap, exit criterion, and per-pass output. Classify independently of write permissions.
 
-A composite may supervise an in-flight phase through caller-supplied context; state that exception in the composite.
+Document when a composite supervises an in-flight phase through caller-supplied context.
 
 ### The diagnostic
 
 - Entirely before or after the base protocol, with its output complete and printed at the boundary: composite. Keep the base skill whole; the composite orders phases.
 - Inside a phase, changing execution or merging intermediate work before verdicts finalize: flag.
 
-Scattered flag conditionals suggest a misclassified phase. A modal flag modifies one phase.
+A modal flag modifies one phase; scattered conditionals suggest a misclassified phase.
 
 ## Current members
 
@@ -67,24 +67,24 @@ Pass each phase's modal flags through unchanged, except the `review-code-triage-
 
 ## The invocation gate
 
-A run is **user-invoked** through either of two doors.
+Two doors establish a **user-invoked** run, the first a typed command and the second a confirmed proposal:
 
-- **Typed command.** Read from the host's marker: Claude Code's preceding `<command-name>` block; on Codex, the user's own `$<name>` mention. A host whose marker cannot tell a typed command from a skill the model loaded counts the run as model-invoked.
-- **Confirmed proposal.** Read from the exchange that preceded the launch: the agent proposed one run naming the skill, its arguments, and the writes it will cover, Git mutations included, and asked as a question; the user confirmed with the word the question names or an explicit yes, in chat or through the structured question tool. A bare acknowledgement confirms nothing; ask again. "yes", "go", or the word the question names confirms; "ok", "thanks", "nice", or a reaction emoji acknowledges. This door needs no host marker.
+- **Typed command.** Require Claude Code's preceding `<command-name>` block or the Codex user's `$<name>` mention. If the host marker cannot distinguish a typed command from model loading, treat the run as model-invoked.
+- **Confirmed proposal.** Before launch, ask about one run naming the skill, arguments, and every write, including Git mutations. Require the named confirmation word or explicit yes through chat or the question tool. "yes", "go", or the named word confirms; "ok", "thanks", "nice", or a reaction acknowledges. Ask again after mere acknowledgement. No host marker is needed.
 
-Every other run is **model-invoked**, including one the model starts from a loose request. Do not infer user invocation.
+Every other run, including a loose request, is **model-invoked**. Do not infer user invocation.
 
-Silence, and any reply made while no question is pending, open nothing. A write the proposal left unnamed takes its own confirmation; the run stays user-invoked. The grant is run-scoped: it covers the proposed run alone, and a later run proposes again.
+Silence or replies without a pending question grant nothing. Confirm omitted writes separately; the run remains user-invoked. Grants cover one run; later runs propose again.
 
 A confirmed proposal carries the sanctions the first door carries. They are the task branch and worktree lifecycle (`./task-delivery.md` § *Branch and worktree creation* → **The sanction**), executor delegation (`./executor-routing.md` § *The registry and its authorization*), and reconciler auto-apply (`./reconciliation.md` § *Consent model: findings apply, the record carries them*). Every sanctioned write, these three included, holds only when the proposal named it. `fix-findings`' commit per concern batch, or one commit for the run under `-1`, is one such write (`skills/fix-findings/SKILL.md` § *Batch commits*).
 
 A skill whose run or first write needs that consent is **confirm-gated**. Membership follows one of three grounds: a filing or publishing write with no preview of its own, a sweep beyond the current project, or the user's preference. A filing or publishing skill that previews its computed payload before a single write gates itself and stays off this roster. A sweep stays on the roster whatever it previews. A confirm-gated skill carries, directly after its Core Rules block, this exact line: ``**Model invocation:** requires a confirmed proposal (`./references/workflow/skill-conventions.md` § *The invocation gate*).`` Its protocol places the proposal ahead of its first write. Set neither `disable-model-invocation: true` in its frontmatter nor `allow_implicit_invocation: false` in an `agents/openai.yaml`; the first blocks Claude Code's skill tool and the second blocks Codex's implicit invocation, each its host's second door.
 
-A model-invoked run makes that proposal and waits; the confirmation opens the second door for the writes the proposal named. A user-invoked run has passed it; a preview of a payload computed during the run, where the protocol keeps one, still runs.
+Model-invoked runs propose and wait. Confirmation authorizes the named writes. User-invoked runs retain any protocol-required payload preview.
 
-A **counted choice** qualifies as the proposal when every write option names its exact payload and size, and another option writes nothing. Write only the selection, from a numbered chat list or a structured question alike. Selecting a target alone does not authorize the act.
+A **counted choice** qualifies when each write option names exact payload and size, with a no-write option. Apply only the numbered-chat or structured-question selection. Target selection alone grants no action.
 
-A sweep beyond the current project, across registered roots or into installed state, is an action the proposal names by scope. A per-change confirmation does not authorize it, and resolving one named task across roots is not such a sweep. Reading the registry and checking that its paths exist builds the scope proposal and is not the sweep.
+Name cross-project, registered-root, or installed-state sweep scope in the proposal; per-change consent grants no sweep. Resolving one named task across roots is not a sweep. Registry reading and path-existence checks may prepare its proposal.
 
 **Confirm-gated skills:**
 
@@ -119,12 +119,12 @@ An open skill using invocation as consent states the user/model split beside tha
 
 ## Cold citations
 
-A SKILL.md citation marked `<!-- cold -->` on the same line is skipped on the typical invocation path. Unmarked citations load when the skill runs. The skill's own SKILL.md and core-rules citation (`AGENTS.md`) remain hot regardless of markers.
+In SKILL.md, skip citations marked same-line `<!-- cold -->` on typical invocations. Unmarked citations load when the skill runs. Its own SKILL.md and core-rules citation (`AGENTS.md`) stay hot regardless of markers.
 
-State the cold citation's loading condition beside it: a flag, file presence, or another conditional branch. The marker classifies the citation; it never supplies its condition.
+State each cold citation's trigger beside it: flag, file presence, or conditional branch. The marker supplies no condition.
 
-One marker covers every citation on its line. Split citations with different conditions onto separate lines. A repeatedly cited file is cold only when every citation is marked; one unmarked citation makes it hot.
+One marker covers its line. Separate differing triggers. Every citation of a file must be marked for it to stay cold; one unmarked citation makes it hot.
 
-A condition reached on most runs is hot, including routine health boundaries. Split such a file into hot guidance and a conditional satellite before marking the latter cold.
+Conditions reached on most runs stay hot, including routine health boundaries. Extract conditional guidance before marking it cold.
 
 The marker has no runtime interpreter; judge it against the loading path.

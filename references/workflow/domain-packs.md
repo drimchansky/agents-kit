@@ -34,7 +34,7 @@ Read `**Domain:**` from the task's `CONTEXT.md` header block:
 **Domain:** engineering
 ```
 
-Default to `engineering` when that header is absent, preserving existing tasks. Load the requested phase files from `references/<domain>/`. Resolve from the header value, like plan Status (`task-lifecycle.md`), never from filesystem placement or directory shape.
+Default absent Domain to `engineering`. Load requested phase files from `references/<domain>/`; never infer the domain from placement or directory shape.
 
 ## Which skills resolve a domain vs. load a fixed pack
 
@@ -57,9 +57,8 @@ A composite's delegated skills retain their own pack loads unless explicitly ove
 
 ## Utility skills
 
-A utility skill keeps its complete task instructions and output contract in its own `SKILL.md`.
-It requires no shared global rules, references, sibling skills, or supporting instruction files, and resolves no domain pack.
-Ship it without `AGENTS.md` or `references` links. Utility status describes loading; its protocol may still expose flags.
+A utility contains its complete protocol/output in `SKILL.md`, with no shared rules, references, sibling skills, supporting instructions, or domain pack.
+Ship no `AGENTS.md` or `references` links. Utilities may expose flags.
 
 The initial members are `format-dictation` and `proofread`.
 
@@ -76,7 +75,7 @@ Fixed-pack skills skip resolution. `fix-findings` resolves per chosen fix withou
 
 ## Missing-pack fallback
 
-When a resolved pack or requested phase file is absent, say which guidance is missing and proceed with neutral methodology. Never invent domain rules, checklists, or verification recipes. Do not silently substitute engineering or another pack.
+Report an absent pack or phase file and use neutral methodology. Invent no domain rules, checklists, or verification recipes; silently substitute no pack.
 
 ## Adding a new domain
 

@@ -11,7 +11,7 @@ argument-hint: '[source: PR number/URL, file path, or pasted findings; defaults 
 
 Findings-first pipeline: gather and batch findings you already have (`triage-findings`), then verify each **open** batch in an isolated read-only probe running the `verify-issue` protocol, one verdict per finding. There is no review phase, so the `verify` and `addressed` buckets can be populated and are shown.
 
-`./references/workflow/verify-pipeline.md` carries the shared mechanics and the pipeline-wide overrides; the sections below carry only what is specific to this composite.
+Apply `./references/workflow/verify-pipeline.md` with this composite's specific rules below.
 
 The whole pipeline reads and displays. No phase edits code, posts to a PR, resolves a thread, or writes to any source.
 

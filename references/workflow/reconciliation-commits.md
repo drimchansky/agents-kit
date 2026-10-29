@@ -8,7 +8,7 @@ Commits, including reverts, nominate pending steps; they never verify work. Chec
 
 The watermark is one entry on the result's `## Current state` `**Pointers:**` line, written `SHA <sha> (recorded YYYY-MM-DD)`; the line's other identifiers stay beside it (`./task-authorship.md`). The SHA records the last-observed tip of `<ref>` and the scan floor. Use the task's recorded branch as `<ref>` (`./task-delivery.md` § *Branch and worktree creation*); branch fallback follows the script report.
 
-`scripts/commit-scan.ts` carries this entry shape, a sanctioned copy per `AGENTS.md` § *Consumer lists*. Rewording the shape requires changing its pattern in the same edit.
+`scripts/commit-scan.ts` carries this entry shape, a sanctioned copy per `references/maintenance/repository.md` § *Consumer lists*. Rewording the shape requires changing its pattern in the same edit.
 
 ## The scan
 

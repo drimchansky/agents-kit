@@ -33,10 +33,10 @@ A task store groups folders under a directory tree. Detect optional files by exi
 - `kitRoot` identifies a source checkout holding `setup.ts`, `CORE_RULES.md`, and `references/`, not an installed agent home.
 - `runbookRoot` identifies one dedicated private runbook directory, separate from task-discovery roots. When present, it must be a nonempty string containing an absolute or `~/...` path; other relative paths and non-string values are invalid. Expand tilde and resolve directory identity before use. Entry and lookup behavior belongs to `./runbook.md`.
 - Absent `runbookRoot` opts out silently. When runbook context is needed, report malformed configuration or a missing or unreadable configured source. Do not infer its path from task roots.
-- `openStore` in `scripts/secretary-state.ts` preserves these `runbookRoot` rules, a sanctioned copy per `AGENTS.md` § *Consumer lists*.
+- `openStore` in `scripts/secretary-state.ts` preserves these `runbookRoot` rules, a sanctioned copy per `references/maintenance/repository.md` § *Consumer lists*.
 - Every key is optional. Missing/empty taskRoots means canonical-only discovery; absent kitRoot means no registered source checkout. A file with none of these keys is inert. Record no derivable defaults or preferences here.
 
-`WALK_SKIP_DIRS`, `TASK_STORE_DIR`, and `classifyWalkEntry` in `scripts/lifecycle-constants.ts` preserve the prunes and their ordering, a sanctioned copy per `AGENTS.md` § *Consumer lists*.
+`WALK_SKIP_DIRS`, `TASK_STORE_DIR`, and `classifyWalkEntry` in `scripts/lifecycle-constants.ts` preserve the prunes and their ordering, a sanctioned copy per `references/maintenance/repository.md` § *Consumer lists*.
 
 ## Shared group context (optional)
 
@@ -66,4 +66,4 @@ For `node <kit-root>/scripts/<name>.ts`, use the source checkout from config's `
 
 - Missing config or key outside a plugin install: ask for the checkout path, rather than infer one from the installation.
 - No available checkout: report the helper unavailable and use only the citing skill's stated fallback; otherwise stop.
-- Read `references/scripts/<name>.md` for CLI/stdout contracts. Skills cite `./references/scripts/<name>.md`; references cite `../scripts/<name>.md`. Maintainer rationale stays in `scripts/AGENTS.md`, under `scripts/<name>.ts`.
+- Read `references/scripts/<name>.md` for CLI/stdout contracts. Skills cite `./references/scripts/<name>.md`; references cite `../scripts/<name>.md`. Maintainer rationale: `references/maintenance/scripts.md` § *`scripts/<name>.ts`* (maintainers only).

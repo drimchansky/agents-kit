@@ -22,9 +22,9 @@ Explain the requested topic at the depth needed. For code, apply `./references/e
 - **Concept:** definition, relevance, implications, misconceptions.
 - **Pre-plan:** existing constraints, affected consumers, alternatives, open questions.
 
-Start at the highest relevant level, then drill down. Ask when scope is unclear; answer the actual question.
+Start at the highest relevant level, then add detail. Ask about unclear scope.
 
-The subject at its resolved scope is this skill's proposal. A model-invoked run (`./references/workflow/skill-conventions.md` § *The invocation gate*) asks whether to explore it before gathering; a user-invoked run has passed it. Neither writes anything.
+Propose the resolved subject before gathering on model invocation (`./references/workflow/skill-conventions.md` § *The invocation gate*). User invocation passes this gate. Both routes are read-only.
 
 ## Gather Context
 

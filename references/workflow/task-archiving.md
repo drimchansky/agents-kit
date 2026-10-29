@@ -20,7 +20,7 @@ Match Backlog case-insensitively (`./task-backlog.md`). Only the immediate paren
 
 **Recognizing the directory is case-insensitive.** Create new containers as `Archive/`; recognize existing spellings case-insensitively in scans, slug fallbacks, destination guards, and refusal checks. `maintain` normalizes stray lowercase spelling.
 
-`ARCHIVE_DIR` in `scripts/lifecycle-constants.ts` is a sanctioned copy per `AGENTS.md` § *Consumer lists*.
+`ARCHIVE_DIR` in `scripts/lifecycle-constants.ts` is a sanctioned copy per `references/maintenance/repository.md` § *Consumer lists*.
 
 `archive-task` invokes `scripts/task-move.ts` to check terminal status and destination guards before moving the whole folder. A user's manual move may reach the same destination but skips those guards, including protection against nested archives.
 

@@ -24,11 +24,11 @@ Use these exact role names and casing. Resolve files by role, not a typed stem. 
 
 **Recognition set.** A folder qualifies when it holds at least one file named `CONTEXT.md`, `goals.md`, `plan.md`, `result.md`, or `ticket.md`, or a legacy `*.plan.md`, `*.result.md`, `*.spec.md`, or `*.ticket.md`. `observations.md` alone does not qualify. A ticket-only or context-only folder qualifies; a folder holding none of the set does not. Report that absence rather than guessing. New work uses role names; `maintain` renames legacy forms.
 
-`scripts/lifecycle-constants.ts` holds the recognition lists and membership test, a sanctioned copy per `AGENTS.md` § *Consumer lists*.
+`scripts/lifecycle-constants.ts` holds the recognition lists and membership test, a sanctioned copy per `references/maintenance/repository.md` § *Consumer lists*.
 
 **Size budgets.** A folder holds at most **64 KB** of Markdown, excluding the ticket but including legacy files. Each `## Step` or `## Full Run` result record holds at most **2 KB**. Oversize records are narrative for reconciliation to trim; `maintain` surfaces both budgets as findings, not write refusals.
 
-`TASK_MAX_KB` and `RECORD_MAX_KB` in `scripts/lifecycle-constants.ts` are a sanctioned copy per `AGENTS.md` § *Consumer lists*.
+`TASK_MAX_KB` and `RECORD_MAX_KB` in `scripts/lifecycle-constants.ts` are a sanctioned copy per `references/maintenance/repository.md` § *Consumer lists*.
 
 Place each fact according to `./one-home.md` and cite its section from siblings.
 

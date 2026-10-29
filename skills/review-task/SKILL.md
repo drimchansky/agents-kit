@@ -9,7 +9,7 @@ argument-hint: "[task slug or path; defaults to the session's task] [-x (cross-v
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for (`exploration.md`, `verification.md`, …). If the domain has no pack, run the neutral methodology and say so.
 
-Validate a plan against current reality and report feasibility, gaps, and questions. It loads the task through `./references/workflow/task-layout.md` § *Reading a resolved folder*, whose repairing load may correct proven goal identifiers on user or model invocation alike; an explicit read-only request prevents it. Beyond that repair it implements nothing, redesigns nothing, and writes no file. Route steps needing rethinking to `plan-task`.
+Validate the plan against reality; report feasibility, gaps, and questions. Apply `./references/workflow/task-layout.md` § *Reading a resolved folder*, including proven identifier repair on either invocation route and its read-only exemption. Beyond repair, implement or redesign nothing and write no file. Route redesign to `plan-task`.
 
 ## Flags
 

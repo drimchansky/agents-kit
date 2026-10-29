@@ -1,6 +1,6 @@
 # Execution Loop: Shared Contract
 
-The loop that carries work from "not built" to "verified and done". Three skills run it: `implement-task` against a task folder's `plan.md`, `implement` against an ask framed in the session, and `fix-findings` against the fixable members of a findings set. `./execution-bindings.md` indexes what each substitutes for the six parameters below. The domain pack fixes what to run: `<domain>/execution.md` for a unit, `<domain>/verification.md` for the tiers.
+Consumers: `implement-task` runs plan steps, `implement` runs framed requests, and `fix-findings` runs selected fixes. Find their six bindings in `./execution-bindings.md`. The domain supplies unit work through `<domain>/execution.md` and verification through `<domain>/verification.md`.
 
 ## The six parameters
 
@@ -15,7 +15,7 @@ Every consumer answers these in its own bindings section:
 
 ## Ground truth before work
 
-Identify what you're acting on and where the authoritative information lives; do not work from memory on anything that could be wrong or out of date, and ask when versions or facts are missing or ambiguous. The recipe is the domain's `execution.md` (for code, `../engineering/execution.md` § *Detect stack and sources*). Record the sources you ground the work on, and any uncertainty you couldn't resolve, per the consumer's **Record** binding, not in code comments.
+Identify the target and authoritative sources; verify potentially stale or uncertain facts rather than relying on memory. Ask about missing or ambiguous versions/facts. Use the domain's `execution.md` (`../engineering/execution.md` § *Detect stack and sources* for code). Record sources and unresolved uncertainty under the consumer's **Record** binding, never in code comments.
 
 ## The loop
 

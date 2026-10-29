@@ -9,14 +9,9 @@ argument-hint: "[task slug or path; defaults to the session's task]"
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core, plus `verification.md` — this skill re-verifies before it records any progress. If the domain has no pack, run the neutral methodology and say so.
 
-Review **this session against the task docs** and write the missing information back: the enriching direction of reconciliation. Shared mechanics: `./references/workflow/reconciliation.md`. This direction's rules and mapping: `./references/workflow/reconciliation-session-to-docs.md`.
+Reconcile this session against task docs under `./references/workflow/reconciliation.md` and `./references/workflow/reconciliation-session-to-docs.md`.
 
-This skill applies settled task-doc corrections and presents unresolved impactful choices under `./references/workflow/reconciliation.md` § *Consent model: findings apply, the record carries them*. Compaction retains its separate confirmation (`./references/workflow/reconciliation-compaction.md` § *Compaction (size trigger)*). Four rules bound it:
-
-- **Strengthen only on verified evidence.** Progress is recorded only on evidence re-verified this session, never a chat claim (`./references/workflow/reconciliation.md` § *Strengthen only on verified evidence*).
-- **Grounding docs change on evidence.** Anything redefining scope or acceptance is a judged edit whose record carries the prior wording and the readings passed over (`./references/workflow/reconciliation.md` § *Grounding docs change on evidence, never silently*).
-- **The upstream ask is writable, never quietly.** An edit to `ticket.md` or an applicable `GROUP_CONTEXT.md` owes its record the added terms in `./references/workflow/reconciliation.md` § *The upstream ask is writable, and never rewritten quietly*, and never rewrites the ask to match what was built.
-- **Docs, not the world.** No source code written, no git state mutated, no external system updated (`./references/workflow/reconciliation.md` § *Docs, not the world*). The writable files are `./references/workflow/reconciliation-session-to-docs.md` § *Write surface*; a `warn` or `block` on a read-only surface routes by `./references/workflow/reconciliation.md` § *Never-annotated surfaces*. Output is those files plus a chat change list, no scratch artifact.
+Apply the shared consent, verified-progress, grounding, and upstream-ask rules. Use the direction contract's § *Write surface* and the shared § *Never-annotated surfaces* for writable files and protected surfaces. Produce task-doc edits and a chat change list only: no code, Git mutation, external updates, or scratch artifact.
 
 ## When to Use
 
@@ -74,7 +69,11 @@ The rule is `./references/workflow/reconciliation.md` § *Strengthen only on ver
 
 Apply the findings per `./references/workflow/reconciliation.md` (the append-only `## Reconciliation` record, § *The record*, included) and `./references/workflow/reconciliation-session-to-docs.md` § *`reconcile-task` — session findings*, whose route values are the shared file's § *The mapping legend*; **verify** means Step 5's gate. Every edit maps to a Step 3 or Step 4 finding. A **verify** row waits on Step 5 passing. Every **judged** row follows the shared § *Consent model: findings apply, the record carries them* and retains its required record.
 
-When a result exists or is owed for another change, end the run by refreshing its `## Current state` per the shared file's § *Current state refresh*. Do not create one solely to log structural repair. For an existing result, test the size trigger with `node <kit-root>/scripts/task-state.ts --compaction-plan <task folder>` and read the verdict off its JSON (`./references/scripts/task-state.md`; `<kit-root>` per `./references/workflow/task-store.md` § *Resolving `<kit-root>`*). On `due`, raise the compaction proposal per `./references/workflow/reconciliation-compaction.md` § *Compaction (size trigger)*, which owns its consent and what may collapse; read it only then. When the script is unavailable, say the trigger went untested; never report it as under the trigger. A `maintain` `oversized-task` or `oversized-record` finding is raised alongside the proposal and cut only on the same confirmation, narrative never evidence. <!-- cold -->
+Refresh an existing or otherwise owed result's `## Current state` under the shared § *Current state refresh*. Create no result solely for structural repair.
+
+For an existing result, run `node <kit-root>/scripts/task-state.ts --compaction-plan <task folder>` and read its JSON (`./references/scripts/task-state.md`; root resolution: `./references/workflow/task-store.md` § *Resolving `<kit-root>`*). Report an unavailable helper as an untested trigger, never as under the trigger.
+
+Only on `due`, read `./references/workflow/reconciliation-compaction.md` § *Compaction (size trigger)* and propose its separately confirmed compaction. Raise any `maintain` `oversized-task` or `oversized-record` finding alongside it; trim only on the same confirmation, narrative never evidence. <!-- cold -->
 
 ## Output Template
 

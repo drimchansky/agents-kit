@@ -1,6 +1,6 @@
 # `scripts/task-state.ts`
 
-Reports task state, compaction eligibility (`../workflow/reconciliation-compaction.md`), or an explicit structural repair. The default and compaction modes are read-only.
+Reports task state, compaction eligibility, or an explicit structural repair. The default and compaction modes are read-only.
 
 ```
 node scripts/task-state.ts <task-dir>
@@ -62,7 +62,7 @@ Any `incomplete-reference-scan` gap blocks every edit, since an unread file coul
 
 Due means bytes strictly exceed `maxKb * 1024`. Bytes is decoded-file UTF-8 length; maxKb uses `RESULT_MAX_KB` from `scripts/lifecycle-constants.ts`, without override. Maintain may override the health walk's trigger separately.
 
-`precondition` is `{state,detail,uncommitted}`. Run `git -C <task-dir> cat-file -e HEAD:./result.md`: state is `ok` on success, otherwise `fails`; detail is null or Git's failure reason. Uncommitted reports pending file changes from `git status --porcelain`, or null when the precondition failed or status was unavailable. Only a clean, HEAD-resolvable result permits a compaction proposal; staged-but-never-committed and ignored files do not qualify. Follow `../workflow/reconciliation-compaction.md` for consent.
+`precondition` is `{state,detail,uncommitted}`. Run `git -C <task-dir> cat-file -e HEAD:./result.md`: state is `ok` on success, otherwise `fails`; detail is null or Git's failure reason. Uncommitted reports pending file changes from `git status --porcelain`, or null when the precondition failed or status was unavailable. Only a clean, HEAD-resolvable result permits a compaction proposal; staged-but-never-committed and ignored files do not qualify. Only when `due` is true, follow `../workflow/reconciliation-compaction.md` for consent.
 
 `keep` and `removable` partition level-2 result sections in file order, as `{heading,anchor,rule}` and `{heading,anchor}`. The pre-section header is ineligible; deeper headings belong to their enclosing section. Anchors use the same slug allocation as result-link checks. A tombstone uses the full reported heading and its existing anchor.
 

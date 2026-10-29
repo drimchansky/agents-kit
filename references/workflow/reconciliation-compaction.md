@@ -8,7 +8,7 @@ At a `reconcile-task` run's end, propose compaction when the report says `due`. 
 
 Refuse unless `precondition.state` is `ok` and `uncommitted` is false; removed text must remain recoverable from version history. On `uncommitted`, have the user commit first; a later run re-tests before proposing.
 
-The trigger is **20 KB**. `RESULT_MAX_KB` in `scripts/lifecycle-constants.ts` is a sanctioned copy per `AGENTS.md` § *Consumer lists*. Change both in the same edit. `scripts/task-state.ts` and `scripts/health-check.ts` consume it; `maintain` reads this section and passes `--result-max-kb`.
+The trigger is **20 KB**. `RESULT_MAX_KB` in `scripts/lifecycle-constants.ts` is a sanctioned copy per `references/maintenance/repository.md` § *Consumer lists*. Change both in the same edit. `scripts/task-state.ts` and `scripts/health-check.ts` consume it; `maintain` reads this section and passes `--result-max-kb`.
 
 ## What may be collapsed
 

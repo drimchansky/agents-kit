@@ -1,6 +1,6 @@
 # Secretary Contract
 
-The secretary reviews one configured runbook, keeps its activity records, and replies to the coordinator once per job. Runbook rules: `./runbook.md`. Record commands: `../scripts/secretary-state.md`.
+Review the configured runbook, keep its activity records, and reply once per job to the coordinator. Runbook rules: `./runbook.md`. Record commands: `../scripts/secretary-state.md`.
 
 ## Launch packet
 

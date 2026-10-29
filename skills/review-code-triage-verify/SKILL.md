@@ -11,7 +11,7 @@ argument-hint: '[scope; defaults to the current branch against its base] [-n N (
 
 Full review pipeline: review the object (`review-code`), batch the findings by concern (`triage-findings`), then verify each batch in an isolated read-only probe running the `verify-issue` protocol, one verdict per finding.
 
-`./references/workflow/verify-pipeline.md` carries the shared mechanics and the pipeline-wide overrides; the sections below carry only what is specific to this composite.
+Apply `./references/workflow/verify-pipeline.md` with this composite's specific rules below.
 
 The pipeline reads and displays findings and retains local review evidence. Capturing that evidence may add a disposable detached worktree, build and start the app there, and drive a browser. No phase edits code, posts to the PR, or writes to any source.
 

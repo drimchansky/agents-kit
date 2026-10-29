@@ -21,7 +21,7 @@ An explicit request to review in Slack authorizes a Slack draft only; sending it
 Keep source collection read-only, including the daily doc. Reporting a discrepancy does not authorize changing Jira, GitHub, or the source template.
 
 Resolve the reporting date, timezone, user identities, and any supplied template from session context and connected profiles.
-Default to the preceding working day because daily updates summarize the last workday; use another period when requested.
+Default to the preceding working day; use another period when requested.
 Check Calendar for leave or holidays when choosing that day.
 The report date is today's local date; the activity date is the day being summarized. Preserve both on refresh.
 Use current records for present status, separating it from events inside the reporting window.

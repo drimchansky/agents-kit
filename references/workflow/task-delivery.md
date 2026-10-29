@@ -38,7 +38,7 @@ git worktree add -b <branch> <main-checkout-path>.worktrees/<slug> <base>
 
 Announce branch, path, and base as creation happens. Add `` branch `<branch>` `` to result Current-state Pointers without replacing its existing identifiers (`./one-home.md`, `./reconciliation-commits.md` § *The watermark*). Derive the worktree path; record no separate path pointer.
 
-`scripts/commit-scan.ts` carries the branch-entry shape, a sanctioned copy per `AGENTS.md` § *Consumer lists*.
+`scripts/commit-scan.ts` carries the branch-entry shape, a sanctioned copy per `references/maintenance/repository.md` § *Consumer lists*.
 
 **The sanction.** The skill's `SKILL.md` authorization provisions must name task branch/worktree lifecycle among its sanctioned writes. The user's invocation grants that lifecycle permission under `../engineering/rules.md` § *Code & Git discipline*: by command, or by a confirmed proposal that named the task branch and worktree (`./skill-conventions.md` § *The invocation gate*). A confirmed proposal that left them unnamed grants none; ask for the creation as its own question before it. A model-invoked run grants none and asks nothing: announce the skip and create, recreate, or remove nothing; continue on the current checkout.
 

@@ -9,7 +9,7 @@ argument-hint: '[idea or concept] [destination path]'
 1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
 2. Load the domain pack: take the task's `**Domain:**` (default `engineering`; infer from the request when there's no `CONTEXT.md` yet, and record it in the `CONTEXT.md` you write) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for (`exploration.md`, …). If the domain has no pack, run the neutral methodology and say so.
 
-Turn a raw idea into a sharp concept worth building: divergent exploration, convergent evaluation, then a written one-pager at `<task-folder>/CONTEXT.md`, the static grounding `plan-task` and `implement-task` consume. The output is that file on disk, not a chat message; after writing it, summarize briefly and point at it.
+Diverge, evaluate, then write the chosen concept to `<task-folder>/CONTEXT.md`, grounding later planning and execution. Summarize with its path after writing.
 
 ## When to Refine (and When Not To)
 
@@ -29,12 +29,7 @@ The slug is 2–5 lowercase kebab-case words capturing the gist (`weekly-digest-
 
 ### What belongs in CONTEXT.md (and what doesn't)
 
-- ✅ The one-pager: problem framing, recommended direction, assumptions, MVP scope, "Not Doing"
-- ✅ External references: tickets, threads, PR links, designs, pasted specs and schemas
-- ✅ Standing decisions and constraints the plan must respect
-- ❌ Implementation notes, approach rationale, step breakdowns, verify criteria: the plan and its result
-- ❌ Goals and acceptance criteria: the sibling `goals.md`
-- ❌ Conversation summaries or TODO scratchpads
+Keep framing, direction, assumptions, MVP scope, "Not Doing," external references, and standing decisions/constraints here. Put implementation notes, approach rationale, steps, and verification in the plan/result; acceptance in `goals.md`. Exclude conversation summaries and scratchpads.
 
 ## Process
 
@@ -52,7 +47,7 @@ Write the one-pager to the resolved folder's `CONTEXT.md`. Repeat the Open quest
 - **Know:** the task's handoff token and the `CONTEXT.md` path.
 - **Next:** the one paste-ready command, `/plan-task`, printed bare because it resolves the session's task; Know carries the slug or folder path (`./references/workflow/user-facing-messages.md` § *Blocks*).
 
-Do not drop or paraphrase the `/plan-task` command. The "Not Doing" list is the most valuable part: make trade-offs explicit.
+Keep `/plan-task` verbatim. Make "Not Doing" trade-offs explicit.
 
 ## CONTEXT.md Structure
 

@@ -29,7 +29,7 @@ For private creation, omit parent even when the schema marks it required. Attemp
 
 Use the request's language and supplied material; fetch or ask for missing facts. Preserve a supplied title, otherwise choose a clear one. Add an obvious icon when useful. Use Notion headings/lists/to-dos/callouts/toggles where helpful, otherwise paragraphs. Tables are allowed inside the page.
 
-Default to drafting and creating together because a private page is easily revised. Ask for content when the request is too thin, or preview when requested; do not pad an empty ask with invented structure.
+Default to drafting and creating together. Ask for content when the request is too thin, or preview when requested; do not pad an empty ask with invented structure.
 
 ### 3. Resolve the destination
 
