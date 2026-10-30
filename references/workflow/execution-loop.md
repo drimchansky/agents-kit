@@ -50,7 +50,7 @@ Integration assertions exercise the named end-to-end outcomes a consumer declare
 
 A boundary is mandatory when the consumer's cadence reaches it:
 
-1. Run the domain health recipe over the closure of the delta since the reference its `verification.md` defines, or the whole relevant surface where no reference applies or this boundary's reference carries no in-session green result. A command the domain scopes narrower than that surface runs at the domain's scope (for code, `../engineering/boundary-scope.md` § *CI scope* and § *Infra-bound commands*).
+1. Run the domain health recipe over the closure of the delta since the reference its `verification.md` defines, or the whole relevant surface where no reference applies or this boundary's reference carries no in-session green result. A command the domain scopes narrower than that surface runs at the domain's scope (for code, `../engineering/boundary-scope.md` § *CI-green start*, § *CI scope*, and § *Infra-bound commands*).
 2. If any required check fails, apply Stop-the-Line.
 3. If every required check passes, record integrated-health evidence per the **Record** binding, to the shape the domain fixes (for code, `../engineering/verification.md` § *What a boundary records*). A command the domain licenses the boundary not to launch (for code, `../engineering/boundary-scope.md` § *Infra-bound commands*) is recorded rather than run and leaves the boundary green.
 
