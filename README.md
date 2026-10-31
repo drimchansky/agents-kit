@@ -30,6 +30,35 @@ For Claude Code, the plugin is an alternative:
 
 Choose one installation method. Invoke skills as `/plan-task` in Claude Code, `/agents-kit:plan-task` with the plugin, or `$plan-task` in Codex.
 
+### Browser tools
+
+The [browser guidance](./references/workflow/browser-tools.md) prefers Chrome DevTools MCP on both hosts. It covers acting in your Chrome session, isolated review capture, UI checks, and regressions against live data. Kit skills load it through their core rules.
+
+Register two Chrome DevTools MCP servers on each host. `chrome-devtools` attaches to your running Chrome; `chrome-devtools-isolated` starts a temporary profile.
+
+```sh
+claude mcp add --scope user chrome-devtools -- npx -y chrome-devtools-mcp@latest --autoConnect
+claude mcp add --scope user chrome-devtools-isolated -- npx -y chrome-devtools-mcp@latest --isolated
+codex mcp add chrome-devtools -- npx -y chrome-devtools-mcp@latest --autoConnect
+codex mcp add chrome-devtools-isolated -- npx -y chrome-devtools-mcp@latest --isolated
+```
+
+`--autoConnect` needs Chrome 144 or newer, with remote debugging enabled at `chrome://inspect/#remote-debugging`. Chrome asks you to allow the connection. In Claude Code, Claude in Chrome is the fallback for your session.
+
+To apply the guidance outside skill runs, add a loader to each host's global instructions after setup. In `~/.claude/CLAUDE.md`:
+
+```markdown
+For browser UI actions, read and apply `~/.claude/references/workflow/browser-tools.md`.
+```
+
+In `~/.codex/AGENTS.md`:
+
+```markdown
+For browser UI actions, read and apply `~/.codex/references/workflow/browser-tools.md`.
+```
+
+With the plugin, point the Claude loader at `references/workflow/browser-tools.md` in your kit checkout. The installer leaves both global files untouched. Start a new session to load the instruction.
+
 ## Task workflow
 
 1. **Shape the work.** Use `refine-idea` for a rough idea or `prepare-ticket` for a concrete request.
