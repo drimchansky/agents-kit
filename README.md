@@ -32,10 +32,10 @@ Choose one installation method. Invoke skills as `/plan-task` in Claude Code, `/
 
 ### Codex browser tools
 
-The shared [browser guidance](./references/workflow/browser-tools.md) prefers Chrome DevTools MCP for existing Chrome tabs. Kit skills load it through their core rules. To apply it outside skill runs, add this loader to `~/.codex/AGENTS.md` after setup:
+The [Codex browser guidance](./references/workflow/browser-tools.md#codex) prefers Chrome DevTools MCP for existing Chrome tabs. Codex kit skills load it through their core rules. To apply it outside skill runs, add this loader to `~/.codex/AGENTS.md` after setup:
 
 ```markdown
-For browser UI actions, read and apply `~/.codex/references/workflow/browser-tools.md`.
+For browser UI actions, read and apply `~/.codex/references/workflow/browser-tools.md` § *Codex*.
 ```
 
 The installer leaves your global `AGENTS.md` untouched. Start a new Codex session to load the instruction.
