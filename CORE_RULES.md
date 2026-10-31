@@ -58,6 +58,7 @@ This reporting authorizes no additional audit, upgrade, issue report, or maintai
 ## Workflow
 
 - Before starting, read project and task context: `CONTEXT.md`, project docs, and `AGENTS.md` / `CLAUDE.md`.
+- For browser UI actions, read `./references/workflow/browser-tools.md`. Apply its shared sections and the current host's notes.
 - Consult `./references/workflow/runbook.md` when stored personal or work knowledge is relevant.
 - Create a PR, including a draft, or change its state, review requests, or merge only when the user explicitly requests that action. Other requests do not grant it.
 - Use parallel agents when independent investigations justify coordination. Follow skills' required delegation, fan-out contracts, prompts, engines, and executor rules.
