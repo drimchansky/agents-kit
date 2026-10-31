@@ -9,6 +9,7 @@ Paths without `./` are relative to the source checkout. Entry rules and the supp
 - `skills/<name>/SKILL.md` owns the skill's protocol and direct reference citations.
 - `references/workflow/` owns shared workflow methodology. Its `references/workflow/domain-packs.md` defines the domain-pack interface.
 - `references/<domain>/` owns domain guidance.
+- `references/secretary/` owns secretary duty definitions, one file per duty. It is not a domain pack. `references/workflow/secretary-contract.md` and `skills/start-secretary/SKILL.md` load each duty file.
 - `references/templates/` owns the five copy-ready task-file shapes. Each file's contracting workflow reference owns its rules.
 - `setup.ts` owns installation and distribution. This file's § *Source contracts* owns its CLI, stdout, exit behavior, and rationale.
 - `.claude-plugin/` owns the Claude Code plugin and its single-plugin marketplace. The plugin root is the repository root, so skill `./AGENTS.md` and `./references` links resolve inside the plugin cache. Neither manifest pins `version`, so every commit is a new version for `/plugin update`.
@@ -92,7 +93,7 @@ Run the suite covering each changed surface:
 - `references/templates/` and the three scripts its suite drives: `node --test tests/templates.test.ts`.
 - `skills/review-pr-loop/SKILL.md` or `references/workflow/delegated-waiting.md`: `node --test tests/review-pr-loop.test.ts`.
 - `references/engineering/review-evidence.md`, `references/engineering/review.md`, `references/workflow/user-facing-messages.md`, `references/workflow/reviewer-contract.md`, `references/workflow/verify-pipeline.md`, `references/workflow/executor-contract.md`, `skills/review-code/SKILL.md`, `skills/review-code-triage-verify/SKILL.md`, `skills/publish-pr-review/SKILL.md`, `skills/review-pr-loop/SKILL.md`, `skills/triage-findings/SKILL.md`, or `skills/fix-findings/SKILL.md`: `node --test tests/review-evidence.test.ts`.
-- `skills/start-secretary/SKILL.md`, `references/workflow/secretary-contract.md`, `README.md` § *Secretary*, `agents/secretary.md`, `agents/secretary.toml`, `references/workflow/skill-conventions.md`, or `references/workflow/domain-packs.md`: `node --test tests/start-secretary.test.ts`.
+- `skills/init-config/SKILL.md`, `skills/start-secretary/SKILL.md`, `references/workflow/secretary-contract.md`, `references/secretary/runbook-maintenance.md`, `README.md` § *Secretary*, `agents/secretary.md`, `agents/secretary.toml`, `references/workflow/skill-conventions.md`, or `references/workflow/domain-packs.md`: `node --test tests/start-secretary.test.ts`.
 - Invocation-gate changes: `node --test tests/invocation-gate.test.ts`. This checks that no SKILL.md frontmatter or `agents/` policy file closes a host door, and that the `**Confirm-gated skills:**` roster in `references/workflow/skill-conventions.md` matches the skills carrying the `**Model invocation:**` line.
 
 Helper rationale belongs in its `references/maintenance/scripts.md` section. Skills invoking helpers cite the contract path.
@@ -153,3 +154,4 @@ Both walkers receive recognition and prunes through `classifyWalkEntry`. Commit-
 
 - `references/workflow/reconciliation-commits.md` § *The watermark*, `references/workflow/task-delivery.md` § *Branch and worktree creation*, and `references/workflow/task-delivery-edges.md` § *Removal*: update commit-scan's pointer patterns with their prose. The shapes are `SHA <sha>`, `` branch `<branch>` ``, and `(removed …)`. Free prose offers no other structure for locating the floor and ref. Three owner notes cover one importer; stale patterns would produce `no-watermark` or scan HEAD instead of the recorded task branch.
 - `references/workflow/task-store.md` § *The root registry*: update `scripts/secretary-state.ts`'s `runbookRoot` resolution in `openStore` with the `runbookRoot` bullets. A stale copy would accept a path the registry rejects or refuse one it allows.
+- `references/secretary/runbook-maintenance.md` § *Configuration*: update `configuredInterval`, `intervalMinutes`, and `REVIEW_INTERVAL_MS` in `scripts/secretary-state.ts` with the interval rules. A stale copy would accept or reject intervals differently from the coordinator and `init-config`.

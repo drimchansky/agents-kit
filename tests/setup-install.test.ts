@@ -683,6 +683,22 @@ test("Codex shared skills, references, and CORE_RULES.md install unchanged", () 
   assertNoProblems(observed.clean.codexPayload, "the Codex home must hold the kit payload byte for byte");
 });
 
+test("both hosts install a regular runbook duty and secretary roles retain their authority boundaries", () => {
+  const relative = join("references", "secretary", "runbook-maintenance.md");
+  const source = readFileSync(join(REPO_DIR, relative));
+  for (const home of HOMES) {
+    const installed = join(home, relative);
+    assert.strictEqual(pathKind(installed), "file", `${installed} must be a regular file`);
+    assert.deepStrictEqual(readFileSync(installed), source);
+    const extension = home === CLAUDE_HOME ? "md" : "toml";
+    const adapter = readFileSync(join(home, "agents", `secretary.${extension}`), "utf8");
+    assert.match(adapter, /secretary-contract\.md/);
+    assert.match(adapter, /parent sandbox, approval setting, and managed security policy/);
+    if (extension === "md") assert.match(adapter, /^disallowedTools: Write, Edit, NotebookEdit, Agent, SendMessage, Monitor, TaskStop$/m);
+    else assert.doesNotMatch(adapter, /^(?:sandbox_mode|approval_policy|approvals_reviewer|default_permissions|permissions|network_access)\s*=/m);
+  }
+});
+
 test("installed Codex agent TOML definitions parse and inherit parent permissions", (t: TestContext) => {
   const probe = observed.toml;
   if (probe.interpreter === null) {
