@@ -30,6 +30,16 @@ For Claude Code, the plugin is an alternative:
 
 Choose one installation method. Invoke skills as `/plan-task` in Claude Code, `/agents-kit:plan-task` with the plugin, or `$plan-task` in Codex.
 
+### Codex browser tools
+
+The shared [browser guidance](./references/workflow/browser-tools.md) prefers Chrome DevTools MCP for existing Chrome tabs. Kit skills load it through their core rules. To apply it outside skill runs, add this loader to `~/.codex/AGENTS.md` after setup:
+
+```markdown
+For browser UI actions, read and apply `~/.codex/references/workflow/browser-tools.md`.
+```
+
+The installer leaves your global `AGENTS.md` untouched. Start a new Codex session to load the instruction.
+
 ## Task workflow
 
 1. **Shape the work.** Use `refine-idea` for a rough idea or `prepare-ticket` for a concrete request.
