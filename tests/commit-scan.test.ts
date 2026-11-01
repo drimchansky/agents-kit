@@ -146,6 +146,20 @@ test("ok state nominates the pending steps a commit touched and reports the chec
   assert.strictEqual(scan.commits[0].date.length, 10);
 });
 
+test("commit nominations include live steps and watermark after comment-contained fences", () => {
+  const repo = checkout("comment-fence-nominations");
+  const baseline = commit(repo, { "src/work.ts": "before\n" }, "baseline");
+  const changed = commit(repo, { "src/work.ts": "after\n" }, "deliver work");
+  for (const marker of [FENCE, "~~~"]) for (const eol of ["\n", "\r\n"]) {
+    const comment = `<!-- illustrative\n${marker}\n### Step 99 — Hidden\n- [ ] **What:** edit \`src/work.ts\`\n-->\n`;
+    const task = folder(repo, { plan: (comment + "## Steps\n### Step 1 — Work\n- [ ] **What:** edit `src/work.ts`\n").replaceAll("\n", eol), result: (comment + pointers(`SHA ${baseline} (recorded 2026-11-01)`)).replaceAll("\n", eol) });
+    const scan = report(task);
+    assert.strictEqual(scan.state, "ok");
+    assert.strictEqual(scan.watermark, baseline);
+    assert.deepStrictEqual(scan.steps.map((step) => [step.number, step.classification, step.commits]), [["1", "candidate", [changed]]]);
+  }
+});
+
 test("a recorded task branch is scanned while the checkout's HEAD sits on the default branch", () => {
   const dir = checkout("task-branch");
   const baseline = commit(dir, { "docs/c.md": "c\n", "src/a.ts": "a\n", "src/b.ts": "b\n" }, "baseline");

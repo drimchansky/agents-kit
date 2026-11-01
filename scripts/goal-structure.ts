@@ -158,6 +158,7 @@ function labelScope(
 
 interface LiveLine {
   readonly text: string;
+  readonly visible: string;
   readonly number: number;
   readonly offset: number;
   readonly live: boolean;
@@ -165,17 +166,25 @@ interface LiveLine {
 
 export function* markdownLines(text: string): Generator<LiveLine> {
   let fence: { indent: number; char: string; length: number } | null = null;
+  const state = inlineState();
+  let quoted = false;
   let offset = 0;
   for (const [index, line] of text.split("\n").entries()) {
     const content = line.replace(/\r$/, "");
-    const marker = content.match(FENCE);
+    const source = { text: content, visible: content, number: index + 1, offset, live: true };
+    let visible = content;
+    if (fence === null) {
+      if (!state.inComment) quoted = BLOCKQUOTE.test(content) || (quoted && content.trim() !== "" && !opensBlock(content) && !FENCE.test(content));
+      if (state.inComment || (!quoted && !FENCE.test(content))) visible = maskComments(source, state, false).join("");
+    }
+    const marker = visible.match(FENCE);
     if (marker) {
       const [, pad, run, rest] = marker;
       if (!fence) fence = { indent: pad.length, char: run[0], length: run.length };
       else if (pad.length <= fence.indent && run[0] === fence.char && run.length >= fence.length && rest === "") fence = null;
-      yield { text: content, number: index + 1, offset, live: false };
+      yield { ...source, visible, live: false };
     } else {
-      yield { text: content, number: index + 1, offset, live: fence === null };
+      yield { ...source, visible, live: fence === null };
     }
     offset += line.length + 1;
   }
@@ -183,12 +192,12 @@ export function* markdownLines(text: string): Generator<LiveLine> {
 
 export function carriesStatusHeader(text: string): boolean {
   for (const line of markdownLines(text)) {
-    if (!line.live || BLOCKQUOTE.test(line.text)) continue;
-    if (HEADING.test(line.text)) {
-      if (line.text.startsWith("##")) return false;
+    if (!line.live || BLOCKQUOTE.test(line.visible)) continue;
+    if (HEADING.test(line.visible)) {
+      if (line.visible.startsWith("##")) return false;
       continue;
     }
-    if (STATUS_FIELD.test(line.text)) return true;
+    if (STATUS_FIELD.test(line.visible)) return true;
   }
   return false;
 }
@@ -202,10 +211,10 @@ export function anchorLines(text: string): Set<number> {
   let compacted = false;
   for (const line of markdownLines(text)) {
     if (!line.live) continue;
-    if (HEADING.test(line.text)) {
-      compacted = COMPACTED_HEADING.test(line.text);
+    if (HEADING.test(line.visible)) {
+      compacted = COMPACTED_HEADING.test(line.visible);
       lines.add(line.number);
-    } else if (compacted && TOMBSTONE_BULLET.test(line.text)) lines.add(line.number);
+    } else if (compacted && TOMBSTONE_BULLET.test(line.visible)) lines.add(line.number);
   }
   return lines;
 }
@@ -215,12 +224,12 @@ export function fieldGoalTokens(planText: string): { id: string; line: number; s
   let inScope = false;
   for (const line of markdownLines(planText)) {
     if (!line.live) continue;
-    if (HEADING.test(line.text)) {
-      inScope = SCOPE_HEADING.test(line.text);
+    if (HEADING.test(line.visible)) {
+      inScope = SCOPE_HEADING.test(line.visible);
       continue;
     }
-    if (!inScope && !GOAL_FIELD.test(line.text)) continue;
-    for (const match of line.text.matchAll(BOUNDED_GOAL_TOKEN)) tokens.push({ id: match[0], line: line.number, start: line.offset + match.index });
+    if (!inScope && !GOAL_FIELD.test(line.visible)) continue;
+    for (const match of line.visible.matchAll(BOUNDED_GOAL_TOKEN)) tokens.push({ id: match[0], line: line.number, start: line.offset + match.index });
   }
   return tokens;
 }

@@ -6,6 +6,7 @@ import { dirname, join, resolve } from "node:path";
 import { after, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { ledgerTags, urlsIn, type Citation, type SweepScope } from "../scripts/sweep-scope.ts";
+import { compactionSections } from "../scripts/task-state.ts";
 
 const TESTS_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_DIR = resolve(TESTS_DIR, "..");
@@ -235,6 +236,33 @@ test("two pause sections under one heading sweep only the active one", () => {
     cited(scope, PAUSE_ONLY).occurrences.map((occurrence) => occurrence.surface),
     ["plan-open-questions", "result-pause"],
   );
+});
+
+test("in-place compaction keeps duplicate pause identity and swept citations across repeated compaction", () => {
+  const older = `## Step 1 — Work\n### Blocked\n\n${"Old narrative. ".repeat(100)}\n`;
+  const newer = `## Step 1 — Work\n\n${"New narrative. ".repeat(100)}\n`;
+  const pauses = `## Blocked\n**Blocked:** old ${SHARED}\n## Blocked\n**Blocked:** active ${PAUSE_ONLY}\n`;
+  const before = "## Current state\nWaiting.\n" + older + newer + pauses;
+  const after = "## Current state\nWaiting.\n## Step 1 — Work\nCompacted 2026-11-01; full text in git history (pre-compaction state).\n### Blocked\n## Step 1 — Work\nCompacted 2026-11-01; full text in git history (pre-compaction state).\n" + pauses;
+  const expected = [{ url: PAUSE_ONLY, tag: null, occurrences: [{ surface: "result-pause", file: "result.md", section: "Blocked", text: `**Blocked:** active ${PAUSE_ONLY}` }] }];
+  assert.ok(after.length < before.length);
+  for (const [index, result] of [before, after, after.replaceAll("2026-11-01;", "2026-11-02;")].entries()) {
+    const scope = report(folder(`compaction-pause-${index}`, { plan: "**Status:** blocked\n", result }));
+    assert.strictEqual(scope.planStatus, "blocked");
+    assert.deepStrictEqual(scope.citations, expected);
+  }
+});
+
+test("sweeping agrees with compaction on the active duplicate pause across a commented fence", () => {
+  for (const marker of [FENCE, "~~~"]) for (const eol of ["\n", "\r\n"]) {
+    const comment = `<!-- illustrative\n${marker}\n## Blocked\n**Blocked:** hidden ${SHARED}\n-->\n`;
+    const result = ("## Current state\nWaiting.\n## Step 1 — Work\n### Blocked\n## Blocked\n**Blocked:** old " + SHARED + "\n" + comment + "## Blocked\n**Blocked:** active " + PAUSE_ONLY + "\n").replaceAll("\n", eol);
+    const scope = report(folder(`comment-fence-pause-${marker[0]}-${eol.length}`, { plan: (comment + "**Status:** blocked\n").replaceAll("\n", eol), result }));
+    const pause = compactionSections(result, scope.planStatus).keep.find((section) => section.rule === "pause");
+    assert.strictEqual(pause?.anchor, "blocked-2");
+    assert.deepStrictEqual(scope.citations.map((citation) => [citation.url, citation.occurrences.map((occurrence) => [occurrence.surface, occurrence.section, occurrence.text])]),
+      [[PAUSE_ONLY, [["result-pause", "Blocked", `**Blocked:** active ${PAUSE_ONLY}`]]]]);
+  }
 });
 
 test("a pause section whose heading yields no anchor is still swept by its label", () => {

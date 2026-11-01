@@ -136,15 +136,16 @@ const warnings: string[] = [];
 
 interface ScannedLine {
   readonly line: string;
+  readonly visible: string;
   readonly live: boolean;
 }
 
 function* scanLines(text: string): Generator<ScannedLine> {
-  for (const line of markdownLines(text)) yield { line: line.text, live: line.live };
+  for (const line of markdownLines(text)) yield { line: line.text, visible: line.visible, live: line.live };
 }
 
 function* liveLines(text: string): Generator<string> {
-  for (const scanned of scanLines(text)) if (scanned.live) yield scanned.line;
+  for (const scanned of scanLines(text)) if (scanned.live) yield scanned.visible;
 }
 
 function headingText(line: string): string | null {
@@ -314,7 +315,7 @@ function parsePlan(text: string): ParsedPlan {
   let inScope = false;
   for (const source of markdownLines(text)) {
     if (!source.live) continue;
-    const line = source.text;
+    const line = source.visible;
     const heading = headingText(line);
     if (heading !== null) {
       step = null;
@@ -402,9 +403,9 @@ function checkpointOutcomes(text: string): Map<string, string> {
 function currentStateBlock(text: string): string | null {
   const block: string[] = [];
   let open = false;
-  for (const { line, live } of scanLines(text)) {
-    const heading = live ? headingText(line) : null;
-    if (heading !== null && (line.match(HEADING_LEVEL)?.[1].length ?? 0) === 2) {
+  for (const { line, visible, live } of scanLines(text)) {
+    const heading = live ? headingText(visible) : null;
+    if (heading !== null && (visible.match(HEADING_LEVEL)?.[1].length ?? 0) === 2) {
       if (open) break;
       if (!CURRENT_STATE_TITLE.test(heading)) continue;
       open = true;
@@ -413,7 +414,7 @@ function currentStateBlock(text: string): string | null {
     }
     if (!open) continue;
     block.push(line);
-    if (live && BLOCK_CLOSE.test(line)) break;
+    if (live && BLOCK_CLOSE.test(visible)) break;
   }
   return open ? block.join("\n").replace(/\s+$/, "") : null;
 }

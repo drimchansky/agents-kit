@@ -13,6 +13,7 @@ import {
   TERMINAL_STATUSES,
   UNSTARTED_STATUS,
 } from "./lifecycle-constants.ts";
+import { markdownLines } from "./goal-structure.ts";
 
 const CONTAINERS = {
   archive: { match: ARCHIVE_DIR, create: "Archive" },
@@ -286,7 +287,6 @@ function resolveSlug(slug: string): Resolved {
   return matches[0];
 }
 
-const FENCE = /^([ \t]*)(`{3,}|~{3,})[ \t]*(.*)$/;
 
 const STATUS_PATTERNS = [
   /^\*\*Status\b[^:*\n]*:?\*\*:?[ \t]*(.+)$/im,
@@ -296,21 +296,10 @@ const STATUS_PATTERNS = [
 
 function headerBlock(text: string): string {
   const lines: string[] = [];
-  let fence: { indent: number; char: string; len: number } | null = null;
-  for (const raw of text.split("\n")) {
-    const line = raw.replace(/\r$/, "");
-    const marker = line.match(FENCE);
-    if (marker) {
-      const [, pad, run, rest] = marker;
-      if (!fence) fence = { indent: pad.length, char: run[0], len: run.length };
-      else if (pad.length <= fence.indent && run[0] === fence.char && run.length >= fence.len && rest === "") {
-        fence = null;
-      }
-      continue;
-    }
-    if (fence) continue;
-    if (/^#{2,6}[ \t]/.test(line)) break;
-    lines.push(line);
+  for (const line of markdownLines(text)) {
+    if (!line.live) continue;
+    if (/^#{2,6}[ \t]/.test(line.visible)) break;
+    lines.push(line.visible);
   }
   return lines.join("\n");
 }

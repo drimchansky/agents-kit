@@ -14,4 +14,10 @@ The trigger is **20 KB**. `RESULT_MAX_KB` in `scripts/lifecycle-constants.ts` is
 
 Treat `removable` as eligibility, not permission. Collapse only superseded narrative, such as sections a later `## Reconciliation` entry supersedes, verbose transcripts, or overtaken step detail. Keep all other sections, and never touch a `keep` entry.
 
-Replace each collapsed section with a bullet containing only its reported `heading`, under one `## Compacted — YYYY-MM-DD` stub. Close the stub after the bullets with a separate line: "full text in git history (pre-compaction state)."
+Select approved sections by their reported allocated `anchor`, not heading text, which may repeat.
+
+Keep each selected section's opening and every live nested ATX heading verbatim, in their original global order. Replace only narrative with one plain note: "Compacted YYYY-MM-DD; full text in git history (pre-compaction state)."
+
+Keep protected sections byte-for-byte, including legacy `## Compacted` stubs. Add no heading, anchor syntax, or report field. Preserve all checked links and allocated section anchors; verify the same active pause remains protected.
+
+If retained headings or protected content keep the result oversized, report that remaining size without removing evidence.

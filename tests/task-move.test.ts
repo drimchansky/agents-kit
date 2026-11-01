@@ -143,6 +143,19 @@ test("a done task archives into a fresh Archive/ beside it", () => {
   assert.deepStrictEqual(containers(parent), ["Archive"], "a created container is capitalized");
 });
 
+test("move eligibility reads live status after comment-contained fences", () => {
+  for (const marker of ["```", "~~~"]) for (const eol of ["\n", "\r\n"]) {
+    for (const [status, target, exit] of [["done", "archive", 0], ["to-do", "backlog", 0], ["blocked", "archive", 1], ["blocked", "backlog", 1]] as const) {
+      const parent = area(`comment-fence-${marker[0]}-${eol.length}-${status}-${target}`);
+      const text = `<!-- illustrative\n${marker}\n**Status:** done\n## Example\n-->\n**Status:** ${status}\n## Steps\n`;
+      const src = writeTask(join(parent, "task"), { [PLAN]: text.replaceAll("\n", eol) });
+      const moved = runMove(exit, [src, "--to", target]);
+      if (exit === 0) assertMoved(moved.stdout, src, join(parent, target === "archive" ? "Archive" : "Backlog", "task"));
+      else assertUnmoved(src);
+    }
+  }
+});
+
 test("a skipped task archives on the same terminal set", () => {
   const parent = area("archive-skipped");
   const src = writeTask(join(parent, "abandoned"), { [PLAN]: plan("skipped") });

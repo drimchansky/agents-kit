@@ -95,7 +95,7 @@ Order steps as vertical slices, each delivering one observable outcome end to en
 
 Every step carries **What** (one concern, one sentence), **Verify** (how to confirm it worked; a step without one is too vague or too small), **Goal**, and **Depends on**. Format: § *Output*.
 
-- **`Goal:`** the goal IDs the step delivers, or `none (infra/refactor)`. Every goal is delivered by at least one step; `review-task` keys coverage off these lines (`./references/workflow/task-goals.md`).
+- **`Goal:`** follow `./references/workflow/task-goals.md` for step citations, the infrastructure escape, and delivered-goal coverage.
 - **`Due:` / `Lead time:`** *(optional)* for time-anchored domains; omit for code.
 - **`Touches:`** *(optional)* the step's declared edit surface. `implement-task` runs steps in parallel only when each declares one, no `Depends on:` path connects them, and the surfaces are pairwise disjoint; undeclared runs serially. Declare only where parallel execution is plausible. For code, `./references/engineering/planning.md` lists the shared-artifact traps.
 

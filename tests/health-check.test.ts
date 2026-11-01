@@ -885,6 +885,43 @@ test("a step link whose section a Compacted stub tombstones is documented state,
   );
 });
 
+test("health-check resolves every retained duplicate and nested anchor before and after body compaction", () => {
+  const root = join(TEST_ROOT, "compaction-round-trip");
+  const anchors = ["step-1--work", "example", "example-1", "example-2", "step-1--work-1", "step-0--legacy"];
+  const plan = "# Plan\n**Status:** executing\n## Scope\n- delivered: G1\n## Steps\n" + anchors.map((anchor, index) =>
+    `### Step ${index + 1} — Evidence\n- [x] **What:** done ([result](./result.md#${anchor}))\n- **Goal:** G1\n`,
+  ).join("\n");
+  const headings = ["## Step 1 — Work\n### Example\n#### Example-1\n##### Example\n", "## Step 1 — Work\n"];
+  for (const [name, compacted] of [["before", []], ["older", [0]], ["newer", [1]], ["both", [0, 1]]] as const) {
+    const dir = join(root, name);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, "goals.md"), "## Goals\n- G1 — evidence survives\n");
+    writeFileSync(join(dir, "plan.md"), plan);
+    writeFileSync(join(dir, "result.md"), "## Current state\nExecuting.\n" + headings.map((heading, index) =>
+      heading + (compacted.some((selected) => selected === index) ? "Compacted 2026-11-01; full text in git history (pre-compaction state).\n" : "Narrative. ".repeat(100) + "\n"),
+    ).join("") + "## Compacted — 2025-12-01\n- Step 0 — Legacy\n");
+  }
+  const { report } = runCheck([root]);
+  assert.strictEqual(report.scanned, 4);
+  assert.deepStrictEqual(report.findings.filter((finding) => ["dead-anchor", "dead-citation", "goal-id"].includes(finding.check)), []);
+});
+
+test("health-check agrees on terminal status and checked duplicate anchors after comment-contained fences", () => {
+  const root = join(TEST_ROOT, "comment-fence-readers");
+  for (const marker of ["```", "~~~"]) for (const eol of ["\n", "\r\n"]) {
+    const dir = join(root, `${marker[0]}-${eol.length}`);
+    mkdirSync(dir, { recursive: true });
+    const comment = `<!-- illustrative\n${marker}\n**Status:** blocked\n## Step 1 — Work\n-->\n`;
+    writeFileSync(join(dir, "goals.md"), "## Goals\n- G1 — done\n");
+    writeFileSync(join(dir, "plan.md"), (comment + "**Status:** done\n## Scope\n- delivered: G1\n## Steps\n### Step 1 — Work\n- [x] **What:** done ([result](./result.md#step-1--work-1))\n- **Goal:** G1\n").replaceAll("\n", eol));
+    writeFileSync(join(dir, "result.md"), ("## Current state\nDone.\n## Step 1 — Work\nOld evidence.\n" + comment + "## Step 1 — Work\nCurrent evidence.\n").replaceAll("\n", eol));
+  }
+  const { report } = runCheck([root]);
+  assert.strictEqual(report.scanned, 4);
+  assert.strictEqual(findingCount(report, "done-unarchived"), 4);
+  assert.deepStrictEqual(report.findings.filter((finding) => finding.check !== "done-unarchived"), []);
+});
+
 test("archived folders are exempt from the content checks", () => {
   const { report } = runCheck(ANCHORS_ARGS);
   assert.deepStrictEqual(

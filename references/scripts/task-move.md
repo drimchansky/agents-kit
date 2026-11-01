@@ -8,6 +8,8 @@ node scripts/task-move.ts <slug-or-path> --to archive|backlog
 
 **Contract.** Success prints `moved <src> -> <dest>` to stdout, both paths absolute, and exits 0. Refusal prints one reason to stderr and exits 1 with no disk changes. Exit 2 means bad usage, no/ambiguous slug match, incomplete store lookup, or unexpected failure, with one stderr line.
 
+Read lifecycle headers using `./task-state.md`'s shared comment/fence classification.
+
 Warnings also go to stderr without changing the outcome: malformed registry ignored wholesale, non-array taskRoots ignored, pathless entries ignored, and absent/non-directory registered roots skipped. An absent registry is normal.
 
 If a failed move created its container, remove it only with `rmdirSync`. Preserve pre-existing containers and any newly created container another writer populated.

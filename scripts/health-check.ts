@@ -16,7 +16,7 @@ import {
   UNSTARTED_STATUS,
 } from "./lifecycle-constants.ts";
 import { resultSize, taskState } from "./task-state.ts";
-import { sameDiagnostic, validateGoalStructure, type StructureDiagnostic } from "./goal-structure.ts";
+import { markdownLines, sameDiagnostic, validateGoalStructure, type StructureDiagnostic } from "./goal-structure.ts";
 import { readTaskMarkdown, type TaskMarkdown } from "./task-repair.ts";
 
 process.stdout.on("error", (err: NodeJS.ErrnoException) => {
@@ -32,7 +32,6 @@ const RECORD_TITLE = /^(?:Step|Full Run)\b/;
 const TICKET_FILE = "ticket.md";
 const HEADING = /^#{1,6}[ \t]+(.+?)[ \t]*#*$/;
 const HEADING_LEVEL = /^(#{1,6})[ \t]/;
-const FENCE = /^([ \t]*)(`{3,}|~{3,})[ \t]*(.*)$/;
 const CHECKED_STEP = /^[ \t]*-[ \t]+\[[xX]\]/;
 const RESULT_LINK = /\(\[result\]\(([^()]*)\)\)/g;
 const LINK_TARGET = /\]\([ \t]*(?:<([^<>\n]*)>|((?:[^()\s>]|\([^()\s]*\))+))/g;
@@ -211,29 +210,16 @@ const STATUS_PATTERNS = [
 
 interface ScannedLine {
   readonly line: string;
+  readonly visible: string;
   readonly live: boolean;
 }
 
 function* scanLines(text: string): Generator<ScannedLine> {
-  let fence: { indent: number; char: string; len: number } | null = null;
-  for (const raw of text.split("\n")) {
-    const line = raw.replace(/\r$/, "");
-    const marker = line.match(FENCE);
-    if (marker) {
-      const [, pad, run, rest] = marker;
-      if (!fence) fence = { indent: pad.length, char: run[0], len: run.length };
-      else if (pad.length <= fence.indent && run[0] === fence.char && run.length >= fence.len && rest === "") {
-        fence = null;
-      }
-      yield { line, live: false };
-      continue;
-    }
-    yield { line, live: fence === null };
-  }
+  for (const line of markdownLines(text)) yield { line: line.text, visible: line.visible, live: line.live };
 }
 
 function* liveLines(text: string): Generator<string> {
-  for (const scanned of scanLines(text)) if (scanned.live) yield scanned.line;
+  for (const scanned of scanLines(text)) if (scanned.live) yield scanned.visible;
 }
 
 function rawStatus(text: string): string | null {
@@ -862,7 +848,8 @@ function citationFindings(task: Task, ctx: CitationContext): UnrootedFinding[] {
   const out: UnrootedFinding[] = [];
   for (const artifact of task.artifacts) {
     let quoted = false;
-    for (const line of withoutHtmlComments(liveLines(artifact.text))) {
+    const lines = [...markdownLines(artifact.text)].filter((line) => line.live).map((line) => line.text);
+    for (const line of withoutHtmlComments(lines)) {
       if (BLOCKQUOTE.test(line)) {
         quoted = true;
         continue;
@@ -1039,9 +1026,9 @@ function oversizedRecordFindings(task: Task, recordMaxKb: number): UnrootedFindi
     heading = null;
     section = [];
   };
-  for (const { line, live } of scanLines(result.text)) {
-    const title = live ? line.match(HEADING)?.[1] : undefined;
-    if (title !== undefined && line.match(HEADING_LEVEL)?.[1].length === 2) {
+  for (const { line, visible, live } of scanLines(result.text)) {
+    const title = live ? visible.match(HEADING)?.[1] : undefined;
+    if (title !== undefined && visible.match(HEADING_LEVEL)?.[1].length === 2) {
       close();
       if (RECORD_TITLE.test(title)) {
         heading = title;
