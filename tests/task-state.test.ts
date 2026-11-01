@@ -8,7 +8,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { RESULT_MAX_KB } from "../scripts/lifecycle-constants.ts";
 import { compactionSections, taskState, type CompactionPlan, type TaskState } from "../scripts/task-state.ts";
 import { repairTask } from "../scripts/task-repair.ts";
-import { parseGoalDefinitions, scanGoalReferences } from "../scripts/goal-structure.ts";
+import { markdownLines, parseGoalDefinitions, scanGoalReferences } from "../scripts/goal-structure.ts";
 
 const TESTS_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_DIR = resolve(TESTS_DIR, "..");
@@ -598,6 +598,106 @@ function historicalRepairFolder(name: string, nested = false): string {
   writeFileSync(join(dir, "result.md"), "## Current state\nG4a was pending.\n\nSee G4a. [G4a](./plan.md) is local. https://example.test/G4a remains.\n");
   return dir;
 }
+
+test("comment-contained fences preserve live goal references and original UTF-16 offsets", () => {
+  for (const marker of [FENCE, "~~~"]) for (const eol of ["\n", "\r\n"]) {
+    const lines = [
+      "<!-- hidden G4a", marker, "## Hidden G4a", "--> 😀 G4a is live.",
+      `${marker}text`, "<!-- G4a is fenced.", marker,
+      "`<!-- G4a` and “<!-- G4a” are illustrative.",
+      "> quoted <!-- G4a", "G4a stays in the quote.", "", "G4a is live again.",
+      "<!-- another comment", "> --> G4a is live after the boundary.",
+    ];
+    const text = lines.join(eol);
+    const references = scanGoalReferences("CONTEXT.md", text);
+    assert.deepStrictEqual(references.map(({ id, line, linkedScope }) => [id, line, linkedScope]), [["G4a", 4, null], ["G4a", 12, null], ["G4a", 14, null]]);
+    for (const reference of references) {
+      assert.strictEqual(text.slice(reference.start, reference.end), "G4a");
+      assert.strictEqual(reference.start, lines.slice(0, reference.line - 1).join(eol).length + eol.length + lines[reference.line - 1].indexOf("G4a"));
+    }
+    assert.deepStrictEqual([...markdownLines(text)].map(({ text, offset }) => [text, offset]),
+      lines.map((line, index) => [line, index === 0 ? 0 : lines.slice(0, index).join(eol).length + eol.length]));
+  }
+});
+
+test("comment delimiters in real fence info strings leave later task structure and original offsets intact", () => {
+  for (const marker of [FENCE, "~~~"]) for (const info of ["<!--", "-->", "text <!--", "text -->", "<!-- -->", '"<!--"']) for (const eol of ["\n", "\r\n"]) {
+    const lines = [
+      `${marker} ${info}`, "illustrative G99", marker, "**Status:** done",
+      "## Scope", "- delivered: G1", "## Steps", "### Step 1 — Work",
+      "- [ ] **What:** work", "- **Goal:** G1", "",
+    ];
+    const planText = lines.join(eol);
+    const label = `${marker} ${info}, EOL length ${eol.length}`;
+    const state = taskState({ taskDir: "/fixture", planText, resultText: null, goalsText: "## Goals\n- G1 — work\n" });
+    assert.strictEqual(state.plan.status, "done", label);
+    assert.deepStrictEqual(state.steps.map((step) => [step.number, step.goals]), [["1", ["G1"]]], label);
+    assert.deepStrictEqual(state.structure, { reliable: true, diagnostics: [] }, label);
+    const scanned = [...markdownLines(planText)];
+    assert.deepStrictEqual(scanned.map(({ text, offset }) => [text, offset]),
+      lines.map((line, index) => [line, index === 0 ? 0 : lines.slice(0, index).join(eol).length + eol.length]), label);
+    assert.deepStrictEqual(scanned.slice(0, 3).map((line) => line.live), [false, false, false], label);
+    assert.deepStrictEqual(scanned.slice(3).map(({ visible, live }) => [visible, live]), lines.slice(3).map((line) => [line, true]), label);
+    const references = scanGoalReferences("plan.md", planText);
+    assert.deepStrictEqual(references.map((reference) => reference.id), ["G1", "G1"], label);
+    for (const reference of references) {
+      assert.strictEqual(planText.slice(reference.start, reference.end), "G1", label);
+    }
+  }
+});
+
+test("commented fences leave checked anchors, lifecycle status, and allocated pause identities aligned", () => {
+  for (const marker of [FENCE, "~~~"]) for (const eol of ["\n", "\r\n"]) {
+    const comment = `<!-- illustrative\n${marker}\n**Status:** done\n## Blocked\n## Step 1 — Work\n-->\n`;
+    const planText = (comment + "**Status:** blocked\n## Scope\n- delivered: G1\n## Steps\n### Step 1 — Work\n- [x] **What:** done ([result](./result.md#step-1--work-1))\n- **Goal:** G1\n").replaceAll("\n", eol);
+    const resultText = ("## Current state\nWaiting.\n" + comment + "## Step 1 — Work\n### Blocked\n## Blocked\n**Blocked:** old\n" + comment + "## Step 1 — Work\n## Blocked\n**Blocked:** active\n").replaceAll("\n", eol);
+    const state = taskState({ taskDir: "/fixture", planText, resultText, goalsText: "## Goals\n- G1 — done\n" });
+    assert.strictEqual(state.plan.status, "blocked");
+    assert.strictEqual(state.structure.reliable, true);
+    assert.deepStrictEqual(state.steps.map((step) => [step.number, step.anchor, step.anchorResolves]), [["1", "step-1--work-1", true]]);
+    assert.strictEqual(state.currentState, "## Current state\nWaiting.\n" + comment.trimEnd());
+    const sections = compactionSections(resultText, state.plan.status);
+    assert.strictEqual(sections.keep.find((section) => section.rule === "pause")?.anchor, "blocked-2");
+    assert.deepStrictEqual(sections.removable.map((section) => section.anchor), ["step-1--work", "blocked-1", "step-1--work-1"]);
+  }
+});
+
+test("historical repair remaps every live core reference following a commented fence and keeps illustrative bytes", () => {
+  for (const marker of [FENCE, "~~~"]) for (const eol of ["\n", "\r\n"]) {
+    const dir = historicalRepairFolder(`repair-comment-fence-${marker[0]}-${eol.length}`);
+    const illustrative = ["<!-- illustrative G4a", marker, "G4a", "-->", "`G4a` and “G4a” stay literal.", ""].join(eol);
+    const live = {
+      "goals.md": "## Goals\n- G1 — first\n- G4a — new outcome\n",
+      "plan.md": "## Scope\n- delivered: G1, G4a\n## Steps\n### Step 1 — Work\n- [ ] **What:** deliver G4a\n- **Goal:** G4a\n",
+      "CONTEXT.md": "😀 G4a is the outcome.\nSee [G4a](./plan.md).\n",
+      "result.md": "## Current state\nG4a was pending.\n\nSee G4a.\n",
+    };
+    for (const [file, text] of Object.entries(live)) writeFileSync(join(dir, file), illustrative + text.replaceAll("\n", eol));
+    const attempted = run(["--repair", dir]);
+    assert.strictEqual(attempted.status, 0, attempted.stderr + attempted.stdout);
+    const repaired = JSON.parse(attempted.stdout);
+    assert.deepStrictEqual(repaired.mappings, [{ from: "G4a", to: "G10" }]);
+    assert.strictEqual(repaired.state.structure.reliable, true);
+    for (const [file, text] of Object.entries(live)) assert.strictEqual(readFileSync(join(dir, file), "utf8"), illustrative + text.replaceAll("G4a", "G10").replaceAll("\n", eol), file);
+    assert.strictEqual(report(dir).structure.reliable, true);
+  }
+});
+
+test("a supplementary live reference following a commented fence blocks historical remapping", () => {
+  for (const marker of [FENCE, "~~~"]) {
+    const dir = historicalRepairFolder(`repair-comment-fence-supplementary-${marker[0]}`);
+    writeFileSync(join(dir, "notes.md"), `<!-- illustrative\n${marker}\nG4a\n-->\nThe author requires G4a.\n`);
+    const files = ["goals.md", "plan.md", "CONTEXT.md", "result.md", "notes.md"];
+    const before = files.map((file) => readFileSync(join(dir, file)));
+    const attempted = run(["--repair", dir]);
+    assert.strictEqual(attempted.status, 1, attempted.stderr + attempted.stdout);
+    const repaired = JSON.parse(attempted.stdout);
+    assert.deepStrictEqual(repaired.mappings, []);
+    assert.deepStrictEqual(repaired.applied, []);
+    assert.ok(repaired.unresolved.some((item: { code: string; file: string; line: number }) => item.code === "blocked-goal-remap" && item.file === "notes.md" && item.line === 5));
+    for (const [index, file] of files.entries()) assert.ok(readFileSync(join(dir, file)).equals(before[index]), file);
+  }
+});
 
 test("fresh IDs reserve decorated numeric identities in either definition order", () => {
   for (const [label, decorated] of [["bold", "**G10**"], ["code", "`G10`"], ["colon", "G10:"], ["period", "G10."]] as const) {
@@ -2027,6 +2127,49 @@ test("compaction keeps the Live verification section as completion evidence", ()
     { heading: "Live verification", anchor: "live-verification", rule: "live-verification" },
   ]);
   assert.deepStrictEqual(sections.removable, [{ heading: "Step 1 — Work", anchor: "step-1--work" }]);
+});
+
+test("in-place compaction preserves duplicate and nested anchors, protected bytes, and repeated section identities", () => {
+  const protectedSections = [
+    "## Current state\n\nWaiting on approval.\n\n",
+    "## Compacted — 2025-12-01\n\n- Step 0 — Legacy\n\nfull text in git history (pre-compaction state).\n\n",
+    "## Decision log\n\nKeep this choice.\n\n",
+    "## Acceptance\n\nG1 evidence remains.\n\n",
+    "## Health boundary\n\nPassed.\n\n",
+    "## Live verification\n\nObserved locally.\n\n",
+    "## Reconciliation — 2026-11-01\n\nLatest findings.\n\n",
+    "## Blocked — Approval\n\n**Blocked:** latest approval at https://example.invalid/current\n\n",
+  ];
+  const olderHeadings = "## Step 1 — Work\n\n### Example\n\n#### Example-1\n\n##### Example\n\n";
+  const newerHeadings = "## Step 1 — Work\n\n### Example\n\n";
+  const older = olderHeadings + "Older narrative. ".repeat(100) + "\n\n";
+  const newer = newerHeadings + "Newer narrative. ".repeat(100) + "\n\n";
+  const note = "Compacted 2026-11-01; full text in git history (pre-compaction state).\n\n";
+  const paused = "## Blocked — Approval\n\n**Blocked:** superseded approval\n\n";
+  const assemble = (first: string, second: string): string =>
+    "# Result\n\n" + protectedSections[0] + first + second + paused + protectedSections.slice(1).join("");
+  const before = assemble(older, newer);
+  const sections = compactionSections(before, "blocked");
+  const anchors = ["step-1--work", "example", "example-1", "example-2", "step-1--work-1", "example-3", "step-0--legacy"];
+  const planText = "# Plan\n**Status:** blocked\n## Scope\n- In scope: G1\n## Steps\n" + anchors.map((anchor, index) =>
+    `### Step ${index + 1} — Evidence\n- [x] **What:** retained ([result](./result.md#${anchor}))\n- **Goal:** G1\n`,
+  ).join("\n");
+  const read = (resultText: string): TaskState => taskState({ taskDir: "/fixture", planText, resultText, goalsText: "## Goals\n- G1 — evidence survives\n" });
+  assert.ok(read(before).structure.reliable);
+  assert.ok(read(before).steps.every((step) => step.anchorResolves));
+  assert.deepStrictEqual(sections.removable.map((section) => section.anchor), ["step-1--work", "step-1--work-1", "blocked--approval"]);
+  assert.strictEqual(sections.keep.find((section) => section.rule === "pause")?.anchor, "blocked--approval-1");
+  for (const [first, second] of [[olderHeadings + note, newer], [older, newerHeadings + note], [olderHeadings + note, newerHeadings + note]]) {
+    const after = assemble(first, second);
+    assert.ok(Buffer.byteLength(after) < Buffer.byteLength(before));
+    assert.deepStrictEqual(compactionSections(after, "blocked"), sections);
+    assert.deepStrictEqual(read(after).steps, read(before).steps);
+    assert.ok(read(after).structure.reliable);
+    for (const protectedText of protectedSections) assert.ok(after.includes(protectedText));
+    const repeated = after.replaceAll("Compacted 2026-11-01;", "Compacted 2026-11-02;");
+    assert.deepStrictEqual(compactionSections(repeated, "blocked"), sections);
+    assert.deepStrictEqual(read(repeated).steps, read(before).steps);
+  }
 });
 
 test("an oversized result committed at HEAD passes the precondition and lists both section sets", () => {

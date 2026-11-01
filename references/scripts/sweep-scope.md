@@ -22,6 +22,8 @@ Sections end at the next heading of equal or shallower level. Except plan steps,
 
 **The skip rules.** Accept `<scheme>://` URLs, excluding `file://` and loopback hosts `localhost`, `127.0.0.1`, `[::1]`, `0.0.0.0`. Read Markdown targets and bare URLs; deduplicate within each line.
 
+Apply `./task-state.md`'s shared comment/fence classification before selecting sections or reading URLs.
+
 Read angle-bracketed targets whole through `>`, preserving literal punctuation. `angledTargetText` in `scripts/lifecycle-constants.ts` trims their outer padding; percent-encode interior spaces for ledger matching. The bare-URL pass skips valid angled targets but still reads behind an unclosed `](<`. `scripts/health-check.ts` uses the same padding helper.
 
 **Exit status.** 0 when a report is written, including an empty no-sweep scope. 2 for bad usage, unreadable input, or no task role files recognized by `scripts/lifecycle-constants.ts`. No exit 1; warnings go to stderr.
