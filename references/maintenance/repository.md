@@ -94,8 +94,8 @@ Run the suite covering each changed surface:
 - `skills/review-pr-loop/SKILL.md` or `references/workflow/delegated-waiting.md`: `node --test tests/review-pr-loop.test.ts`.
 - `skills/init-config/SKILL.md`, `skills/start-secretary/SKILL.md`, `references/workflow/secretary-contract.md`, `references/secretary/runbook-maintenance.md`, `agents/secretary.md`, `agents/secretary.toml`, `references/workflow/skill-conventions.md`, or `references/workflow/domain-packs.md`: `node --test tests/start-secretary.test.ts`.
 - Invocation-gate changes: `node --test tests/invocation-gate.test.ts`. This checks that no SKILL.md frontmatter or `agents/` policy file closes a host door, and that the `**Confirm-gated skills:**` roster in `references/workflow/skill-conventions.md` matches the skills carrying the `**Model invocation:**` line.
-- `skills/`, `references/`, `agents/`, or `CORE_RULES.md`: the eval regression gate in `references/maintenance/tests.md` § *Regression gate*, plus any suite above. The PR workflow runs that gate on trusted same-repository heads.
-- `evals/`: author each new or changed case under `references/maintenance/tests.md` § *Authoring a case*.
+- `skills/`, `references/`, `agents/`, or `CORE_RULES.md`: the eval regression gate in `references/maintenance/tests.md` § *Regression gate*, plus any suite above. CI runs that gate on a trusted same-repository PR labeled `eval-gate`, or through `workflow_dispatch` on a repository branch. A PR without `eval-gate` or `eval-authoring` runs no paid eval job.
+- `evals/`: author each new or changed case under `references/maintenance/tests.md` § *Authoring a case*. Labeling a trusted same-repository PR `eval-authoring` runs that authoring in CI.
 
 Helper rationale belongs in its `references/maintenance/scripts.md` section. Skills invoking helpers cite the contract path.
 

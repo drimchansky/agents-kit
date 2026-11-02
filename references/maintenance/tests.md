@@ -95,9 +95,9 @@ Omit `--case` to author all nine cases. That run may exit 1 for `pr-description-
 
 ### CI
 
-`.github/workflows/evals.yml` runs on pull requests that change `skills/**`, `references/**`, `agents/**`, `CORE_RULES.md`, `evals/**`, or the workflow. `workflow_dispatch` also runs it, for repository branches only. The paid job runs only for same-repository heads and skips Dependabot. It installs Claude Code 2.1.316, checks that version, and sets up Node 24. Root `AGENTS.md` § *The `.ts` sources are unchecked by design* states the floor for `.ts` sources.
+`.github/workflows/evals.yml` triggers on pull requests that change `skills/**`, `references/**`, `agents/**`, `CORE_RULES.md`, `evals/**`, or the workflow. Its paid job runs only on PRs labeled `eval-gate` or `eval-authoring`. An unlabeled PR runs no paid job. `workflow_dispatch` also runs the job in gate mode, for repository branches only. The paid job runs only for same-repository heads and skips Dependabot. It installs Claude Code 2.1.316, checks that version, and sets up Node 24. Root `AGENTS.md` § *The `.ts` sources are unchecked by design* states the floor for `.ts` sources.
 
-Without the `eval-authoring` label, the job runs the gate command above verbatim. With the label, it runs the authoring command per changed case. A separate job keeps one PR comment current with the mode, head SHA, per-case scores, errors, and cost.
+`eval-gate` runs the gate command above verbatim. `eval-authoring` runs the authoring command per changed case, and it wins when both labels are present. Adding either label starts a run. Removing either label cancels an in-progress run, and the job reruns only while an opt-in label remains. A separate job keeps one PR comment current with the mode, head SHA, per-case scores, errors, and cost.
 
 `ANTHROPIC_API_KEY` is a repository secret scoped to the eval step. Eval runs set `TMPDIR` to the runner temp directory, because sandboxed shells cannot write under `/tmp`. Files holding an Anthropic key-shaped string are removed before upload.
 
