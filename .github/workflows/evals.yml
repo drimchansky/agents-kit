@@ -105,10 +105,14 @@ jobs:
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           if [ "$PR_ACTION" = synchronize ] && git cat-file -e "$BEFORE_SHA^{commit}" 2>/dev/null; then
-            git diff --name-only "$BEFORE_SHA" "$PR_HEAD_SHA" -- evals/ > "$RUNNER_TEMP/changed-paths.txt"
+            range=("$BEFORE_SHA" "$PR_HEAD_SHA")
           else
-            git diff --name-only "$PR_BASE_SHA...$PR_HEAD_SHA" -- evals/ > "$RUNNER_TEMP/changed-paths.txt"
+            range=("$PR_BASE_SHA...$PR_HEAD_SHA")
           fi
+          if ! git diff --quiet "${range[@]}" -- .github/workflows/evals.yml; then
+            range=("$PR_BASE_SHA...$PR_HEAD_SHA")
+          fi
+          git diff --name-only "${range[@]}" -- evals/ > "$RUNNER_TEMP/changed-paths.txt"
           awk -F/ 'NF > 2 && $2 != "results" { print $2 }' "$RUNNER_TEMP/changed-paths.txt" | sort -u > "$RUNNER_TEMP/changed-dirs.txt"
           mkdir -p evals/results/authoring
           : > evals/results/authoring/cases.txt
@@ -125,7 +129,6 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           API_KEY_PRESENT: ${{ secrets.ANTHROPIC_API_KEY != '' }}
-          CLAUDE_CODE_SUBPROCESS_ENV_SCRUB: '1'
         run: |
           if [ "$API_KEY_PRESENT" != true ]; then
             echo "::error::The Anthropic API key repository secret is empty."
@@ -168,6 +171,31 @@ jobs:
               done < <(jq -r --arg arm "$arm" '.cases[].arms[$arm] // [] | .[] | .tracePath // ""' "$report")
             done
           done
+
+      - name: Remove key-shaped strings
+        if: ${{ !cancelled() }}
+        run: |
+          pattern='sk-ant-[A-Za-z0-9_-]{20,}'
+          found=0
+          while IFS= read -r -d '' file; do
+            matched=no
+            if grep -aqE "$pattern" "$file"; then
+              matched=yes
+            fi
+            case "$file" in
+              *.tgz)
+                if [ "$(tar -xzOf "$file" | grep -acE "$pattern")" != 0 ]; then
+                  matched=yes
+                fi
+                ;;
+            esac
+            if [ "$matched" = yes ]; then
+              rm -f "$file"
+              echo "::error::Removed $file because it contains a key-shaped string."
+              found=1
+            fi
+          done < <(find evals/results -type f -print0)
+          exit "$found"
 
       - name: Fail when a report is missing
         id: no-results
