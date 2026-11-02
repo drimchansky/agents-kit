@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: explore-waits-for-confirmation
+context:
+  scaffold_script: scaffold.sh
