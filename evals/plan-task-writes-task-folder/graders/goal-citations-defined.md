@@ -1,0 +1,6 @@
+---
+type: regex
+weight: 3
+target: trace
+pattern: '^(?=[\s\S]*?"type":"tool_use","id":"[^"]*","name":"(?:Write|Edit|Bash)","input":\{(?=(?:[^"{}]|"(?:[^"\\]|\\.)*")*?(?:"file_path":"(?:[^"\\]|\\.)*?add-csv-export/plan\.md"|"command":"(?:[^"\\]|\\.)*?(?:>|tee[ \t]+(?:-a[ \t]+)?)[ \t]*[^\s"\\]*add-csv-export/plan\.md(?![\w.-])))(?:[^"{}]|"(?:[^"\\]|\\.)*")*?"(?:content|new_string|command)":"(?:[^"\\]|\\.)*?(?:(?<![A-Za-z0-9_/.-])|(?<=\\[nt]))G\d+(?![A-Za-z0-9_]))(?![\s\S]*?"type":"tool_use","id":"[^"]*","name":"(?:Write|Edit|Bash)","input":\{(?=(?:[^"{}]|"(?:[^"\\]|\\.)*")*?(?:"file_path":"(?:[^"\\]|\\.)*?add-csv-export/plan\.md"|"command":"(?:[^"\\]|\\.)*?(?:>|tee[ \t]+(?:-a[ \t]+)?)[ \t]*[^\s"\\]*add-csv-export/plan\.md(?![\w.-])))(?:[^"{}]|"(?:[^"\\]|\\.)*")*?"(?:content|new_string|command)":"(?:[^"\\]|\\.)*?(?:(?<![A-Za-z0-9_/.-])|(?<=\\[nt]))G(\d+)(?![A-Za-z0-9_])(?<=(?![\s\S]*?"type":"tool_use","id":"[^"]*","name":"(?:Write|Edit|Bash)","input":\{(?=(?:[^"{}]|"(?:[^"\\]|\\.)*")*?(?:"file_path":"(?:[^"\\]|\\.)*?add-csv-export/goals\.md"|"command":"(?:[^"\\]|\\.)*?(?:>|tee[ \t]+(?:-a[ \t]+)?)[ \t]*[^\s"\\]*add-csv-export/goals\.md(?![\w.-])))(?:[^"{}]|"(?:[^"\\]|\\.)*")*?"(?:content|new_string|command)":"(?:[^"\\]|\\.)*?\\n[-*+](?: |\\t)+G\1(?![A-Za-z0-9_]))^[\s\S]*))'
+---
