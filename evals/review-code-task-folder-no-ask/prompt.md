@@ -8,4 +8,4 @@ timeout_seconds: 1200
 allowed_tools: [Read, Glob, Grep, Skill, AskUserQuestion]
 ---
 
-Please review the work tracked in the task folder `.agents/tasks/add-clamp`. Run the review pass yourself in this session rather than launching a separate reviewer agent.
+Please code-review the work tracked in the task folder `.agents/tasks/add-clamp`. Run the review pass yourself in this session rather than launching a separate reviewer agent.
