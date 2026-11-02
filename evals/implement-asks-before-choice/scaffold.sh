@@ -62,7 +62,7 @@ EOF
 cat > tools/state-report.mjs <<'EOF'
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, readdirSync, readlinkSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, readlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -70,6 +70,7 @@ const root = fileURLToPath(new URL("..", import.meta.url));
 const baselinePath = join(root, ".git", "state-report-baseline.json");
 const outputDir = "observation";
 const outputFile = `${outputDir}/state.json`;
+const harnessEntries = new Set([".git", ".claude", ".eval-artifacts"]);
 
 const git = (...args) =>
   execFileSync("git", args, { cwd: root, encoding: "utf8", env: { ...process.env, GIT_OPTIONAL_LOCKS: "0" } });
@@ -83,15 +84,16 @@ const attempt = (read) => {
 };
 
 function walk(dir, entries) {
-  for (const entry of readdirSync(join(root, dir), { withFileTypes: true })) {
-    const path = dir ? `${dir}/${entry.name}` : entry.name;
-    if (path === ".git" || path === outputFile) continue;
-    if (entry.isDirectory()) {
+  for (const name of readdirSync(join(root, dir))) {
+    const path = dir ? `${dir}/${name}` : name;
+    if ((!dir && harnessEntries.has(name)) || path === outputFile) continue;
+    const stats = lstatSync(join(root, path));
+    if (stats.isDirectory()) {
       if (path !== outputDir) entries[`${path}/`] = "directory";
       walk(path, entries);
-    } else if (entry.isSymbolicLink()) {
+    } else if (stats.isSymbolicLink()) {
       entries[path] = `symlink:${readlinkSync(join(root, path))}`;
-    } else {
+    } else if (stats.isFile()) {
       entries[path] = `sha256:${createHash("sha256").update(readFileSync(join(root, path))).digest("hex")}`;
     }
   }
@@ -139,6 +141,22 @@ git init -q --template= -b main
 git config user.name "Fixture Author"
 git config user.email "fixture@example.invalid"
 git config commit.gpgsign false
+mkdir -p .git/info
+cat > .git/info/exclude <<'EOF'
+/.bash_profile
+/.bashrc
+/.profile
+/.zprofile
+/.zshrc
+/.gitconfig
+/.gitmodules
+/.idea
+/.vscode
+/.mcp.json
+/.ripgreprc
+/.claude/
+/.eval-artifacts
+EOF
 git add -A
 git commit -q --no-gpg-sign -m "Add feed export component"
 node tools/state-report.mjs --record
