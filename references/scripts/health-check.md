@@ -56,11 +56,11 @@ Under `../workflow/one-home.md` § *One home per fact*, `detail` supplies the re
 
 Store-root and outside-store targets receive notes, not replacements or empty paths. Dead checked-step links appear under dead-citation and dead-anchor.
 
-**Where the lifecycle is read.** Plan status alone controls lifecycle and unknown-status (`../workflow/task-lifecycle.md` § *`result.md` — no status field*). A result's legacy Status header is reported verbatim as legacy-result-status without vocabulary validation. Without a plan, result existence establishes started work; only its closing `**Completed:**` line with colon and date establishes finished work.
+**Where the lifecycle is read.** Plan status alone controls lifecycle and unknown-status (`../workflow/task-lifecycle.md` § *`result.md` — no status field*). A result's legacy Status header is reported with comments masked as legacy-result-status without vocabulary validation. Unknown-status and oversized-record details quote their source text with comments masked the same way. Without a plan, result existence establishes started work; only its closing `**Completed:**` line with colon and date establishes finished work.
 
 **Walk rules.** Prune node_modules and dotted names except `.agents` at every depth. Directory entries are listed once and passed down; citation resolution may list them again. Coverage paths are deduplicated. Archive anywhere below the store root marks all descendants archived, even Backlog beneath it. Backlog applies only to the immediate parent; tasks under groups or Archive inside it are not parked (`../workflow/task-archiving.md` § *Already archived is asked of the whole path up to the store*).
 
-**What a scan reads.** Skip fenced content in task files. Read status only above the first `##`-or-deeper heading. Step links resolving to tombstone bullets in a Compacted stub count as resolved (`../workflow/reconciliation-compaction.md`).
+**What a scan reads.** Apply `./task-state.md`'s shared comment/fence classification to structural task-file reading. Read status only above the first `##`-or-deeper heading. Step links resolving to tombstone bullets in a Compacted stub count as resolved (`../workflow/reconciliation-compaction.md`).
 
 **The size trigger has one measure.** Oversized-result uses `scripts/task-state.ts`'s exported `resultSize`, matching that script's compaction-plan due measurement.
 

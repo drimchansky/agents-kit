@@ -79,7 +79,7 @@ Run the suite covering each changed surface:
 - `scripts/health-check.ts`: `node --test tests/health-check.test.ts`.
 - `scripts/task-move.ts`: `node --test tests/task-move.test.ts`.
 - `scripts/task-state.ts`: `node --test tests/task-state.test.ts`, plus health-check and sweep-scope suites for its exported helpers.
-- `scripts/goal-structure.ts`: task-state, health-check, sweep-scope, and templates suites; its reference classification also governs task-repair.
+- `scripts/goal-structure.ts`: task-state, health-check, sweep-scope, task-move, commit-scan, and templates suites; its reference classification also governs task-repair.
 - `scripts/task-repair.ts`: task-state, health-check, and sweep-scope suites, because task-state imports it for the direct CLI.
 - `scripts/commit-scan.ts`: `node --test tests/commit-scan.test.ts`.
 - `scripts/sweep-scope.ts`: `node --test tests/sweep-scope.test.ts`.

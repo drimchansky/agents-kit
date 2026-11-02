@@ -25,6 +25,8 @@ node scripts/commit-scan.ts <task-dir>
 
 `steps` follows plan order: `{number,checked,paths,pathExists,classification,commits}`. `paths` unions each step's Touches and What paths; missing Touches excludes no step. Inline-code spans qualify when they contain `/`, end with `/`, or have a file extension.
 
+Parse headings, paths, and Pointers with `./task-state.md`'s shared comment/fence classification.
+
 Step `commits` lists every nominating SHA from the full enumeration, including commits beyond the displayed cap. Name matching requires equality or a descendant at a `/` boundary. `pathExists` separately tests existence under `repo`.
 
 `classification` is `candidate` for a touched pending step with an existing named path, `info` for a touched checked step, otherwise null. A pending step with no existing paths retains nominating commits but has null classification. Candidates require caller verification before writes; vanished work is the caller's unbacked-step repair.

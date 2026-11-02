@@ -8,7 +8,7 @@ node scripts/sweep-scope.ts <task-dir>
 
 **Contract.** stdout is exactly one JSON object: `{taskDir,planStatus,deliverable,deliverableCandidates,ledger,citations}`.
 
-`citations` contains `{url,tag,occurrences}` per distinct URL, in first-cited order. Each occurrence is `{surface,file,section,text}`, ordered by CONTEXT, plan, ticket, result, then deliverable. `text` is the trimmed citing line; compare fetched state against it when no prior ledger line exists.
+`citations` contains `{url,tag,occurrences}` per distinct URL, in first-cited order. Each occurrence is `{surface,file,section,text}`, ordered by CONTEXT, plan, ticket, result, then deliverable. `text` is the trimmed citing line with comments masked to equal-width spaces; compare fetched state against it when no prior ledger line exists. `section` masks comments the same way.
 
 Deduplicate URL spellings after trimming trailing brackets or sentence punctuation. Distinct spellings remain distinct entries. `tag` is the strongest observations-ledger tag for that URL: block > warn > info, or null without a matching line/ledger.
 
@@ -21,6 +21,8 @@ Sections end at the next heading of equal or shallower level. Except plan steps,
 `deliverable` resolves under `../workflow/doc-task-files.md`, ignoring the plan's optional Deliverable header. Candidates are Markdown files other than recognized role files and `observations.md`, with a Status line above the first `##` heading. Ignore fences and blockquotes. `deliverableCandidates` names all matches; multiple matches yield null deliverable and a stderr warning, not a guessed selection. Sweep only the resolved deliverable's Published lines.
 
 **The skip rules.** Accept `<scheme>://` URLs, excluding `file://` and loopback hosts `localhost`, `127.0.0.1`, `[::1]`, `0.0.0.0`. Read Markdown targets and bare URLs; deduplicate within each line.
+
+Apply `./task-state.md`'s shared comment/fence classification before selecting sections or reading URLs.
 
 Read angle-bracketed targets whole through `>`, preserving literal punctuation. `angledTargetText` in `scripts/lifecycle-constants.ts` trims their outer padding; percent-encode interior spaces for ledger matching. The bare-URL pass skips valid angled targets but still reads behind an unclosed `](<`. `scripts/health-check.ts` uses the same padding helper.
 

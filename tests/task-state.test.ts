@@ -8,7 +8,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { RESULT_MAX_KB } from "../scripts/lifecycle-constants.ts";
 import { compactionSections, taskState, type CompactionPlan, type TaskState } from "../scripts/task-state.ts";
 import { repairTask } from "../scripts/task-repair.ts";
-import { parseGoalDefinitions, scanGoalReferences } from "../scripts/goal-structure.ts";
+import { carriesStatusHeader, markdownLines, parseGoalDefinitions, scanGoalReferences } from "../scripts/goal-structure.ts";
 
 const TESTS_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_DIR = resolve(TESTS_DIR, "..");
@@ -599,6 +599,106 @@ function historicalRepairFolder(name: string, nested = false): string {
   return dir;
 }
 
+test("comment-contained fences preserve live goal references and original UTF-16 offsets", () => {
+  for (const marker of [FENCE, "~~~"]) for (const eol of ["\n", "\r\n"]) {
+    const lines = [
+      "<!-- hidden G4a", marker, "## Hidden G4a", "--> 😀 G4a is live.",
+      `${marker}text`, "<!-- G4a is fenced.", marker,
+      "`<!-- G4a` and “<!-- G4a” are illustrative.",
+      "> quoted <!-- G4a", "G4a stays in the quote.", "", "G4a is live again.",
+      "<!-- another comment", "> --> G4a is live after the boundary.",
+    ];
+    const text = lines.join(eol);
+    const references = scanGoalReferences("CONTEXT.md", text);
+    assert.deepStrictEqual(references.map(({ id, line, linkedScope }) => [id, line, linkedScope]), [["G4a", 4, null], ["G4a", 12, null], ["G4a", 14, null]]);
+    for (const reference of references) {
+      assert.strictEqual(text.slice(reference.start, reference.end), "G4a");
+      assert.strictEqual(reference.start, lines.slice(0, reference.line - 1).join(eol).length + eol.length + lines[reference.line - 1].indexOf("G4a"));
+    }
+    assert.deepStrictEqual([...markdownLines(text)].map(({ text, offset }) => [text, offset]),
+      lines.map((line, index) => [line, index === 0 ? 0 : lines.slice(0, index).join(eol).length + eol.length]));
+  }
+});
+
+test("comment delimiters in real fence info strings leave later task structure and original offsets intact", () => {
+  for (const marker of [FENCE, "~~~"]) for (const info of ["<!--", "-->", "text <!--", "text -->", "<!-- -->", '"<!--"']) for (const eol of ["\n", "\r\n"]) {
+    const lines = [
+      `${marker} ${info}`, "illustrative G99", marker, "**Status:** done",
+      "## Scope", "- delivered: G1", "## Steps", "### Step 1 — Work",
+      "- [ ] **What:** work", "- **Goal:** G1", "",
+    ];
+    const planText = lines.join(eol);
+    const label = `${marker} ${info}, EOL length ${eol.length}`;
+    const state = taskState({ taskDir: "/fixture", planText, resultText: null, goalsText: "## Goals\n- G1 — work\n" });
+    assert.strictEqual(state.plan.status, "done", label);
+    assert.deepStrictEqual(state.steps.map((step) => [step.number, step.goals]), [["1", ["G1"]]], label);
+    assert.deepStrictEqual(state.structure, { reliable: true, diagnostics: [] }, label);
+    const scanned = [...markdownLines(planText)];
+    assert.deepStrictEqual(scanned.map(({ text, offset }) => [text, offset]),
+      lines.map((line, index) => [line, index === 0 ? 0 : lines.slice(0, index).join(eol).length + eol.length]), label);
+    assert.deepStrictEqual(scanned.slice(0, 3).map((line) => line.live), [false, false, false], label);
+    assert.deepStrictEqual(scanned.slice(3).map(({ visible, live }) => [visible, live]), lines.slice(3).map((line) => [line, true]), label);
+    const references = scanGoalReferences("plan.md", planText);
+    assert.deepStrictEqual(references.map((reference) => reference.id), ["G1", "G1"], label);
+    for (const reference of references) {
+      assert.strictEqual(planText.slice(reference.start, reference.end), "G1", label);
+    }
+  }
+});
+
+test("commented fences leave checked anchors, lifecycle status, and allocated pause identities aligned", () => {
+  for (const marker of [FENCE, "~~~"]) for (const eol of ["\n", "\r\n"]) {
+    const comment = `<!-- illustrative\n${marker}\n**Status:** done\n## Blocked\n## Step 1 — Work\n-->\n`;
+    const planText = (comment + "**Status:** blocked\n## Scope\n- delivered: G1\n## Steps\n### Step 1 — Work\n- [x] **What:** done ([result](./result.md#step-1--work-1))\n- **Goal:** G1\n").replaceAll("\n", eol);
+    const resultText = ("## Current state\nWaiting.\n" + comment + "## Step 1 — Work\n### Blocked\n## Blocked\n**Blocked:** old\n" + comment + "## Step 1 — Work\n## Blocked\n**Blocked:** active\n").replaceAll("\n", eol);
+    const state = taskState({ taskDir: "/fixture", planText, resultText, goalsText: "## Goals\n- G1 — done\n" });
+    assert.strictEqual(state.plan.status, "blocked");
+    assert.strictEqual(state.structure.reliable, true);
+    assert.deepStrictEqual(state.steps.map((step) => [step.number, step.anchor, step.anchorResolves]), [["1", "step-1--work-1", true]]);
+    assert.strictEqual(state.currentState, "## Current state\nWaiting.\n" + comment.trimEnd());
+    const sections = compactionSections(resultText, state.plan.status);
+    assert.strictEqual(sections.keep.find((section) => section.rule === "pause")?.anchor, "blocked-2");
+    assert.deepStrictEqual(sections.removable.map((section) => section.anchor), ["step-1--work", "blocked-1", "step-1--work-1"]);
+  }
+});
+
+test("historical repair remaps every live core reference following a commented fence and keeps illustrative bytes", () => {
+  for (const marker of [FENCE, "~~~"]) for (const eol of ["\n", "\r\n"]) {
+    const dir = historicalRepairFolder(`repair-comment-fence-${marker[0]}-${eol.length}`);
+    const illustrative = ["<!-- illustrative G4a", marker, "G4a", "-->", "`G4a` and “G4a” stay literal.", ""].join(eol);
+    const live = {
+      "goals.md": "## Goals\n- G1 — first\n- G4a — new outcome\n",
+      "plan.md": "## Scope\n- delivered: G1, G4a\n## Steps\n### Step 1 — Work\n- [ ] **What:** deliver G4a\n- **Goal:** G4a\n",
+      "CONTEXT.md": "😀 G4a is the outcome.\nSee [G4a](./plan.md).\n",
+      "result.md": "## Current state\nG4a was pending.\n\nSee G4a.\n",
+    };
+    for (const [file, text] of Object.entries(live)) writeFileSync(join(dir, file), illustrative + text.replaceAll("\n", eol));
+    const attempted = run(["--repair", dir]);
+    assert.strictEqual(attempted.status, 0, attempted.stderr + attempted.stdout);
+    const repaired = JSON.parse(attempted.stdout);
+    assert.deepStrictEqual(repaired.mappings, [{ from: "G4a", to: "G10" }]);
+    assert.strictEqual(repaired.state.structure.reliable, true);
+    for (const [file, text] of Object.entries(live)) assert.strictEqual(readFileSync(join(dir, file), "utf8"), illustrative + text.replaceAll("G4a", "G10").replaceAll("\n", eol), file);
+    assert.strictEqual(report(dir).structure.reliable, true);
+  }
+});
+
+test("a supplementary live reference following a commented fence blocks historical remapping", () => {
+  for (const marker of [FENCE, "~~~"]) {
+    const dir = historicalRepairFolder(`repair-comment-fence-supplementary-${marker[0]}`);
+    writeFileSync(join(dir, "notes.md"), `<!-- illustrative\n${marker}\nG4a\n-->\nThe author requires G4a.\n`);
+    const files = ["goals.md", "plan.md", "CONTEXT.md", "result.md", "notes.md"];
+    const before = files.map((file) => readFileSync(join(dir, file)));
+    const attempted = run(["--repair", dir]);
+    assert.strictEqual(attempted.status, 1, attempted.stderr + attempted.stdout);
+    const repaired = JSON.parse(attempted.stdout);
+    assert.deepStrictEqual(repaired.mappings, []);
+    assert.deepStrictEqual(repaired.applied, []);
+    assert.ok(repaired.unresolved.some((item: { code: string; file: string; line: number }) => item.code === "blocked-goal-remap" && item.file === "notes.md" && item.line === 5));
+    for (const [index, file] of files.entries()) assert.ok(readFileSync(join(dir, file)).equals(before[index]), file);
+  }
+});
+
 test("fresh IDs reserve decorated numeric identities in either definition order", () => {
   for (const [label, decorated] of [["bold", "**G10**"], ["code", "`G10`"], ["colon", "G10:"], ["period", "G10."]] as const) {
     for (const order of ["malformed-first", "numeric-first"] as const) {
@@ -1102,9 +1202,9 @@ test("comment markers inside multiline code or quotations do not hide live refer
     ["single-quote", "'", "'"],
     ["double-quote", '"', '"'],
   ] as const) {
-    for (const marker of ["example <!--\n", "example\n<!--\n"]) {
-      const dir = historicalRepairFolder(`repair-span-comment-${label}-${marker.length}`);
-      const context = `Use ${open}${marker}${close} closes the example; G4a is live.\n`;
+    for (const [index, [marker, after]] of [["example <!--\n", ""], ["example\n<!--\n", ""], ["example\n<!--\n", "\n<!-- unrelated -->\n"]].entries()) {
+      const dir = historicalRepairFolder(`repair-span-comment-${label}-${index}`);
+      const context = `Use ${open}${marker}${close} closes the example; G4a is live.\n${after}`;
       writeFileSync(join(dir, "CONTEXT.md"), context);
       assert.deepStrictEqual(
         scanGoalReferences("CONTEXT.md", context).map(({ id, linkedScope }) => [id, linkedScope]),
@@ -1541,7 +1641,7 @@ test("a repair proposal with overlapping edits reports its error as JSON and wri
   writeFileSync(join(dir, "goals.md"), "## Goals\n- G1 — first\n");
   git(dir, ["add", "goals.md"]);
   git(dir, ["commit", "-qm", "record goals"]);
-  writeFileSync(join(dir, "goals.md"), "## Goals\n- G1 — first\n> <!--\n## Notes\n-->\n- G4a — x\n");
+  writeFileSync(join(dir, "goals.md"), "## Goals\n- G1 — first\n## Goals:x\n- G4a — x\n");
   writeFileSync(join(dir, "plan.md"), "## Scope\n- delivered: G1, G4a\n## Steps\n### Step 1 — Work\n- [ ] **What:** work\n- **Goal:** G4a\n");
   const goals = readFileSync(join(dir, "goals.md"));
   const plan = readFileSync(join(dir, "plan.md"));
@@ -1847,6 +1947,99 @@ ${FENCE}
   ]);
 });
 
+test("an unpaired comment opener leaves later task structure live", () => {
+  const goalsText = "## Goals\n- G1 — work\n- G2 — more\n";
+  const resultText = "## Current state\nWorking.\n## Step 1 — Work\nDone.\n";
+  const plan = (note: string, closer = ""): string =>
+    `**Status:** executing\n## Scope\n- delivered: G1, G2\n## Steps\n### Step 1 — Work\n- [x] **What:** work ([result](./result.md#step-1--work))\n- **Goal:** G1\n${note}\n\n### Step 2 — More\n- [ ] **What:** more\n- **Goal:** G2\n${closer}`;
+  for (const [note, closer] of [
+    ["The parser stops at a bare <!-- marker."],
+    ["- **Note:** keep <!-- literal"],
+    ["<!-- line-start with no closer"],
+    ["    <!-- indented example"],
+    ["- **Verify:** no <!-- markers", "- **Verify:** arrows --> stay\n"],
+  ] as const) for (const eol of ["\n", "\r\n"]) {
+    const planText = plan(note, closer).replaceAll("\n", eol);
+    const state = taskState({ taskDir: "/fixture", planText, resultText, goalsText });
+    assert.deepStrictEqual(state.steps.map((step) => step.number), ["1", "2"], note);
+    assert.strictEqual(state.nextPendingStep, "2", note);
+    assert.strictEqual(state.structure.reliable, true, note);
+  }
+});
+
+test("an escaped comment opener leaves later task structure live", () => {
+  for (const closer of ["", "-->\n"]) {
+    const state = parse(`Literal opener: \\<!--\n**Status:** done\n## Steps\n### Step 1 — Work\n- [x] **What:** work\n${closer}`);
+    assert.strictEqual(state.plan.status, "done");
+    assert.deepStrictEqual(state.steps.map((step) => step.number), ["1"]);
+  }
+});
+
+test("an escaped backtick opens no span, so a following comment stays masked", () => {
+  assert.deepStrictEqual(scanGoalReferences("plan.md", "Escaped \\` tick <!-- G9 sits in a comment -->\n"), []);
+});
+
+test("an escaped backtick leaves a later goal reference unambiguous", () => {
+  for (const text of ["Escaped \\` tick G9 here\n", "Escaped \\` tick\nG9 here\n"]) {
+    assert.deepStrictEqual(scanGoalReferences("plan.md", text).map(({ id, linkedScope }) => [id, linkedScope]), [["G9", null]]);
+  }
+});
+
+test("text after a line-start comment stays out of structural reading", () => {
+  for (const marker of [FENCE, "~~~"]) for (const eol of ["\n", "\r\n"]) {
+    const single = `<!-- note --> ${marker}\n\nG4a is live.\n## Goals\n- G1 — one\n`.replaceAll("\n", eol);
+    const closing = `<!-- note\n--> ${marker}\n\nG4a is live.\n## Goals\n- G1 — one\n`.replaceAll("\n", eol);
+    for (const text of [single, closing]) {
+      assert.deepStrictEqual(scanGoalReferences("goals.md", text).map(({ id }) => id), ["G4a"]);
+      assert.deepStrictEqual(parseGoalDefinitions(text).definitions.map(({ id }) => id), ["G1"]);
+      assert.ok([...markdownLines(text)].every((line) => line.live));
+    }
+  }
+  assert.strictEqual(carriesStatusHeader("# Task\n\n<!-- note --> **Status:** done\n"), false);
+  const state = parse("**Status:** executing\n## Steps\n### Step 1 — Work\n<!-- note --> - [x] **What:** work\n");
+  assert.strictEqual(state.steps[0].checked, false);
+});
+
+test("a quoted comment opener leaves later goal definitions live", () => {
+  const goals = "## Goals\n- G1 — one\n\n> note <!-- quoted\n\n- G2 — two\n";
+  assert.deepStrictEqual(parseGoalDefinitions(goals).definitions.map(({ id }) => id), ["G1", "G2"]);
+});
+
+test("a line-start comment after a blockquote ends the quote", () => {
+  for (const marker of [FENCE, "~~~"]) {
+    const planText = `> Reminder\n<!-- illustrative G9\n${marker}\n-->\n**Status:** executing\n## Steps\n### Step 1 — Work\n- [ ] **What:** work\n`;
+    const state = parse(planText);
+    assert.strictEqual(state.plan.status, "executing");
+    assert.deepStrictEqual(state.steps.map((step) => step.number), ["1"]);
+    assert.deepStrictEqual(scanGoalReferences("plan.md", planText), []);
+  }
+});
+
+test("a line-start comment that leaves text on its line keeps a blockquote's lazy continuation", () => {
+  for (const [index, opener] of ["<!-- note", "<!-- note --> G4a stays quoted."].entries()) {
+    const text = `> Quoted example:\n${opener}\n[a](./missing.md) G4a must remain literal.\n\nG4a resumes after the quote.\n`;
+    assert.deepStrictEqual(scanGoalReferences("result.md", text).map(({ line }) => line), [5], opener);
+    const dir = historicalRepairFolder(`repair-lazy-quote-comment-${index}`);
+    writeFileSync(join(dir, "result.md"), text);
+    const result = run(["--repair", dir]);
+    assert.strictEqual(result.status, 0, result.stderr + result.stdout);
+    assert.deepStrictEqual(JSON.parse(result.stdout).mappings, [{ from: "G4a", to: "G10" }], opener);
+    assert.strictEqual(readFileSync(join(dir, "result.md"), "utf8"), text.replace("G4a resumes", "G10 resumes"), opener);
+  }
+});
+
+test("a complete empty comment closes on its own line", () => {
+  assert.strictEqual(parse("<!-->\n**Status:** executing\n").plan.status, "executing");
+});
+
+test("an unpaired comment opener leaves protected sections and the Current state bound intact", () => {
+  const resultText = "## Current state\nStill strips <!-- markers.\n\n---\n\n## Step 1 — Work\nFixed the <!-- parser.\n## Decision log\n- Kept it.\n## Blocked\n**Blocked:** waiting\n";
+  const sections = compactionSections(resultText, "blocked");
+  assert.deepStrictEqual(sections.keep.map((section) => section.anchor), ["current-state", "decision-log", "blocked"]);
+  assert.deepStrictEqual(sections.removable.map((section) => section.anchor), ["step-1--work"]);
+  assert.strictEqual(parse(MIXED_PLAN, resultText, GOALS).currentState, "## Current state\nStill strips <!-- markers.\n\n---");
+});
+
 test("a legacy result status is reported verbatim, and a conformant result carries none", () => {
   const legacy = parse(
     MIXED_PLAN,
@@ -1858,6 +2051,13 @@ test("a legacy result status is reported verbatim, and a conformant result carri
 
   const conformant = parse(MIXED_PLAN, MIXED_RESULT, GOALS);
   assert.deepStrictEqual(conformant.result, { file: "result.md", legacyStatus: null });
+});
+
+test("a legacy result status masks comments and reads as absent when only a comment remains", () => {
+  const withStatus = (status: string): TaskState =>
+    parse(MIXED_PLAN, MIXED_RESULT.replace("# Result: fixture\n", `# Result: fixture\n\n**Status:** ${status}\n`), GOALS);
+  assert.strictEqual(withStatus("shipped <!-- reviewed --> onwards").result?.legacyStatus, `shipped${" ".repeat(19)}onwards`);
+  assert.strictEqual(withStatus("<!-- shipped -->").result?.legacyStatus, null);
 });
 
 test("an unrecognized status reads as unknown, an absent one as null", () => {
@@ -2029,6 +2229,49 @@ test("compaction keeps the Live verification section as completion evidence", ()
   assert.deepStrictEqual(sections.removable, [{ heading: "Step 1 — Work", anchor: "step-1--work" }]);
 });
 
+test("in-place compaction preserves duplicate and nested anchors, protected bytes, and repeated section identities", () => {
+  const protectedSections = [
+    "## Current state\n\nWaiting on approval.\n\n",
+    "## Compacted — 2025-12-01\n\n- Step 0 — Legacy\n\nfull text in git history (pre-compaction state).\n\n",
+    "## Decision log\n\nKeep this choice.\n\n",
+    "## Acceptance\n\nG1 evidence remains.\n\n",
+    "## Health boundary\n\nPassed.\n\n",
+    "## Live verification\n\nObserved locally.\n\n",
+    "## Reconciliation — 2026-11-01\n\nLatest findings.\n\n",
+    "## Blocked — Approval\n\n**Blocked:** latest approval at https://example.invalid/current\n\n",
+  ];
+  const olderHeadings = "## Step 1 — Work\n\n### Example\n\n#### Example-1\n\n##### Example\n\n";
+  const newerHeadings = "## Step 1 — Work\n\n### Example\n\n";
+  const older = olderHeadings + "Older narrative. ".repeat(100) + "\n\n";
+  const newer = newerHeadings + "Newer narrative. ".repeat(100) + "\n\n";
+  const note = "Compacted 2026-11-01; full text in git history (pre-compaction state).\n\n";
+  const paused = "## Blocked — Approval\n\n**Blocked:** superseded approval\n\n";
+  const assemble = (first: string, second: string): string =>
+    "# Result\n\n" + protectedSections[0] + first + second + paused + protectedSections.slice(1).join("");
+  const before = assemble(older, newer);
+  const sections = compactionSections(before, "blocked");
+  const anchors = ["step-1--work", "example", "example-1", "example-2", "step-1--work-1", "example-3", "step-0--legacy"];
+  const planText = "# Plan\n**Status:** blocked\n## Scope\n- In scope: G1\n## Steps\n" + anchors.map((anchor, index) =>
+    `### Step ${index + 1} — Evidence\n- [x] **What:** retained ([result](./result.md#${anchor}))\n- **Goal:** G1\n`,
+  ).join("\n");
+  const read = (resultText: string): TaskState => taskState({ taskDir: "/fixture", planText, resultText, goalsText: "## Goals\n- G1 — evidence survives\n" });
+  assert.ok(read(before).structure.reliable);
+  assert.ok(read(before).steps.every((step) => step.anchorResolves));
+  assert.deepStrictEqual(sections.removable.map((section) => section.anchor), ["step-1--work", "step-1--work-1", "blocked--approval"]);
+  assert.strictEqual(sections.keep.find((section) => section.rule === "pause")?.anchor, "blocked--approval-1");
+  for (const [first, second] of [[olderHeadings + note, newer], [older, newerHeadings + note], [olderHeadings + note, newerHeadings + note]]) {
+    const after = assemble(first, second);
+    assert.ok(Buffer.byteLength(after) < Buffer.byteLength(before));
+    assert.deepStrictEqual(compactionSections(after, "blocked"), sections);
+    assert.deepStrictEqual(read(after).steps, read(before).steps);
+    assert.ok(read(after).structure.reliable);
+    for (const protectedText of protectedSections) assert.ok(after.includes(protectedText));
+    const repeated = after.replaceAll("Compacted 2026-11-01;", "Compacted 2026-11-02;");
+    assert.deepStrictEqual(compactionSections(repeated, "blocked"), sections);
+    assert.deepStrictEqual(read(repeated).steps, read(before).steps);
+  }
+});
+
 test("an oversized result committed at HEAD passes the precondition and lists both section sets", () => {
   const repo = checkout("compaction-committed");
   const dir = join(repo, "task");
@@ -2123,4 +2366,80 @@ test("the compaction trigger reads the same bytes health-check's oversized-resul
   assert.deepStrictEqual(oversized, ["measure/over-trigger"]);
   assert.strictEqual(plan(join(root, "at-trigger")).due, false);
   assert.strictEqual(plan(join(root, "over-trigger")).due, true);
+});
+
+test("a line-start comment after an unclosed code span or quotation still hides its fence", () => {
+  const cases = ["We ship 'em after review.", "Intro with a stray ` tick.", "he said \"maybe."].flatMap((previous) => [FENCE, "~~~"].map((marker) => [previous, marker]));
+  const read = cases.map(([previous, marker]) => {
+    const planText = `# Plan\n${previous}\n<!-- example\n${marker}\n-->\n**Status:** done\n## Scope\n- delivered: G1\n## Steps\n### Step 1 — Work\n- [x] **What:** work\n- **Goal:** G1\n`;
+    const state = parse(planText, null, "## Goals\n- G1 — work\n");
+    return [previous, marker, state.plan.status, state.steps.map((step) => step.number)];
+  });
+  assert.deepStrictEqual(read, cases.map(([previous, marker]) => [previous, marker, "done", ["1"]]));
+});
+
+test("a mid-line comment after an unclosed code span or quotation still hides a retired status", () => {
+  const previous = ["We ship 'em after review.", "Intro with a stray ` tick.", "he said \"maybe."];
+  const read = previous.map((line) => parse(`# Plan\n${line}\nSee <!-- retired header\n**Status:** done\n-->\n**Status:** blocked\n## Steps\n`).plan.status);
+  assert.deepStrictEqual(read, previous.map(() => "blocked"));
+});
+
+test("a quotation left open on a heading line does not hide a comment on the next line", () => {
+  const openers = ["<!--", "See <!--"];
+  const read = openers.map((opener) => {
+    const planText = `# Plan: retry the "draft\n${opener} example of a finished header\n**Status:** done\n-->\n**Status:** blocked\n## Steps\n`;
+    return [opener, parse(planText).plan.status];
+  });
+  assert.deepStrictEqual(read, openers.map((opener) => [opener, "blocked"]));
+});
+
+test("historical repair rewrites a live reference after a commented fence that follows an unclosed code span or quotation", () => {
+  for (const [label, previous] of [["tick", "Intro with a stray ` tick."], ["single", "We ship 'em after review."], ["double", "he said \"maybe."]] as const) {
+    const dir = historicalRepairFolder(`repair-comment-fence-after-stray-${label}`);
+    const context = `${previous}\n<!-- illustrative\n${FENCE}\n-->\nThe outcome is G4a.\n`;
+    writeFileSync(join(dir, "CONTEXT.md"), context);
+    const attempted = run(["--repair", dir]);
+    assert.strictEqual(attempted.status, 0, `${label}: ${attempted.stderr}${attempted.stdout}`);
+    const repaired = JSON.parse(attempted.stdout);
+    assert.deepStrictEqual(repaired.mappings, [{ from: "G4a", to: "G10" }], label);
+    assert.deepStrictEqual(repaired.unresolved, [], label);
+    assert.strictEqual(repaired.state.structure.reliable, true, label);
+    assert.strictEqual(readFileSync(join(dir, "CONTEXT.md"), "utf8"), context.replace("G4a", "G10"), label);
+  }
+});
+
+test("text after a comment closer does not carry a code span or quotation into the next line's comment", () => {
+  const plans = [
+    "# Plan\n<!-- example\n## Example\n--> `\nSee <!-- retired header\n**Status:** done\n-->\n**Status:** blocked\n## Steps\n",
+    "# Plan\n<!-- note --> `\nSee <!-- retired header\n**Status:** done\n-->\n**Status:** blocked\n## Steps\n",
+    "<!-- example\n## Example\n--> `\n<!-- retired header\n**Status:** done\n-->\n**Status:** blocked\n## Steps\n",
+    "# Plan\n<!-- note --> \"maybe\nSee <!-- retired header\n**Status:** done\n-->\n**Status:** blocked\n## Steps\n",
+  ];
+  assert.deepStrictEqual(plans.map((planText) => parse(planText).plan.status), plans.map(() => "blocked"));
+});
+
+test("the reference scan does not carry a span opened after a comment closer into the next line's comment", () => {
+  const plans = [
+    "# Plan\n<!-- note --> `\nSee <!-- retired header G9\n-->\n` closes\n**Status:** blocked\n## Steps\n",
+    "# Plan\n<!-- note --> \"maybe\nSee <!-- retired header G9\n-->\n\" closes\n**Status:** blocked\n## Steps\n",
+  ];
+  assert.deepStrictEqual(plans.map((planText) => [parse(planText).plan.status, scanGoalReferences("plan.md", planText)]), plans.map(() => ["blocked", []]));
+});
+
+test("the reference scan still reads text after a comment closer on a structurally hidden line", () => {
+  const read = ["<!-- note --> G4a\n", "<!-- example\n## Example\n--> G4a\n"].map((text) => scanGoalReferences("CONTEXT.md", text).map(({ id, line, linkedScope }) => [id, line, linkedScope]));
+  assert.deepStrictEqual(read, [[["G4a", 1, null]], [["G4a", 3, null]]]);
+});
+
+test("an unclosed comment opener on a heading line does not hide the next line's pause label", () => {
+  const result = "## Current state\nWaiting.\n\n## Step 1 — Work\nDid it.\n\n## Step 2 — Notes <!-- since\n**Blocked:** awaiting approval -->\n";
+  const sections = compactionSections(result, "blocked");
+  assert.deepStrictEqual(sections.keep.filter((section) => section.rule === "pause").map((section) => section.heading), ["Step 2 — Notes <!-- since"]);
+  assert.ok(!sections.removable.some((section) => section.heading.startsWith("Step 2")));
+  assert.deepStrictEqual(sections.removable.map((section) => section.heading), ["Step 1 — Work"]);
+});
+
+test("a heading's unclosed comment opener leaves its own line and the next one visible", () => {
+  const lines = [...markdownLines("# Plan\n## Step 2 — Notes <!-- since\n**Blocked:** awaiting approval -->\nAfter.\n")];
+  assert.deepStrictEqual(lines.slice(1).map(({ text, visible, live }) => [visible === text, live]), [[true, true], [true, true], [true, true], [true, true]]);
 });

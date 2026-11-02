@@ -4,6 +4,7 @@ import { existsSync, readFileSync, readdirSync, realpathSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { holdsRoleFile } from "./lifecycle-constants.ts";
+import { markdownLines } from "./goal-structure.ts";
 
 const PLAN_FILE = "plan.md";
 const RESULT_FILE = "result.md";
@@ -12,7 +13,6 @@ const COMMIT_CAP = 20;
 const LOG_FORMAT = "--pretty=format:%x00%h %ad %s";
 const GIT_MAX_BUFFER = 64 * 1024 * 1024;
 
-const FENCE = /^([ \t]*)(`{3,}|~{3,})[ \t]*(.*)$/;
 const HEADING = /^#{1,6}[ \t]+(.+?)[ \t]*#*$/;
 const STEP_TITLE = /^Step[ \t]+(\d+[a-z]*)\b/i;
 const CHECKBOX = /^[ \t]*-[ \t]+\[([ xX])\]/;
@@ -85,20 +85,7 @@ class Exit extends Error {
 }
 
 function* liveLines(text: string): Generator<string> {
-  let fence: { indent: number; char: string; len: number } | null = null;
-  for (const raw of text.split("\n")) {
-    const line = raw.replace(/\r$/, "");
-    const marker = line.match(FENCE);
-    if (marker) {
-      const [, pad, run, rest] = marker;
-      if (!fence) fence = { indent: pad.length, char: run[0], len: run.length };
-      else if (pad.length <= fence.indent && run[0] === fence.char && run.length >= fence.len && rest === "") {
-        fence = null;
-      }
-      continue;
-    }
-    if (!fence) yield line;
-  }
+  for (const line of markdownLines(text)) if (line.live) yield line.visible;
 }
 
 function headingText(line: string): string | null {
