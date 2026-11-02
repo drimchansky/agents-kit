@@ -1,6 +1,7 @@
 ---
-type: tool_used
+type: regex
 weight: 1
-tool: Skill
-input_match: '"skill"\s*:\s*"(?:[\w-]+:)?implement"'
+arm: with-only
+target: trace
+pattern: '"role":"user","content":(?:"|\[(?:[^"\[\]]|"(?:[^"\\]|\\.)*")*?\{"type":"text","text":")(?:[^"\\]|\\.)*?Base directory for this skill: (?:[^\s"\\]|\\[^nrt])*/skills/implement(?:\\[nrt]|")'
 ---

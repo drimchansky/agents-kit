@@ -149,7 +149,7 @@ cat > "$task_dir/result.md" <<EOF
 
 ## Current state
 _Updated: 2026-10-02_
-- **Status:** in review — Step 1 is committed on the task branch and awaits code review.
+- **Status:** in review — Step 1 landed on the task branch and is waiting for its first code review.
 - **Pointers:** branch \`task/add-clamp\`; SHA ${head_sha} (recorded 2026-10-02)
 - **Next:** Review the branch against \`main\`.
 

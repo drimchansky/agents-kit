@@ -129,6 +129,7 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           API_KEY_PRESENT: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+          TMPDIR: ${{ runner.temp }}
         run: |
           if [ "$API_KEY_PRESENT" != true ]; then
             echo "::error::The Anthropic API key repository secret is empty."
