@@ -45,6 +45,7 @@ const DEFINITION_PREFIX = /^[ \t]{0,3}\[[^\]]+\]:/;
 const REFERENCE_DEFINITION = /^[ \t]{0,3}\[([^\]^][^\]]*)\]:[ \t]*(?:(?:<([^>]+)>|(\S+))[ \t]*(?:"[^"]*"|'[^']*'|\([^)]*\))?[ \t]*)?$/;
 const DEFINITION_CONTINUATION = /^[ \t]*(?:<([^>]+)>|(\S+))[ \t]*(?:"[^"]*"|'[^']*'|\([^)]*\))?[ \t]*$/;
 const BLOCKQUOTE = /^[ \t]*>/;
+const COMMENT_START = /^ {0,3}<!--/;
 const STATUS_FIELD = /^[ \t]*[-*+]?[ \t]*\*\*Status\b[^:*\n]*:?\*\*/i;
 const TICKET_FILE = "ticket.md";
 const LIST_START = /^[ \t]*(?:[-*+]|1[.)])[ \t]/;
@@ -77,11 +78,14 @@ function referenceKey(label: string): string {
   return label.trim().replace(/[ \t]+/g, " ").toLowerCase();
 }
 
-function bracketAt(line: string, index: number, bracket: "[" | "]"): boolean {
-  if (line[index] !== bracket) return false;
+function escaped(line: string, index: number): boolean {
   let backslashes = 0;
   while (line[index - 1 - backslashes] === "\\") backslashes++;
-  return backslashes % 2 === 0;
+  return backslashes % 2 === 1;
+}
+
+function bracketAt(line: string, index: number, bracket: "[" | "]"): boolean {
+  return line[index] === bracket && !escaped(line, index);
 }
 
 function nextBracket(line: string, bracket: "[" | "]", from: number): number {
@@ -158,6 +162,8 @@ function labelScope(
 
 interface LiveLine {
   readonly text: string;
+  readonly visible: string;
+  readonly lines: readonly string[];
   readonly number: number;
   readonly offset: number;
   readonly live: boolean;
@@ -165,17 +171,28 @@ interface LiveLine {
 
 export function* markdownLines(text: string): Generator<LiveLine> {
   let fence: { indent: number; char: string; length: number } | null = null;
+  const state = inlineState();
+  let quoted = false;
   let offset = 0;
-  for (const [index, line] of text.split("\n").entries()) {
-    const content = line.replace(/\r$/, "");
-    const marker = content.match(FENCE);
+  const raw = text.split("\n");
+  const lines = raw.map((line) => line.replace(/\r$/, ""));
+  for (const [index, line] of raw.entries()) {
+    const content = lines[index];
+    const source = { text: content, visible: content, lines, number: index + 1, offset, live: true };
+    let visible = content;
+    if (fence === null) {
+      if (!state.inComment) quoted = BLOCKQUOTE.test(content) || (quoted && continuesQuote(source, state));
+      if (state.inComment || (!quoted && !FENCE.test(content))) visible = maskComments(source, state, false).join("");
+      if (visible !== content && visible[content.search(/\S/)] === " ") visible = " ".repeat(content.length);
+    }
+    const marker = visible.match(FENCE);
     if (marker) {
       const [, pad, run, rest] = marker;
       if (!fence) fence = { indent: pad.length, char: run[0], length: run.length };
       else if (pad.length <= fence.indent && run[0] === fence.char && run.length >= fence.length && rest === "") fence = null;
-      yield { text: content, number: index + 1, offset, live: false };
+      yield { ...source, visible, live: false };
     } else {
-      yield { text: content, number: index + 1, offset, live: fence === null };
+      yield { ...source, visible, live: fence === null };
     }
     offset += line.length + 1;
   }
@@ -183,12 +200,12 @@ export function* markdownLines(text: string): Generator<LiveLine> {
 
 export function carriesStatusHeader(text: string): boolean {
   for (const line of markdownLines(text)) {
-    if (!line.live || BLOCKQUOTE.test(line.text)) continue;
-    if (HEADING.test(line.text)) {
-      if (line.text.startsWith("##")) return false;
+    if (!line.live || BLOCKQUOTE.test(line.visible)) continue;
+    if (HEADING.test(line.visible)) {
+      if (line.visible.startsWith("##")) return false;
       continue;
     }
-    if (STATUS_FIELD.test(line.text)) return true;
+    if (STATUS_FIELD.test(line.visible)) return true;
   }
   return false;
 }
@@ -202,10 +219,10 @@ export function anchorLines(text: string): Set<number> {
   let compacted = false;
   for (const line of markdownLines(text)) {
     if (!line.live) continue;
-    if (HEADING.test(line.text)) {
-      compacted = COMPACTED_HEADING.test(line.text);
+    if (HEADING.test(line.visible)) {
+      compacted = COMPACTED_HEADING.test(line.visible);
       lines.add(line.number);
-    } else if (compacted && TOMBSTONE_BULLET.test(line.text)) lines.add(line.number);
+    } else if (compacted && TOMBSTONE_BULLET.test(line.visible)) lines.add(line.number);
   }
   return lines;
 }
@@ -215,12 +232,12 @@ export function fieldGoalTokens(planText: string): { id: string; line: number; s
   let inScope = false;
   for (const line of markdownLines(planText)) {
     if (!line.live) continue;
-    if (HEADING.test(line.text)) {
-      inScope = SCOPE_HEADING.test(line.text);
+    if (HEADING.test(line.visible)) {
+      inScope = SCOPE_HEADING.test(line.visible);
       continue;
     }
-    if (!inScope && !GOAL_FIELD.test(line.text)) continue;
-    for (const match of line.text.matchAll(BOUNDED_GOAL_TOKEN)) tokens.push({ id: match[0], line: line.number, start: line.offset + match.index });
+    if (!inScope && !GOAL_FIELD.test(line.visible)) continue;
+    for (const match of line.visible.matchAll(BOUNDED_GOAL_TOKEN)) tokens.push({ id: match[0], line: line.number, start: line.offset + match.index });
   }
   return tokens;
 }
@@ -243,16 +260,35 @@ function opensBlock(line: string): boolean {
 interface InlineState {
   previous: number;
   inComment: boolean;
+  commentLead: boolean;
   code: number;
   quote: string | null;
 }
 
 function inlineState(): InlineState {
-  return { previous: 0, inComment: false, code: 0, quote: null };
+  return { previous: 0, inComment: false, commentLead: false, code: 0, quote: null };
+}
+
+function opensLineComment(line: LiveLine): boolean {
+  if (!COMMENT_START.test(line.text)) return false;
+  const opener = line.text.indexOf("<!--");
+  return line.text.includes("-->", opener + 2) || closesLater(line, opener);
+}
+
+function followsParagraph(line: LiveLine, previous: number): boolean {
+  return line.number === previous + 1 && line.text.trim() !== "" && !opensBlock(line.text) && !HEADING.test(line.lines[previous - 1] ?? "");
 }
 
 function continuesParagraph(line: LiveLine, previous: number): boolean {
-  return line.number === previous + 1 && line.text.trim() !== "" && !opensBlock(line.text);
+  return followsParagraph(line, previous) && !opensLineComment(line);
+}
+
+function commentOnly(line: LiveLine, state: InlineState): boolean {
+  return COMMENT_START.test(line.text) && maskComments(line, { ...state }, false).join("").trim() === "";
+}
+
+function continuesQuote(line: LiveLine, state: InlineState): boolean {
+  return line.text.trim() !== "" && !opensBlock(line.text) && !FENCE.test(line.text) && !commentOnly(line, state);
 }
 
 function* unquotedLines(text: string): Generator<LiveLine> {
@@ -262,7 +298,7 @@ function* unquotedLines(text: string): Generator<LiveLine> {
     if (!line.live) { quoted = false; continue; }
     if (!state.inComment) {
       if (BLOCKQUOTE.test(line.text)) { quoted = true; continue; }
-      if (quoted && line.text.trim() !== "" && !opensBlock(line.text)) continue;
+      if (quoted && continuesQuote(line, state)) continue;
     }
     quoted = false;
     maskComments(line, state, false);
@@ -276,10 +312,9 @@ export function parseGoalDefinitions(text: string): GoalDefinitions {
   const diagnostics: StructureDiagnostic[] = [];
   const seen = new Set<string>();
   let section: GoalDefinition[] | null = null;
-  const state = inlineState();
   for (const line of markdownLines(text)) {
     if (!line.live) continue;
-    const visible = maskComments(line, state, false).join("");
+    const { visible } = line;
     const heading = visible.match(HEADING);
     if (heading) {
       section = GOALS_HEADING.test(visible) ? definitions : DEFINITION_HEADING.test(visible) ? retired : null;
@@ -299,13 +334,44 @@ export function parseGoalDefinitions(text: string): GoalDefinitions {
   return { definitions, retired, diagnostics };
 }
 
+function closesLater(source: LiveLine, opener: number): boolean {
+  if (HEADING.test(source.text)) return false;
+  const spansBlocks = /^ {0,3}$/.test(source.text.slice(0, opener));
+  for (const line of source.lines.slice(source.number)) {
+    if (!spansBlocks && (line.trim() === "" || opensBlock(line) || FENCE.test(line))) return false;
+    if (line.includes("-->")) return true;
+  }
+  return false;
+}
+
+function closesInParagraph(source: LiveLine, closes: (text: string) => boolean): boolean {
+  if (HEADING.test(source.text)) return false;
+  for (const line of source.lines.slice(source.number)) {
+    if (line.trim() === "" || opensBlock(line) || FENCE.test(line)) return false;
+    if (closes(line)) return true;
+  }
+  return false;
+}
+
+function closesCode(text: string, length: number): boolean {
+  for (const run of text.matchAll(/`+/g)) if (run[0].length === length) return true;
+  return false;
+}
+
+function closesQuotationIn(text: string, close: string): boolean {
+  for (let index = 0; index < text.length; index++) if (closesQuotation(text, index, close)) return true;
+  return false;
+}
+
 function maskComments(source: LiveLine, state: InlineState, maskCode: boolean): string[] {
   const line = source.text;
-  if (!continuesParagraph(source, state.previous)) {
+  if (!followsParagraph(source, state.previous)) {
     state.code = 0;
     state.quote = null;
   }
   state.previous = source.number;
+  const first = line.search(/\S/);
+  state.commentLead = state.inComment && first !== -1;
   const chars = line.split("");
   const blank = (start: number, end: number): void => {
     for (let index = start; index < end; index++) chars[index] = " ";
@@ -332,14 +398,21 @@ function maskComments(source: LiveLine, state: InlineState, maskCode: boolean): 
       if (closesQuotation(line, index, state.quote)) state.quote = null;
       continue;
     }
-    if (line.startsWith("<!--", index)) {
-      const end = line.indexOf("-->", index + 4);
-      if (end === -1) { blank(index, line.length); state.inComment = true; break; }
-      blank(index, end + 3);
-      index = end + 2;
+    if (line.startsWith("<!--", index) && !escaped(line, index)) {
+      const end = line.indexOf("-->", index + 2);
+      if (end !== -1) {
+        blank(index, end + 3);
+        if (index === first) state.commentLead = true;
+        index = end + 2;
+      } else if (closesLater(source, index)) {
+        blank(index, line.length);
+        if (index === first) state.commentLead = true;
+        state.inComment = true;
+        break;
+      }
       continue;
     }
-    if (line[index] === "`") {
+    if (line[index] === "`" && !escaped(line, index)) {
       let length = 1;
       while (line[index + length] === "`") length++;
       const close = line.indexOf("`".repeat(length), index + length);
@@ -347,7 +420,7 @@ function maskComments(source: LiveLine, state: InlineState, maskCode: boolean): 
         if (maskCode) blank(index, close + length);
         index = close + length - 1;
       } else {
-        state.code = length;
+        if (closesInParagraph(source, (text) => closesCode(text, length))) state.code = length;
         index += length - 1;
       }
       continue;
@@ -357,8 +430,12 @@ function maskComments(source: LiveLine, state: InlineState, maskCode: boolean): 
       let end = index + 1;
       while (end < line.length && !closesQuotation(line, end, quote)) end++;
       if (end < line.length) index = end;
-      else state.quote = quote;
+      else if (closesInParagraph(source, (text) => closesQuotationIn(text, quote))) state.quote = quote;
     }
+  }
+  if (state.commentLead) {
+    state.code = 0;
+    state.quote = null;
   }
   return chars;
 }
@@ -404,7 +481,7 @@ function closesQuotation(text: string, index: number, close: string): boolean {
 
 function opensSpanBefore(line: string, searchable: string, end: number): boolean {
   for (let index = 0; index < end; index++) {
-    if (searchable[index] === "`" || quotationClose(line, searchable, index) !== null) return true;
+    if ((searchable[index] === "`" && !escaped(line, index)) || quotationClose(line, searchable, index) !== null) return true;
   }
   return false;
 }
@@ -418,7 +495,7 @@ function referenceDefinitions(text: string): { definitions: Map<string, string |
   const state = inlineState();
   let pending: { key: string; number: number } | null = null;
   for (const line of unquotedLines(text)) {
-    const inSpan = continuesParagraph(line, state.previous) && (state.code !== 0 || state.quote !== null);
+    const inSpan = followsParagraph(line, state.previous) && (state.code !== 0 || state.quote !== null);
     const visible = visibleText(line, state);
     if (pending !== null) {
       const continuation = line.number === pending.number + 1 ? line.text.match(DEFINITION_CONTINUATION) : null;
@@ -466,7 +543,8 @@ function* searchableLines(file: string, text: string): Generator<{ line: LiveLin
   let code = 0;
   let quote: string | null = null;
   for (const line of unquotedLines(text)) {
-    if (line.number !== previous + 1 || line.text.trim() === "" || opensBlock(line.text)) {
+    const carried = state.code !== 0 || state.quote !== null;
+    if (!(carried ? followsParagraph(line, previous) : continuesParagraph(line, previous))) {
       brackets = 0;
       code = 0;
       quote = null;
@@ -489,8 +567,10 @@ function* searchableLines(file: string, text: string): Generator<{ line: LiveLin
     let carriedCode = code !== 0;
     let codeClose = carriedCode ? line.text.length : 0;
     for (const run of runs) {
-      if (code === 0) code = run[0].length;
-      else if (run[0].length === code) {
+      if (code === 0) {
+        const length = run[0].length - (escaped(line.text, run.index) ? 1 : 0);
+        if (length > 0) code = length;
+      } else if (run[0].length === code) {
         code = 0;
         if (carriedCode) {
           codeClose = run.index + run[0].length;
@@ -506,6 +586,10 @@ function* searchableLines(file: string, text: string): Generator<{ line: LiveLin
           quoteClose ??= index + 1;
         }
       } else quote = quotationClose(line.text, visible.text, index);
+    }
+    if (state.commentLead) {
+      code = 0;
+      quote = null;
     }
     const carriedUntil = Math.max(bracketsClose ?? line.text.length, codeClose, quoteClose ?? line.text.length);
     const openers = searchable.split("").fill(" ", 0, codeClose);

@@ -3,7 +3,7 @@ import { readFileSync, readdirSync, realpathSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { angledTargetText, holdsRoleFile } from "./lifecycle-constants.ts";
-import { carriesStatusHeader } from "./goal-structure.ts";
+import { carriesStatusHeader, markdownLines } from "./goal-structure.ts";
 import { compactionSections, slugAllocator, taskState } from "./task-state.ts";
 
 const CONTEXT_FILE = "CONTEXT.md";
@@ -14,7 +14,6 @@ const LEDGER_FILE = "observations.md";
 const DERIVED_ROLE_FILES: ReadonlySet<string> = new Set([LEDGER_FILE]);
 const USAGE = "usage: node scripts/sweep-scope.ts <task-dir>";
 
-const FENCE = /^([ \t]*)(`{3,}|~{3,})[ \t]*(.*)$/;
 const HEADING = /^#{1,6}[ \t]+(.+?)[ \t]*#*$/;
 const HEADING_LEVEL = /^(#{1,6})[ \t]/;
 const REFERENCES_HEADING = /^references\b/i;
@@ -88,20 +87,7 @@ class Exit extends Error {
 }
 
 function* liveLines(text: string): Generator<string> {
-  let fence: { indent: number; char: string; len: number } | null = null;
-  for (const raw of text.split("\n")) {
-    const line = raw.replace(/\r$/, "");
-    const marker = line.match(FENCE);
-    if (marker) {
-      const [, pad, run, rest] = marker;
-      if (!fence) fence = { indent: pad.length, char: run[0], len: run.length };
-      else if (pad.length <= fence.indent && run[0] === fence.char && run.length >= fence.len && rest === "") {
-        fence = null;
-      }
-      continue;
-    }
-    if (!fence) yield line;
-  }
+  for (const line of markdownLines(text)) if (line.live) yield line.visible;
 }
 
 function headingText(line: string): string | null {

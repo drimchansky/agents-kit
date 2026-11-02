@@ -143,6 +143,26 @@ test("a done task archives into a fresh Archive/ beside it", () => {
   assert.deepStrictEqual(containers(parent), ["Archive"], "a created container is capitalized");
 });
 
+test("move eligibility reads live status after comment-contained fences", () => {
+  for (const marker of ["```", "~~~"]) for (const eol of ["\n", "\r\n"]) {
+    for (const [status, target, exit] of [["done", "archive", 0], ["to-do", "backlog", 0], ["blocked", "archive", 1], ["blocked", "backlog", 1]] as const) {
+      const parent = area(`comment-fence-${marker[0]}-${eol.length}-${status}-${target}`);
+      const text = `<!-- illustrative\n${marker}\n**Status:** done\n## Example\n-->\n**Status:** ${status}\n## Steps\n`;
+      const src = writeTask(join(parent, "task"), { [PLAN]: text.replaceAll("\n", eol) });
+      const moved = runMove(exit, [src, "--to", target]);
+      if (exit === 0) assertMoved(moved.stdout, src, join(parent, target === "archive" ? "Archive" : "Backlog", "task"));
+      else assertUnmoved(src);
+    }
+  }
+});
+
+test("move eligibility reads live status below an unpaired comment opener", () => {
+  const parent = area("unpaired-opener");
+  const src = writeTask(join(parent, "task"), { [PLAN]: "# Plan: strip <!-- markers\n\n**Status:** done\n## Steps\n" });
+  const moved = runMove(0, [src, "--to", "archive"]);
+  assertMoved(moved.stdout, src, join(parent, "Archive", "task"));
+});
+
 test("a skipped task archives on the same terminal set", () => {
   const parent = area("archive-skipped");
   const src = writeTask(join(parent, "abandoned"), { [PLAN]: plan("skipped") });
@@ -1324,4 +1344,58 @@ test("a bare `.`, `..`, or empty subject names no task folder", () => {
 
   assertUnmoved(tasks);
   assert.strictEqual(exists(join(project, ".agents", "Backlog")), false, "the store itself never moved");
+});
+
+test("move eligibility reads live status after a comment that follows a heading's open quotation", () => {
+  const parent = area("heading-quote-comment");
+  const text = "# Plan: retry the \"draft\n<!-- example of a finished header\n**Status:** done\n-->\n**Status:** blocked\n## Steps\n";
+  const src = writeTask(join(parent, "task"), { [PLAN]: text });
+  const { stderr } = runMove(1, [src, "--to", "archive"]);
+  assertIncludes(stderr, "blocked", "the refusal names the live status");
+  assertUnmoved(src);
+  assert.deepStrictEqual(containers(parent), [], "a refused move creates no container");
+});
+
+test("move eligibility reads live status after a comment whose closing line leaves a code span open", () => {
+  const parent = area("closer-code-comment");
+  const text = "# Plan\n<!-- example\n## Example\n--> `\nSee <!-- retired header\n**Status:** done\n-->\n**Status:** blocked\n## Steps\n";
+  const src = writeTask(join(parent, "task"), { [PLAN]: text });
+  const { stderr } = runMove(1, [src, "--to", "archive"]);
+  assertIncludes(stderr, "blocked", "the refusal names the live status");
+  assertUnmoved(src);
+  assert.deepStrictEqual(containers(parent), [], "a refused move creates no container");
+});
+
+test("move eligibility reads live status after a mid-line comment that follows an unclosed code span", () => {
+  const parent = area("stray-tick-comment");
+  const text = "# Plan\nIntro with a stray ` tick.\nSee <!-- retired header\n**Status:** done\n-->\n**Status:** blocked\n## Steps\n";
+  const src = writeTask(join(parent, "task"), { [PLAN]: text });
+  const { stderr } = runMove(1, [src, "--to", "archive"]);
+  assertIncludes(stderr, "blocked", "the refusal names the live status");
+  assertUnmoved(src);
+  assert.deepStrictEqual(containers(parent), [], "a refused move creates no container");
+});
+
+test("archiving skips a status label holding only formatting and reads the plain status below it", () => {
+  const parent = area("formatting-only-label-archive");
+  const src = writeTask(join(parent, "task"), { [PLAN]: "# Plan\n\n**Status:**\nStatus: done\n## Steps\n" });
+  const { stdout } = runMove(0, [src, "--to", "archive"]);
+  assertMoved(stdout, src, join(parent, "Archive", "task"));
+});
+
+test("parking skips a status label holding only formatting and reads the plain status below it", () => {
+  const parent = area("formatting-only-label-backlog");
+  const src = writeTask(join(parent, "task"), { [PLAN]: "# Plan\n\n**Status:**\nStatus: to-do\n## Steps\n" });
+  const { stdout } = runMove(0, [src, "--to", "backlog"]);
+  assertMoved(stdout, src, join(parent, "Backlog", "task"));
+});
+
+test("a status label whose only value is a comment reads as absent", () => {
+  const parent = area("comment-only-label");
+  const src = writeTask(join(parent, "task"), { [PLAN]: "# Plan\n\n**Status:** <!-- done -->\n## Steps\n" });
+  const { stderr } = runMove(1, [src, "--to", "archive"]);
+  assertIncludes(stderr, "plan status `absent`", "the refusal names the status as absent");
+  assert.ok(!stderr.includes("status ``"), `the refusal names no empty status (got "${stderr}")`);
+  assertUnmoved(src);
+  assert.deepStrictEqual(containers(parent), [], "a refused move creates no container");
 });
