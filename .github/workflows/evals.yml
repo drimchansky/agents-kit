@@ -1,0 +1,295 @@
+name: Evals
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    paths:
+      - 'skills/**'
+      - 'references/**'
+      - 'agents/**'
+      - 'CORE_RULES.md'
+      - 'evals/**'
+      - '.github/workflows/evals.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}${{ (github.event.action == 'labeled' || github.event.action == 'unlabeled') && github.event.label.name != 'eval-authoring' && format('-{0}', github.run_id) || '' }}
+  cancel-in-progress: true
+
+env:
+  EVAL_MODE: ${{ contains(github.event.pull_request.labels.*.name, 'eval-authoring') && 'authoring' || 'gate' }}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  eval:
+    name: Run evals
+    if: >-
+      github.actor != 'dependabot[bot]' &&
+      (github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
+      ((github.event.action != 'labeled' && github.event.action != 'unlabeled') ||
+      github.event.label.name == 'eval-authoring')))
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out (actions/checkout v7.0.1)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Record source identity
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          checked_out_sha=$(git rev-parse HEAD)
+          mkdir -p evals/results
+          jq -n \
+            --arg checkedOutSha "$checked_out_sha" \
+            --arg prHeadSha "$PR_HEAD_SHA" \
+            --arg prBaseSha "$PR_BASE_SHA" \
+            --arg mode "$EVAL_MODE" \
+            --arg runId "$GITHUB_RUN_ID" \
+            --arg eventName "$GITHUB_EVENT_NAME" \
+            '$ARGS.named' > evals/results/source.json
+
+      - name: Set up Node (actions/setup-node v7.1.0)
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Install Claude Code
+        run: |
+          npm install -g @anthropic-ai/claude-code@2.1.316
+          version=$(claude --version)
+          echo "$version"
+          if [ "${version%% *}" != 2.1.316 ]; then
+            echo "::error::Expected Claude Code 2.1.316, got $version."
+            exit 1
+          fi
+
+      - name: Install sandbox prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes bubblewrap socat
+          if [ "$(sysctl -n kernel.apparmor_restrict_unprivileged_userns 2>/dev/null)" = 1 ]; then
+            sudo tee /etc/apparmor.d/bwrap > /dev/null <<'EOF'
+          abi <abi/4.0>,
+          include <tunables/global>
+
+          profile bwrap /usr/bin/bwrap flags=(unconfined) {
+            userns,
+            include if exists <local/bwrap>
+          }
+          EOF
+            sudo systemctl reload apparmor
+          fi
+
+      - name: Verify the sandbox starts
+        run: bwrap --unshare-user --unshare-all --new-session --die-with-parent --ro-bind / / --dev /dev --proc /proc /bin/true
+
+      - name: Find changed eval cases
+        if: ${{ env.EVAL_MODE == 'authoring' }}
+        env:
+          PR_ACTION: ${{ github.event.action }}
+          BEFORE_SHA: ${{ github.event.before }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ "$PR_ACTION" = synchronize ] && git cat-file -e "$BEFORE_SHA^{commit}" 2>/dev/null; then
+            git diff --name-only "$BEFORE_SHA" "$PR_HEAD_SHA" -- evals/ > "$RUNNER_TEMP/changed-paths.txt"
+          else
+            git diff --name-only "$PR_BASE_SHA...$PR_HEAD_SHA" -- evals/ > "$RUNNER_TEMP/changed-paths.txt"
+          fi
+          awk -F/ 'NF > 2 && $2 != "results" { print $2 }' "$RUNNER_TEMP/changed-paths.txt" | sort -u > "$RUNNER_TEMP/changed-dirs.txt"
+          mkdir -p evals/results/authoring
+          : > evals/results/authoring/cases.txt
+          while IFS= read -r case; do
+            if [ -f "evals/$case/prompt.md" ] || [ -f "evals/$case/case.yaml" ]; then
+              echo "$case" >> evals/results/authoring/cases.txt
+            fi
+          done < "$RUNNER_TEMP/changed-dirs.txt"
+          if [ ! -s evals/results/authoring/cases.txt ]; then
+            echo "No eval case changed in this push." > evals/results/no-changed-case
+          fi
+
+      - name: Run evals
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          API_KEY_PRESENT: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+          CLAUDE_CODE_SUBPROCESS_ENV_SCRUB: '1'
+        run: |
+          if [ "$API_KEY_PRESENT" != true ]; then
+            echo "::error::The Anthropic API key repository secret is empty."
+            exit 1
+          fi
+          if [ "$EVAL_MODE" = gate ]; then
+            mkdir -p evals/results/gate
+            claude plugin eval . --tag regression --json --threshold 0.8 --trust-plugin --scaffold --allow-tools Bash Write Edit --disallow-tools Agent --ablation none --runs 3 --model claude-opus-5-5 --judge-model claude-haiku-4-5 --no-publish --output-dir evals/results/gate --report evals/results/gate/report.html
+            exit 0
+          fi
+          failed=0
+          while IFS= read -r case <&3; do
+            mkdir -p "evals/results/authoring/$case"
+            claude plugin eval . --case "$case" --trust-plugin --scaffold --allow-tools Bash Write Edit --disallow-tools Agent --ablation with-without --runs 3 --threshold 0.8 --model claude-opus-5-5 --judge-model claude-haiku-4-5 --no-publish --keep-temp --output-dir "evals/results/authoring/$case" --report "evals/results/authoring/$case/report.html" || failed=1
+          done 3< evals/results/authoring/cases.txt
+          exit "$failed"
+
+      - name: Collect traces and workspaces
+        if: ${{ !cancelled() && env.EVAL_MODE == 'authoring' }}
+        run: |
+          shopt -s nullglob
+          for report in evals/results/authoring/*/aggregate-result.json; do
+            traces_dir="$(dirname "$report")/traces"
+            mkdir -p "$traces_dir"
+            for arm in with without; do
+              n=0
+              while IFS= read -r trace; do
+                n=$((n + 1))
+                if [ -z "$trace" ]; then
+                  continue
+                fi
+                if [ -f "$trace" ]; then
+                  cp "$trace" "$traces_dir/$arm-$n.jsonl"
+                fi
+                temp_dir=$(dirname "$(dirname "$trace")")
+                if [ "$arm" = with ] && [ -d "$temp_dir/sealed" ]; then
+                  chmod 700 "$temp_dir" "$temp_dir/sealed"
+                  tar --exclude=.claude -czf "$traces_dir/with-$n-workspace.tgz" -C "$temp_dir/sealed/home" cwd
+                fi
+              done < <(jq -r --arg arm "$arm" '.cases[].arms[$arm] // [] | .[] | .tracePath // ""' "$report")
+            done
+          done
+
+      - name: Fail when a report is missing
+        id: no-results
+        if: ${{ !cancelled() }}
+        run: |
+          if [ "$EVAL_MODE" = gate ]; then
+            if [ ! -f evals/results/gate/report.html ]; then
+              echo "::error::evals/results/gate/report.html was not written."
+              exit 1
+            fi
+            exit 0
+          fi
+          if [ -f evals/results/no-changed-case ]; then
+            exit 0
+          fi
+          if [ ! -s evals/results/authoring/cases.txt ]; then
+            echo "::error::The changed-case list was not written."
+            exit 1
+          fi
+          missing=0
+          while IFS= read -r case; do
+            if [ ! -f "evals/results/authoring/$case/report.html" ]; then
+              echo "::error::evals/results/authoring/$case/report.html was not written."
+              missing=1
+            fi
+          done < evals/results/authoring/cases.txt
+          exit "$missing"
+
+      - name: Upload results (actions/upload-artifact v7.0.2)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: eval-results
+          path: evals/results/
+          if-no-files-found: error
+          retention-days: 14
+
+  comment:
+    name: Post results
+    needs: eval
+    if: ${{ !cancelled() && github.event_name == 'pull_request' && needs.eval.result != 'skipped' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Download results (actions/download-artifact v8.0.2)
+        continue-on-error: true
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          name: eval-results
+          path: results
+
+      - name: Render the comment
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          EVAL_RESULT: ${{ needs.eval.result }}
+        run: |
+          shopt -s nullglob
+          reports=(results/*/aggregate-result.json results/authoring/*/aggregate-result.json)
+          no_change=no
+          if [ -f results/no-changed-case ]; then
+            no_change=yes
+          fi
+          cat > render.jq <<'JQ'
+          def two: (. * 100 | fabs | round) as $cents
+            | "\($cents / 100 | floor).\($cents % 100 | tostring | if length < 2 then "0" + . else . end)";
+          def number: if . == null then "n/a" else two end;
+          def signed: if . == null then "n/a" elif . < 0 then "-" + two else "+" + two end;
+          def runs:
+            .arms
+            | to_entries
+            | map(.key as $arm | .value | to_entries | map(.value + {arm: $arm, n: (.key + 1)}))
+            | add // [];
+          def case_line:
+            .aggregates as $scores
+            | "- \(if ($scores.score // 0) >= 0.8 then "PASS" else "FAIL" end) \(.name): score \($scores.score | number)"
+              + (if $mode == "authoring" then ", without \($scores.scoreWithout | number), delta \($scores.delta | signed)" else "" end)
+              + ", cost $\(runs | map(.costUsd // 0) | add // 0 | number)";
+          def error_lines:
+            .name as $name
+            | runs
+            | map(select(.error != null) | "- Error in \($name), \(.arm) run \(.n): \(.error | tostring | gsub("\\s+"; " "))");
+          [inputs] as $reports
+          | ($reports | map(.cases[])) as $cases
+          | [
+              "<!-- agents-kit-evals -->",
+              "## Eval results",
+              "",
+              "- Mode: \($mode)",
+              "- Commit: \($sha)",
+              "- Result: \($result)",
+              "- Run: \($run_url)",
+              ""
+            ]
+            + if $no_change == "yes" then
+                ["No eval case changed in this push."]
+              elif ($reports | length) == 0 then
+                ["No eval report was produced. See the workflow run."]
+              else
+                ($cases | map(case_line))
+                + ($cases | map(error_lines) | add // [])
+                + ($reports | map(select(.partial) | "- Partial run: \(.partialReason // "no reason given")"))
+                + ["- Total cost: $\($reports | map(.costUsd // 0) | add | number)"]
+              end
+          | .[]
+          JQ
+          jq -n -r \
+            --arg mode "$EVAL_MODE" \
+            --arg sha "$PR_HEAD_SHA" \
+            --arg result "$EVAL_RESULT" \
+            --arg run_url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --arg no_change "$no_change" \
+            -f render.jq "${reports[@]}" < /dev/null > comment.md
+
+      - name: Create or update the comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          comment_id=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments?per_page=100" --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("<!-- agents-kit-evals -->"))) | .id' | head -n 1)
+          if [ -n "$comment_id" ]; then
+            gh api --silent -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$comment_id" -F body=@comment.md
+          else
+            gh api --silent -X POST "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" -F body=@comment.md
+          fi
