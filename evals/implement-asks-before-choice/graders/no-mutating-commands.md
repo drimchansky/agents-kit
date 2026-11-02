@@ -1,0 +1,7 @@
+---
+type: regex
+weight: 3
+target: trace
+match: not_contains
+pattern: '"type":"tool_use","id":"[^"]*","name":"Bash","input":\{(?:[^"}]|"(?:[^"\\]|\\.)*")*?"command":"(?:(?=(?:[^"\\]|\\.)*?(?:(?<![-=])>(?![>&]|\s*/dev/)|(?:\\[nrt]|(?<![\w.-]))(?:(?:tee|touch|mkdir|cp|mv|rm|rmdir|ln|truncate|patch|install|dd)\s|(?:sed|perl)(?:\s[^"\\|;&]*?)?\s-(?:\w*i|-in-place))|writeFile|appendFile|createWriteStream|rmSync|unlinkSync|renameSync|copyFileSync|truncateSync|\.write(?:_text|_bytes)?\())(?=(?:[^"\\]|\\.)*?(?:src/|docs/|tools/|\.git/|package\.json|feeds\.js|encodings\.js|warehouse-loader|state-report|ledger))|(?=(?:[^"\\]|\\.)*?(?:(?:\\[nrt]|(?<![\w.-]))(?:[\w.-]*/)*git(?:\s+(?:-C|-c|--git-dir|--work-tree|--namespace|--exec-path|--config-env)(?:=|\s+)(?:[^\s"\\]|\\.)+|\s+--?[\w-]+(?:=(?:[^\s"\\]|\\.)*)?)*\s+(?:(?:add|commit|rm|mv|apply|am|reset|restore|checkout|switch|merge|rebase|cherry-pick|revert|update-index|update-ref|read-tree|clean|pull|fetch|push|notes|replace|filter-branch)(?![\w-])|stash(?![\w-])(?!\s+(?:list|show))|worktree\s+(?:add|remove|move|prune)|tag\s+(?!-l|--list|-n)[^\s"\\|;&)<>-]|branch\s+(?:-[dDmMcCf]|--(?:delete|move|copy|force)|[^\s"\\|;&)<>-]))|(?:executor-run|(?:\\[nrt]|(?<![\w.-]))(?:claude\s+(?:[^"\\|;&]*?\s)?(?:-p|--print)(?![\w-])|codex\s+(?:exec|e)(?![\w-])))|(?:\\[nrt]|(?<![\w.-]))(?:npm|pnpm|yarn|bun)\s+(?:i|install|ci|add|update|uninstall|remove)(?![\w-]))))'
+---
