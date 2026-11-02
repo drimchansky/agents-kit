@@ -1,6 +1,6 @@
 # Test maintenance
 
-Maintainer-only suite commands, dependencies, rationale, and live procedures. Read the relevant suite paragraphs before changing its tests; read the live procedure only when live model calls are requested. Surface-to-suite routing is in `references/maintenance/repository.md` § *Change routing*.
+Maintainer-only suite commands, dependencies, rationale, and live procedures. Read the relevant suite paragraphs before changing its tests. Read § *Skill evals* before running or changing `evals/` cases. Read the live executor procedure only when live executor calls are requested. Surface-to-suite routing is in `references/maintenance/repository.md` § *Change routing*.
 
 Suites use zero dependencies and Node type stripping, like their sources.
 
@@ -50,6 +50,58 @@ Permission cases observe record protection and apply permissions during writes a
 **The `templates` suite fills the five task templates into temporary folders.** Task-state must parse the filled folder as a live task, and health-check must raise no finding on it. Sweep-scope must sweep populated optional sections and the links an in-review result awaits. A minimal folder created without refinement keeps only filled, required sections.
 
 **The `worktree-merge` suite builds real Git repositories.** Cases cover baseline manifests, surface checks, apply receipts, removal gates, git-ignore filtering, index comparison, symlinks, and collision filenames such as `__proto__`.
+
+## Skill evals
+
+`evals/` holds one directory per case for `claude plugin eval`. Each run makes paid model calls in real Claude Code sessions.
+
+**Pins.** The agent model is `claude-opus-5-5`, and the judge model is `claude-haiku-4-5`. Use Claude Code CLI 2.1.316. An unavailable model or CLI version is a run failure; substitute no other.
+
+**Grants.** Both commands pass `--allow-tools Bash Write Edit` and `--disallow-tools Agent`. Each case's `allowed_tools` declares only read-only tools.
+
+**Fixture trust.** `--trust-plugin` and `--scaffold` run each case's scaffold script as the invoking user. Run only case files you have reviewed and trust.
+
+**Tags.** Tags sit in each case's `prompt.md` frontmatter. Eight cases carry `regression`, and the gate runs only those. `pr-description-no-tracker` carries only `capability`. It records the tracker-less `Task: <add ticket link>` gap and stays outside the gate.
+
+**Results.** `evals/results/` is git-ignored. Authoring runs write timestamped directories there unless `--output-dir` names one. The gate reuses `evals/results/gate/`, so preserve a report you need before rerunning it.
+
+### Regression gate
+
+Run the gate from the repository root:
+
+```sh
+claude plugin eval . --tag regression --json --threshold 0.8 --trust-plugin --scaffold --allow-tools Bash Write Edit --disallow-tools Agent --ablation none --runs 3 --model claude-opus-5-5 --judge-model claude-haiku-4-5 --no-publish --output-dir evals/results/gate --report evals/results/gate/report.html
+```
+
+Exit 0 means every regression case scored at least 0.8. Exit 1 covers a case below 0.8 and load or trust failures. It also covers API and usage-limit errors. Such runs score 0 without grading, and the report is not marked partial. A report-writing problem leaves the exit code unchanged, so confirm `evals/results/gate/report.html` exists. One full gate run took about 11 minutes and cost about $4.90. The suite sets no cost ceiling.
+
+### Authoring a case
+
+Run each new or changed case through both arms:
+
+```sh
+claude plugin eval . --case '<case-name>' --trust-plugin --scaffold --allow-tools Bash Write Edit --disallow-tools Agent --ablation with-without --runs 3 --threshold 0.8 --model claude-opus-5-5 --judge-model claude-haiku-4-5 --no-publish --keep-temp
+```
+
+Accept a regression case only with a with-arm score of at least 0.8 and a nonnegative delta. The run must also show no run errors and `partial: false`. Inspect the Skill indicator separately, because two-arm runs leave it unscored.
+
+Omit `--case` to author all nine cases. That run may exit 1 for `pr-description-no-tracker` alone, which fails as expected. Treat any other failure as real, including load, scaffold, model, API, and timeout failures. One complete two-arm run took about 27 minutes and cost about $8.50.
+
+**macOS cannot author Git cases.** Inside the macOS eval sandbox, plain `git` resolves to Apple's `/usr/bin/git` shim and exits 72. Changing `PATH` does not help. Author any case whose skill or fixture runs Git through CI instead. Label a trusted same-repository PR `eval-authoring`. The workflow then runs the authoring command for each case the push changed. A push that changes the workflow runs every case the PR changed. Traces and with-arm workspaces upload as the `eval-results` artifact. It is public on a public repository and kept for 14 days. Inspect downloaded workspaces as data; run no Git command that loads their configuration.
+
+**The Linux sandbox adds workspace entries.** Sandboxed shell commands expose placeholder files such as `.bashrc`, `.gitconfig`, and `.mcp.json` as character devices. Harness folders `.claude/` and `.eval-artifacts` also appear. Observers must skip these entries, and scaffolds should list them in `.git/info/exclude`.
+
+**Skill records depend on invocation.** A confirm-gated skill invoked by the model proposes before working. A typed slash command leaves no skill record in the trace.
+
+### CI
+
+`.github/workflows/evals.yml` runs on pull requests that change `skills/**`, `references/**`, `agents/**`, `CORE_RULES.md`, `evals/**`, or the workflow. `workflow_dispatch` also runs it, for repository branches only. The paid job runs only for same-repository heads and skips Dependabot. It installs Claude Code 2.1.316, checks that version, and sets up Node 24. Root `AGENTS.md` § *The `.ts` sources are unchecked by design* states the floor for `.ts` sources.
+
+Without the `eval-authoring` label, the job runs the gate command above verbatim. With the label, it runs the authoring command per changed case. A separate job keeps one PR comment current with the mode, head SHA, per-case scores, errors, and cost.
+
+`ANTHROPIC_API_KEY` is a repository secret scoped to the eval step. Eval runs set `TMPDIR` to the runner temp directory, because sandboxed shells cannot write under `/tmp`. Files holding an Anthropic key-shaped string are removed before upload.
+
+Fork PRs and secret-restricted Dependabot PRs get no paid job and claim no eval pass. To evaluate one, a maintainer moves the reviewed revision to a trusted branch. Record both the reviewed and the evaluated revision. The fork and Dependabot guards are verified only by reading the workflow. A live fork or Dependabot observation is still pending.
 
 ## Opt-in live executor smoke
 
