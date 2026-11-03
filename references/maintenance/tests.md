@@ -1,6 +1,6 @@
 # Test maintenance
 
-Maintainer-only suite commands, dependencies, rationale, and live procedures. Read the relevant suite paragraphs before changing its tests; read the live procedure only when live model calls are requested. Surface-to-suite routing is in `references/maintenance/repository.md` § *Change routing*.
+Maintainer-only testing strategy, suite commands, dependencies, rationale, and live procedures. Read § *Testing strategy* before adding or retaining a check. Read the relevant suite paragraphs before changing its tests; read the live procedure only when live model calls are requested. Surface-to-suite routing is in `references/maintenance/repository.md` § *Change routing*.
 
 Suites use zero dependencies and Node type stripping, like their sources.
 
@@ -10,6 +10,29 @@ node --test "tests/*.test.ts"
 ```
 
 Quote the glob for the runner to expand it. A bare directory would be resolved as a module path.
+
+## Testing strategy
+
+Apply `references/engineering/testing.md` for generic test practice. This section adds the project's check kinds, limits, and retention rules.
+
+Suites use four kinds of checks:
+
+- **Behavioral checks** run a helper, its exported functions, or `setup.ts` against temporary fixtures. They assert outputs, exit codes, written and preserved files, Git state, and process lifecycle.
+- **Structural checks** read corpus files for formats that helpers, installers, or other sources consume mechanically. They check citations, cited headings, registries, markers, and adapter fields. They assert no instruction wording.
+- **Template and snippet checks** fill the task templates or extract a skill's embedded shell program. They run real helpers or that program over the result.
+- **CLI integration checks** spawn a helper and assert its status, stdout, stderr, and process behavior. Run input-validation variants through the exported API. Keep representative CLI cases for refusal status, diagnostics, and the absence of a launched child.
+
+The default suite proves neither agent compliance with instructions nor real vendor CLI behavior. Review instruction-following behavior manually. Fake vendor CLIs prove the helper's transport only.
+
+**Isolation.** Cases that write files or run helpers work under temporary homes, stores, and checkouts. Default runs read no real home or credentials, launch no real vendor CLI, and reach no network. Cases that differ in input, permissions, clock, or process behavior get separate executions.
+
+**Scenario reuse.** When several tests assert on one unchanged argument set, run it once in a `describe` scenario's `before` hook. Freeze the captured result so a test that mutates it fails. Selecting one test then runs only its scenario, and a failed setup cancels only that scenario's tests. The suite paragraphs below name the cases kept separate.
+
+**Fault-based retention.** Keep an assertion when a plausible fault in the covered code or source makes it fail. Remove assertions that only confirm the test's own fixture or construction. Name each test for the behavior it exercises, including the limits of fixtures that stand in for agent or vendor actions.
+
+**Routine verification.** `node --test "tests/*.test.ts"` runs offline and makes no model calls. The live Codex doctor probe and the live executor smoke stay opt-in under their own procedures below.
+
+## Suite notes
 
 **The `pr-comments` suite never reaches the real CLI or the network.** Cases use fixture pages, arguments rejected before fetching, or a fake `gh` first on PATH. Cases requiring live CLI or network access do not belong here.
 
