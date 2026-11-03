@@ -21,7 +21,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
-import { after, before, test, type TestContext } from "node:test";
+import { after, before, describe, test, type TestContext } from "node:test";
 import { fileURLToPath } from "node:url";
 
 const TESTS_DIR = dirname(fileURLToPath(import.meta.url));
@@ -192,8 +192,10 @@ function runCheck(args: readonly string[]): CheckRun {
     `health-check.ts exited ${run.status} (the contract requires exit 0) for: ${args.join(" ")}\n` +
       `${run.stderr ?? run.error?.message ?? ""}`,
   );
-  const report: Report = JSON.parse(run.stdout);
-  return { report, stderr: run.stderr };
+  const report: Report = JSON.parse(run.stdout, (_key, value) =>
+    typeof value === "object" && value !== null ? Object.freeze(value) : value,
+  );
+  return Object.freeze({ report, stderr: run.stderr });
 }
 
 function findingCount(report: Report, check?: string): number {
@@ -568,49 +570,164 @@ after(() => {
   rmSync(TEST_ROOT, { recursive: true, force: true });
 });
 
-test("a readable store scans without warnings and exits 0", () => {
-  const { stderr } = runCheck(STORE_ARGS);
-  assert.strictEqual(stderr, "", "a readable fixture store must produce no warnings");
-});
+describe("the fixture store, scanned once", () => {
+  let storeRun: CheckRun;
+  before(() => {
+    storeRun = runCheck(STORE_ARGS);
+  });
 
-test("scanned counts every task folder, archived and backlogged ones included", () => {
-  const { report } = runCheck(STORE_ARGS);
-  assert.strictEqual(report.scanned, 13, "scanned task count");
-  assert.strictEqual(report.unreadable, 0, "a readable store reports nothing unread");
-});
+  test("a readable store scans without warnings and exits 0", () => {
+    const { stderr } = storeRun;
+    assert.strictEqual(stderr, "", "a readable fixture store must produce no warnings");
+  });
 
-test("a plan status outside the vocabulary is reported rather than silently exempted", () => {
-  const { report } = runCheck(STORE_ARGS);
-  assert.strictEqual(findingCount(report, "unknown-status"), 1, "unknown-status finding count");
-  assert.strictEqual(
-    findingDetail(report, "unknown-status", "store/unknown-status"),
-    "plan.md carries an unrecognized status: in progress",
-    "unknown-status detail carries the value the file actually holds",
-  );
-  assert.strictEqual(
-    findingDetail(report, "stale", "store/unknown-status"),
-    "",
-    "an unclassifiable status is reported once, under its own check",
-  );
-});
+  test("scanned counts every task folder, archived and backlogged ones included", () => {
+    const { report } = storeRun;
+    assert.strictEqual(report.scanned, 13, "scanned task count");
+    assert.strictEqual(report.unreadable, 0, "a readable store reports nothing unread");
+  });
 
-test("a legacy result status is reported as legacy and never as an unrecognized status", () => {
-  const { report } = runCheck(STORE_ARGS);
-  assert.strictEqual(
-    findingCount(report, "legacy-result-status"),
-    1,
-    "legacy-result-status finding count",
-  );
-  assert.strictEqual(
-    findingDetail(report, "legacy-result-status", "store/legacy-result-status"),
-    "result.md carries a legacy **Status:** header (shipped onwards); plan.md owns the lifecycle",
-    "the legacy finding names the file and the value it still carries",
-  );
-  assert.deepStrictEqual(
-    report.findings.filter((entry) => entry.path === "store/legacy-result-status").map((entry) => entry.check),
-    ["legacy-result-status"],
-    "a result-side status produces no unknown-status and no other finding",
-  );
+  test("a plan status outside the vocabulary is reported rather than silently exempted", () => {
+    const { report } = storeRun;
+    assert.strictEqual(findingCount(report, "unknown-status"), 1, "unknown-status finding count");
+    assert.strictEqual(
+      findingDetail(report, "unknown-status", "store/unknown-status"),
+      "plan.md carries an unrecognized status: in progress",
+      "unknown-status detail carries the value the file actually holds",
+    );
+    assert.strictEqual(
+      findingDetail(report, "stale", "store/unknown-status"),
+      "",
+      "an unclassifiable status is reported once, under its own check",
+    );
+  });
+
+  test("a legacy result status is reported as legacy and never as an unrecognized status", () => {
+    const { report } = storeRun;
+    assert.strictEqual(
+      findingCount(report, "legacy-result-status"),
+      1,
+      "legacy-result-status finding count",
+    );
+    assert.strictEqual(
+      findingDetail(report, "legacy-result-status", "store/legacy-result-status"),
+      "result.md carries a legacy **Status:** header (shipped onwards); plan.md owns the lifecycle",
+      "the legacy finding names the file and the value it still carries",
+    );
+    assert.deepStrictEqual(
+      report.findings.filter((entry) => entry.path === "store/legacy-result-status").map((entry) => entry.check),
+      ["legacy-result-status"],
+      "a result-side status produces no unknown-status and no other finding",
+    );
+  });
+
+  test("a 62-day-old executing task is reported stale with its status and age", () => {
+    const { report } = storeRun;
+    assert.strictEqual(findingCount(report, "stale"), 2, "stale finding count");
+    assert.strictEqual(
+      findingDetail(report, "stale", "store/stale-executing"),
+      "executing, 62 days stale",
+      "stale detail for store/stale-executing",
+    );
+  });
+
+  test("a 2-day-old executing task is not reported stale", () => {
+    const { report } = storeRun;
+    assert.strictEqual(
+      findingDetail(report, "stale", "store/fresh-executing"),
+      "",
+      "fresh task must not be reported stale",
+    );
+  });
+
+  test("a plan with no parseable status is reported stale under a named label, not an empty value", () => {
+    const { report } = storeRun;
+    assert.strictEqual(
+      findingDetail(report, "stale", "store/no-status-plan"),
+      "no-status, 70 days stale",
+      "stale detail for a plan carrying no parseable status",
+    );
+  });
+
+  test("a done task outside Archive/ is reported with its status", () => {
+    const { report } = storeRun;
+    assert.strictEqual(findingCount(report, "done-unarchived"), 2, "done-unarchived finding count");
+    assert.strictEqual(
+      findingDetail(report, "done-unarchived", "store/done-unarchived"),
+      "done, outside Archive/",
+      "done-unarchived detail for store/done-unarchived",
+    );
+  });
+
+  test("a **Completed prose header on a plan-less result is not a done task", () => {
+    const { report } = storeRun;
+    assert.deepStrictEqual(
+      report.findings.filter((entry) => entry.path === "store/completed-prose"),
+      [],
+      "a `**Completed steps:**` header is prose, not the closing line a done plan owes",
+    );
+  });
+
+  test("a done task parked in Backlog/ is reported as misfiled, not merely unarchived", () => {
+    const { report } = storeRun;
+    assert.strictEqual(
+      findingDetail(report, "done-unarchived", "store/Backlog/done-parked"),
+      "done, parked in Backlog/ — belongs in Archive/",
+      "done-unarchived detail for a terminal task inside a backlog",
+    );
+  });
+
+  test("a parked to-do task produces no findings, its 70-day age included", () => {
+    const { report } = storeRun;
+    assert.deepStrictEqual(
+      report.findings.filter((entry) => entry.path === "store/Backlog/parked-todo"),
+      [],
+      "an aged to-do task inside a backlog must stay silent",
+    );
+  });
+
+  test("a live task parked in Backlog/ is reported under started-in-backlog", () => {
+    const { report } = storeRun;
+    assert.strictEqual(findingCount(report, "started-in-backlog"), 3, "started-in-backlog finding count");
+    assert.strictEqual(
+      findingDetail(report, "started-in-backlog", "store/Backlog/started-parked"),
+      "executing, parked in Backlog/ — a parked task must be unstarted",
+      "started-in-backlog detail for a live parked task",
+    );
+  });
+
+  test("a parked plan with no parseable status is reported as unjudgeable, not left silent", () => {
+    const { report } = storeRun;
+    assert.strictEqual(
+      findingDetail(report, "started-in-backlog", "store/Backlog/statusless-parked"),
+      "no parseable plan status, parked in Backlog/ — cannot judge the entry gate",
+      "the stale exemption must not silence a statusless parked plan",
+    );
+  });
+
+  test("a plan-less parked folder holding a result.md at all is reported as started", () => {
+    const { report } = storeRun;
+    assert.strictEqual(
+      findingDetail(report, "started-in-backlog", "store/Backlog/resultonly-parked"),
+      "no plan.md but result.md exists, parked in Backlog/ — a parked task must be unstarted",
+      "an existing result file must fail the entry gate for a plan-less parked folder",
+    );
+  });
+
+  test("an archived task produces no findings", () => {
+    const { report } = storeRun;
+    assert.strictEqual(
+      findingDetail(report, "done-unarchived", "store/Archive/done-archived"),
+      "",
+      "archived task must not be reported done-unarchived",
+    );
+    assert.strictEqual(
+      findingDetail(report, "stale", "store/Archive/done-archived"),
+      "",
+      "archived task must not be reported stale",
+    );
+    assert.strictEqual(findingCount(report), 9, "total finding count");
+  });
 });
 
 test("a legacy CONTEXT.md status is tolerated and produces no finding", () => {
@@ -621,114 +738,6 @@ test("a legacy CONTEXT.md status is tolerated and produces no finding", () => {
     "a CONTEXT.md carrying a legacy **Status:** line raises nothing",
   );
   assert.strictEqual(report.scanned, 1, "the legacy-context root holds the one fixture folder");
-});
-
-test("a 62-day-old executing task is reported stale with its status and age", () => {
-  const { report } = runCheck(STORE_ARGS);
-  assert.strictEqual(findingCount(report, "stale"), 2, "stale finding count");
-  assert.strictEqual(
-    findingDetail(report, "stale", "store/stale-executing"),
-    "executing, 62 days stale",
-    "stale detail for store/stale-executing",
-  );
-});
-
-test("a 2-day-old executing task is not reported stale", () => {
-  const { report } = runCheck(STORE_ARGS);
-  assert.strictEqual(
-    findingDetail(report, "stale", "store/fresh-executing"),
-    "",
-    "fresh task must not be reported stale",
-  );
-});
-
-test("a plan with no parseable status is reported stale under a named label, not an empty value", () => {
-  const { report } = runCheck(STORE_ARGS);
-  assert.strictEqual(
-    findingDetail(report, "stale", "store/no-status-plan"),
-    "no-status, 70 days stale",
-    "stale detail for a plan carrying no parseable status",
-  );
-});
-
-test("a done task outside Archive/ is reported with its status", () => {
-  const { report } = runCheck(STORE_ARGS);
-  assert.strictEqual(findingCount(report, "done-unarchived"), 2, "done-unarchived finding count");
-  assert.strictEqual(
-    findingDetail(report, "done-unarchived", "store/done-unarchived"),
-    "done, outside Archive/",
-    "done-unarchived detail for store/done-unarchived",
-  );
-});
-
-test("a **Completed prose header on a plan-less result is not a done task", () => {
-  const { report } = runCheck(STORE_ARGS);
-  assert.deepStrictEqual(
-    report.findings.filter((entry) => entry.path === "store/completed-prose"),
-    [],
-    "a `**Completed steps:**` header is prose, not the closing line a done plan owes",
-  );
-});
-
-test("a done task parked in Backlog/ is reported as misfiled, not merely unarchived", () => {
-  const { report } = runCheck(STORE_ARGS);
-  assert.strictEqual(
-    findingDetail(report, "done-unarchived", "store/Backlog/done-parked"),
-    "done, parked in Backlog/ — belongs in Archive/",
-    "done-unarchived detail for a terminal task inside a backlog",
-  );
-});
-
-test("a parked to-do task produces no findings, its 70-day age included", () => {
-  const { report } = runCheck(STORE_ARGS);
-  assert.deepStrictEqual(
-    report.findings.filter((entry) => entry.path === "store/Backlog/parked-todo"),
-    [],
-    "an aged to-do task inside a backlog must stay silent",
-  );
-});
-
-test("a live task parked in Backlog/ is reported under started-in-backlog", () => {
-  const { report } = runCheck(STORE_ARGS);
-  assert.strictEqual(findingCount(report, "started-in-backlog"), 3, "started-in-backlog finding count");
-  assert.strictEqual(
-    findingDetail(report, "started-in-backlog", "store/Backlog/started-parked"),
-    "executing, parked in Backlog/ — a parked task must be unstarted",
-    "started-in-backlog detail for a live parked task",
-  );
-});
-
-test("a parked plan with no parseable status is reported as unjudgeable, not left silent", () => {
-  const { report } = runCheck(STORE_ARGS);
-  assert.strictEqual(
-    findingDetail(report, "started-in-backlog", "store/Backlog/statusless-parked"),
-    "no parseable plan status, parked in Backlog/ — cannot judge the entry gate",
-    "the stale exemption must not silence a statusless parked plan",
-  );
-});
-
-test("a plan-less parked folder holding a result.md at all is reported as started", () => {
-  const { report } = runCheck(STORE_ARGS);
-  assert.strictEqual(
-    findingDetail(report, "started-in-backlog", "store/Backlog/resultonly-parked"),
-    "no plan.md but result.md exists, parked in Backlog/ — a parked task must be unstarted",
-    "an existing result file must fail the entry gate for a plan-less parked folder",
-  );
-});
-
-test("an archived task produces no findings", () => {
-  const { report } = runCheck(STORE_ARGS);
-  assert.strictEqual(
-    findingDetail(report, "done-unarchived", "store/Archive/done-archived"),
-    "",
-    "archived task must not be reported done-unarchived",
-  );
-  assert.strictEqual(
-    findingDetail(report, "stale", "store/Archive/done-archived"),
-    "",
-    "archived task must not be reported stale",
-  );
-  assert.strictEqual(findingCount(report), 9, "total finding count");
 });
 
 test("an unreadable task file reaches the contract, not only stderr", (t: TestContext) => {
@@ -846,65 +855,192 @@ test("findings from same-basename roots remain unambiguous through the root fiel
   );
 });
 
-test("a checked step whose anchor is missing from the result file is reported, a resolving one is not", () => {
-  const { report, stderr } = runCheck(ANCHORS_ARGS);
-  assert.strictEqual(stderr, "", "the anchor fixtures must produce no warnings");
-  assert.strictEqual(report.scanned, 14, "scanned count for the anchor fixtures");
-  assert.strictEqual(findingCount(report, "dead-anchor"), 6, "dead-anchor finding count");
-  assert.deepStrictEqual(
-    findingDetails(report, "dead-anchor", "anchors/dead-anchor"),
-    [
-      "Step 2: anchor not found: #step-2--never-written in ./result.md",
-      "Step 2a: anchor not found: #step-2a--never-written in ./result.md",
-    ],
-    "dead-anchor details for unresolvable anchors, the inserted step labelled by its own number",
-  );
-});
+describe("the anchor fixtures, scanned once", () => {
+  let anchorsRun: CheckRun;
+  before(() => {
+    anchorsRun = runCheck(ANCHORS_ARGS);
+  });
 
-test("a checked step with no result link is reported; a checkpoint checkbox is not a step", () => {
-  const { report } = runCheck(ANCHORS_ARGS);
-  assert.strictEqual(
-    findingDetail(report, "dead-anchor", "anchors/missing-link"),
-    "Step 1: checked step missing result link",
-    "dead-anchor detail for a step with no result link",
-  );
-});
+  test("a checked step whose anchor is missing from the result file is reported, a resolving one is not", () => {
+    const { report, stderr } = anchorsRun;
+    assert.strictEqual(stderr, "", "the anchor fixtures must produce no warnings");
+    assert.strictEqual(report.scanned, 14, "scanned count for the anchor fixtures");
+    assert.strictEqual(findingCount(report, "dead-anchor"), 6, "dead-anchor finding count");
+    assert.deepStrictEqual(
+      findingDetails(report, "dead-anchor", "anchors/dead-anchor"),
+      [
+        "Step 2: anchor not found: #step-2--never-written in ./result.md",
+        "Step 2a: anchor not found: #step-2a--never-written in ./result.md",
+      ],
+      "dead-anchor details for unresolvable anchors, the inserted step labelled by its own number",
+    );
+  });
 
-test("a checked step linking a file the folder does not hold is reported", () => {
-  const { report } = runCheck(ANCHORS_ARGS);
-  assert.strictEqual(
-    findingDetail(report, "dead-anchor", "anchors/missing-target"),
-    "Step 1: link target missing: ./gone.result.md#step-1--vanished",
-    "dead-anchor detail for a link whose file is gone",
-  );
-});
+  test("a checked step with no result link is reported; a checkpoint checkbox is not a step", () => {
+    const { report } = anchorsRun;
+    assert.strictEqual(
+      findingDetail(report, "dead-anchor", "anchors/missing-link"),
+      "Step 1: checked step missing result link",
+      "dead-anchor detail for a step with no result link",
+    );
+  });
 
-test("checked-step evidence must name both the result file and a concrete result heading", () => {
-  const { report } = runCheck(ANCHORS_ARGS);
-  assert.strictEqual(
-    findingDetail(report, "dead-anchor", "anchors/anchorless-result"),
-    "Step 1: result link missing anchor: ./result.md",
-    "dead-anchor detail for an anchorless result link",
-  );
-  assert.strictEqual(
-    findingDetail(report, "dead-anchor", "anchors/plan-local-result"),
-    "Step 1: result link missing file target: #step-1--plan-local-evidence",
-    "dead-anchor detail for a plan-local result link",
-  );
-});
+  test("a checked step linking a file the folder does not hold is reported", () => {
+    const { report } = anchorsRun;
+    assert.strictEqual(
+      findingDetail(report, "dead-anchor", "anchors/missing-target"),
+      "Step 1: link target missing: ./gone.result.md#step-1--vanished",
+      "dead-anchor detail for a link whose file is gone",
+    );
+  });
 
-test("a duplicate and malformed G-IDs are reported across bullet markers; a valid ID and an (external) token are not", () => {
-  const { report } = runCheck(ANCHORS_ARGS);
-  assert.strictEqual(findingCount(report, "goal-id"), 3, "goal-id finding count");
-  assert.deepStrictEqual(
-    findingDetails(report, "goal-id", "anchors/bad-goal-ids"),
-    [
-      "duplicate goal ID G1 in goals.md",
-      "malformed goal ID in goals.md: - Goal three — no ID assigned",
-      "malformed goal ID in goals.md: * Goal four — an asterisk bullet, no ID",
-    ],
-    "goal-id details for the malformed and duplicate IDs",
-  );
+  test("checked-step evidence must name both the result file and a concrete result heading", () => {
+    const { report } = anchorsRun;
+    assert.strictEqual(
+      findingDetail(report, "dead-anchor", "anchors/anchorless-result"),
+      "Step 1: result link missing anchor: ./result.md",
+      "dead-anchor detail for an anchorless result link",
+    );
+    assert.strictEqual(
+      findingDetail(report, "dead-anchor", "anchors/plan-local-result"),
+      "Step 1: result link missing file target: #step-1--plan-local-evidence",
+      "dead-anchor detail for a plan-local result link",
+    );
+  });
+
+  test("a duplicate and malformed G-IDs are reported across bullet markers; a valid ID and an (external) token are not", () => {
+    const { report } = anchorsRun;
+    assert.strictEqual(findingCount(report, "goal-id"), 3, "goal-id finding count");
+    assert.deepStrictEqual(
+      findingDetails(report, "goal-id", "anchors/bad-goal-ids"),
+      [
+        "duplicate goal ID G1 in goals.md",
+        "malformed goal ID in goals.md: - Goal three — no ID assigned",
+        "malformed goal ID in goals.md: * Goal four — an asterisk bullet, no ID",
+      ],
+      "goal-id details for the malformed and duplicate IDs",
+    );
+  });
+
+  test("a live result with no ## Current state block is reported", () => {
+    const { report } = anchorsRun;
+    assert.strictEqual(findingCount(report, "no-current-state"), 3, "no-current-state finding count");
+    assert.strictEqual(
+      findingDetail(report, "no-current-state", "anchors/no-current-state"),
+      'blocked result.md has no "## Current state" block',
+      "no-current-state detail for a blocked result",
+    );
+  });
+
+  test("a ## Current state heading inside a code fence does not satisfy the liveness check", () => {
+    const { report } = anchorsRun;
+    assert.strictEqual(
+      findingDetail(report, "no-current-state", "anchors/fenced-current-state"),
+      'executing result.md has no "## Current state" block',
+      "no-current-state detail for a result whose only block sits in a fence",
+    );
+  });
+
+  test("a three-backtick example inside a four-backtick fence does not toggle scanning back on", () => {
+    const { report } = anchorsRun;
+    assert.strictEqual(
+      findingDetail(report, "no-current-state", "anchors/nested-fence"),
+      'executing result.md has no "## Current state" block',
+      "no-current-state detail for a result whose only block sits in a nested fence",
+    );
+  });
+
+  test("a fenced status example is illustrative markdown, not a lifecycle state", () => {
+    const { report } = anchorsRun;
+    assert.strictEqual(
+      findingDetail(report, "done-unarchived", "anchors/fenced-status"),
+      "",
+      "a **Status:** line inside a fence must not be read as the plan's own",
+    );
+  });
+
+  test("a step link whose section a Compacted stub tombstones is documented state, not a dead anchor", () => {
+    const { report } = anchorsRun;
+    assert.strictEqual(
+      findingDetail(report, "dead-anchor", "anchors/compacted-tombstone"),
+      "",
+      "an anchor named by a ## Compacted tombstone bullet must resolve",
+    );
+  });
+
+  test("archived folders are exempt from the content checks", () => {
+    const { report } = anchorsRun;
+    assert.deepStrictEqual(
+      findingDetails(report, "dead-anchor", "anchors/Archive/archived-violations"),
+      [],
+      "an archived checked step with no result link must stay silent",
+    );
+    assert.deepStrictEqual(
+      findingDetails(report, "goal-id", "anchors/Archive/archived-violations"),
+      [],
+      "an archived duplicate G-ID must stay silent",
+    );
+    assert.strictEqual(
+      findingDetail(report, "no-current-state", "anchors/Archive/archived-violations"),
+      "",
+      "an archived live result without ## Current state must stay silent",
+    );
+    assert.strictEqual(
+      findingCount(report, "legacy-result-status"),
+      0,
+      "the archived fixtures' legacy result statuses stay silent like every other archived shape",
+    );
+  });
+
+  test("an archived folder and a legacy done result without ## Current state produce no findings", () => {
+    const { report } = anchorsRun;
+    assert.strictEqual(findingCount(report), 14, "total finding count for the anchor fixtures");
+  });
+
+  test("a dead link is reported under dead-citation wherever it sits, a dead step link twice over", () => {
+    const { report } = anchorsRun;
+    assert.deepStrictEqual(
+      report.findings
+        .filter((entry) => entry.check === "dead-citation")
+        .map((entry) => `${entry.path} — ${entry.detail}`),
+      [
+        "anchors/bad-goal-ids — goals.md: link target ./plan.md resolves to nothing",
+        "anchors/missing-target — plan.md: link target ./gone.result.md#step-1--vanished resolves to nothing",
+      ],
+      "a checked step's own dead link is checked like any other, while the backticked ([result](…)) " +
+        "example on the compacted-tombstone step raises nothing",
+    );
+    assert.strictEqual(
+      findingDetail(report, "dead-anchor", "anchors/missing-target"),
+      "Step 1: link target missing: ./gone.result.md#step-1--vanished",
+      "a checked step's dead link is both a dead anchor and a dead citation",
+    );
+  });
+
+  test("--result-max-kb reports a result over the given trigger and stays quiet at the default", () => {
+    const { report: atDefault } = anchorsRun;
+    assert.strictEqual(
+      findingCount(atDefault, "oversized-result"),
+      0,
+      "oversized-result count at the default threshold",
+    );
+    const { report } = runCheck(["--result-max-kb", "1", ANCHORS]);
+    assert.strictEqual(
+      findingCount(report, "oversized-result"),
+      1,
+      "oversized-result count at a lowered threshold",
+    );
+    assert.strictEqual(
+      findingDetail(report, "oversized-result", "anchors/oversized-result"),
+      "result.md is 1.6 KB, over the 1 KB compaction trigger",
+      "oversized-result detail carries the actual size",
+    );
+    assert.strictEqual(
+      findingDetail(report, "oversized-result", "anchors/Archive/archived-violations"),
+      "",
+      "an archived oversized result must stay silent even at a lowered threshold",
+    );
+  });
 });
 
 test("goal references in task Markdown share the structural validator and archived tasks stay exempt", () => {
@@ -1011,52 +1147,6 @@ test("a CRLF plan resolves its checked-step anchors, so a fenced-only heading is
   assert.deepStrictEqual(findingDetails(report, "no-current-state", "crlf-anchors/live"), []);
 });
 
-test("a live result with no ## Current state block is reported", () => {
-  const { report } = runCheck(ANCHORS_ARGS);
-  assert.strictEqual(findingCount(report, "no-current-state"), 3, "no-current-state finding count");
-  assert.strictEqual(
-    findingDetail(report, "no-current-state", "anchors/no-current-state"),
-    'blocked result.md has no "## Current state" block',
-    "no-current-state detail for a blocked result",
-  );
-});
-
-test("a ## Current state heading inside a code fence does not satisfy the liveness check", () => {
-  const { report } = runCheck(ANCHORS_ARGS);
-  assert.strictEqual(
-    findingDetail(report, "no-current-state", "anchors/fenced-current-state"),
-    'executing result.md has no "## Current state" block',
-    "no-current-state detail for a result whose only block sits in a fence",
-  );
-});
-
-test("a three-backtick example inside a four-backtick fence does not toggle scanning back on", () => {
-  const { report } = runCheck(ANCHORS_ARGS);
-  assert.strictEqual(
-    findingDetail(report, "no-current-state", "anchors/nested-fence"),
-    'executing result.md has no "## Current state" block',
-    "no-current-state detail for a result whose only block sits in a nested fence",
-  );
-});
-
-test("a fenced status example is illustrative markdown, not a lifecycle state", () => {
-  const { report } = runCheck(ANCHORS_ARGS);
-  assert.strictEqual(
-    findingDetail(report, "done-unarchived", "anchors/fenced-status"),
-    "",
-    "a **Status:** line inside a fence must not be read as the plan's own",
-  );
-});
-
-test("a step link whose section a Compacted stub tombstones is documented state, not a dead anchor", () => {
-  const { report } = runCheck(ANCHORS_ARGS);
-  assert.strictEqual(
-    findingDetail(report, "dead-anchor", "anchors/compacted-tombstone"),
-    "",
-    "an anchor named by a ## Compacted tombstone bullet must resolve",
-  );
-});
-
 test("health-check resolves every retained duplicate and nested anchor before and after body compaction", () => {
   const root = join(TEST_ROOT, "compaction-round-trip");
   const anchors = ["step-1--work", "example", "example-1", "example-2", "step-1--work-1", "step-0--legacy"];
@@ -1114,233 +1204,276 @@ test("a comment-only legacy result status raises no finding", () => {
   assert.strictEqual(findingCount(report, "legacy-result-status"), 0);
 });
 
-test("archived folders are exempt from the content checks", () => {
-  const { report } = runCheck(ANCHORS_ARGS);
-  assert.deepStrictEqual(
-    findingDetails(report, "dead-anchor", "anchors/Archive/archived-violations"),
-    [],
-    "an archived checked step with no result link must stay silent",
-  );
-  assert.deepStrictEqual(
-    findingDetails(report, "goal-id", "anchors/Archive/archived-violations"),
-    [],
-    "an archived duplicate G-ID must stay silent",
-  );
-  assert.strictEqual(
-    findingDetail(report, "no-current-state", "anchors/Archive/archived-violations"),
-    "",
-    "an archived live result without ## Current state must stay silent",
-  );
-  assert.strictEqual(
-    findingCount(report, "legacy-result-status"),
-    0,
-    "the archived fixtures' legacy result statuses stay silent like every other archived shape",
-  );
-});
+describe("the citation fixtures, scanned once", () => {
+  let citationsRun: CheckRun;
+  before(() => {
+    citationsRun = runCheck(CITATIONS_ARGS);
+  });
 
-test("an archived folder and a legacy done result without ## Current state produce no findings", () => {
-  const { report } = runCheck(ANCHORS_ARGS);
-  assert.strictEqual(findingCount(report), 14, "total finding count for the anchor fixtures");
-});
+  test("the citation fixtures scan without warnings and leave nothing unread", () => {
+    const { report, stderr } = citationsRun;
+    assert.strictEqual(stderr, "", "the citation fixtures must produce no warnings");
+    assert.strictEqual(report.unreadable, 0, "the citation fixtures are all readable");
+  });
 
-test("a dead link is reported under dead-citation wherever it sits, a dead step link twice over", () => {
-  const { report } = runCheck(ANCHORS_ARGS);
-  assert.deepStrictEqual(
-    report.findings
-      .filter((entry) => entry.check === "dead-citation")
-      .map((entry) => `${entry.path} — ${entry.detail}`),
-    [
-      "anchors/bad-goal-ids — goals.md: link target ./plan.md resolves to nothing",
-      "anchors/missing-target — plan.md: link target ./gone.result.md#step-1--vanished resolves to nothing",
-    ],
-    "a checked step's own dead link is checked like any other, while the backticked ([result](…)) " +
-      "example on the compacted-tombstone step raises nothing",
-  );
-  assert.strictEqual(
-    findingDetail(report, "dead-anchor", "anchors/missing-target"),
-    "Step 1: link target missing: ./gone.result.md#step-1--vanished",
-    "a checked step's dead link is both a dead anchor and a dead citation",
-  );
-});
+  test("a link to a local path the store does not hold is reported once, with the target as written", () => {
+    const { report } = citationsRun;
+    assert.deepStrictEqual(
+      findingDetails(report, "dead-citation", "citations/dead-link"),
+      ["CONTEXT.md: link target ../gone/adr.md resolves to nothing"],
+      "dead-citation detail names the citing file and the unresolvable target",
+    );
+  });
 
-test("the citation fixtures scan without warnings and leave nothing unread", () => {
-  const { report, stderr } = runCheck(CITATIONS_ARGS);
-  assert.strictEqual(stderr, "", "the citation fixtures must produce no warnings");
-  assert.strictEqual(report.unreadable, 0, "the citation fixtures are all readable");
-});
+  test("a resolving link, an anchor, a mailto, and an http URL are not local citations to check", () => {
+    const { report } = citationsRun;
+    assert.deepStrictEqual(
+      report.findings.filter((entry) => entry.path === "citations/live-links"),
+      [],
+      "a ./ link that resolves, a bare #anchor, a mailto:, and an https:// target must all stay silent",
+    );
+  });
 
-test("a link to a local path the store does not hold is reported once, with the target as written", () => {
-  const { report } = runCheck(CITATIONS_ARGS);
-  assert.deepStrictEqual(
-    findingDetails(report, "dead-citation", "citations/dead-link"),
-    ["CONTEXT.md: link target ../gone/adr.md resolves to nothing"],
-    "dead-citation detail names the citing file and the unresolvable target",
-  );
-});
+  test("a citation differing from the file on disk by case alone is dead, whatever the filesystem folds", () => {
+    const { report } = citationsRun;
+    assert.deepStrictEqual(
+      findingDetails(report, "dead-citation", "citations/case-only"),
+      ["CONTEXT.md: link target ./Plan.md resolves to nothing"],
+      "resolution compares the directory listing, so ./Plan.md misses a plan.md on a case-insensitive volume",
+    );
+  });
 
-test("a resolving link, an anchor, a mailto, and an http URL are not local citations to check", () => {
-  const { report } = runCheck(CITATIONS_ARGS);
-  assert.deepStrictEqual(
-    report.findings.filter((entry) => entry.path === "citations/live-links"),
-    [],
-    "a ./ link that resolves, a bare #anchor, a mailto:, and an https:// target must all stay silent",
-  );
-});
+  test("a cross-folder relative link is reported by form, its conformant replacement named", () => {
+    const { report } = citationsRun;
+    assert.deepStrictEqual(
+      report.findings
+        .filter((entry) => entry.check === "citation-form")
+        .map((entry) => `${entry.path} — ${entry.detail}`),
+      [
+        "citations/cross-archived — CONTEXT.md: cross-folder link ../Archive/archived-sibling/adr.md — " +
+          "cite task `archived-sibling` by its bare slug (adr.md)",
+        "citations/cross-folder — CONTEXT.md: cross-folder link ../sibling-task/adr.md — " +
+          "cite task `sibling-task` by its bare slug (adr.md)",
+        "citations/cross-folder — CONTEXT.md: cross-folder link ../Area/nested-task/adr.md — " +
+          "cite the folder path Area/nested-task/adr.md",
+        "citations/cross-folder — CONTEXT.md: cross-folder link ../cross-folder/adr.md — cite ./adr.md inside this folder",
+        "citations/cross-folder — CONTEXT.md: cross-folder link ../../outside-the-root.md — " +
+          "the target lies outside the store root",
+        "citations/cross-folder — CONTEXT.md: cross-folder link ../cross-folder — cite this folder as ./",
+        "citations/cross-folder — CONTEXT.md: cross-folder link ../ — the target is the store root itself",
+        "citations/cross-root — CONTEXT.md: cross-folder link ../../citations-second/target-task/adr.md — " +
+          "the target lies outside the store root",
+        "citations/cross-root — CONTEXT.md: cross-folder link ../../citations-second/Area/deep-task/adr.md — " +
+          "the target lies outside the store root",
+        "citations/cross-root — CONTEXT.md: cross-folder link ../../citations-second/Hub/DECISIONS.md — " +
+          "the target lies outside the store root",
+        "citations/dead-link — CONTEXT.md: cross-folder link ../gone/adr.md — cite the folder path gone/adr.md",
+        "citations/root-absolute — CONTEXT.md: store-level doc link /Area/DECISIONS.md — " +
+          "cite Area/DECISIONS.md as plain text",
+        "citations/root-absolute — CONTEXT.md: root-absolute link /Area/gone.md — " +
+          "cite the folder path Area/gone.md",
+        "citations/root-absolute — CONTEXT.md: store-level doc link Area/DECISIONS.md — " +
+          "cite Area/DECISIONS.md as plain text",
+        "citations/store-level — ticket.md: cross-folder link ../Area/DECISIONS.md — cite Area/DECISIONS.md as plain text",
+        "citations/store-level — ticket.md: cross-folder link ../Stale/Area/DECISIONS.md — " +
+          "cite Stale/Area/DECISIONS.md as plain text",
+      ],
+      "a walked task is named by its bare slug, an archived one included, and a target in no task folder by its path",
+    );
+  });
 
-test("a citation differing from the file on disk by case alone is dead, whatever the filesystem folds", () => {
-  const { report } = runCheck(CITATIONS_ARGS);
-  assert.deepStrictEqual(
-    findingDetails(report, "dead-citation", "citations/case-only"),
-    ["CONTEXT.md: link target ./Plan.md resolves to nothing"],
-    "resolution compares the directory listing, so ./Plan.md misses a plan.md on a case-insensitive volume",
-  );
-});
-
-test("a cross-folder relative link is reported by form, its conformant replacement named", () => {
-  const { report } = runCheck(CITATIONS_ARGS);
-  assert.deepStrictEqual(
-    report.findings
+  test("the replacement named is one that resolves — never a slug for a group-nested or self-cited target", () => {
+    const { report } = citationsRun;
+    const forms = report.findings
       .filter((entry) => entry.check === "citation-form")
-      .map((entry) => `${entry.path} — ${entry.detail}`),
-    [
-      "citations/cross-archived — CONTEXT.md: cross-folder link ../Archive/archived-sibling/adr.md — " +
-        "cite task `archived-sibling` by its bare slug (adr.md)",
-      "citations/cross-folder — CONTEXT.md: cross-folder link ../sibling-task/adr.md — " +
-        "cite task `sibling-task` by its bare slug (adr.md)",
-      "citations/cross-folder — CONTEXT.md: cross-folder link ../Area/nested-task/adr.md — " +
-        "cite the folder path Area/nested-task/adr.md",
-      "citations/cross-folder — CONTEXT.md: cross-folder link ../cross-folder/adr.md — cite ./adr.md inside this folder",
-      "citations/cross-folder — CONTEXT.md: cross-folder link ../../outside-the-root.md — " +
-        "the target lies outside the store root",
-      "citations/cross-folder — CONTEXT.md: cross-folder link ../cross-folder — cite this folder as ./",
-      "citations/cross-folder — CONTEXT.md: cross-folder link ../ — the target is the store root itself",
-      "citations/cross-root — CONTEXT.md: cross-folder link ../../citations-second/target-task/adr.md — " +
-        "the target lies outside the store root",
-      "citations/cross-root — CONTEXT.md: cross-folder link ../../citations-second/Area/deep-task/adr.md — " +
-        "the target lies outside the store root",
-      "citations/cross-root — CONTEXT.md: cross-folder link ../../citations-second/Hub/DECISIONS.md — " +
-        "the target lies outside the store root",
-      "citations/dead-link — CONTEXT.md: cross-folder link ../gone/adr.md — cite the folder path gone/adr.md",
-      "citations/root-absolute — CONTEXT.md: store-level doc link /Area/DECISIONS.md — " +
-        "cite Area/DECISIONS.md as plain text",
-      "citations/root-absolute — CONTEXT.md: root-absolute link /Area/gone.md — " +
-        "cite the folder path Area/gone.md",
-      "citations/root-absolute — CONTEXT.md: store-level doc link Area/DECISIONS.md — " +
-        "cite Area/DECISIONS.md as plain text",
-      "citations/store-level — ticket.md: cross-folder link ../Area/DECISIONS.md — cite Area/DECISIONS.md as plain text",
-      "citations/store-level — ticket.md: cross-folder link ../Stale/Area/DECISIONS.md — " +
-        "cite Stale/Area/DECISIONS.md as plain text",
-    ],
-    "a walked task is named by its bare slug, an archived one included, and a target in no task folder by its path",
-  );
-});
+      .map((entry) => entry.detail)
+      .join("\n");
+    assert.ok(
+      forms.includes("../Area/nested-task/adr.md — cite the folder path Area/nested-task/adr.md"),
+      "a bare slug reads the canonical root one level deep, so a group under it takes the path form",
+    );
+    assert.ok(
+      forms.includes("../cross-folder/adr.md — cite ./adr.md inside this folder"),
+      "a folder citing itself the long way round owes a ./ link, not its own slug",
+    );
+    assert.ok(
+      !forms.includes("cite the folder path ../"),
+      "a path from the root never begins with .., so a target above the root is named as outside it",
+    );
+    assert.ok(
+      forms.includes("../cross-folder — cite this folder as ./"),
+      "a link naming the citing folder itself owes a ./ link, and no branch names an empty path",
+    );
+    assert.ok(
+      forms.includes("../ — the target is the store root itself"),
+      "a link landing on the walked root names it rather than falling through to an empty path",
+    );
+  });
 
-test("the replacement named is one that resolves — never a slug for a group-nested or self-cited target", () => {
-  const { report } = runCheck(CITATIONS_ARGS);
-  const forms = report.findings
-    .filter((entry) => entry.check === "citation-form")
-    .map((entry) => entry.detail)
-    .join("\n");
-  assert.ok(
-    forms.includes("../Area/nested-task/adr.md — cite the folder path Area/nested-task/adr.md"),
-    "a bare slug reads the canonical root one level deep, so a group under it takes the path form",
-  );
-  assert.ok(
-    forms.includes("../cross-folder/adr.md — cite ./adr.md inside this folder"),
-    "a folder citing itself the long way round owes a ./ link, not its own slug",
-  );
-  assert.ok(
-    !forms.includes("cite the folder path ../"),
-    "a path from the root never begins with .., so a target above the root is named as outside it",
-  );
-  assert.ok(
-    forms.includes("../cross-folder — cite this folder as ./"),
-    "a link naming the citing folder itself owes a ./ link, and no branch names an empty path",
-  );
-  assert.ok(
-    forms.includes("../ — the target is the store root itself"),
-    "a link landing on the walked root names it rather than falling through to an empty path",
-  );
-});
+  test("a cross-folder link whose target is gone is reported both by form and as a dead citation", () => {
+    const { report } = citationsRun;
+    assert.deepStrictEqual(
+      report.findings
+        .filter((entry) => entry.path === "citations/dead-link")
+        .map((entry) => entry.check)
+        .sort(),
+      ["citation-form", "dead-citation"],
+      "the form is wrong whatever the target resolves to, and this target resolves to nothing",
+    );
+  });
 
-test("a cross-folder link whose target is gone is reported both by form and as a dead citation", () => {
-  const { report } = runCheck(CITATIONS_ARGS);
-  assert.deepStrictEqual(
-    report.findings
-      .filter((entry) => entry.path === "citations/dead-link")
-      .map((entry) => entry.check)
-      .sort(),
-    ["citation-form", "dead-citation"],
-    "the form is wrong whatever the target resolves to, and this target resolves to nothing",
-  );
-});
+  test("a plain-text store-level path that resolves from no walked root is reported as written", () => {
+    const { report } = citationsRun;
+    assert.deepStrictEqual(
+      findingDetails(report, "dead-citation", "citations/store-level"),
+      [
+        "ticket.md: store-level citation Stale/Area/DECISIONS.md resolves to nothing from the root",
+        "ticket.md: store-level citation Legacy/Area/DECISIONS.md resolves to nothing from the root",
+        "ticket.md: link target ../Stale/Area/DECISIONS.md resolves to nothing",
+      ],
+      "the run is the path token alone, so a bulleted line reports the target rather than the whole bullet",
+    );
+  });
 
-test("a plain-text store-level path that resolves from no walked root is reported as written", () => {
-  const { report } = runCheck(CITATIONS_ARGS);
-  assert.deepStrictEqual(
-    findingDetails(report, "dead-citation", "citations/store-level"),
-    [
-      "ticket.md: store-level citation Stale/Area/DECISIONS.md resolves to nothing from the root",
-      "ticket.md: store-level citation Legacy/Area/DECISIONS.md resolves to nothing from the root",
-      "ticket.md: link target ../Stale/Area/DECISIONS.md resolves to nothing",
-    ],
-    "the run is the path token alone, so a bulleted line reports the target rather than the whole bullet",
-  );
-});
+  test("a link whose text repeats its own path is one citation, not a link and a plain-text one", () => {
+    const { report } = citationsRun;
+    assert.strictEqual(
+      findingDetails(report, "dead-citation", "citations/store-level").filter((detail) =>
+        detail.includes("Stale/Area/DECISIONS.md"),
+      ).length,
+      2,
+      "the link arm owns its target and the text repeating it, leaving only the unlinked citation above",
+    );
+  });
 
-test("a link whose text repeats its own path is one citation, not a link and a plain-text one", () => {
-  const { report } = runCheck(CITATIONS_ARGS);
-  assert.strictEqual(
-    findingDetails(report, "dead-citation", "citations/store-level").filter((detail) =>
-      detail.includes("Stale/Area/DECISIONS.md"),
-    ).length,
-    2,
-    "the link arm owns its target and the text repeating it, leaving only the unlinked citation above",
-  );
-});
+  test("prose carrying an unrelated slash, and a placeholder broken by one, are not store-level citations", () => {
+    const { report } = citationsRun;
+    const details = findingDetails(report, "dead-citation", "citations/store-level").join("\n");
+    assert.ok(
+      !details.includes("eng/platform"),
+      "a slash earlier in the sentence is not a path ahead of the filename, so the run stops at the token",
+    );
+    assert.ok(
+      !details.includes("CONTEXT section"),
+      "the leading-slash guard tests the token that gets reported, so a broken placeholder raises nothing",
+    );
+    assert.ok(
+      !details.includes("~/.claude"),
+      "a ~ path names a home rather than a store root, so it is an illustration the guard drops too",
+    );
+  });
 
-test("prose carrying an unrelated slash, and a placeholder broken by one, are not store-level citations", () => {
-  const { report } = runCheck(CITATIONS_ARGS);
-  const details = findingDetails(report, "dead-citation", "citations/store-level").join("\n");
-  assert.ok(
-    !details.includes("eng/platform"),
-    "a slash earlier in the sentence is not a path ahead of the filename, so the run stops at the token",
-  );
-  assert.ok(
-    !details.includes("CONTEXT section"),
-    "the leading-slash guard tests the token that gets reported, so a broken placeholder raises nothing",
-  );
-  assert.ok(
-    !details.includes("~/.claude"),
-    "a ~ path names a home rather than a store root, so it is an illustration the guard drops too",
-  );
-});
+  test("a quoted repo path, a pathless filename, a relative token, and a link target are not this arm's", () => {
+    const { report } = citationsRun;
+    assert.deepStrictEqual(
+      report.findings
+        .filter((entry) => entry.path === "citations/store-level")
+        .map((entry) => entry.check),
+      ["dead-citation", "citation-form", "dead-citation", "citation-form", "dead-citation"],
+      "only the unresolvable root-relative paths are dead citations, and the links are the link arm's alone",
+    );
+    assert.strictEqual(findingCount(report), 34, "total finding count for the citation fixtures");
+  });
 
-test("a quoted repo path, a pathless filename, a relative token, and a link target are not this arm's", () => {
-  const { report } = runCheck(CITATIONS_ARGS);
-  assert.deepStrictEqual(
-    report.findings
-      .filter((entry) => entry.path === "citations/store-level")
-      .map((entry) => entry.check),
-    ["dead-citation", "citation-form", "dead-citation", "citation-form", "dead-citation"],
-    "only the unresolvable root-relative paths are dead citations, and the links are the link arm's alone",
-  );
-  assert.strictEqual(findingCount(report), 34, "total finding count for the citation fixtures");
-});
+  test("a store-level path carrying a space in a group name resolves rather than reporting dead", () => {
+    const { report } = citationsRun;
+    const details = findingDetails(report, "dead-citation", "citations/store-level").join("\n");
+    assert.ok(
+      !details.includes("Management"),
+      "the run widens across a space whenever the wider candidate resolves, so the live " +
+        `spaced path is read whole and resolves: ${details}`,
+    );
+    assert.ok(
+      !details.includes("Platform"),
+      "a group name carrying two spaces widens as far as it resolves, rather than stopping at the " +
+        `first word whose predecessor carries no slash: ${details}`,
+    );
+  });
 
-test("a store-level path carrying a space in a group name resolves rather than reporting dead", () => {
-  const { report } = runCheck(CITATIONS_ARGS);
-  const details = findingDetails(report, "dead-citation", "citations/store-level").join("\n");
-  assert.ok(
-    !details.includes("Management"),
-    "the run widens across a space whenever the wider candidate resolves, so the live " +
-      `spaced path is read whole and resolves: ${details}`,
-  );
-  assert.ok(
-    !details.includes("Platform"),
-    "a group name carrying two spaces widens as far as it resolves, rather than stopping at the " +
-      `first word whose predecessor carries no slash: ${details}`,
-  );
+  test("a link target starting at the root is resolved from the root, not from the task folder", () => {
+    const { report } = citationsRun;
+    assert.deepStrictEqual(
+      findingDetails(report, "dead-citation", "citations/root-absolute"),
+      [
+        "CONTEXT.md: link target /Area/gone.md resolves to nothing",
+        "CONTEXT.md: link target Area/DECISIONS.md resolves to nothing",
+      ],
+      "a leading slash names the store root, so the live decision log resolves and only the absent " +
+        "one is dead; the same path without the slash resolves from the folder, where it is not there",
+    );
+  });
+
+  test("a store-level doc cited as a link is reported by form, whatever the link resolves to", () => {
+    const { report } = citationsRun;
+    assert.deepStrictEqual(
+      findingDetails(report, "citation-form", "citations/root-absolute"),
+      [
+        "CONTEXT.md: store-level doc link /Area/DECISIONS.md — cite Area/DECISIONS.md as plain text",
+        "CONTEXT.md: root-absolute link /Area/gone.md — cite the folder path Area/gone.md",
+        "CONTEXT.md: store-level doc link Area/DECISIONS.md — cite Area/DECISIONS.md as plain text",
+      ],
+      "one-home.md gives a store-level doc no link form at all, so the root-absolute and " +
+        "root-relative spellings are both reported however they resolve; a root-absolute target " +
+        "that names no store-level doc is reported by form too, since a renderer resolves it from " +
+        "the repository root and finds nothing there whatever this walk resolves it to",
+    );
+  });
+
+  test("a link inside a blockquote or an HTML comment is not the citing folder's own citation", () => {
+    const { report } = citationsRun;
+    assert.deepStrictEqual(
+      findingDetails(report, "dead-citation", "citations/quoted"),
+      [
+        "CONTEXT.md: link target ./gone-after-heading.md resolves to nothing",
+        "CONTEXT.md: link target ./gone-after-list.md resolves to nothing",
+        "CONTEXT.md: store-level citation Gone/DECISIONS.md resolves to nothing from the root",
+        "CONTEXT.md: link target ./gone-after-break.md resolves to nothing",
+        "CONTEXT.md: link target ./gone-after-marker.md resolves to nothing",
+        "CONTEXT.md: link target ./gone-after-unclosed.md resolves to nothing",
+      ],
+      "a quoted line carries another file's markdown and a commented one a retired citation, so " +
+        "neither resolves against the quoting folder and neither is read; a heading, a list item, " +
+        "and a thematic break each open a block the quote cannot lazily continue into, so both arms " +
+        "read that line and everything under it rather than running on to the next blank line; a " +
+        "backticked <!-- is an illustration rather than an opener, so it cannot pair with the real " +
+        "comment below it and swallow the citations between them, and an unclosed one opens no span",
+    );
+  });
+
+  test("an angle-bracketed target carries its spaces, the one shape that form exists for", () => {
+    const { report } = citationsRun;
+    assert.deepStrictEqual(
+      findingDetails(report, "dead-citation", "citations/angle-target"),
+      ["CONTEXT.md: link target ./no notes.md resolves to nothing"],
+      "the target runs to the closing bracket, so a spaced name resolves and a missing one reports in " +
+        "full, while padding inside the brackets is trimmed rather than resolved as a ' .' segment",
+    );
+  });
+
+  test("an archived folder's own citations are still followed, unlike every other content check", () => {
+    const { report } = citationsRun;
+    assert.deepStrictEqual(
+      findingDetails(report, "dead-citation", "citations/Archive/archived-sibling"),
+      ["adr.md: link target ./gone-in-archive.md resolves to nothing"],
+      "the two citation checks run inside Archive/, where a slug fallback keeps the folder citable",
+    );
+  });
+
+  test("a link inside an inline code span is literal text, not a citation the check follows", () => {
+    const { report } = citationsRun;
+    assert.deepStrictEqual(
+      report.findings
+        .filter((entry) => entry.path === "citations/code-span")
+        .map((entry) => `${entry.check} ${entry.detail}`),
+      [
+        "dead-citation CONTEXT.md: link target ./gone-outside.md resolves to nothing",
+        "dead-citation CONTEXT.md: link target ./gone-after-tick.md resolves to nothing",
+      ],
+      "a shell regex and a single- and double-backtick span raise nothing, while a link beside a span " +
+        "and one after an unclosed backtick are both followed; both arms read the blanked line, so a " +
+        "backticked path is an illustration to neither of them",
+    );
+  });
 });
 
 test("a slug citation across two walked roots is named from the root that holds the target", () => {
@@ -1358,116 +1491,6 @@ test("a slug citation across two walked roots is named from the root that holds 
     "the depth test belongs to the holder's own root, so a uniquely-slugged task in the second " +
       "root is citable by slug rather than reported as outside the store root, and a target no " +
       "slug reaches takes the path form from the root that holds it, named",
-  );
-});
-
-test("a link target starting at the root is resolved from the root, not from the task folder", () => {
-  const { report } = runCheck(CITATIONS_ARGS);
-  assert.deepStrictEqual(
-    findingDetails(report, "dead-citation", "citations/root-absolute"),
-    [
-      "CONTEXT.md: link target /Area/gone.md resolves to nothing",
-      "CONTEXT.md: link target Area/DECISIONS.md resolves to nothing",
-    ],
-    "a leading slash names the store root, so the live decision log resolves and only the absent " +
-      "one is dead; the same path without the slash resolves from the folder, where it is not there",
-  );
-});
-
-test("a store-level doc cited as a link is reported by form, whatever the link resolves to", () => {
-  const { report } = runCheck(CITATIONS_ARGS);
-  assert.deepStrictEqual(
-    findingDetails(report, "citation-form", "citations/root-absolute"),
-    [
-      "CONTEXT.md: store-level doc link /Area/DECISIONS.md — cite Area/DECISIONS.md as plain text",
-      "CONTEXT.md: root-absolute link /Area/gone.md — cite the folder path Area/gone.md",
-      "CONTEXT.md: store-level doc link Area/DECISIONS.md — cite Area/DECISIONS.md as plain text",
-    ],
-    "one-home.md gives a store-level doc no link form at all, so the root-absolute and " +
-      "root-relative spellings are both reported however they resolve; a root-absolute target " +
-      "that names no store-level doc is reported by form too, since a renderer resolves it from " +
-      "the repository root and finds nothing there whatever this walk resolves it to",
-  );
-});
-
-test("a link inside a blockquote or an HTML comment is not the citing folder's own citation", () => {
-  const { report } = runCheck(CITATIONS_ARGS);
-  assert.deepStrictEqual(
-    findingDetails(report, "dead-citation", "citations/quoted"),
-    [
-      "CONTEXT.md: link target ./gone-after-heading.md resolves to nothing",
-      "CONTEXT.md: link target ./gone-after-list.md resolves to nothing",
-      "CONTEXT.md: store-level citation Gone/DECISIONS.md resolves to nothing from the root",
-      "CONTEXT.md: link target ./gone-after-break.md resolves to nothing",
-      "CONTEXT.md: link target ./gone-after-marker.md resolves to nothing",
-      "CONTEXT.md: link target ./gone-after-unclosed.md resolves to nothing",
-    ],
-    "a quoted line carries another file's markdown and a commented one a retired citation, so " +
-      "neither resolves against the quoting folder and neither is read; a heading, a list item, " +
-      "and a thematic break each open a block the quote cannot lazily continue into, so both arms " +
-      "read that line and everything under it rather than running on to the next blank line; a " +
-      "backticked <!-- is an illustration rather than an opener, so it cannot pair with the real " +
-      "comment below it and swallow the citations between them, and an unclosed one opens no span",
-  );
-});
-
-test("an angle-bracketed target carries its spaces, the one shape that form exists for", () => {
-  const { report } = runCheck(CITATIONS_ARGS);
-  assert.deepStrictEqual(
-    findingDetails(report, "dead-citation", "citations/angle-target"),
-    ["CONTEXT.md: link target ./no notes.md resolves to nothing"],
-    "the target runs to the closing bracket, so a spaced name resolves and a missing one reports in " +
-      "full, while padding inside the brackets is trimmed rather than resolved as a ' .' segment",
-  );
-});
-
-test("an archived folder's own citations are still followed, unlike every other content check", () => {
-  const { report } = runCheck(CITATIONS_ARGS);
-  assert.deepStrictEqual(
-    findingDetails(report, "dead-citation", "citations/Archive/archived-sibling"),
-    ["adr.md: link target ./gone-in-archive.md resolves to nothing"],
-    "the two citation checks run inside Archive/, where a slug fallback keeps the folder citable",
-  );
-});
-
-test("a link inside an inline code span is literal text, not a citation the check follows", () => {
-  const { report } = runCheck(CITATIONS_ARGS);
-  assert.deepStrictEqual(
-    report.findings
-      .filter((entry) => entry.path === "citations/code-span")
-      .map((entry) => `${entry.check} ${entry.detail}`),
-    [
-      "dead-citation CONTEXT.md: link target ./gone-outside.md resolves to nothing",
-      "dead-citation CONTEXT.md: link target ./gone-after-tick.md resolves to nothing",
-    ],
-    "a shell regex and a single- and double-backtick span raise nothing, while a link beside a span " +
-      "and one after an unclosed backtick are both followed; both arms read the blanked line, so a " +
-      "backticked path is an illustration to neither of them",
-  );
-});
-
-test("--result-max-kb reports a result over the given trigger and stays quiet at the default", () => {
-  const { report: atDefault } = runCheck(ANCHORS_ARGS);
-  assert.strictEqual(
-    findingCount(atDefault, "oversized-result"),
-    0,
-    "oversized-result count at the default threshold",
-  );
-  const { report } = runCheck(["--result-max-kb", "1", ANCHORS]);
-  assert.strictEqual(
-    findingCount(report, "oversized-result"),
-    1,
-    "oversized-result count at a lowered threshold",
-  );
-  assert.strictEqual(
-    findingDetail(report, "oversized-result", "anchors/oversized-result"),
-    "result.md is 1.6 KB, over the 1 KB compaction trigger",
-    "oversized-result detail carries the actual size",
-  );
-  assert.strictEqual(
-    findingDetail(report, "oversized-result", "anchors/Archive/archived-violations"),
-    "",
-    "an archived oversized result must stay silent even at a lowered threshold",
   );
 });
 
@@ -1502,145 +1525,138 @@ test("the folder and record budgets fire only past their thresholds, and never u
   );
 });
 
-test("--installs reports each differing, missing, and extra path, per home and native agent format", () => {
-  const { report, stderr } = runCheck(INSTALLS_ARGS);
-  assert.strictEqual(stderr, "", "readable install fixtures must produce no warnings");
-  assert.strictEqual(report.scanned, 5, "scanned count of marker-owned items");
-  assert.strictEqual(findingCount(report, "install-drift"), 22, "install-drift finding count");
-  assert.deepStrictEqual(
-    [
-      findingDetail(report, "install-drift", ".claude/rules/agents-kit-core-rules.md"),
-      findingDetail(report, "install-drift", ".claude/settings.json"),
-      findingDetail(report, "install-drift", ".codex/AGENTS.md"),
-    ],
-    ["missing in install", `${HOOK_EVENT} hook entry missing in install`, "core-rules block missing in install"],
-    "a home installed before always-on delivery reports each delivery item it lacks",
-  );
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".claude/CORE_RULES.md"),
-    "differs from kit source",
-    "install-drift detail for an edited CORE_RULES.md",
-  );
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".claude/skills/kept-skill/SKILL.md"),
-    "differs from kit source",
-    "install-drift detail for an edited installed skill file",
-  );
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".claude/skills/kept-skill/dropped.md"),
-    "missing in install",
-    "install-drift detail for a kit file absent from the install",
-  );
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".claude/skills/kept-skill/extra.md"),
-    "extra in install",
-    "install-drift detail for an installed file absent from the kit",
-  );
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".claude/agents/kept-agent.md"),
-    "differs from kit source",
-    "install-drift detail for an edited Markdown agent definition",
-  );
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".codex/agents/kept-agent.toml"),
-    "differs from kit source",
-    "install-drift detail for an edited TOML agent definition",
-  );
-});
+describe("the pre-delivery Claude Code and Codex homes, compared once", () => {
+  let installsRun: CheckRun;
+  before(() => {
+    installsRun = runCheck(INSTALLS_ARGS);
+  });
 
-test("an item without its ownership marker is not kit-managed and produces no findings", () => {
-  const { report } = runCheck(INSTALLS_ARGS);
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".claude/skills/user-skill/SKILL.md"),
-    "",
-    "an unmarked skill must not be compared",
-  );
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".claude/agents/user-agent.md"),
-    "",
-    "an unmarked agent file must not be compared",
-  );
-});
+  test("--installs reports each differing, missing, and extra path, per home and native agent format", () => {
+    const { report, stderr } = installsRun;
+    assert.strictEqual(stderr, "", "readable install fixtures must produce no warnings");
+    assert.strictEqual(report.scanned, 5, "scanned count of marker-owned items");
+    assert.strictEqual(findingCount(report, "install-drift"), 22, "install-drift finding count");
+    assert.deepStrictEqual(
+      [
+        findingDetail(report, "install-drift", ".claude/rules/agents-kit-core-rules.md"),
+        findingDetail(report, "install-drift", ".claude/settings.json"),
+        findingDetail(report, "install-drift", ".codex/AGENTS.md"),
+      ],
+      ["missing in install", `${HOOK_EVENT} hook entry missing in install`, "core-rules block missing in install"],
+      "a home installed before always-on delivery reports each delivery item it lacks",
+    );
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".claude/CORE_RULES.md"),
+      "differs from kit source",
+      "install-drift detail for an edited CORE_RULES.md",
+    );
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".claude/skills/kept-skill/SKILL.md"),
+      "differs from kit source",
+      "install-drift detail for an edited installed skill file",
+    );
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".claude/skills/kept-skill/dropped.md"),
+      "missing in install",
+      "install-drift detail for a kit file absent from the install",
+    );
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".claude/skills/kept-skill/extra.md"),
+      "extra in install",
+      "install-drift detail for an installed file absent from the kit",
+    );
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".claude/agents/kept-agent.md"),
+      "differs from kit source",
+      "install-drift detail for an edited Markdown agent definition",
+    );
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".codex/agents/kept-agent.toml"),
+      "differs from kit source",
+      "install-drift detail for an edited TOML agent definition",
+    );
+  });
 
-test("byte-identical files and matching symlinks are silent", () => {
-  const { report } = runCheck(INSTALLS_ARGS);
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".claude/references/sample.md"),
-    "",
-    "an identical reference file must not be reported",
-  );
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".claude/references/nested/deep.md"),
-    "",
-    "an identical nested reference file must not be reported",
-  );
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".claude/skills/kept-skill/AGENTS.md"),
-    "",
-    "a symlink with the same target on both sides must not be reported",
-  );
-});
+  test("an item without its ownership marker is not kit-managed and produces no findings", () => {
+    const { report } = installsRun;
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".claude/skills/user-skill/SKILL.md"),
+      "",
+      "an unmarked skill must not be compared",
+    );
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".claude/agents/user-agent.md"),
+      "",
+      "an unmarked agent file must not be compared",
+    );
+  });
 
-test("OS artifacts are skipped by name, and a kit dotfile beside one stays comparable", () => {
-  const { report } = runCheck(INSTALLS_ARGS);
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".claude/references/.DS_Store"),
-    "",
-    "an OS artifact differing on both sides must not be reported",
-  );
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".claude/references/.keeprc"),
-    "differs from kit source",
-    "a non-artifact dotfile differing on both sides is still reported",
-  );
-});
+  test("byte-identical files and matching symlinks are silent", () => {
+    const { report } = installsRun;
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".claude/references/sample.md"),
+      "",
+      "an identical reference file must not be reported",
+    );
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".claude/references/nested/deep.md"),
+      "",
+      "an identical nested reference file must not be reported",
+    );
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".claude/skills/kept-skill/AGENTS.md"),
+      "",
+      "a symlink with the same target on both sides must not be reported",
+    );
+  });
 
-test("never-deployed kit payloads are reported in every home setup.ts has partially installed", () => {
-  const { report } = runCheck(INSTALLS_ARGS);
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".claude/skills/never-deployed/SKILL.md"),
-    "missing in install",
-    "a kit skill that was never deployed is reported",
-  );
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".claude/agents/never-deployed.md"),
-    "missing in install",
-    "a kit agent that was never deployed is reported",
-  );
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".codex/skills/never-deployed/SKILL.md"),
-    "missing in install",
-    "a partially installed home is reported missing a kit skill even without skill markers",
-  );
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".codex/references/sample.md"),
-    "missing in install",
-    "a partially installed home is reported missing shared references",
-  );
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".codex/CORE_RULES.md"),
-    "missing in install",
-    "a partially installed home is reported missing CORE_RULES.md",
-  );
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".claude/skills/user-skill/SKILL.md"),
-    "",
-    "a kit-named skill the home owns unmarked is present, so it is never reported missing",
-  );
-});
+  test("OS artifacts are skipped by name, and a kit dotfile beside one stays comparable", () => {
+    const { report } = installsRun;
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".claude/references/.DS_Store"),
+      "",
+      "an OS artifact differing on both sides must not be reported",
+    );
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".claude/references/.keeprc"),
+      "differs from kit source",
+      "a non-artifact dotfile differing on both sides is still reported",
+    );
+  });
 
-test("an unmarked shared payload is a conflict, not a clean home", () => {
-  const { report } = runCheck(["--installs", KIT, CONFLICT_HOME]);
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".claude/CORE_RULES.md"),
-    "present but not kit-owned — skills using shared rules resolve into it; move it aside and rerun setup.ts",
-    "an unmarked CORE_RULES.md is reported rather than treated as the user's business",
-  );
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".claude/references"),
-    "present but not kit-owned — skills using shared rules resolve into it; move it aside and rerun setup.ts",
-    "an unmarked references/ is reported the same way",
-  );
+  test("never-deployed kit payloads are reported in every home setup.ts has partially installed", () => {
+    const { report } = installsRun;
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".claude/skills/never-deployed/SKILL.md"),
+      "missing in install",
+      "a kit skill that was never deployed is reported",
+    );
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".claude/agents/never-deployed.md"),
+      "missing in install",
+      "a kit agent that was never deployed is reported",
+    );
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".codex/skills/never-deployed/SKILL.md"),
+      "missing in install",
+      "a partially installed home is reported missing a kit skill even without skill markers",
+    );
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".codex/references/sample.md"),
+      "missing in install",
+      "a partially installed home is reported missing shared references",
+    );
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".codex/CORE_RULES.md"),
+      "missing in install",
+      "a partially installed home is reported missing CORE_RULES.md",
+    );
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".claude/skills/user-skill/SKILL.md"),
+      "",
+      "a kit-named skill the home owns unmarked is present, so it is never reported missing",
+    );
+  });
 });
 
 test("an unreadable ownership marker is a coverage gap, not proof the item is the user's", (t: TestContext) => {
@@ -1664,102 +1680,7 @@ test("an unreadable ownership marker is a coverage gap, not proof the item is th
   );
 });
 
-test("a leftover staging dir is an interrupted install, not drift to reconcile", () => {
-  const { report } = runCheck(["--installs", KIT, STAGING_HOME]);
-  assert.strictEqual(report.scanned, 0, "a leftover staging dir is not counted as an installed item");
-  assert.strictEqual(
-    findingCount(report, "install-drift"),
-    1,
-    "a home holding only a staging dir reports the never-installed line, not one finding per file",
-  );
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".claude"),
-    "no kit markers — never installed",
-    "an interrupted first install is one fact about the home",
-  );
-});
-
-test("the two sides disagreeing on link-ness is reported rather than compared through the link", () => {
-  const { report } = runCheck(["--installs", KIT, MATERIALIZED_HOME]);
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".claude/skills/kept-skill/AGENTS.md"),
-    "symlink replaced by a copy",
-    "a kit symlink materialized into a regular copy is drift, not a copy-mode difference",
-  );
-});
-
-test("one surviving kit marker proves setup.ts ran, so absent payload categories are drift", () => {
-  const { report } = runCheck(["--installs", KIT, PARTIAL_HOME]);
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".claude/skills/never-deployed/SKILL.md"),
-    "missing in install",
-    "a core-only partial install is reported missing skills",
-  );
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".claude/references/sample.md"),
-    "missing in install",
-    "a core-only partial install is reported missing references",
-  );
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".claude/agents/never-deployed.md"),
-    "missing in install",
-    "a core-only partial install is reported missing native agents",
-  );
-});
-
-test("a home setup.ts never installed into is reported once rather than flooding", () => {
-  const { report } = runCheck(["--installs", KIT, FRESH_HOME]);
-  assert.strictEqual(
-    findingCount(report, "install-drift"),
-    1,
-    "finding count for a never-installed home",
-  );
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".claude"),
-    "no kit markers — never installed",
-    "a home with no markers reports one line, not one per kit file",
-  );
-  assert.strictEqual(report.scanned, 0, "scanned count for a never-installed home");
-});
-
-test("the conflict that blocks a never-installed home rides on its one line", () => {
-  const { report } = runCheck(["--installs", KIT, BLOCKED_FRESH_HOME]);
-  assert.strictEqual(
-    findingCount(report, "install-drift"),
-    1,
-    "a never-installed home blocked by its own shared payload is still one finding",
-  );
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".claude"),
-    "no kit markers — never installed; CORE_RULES.md present but not kit-owned — move aside and rerun setup.ts",
-    "the one line names the payload blocking the install",
-  );
-  assert.strictEqual(report.scanned, 0, "a blocked never-installed home compares nothing");
-});
-
-test("a missing install home reports the documented uninstalled state", () => {
-  const { report } = runCheck(["--installs", KIT, ABSENT_HOME]);
-  assert.strictEqual(
-    findingCount(report, "install-drift"),
-    1,
-    "finding count for an absent install home",
-  );
-  assert.strictEqual(
-    findingDetail(report, "install-drift", ".claude"),
-    "no kit markers — never installed",
-    "an absent install home is classified as uninstalled",
-  );
-  assert.strictEqual(report.unreadable, 0, "an absent install home is not an unreadable coverage gap");
-});
-
-function assertOnlyDrift(home: string, path: string, detail: string, message: string): void {
-  const { report, stderr } = runCheck(["--installs", KIT, home]);
-  assert.strictEqual(stderr, "", `${message}: the run must produce no warnings`);
-  assert.deepStrictEqual(report.findings, [{ check: "install-drift", path, detail }], message);
-}
-
-test("install drift names a user action exactly when setup.ts cannot clear it", () => {
-  const userAction = /(?:move (?:it )?aside|fix the file|repair or remove (?:the link|the markers)) and rerun setup\.ts|empty or remove it/;
+describe("each single-home --installs fixture, compared once", () => {
   const userFixHomes = [
     CONFLICT_HOME, BLOCKED_FRESH_HOME, RULE_UNMARKED_HOME, RULE_SYMLINK_HOME,
     RULE_DIRECTORY_HOME, RULE_DIRECTORY_LINK_HOME, SETTINGS_INVALID_HOME,
@@ -1774,18 +1695,267 @@ test("install drift names a user action exactly when setup.ts cannot clear it", 
     HOOK_MISSING_HOME, SETTINGS_MISSING_HOME, HOOK_DIFFERS_HOME,
     HOOK_DOUBLED_HOME, BLOCK_MISSING_HOME, BLOCK_DIFFERS_HOME,
   ];
-  for (const [homes, needsUserAction] of [[userFixHomes, true], [rerunHomes, false]] as const) {
-    for (const home of homes) {
-      const { report } = runCheck(["--installs", KIT, home]);
-      const drift = report.findings.filter((finding) => finding.check === "install-drift");
-      assert.ok(drift.length > 0, `${home}: fixture must report drift`);
-      for (const finding of drift) {
-        const isConflict = [".claude/references", ".claude/CORE_RULES.md"].includes(finding.path);
-        const needsAction = needsUserAction && (home !== CONFLICT_HOME || isConflict);
-        assert.strictEqual(userAction.test(finding.detail), needsAction, `${home}: ${finding.path}: ${finding.detail}`);
+  const homeRuns = new Map<string, CheckRun>();
+  before(() => {
+    for (const home of [...userFixHomes, ...rerunHomes]) homeRuns.set(home, runCheck(["--installs", KIT, home]));
+  });
+
+  function homeRun(home: string): CheckRun {
+    const run = homeRuns.get(home);
+    assert.ok(run, `no single-home run was captured for ${home}`);
+    return run;
+  }
+
+  function assertOnlyDrift(home: string, path: string, detail: string, message: string): void {
+    const { report, stderr } = homeRun(home);
+    assert.strictEqual(stderr, "", `${message}: the run must produce no warnings`);
+    assert.deepStrictEqual(report.findings, [{ check: "install-drift", path, detail }], message);
+  }
+
+  test("an unmarked shared payload is a conflict, not a clean home", () => {
+    const { report } = homeRun(CONFLICT_HOME);
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".claude/CORE_RULES.md"),
+      "present but not kit-owned — skills using shared rules resolve into it; move it aside and rerun setup.ts",
+      "an unmarked CORE_RULES.md is reported rather than treated as the user's business",
+    );
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".claude/references"),
+      "present but not kit-owned — skills using shared rules resolve into it; move it aside and rerun setup.ts",
+      "an unmarked references/ is reported the same way",
+    );
+  });
+
+  test("a leftover staging dir is an interrupted install, not drift to reconcile", () => {
+    const { report } = homeRun(STAGING_HOME);
+    assert.strictEqual(report.scanned, 0, "a leftover staging dir is not counted as an installed item");
+    assert.strictEqual(
+      findingCount(report, "install-drift"),
+      1,
+      "a home holding only a staging dir reports the never-installed line, not one finding per file",
+    );
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".claude"),
+      "no kit markers — never installed",
+      "an interrupted first install is one fact about the home",
+    );
+  });
+
+  test("the two sides disagreeing on link-ness is reported rather than compared through the link", () => {
+    const { report } = homeRun(MATERIALIZED_HOME);
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".claude/skills/kept-skill/AGENTS.md"),
+      "symlink replaced by a copy",
+      "a kit symlink materialized into a regular copy is drift, not a copy-mode difference",
+    );
+  });
+
+  test("one surviving kit marker proves setup.ts ran, so absent payload categories are drift", () => {
+    const { report } = homeRun(PARTIAL_HOME);
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".claude/skills/never-deployed/SKILL.md"),
+      "missing in install",
+      "a core-only partial install is reported missing skills",
+    );
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".claude/references/sample.md"),
+      "missing in install",
+      "a core-only partial install is reported missing references",
+    );
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".claude/agents/never-deployed.md"),
+      "missing in install",
+      "a core-only partial install is reported missing native agents",
+    );
+  });
+
+  test("a home setup.ts never installed into is reported once rather than flooding", () => {
+    const { report } = homeRun(FRESH_HOME);
+    assert.strictEqual(
+      findingCount(report, "install-drift"),
+      1,
+      "finding count for a never-installed home",
+    );
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".claude"),
+      "no kit markers — never installed",
+      "a home with no markers reports one line, not one per kit file",
+    );
+    assert.strictEqual(report.scanned, 0, "scanned count for a never-installed home");
+  });
+
+  test("the conflict that blocks a never-installed home rides on its one line", () => {
+    const { report } = homeRun(BLOCKED_FRESH_HOME);
+    assert.strictEqual(
+      findingCount(report, "install-drift"),
+      1,
+      "a never-installed home blocked by its own shared payload is still one finding",
+    );
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".claude"),
+      "no kit markers — never installed; CORE_RULES.md present but not kit-owned — move aside and rerun setup.ts",
+      "the one line names the payload blocking the install",
+    );
+    assert.strictEqual(report.scanned, 0, "a blocked never-installed home compares nothing");
+  });
+
+  test("a missing install home reports the documented uninstalled state", () => {
+    const { report } = homeRun(ABSENT_HOME);
+    assert.strictEqual(
+      findingCount(report, "install-drift"),
+      1,
+      "finding count for an absent install home",
+    );
+    assert.strictEqual(
+      findingDetail(report, "install-drift", ".claude"),
+      "no kit markers — never installed",
+      "an absent install home is classified as uninstalled",
+    );
+    assert.strictEqual(report.unreadable, 0, "an absent install home is not an unreadable coverage gap");
+  });
+
+  test("install drift names a user action exactly when setup.ts cannot clear it", () => {
+    const userAction = /(?:move (?:it )?aside|fix the file|repair or remove (?:the link|the markers)) and rerun setup\.ts|empty or remove it/;
+    for (const [homes, needsUserAction] of [[userFixHomes, true], [rerunHomes, false]] as const) {
+      for (const home of homes) {
+        const { report } = homeRun(home);
+        const drift = report.findings.filter((finding) => finding.check === "install-drift");
+        assert.ok(drift.length > 0, `${home}: fixture must report drift`);
+        for (const finding of drift) {
+          const isConflict = [".claude/references", ".claude/CORE_RULES.md"].includes(finding.path);
+          const needsAction = needsUserAction && (home !== CONFLICT_HOME || isConflict);
+          assert.strictEqual(userAction.test(finding.detail), needsAction, `${home}: ${finding.path}: ${finding.detail}`);
+        }
       }
     }
-  }
+  });
+
+  test("a missing Claude Code rule file is drift", () => {
+    assertOnlyDrift(RULE_MISSING_HOME, ".claude/rules/agents-kit-core-rules.md", "missing in install", "the rule file and its marker are gone");
+  });
+
+  test("a marked rule file that differs from CORE_RULES.md is drift", () => {
+    assertOnlyDrift(RULE_DIFFERS_HOME, ".claude/rules/agents-kit-core-rules.md", "differs from kit source", "the rule file holds stale rules");
+  });
+
+  test("an unmarked rule file is drift setup.ts cannot clear", () => {
+    assertOnlyDrift(
+      RULE_UNMARKED_HOME,
+      ".claude/rules/agents-kit-core-rules.md",
+      "present but not kit-owned — setup.ts never replaces it; move it aside and rerun setup.ts",
+      "a same-named user file keeps the core rules out of Claude Code",
+    );
+  });
+
+  test("a symlinked rule file with a marker is drift setup.ts cannot clear", () => {
+    assertOnlyDrift(
+      RULE_SYMLINK_HOME,
+      ".claude/rules/agents-kit-core-rules.md",
+      "present but not kit-owned — setup.ts never replaces it; move it aside and rerun setup.ts",
+      "a marked symlink remains user-owned",
+    );
+  });
+
+  test("settings without the kit SubagentStart entry report the hook missing", () => {
+    assertOnlyDrift(HOOK_MISSING_HOME, ".claude/settings.json", `${HOOK_EVENT} hook entry missing in install`, "a synced settings copy dropped the entry");
+    assertOnlyDrift(SETTINGS_MISSING_HOME, ".claude/settings.json", `${HOOK_EVENT} hook entry missing in install`, "no settings.json holds no entry");
+  });
+
+  test("a kit SubagentStart entry unlike the one setup.ts writes is drift", () => {
+    const detail = `${HOOK_EVENT} hook entry differs from the entry setup.ts writes`;
+    assertOnlyDrift(HOOK_DIFFERS_HOME, ".claude/settings.json", detail, "the kit entry also holds a user command");
+    assertOnlyDrift(HOOK_DOUBLED_HOME, ".claude/settings.json", detail, "setup.ts keeps one kit entry, so a second is drift");
+  });
+
+  test("invalid settings JSON is drift setup.ts cannot clear", () => {
+    assertOnlyDrift(
+      SETTINGS_INVALID_HOME,
+      ".claude/settings.json",
+      `not valid JSON — setup.ts cannot merge the ${HOOK_EVENT} hook entry; fix the file and rerun setup.ts`,
+      "setup.ts refuses to merge into a file it cannot parse",
+    );
+  });
+
+  test("settings with a non-list SubagentStart value are drift setup.ts cannot clear", () => {
+    assertOnlyDrift(
+      SETTINGS_NONLIST_HOME,
+      ".claude/settings.json",
+      `holds no hooks.${HOOK_EVENT} list — setup.ts cannot merge the hook entry; fix the file and rerun setup.ts`,
+      "setup.ts refuses to merge into a hook event that is not a list",
+    );
+  });
+
+  test("a Codex AGENTS.md without the core-rules block is drift", () => {
+    assertOnlyDrift(BLOCK_MISSING_HOME, ".codex/AGENTS.md", "core-rules block missing in install", "only the user's line remains");
+  });
+
+  test("a core-rules block that differs from CORE_RULES.md is drift", () => {
+    assertOnlyDrift(BLOCK_DIFFERS_HOME, ".codex/AGENTS.md", "core-rules block differs from kit source", "the block holds stale rules");
+  });
+
+  test("unmatched core-rules block markers are drift setup.ts cannot clear", () => {
+    assertOnlyDrift(
+      BLOCK_UNMATCHED_HOME,
+      ".codex/AGENTS.md",
+      "holds unmatched core-rules block markers — setup.ts leaves the file untouched; repair or remove the markers and rerun setup.ts",
+      "a second start marker blocks the block replacement",
+    );
+  });
+
+  test("reversed core-rules block markers are drift setup.ts cannot clear", () => {
+    assertOnlyDrift(
+      BLOCK_REVERSED_HOME,
+      ".codex/AGENTS.md",
+      "holds unmatched core-rules block markers — setup.ts leaves the file untouched; repair or remove the markers and rerun setup.ts",
+      "an end marker before the start marker blocks the block replacement",
+    );
+  });
+
+  test("dangling settings.json, AGENTS.md, and rules links are drift setup.ts cannot clear", () => {
+    const detail = "dangling symlink — setup.ts cannot write through it; repair or remove the link and rerun setup.ts";
+    assertOnlyDrift(SETTINGS_DANGLING_HOME, ".claude/settings.json", detail, "setup.ts refuses to write through a dangling settings link");
+    assertOnlyDrift(AGENTS_DANGLING_HOME, ".codex/AGENTS.md", detail, "setup.ts refuses to write through a dangling AGENTS.md link");
+    assertOnlyDrift(RULES_DANGLING_HOME, ".claude/rules", detail, "setup.ts cannot create the rule file under a dangling rules link");
+  });
+
+  test("a rules path that is not a directory is drift setup.ts cannot clear", () => {
+    const detail = "not a directory — setup.ts cannot create the rule file; move it aside and rerun setup.ts";
+    for (const [home, message] of [
+      [RULES_FILE_HOME, "setup.ts cannot create the rule file under a regular rules file"],
+      [RULES_FILE_LINK_HOME, "setup.ts cannot create the rule file under a rules link to a file"],
+    ]) {
+      assertOnlyDrift(home, ".claude/rules", detail, message);
+      assert.strictEqual(homeRun(home).report.unreadable, 0, `${message}: the rule marker is not an unreadable coverage gap`);
+    }
+  });
+
+  test("a marked Claude rule file that is a directory or a link to one is drift setup.ts cannot clear", () => {
+    const detail = "a directory — setup.ts cannot write it; move it aside and rerun setup.ts";
+    for (const home of [RULE_DIRECTORY_HOME, RULE_DIRECTORY_LINK_HOME]) {
+      assertOnlyDrift(home, ".claude/rules/agents-kit-core-rules.md", detail, "setup.ts cannot write the rule file over a directory");
+      assert.strictEqual(homeRun(home).report.unreadable, 0, "the directory is not an unreadable coverage gap");
+    }
+  });
+
+  test("a settings.json or AGENTS.md that is a directory is drift setup.ts cannot clear", () => {
+    const detail = "a directory — setup.ts cannot write it; move it aside and rerun setup.ts";
+    for (const [home, path, message] of [
+      [SETTINGS_DIRECTORY_HOME, ".claude/settings.json", "setup.ts cannot merge the hook entry into a settings.json directory"],
+      [AGENTS_DIRECTORY_HOME, ".codex/AGENTS.md", "setup.ts cannot write the core-rules block into an AGENTS.md directory"],
+    ]) {
+      assertOnlyDrift(home, path, detail, message);
+      assert.strictEqual(homeRun(home).report.unreadable, 0, `${message}: the directory is not an unreadable coverage gap`);
+    }
+  });
+
+  test("a non-empty AGENTS.override.md hides the core-rules block", () => {
+    assertOnlyDrift(
+      OVERRIDE_HOME,
+      ".codex/AGENTS.override.md",
+      "non-empty — Codex reads it in place of AGENTS.md, hiding the core-rules block; empty or remove it",
+      "Codex reads the override instead of AGENTS.md",
+    );
+  });
 });
 
 test("a clean install reports no drift in either home, its core-rules delivery included", () => {
@@ -1794,133 +1964,6 @@ test("a clean install reports no drift in either home, its core-rules delivery i
   assert.deepStrictEqual(report.findings, [], "user hooks, user lines, and key order must not read as drift");
   assert.strictEqual(report.unreadable, 0, "a clean install leaves nothing unread");
   assert.strictEqual(report.scanned, 14, "eight Claude Code items, its marked rule file included, and six Codex items");
-});
-
-test("a missing Claude Code rule file is drift", () => {
-  assertOnlyDrift(RULE_MISSING_HOME, ".claude/rules/agents-kit-core-rules.md", "missing in install", "the rule file and its marker are gone");
-});
-
-test("a marked rule file that differs from CORE_RULES.md is drift", () => {
-  assertOnlyDrift(RULE_DIFFERS_HOME, ".claude/rules/agents-kit-core-rules.md", "differs from kit source", "the rule file holds stale rules");
-});
-
-test("an unmarked rule file is drift setup.ts cannot clear", () => {
-  assertOnlyDrift(
-    RULE_UNMARKED_HOME,
-    ".claude/rules/agents-kit-core-rules.md",
-    "present but not kit-owned — setup.ts never replaces it; move it aside and rerun setup.ts",
-    "a same-named user file keeps the core rules out of Claude Code",
-  );
-});
-
-test("a symlinked rule file with a marker is drift setup.ts cannot clear", () => {
-  assertOnlyDrift(
-    RULE_SYMLINK_HOME,
-    ".claude/rules/agents-kit-core-rules.md",
-    "present but not kit-owned — setup.ts never replaces it; move it aside and rerun setup.ts",
-    "a marked symlink remains user-owned",
-  );
-});
-
-test("settings without the kit SubagentStart entry report the hook missing", () => {
-  assertOnlyDrift(HOOK_MISSING_HOME, ".claude/settings.json", `${HOOK_EVENT} hook entry missing in install`, "a synced settings copy dropped the entry");
-  assertOnlyDrift(SETTINGS_MISSING_HOME, ".claude/settings.json", `${HOOK_EVENT} hook entry missing in install`, "no settings.json holds no entry");
-});
-
-test("a kit SubagentStart entry unlike the one setup.ts writes is drift", () => {
-  const detail = `${HOOK_EVENT} hook entry differs from the entry setup.ts writes`;
-  assertOnlyDrift(HOOK_DIFFERS_HOME, ".claude/settings.json", detail, "the kit entry also holds a user command");
-  assertOnlyDrift(HOOK_DOUBLED_HOME, ".claude/settings.json", detail, "setup.ts keeps one kit entry, so a second is drift");
-});
-
-test("invalid settings JSON is drift setup.ts cannot clear", () => {
-  assertOnlyDrift(
-    SETTINGS_INVALID_HOME,
-    ".claude/settings.json",
-    `not valid JSON — setup.ts cannot merge the ${HOOK_EVENT} hook entry; fix the file and rerun setup.ts`,
-    "setup.ts refuses to merge into a file it cannot parse",
-  );
-});
-
-test("settings with a non-list SubagentStart value are drift setup.ts cannot clear", () => {
-  assertOnlyDrift(
-    SETTINGS_NONLIST_HOME,
-    ".claude/settings.json",
-    `holds no hooks.${HOOK_EVENT} list — setup.ts cannot merge the hook entry; fix the file and rerun setup.ts`,
-    "setup.ts refuses to merge into a hook event that is not a list",
-  );
-});
-
-test("a Codex AGENTS.md without the core-rules block is drift", () => {
-  assertOnlyDrift(BLOCK_MISSING_HOME, ".codex/AGENTS.md", "core-rules block missing in install", "only the user's line remains");
-});
-
-test("a core-rules block that differs from CORE_RULES.md is drift", () => {
-  assertOnlyDrift(BLOCK_DIFFERS_HOME, ".codex/AGENTS.md", "core-rules block differs from kit source", "the block holds stale rules");
-});
-
-test("unmatched core-rules block markers are drift setup.ts cannot clear", () => {
-  assertOnlyDrift(
-    BLOCK_UNMATCHED_HOME,
-    ".codex/AGENTS.md",
-    "holds unmatched core-rules block markers — setup.ts leaves the file untouched; repair or remove the markers and rerun setup.ts",
-    "a second start marker blocks the block replacement",
-  );
-});
-
-test("reversed core-rules block markers are drift setup.ts cannot clear", () => {
-  assertOnlyDrift(
-    BLOCK_REVERSED_HOME,
-    ".codex/AGENTS.md",
-    "holds unmatched core-rules block markers — setup.ts leaves the file untouched; repair or remove the markers and rerun setup.ts",
-    "an end marker before the start marker blocks the block replacement",
-  );
-});
-
-test("dangling settings.json, AGENTS.md, and rules links are drift setup.ts cannot clear", () => {
-  const detail = "dangling symlink — setup.ts cannot write through it; repair or remove the link and rerun setup.ts";
-  assertOnlyDrift(SETTINGS_DANGLING_HOME, ".claude/settings.json", detail, "setup.ts refuses to write through a dangling settings link");
-  assertOnlyDrift(AGENTS_DANGLING_HOME, ".codex/AGENTS.md", detail, "setup.ts refuses to write through a dangling AGENTS.md link");
-  assertOnlyDrift(RULES_DANGLING_HOME, ".claude/rules", detail, "setup.ts cannot create the rule file under a dangling rules link");
-});
-
-test("a rules path that is not a directory is drift setup.ts cannot clear", () => {
-  const detail = "not a directory — setup.ts cannot create the rule file; move it aside and rerun setup.ts";
-  for (const [home, message] of [
-    [RULES_FILE_HOME, "setup.ts cannot create the rule file under a regular rules file"],
-    [RULES_FILE_LINK_HOME, "setup.ts cannot create the rule file under a rules link to a file"],
-  ]) {
-    assertOnlyDrift(home, ".claude/rules", detail, message);
-    assert.strictEqual(runCheck(["--installs", KIT, home]).report.unreadable, 0, `${message}: the rule marker is not an unreadable coverage gap`);
-  }
-});
-
-test("a marked Claude rule file that is a directory or a link to one is drift setup.ts cannot clear", () => {
-  const detail = "a directory — setup.ts cannot write it; move it aside and rerun setup.ts";
-  for (const home of [RULE_DIRECTORY_HOME, RULE_DIRECTORY_LINK_HOME]) {
-    assertOnlyDrift(home, ".claude/rules/agents-kit-core-rules.md", detail, "setup.ts cannot write the rule file over a directory");
-    assert.strictEqual(runCheck(["--installs", KIT, home]).report.unreadable, 0, "the directory is not an unreadable coverage gap");
-  }
-});
-
-test("a settings.json or AGENTS.md that is a directory is drift setup.ts cannot clear", () => {
-  const detail = "a directory — setup.ts cannot write it; move it aside and rerun setup.ts";
-  for (const [home, path, message] of [
-    [SETTINGS_DIRECTORY_HOME, ".claude/settings.json", "setup.ts cannot merge the hook entry into a settings.json directory"],
-    [AGENTS_DIRECTORY_HOME, ".codex/AGENTS.md", "setup.ts cannot write the core-rules block into an AGENTS.md directory"],
-  ]) {
-    assertOnlyDrift(home, path, detail, message);
-    assert.strictEqual(runCheck(["--installs", KIT, home]).report.unreadable, 0, `${message}: the directory is not an unreadable coverage gap`);
-  }
-});
-
-test("a non-empty AGENTS.override.md hides the core-rules block", () => {
-  assertOnlyDrift(
-    OVERRIDE_HOME,
-    ".codex/AGENTS.override.md",
-    "non-empty — Codex reads it in place of AGENTS.md, hiding the core-rules block; empty or remove it",
-    "Codex reads the override instead of AGENTS.md",
-  );
 });
 
 test("an empty or whitespace-only AGENTS.override.md hides nothing", () => {
@@ -2003,65 +2046,72 @@ test("an early-closing reader does not turn into a non-zero exit", async () => {
   );
 });
 
-test("a slug in two roots reports once per colliding folder, not once per collision", () => {
-  const { report } = runCheck(DUP_ARGS);
-  assert.strictEqual(findingCount(report, "duplicate-slug"), 6, "duplicate-slug finding count");
-});
+describe("two roots sharing slugs, scanned once", () => {
+  let duplicatesRun: CheckRun;
+  before(() => {
+    duplicatesRun = runCheck(DUP_ARGS);
+  });
 
-test("each side of a collision is actionable from its own finding", () => {
-  const { report } = runCheck(DUP_ARGS);
-  assert.strictEqual(
-    findingDetail(report, "duplicate-slug", "dup-a/add-csv-export"),
-    `slug "add-csv-export" also at ${join(DUP_B, "add-csv-export")}`,
-    "active/active collision detail names the peer by absolute path",
-  );
-  assert.strictEqual(
-    findingDetail(report, "duplicate-slug", "dup-b/add-csv-export"),
-    `slug "add-csv-export" also at ${join(DUP_A, "add-csv-export")}`,
-    "the peer's own finding names it back",
-  );
-});
+  test("a slug in two roots reports once per colliding folder, not once per collision", () => {
+    const { report } = duplicatesRun;
+    assert.strictEqual(findingCount(report, "duplicate-slug"), 6, "duplicate-slug finding count");
+  });
 
-test("duplicate-slug sees archived folders, because a bare slug still falls back into Archive/", () => {
-  const { report } = runCheck(DUP_ARGS);
-  assert.strictEqual(
-    findingDetail(report, "duplicate-slug", "dup-a/only-here"),
-    `slug "only-here" also at ${join(DUP_B, "Archive", "only-here")} (archived)`,
-    "an archived peer is reported and labelled archived",
-  );
-  assert.strictEqual(
-    findingDetail(report, "duplicate-slug", "dup-b/Archive/only-here"),
-    `slug "only-here" (archived) also at ${join(DUP_A, "only-here")}`,
-    "the archived folder gets its own finding despite the archive exemption",
-  );
-});
+  test("each side of a collision is actionable from its own finding", () => {
+    const { report } = duplicatesRun;
+    assert.strictEqual(
+      findingDetail(report, "duplicate-slug", "dup-a/add-csv-export"),
+      `slug "add-csv-export" also at ${join(DUP_B, "add-csv-export")}`,
+      "active/active collision detail names the peer by absolute path",
+    );
+    assert.strictEqual(
+      findingDetail(report, "duplicate-slug", "dup-b/add-csv-export"),
+      `slug "add-csv-export" also at ${join(DUP_A, "add-csv-export")}`,
+      "the peer's own finding names it back",
+    );
+  });
 
-test("duplicate-slug sees backlogged folders, because a bare slug still falls back into Backlog/", () => {
-  const { report } = runCheck(DUP_ARGS);
-  assert.strictEqual(
-    findingDetail(report, "duplicate-slug", "dup-a/parked-too"),
-    `slug "parked-too" also at ${join(DUP_B, "Backlog", "parked-too")} (backlogged)`,
-    "a backlogged peer is reported and labelled backlogged",
-  );
-  assert.strictEqual(
-    findingDetail(report, "duplicate-slug", "dup-b/Backlog/parked-too"),
-    `slug "parked-too" (backlogged) also at ${join(DUP_A, "parked-too")}`,
-    "the backlogged folder gets its own finding despite the stale exemption",
-  );
-});
+  test("duplicate-slug sees archived folders, because a bare slug still falls back into Archive/", () => {
+    const { report } = duplicatesRun;
+    assert.strictEqual(
+      findingDetail(report, "duplicate-slug", "dup-a/only-here"),
+      `slug "only-here" also at ${join(DUP_B, "Archive", "only-here")} (archived)`,
+      "an archived peer is reported and labelled archived",
+    );
+    assert.strictEqual(
+      findingDetail(report, "duplicate-slug", "dup-b/Archive/only-here"),
+      `slug "only-here" (archived) also at ${join(DUP_A, "only-here")}`,
+      "the archived folder gets its own finding despite the archive exemption",
+    );
+  });
 
-test("a globally unique slug stays silent", () => {
-  const { report } = runCheck(DUP_ARGS);
-  assert.strictEqual(
-    findingDetail(report, "duplicate-slug", "dup-a/unique-a"),
-    "",
-    "a slug unique to its root is not reported",
-  );
-  assert.strictEqual(
-    findingDetail(report, "duplicate-slug", "dup-b/unique-b"),
-    "",
-    "a slug unique to the other root is not reported",
-  );
+  test("duplicate-slug sees backlogged folders, because a bare slug still falls back into Backlog/", () => {
+    const { report } = duplicatesRun;
+    assert.strictEqual(
+      findingDetail(report, "duplicate-slug", "dup-a/parked-too"),
+      `slug "parked-too" also at ${join(DUP_B, "Backlog", "parked-too")} (backlogged)`,
+      "a backlogged peer is reported and labelled backlogged",
+    );
+    assert.strictEqual(
+      findingDetail(report, "duplicate-slug", "dup-b/Backlog/parked-too"),
+      `slug "parked-too" (backlogged) also at ${join(DUP_A, "parked-too")}`,
+      "the backlogged folder gets its own finding despite the stale exemption",
+    );
+  });
+
+  test("a globally unique slug stays silent", () => {
+    const { report } = duplicatesRun;
+    assert.strictEqual(
+      findingDetail(report, "duplicate-slug", "dup-a/unique-a"),
+      "",
+      "a slug unique to its root is not reported",
+    );
+    assert.strictEqual(
+      findingDetail(report, "duplicate-slug", "dup-b/unique-b"),
+      "",
+      "a slug unique to the other root is not reported",
+    );
+  });
 });
 
 test("a root whose slugs are all distinct stays silent, with no cross-root state leaking in", () => {
@@ -2087,45 +2137,95 @@ test("two area directories of one root collide — uniqueness is global, not per
   );
 });
 
-test("a root of grouping directories scans its task leaves and reports nothing about the groups", () => {
-  const { report, stderr } = runCheck(GROUPS_ARGS);
-  assert.strictEqual(stderr, "", "a readable group tree must produce no warnings");
-  assert.strictEqual(
-    report.scanned,
-    3,
-    "scanned counts the active, archived, and parked leaves — never the four groups above them",
-  );
-  assert.deepStrictEqual(
-    report.findings.map((entry) => entry.path).filter((path) => !path.endsWith("-leaf")),
-    [],
-    "a directory holding only a group file raises no finding of its own",
-  );
-  assert.strictEqual(findingCount(report, "nested-task"), 0, "a correctly spelled group tree hides no task folder");
+describe("a root of grouping directories, scanned once", () => {
+  let groupsRun: CheckRun;
+  before(() => {
+    groupsRun = runCheck(GROUPS_ARGS);
+  });
+
+  test("a root of grouping directories scans its task leaves and reports nothing about the groups", () => {
+    const { report, stderr } = groupsRun;
+    assert.strictEqual(stderr, "", "a readable group tree must produce no warnings");
+    assert.strictEqual(
+      report.scanned,
+      3,
+      "scanned counts the active, archived, and parked leaves — never the four groups above them",
+    );
+    assert.deepStrictEqual(
+      report.findings.map((entry) => entry.path).filter((path) => !path.endsWith("-leaf")),
+      [],
+      "a directory holding only a group file raises no finding of its own",
+    );
+    assert.strictEqual(findingCount(report, "nested-task"), 0, "a correctly spelled group tree hides no task folder");
+  });
+
+  test("a group file dropped straight into a nested Archive/ or Backlog/ makes no task and no finding", () => {
+    const { report } = groupsRun;
+    for (const container of [
+      "groups/product/backend/empty/Archive",
+      "groups/product/backend/empty/Backlog",
+    ]) {
+      assert.deepStrictEqual(
+        report.findings.filter((entry) => entry.path === container),
+        [],
+        `${container} carries a group file and is still not a task folder`,
+      );
+    }
+    assert.strictEqual(report.scanned, 3, "the two decoy group files add no task folder to the walk");
+  });
+
+  test("a task archived inside a nested group is counted and exempt from every check but duplicate-slug", () => {
+    const { report } = groupsRun;
+    assert.deepStrictEqual(
+      report.findings.filter(
+        (entry) => entry.path === "groups/product/backend/empty/Archive/archived-leaf",
+      ),
+      [],
+      "a done leaf well past the stale window raises neither stale nor done-unarchived once archived",
+    );
+  });
+
+  test("a backlogged task inside a nested group is exempt from stale alone", () => {
+    const { report } = groupsRun;
+    assert.strictEqual(findingCount(report, "stale"), 0, "a parked leaf past the stale window is exempt");
+    assert.deepStrictEqual(
+      findingDetails(report, "started-in-backlog", "groups/product/backend/empty/Backlog/parked-leaf"),
+      ["executing, parked in Backlog/ — a parked task must be unstarted"],
+      "the same leaf is still judged by the checks the backlog does not exempt",
+    );
+  });
 });
 
-test("a group holding a CONTEXT.md instead of a GROUP_CONTEXT.md is named with the task folders it hides", () => {
-  const { report } = runCheck(NEAR_MISS_ARGS);
-  assert.strictEqual(report.scanned, 1, "the near-miss group is the only folder the walk claims");
-  assert.strictEqual(
-    findingDetail(report, "nested-task", "groups-near-miss/product"),
-    "claimed as a task folder, hiding the task folders beneath it: groups-near-miss/product/Archive/hidden-archived, groups-near-miss/product/backend/hidden-leaf",
-    "the finding names every hidden task folder beneath the claimed one",
-  );
-});
+describe("a near-miss group, scanned once", () => {
+  let nearMissRun: CheckRun;
+  before(() => {
+    nearMissRun = runCheck(NEAR_MISS_ARGS);
+  });
 
-test("a role file misfiled into a container under a claim never makes the container the hidden task", () => {
-  const { report } = runCheck(NEAR_MISS_ARGS);
-  const hidden = findingDetail(report, "nested-task", "groups-near-miss/product")
-    .replace("claimed as a task folder, hiding the task folders beneath it: ", "")
-    .split(", ");
-  assert.ok(
-    hidden.includes("groups-near-miss/product/Archive/hidden-archived"),
-    "the descent walks through the container to the task folder beneath it",
-  );
-  assert.ok(
-    !hidden.includes("groups-near-miss/product/Archive"),
-    "the container is tested before the recognition set, so its own CONTEXT.md never claims it",
-  );
+  test("a group holding a CONTEXT.md instead of a GROUP_CONTEXT.md is named with the task folders it hides", () => {
+    const { report } = nearMissRun;
+    assert.strictEqual(report.scanned, 1, "the near-miss group is the only folder the walk claims");
+    assert.strictEqual(
+      findingDetail(report, "nested-task", "groups-near-miss/product"),
+      "claimed as a task folder, hiding the task folders beneath it: groups-near-miss/product/Archive/hidden-archived, groups-near-miss/product/backend/hidden-leaf",
+      "the finding names every hidden task folder beneath the claimed one",
+    );
+  });
+
+  test("a role file misfiled into a container under a claim never makes the container the hidden task", () => {
+    const { report } = nearMissRun;
+    const hidden = findingDetail(report, "nested-task", "groups-near-miss/product")
+      .replace("claimed as a task folder, hiding the task folders beneath it: ", "")
+      .split(", ");
+    assert.ok(
+      hidden.includes("groups-near-miss/product/Archive/hidden-archived"),
+      "the descent walks through the container to the task folder beneath it",
+    );
+    assert.ok(
+      !hidden.includes("groups-near-miss/product/Archive"),
+      "the container is tested before the recognition set, so its own CONTEXT.md never claims it",
+    );
+  });
 });
 
 test("a claimed folder under Archive/ is still named with the task folders it hides", () => {
@@ -2142,42 +2242,6 @@ test("a claimed folder under Archive/ is still named with the task folders it hi
       .map((entry) => entry.check),
     ["nested-task"],
     "every other check still exempts the folder, well past the stale window as it is",
-  );
-});
-
-test("a group file dropped straight into a nested Archive/ or Backlog/ makes no task and no finding", () => {
-  const { report } = runCheck(GROUPS_ARGS);
-  for (const container of [
-    "groups/product/backend/empty/Archive",
-    "groups/product/backend/empty/Backlog",
-  ]) {
-    assert.deepStrictEqual(
-      report.findings.filter((entry) => entry.path === container),
-      [],
-      `${container} carries a group file and is still not a task folder`,
-    );
-  }
-  assert.strictEqual(report.scanned, 3, "the two decoy group files add no task folder to the walk");
-});
-
-test("a task archived inside a nested group is counted and exempt from every check but duplicate-slug", () => {
-  const { report } = runCheck(GROUPS_ARGS);
-  assert.deepStrictEqual(
-    report.findings.filter(
-      (entry) => entry.path === "groups/product/backend/empty/Archive/archived-leaf",
-    ),
-    [],
-    "a done leaf well past the stale window raises neither stale nor done-unarchived once archived",
-  );
-});
-
-test("a backlogged task inside a nested group is exempt from stale alone", () => {
-  const { report } = runCheck(GROUPS_ARGS);
-  assert.strictEqual(findingCount(report, "stale"), 0, "a parked leaf past the stale window is exempt");
-  assert.deepStrictEqual(
-    findingDetails(report, "started-in-backlog", "groups/product/backend/empty/Backlog/parked-leaf"),
-    ["executing, parked in Backlog/ — a parked task must be unstarted"],
-    "the same leaf is still judged by the checks the backlog does not exempt",
   );
 });
 

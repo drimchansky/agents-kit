@@ -41,6 +41,10 @@ Permission cases observe record protection and apply permissions during writes a
 
 **The `health-check` suite's fixture ages are load-bearing.** Four folders exceed the default 30 days. `done-unarchived` is excluded from stale by terminal status; `unknown-status` by vocabulary; `parked-todo` by backlog placement. `no-status-plan` has no exemption: the live-status guard checks only non-null status. Its unparseable header therefore yields the second stale finding, labeled `no-status`. Regressing any exclusion changes the count.
 
+Each unchanged health-check argument set runs once, in its scenario's `before` hook. These cover the store, anchor, citation, pre-delivery install, duplicate-slug, group, and near-miss fixtures. A separate group runs each single-home `--installs` fixture once for both its own test and the user-action matrix. Selecting one single-home test therefore runs every single-home fixture. Shared results are frozen, so a test that mutates one fails. Flag variants, permission and mutation cases, and the file, pipe-buffer, and early-reader runs keep separate executions.
+
+**The `session-triage` suite launches each unchanged argument set once.** The main corpus and its `--top`, `--since`, retry, and absent-directory variants each spawn the helper in their scenario's `before` hook. Each test reads status, stdout, and stderr from that frozen capture and parses its own report. Selecting one test launches only its own scenario. Built fixture scenarios, the locked-directory and locked-file cases, and the file, pipe-buffer, and early-close runs keep separate executions. The determinism cases run their arguments twice on purpose.
+
 ## Opt-in live executor smoke
 
 Run this procedure only when live model calls are requested. Use disposable fixture repositories and existing authenticated CLIs. Preserve installed payloads, authentication files, and user configuration. Fingerprint protected configuration, auth files, and installed definitions before calls; retain hashes without copying credential contents.
