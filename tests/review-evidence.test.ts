@@ -17,6 +17,7 @@ const PIPELINE = "references/workflow/verify-pipeline.md";
 const TRIAGE = "skills/triage-findings/SKILL.md";
 const FIX = "skills/fix-findings/SKILL.md";
 const EXECUTOR = "references/workflow/executor-contract.md";
+const RECOVERY = "references/workflow/fix-findings-recovery.md";
 
 function source(path: string): string {
   return readFileSync(join(ROOT, path), "utf8");
@@ -343,21 +344,67 @@ test("the settle spot-checks Critical/Major Pre-existing labels against the merg
   assert.match(section(PIPELINE, "The review composite"), /The adopt, anchor spot-check, and final-verdict steps do not run\. The `Pre-existing` label spot-check still runs on Critical\/Major entries, in full as `\.\/reviewer-contract\.md` § \*The settle\* defines it, including the rule for pooled returns that disagree on a label/);
 });
 
-test("fix-findings keeps the Pre-existing label and asks before fixing a labeled finding", () => {
+test("fix-findings keeps the Pre-existing label and asks once whether to include labeled findings", () => {
   assert.match(section(FIX, "Source"), /Preserve each finding's wording, severity, `Pre-existing` label, anchor, root cause, and fix options as supplied/);
-  assert.match(section(FIX, "The Gate: Auto vs Ask"), /\*\*Ask:\*\* every other actionable finding, including unverified findings, findings labeled `Pre-existing`/);
-  assert.match(section(FIX, "Output"), /Preserve the finding's original text, severity, and any `Pre-existing` label in each entry/);
+  const gate = section(FIX, "The Gate: Auto vs Ask");
+  assert.match(gate, /In the same batched round, ask one question whether to include the selected actionable findings labeled `Pre-existing` \(`\.\/references\/engineering\/review\.md` § \*Pre-existing findings\*\)\./);
+  assert.match(gate, /A `Pre-existing` finding the user named individually, by number, anchor, or quoted text, counts as included and stays out of the question\./);
+  assert.match(gate, /Route included findings like any other finding\./);
+  assert.match(gate, /Report excluded ones under \*\*Decided\*\* as excluded `Pre-existing` findings\./);
+  assert.match(gate, /until the inclusion question and every initial Ask finding have an explicit user decision/);
+  assert.doesNotMatch(gate, /\*\*Ask:\*\*[^\n]*`Pre-existing`/);
+  const output = section(FIX, "Output");
+  assert.match(output, /Preserve the finding's original text, severity, and any `Pre-existing` label in each entry/);
+  assert.match(output, /\*\*Decided:\*\*[^\n]*`Pre-existing` findings the user excluded through the inclusion question, with that reason/);
 });
 
-test("fix-findings delegates approved Ask fixes and its executor binding applies none inline", () => {
-  const strategy = section(FIX, "Applying Fixes").split("\n### Execution strategy")[1]?.split("\n### ")[0];
+test("fix-findings applies verified and non-functional fixes without asking", () => {
+  const gate = section(FIX, "The Gate: Auto vs Ask");
+  assert.match(source(FIX).split("\n---\n")[0], /\ndescription:[^\n]*Applies eligible Confirmed and non-functional fixes automatically/);
+  assert.match(gate, /\*\*Withdrawn and Inconclusive findings are never edited\.\*\* Put them in Untouched with their verdict\. Apply a fix without asking only when it meets an Auto tier/);
+  assert.match(gate, /\*\*Auto, verified:\*\* a Confirmed finding with one unambiguous targeted change, confined to reviewed files, with no new dependency or public API or behavior change beyond the finding\. A fix that changes behavior qualifies\./);
+  assert.match(gate, /\*\*Auto, non-functional:\*\* a finding with any verdict or none, except Withdrawn or Inconclusive, whose fix is one unambiguous targeted change confined to reviewed files\. The change must fall within the `low` tier of `\.\/references\/engineering\/review-evidence\.md` § \*Risk\*\./);
+  assert.doesNotMatch(gate, /\*\*Ask:\*\*[^\n]*unverified findings/);
+  assert.doesNotMatch(section(TRIAGE, "Output"), /asking approval for unverified fixes/);
+  assert.match(gate, /Route a consequential change in a document's claim, decision, or intended audience to Ask/);
+  assert.match(gate, /Route a test edit to Ask unless its finding is Confirmed\./);
+  assert.match(gate, /Treat a file named only as a proposed remedy as outside the reviewed files for Auto\. Route that fix to Ask\./);
+});
+
+test("fix-findings asks ask-routed findings as option questions without diffs", () => {
+  const gate = section(FIX, "The Gate: Auto vs Ask");
+  const frontmatter = source(FIX).split("\n---\n")[0];
+  assert.match(frontmatter, /\ndescription:[^\n]*other actionable fixes ask the user to pick from analyzed options with a recommendation/);
+  assert.doesNotMatch(frontmatter, /diff/i);
+  assert.match(gate, /For each Ask finding, show the finding, its viable fix options, their material trade-offs, and your recommended option\./);
+  assert.match(gate, /the executors it will launch for those fixes and for each option the Ask round approves/);
+  assert.match(gate, /A decision picks one shown option, or skips, defers, or rejects the finding\. A general go-ahead that names no option picks none, unless the question showed only one option\./);
+  assert.doesNotMatch(gate, /concrete diff/);
+  assert.doesNotMatch(gate, /\bdiffs?\b/i);
+});
+
+test("fix-findings delegates picked options like Auto fixes and its executor binding applies none inline", () => {
+  const applying = section(FIX, "Applying Fixes");
+  const strategy = applying.split("\n### Execution strategy")[1]?.split("\n### ")[0];
   assert.ok(strategy);
-  assert.match(strategy, /Delegate every fix the run applies, Auto or Ask[^\n]*An Ask fix settles when the user approves its concrete diff/);
+  assert.match(strategy, /Delegate every fix the run applies, Auto or Ask[^\n]*An Ask fix settles when the user picks its option\./);
+  assert.match(applying, /An executor that returns a pending impactful choice for any fix, Auto or picked, restores the same way[^\n]*re-executes only after the user picks from a fresh option question with a recommendation/);
   const binding = section(EXECUTOR, "Bindings").split("\n### fix-findings\n")[1];
   assert.ok(binding);
-  assert.match(binding, /delegated once its change is settled: an Auto fix, or an Ask fix after the user approves its concrete diff/);
+  assert.match(binding, /delegated once its change is settled: an Auto fix, or an Ask fix after the user picks its option\./);
+  assert.match(binding, /A picked option takes the same packet as an Auto fix: the picked option is the chosen fix, and the prior-decisions item carries the user's pick\./);
+  assert.match(binding, /\*\*Picked-option intake:\*\* before recording a picked option's change set, compare the report's `Changes` with the picked option\./);
   assert.match(binding, /\*\*Outside the delegation surface:\*\* findings the run does not fix receive no edits/);
   assert.doesNotMatch(binding, /coordinator applies[^\n]*inline/);
+  assert.doesNotMatch(binding, /Approved-diff intake/);
+  assert.doesNotMatch(binding, /approved diff|concrete diff|apply that diff|formatter-only drift/i);
+  assert.doesNotMatch(section(EXECUTOR, "Write-mode routing"), /concrete change/);
+  assert.doesNotMatch(source(FIX), /approved diff|concrete diff|approved-diff|formatter-only drift/i);
+});
+
+test("fix-findings recovery re-executes picked options like Auto fixes", () => {
+  assert.match(section(RECOVERY, "Dependency-safe recovery"), /An Auto fix or a picked option may be re-executed through the selected executor\./);
+  assert.doesNotMatch(source(RECOVERY), /approved diff|concrete diff|concrete-diff|approved-diff|fresh diff|replay[^\n]*verbatim|verbatim[^\n]*replay/i);
 });
 
 test("pending endings retain the worktree and report evidence even without findings", () => {

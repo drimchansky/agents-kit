@@ -61,4 +61,4 @@ Close with the Handoff block (`./references/workflow/user-facing-messages.md` §
 
 - **Done:** the open findings batched by concern, pointing at **Overview** and **Batches**.
 - **Know:** likely-handled findings to confirm, pointing at **Verify**, and a partial or failed fetch, pointing at **Inaccessible context**.
-- **Next:** `/fix-findings` applies the batches and commits each one, asking approval for unverified fixes. `/triage-findings-verify <source>` first verifies each open batch in a read-only probe.
+- **Next:** `/fix-findings` applies the batches and commits each one. It applies eligible Confirmed fixes and low-risk non-functional fixes without asking, asks once whether to include `Pre-existing` findings, and asks you to pick an option for the rest. `/triage-findings-verify <source>` first verifies each open batch in a read-only probe.
