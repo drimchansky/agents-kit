@@ -132,10 +132,11 @@ test("the confirm-gated roster names an existing proposal section for start-secr
   }
 });
 
-test("both secretary adapters carry the role name and contract citation the launch checks read", () => {
+test("both secretary adapters carry the role name and contract citation the launch checks read and no override keys", () => {
   const codex = readFileSync(join(REPO_DIR, "agents", "secretary.toml"), "utf8");
   assert.match(codex, /^name = "secretary"$/m);
   assert.match(codex, /developer_instructions = """[\s\S]*secretary-contract\.md/);
+  assert.doesNotMatch(codex, /^(?:sandbox_mode|approval_policy|network_access|model_provider)\s*=/m, "the Codex adapter inherits the parent's provider and permissions");
   const [header, body = ""] = readFileSync(join(REPO_DIR, "agents", "secretary.md"), "utf8").split("\n---\n");
   assert.match(body, /`references\/workflow\/secretary-contract\.md`/, "the Claude adapter's body carries the citation the effective-definition check reads");
   assert.doesNotMatch(header, /^tools:/m, "an allowlist would drop the connectors the secretary reads");
