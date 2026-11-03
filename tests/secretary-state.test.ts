@@ -3100,6 +3100,19 @@ test("wake cron refuses upper-bound rounding and shift overflow while keeping it
   }
 });
 
+test("wake prints the status cron for any instant without configuration or records", () => {
+  const home = mkdtempSync(join(TEST_ROOT, "wake-"));
+  const at = new Date(Date.now() + 3 * HOUR_MS);
+  const result = runExpect(0, home, ["wake", "--at", at.toISOString()]);
+  const printed = JSON.parse(result.stdout);
+  assert.strictEqual(printed.wake.at, at.toISOString());
+  assert.strictEqual(printed.wake.cron, wakeCron(at, new Date()));
+  assert.strictEqual(existsSync(join(home, ".local")), false);
+  assert.strictEqual(existsSync(join(home, ".config")), false);
+  for (const args of [["wake"], ["wake", "--at", "2026-13-01T00:00:00Z"], ["wake", "--at", "2026-02-30T00:00:00Z"], ["wake", "--at", "2026-01-01T24:00:00Z"], ["wake", "--at", "tomorrow"], ["wake", "--at", at.toISOString(), "--runbook", home]]) runExpect(2, home, args);
+  assert.strictEqual(JSON.parse(runExpect(0, home, ["wake", "--at", "+010000-01-01T00:00:00.000Z"]).stdout).wake.at, "+010000-01-01T00:00:00.000Z");
+});
+
 test("wake cron refuses minimum-lead overflow", () => {
   const upper = 8640000000000000;
   assertExit(2, () => wakeCron(new Date(upper - HOUR_MS), new Date(upper - 1)), /unrepresentable wake/);

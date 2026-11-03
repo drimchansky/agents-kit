@@ -1,19 +1,27 @@
 # Secretary Contract
 
-Read `../secretary/runbook-maintenance.md` before executing the packet. It defines the runbook duty, its reads, writes, jobs, and reply. Send one reply to the coordinator per job.
+Read the packet's duty before executing: `../secretary/runbook-maintenance.md` for `runbook-maintenance`, or `../secretary/meeting-sync.md` for `meeting-sync`.
+Each duty defines its reads, writes, jobs, and reply. Send one reply to the coordinator per job.
 
 ## Launch packet
 
 The coordinator supplies:
 
-- The runbook's original physical root retained by the coordinator, resolved under `./task-store.md` § *The root registry*.
-- The retained interval, absolute helper path, and original store ID. The coordinator resolved these once at startup; later configuration cannot replace them.
-- One job: `review` with a fresh attempt token and the coordinator's owner label, or `apply` with a fresh attempt token, the owner label, and one accepted `<proposal>@<revision>`.
-- The current UTC time.
+- An explicit duty: `runbook-maintenance` or `meeting-sync`. Load only that duty; a meeting job opens no runbook records.
+- For `meeting-sync`: job `sync`, the complete retained helper settings object, absolute helper path, coordinator-started token, and current UTC time.
+    - The meeting settings include physical folder and identity, interval, owner, and store. Starting the enclosing session authorizes its routine meeting writes.
+- For `runbook-maintenance`, the following fields:
+    - The runbook's original physical root retained by the coordinator, resolved under `./task-store.md` § *The root registry*.
+    - The retained interval, absolute helper path, and original store ID. The coordinator resolved these once at startup; later configuration cannot replace them.
+    - One job: `review` with a fresh attempt token and the coordinator's owner label, or `apply` with a fresh attempt token, the owner label, and one accepted `<proposal>@<revision>`.
+    - The current UTC time.
 
 Report a missing or ambiguous item and do no job. Infer no retained setting or job from the adapter, installation, shell, or current configuration.
 
 ## Unavailable
+
+For meeting jobs, use `../secretary/meeting-sync.md` § *Job* to validate availability and invoke the helper.
+The remaining checks in this section apply only to runbook jobs.
 
 On every helper invocation, use `node <packet helper path> <command> --runbook <packet root> --interval-minutes <packet interval>`. Shell-quote both paths. Read no global configuration and substitute no later root, interval, or helper. Record commands: `../scripts/secretary-state.md`.
 
@@ -30,9 +38,10 @@ A status with `ready: false` permits no job; report it unavailable. The coordina
 
 - Launch no executor, reviewer, probe, or other agent.
 - Arm no timer, cron, background command, or other wait; waiting and stopping belong to the coordinator.
+- After a stopped or superseded meeting token refuses, end the job; a delayed reply grants no further work.
 - Record no `attempt-stopped`. The coordinator records it when it stops a job or finds one interrupted.
 - Record no decision. The coordinator records each one from the user's own message.
-- Take no duty beyond the packet and `../secretary/runbook-maintenance.md`.
+- Take no duty beyond the packet's selected duty. A meeting launch grants no runbook decision or apply authority.
 
 ## Consumers
 

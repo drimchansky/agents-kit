@@ -12,9 +12,12 @@ node scripts/secretary-state.ts rejected [--cursor <target>]
 node scripts/secretary-state.ts history [--after <seq>] [--type <type>] [--proposal <id>]
 node scripts/secretary-state.ts event --seq <seq>
 node scripts/secretary-state.ts body --hash <sha256> [--offset <n>] [--limit <n>]
+node scripts/secretary-state.ts wake --at <iso-utc-instant>
 ```
 
-Every command also accepts `--expect-runbook <physical-root>` or the paired `--runbook <physical-root> --interval-minutes <n>` options.
+Every command except `wake` also accepts `--expect-runbook <physical-root>` or the paired `--runbook <physical-root> --interval-minutes <n>` options.
+
+**Wake.** `wake --at <ISO UTC instant>` reads no configuration and opens no store. It accepts the signed six-digit years `toISOString()` writes outside 0000–9999. It prints `{"wake":{"at","cron"}}`, building `cron` for that instant as § *Status* builds `review.wake.cron`. A malformed instant, another option, or an unrepresentable minute exits 2.
 
 **Expected runbook.** The optional path is an absolute physical root retained from an earlier status. The helper compares it with the configured physical root before accessing records. A mismatch exits 1 without reading or writing either store; a non-absolute argument exits 2. Configuration aliases resolving to the same physical root pass. Omitting the option preserves configuration-selected access for standalone commands. This legacy mode remains configuration-driven.
 
