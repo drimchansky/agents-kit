@@ -6,6 +6,8 @@ argument-hint: '[-f (fact verification)] [message or file path]'
 
 # Proofread
 
+This utility skill's output follows only the rules in this file.
+
 Suggest improvements while preserving the author's tone, voice, style, formatting, and structure.
 
 ## Flags

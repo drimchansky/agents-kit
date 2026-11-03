@@ -39,10 +39,10 @@ Default absent Domain to `engineering`. Load requested phase files from `referen
 ## Which skills resolve a domain vs. load a fixed pack
 
 - **Spine skills** resolve the task's Domain, except three that may lack a task folder. `explore` resolves only when relevant and may answer domain-neutrally. `implement` infers from the request. `decompose-task` infers from the source document and stamps each materialized part's seeded `CONTEXT.md`.
-- **Engineering-only skills** load `references/engineering/`: `commit`, `rebase`, `squash-push`, `review-code`, `update-pr-description`, `publish-pr-review`, `triage-findings`, `verify-issue`, `review-code-triage-verify`, `triage-findings-verify`, and `review-pr-loop`. **Exception:** `commit` reads only the neutral core because it writes no code. Its SKILL.md states the applicable Git-mutation rule inline. Pack membership does not require every pack file.
+- **Engineering-only skills** load `references/engineering/`: `commit`, `rebase`, `squash-push`, `review-code`, `update-pr-description`, `publish-pr-review`, `triage-findings`, `verify-issue`, `review-code-triage-verify`, `triage-findings-verify`, and `review-pr-loop`. **Exception:** `commit` loads no pack file and applies only the neutral core, because it writes no code. Its SKILL.md states the applicable Git-mutation rule inline. Pack membership does not require every pack file.
 - **Documentation-contributed skills** load `references/documentation/`: `review-docs` checks accuracy against code and whole-document quality; `prepare-diagram` produces Mermaid diagrams.
 - **Mixed-domain findings:** `fix-findings` applies the engineering pack, documentation pack, or both to each chosen fix according to its edit surface. A finding's anchor does not determine the domain.
-- **Pack-free skills** read the neutral core and resolve no pack themselves:
+- **Pack-free skills** apply the neutral core and resolve no pack themselves:
   - `archive-task`, `backlog-task`, and `maintain` operate on task envelopes and store artifacts. Read `task-layout.md`, its filing/role-file satellites, and `task-lifecycle.md`. Archive uses location and terminal-state rules; backlog uses location and unstarted-entry rules; maintain uses format and registry rules.
   - `prepare-ticket` writes a domain-neutral upstream artifact before a Domain marker exists; apply `ticket-format.md` and `task-layout.md`.
   - `prepare-epic` writes a domain-neutral epic description as a standalone file, not a task role file; read `task-layout.md` and `task-store.md` to resolve source tasks and conventions.
@@ -50,23 +50,25 @@ Default absent Domain to `engineering`. Load requested phase files from `referen
   - `init-config` writes machine paths and secretary-duty settings in the global configuration and touches no task.
   - `start-secretary` dispatches runbook maintenance and meeting sync under `secretary-contract.md`, with one retained session and no task writes.
 
-The skills `create-notion-page`, `prepare-daily-status`, `prepare-release-announcement`, `review-note`, `run-knowledge-session`, `sync-meeting-notes`, and `translate` read only `./AGENTS.md` § *Ask Before Assuming* from the core and resolve no domain pack.
-All seven also read `./user-facing-messages.md` § *Plain wording* and link `./references`.
+The skills `create-notion-page`, `prepare-daily-status`, `prepare-release-announcement`, `review-note`, `run-knowledge-session`, `sync-meeting-notes`, and `translate` resolve no domain pack; their Core Rules apply the working repository's instruction files.
+Only `prepare-release-announcement` and `sync-meeting-notes` link `./references`.
 
 A composite's delegated skills retain their own pack loads unless explicitly overridden. `maintain` invokes no sibling skill; its Phase 4 read-only probes resolve no pack either.
 
 ## Utility skills
 
-A utility contains its complete protocol/output in `SKILL.md`, with no shared rules, references, sibling skills, supporting instructions, or domain pack.
-Ship no `AGENTS.md` or `references` links. Utilities may expose flags.
+A utility contains its complete protocol/output in `SKILL.md`, with no references, sibling skills, supporting instructions, or domain pack.
+The always-on core rules are present, but a utility's output follows its own rules (`../../CORE_RULES.md` § *NOTICED BUT NOT TOUCHING* and § *Communication*).
+Ship no `references` link. Utilities may expose flags.
+Each utility's `SKILL.md` names itself a utility skill, so the always-on exemption reaches it at run time.
 
 The initial members are `format-dictation` and `proofread`.
 
 ## Load order
 
-For a spine skill acting on a task:
+For a spine skill acting on a task, the neutral `../../CORE_RULES.md` is already in context through the always-on delivery `setup.ts` installs:
 
-1. Read and apply `./AGENTS.md`, the neutral `CORE_RULES.md`.
+1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 2. Resolve Domain from `CONTEXT.md`, defaulting to engineering.
 3. Layer `references/<domain>/rules.md` over the core.
 4. Load the corresponding pack file as each phase requires it.

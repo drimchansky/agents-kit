@@ -6,7 +6,7 @@ argument-hint: '[source: PR number/URL, file path, or pasted findings; defaults 
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
+1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 2. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core.
 
 Gather findings from a source, filter to the ones still unaddressed, cluster them by concern, and display the batches.

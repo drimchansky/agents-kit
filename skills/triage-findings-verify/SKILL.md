@@ -6,7 +6,7 @@ argument-hint: '[source: PR number/URL, file path, or pasted findings; defaults 
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
+1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 2. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core.
 
 Findings-first pipeline: gather and batch findings you already have (`triage-findings`), then verify each **open** batch in an isolated read-only probe running the `verify-issue` protocol, one verdict per finding. There is no review phase, so the `verify` and `addressed` buckets can be populated and are shown.

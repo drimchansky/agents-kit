@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import { spawnSync } from "node:child_process";
 import {
+  chmodSync,
   lstatSync,
   mkdirSync,
   mkdtempSync,
@@ -8,13 +9,15 @@ import {
   readdirSync,
   readlinkSync,
   rmSync,
+  statSync,
   symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { homedir, tmpdir } from "node:os";
-import { basename, dirname, join, resolve, sep } from "node:path";
+import { basename, delimiter, dirname, join, resolve, sep } from "node:path";
 import { after, before, test, type TestContext } from "node:test";
 import { fileURLToPath } from "node:url";
+import { isDeepStrictEqual } from "node:util";
 
 const TESTS_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_DIR = resolve(TESTS_DIR, "..");
@@ -49,6 +52,108 @@ const CLAUDE_EXECUTOR_MARKER = join(CLAUDE_HOME, "agents", EXECUTOR_MARKER);
 const CODEX_EXECUTOR_MARKER = join(CODEX_HOME, "agents", EXECUTOR_MARKER);
 const CLAUDE_BYSTANDER = join(CLAUDE_HOME, "agents", "bystander.md");
 const CODEX_BYSTANDER = join(CODEX_HOME, "agents", "bystander.toml");
+const RULE_FILE = "agents-kit-core-rules.md";
+const RULE_FILE_SKIP = `  skipped (not kit-managed): rules/${RULE_FILE}`;
+const RULE_OWNER_HOME = join(TEST_ROOT, "rule-owner-home");
+const RULE_OWNER_FILE = join(RULE_OWNER_HOME, ".claude", "rules", RULE_FILE);
+const LINKED_RULE_HOME = join(TEST_ROOT, "linked-rule-home");
+const LINKED_RULE_FILE = join(LINKED_RULE_HOME, ".claude", "rules", RULE_FILE);
+const LINKED_RULE_TARGET = join(TEST_ROOT, "user-rule.md");
+const DANGLING_RULE_HOME = join(TEST_ROOT, "dangling-rule-home");
+const DANGLING_RULE_FILE = join(DANGLING_RULE_HOME, ".claude", "rules", RULE_FILE);
+const DANGLING_RULE_TARGET = join(TEST_ROOT, "missing-rule.md");
+const USER_RULE_FILE = "user-owned Claude rule file\n";
+const CLAUDE_RULE_FILE = join(CLAUDE_HOME, "rules", RULE_FILE);
+const CLAUDE_SETTINGS = join(CLAUDE_HOME, "settings.json");
+const HOOK_EVENT = "SubagentStart";
+const HOOK_MATCHER = "^(Explore|Plan)$";
+const HOOK_TOKEN = "agents-kit-core-rules";
+const HOOK_CONTEXT_LIMIT = 10_000;
+const HOOK_SKIP = `Skipping the ${HOOK_EVENT} hook: `;
+const USER_RULE_READER = `cat ~/.claude/rules/${HOOK_TOKEN}.md`;
+const HOOK_MERGE_HOME = join(TEST_ROOT, "hook-merge-home");
+const HOOK_MERGE_SETTINGS = join(HOOK_MERGE_HOME, ".claude", "settings.json");
+const INVALID_SETTINGS_HOME = join(TEST_ROOT, "invalid-settings-home");
+const INVALID_SETTINGS = join(INVALID_SETTINGS_HOME, ".claude", "settings.json");
+const INVALID_SETTINGS_TEXT = '{\n  "model": "opus",\n';
+const DANGLING_SETTINGS_HOME = join(TEST_ROOT, "dangling-settings-home");
+const DANGLING_SETTINGS = join(DANGLING_SETTINGS_HOME, ".claude", "settings.json");
+const DANGLING_SETTINGS_TARGET = join(TEST_ROOT, "missing-settings-parent", "settings.json");
+const MISSHAPEN_SETTINGS_HOME = join(TEST_ROOT, "misshapen-settings-home");
+const MISSHAPEN_SETTINGS = join(MISSHAPEN_SETTINGS_HOME, ".claude", "settings.json");
+const MISSHAPEN_SETTINGS_TEXT = '{\n  "hooks": {\n    "SubagentStart": {\n      "matcher": "Explore"\n    }\n  }\n}\n';
+const LINKED_FILES_HOME = join(TEST_ROOT, "linked-files-home");
+const LINKED_SETTINGS = join(LINKED_FILES_HOME, ".claude", "settings.json");
+const LINKED_CODEX_AGENTS = join(LINKED_FILES_HOME, ".codex", "AGENTS.md");
+const SYNCED_DIR = join(TEST_ROOT, "synced");
+const SYNCED_SETTINGS = join(SYNCED_DIR, "settings.json");
+const SYNCED_CODEX_AGENTS = join(SYNCED_DIR, "codex-AGENTS.md");
+const SYNCED_CODEX_LINE = "Synced user line without a trailing newline.";
+const BLOCK_START = "<!-- agents-kit:core-rules:start -->";
+const BLOCK_END = "<!-- agents-kit:core-rules:end -->";
+const CODEX_BLOCK = `${BLOCK_START}\n${readFileSync(join(REPO_DIR, "CORE_RULES.md"), "utf8")}${BLOCK_END}`;
+const BLOCK_SKIP = "Skipping the core-rules block: ";
+const CODEX_AGENTS = join(CODEX_HOME, "AGENTS.md");
+const CODEX_BLOCK_HOME = join(TEST_ROOT, "codex-block-home");
+const CODEX_BLOCK_AGENTS = join(CODEX_BLOCK_HOME, ".codex", "AGENTS.md");
+const USER_CODEX_LINE = "Prefer the user's own Codex instruction.\n";
+const USER_CODEX_HEAD = "# User instructions\n\nKeep this line above the kit block.\n\n";
+const USER_CODEX_TAIL = "\nKeep this line below the kit block.\n";
+const STALE_CODEX_BLOCK = `${BLOCK_START}\nstale core rules\n${BLOCK_END}`;
+const UNMATCHED_MARKER_HOME = join(TEST_ROOT, "unmatched-marker-home");
+const UNMATCHED_MARKER_AGENTS = join(UNMATCHED_MARKER_HOME, ".codex", "AGENTS.md");
+const UNMATCHED_MARKER_TEXT = `${USER_CODEX_LINE}${BLOCK_START}\nan unterminated kit block\n${USER_CODEX_TAIL}${STALE_CODEX_BLOCK}\n`;
+const REVERSED_MARKER_HOME = join(TEST_ROOT, "reversed-marker-home");
+const REVERSED_MARKER_AGENTS = join(REVERSED_MARKER_HOME, ".codex", "AGENTS.md");
+const REVERSED_MARKER_TEXT = `${USER_CODEX_HEAD}${BLOCK_END}\n${USER_CODEX_LINE}${BLOCK_START}\n${USER_CODEX_TAIL}`;
+const RENAMED_WRITES_HOME = join(TEST_ROOT, "renamed-writes-home");
+const RENAMED_SETTINGS = join(RENAMED_WRITES_HOME, ".claude", "settings.json");
+const RENAMED_CODEX_AGENTS = join(RENAMED_WRITES_HOME, ".codex", "AGENTS.md");
+const RULE_SKIP = "Skipping the rule file: ";
+const DANGLING_RULES_HOME = join(TEST_ROOT, "dangling-rules-home");
+const DANGLING_RULES = join(DANGLING_RULES_HOME, ".claude", "rules");
+const DANGLING_RULES_TARGET = join(TEST_ROOT, "missing-rules-parent", "rules");
+const RULES_FILE_HOME = join(TEST_ROOT, "rules-file-home");
+const RULES_FILE = join(RULES_FILE_HOME, ".claude", "rules");
+const RULES_FILE_TEXT = "user file where the rules directory belongs\n";
+
+interface HookCommand {
+  readonly type: string;
+  readonly command: string;
+}
+
+interface HookEntry {
+  readonly matcher?: string;
+  readonly hooks: readonly HookCommand[];
+}
+
+interface ClaudeSettings {
+  readonly hooks?: Readonly<Record<string, readonly HookEntry[]>>;
+  readonly [key: string]: unknown;
+}
+
+const commandEntry = (command: string, matcher?: string): HookEntry => ({
+  ...(matcher === undefined ? {} : { matcher }),
+  hooks: [{ type: "command", command }],
+});
+const USER_SUBAGENT_ENTRY = commandEntry("echo user-subagent", "general-purpose");
+const USER_PLAN_ENTRY = commandEntry("echo user-plan", "Plan");
+const USER_RULE_READER_ENTRY = commandEntry(USER_RULE_READER, "general-purpose");
+const USER_EXPLORE_HOOK: HookCommand = { type: "command", command: "echo user-explore" };
+const USER_SETTINGS: ClaudeSettings = {
+  model: "opus",
+  permissions: { allow: ["Bash(git status)"], deny: [] },
+  hooks: {
+    PreToolUse: [commandEntry("echo user-pre-tool", "Bash")],
+    SubagentStart: [USER_SUBAGENT_ENTRY, USER_PLAN_ENTRY],
+    Stop: [commandEntry("echo user-stop")],
+  },
+  statusLine: { type: "command", command: "echo user-status" },
+};
+const SYNCED_USER_SETTINGS: ClaudeSettings = {
+  theme: "dark",
+  hooks: { Stop: [commandEntry("echo synced-stop")] },
+};
 const CONFLICT_HOME = join(TEST_ROOT, "conflict-home");
 const CONFLICT_CLAUDE = join(CONFLICT_HOME, ".claude");
 const CONFLICT_CODEX = join(CONFLICT_HOME, ".codex");
@@ -96,6 +201,10 @@ interface CleanInstall {
   readonly foreignFormats: readonly string[];
   readonly claudePayload: readonly string[];
   readonly codexPayload: readonly string[];
+  readonly claudeRuleFile: readonly string[];
+  readonly codexRuleFile: readonly string[];
+  readonly codexBlock: readonly string[];
+  readonly claudeBlock: readonly string[];
 }
 
 interface TomlProbe {
@@ -115,6 +224,7 @@ interface ManagedReinstall {
   readonly claudeAgent: readonly string[];
   readonly codexAgent: readonly string[];
   readonly payload: readonly string[];
+  readonly ruleFile: readonly string[];
 }
 
 interface PreservedPair {
@@ -145,6 +255,33 @@ interface WholeHomeConflict {
   readonly problems: readonly string[];
 }
 
+interface RefusedFile extends SetupRun {
+  readonly problems: readonly string[];
+}
+
+interface CleanSettings {
+  readonly kitEntry: HookEntry | null;
+  readonly created: readonly string[];
+  readonly codexSettings: readonly string[];
+  readonly hookOutput: readonly string[];
+}
+
+interface SettingsMerge {
+  readonly merged: readonly string[];
+  readonly rerun: readonly string[];
+}
+
+interface LinkedFiles {
+  readonly settings: readonly string[];
+  readonly codexAgents: readonly string[];
+}
+
+interface CodexBlockEdits {
+  readonly appended: readonly string[];
+  readonly rerun: readonly string[];
+  readonly replaced: readonly string[];
+}
+
 interface Observations {
   readonly clean: CleanInstall;
   readonly toml: TomlProbe;
@@ -159,6 +296,22 @@ interface Observations {
   readonly orphan: OrphanRecovery;
   readonly conflict: WholeHomeConflict;
   readonly symlinkGate: SymlinkGate;
+  readonly ruleOwner: CollisionRun & SetupRun;
+  readonly linkedRule: CollisionRun & SetupRun;
+  readonly danglingRule: CollisionRun & SetupRun;
+  readonly cleanSettings: CleanSettings;
+  readonly cleanRerun: readonly string[];
+  readonly hookMerge: SettingsMerge;
+  readonly invalidSettings: RefusedFile;
+  readonly danglingSettings: RefusedFile;
+  readonly misshapenSettings: RefusedFile;
+  readonly linkedFiles: LinkedFiles;
+  readonly codexBlockEdits: CodexBlockEdits;
+  readonly unmatchedMarkers: RefusedFile;
+  readonly reversedMarkers: RefusedFile;
+  readonly renamedWrites: readonly string[];
+  readonly danglingRules: RefusedFile;
+  readonly rulesFile: RefusedFile;
 }
 
 interface RefusedLink {
@@ -294,6 +447,20 @@ function sharedPayloadProblems(hostHome: string): string[] {
   return problems;
 }
 
+function ruleFileProblems(hostHome: string): string[] {
+  return [
+    ...markerProblems(join(hostHome, "rules", CORE_RULES_MARKER)),
+    ...copyProblems(join(REPO_DIR, "CORE_RULES.md"), join(hostHome, "rules", RULE_FILE)),
+  ];
+}
+
+function ruleFileAbsenceProblems(hostHome: string): string[] {
+  return [
+    ...absenceProblems(join(hostHome, "rules", CORE_RULES_MARKER)),
+    ...absenceProblems(join(hostHome, "rules", RULE_FILE)),
+  ];
+}
+
 function preservedSkillProblems(hostHome: string, name: string, content: string): string[] {
   const skill = join(hostHome, "skills", name);
   return [...contentProblems(join(skill, "SKILL.md"), content), ...absenceProblems(join(skill, MARKER))];
@@ -352,6 +519,10 @@ function observeCleanInstall(): CleanInstall {
     foreignFormats: foreignFormatProblems(),
     claudePayload: sharedPayloadProblems(CLAUDE_HOME),
     codexPayload: sharedPayloadProblems(CODEX_HOME),
+    claudeRuleFile: ruleFileProblems(CLAUDE_HOME),
+    codexRuleFile: ruleFileAbsenceProblems(CODEX_HOME),
+    codexBlock: contentProblems(CODEX_AGENTS, `${CODEX_BLOCK}\n`),
+    claudeBlock: absenceProblems(join(CLAUDE_HOME, "AGENTS.md")),
   };
 }
 
@@ -416,11 +587,13 @@ function observeManagedReinstall(): ManagedReinstall {
     writeFileSync(join(home, "references", "workflow", "executor-contract.md"), "stale managed reference\n");
     writeFileSync(join(home, "CORE_RULES.md"), "stale managed core rules\n");
   }
+  writeFileSync(join(CLAUDE_HOME, "rules", RULE_FILE), "stale managed rule file\n");
   runSetup(PRIMARY_HOME);
   return {
     claudeAgent: agentProblems(CLAUDE_HOME, "md"),
     codexAgent: agentProblems(CODEX_HOME, "toml"),
     payload: HOMES.flatMap((home) => sharedPayloadProblems(home)),
+    ruleFile: ruleFileProblems(CLAUDE_HOME),
   };
 }
 
@@ -630,6 +803,289 @@ function observeSymlinkGate(): SymlinkGate {
   };
 }
 
+function observeRuleOwner(): CollisionRun & SetupRun {
+  mkdirSync(dirname(RULE_OWNER_FILE), { recursive: true });
+  writeFileSync(RULE_OWNER_FILE, USER_RULE_FILE);
+  const run = spawnSetup(RULE_OWNER_HOME);
+  return {
+    ...run,
+    skips: countExactLines(run.log, RULE_FILE_SKIP),
+    problems: [
+      ...contentProblems(RULE_OWNER_FILE, USER_RULE_FILE),
+      ...absenceProblems(join(dirname(RULE_OWNER_FILE), CORE_RULES_MARKER)),
+    ],
+  };
+}
+
+function observeLinkedRule(): CollisionRun & SetupRun {
+  mkdirSync(dirname(LINKED_RULE_FILE), { recursive: true });
+  writeFileSync(join(dirname(LINKED_RULE_FILE), CORE_RULES_MARKER), "");
+  writeFileSync(LINKED_RULE_TARGET, USER_RULE_FILE);
+  symlinkSync(LINKED_RULE_TARGET, LINKED_RULE_FILE);
+  const run = spawnSetup(LINKED_RULE_HOME);
+  return {
+    ...run,
+    skips: countExactLines(run.log, RULE_FILE_SKIP),
+    problems: [
+      ...linkProblems(LINKED_RULE_FILE, LINKED_RULE_TARGET),
+      ...contentProblems(LINKED_RULE_TARGET, USER_RULE_FILE),
+    ],
+  };
+}
+
+function observeDanglingRule(): CollisionRun & SetupRun {
+  mkdirSync(dirname(DANGLING_RULE_FILE), { recursive: true });
+  symlinkSync(DANGLING_RULE_TARGET, DANGLING_RULE_FILE);
+  const run = spawnSetup(DANGLING_RULE_HOME);
+  return {
+    ...run,
+    skips: countExactLines(run.log, RULE_FILE_SKIP),
+    problems: [
+      ...linkProblems(DANGLING_RULE_FILE, DANGLING_RULE_TARGET),
+      ...absenceProblems(DANGLING_RULE_TARGET),
+      ...absenceProblems(join(dirname(DANGLING_RULE_FILE), CORE_RULES_MARKER)),
+    ],
+  };
+}
+
+function settingsText(settings: unknown): string {
+  return `${JSON.stringify(settings, null, 2)}\n`;
+}
+
+function withSubagentEntries(settings: ClaudeSettings, entries: readonly unknown[]): unknown {
+  return { ...settings, hooks: { ...settings.hooks, [HOOK_EVENT]: entries } };
+}
+
+function installedKitEntry(settingsPath: string): HookEntry | null {
+  try {
+    const settings: ClaudeSettings = JSON.parse(readFileSync(settingsPath, "utf8"));
+    return settings.hooks?.[HOOK_EVENT]?.[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function kitEntryProblems(entry: HookEntry | null): string[] {
+  if (entry === null) return [`the Claude settings hold no ${HOOK_EVENT} entry`];
+  const [hook, ...extra] = entry.hooks;
+  const command = hook?.command ?? "";
+  return [
+    ...(entry.matcher === HOOK_MATCHER ? [] : [`the kit entry matches ${JSON.stringify(entry.matcher)}, not ${HOOK_MATCHER}`]),
+    ...(hook?.type === "command" && extra.length === 0 ? [] : [`the kit entry must hold one command hook: ${JSON.stringify(entry.hooks)}`]),
+    ...(command.includes(HOOK_TOKEN) ? [] : [`the kit command lacks its ${HOOK_TOKEN} token: ${command}`]),
+    ...([TEST_ROOT, REPO_DIR, OPERATOR_HOME].some((path) => command.includes(path))
+      ? [`the kit command names a machine-absolute path: ${command}`]
+      : []),
+  ];
+}
+
+function hookOutputProblems(isolatedHome: string, entry: HookEntry | null): string[] {
+  assertIsolatedHome(isolatedHome);
+  const command = entry?.hooks[0]?.command;
+  if (command === undefined) return [`no installed ${HOOK_EVENT} command to run`];
+  const run = spawnSync("sh", ["-c", command], {
+    encoding: "utf8",
+    env: { ...process.env, HOME: isolatedHome, PATH: `${dirname(process.execPath)}${delimiter}${process.env.PATH ?? ""}` },
+    input: JSON.stringify({ hook_event_name: HOOK_EVENT, agent_type: "Explore" }),
+    maxBuffer: MAX_BUFFER_BYTES,
+  });
+  if (run.status !== 0 || run.stderr !== "") {
+    return [`the hook command exited ${run.status}: ${run.stderr ?? run.error?.message ?? ""}`];
+  }
+  let output: unknown;
+  try {
+    output = JSON.parse(run.stdout);
+  } catch {
+    return [`the hook command printed more than one JSON object: ${run.stdout}`];
+  }
+  const ruleText = readFileSync(join(isolatedHome, ".claude", "rules", RULE_FILE), "utf8");
+  const expected = { hookSpecificOutput: { hookEventName: HOOK_EVENT, additionalContext: ruleText } };
+  return [
+    ...(isDeepStrictEqual(output, expected) ? [] : [`the hook command printed ${run.stdout}`]),
+    ...(ruleText.length <= HOOK_CONTEXT_LIMIT
+      ? []
+      : [`the rule file holds ${ruleText.length} characters, over the ${HOOK_CONTEXT_LIMIT}-character hook output limit`]),
+  ];
+}
+
+function observeCleanSettings(): CleanSettings {
+  const kitEntry = installedKitEntry(CLAUDE_SETTINGS);
+  return {
+    kitEntry,
+    created: [
+      ...kitEntryProblems(kitEntry),
+      ...contentProblems(CLAUDE_SETTINGS, settingsText({ hooks: { [HOOK_EVENT]: [kitEntry] } })),
+    ],
+    codexSettings: absenceProblems(join(CODEX_HOME, "settings.json")),
+    hookOutput: hookOutputProblems(PRIMARY_HOME, kitEntry),
+  };
+}
+
+function fileSnapshot(paths: readonly string[]): (Buffer | null)[] {
+  return paths.map((path) => (pathKind(path) === "absent" ? null : readFileSync(path)));
+}
+
+function rerunProblems(isolatedHome: string, paths: readonly string[]): string[] {
+  const first = fileSnapshot(paths);
+  runSetup(isolatedHome);
+  const second = fileSnapshot(paths);
+  return paths.flatMap((path, index) =>
+    first[index] !== null && isDeepStrictEqual(first[index], second[index]) ? [] : [`a rerun changed or lacked ${path}`],
+  );
+}
+
+function observeHookMerge(kitEntry: HookEntry | null): SettingsMerge {
+  const kitHooks = kitEntry?.hooks ?? [];
+  const input = withSubagentEntries(USER_SETTINGS, [
+    USER_SUBAGENT_ENTRY,
+    { matcher: "Explore", hooks: [...kitHooks, USER_EXPLORE_HOOK] },
+    USER_PLAN_ENTRY,
+    { matcher: "Plan", hooks: kitHooks },
+    USER_RULE_READER_ENTRY,
+  ]);
+  mkdirSync(dirname(HOOK_MERGE_SETTINGS), { recursive: true });
+  writeFileSync(HOOK_MERGE_SETTINGS, settingsText(input));
+  runSetup(HOOK_MERGE_HOME);
+  const expected = withSubagentEntries(USER_SETTINGS, [
+    USER_SUBAGENT_ENTRY,
+    kitEntry,
+    { matcher: "Explore", hooks: [USER_EXPLORE_HOOK] },
+    USER_PLAN_ENTRY,
+    USER_RULE_READER_ENTRY,
+  ]);
+  return {
+    merged: contentProblems(HOOK_MERGE_SETTINGS, settingsText(expected)),
+    rerun: rerunProblems(HOOK_MERGE_HOME, [HOOK_MERGE_SETTINGS]),
+  };
+}
+
+function observeRefusedFile(isolatedHome: string, path: string, text: string): RefusedFile {
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, text);
+  const run = spawnSetup(isolatedHome);
+  return {
+    ...run,
+    problems: [
+      ...contentProblems(path, text),
+      ...ruleFileProblems(join(isolatedHome, ".claude")),
+      ...sharedPayloadProblems(join(isolatedHome, ".codex")),
+    ],
+  };
+}
+
+function linkProblems(link: string, target: string): string[] {
+  return pathKind(link) === "symlink" && readlinkSync(link) === target
+    ? []
+    : [`expected ${link} to remain a symlink to ${target} (found ${pathKind(link)})`];
+}
+
+function observeDanglingSettings(): RefusedFile {
+  mkdirSync(dirname(DANGLING_SETTINGS), { recursive: true });
+  symlinkSync(DANGLING_SETTINGS_TARGET, DANGLING_SETTINGS);
+  const run = spawnSetup(DANGLING_SETTINGS_HOME);
+  return {
+    ...run,
+    problems: [
+      ...linkProblems(DANGLING_SETTINGS, DANGLING_SETTINGS_TARGET),
+      ...(pathKind(DANGLING_SETTINGS_TARGET) === "absent" ? [] : ["the settings link target must remain absent"]),
+      ...sharedPayloadProblems(join(DANGLING_SETTINGS_HOME, ".codex")),
+      ...contentProblems(join(DANGLING_SETTINGS_HOME, ".codex", "AGENTS.md"), `${CODEX_BLOCK}\n`),
+    ],
+  };
+}
+
+function observeLinkedFiles(kitEntry: HookEntry | null): LinkedFiles {
+  mkdirSync(SYNCED_DIR, { recursive: true });
+  mkdirSync(dirname(LINKED_SETTINGS), { recursive: true });
+  mkdirSync(dirname(LINKED_CODEX_AGENTS), { recursive: true });
+  writeFileSync(SYNCED_SETTINGS, settingsText(SYNCED_USER_SETTINGS));
+  writeFileSync(SYNCED_CODEX_AGENTS, SYNCED_CODEX_LINE);
+  symlinkSync(SYNCED_SETTINGS, LINKED_SETTINGS);
+  symlinkSync(SYNCED_CODEX_AGENTS, LINKED_CODEX_AGENTS);
+  runSetup(LINKED_FILES_HOME);
+  return {
+    settings: [
+      ...linkProblems(LINKED_SETTINGS, SYNCED_SETTINGS),
+      ...contentProblems(SYNCED_SETTINGS, settingsText(withSubagentEntries(SYNCED_USER_SETTINGS, [kitEntry]))),
+    ],
+    codexAgents: [
+      ...linkProblems(LINKED_CODEX_AGENTS, SYNCED_CODEX_AGENTS),
+      ...contentProblems(SYNCED_CODEX_AGENTS, `${SYNCED_CODEX_LINE}\n\n${CODEX_BLOCK}\n`),
+    ],
+  };
+}
+
+function observeCodexBlockEdits(): CodexBlockEdits {
+  mkdirSync(dirname(CODEX_BLOCK_AGENTS), { recursive: true });
+  writeFileSync(CODEX_BLOCK_AGENTS, USER_CODEX_LINE);
+  runSetup(CODEX_BLOCK_HOME);
+  const appended = contentProblems(CODEX_BLOCK_AGENTS, `${USER_CODEX_LINE}\n${CODEX_BLOCK}\n`);
+  const rerun = rerunProblems(CODEX_BLOCK_HOME, [CODEX_BLOCK_AGENTS]);
+  writeFileSync(CODEX_BLOCK_AGENTS, `${USER_CODEX_HEAD}${STALE_CODEX_BLOCK}${USER_CODEX_TAIL}`);
+  runSetup(CODEX_BLOCK_HOME);
+  return {
+    appended,
+    rerun,
+    replaced: contentProblems(CODEX_BLOCK_AGENTS, `${USER_CODEX_HEAD}${CODEX_BLOCK}${USER_CODEX_TAIL}`),
+  };
+}
+
+function observeRenamedWrites(): string[] {
+  const paths = [RENAMED_SETTINGS, RENAMED_CODEX_AGENTS];
+  mkdirSync(dirname(RENAMED_SETTINGS), { recursive: true });
+  mkdirSync(dirname(RENAMED_CODEX_AGENTS), { recursive: true });
+  writeFileSync(RENAMED_SETTINGS, settingsText(USER_SETTINGS));
+  writeFileSync(RENAMED_CODEX_AGENTS, USER_CODEX_LINE);
+  const modes = [0o600, 0o640];
+  paths.forEach((path, index) => chmodSync(path, modes[index]));
+  const inodes = paths.map((path) => statSync(path).ino);
+  runSetup(RENAMED_WRITES_HOME);
+  const octal = (mode: number): string => mode.toString(8).padStart(4, "0");
+  return paths.flatMap((path, index) => {
+    const stats = statSync(path);
+    const mode = stats.mode & 0o7777;
+    return [
+      ...(stats.ino === inodes[index] ? [`${path} was rewritten in place rather than replaced by rename`] : []),
+      ...(mode === modes[index] ? [] : [`${path} changed mode from ${octal(modes[index])} to ${octal(mode)}`]),
+      ...readdirSync(dirname(path))
+        .filter((name) => name.includes(".agents-kit-tmp."))
+        .map((name) => `a temporary file was left beside ${path}: ${name}`),
+    ];
+  });
+}
+
+function blockedRulesProblems(isolatedHome: string): string[] {
+  return [
+    ...kitEntryProblems(installedKitEntry(join(isolatedHome, ".claude", "settings.json"))),
+    ...sharedPayloadProblems(join(isolatedHome, ".codex")),
+    ...contentProblems(join(isolatedHome, ".codex", "AGENTS.md"), `${CODEX_BLOCK}\n`),
+  ];
+}
+
+function observeDanglingRules(): RefusedFile {
+  mkdirSync(dirname(DANGLING_RULES), { recursive: true });
+  symlinkSync(DANGLING_RULES_TARGET, DANGLING_RULES);
+  const run = spawnSetup(DANGLING_RULES_HOME);
+  return {
+    ...run,
+    problems: [
+      ...linkProblems(DANGLING_RULES, DANGLING_RULES_TARGET),
+      ...absenceProblems(DANGLING_RULES_TARGET),
+      ...blockedRulesProblems(DANGLING_RULES_HOME),
+    ],
+  };
+}
+
+function observeRulesFile(): RefusedFile {
+  mkdirSync(dirname(RULES_FILE), { recursive: true });
+  writeFileSync(RULES_FILE, RULES_FILE_TEXT);
+  const run = spawnSetup(RULES_FILE_HOME);
+  return {
+    ...run,
+    problems: [...contentProblems(RULES_FILE, RULES_FILE_TEXT), ...blockedRulesProblems(RULES_FILE_HOME)],
+  };
+}
+
 function assertNoProblems(problems: readonly string[], message: string): void {
   assert.ok(problems.length === 0, `${message}:\n  ${problems.join("\n  ")}`);
 }
@@ -641,8 +1097,12 @@ before(() => {
   const collidingSkill = skillNames()[0];
   assert.ok(collidingSkill !== undefined, "no source skill is available for the name-collision case");
   const clean = observeCleanInstall();
+  const cleanSettings = observeCleanSettings();
+  const cleanRerun = rerunProblems(PRIMARY_HOME, [CLAUDE_RULE_FILE, CLAUDE_SETTINGS, CODEX_AGENTS]);
   observed = {
     clean,
+    cleanSettings,
+    cleanRerun,
     toml: observeTomlParse(),
     doctor: process.env.AGENTS_KIT_LIVE_CODEX_DOCTOR === "1" ? observeDoctor() : null,
     managed: observeManagedReinstall(),
@@ -655,6 +1115,20 @@ before(() => {
     orphan: observeOrphanRecovery(),
     conflict: observeWholeHomeConflict(),
     symlinkGate: observeSymlinkGate(),
+    ruleOwner: observeRuleOwner(),
+    linkedRule: observeLinkedRule(),
+    danglingRule: observeDanglingRule(),
+    hookMerge: observeHookMerge(cleanSettings.kitEntry),
+    invalidSettings: observeRefusedFile(INVALID_SETTINGS_HOME, INVALID_SETTINGS, INVALID_SETTINGS_TEXT),
+    danglingSettings: observeDanglingSettings(),
+    misshapenSettings: observeRefusedFile(MISSHAPEN_SETTINGS_HOME, MISSHAPEN_SETTINGS, MISSHAPEN_SETTINGS_TEXT),
+    linkedFiles: observeLinkedFiles(cleanSettings.kitEntry),
+    codexBlockEdits: observeCodexBlockEdits(),
+    unmatchedMarkers: observeRefusedFile(UNMATCHED_MARKER_HOME, UNMATCHED_MARKER_AGENTS, UNMATCHED_MARKER_TEXT),
+    reversedMarkers: observeRefusedFile(REVERSED_MARKER_HOME, REVERSED_MARKER_AGENTS, REVERSED_MARKER_TEXT),
+    renamedWrites: observeRenamedWrites(),
+    danglingRules: observeDanglingRules(),
+    rulesFile: observeRulesFile(),
   };
 });
 
@@ -681,6 +1155,145 @@ test("Claude shared skills, references, and CORE_RULES.md install unchanged", ()
 
 test("Codex shared skills, references, and CORE_RULES.md install unchanged", () => {
   assertNoProblems(observed.clean.codexPayload, "the Codex home must hold the kit payload byte for byte");
+});
+
+test("Claude clean install places CORE_RULES.md in rules/ under its marker", () => {
+  assertNoProblems(observed.clean.claudeRuleFile, "a clean install must deliver the core rules as a marked Claude rule file");
+});
+
+test("Codex clean install receives no Claude rule file", () => {
+  assertNoProblems(observed.clean.codexRuleFile, "only the Claude home loads rules/ instruction files");
+});
+
+test("a second run leaves the always-on core-rules files byte-identical", () => {
+  assertNoProblems(observed.cleanRerun, "a rerun with no source change must reproduce every always-on file");
+});
+
+test("managed reinstall refreshes the Claude rule file", () => {
+  assertNoProblems(observed.managed.ruleFile, "a rerun must restore an edited marker-owned rule file");
+});
+
+test("an unmarked Claude rule file is reported, preserved, and left unmarked", () => {
+  assert.strictEqual(observed.ruleOwner.status, 1, "setup.ts must exit 1 when an unmarked rule file prevents installation");
+  assert.ok(observed.ruleOwner.log.includes(`${RULE_SKIP}${RULE_OWNER_FILE}`), "the refusal must name the file");
+  assert.strictEqual(observed.ruleOwner.skips, 1, "the Claude home must report the rule file skipped");
+  assertNoProblems(observed.ruleOwner.problems, "a same-named rule file without the marker is the user's");
+});
+
+test("a marked Claude rule symlink is reported and preserves its link and target", () => {
+  assert.strictEqual(observed.linkedRule.status, 1, "setup.ts must exit 1 when a marked rule symlink prevents installation");
+  assert.ok(observed.linkedRule.log.includes(`${RULE_SKIP}${LINKED_RULE_FILE}`), "the refusal must name the file");
+  assert.strictEqual(observed.linkedRule.skips, 1, "the Claude home must report the rule symlink skipped exactly once");
+  assertNoProblems(observed.linkedRule.problems, "a rule symlink and its user's target must survive even with a marker");
+});
+
+test("an unmarked dangling Claude rule symlink is reported, preserved, and left unmarked", () => {
+  assert.strictEqual(observed.danglingRule.status, 1, "setup.ts must exit 1 when a dangling rule symlink prevents installation");
+  assert.ok(observed.danglingRule.log.includes(`${RULE_SKIP}${DANGLING_RULE_FILE}`), "the refusal must name the file");
+  assert.strictEqual(observed.danglingRule.skips, 1, "the Claude home must report the dangling rule symlink skipped exactly once");
+  assertNoProblems(observed.danglingRule.problems, "a dangling rule symlink must survive without creating its target or marker");
+});
+
+test("a dangling rules link is preserved and exits 1 after the hook merges and the Codex home installs", () => {
+  const refused = observed.danglingRules;
+  assert.strictEqual(refused.status, 1, `setup.ts must exit 1 when the rule file cannot be installed:\n${refused.log}`);
+  assert.ok(refused.log.includes(`${RULE_SKIP}${join(DANGLING_RULES, RULE_FILE)}`), `the refusal must name the file:\n${refused.log}`);
+  assertNoProblems(refused.problems, "the dangling link must survive while the rest of the install runs");
+});
+
+test("a file where rules/ belongs is preserved and exits 1 after the hook merges and the Codex home installs", () => {
+  const refused = observed.rulesFile;
+  assert.strictEqual(refused.status, 1, `setup.ts must exit 1 when the rule file cannot be installed:\n${refused.log}`);
+  assert.ok(refused.log.includes(`${RULE_SKIP}${join(RULES_FILE, RULE_FILE)}`), `the refusal must name the file:\n${refused.log}`);
+  assertNoProblems(refused.problems, "the user's file must survive while the rest of the install runs");
+});
+
+test("a missing Claude settings.json is created holding only the kit SubagentStart entry", () => {
+  assertNoProblems(observed.cleanSettings.created, "a clean install must create settings.json with the Explore/Plan hook");
+});
+
+test("Codex clean install receives no settings.json hook", () => {
+  assertNoProblems(observed.cleanSettings.codexSettings, "only the Claude home runs SubagentStart hooks");
+});
+
+test("the installed SubagentStart command prints the rule file as additionalContext", () => {
+  assertNoProblems(observed.cleanSettings.hookOutput, "Explore and Plan must receive the installed rule file verbatim");
+});
+
+test("the kit SubagentStart entry takes the first kit command's place, keeps user hook commands, and leaves other settings unchanged", () => {
+  assertNoProblems(observed.hookMerge.merged, "the merge may move or remove only the kit's own command");
+});
+
+test("a rerun leaves merged settings.json byte-identical", () => {
+  assertNoProblems(observed.hookMerge.rerun, "rewriting an already-merged settings file must reproduce its bytes");
+});
+
+test("invalid settings JSON is left untouched, reported on stderr, and exits 1 after the rest installs", () => {
+  const refused = observed.invalidSettings;
+  assert.strictEqual(refused.status, 1, `setup.ts must exit 1 when settings.json cannot be parsed:\n${refused.log}`);
+  assert.ok(refused.log.includes(`${HOOK_SKIP}${INVALID_SETTINGS} is not valid JSON`), `the refusal must name the file:\n${refused.log}`);
+  assertNoProblems(refused.problems, "an unparsable settings file must survive while every other item installs");
+});
+
+test("settings whose SubagentStart hooks are not a list are left untouched and exit 1", () => {
+  const refused = observed.misshapenSettings;
+  assert.strictEqual(refused.status, 1, `setup.ts must exit 1 when it cannot merge into settings.json:\n${refused.log}`);
+  assert.ok(refused.log.includes(`${HOOK_SKIP}${MISSHAPEN_SETTINGS}`), `the refusal must name the file:\n${refused.log}`);
+  assertNoProblems(refused.problems, "settings the merge cannot place an entry in must survive unchanged");
+});
+
+test("a dangling settings link is preserved and exits 1 after the Codex home installs", () => {
+  const refused = observed.danglingSettings;
+  assert.strictEqual(refused.status, 1, `setup.ts must exit 1 when settings.json cannot be written:\n${refused.log}`);
+  assert.ok(refused.log.includes(`${HOOK_SKIP}${DANGLING_SETTINGS}`), `the refusal must name the file:\n${refused.log}`);
+  assert.ok(refused.log.includes("ENOENT"), `the refusal must include the error code:\n${refused.log}`);
+  assertNoProblems(refused.problems, "the dangling link must survive while the Codex home installs");
+});
+
+test("a symlinked settings.json is merged through its link", () => {
+  assertNoProblems(observed.linkedFiles.settings, "the merge must write the link target and keep the link");
+});
+
+test("a missing Codex AGENTS.md is created holding only the core-rules block", () => {
+  assertNoProblems(observed.clean.codexBlock, "a clean install must deliver the core rules between the kit markers");
+});
+
+test("the Claude home receives no AGENTS.md block", () => {
+  assertNoProblems(observed.clean.claudeBlock, "only the Codex home reads its global AGENTS.md");
+});
+
+test("the core-rules block is appended after the user's Codex line", () => {
+  assertNoProblems(observed.codexBlockEdits.appended, "an unmarked AGENTS.md must keep its lines and gain the block after a blank line");
+});
+
+test("a rerun leaves a Codex AGENTS.md holding user lines byte-identical", () => {
+  assertNoProblems(observed.codexBlockEdits.rerun, "replacing an up-to-date block must reproduce the file");
+});
+
+test("a stale core-rules block is replaced in place between the user's lines", () => {
+  assertNoProblems(observed.codexBlockEdits.replaced, "only the bytes between the kit markers may change");
+});
+
+test("a symlinked Codex AGENTS.md is written through its link", () => {
+  assertNoProblems(observed.linkedFiles.codexAgents, "the block must land in the link target and keep the link");
+});
+
+test("settings.json and Codex AGENTS.md are replaced by rename rather than rewritten in place", () => {
+  assertNoProblems(observed.renamedWrites, "a failed merge write must not be able to truncate the user's file");
+});
+
+test("unmatched core-rules markers leave Codex AGENTS.md untouched and exit 1 after the rest installs", () => {
+  const refused = observed.unmatchedMarkers;
+  assert.strictEqual(refused.status, 1, `setup.ts must exit 1 when it cannot place the block:\n${refused.log}`);
+  assert.ok(refused.log.includes(`${BLOCK_SKIP}${UNMATCHED_MARKER_AGENTS}`), `the refusal must name the file:\n${refused.log}`);
+  assertNoProblems(refused.problems, "a file with unmatched kit markers must survive while every other item installs");
+});
+
+test("reversed core-rules markers leave Codex AGENTS.md untouched and exit 1 after the rest installs", () => {
+  const refused = observed.reversedMarkers;
+  assert.strictEqual(refused.status, 1, `setup.ts must exit 1 when it cannot place the block:\n${refused.log}`);
+  assert.ok(refused.log.includes(`${BLOCK_SKIP}${REVERSED_MARKER_AGENTS}`), `the refusal must name the file:\n${refused.log}`);
+  assertNoProblems(refused.problems, "a file with reversed kit markers must survive while every other item installs");
 });
 
 test("both hosts install regular secretary duties and retain authority and source helper boundaries", () => {

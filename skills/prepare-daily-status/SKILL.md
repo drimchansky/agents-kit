@@ -5,8 +5,7 @@ description: Prepare or refresh a personal daily work status from the user's dai
 
 ## Core Rules
 
-Read and apply `./AGENTS.md` § *Ask Before Assuming*.
-Read and apply `./references/workflow/user-facing-messages.md` § *Plain wording* only.
+Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 
 # Prepare Daily Status
 

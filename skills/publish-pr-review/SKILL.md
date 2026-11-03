@@ -5,7 +5,7 @@ description: Use when asked to publish this session's code review to GitHub. Off
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
+1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 2. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core.
 
 Publishes one review from this session's upstream review. Invocation alone grants no publishing permission; step 4's selection authorizes the payload. Edit no code, title, PR state, or merge; publish nothing outside the selected source tiers and the evidence attachment step 4 offers.

@@ -6,7 +6,7 @@ argument-hint: "[task slug or path; defaults to the session's task]"
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
+1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 2. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core, plus `verification.md` — this skill re-verifies before it records any progress. If the domain has no pack, run the neutral methodology and say so.
 
 Reconcile this session against task docs under `./references/workflow/reconciliation.md` and `./references/workflow/reconciliation-session-to-docs.md`.

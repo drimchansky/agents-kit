@@ -108,6 +108,14 @@ Measure depth and fallback paths from the root holding the target, not the citin
 
 Both citation readers import `angledTargetText` from `lifecycle-constants.ts`. Shared code prevents the angle-target padding rule from drifting again. Health-check retains paired-comment citation filtering over original live lines, so an unclosed opener remains readable there. It blanks inline code and skips blockquotes, then percent-decodes targets to resolve paths. Sweep-scope instead percent-encodes interior spaces so URLs match its ledger. Preserve these deliberate differences while keeping the shared literal angle-target interpretation.
 
+**Why the core-rules delivery checks copy `setup.ts`'s shapes.** `setup.ts` runs its installer at import, so this script cannot import its constants. The rule-file name and marker, `HOOK_ENTRY`, the command test in `isKitHookEntry`, and both block markers are copies. Change them with `setup.ts` in the same edit, along with the hook command `tests/health-check.test.ts` writes into its clean home. A stale copy would report every current install as drifted, or pass a broken one. Registered under `references/maintenance/repository.md` § *Consumer lists*.
+
+**Why the hook entry compares structurally.** Synced settings copies can reorder keys while keeping the entry intact. `isDeepStrictEqual` ignores key order, so only a changed matcher, hook type, or command counts. `setup.ts` keeps one kit entry, so a second one is drift.
+
+**Why the override check trims.** Codex skips a global instruction file whose trimmed text is empty and reads the first remaining candidate, override first ([`codex-rs/codex-home/src/instructions/mod.rs`](https://github.com/openai/codex/blob/main/codex-rs/codex-home/src/instructions/mod.rs)). A whitespace-only override therefore hides nothing, and reporting it would send the user to fix a working setup.
+
+**Why the delivery checks skip a markerless home.** A home with no kit marker never ran `setup.ts`. Per-item delivery findings would bury its one `never installed` line, the fact that tells the user what to do.
+
 ## `scripts/lifecycle-constants.ts`
 
 This module holds machine-readable copies of the task values whose prose homes `references/maintenance/repository.md` § *Consumer lists* names. Change the values with their prose. A stale status vocabulary reads renamed states as `unknown`, silently disabling stale, done-unarchived, and started-in-backlog checks.

@@ -91,19 +91,22 @@ test("frontmatter names the skill and states when to use it", () => {
   assert.match(fields.get("description") ?? "", /^Use when asked to start the secretary/);
 });
 
-test("Core Rules loads the whole neutral core through the skill's shared-rule links", () => {
+test("Core Rules applies the project's instruction files and leaves the core to always-on delivery", () => {
   const firstRule = section(SKILL, "## Core Rules")
     .split("\n")
     .find((line) => line.trim() !== "");
-  assert.strictEqual(firstRule, "1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.");
-  for (const [link, target] of [
-    ["AGENTS.md", "../../CORE_RULES.md"],
-    ["references", "../../references"],
-  ]) {
-    const path = join(SKILL_DIR, link);
-    assert.ok(lstatSync(path).isSymbolicLink(), `${link} is a symlink`);
-    assert.strictEqual(readlinkSync(path), target, `${link} points at ${target}`);
-  }
+  assert.strictEqual(
+    firstRule,
+    "1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.",
+  );
+  assert.strictEqual(
+    lstatSync(join(SKILL_DIR, "AGENTS.md"), { throwIfNoEntry: false }),
+    undefined,
+    "the skill ships no AGENTS.md link, so it never loads the core rules itself",
+  );
+  const references = join(SKILL_DIR, "references");
+  assert.ok(lstatSync(references).isSymbolicLink(), "references is a symlink");
+  assert.strictEqual(readlinkSync(references), "../../references", "references points at ../../references");
   assert.doesNotMatch(SKILL, /references\/(engineering|documentation)\//, "the skill resolves no domain pack");
 });
 

@@ -5,7 +5,7 @@ description: Rebase the current Git branch onto a confirmed base, or resume its 
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules.
+1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 2. Read `./references/engineering/rules.md` for the engineering overlay.
 
 An explicit rebase request authorizes this operation and clear conflict resolutions. Skill selection alone grants no Git writes. Use the requested checkout, preserving commit messages, hooks, and signing. Do not stash, skip, abort, reset, or push without instruction. Ask when target, replay range, or conflict intent is unclear.

@@ -6,7 +6,7 @@ argument-hint: '[scope; defaults to the current branch against its base] [-n N (
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
+1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 2. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core.
 
 Review the object Setup resolves (the current branch's diff against its base with no argument, or the commit range or path set the invocation names) for correctness, unintended impact, and adherence to project patterns.

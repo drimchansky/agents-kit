@@ -6,7 +6,7 @@ argument-hint: '[epic description and/or sources: PRD or ADR path/URL, task fold
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
+1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 
 Draft an epic description to a file in the default shape below. Resolve no domain pack: an epic states an outcome, not domain work.
 

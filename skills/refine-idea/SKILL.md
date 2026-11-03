@@ -6,7 +6,7 @@ argument-hint: '[idea or concept] [destination path]'
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
+1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 2. Load the domain pack: take the task's `**Domain:**` (default `engineering`; infer from the request when there's no `CONTEXT.md` yet, and record it in the `CONTEXT.md` you write) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for (`exploration.md`, …). If the domain has no pack, run the neutral methodology and say so.
 
 Diverge, evaluate, then write the chosen concept to `<task-folder>/CONTEXT.md`, grounding later planning and execution. Summarize with its path after writing.

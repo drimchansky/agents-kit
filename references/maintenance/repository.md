@@ -12,7 +12,7 @@ Paths without `./` are relative to the source checkout. Entry rules and the supp
 - `references/secretary/` owns secretary duty definitions, one file per duty. It is not a domain pack. `references/workflow/secretary-contract.md` and `skills/start-secretary/SKILL.md` load each duty file.
 - `references/templates/` owns the five copy-ready task-file shapes. Each file's contracting workflow reference owns its rules.
 - `setup.ts` owns installation and distribution. This file's § *Source contracts* owns its CLI, stdout, exit behavior, and rationale.
-- `.claude-plugin/` owns the Claude Code plugin and its single-plugin marketplace. The plugin root is the repository root, so skill `./AGENTS.md` and `./references` links resolve inside the plugin cache. Neither manifest pins `version`, so every commit is a new version for `/plugin update`.
+- `.claude-plugin/` owns the Claude Code plugin and its single-plugin marketplace. The plugin root is the repository root, so skill `./references` links and `../../CORE_RULES.md` citations resolve inside the plugin cache. The plugin delivers no always-on core rules; only `setup.ts` installs them. Neither manifest pins `version`, so every commit is a new version for `/plugin update`.
 - `scripts/` owns zero-dependency Node helpers. For a helper skills run, `references/scripts/<name>.md` owns CLI and stdout contracts, installed with other references. Its `references/maintenance/scripts.md` section owns rationale and mirror notes. For maintainer-only helpers, that section owns all three. Sources carry no comments; change a contract at its owner in the same edit.
 - `tests/` owns verification. `references/maintenance/tests.md` explains suite commands and dependencies; § *Change routing* maps scripts to suites. `tests/dup-allow.json` records intentional prose mirrors, each entry explaining why its copy stays.
 - `.agents/tasks/` owns task artifacts and active work context.
@@ -29,7 +29,7 @@ No linter, formatter, or graph-aware runner exposes a narrowing class, so every 
 
 Run-time helper contracts live in `references/scripts/<name>.md`. This section holds shared conventions and installation behavior. `references/maintenance/scripts.md` holds maintainer-only helper contracts, helper rationale, and mirrors. `references/maintenance/tests.md` holds suite commands and dependencies. Read the relevant helper or suite section before editing its source. Callers read decisions in these places before assembling commands; sources contain no comments.
 
-`setup.ts` installs `CORE_RULES.md` as shared-rule skills' `./AGENTS.md` target. Keep maintainer citations as source-root-relative text; they do not add runtime reading.
+`setup.ts` installs `CORE_RULES.md` at each home's root, where skills' `../../CORE_RULES.md` citations resolve. Keep maintainer citations as source-root-relative text; they do not add runtime reading.
 
 ### Shared conventions
 
@@ -45,17 +45,17 @@ Run-time helper contracts live in `references/scripts/<name>.md`. This section h
 
 ### `setup.ts`
 
-Installs skills, `references/`, `CORE_RULES.md`, and native agent definitions into `~/.claude` and `~/.codex`. Ownership markers let later runs reclaim installed items while preserving user content.
+Installs skills, `references/`, `CORE_RULES.md`, and native agent definitions into `~/.claude` and `~/.codex`. It also copies `CORE_RULES.md` to the Claude Code rule file `~/.claude/rules/agents-kit-core-rules.md`. It merges into `~/.claude/settings.json` a `SubagentStart` hook that gives Explore and Plan that file. It writes `CORE_RULES.md` into a marked block of `~/.codex/AGENTS.md`. Ownership markers let later runs reclaim installed items while preserving user content.
 
 ```
 node setup.ts
 ```
 
-**Contract.** stdout names each home and every installed or skipped item; stderr names refused homes. Exit 0 means every home installed; 1 means at least one home was skipped.
+**Contract.** stdout names each home and every installed or skipped item. stderr names refused homes and each file left uninstalled or unmerged, with the reason. Exit 0 means every home installed and every merge completed. Exit 1 means at least one home was skipped or one file was left uninstalled or unmerged; the rest of the install still runs.
 
-**Why the staging dirs.** Skills stage under `skills/.agents-kit-staging.*`; references stage under the home's `.agents-kit-references.staging.*`. Each staging directory contains its marker before atomic rename, preventing a visible unmarked payload. An interrupted run leaves staging directories that the next sweep removes under both prefixes. `CORE_RULES.md` and agent definitions instead use `touchMarker` followed by `copyFileSync` at their visible paths. They use neither staging nor rename, so interruption mid-copy can leave a partial marked file.
+**Why the staging dirs.** Skills stage under `skills/.agents-kit-staging.*`; references stage under the home's `.agents-kit-references.staging.*`. Each staging directory contains its marker before atomic rename, preventing a visible unmarked payload. An interrupted run leaves staging directories that the next sweep removes under both prefixes. `CORE_RULES.md`, the Claude Code rule file, and agent definitions instead use `touchMarker` followed by `copyFileSync` at their visible paths. They use neither staging nor rename, so interruption mid-copy can leave a partial marked file.
 
-**Why a home is refused.** Skills using shared rules symlink `./AGENTS.md` and `./references` to install-root siblings. User-owned replacements would redirect those loads into non-kit content, so the installer refuses that entire home. A kit-owned `skills/` symlink is reclaimed, including links into this repository, dangling leftovers, or moved clones. Other `skills/` symlinks are refused because installing through them would dangle the per-skill links.
+**Why a home is refused.** Skills symlink `./references` to the install-root `references/`. Skill and reference citations of `CORE_RULES.md` reach the install-root copy. A user-owned replacement of either would redirect those reads into non-kit content, so the installer refuses that entire home. A kit-owned `skills/` symlink is reclaimed, including links into this repository, dangling leftovers, or moved clones. Other `skills/` symlinks are refused because installing through them would dangle the per-skill links.
 
 **Why the copy modes differ.** Skills use `verbatimSymlinks` to preserve relative targets. Without it, `cpSync` rewrites them as absolute checkout paths instead of resolving inside the installed home. References contain no symlinks and use `dereference`. References and core rules remain available during the skills loop; each is replaced only at its own installation site. The references replacement is staged before removing its predecessor.
 
@@ -67,11 +67,21 @@ node setup.ts
 
 **Why the agent sweep is marker-driven.** The marker alone establishes ownership. Sweep each definition with its marker, reclaiming installs interrupted between the two writes. The copy loop preserves and skips any same-named unmarked file.
 
+**Why the rule file is a marked regular copy.** Claude Code loads a user rule without `paths:` frontmatter at launch and again after compaction, with no skill or file read. Cowork skips symlinked user rules, and health-check compares bytes, so the file is a copy. Its marker is `rules/.agents-kit-core-rules`, written before `copyFileSync` like the core rules. Each run refreshes a marked file. A same-named unmarked file or symlink is the user's and is reported as skipped. Only the Claude Code home receives it.
+
+**Why Explore and Plan get a `SubagentStart` hook.** Those two agents start without the `CLAUDE.md` hierarchy, so user rules never reach them. The kit entry matches `^(Explore|Plan)$` and runs an inline `node -e` command. That command reads the installed rule file at run time and prints it as `hookSpecificOutput.additionalContext`. The entry therefore stays the same when the rules change. The command finds the file through `os.homedir()`, so the entry can be copied into synced settings unchanged. Claude Code caps hook output at 10,000 characters, so `CORE_RULES.md` must stay under that limit.
+
+**Why the settings merge rewrites only parsed JSON.** `setup.ts` recognizes its hook by the exact command it writes, so a user command that only names the rule file stays the user's. It inserts its entry where the first entry holding that command stood and removes the command from every entry. An entry left with other hook commands keeps them, after the kit entry; an entry left empty is dropped. Without the command, it appends the entry. Changing the command leaves its predecessor in installed settings. Other keys and hooks keep their values and order. The file is written as `JSON.stringify(value, null, 2)` plus a newline, so a rerun reproduces its bytes. Setup leaves the file untouched when it is not valid JSON or has no place for the entry: a non-object root or `hooks`, or a non-list `hooks.SubagentStart`. A `null` `hooks` or `hooks.SubagentStart` counts as absent. Rewriting such a file could drop the user's settings. That refusal exits 1 like a skipped home. The write follows a symlinked `settings.json`, so a linked file stays linked.
+
+**Why the two merges replace their file by rename.** The settings merge and the Codex block write a temporary file beside the file a link resolves to. They copy its permission bits, then rename it over that file. A failed write therefore leaves the user's original intact; an in-place write would truncate it first. An interrupted run can leave the temporary file `.<name>.agents-kit-tmp.<pid>` beside the target. A hard link to the file stops sharing it after the rename.
+
+**Why the Codex block sits between markers.** Codex loads `~/.codex/AGENTS.md` into every session and subagent, and the file also holds the user's own lines. `setup.ts` writes `CORE_RULES.md` bytes between `<!-- agents-kit:core-rules:start -->` and `<!-- agents-kit:core-rules:end -->`. It replaces one existing marker pair in place, so a rerun reproduces the file. Without markers, it appends the block after a blank line, or creates the file. Lines outside the block keep their bytes. Any other marker count or order leaves the file untouched and exits 1. Replacing between unmatched markers could overwrite user lines. The write follows a symlinked file. Only the Codex home receives the block.
+
 ## Change routing
 
 Root `AGENTS.md` § *Change routing* owns the pre-edit inspection, reverse-search, and dup-check rules. This section holds the suite map and the reasons behind those rules.
 
-Git history preserves existing contract reasons. Installation changes include `setup.ts`, native agent definitions, and installed payload behavior. Their checks hardcode markers, payload categories, and per-host agent extensions, so `tests/setup-install.test.ts` and `scripts/health-check.ts` change together.
+Git history preserves existing contract reasons. Installation changes include `setup.ts`, native agent definitions, and installed payload behavior. Their checks hardcode markers, payload categories, per-host agent extensions, and always-on delivery shapes, so `tests/setup-install.test.ts` and `scripts/health-check.ts` change together.
 
 Run the suite covering each changed surface:
 
@@ -159,3 +169,4 @@ Both walkers receive recognition and prunes through `classifyWalkEntry`. Commit-
 - `references/secretary/runbook-maintenance.md` § *Configuration*: update `configuredInterval`, `intervalMinutes`, and `REVIEW_INTERVAL_MS` in `scripts/secretary-state.ts` with the interval rules. A stale copy would accept or reject intervals differently from the coordinator and `init-config`.
 - `references/secretary/meeting-sync.md` § *Configuration*: keep `scripts/meeting-sync-state.ts` functions `configure` and `cadence` aligned with folder enablement, physical resolution, and interval validation. `skills/init-config/SKILL.md` consumes the same duty rules; configuration tests cover preserved unknown keys and disabled-duty interval handling.
 - `scripts/secretary-state.ts` lock (`sleep`, `readOwner`, `readOwnerFile`, `alive`, `breakStaleLock`, `removeLock`, and `withLock`): `scripts/meeting-sync-state.ts` copies it for its separate store. Change both together. A stale copy would reclaim or report busy locks differently in the two stores.
+- `setup.ts`'s always-on delivery shapes: update the rule-file name and marker, `HOOK_ENTRY`, `isKitHookEntry`'s command test, and the block markers in `scripts/health-check.ts` with them. Health-check cannot import an installer that runs at import, and a stale copy reports every current install as drifted. The mirror note is in `references/maintenance/scripts.md` § *`scripts/health-check.ts`*.

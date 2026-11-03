@@ -6,7 +6,7 @@ argument-hint: '[doc file path] [-x (cross-vendor grounding probe)]'
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
+1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 2. This is a documentation-pack skill: also read `./references/documentation/rules.md` and apply it on top of the core — its repo-grounding license covers the against-codebase audit below.
 
 Audit documentation for source accuracy and whole-document quality (`./references/documentation/verification.md`). Report in chat without editing. Only a subsequent explicit request after the review authorizes scoped fixes. Implementation plans use `review-task`.

@@ -6,7 +6,7 @@ argument-hint: "[task slug or path; defaults to the session's task] [-e native|c
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
+1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 2. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for (`execution.md`, `verification.md`, …). If the domain has no pack, run the neutral methodology and say so.
 
 Execute `plan.md`, record outcomes in `result.md`, and link checked steps to their evidence. Gate `goals.md` before setting `done`.
@@ -44,7 +44,7 @@ Establish ground truth per `./references/workflow/execution-loop.md` § *Ground 
 - Report the loader's `applied`, `mappings`, and `unresolved` before relying on its returned `state`. A null `state` with no readable plan goes to `plan-task`; a failed repair stops execution. Unresolved structure cannot count as complete goal coverage.
 - `goals.md` missing: stop and tell the user. Never invent goals.
 - `CONTEXT.md`: its header for `**Domain:**`; its prose when a step's packet (§4) turns on it.
-- Read shared grounding from the folder's current location on every invocation. Resolve material contradictions before dependent steps or acceptance under § *Correcting Grounding Where It's Wrong*. Record both statements and sources. Unresolved material contradictions or impactful choices take `./AGENTS.md` § *Ask Before Assuming* before dependent writes.
+- Read shared grounding from the folder's current location on every invocation. Resolve material contradictions before dependent steps or acceptance under § *Correcting Grounding Where It's Wrong*. Record both statements and sources. Unresolved material contradictions or impactful choices take `../../CORE_RULES.md` § *Ask Before Assuming* before dependent writes.
 - `ticket.md` is the product-facing ask; the gate runs against `goals.md`, not the ticket.
 - A `currentState` block or any checked step means a prior session got partway: pick up there, never redoing completed steps. Then branch on the plan status (`./references/workflow/task-lifecycle.md`):
     - `blocked`: read the result's `**Blocked:**` section; resume only once the blocker has cleared, flipping the plan back to `executing` first.
@@ -180,7 +180,7 @@ Close each completed run with the Handoff block (`./references/workflow/user-fac
 When execution disproves a factual claim, correct its owning surface: `CONTEXT.md`, `goals.md`, `ticket.md`, or an applicable `GROUP_CONTEXT.md`.
 Apply `./references/workflow/reconciliation.md` § *Grounding docs change on evidence, never silently* and § *The upstream ask is writable, and never rewritten quietly*.
 
-Before a correction requiring an unresolved impactful choice, apply `./AGENTS.md` § *Ask Before Assuming* and hold dependent writes.
+Before a correction requiring an unresolved impactful choice, apply `../../CORE_RULES.md` § *Ask Before Assuming* and hold dependent writes.
 A discrepancy proves no new requirement. Evidence-settled facts and settled prior decisions keep their correction route.
 
 **A correction is bounded by what the run learned.** Rewrite the statement the work disproved and nothing adjacent; reshaping untested grounding is `plan-task`'s.

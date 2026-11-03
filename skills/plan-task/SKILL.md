@@ -6,7 +6,7 @@ argument-hint: "[task or feature description, task folder or destination path; d
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
+1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 2. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for (`exploration.md`, `planning.md`, …). If the domain has no pack, run the neutral methodology and say so.
 
 Write `goals.md` (acceptance) and `plan.md` (execution) into the resolved task folder. Summarize in chat with file links.
@@ -74,7 +74,7 @@ Explore before designing, per the domain's exploration guide (`./references/engi
 
 Compare viable approaches, including ones the user may not have considered, and recommend a better one when warranted. With only one viable approach, explain the constraint without fabricating alternatives. Weigh alignment with existing patterns, minimum complexity, risk and reversibility, and effort, a line per axis.
 
-Take unresolved impactful approach choices through `./AGENTS.md` § *Ask Before Assuming*, even when goals are clear.
+Take unresolved impactful approach choices through `../../CORE_RULES.md` § *Ask Before Assuming*, even when goals are clear.
 When an approach decision is needed, `## Approach` cites CONTEXT's `## Recommended Direction` if present and records only plan-time refinements.
 
 ### 6. Define Scope

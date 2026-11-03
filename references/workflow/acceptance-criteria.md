@@ -10,7 +10,7 @@ Quality bar for the goals in `goals.md`, each a `G<n>` bullet (`- G1 — <outcom
 - [ ] **Singular**: one observable claim per bullet
 - [ ] **Bounded**: the reader can tell what is in and out without guessing
 - [ ] **Stated as behavior**: name what the actor can do or observe before the implementation detail; "GET /foo returns 200 with `{shape}`" beats "the endpoint exists"
-- [ ] **Plain wording**: states the action and conditions directly under `./user-facing-messages.md` § *Plain wording*. Compare the goal with its source. Retain each condition and technical qualifier in the goal when shortening its wording.
+- [ ] **Plain wording**: states the action and conditions directly under `../../CORE_RULES.md` § *Communication*. Compare the goal with its source. Retain each condition and technical qualifier in the goal when shortening its wording.
 
 Keep thresholds, compatibility obligations, and failure behavior in the goal as acceptance details. Put commands, typecheck assertions, fixture setup, and test recipes in the plan step's `Verify`, not in the goal. A document goal names what a reader can decide or use from the document, with required content and format as acceptance details.
 

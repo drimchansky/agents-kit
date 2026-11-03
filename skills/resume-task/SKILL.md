@@ -6,7 +6,7 @@ argument-hint: "[task slug or path; defaults to the session's task]"
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
+1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 2. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core. This skill mostly observes; pull in deeper pack files only if you dig into a step's work. If the domain has no pack, run the neutral methodology and say so.
 
 Brief status, completed work, drift, and next action in chat. Apply `./references/workflow/task-layout.md` § *Reading a resolved folder*, including proven identifier repair on either invocation route and its read-only exemption. Beyond that repair and a user-confirmed Backlog activation (`./references/workflow/implement-task-edges.md` § *Activating a backlogged task*), edit no task file, code, or Git state; execute no plan work.
