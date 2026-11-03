@@ -6,7 +6,7 @@ argument-hint: '[task description] [optional task folder, slug, or target file p
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
+1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 
 Write a self-contained outcome ticket to a file. Resolve no domain pack: the ticket precedes Domain grounding. Read `./references/workflow/ticket-format.md`, `./references/workflow/task-layout.md`, and `./references/workflow/task-destinations.md` before drafting.
 

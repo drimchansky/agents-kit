@@ -6,8 +6,7 @@ argument-hint: '[note file path or pasted text]'
 
 ## Core Rules
 
-Read and apply `./AGENTS.md` § *Ask Before Assuming*.
-Read and apply `./references/workflow/user-facing-messages.md` § *Plain wording* only.
+Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 
 # Review Note
 

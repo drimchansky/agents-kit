@@ -5,7 +5,7 @@ description: Use when asked to update a PR's description on GitHub after review-
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
+1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 2. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core.
 
 **Model invocation:** requires a confirmed proposal (`./references/workflow/skill-conventions.md` § *The invocation gate*).

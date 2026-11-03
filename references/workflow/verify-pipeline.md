@@ -6,7 +6,7 @@ A verify pipeline chains a base pass into a batched, probe-verified triage: find
 
 Each phase executes its skill file in full, under three overrides:
 
-- **Core Rules blocks:** the composite's own block covers the pipeline; inner skills do not repeat the AGENTS.md read.
+- **Core Rules blocks:** the composite's own block covers the pipeline; inner skills do not repeat reading the project's `AGENTS.md` and `CLAUDE.md`.
 - **Chat display:** findings render once, in the final Output; phases print only what their own section allows.
 - **Handoff:** inner skills' Handoff blocks are dropped; the composite's Output composes one block for the pipeline (`./user-facing-messages.md` § *Blocks*).
 

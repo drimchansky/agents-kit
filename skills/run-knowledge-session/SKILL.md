@@ -5,8 +5,7 @@ description: Conduct a learning session scoped by the user's requested number of
 
 ## Core Rules
 
-Read and apply `./AGENTS.md` § *Ask Before Assuming*.
-Read and apply `./references/workflow/user-facing-messages.md` § *Plain wording* only.
+Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 
 # Run Knowledge Session
 

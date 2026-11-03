@@ -6,6 +6,8 @@ argument-hint: '[transcript or audio]'
 
 # Format Dictation
 
+This utility skill's output follows only the rules in this file.
+
 Return only the edited text, without an introduction, explanation, quotation wrapper, or code fence.
 
 ## Preserve the message

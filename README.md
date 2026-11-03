@@ -19,7 +19,7 @@ cd agents-kit
 node setup.ts
 ```
 
-This installs the kit into `~/.claude` and `~/.codex`. Pull changes and rerun `node setup.ts` to update.
+This installs the kit into `~/.claude` and `~/.codex`, including always-on [core rules](./CORE_RULES.md) on both hosts. Pull changes and rerun `node setup.ts` to update.
 
 For Claude Code, the plugin is an alternative:
 
@@ -28,11 +28,20 @@ For Claude Code, the plugin is an alternative:
 /plugin install agents-kit@agents-kit
 ```
 
-Choose one installation method. Invoke skills as `/plan-task` in Claude Code, `/agents-kit:plan-task` with the plugin, or `$plan-task` in Codex.
+A plugin install runs without the always-on core rules; only `node setup.ts` installs them. Some kit skills still read the plugin's `CORE_RULES.md` through section citations. Its `references/` paths resolve under `~/.claude`, so those reads work only alongside a `setup.ts` install. Choose one installation method. Invoke skills as `/plan-task` in Claude Code, `/agents-kit:plan-task` with the plugin, or `$plan-task` in Codex.
+
+### Core rules
+
+New sessions and their subagents start with the core rules, without a skill or file read. Start a new session after setup to load them.
+
+- **Claude Code:** setup writes the rule file `~/.claude/rules/agents-kit-core-rules.md`. Explore and Plan skip user rules, so setup also merges a `SubagentStart` hook into `~/.claude/settings.json` to give them the rules. The merge keeps your other settings and rewrites the file as two-space JSON. `~/.claude/CLAUDE.md` stays unchanged.
+- **Codex:** setup writes the rules into a marked block of `~/.codex/AGENTS.md`. Your lines outside the block stay unchanged.
+
+If your `~/.claude/settings.json` is synced from elsewhere, the synced copy must keep the kit's Explore/Plan hook. Otherwise each sync removes the hook, and `maintain` reports it missing. Copy the kit's `SubagentStart` entry from the installed file unchanged.
 
 ### Browser tools
 
-The [browser guidance](./references/workflow/browser-tools.md) prefers Chrome DevTools MCP on both hosts. It covers acting in your Chrome session, isolated review capture, UI checks, and regressions against live data. Kit skills load it through their core rules.
+The [browser guidance](./references/workflow/browser-tools.md) prefers Chrome DevTools MCP on both hosts. It covers acting in your Chrome session, isolated review capture, UI checks, and regressions against live data. The core rules tell each session to read it before acting in a browser UI. Plugin sessions lack the core rules, so they do not read it.
 
 Register two Chrome DevTools MCP servers on each host. `chrome-devtools` attaches to your running Chrome; `chrome-devtools-isolated` starts a temporary profile.
 
@@ -44,20 +53,6 @@ codex mcp add chrome-devtools-isolated -- npx -y chrome-devtools-mcp@latest --is
 ```
 
 `--autoConnect` needs Chrome 144 or newer, with remote debugging enabled at `chrome://inspect/#remote-debugging`. Chrome asks you to allow the connection. In Claude Code, Claude in Chrome is the fallback for your session.
-
-To apply the guidance outside skill runs, add a loader to each host's global instructions after setup. In `~/.claude/CLAUDE.md`:
-
-```markdown
-For browser UI actions, read and apply `~/.claude/references/workflow/browser-tools.md`.
-```
-
-In `~/.codex/AGENTS.md`:
-
-```markdown
-For browser UI actions, read and apply `~/.codex/references/workflow/browser-tools.md`.
-```
-
-With the plugin, point the Claude loader at `references/workflow/browser-tools.md` in your kit checkout. The installer leaves both global files untouched. Start a new session to load the instruction.
 
 ## Task workflow
 
@@ -92,7 +87,7 @@ Then explicitly request initialization with `implement`, for example:
 
 The [runbook reference](./references/workflow/runbook.md) defines entry and source conventions. Store access methods and credential-manager references, keeping credential values outside the runbook. `init-config` changes configuration only; the initialization request creates the selected index and entries.
 
-Kit skill runs that load the full [core rules](./CORE_RULES.md), such as task workflows, `implement`, and `explore`, consult the index when personal or work knowledge becomes relevant. They then read the applicable entries. They retain evidence dates and uncertainty; current infrastructure claims still need fresh verification. An absent setting opts out silently. A needed unavailable source is reported without searching the vault.
+Sessions with the always-on [core rules](./CORE_RULES.md) consult the index when personal or work knowledge becomes relevant. They then read the applicable entries. They retain evidence dates and uncertainty; current infrastructure claims still need fresh verification. An absent setting opts out silently. A needed unavailable source is reported without searching the vault.
 
 ## Secretary
 

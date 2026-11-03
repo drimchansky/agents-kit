@@ -6,13 +6,13 @@ argument-hint: "[task slug or path; defaults to the session's task]"
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
+1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 
 Brief through `resume-task`, then reconcile its findings against the same post-loader, pre-edit baseline.
 
 Phase 1 runs `../resume-task/SKILL.md`'s full protocol; Phase 2 runs the reference contract it names. Four overrides apply pipeline-wide:
 
-- **Core Rules blocks**: this block covers the pipeline; the inner AGENTS.md read does not repeat. `resume-task`'s domain-pack step still runs.
+- **Core Rules blocks**: this block covers the pipeline; the inner read of the project's `AGENTS.md` and `CLAUDE.md` does not repeat. `resume-task`'s domain-pack step still runs.
 - **Chat display**: the brief prints in full at the end of Phase 1, before any reconciliation edit.
 - **Handoff**: the inner skill's block is dropped; this Output composes one block from the reconciled state.
 - **Loader baseline**: the run announces the resolved folder before its first write, the repairing load included. Phase 1 runs the inner skill's repairing load once and reports its structural repair before briefing. Phase 2 retains that repaired baseline and does not rerun repair.

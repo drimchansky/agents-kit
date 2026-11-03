@@ -1,18 +1,10 @@
 # User-Facing Messages: Markers, Blocks, and Surface Adapters
 
-Markers, Blocks, and Surface adapters govern final chat responses, progress updates, PR comments and descriptions, and Jira drafts. They fix visual grammar and ordering; Handoff also fixes what each slot admits. Each skill's Output owns its content. Those sections exclude questions, approvals, refusals, errors, and internal returns. Plain wording has its own applicability below.
+Markers, Blocks, and Surface adapters govern final chat responses, progress updates, PR comments and descriptions, and Jira drafts. They fix visual grammar and ordering; Handoff also fixes what each slot admits. Each skill's Output owns its content. Those sections exclude questions, approvals, refusals, errors, and internal returns. Plain wording has its own scope, set in `../../CORE_RULES.md` § *Communication*.
 
 ## Plain wording
 
-Apply to newly authored prose for people: goals, tickets, `CONTEXT.md`, `result.md`'s Current state, chat, PR text, Slack and Jira drafts, and writing-utility output. This includes questions, approvals, refusals, and errors. It adds no marker or Handoff requirements.
-
-- Before saving or returning a draft, revise its wording under these rules. State the actor's action or observable result directly. Prefer ordinary verbs and literal relationships to nominalizations and unnecessary abstractions.
-- Remove repetition, artificial contrasts, staged emphasis, candor framing, and closing restatements when they add no meaning.
-- Replace structural metaphors with the relationship they describe. Keep necessary technical terms; use context rather than a replacement dictionary.
-- Compare the revised draft with its source. Preserve facts, conditions, permissions, comparisons, uncertainty, negation, thresholds, identifiers, and logical scope. Add no claims or recommendations.
-- Preserve quotations, commands, code, required formats, recorded decisions, delivery identifiers, and explicitly requested tone or language. When adapting source text, preserve its intended tone and simplify wording the request does not require verbatim.
-
-Leave commit messages, kit instruction prose, and raw executor, reviewer, and probe returns unchanged. Text protected by a verbatim-copy rule stays verbatim; § *Finding entry wording* defines the first-report exception for new review findings.
+The Plain wording rules, scope, and exclusions are in `../../CORE_RULES.md` § *Communication*. They add no marker or Handoff requirements.
 
 Wording examples; § *Blocks* still governs Handoff structure:
 
@@ -21,7 +13,7 @@ Wording examples; § *Blocks* still governs Handoff structure:
 
 ## Finding entry wording
 
-When preparing a new review finding for people, keep the raw return and draft a separate finding under § *Plain wording*. Compare it with its source before accepting the wording: preserve severity, locator, the `Pre-existing` label, recommendation, impact, certainty, and every distinct claim. Change wording without inferring a new fix or cause.
+When preparing a new review finding for people, keep the raw return and draft a separate finding under the Plain wording rules (`../../CORE_RULES.md` § *Communication*). Compare it with its source before accepting the wording: preserve severity, locator, the `Pre-existing` label, recommendation, impact, certainty, and every distinct claim. Change wording without inferring a new fix or cause.
 
 Prepare once before triage, verification, or publication, even when chat display waits. Apply this also to candidates first raised during verification, before the session verifies and adopts them. Preparation assigns no verdict and adopts no candidate.
 

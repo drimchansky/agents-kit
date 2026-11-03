@@ -6,7 +6,7 @@ argument-hint: '[subject] [optional: diagram type, destination file]'
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
+1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 2. This is a **documentation-pack skill**: apply `./references/documentation/rules.md` on top of the core unconditionally — no `**Domain:**` resolution; the documentation pack is this skill's domain.
 
 Generate an accurate, portable Mermaid diagram for the requested subject. Deliver a fenced Mermaid block in chat.

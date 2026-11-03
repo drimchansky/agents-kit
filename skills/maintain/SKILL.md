@@ -6,7 +6,7 @@ argument-hint: '[kit path and/or task-root path — defaults to the registered r
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
+1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 
 **Model invocation:** requires a confirmed proposal (`./references/workflow/skill-conventions.md` § *The invocation gate*).
 
@@ -87,7 +87,9 @@ Attribute each finding by its absolute `root`, never its basename-prefixed displ
 node <kit-root>/scripts/health-check.ts --installs <kit-root> ~/.claude ~/.codex
 ```
 
-Read marker-owned comparisons and kit items wholly absent from each home. User-installed paths remain outside comparison, except unmarked `references/` or `CORE_RULES.md`: those are conflicts that refuse installation. Rerunning setup cannot clear them. A markerless home receives one `never installed` line, including any conflict, rather than a finding per kit file.
+Read marker-owned comparisons and kit items wholly absent from each home. User-installed paths remain outside comparison; classify reported conflicts under the setup-rerun gate below. A markerless home receives one `never installed` line, including any conflict, rather than a finding per kit file.
+
+An installed home also reports drift in its always-on core rules. In `~/.claude`, that covers the rule file `rules/agents-kit-core-rules.md` and the Explore/Plan `SubagentStart` entry in `settings.json`. In `~/.codex`, it covers the marked core-rules block in `AGENTS.md` and a non-empty `AGENTS.override.md` that hides it. A missing hook entry often means a synced `settings.json` copy replaced the installed one.
 
 **Uncommitted work:** read `git worktree list --porcelain` once from the kit root for this probe and the husk probe. Run `git -C <root> status --porcelain` for the kit, each task root inside a repository, and every listed linked worktree. Deduplicate paths already covered. Include worktrees belonging to no kit task. A root below a repository's top level still reports that repository. Report dirty paths only.
 
@@ -108,7 +110,7 @@ When the health helper or Node is unavailable, skip both script probes and state
 
 On one confirmation, move exactly the previewed batch; declining moves nothing. A plain `mv` may perform the contracted whole-folder move. Change no contents or internal `./` links.
 
-**Gate — rerun `setup.ts`.** Withhold this gate when the plugin manages `~/.claude`: `setup.ts` always writes both homes, so every skill would be listed twice. Report any Codex drift with that reason. Preview drifted paths grouped by home. Before confirmation, warn that `node <kit-root>/setup.ts` replaces installed skills and references beneath live sessions, including this one. Run only on confirmation and only as a whole installation; there is no per-path mode. Declining leaves both homes unchanged. Retain drift findings in Output either way.
+**Gate — rerun `setup.ts`.** Withhold this gate when the plugin manages `~/.claude`: `setup.ts` always writes both homes, so every skill would be listed twice. Report any Codex drift with that reason. Preview drifted paths grouped by home. Before confirmation, warn that `node <kit-root>/setup.ts` replaces installed skills and references beneath live sessions, including this one. Also warn that it rewrites `~/.claude/rules/agents-kit-core-rules.md` and the core-rules block in `~/.codex/AGENTS.md`. It also rewrites `~/.claude/settings.json` as reformatted JSON holding the kit's `SubagentStart` entry. Label every drift whose health-check detail names a user action as the user's fix in the preview. A `setup.ts` rerun cannot clear it; see `./references/scripts/health-check.md` § *`--installs` mode* for the cases. Run only on confirmation and only as a whole installation; there is no per-path mode. Declining leaves both homes unchanged. Retain drift findings in Output either way.
 
 **Gate — remove the worktree husks.** Preview each eligible path, branch, and merge proof; label branch-only entries as having no worktree. Confirm **per item**, never as a batch. Exclude terminal-but-unmerged entries. On confirmation, use the resolved path, checks, order, and unforced commands in `./references/workflow/task-delivery-edges.md` § *Removal*. Branch-only candidates run `git branch -d` alone. Report refusals without forcing cleanup. If worktree removal succeeded before branch deletion failed, report partial cleanup and the surviving branch. Declining removes nothing. With no removable candidate, skip this gate and its contract load. <!-- cold -->
 

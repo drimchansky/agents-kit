@@ -1,6 +1,6 @@
 # Engineering Rules
 
-Apply with `../../CORE_RULES.md` for engineering tasks and engineering-only skills.
+Apply on top of the core rules for engineering tasks and engineering-only skills.
 
 ## Code & Git discipline
 

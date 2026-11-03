@@ -6,7 +6,7 @@ argument-hint: '[scope; defaults to the current branch against its base] [-n N (
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
+1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 2. This is an engineering skill: also read `./references/engineering/rules.md` and apply it on top of the core.
 
 Full review pipeline: review the object (`review-code`), batch the findings by concern (`triage-findings`), then verify each batch in an isolated read-only probe running the `verify-issue` protocol, one verdict per finding.

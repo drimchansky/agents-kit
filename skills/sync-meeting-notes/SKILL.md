@@ -6,8 +6,7 @@ argument-hint: '[meetings folder]'
 
 ## Core Rules
 
-1. Read and apply `./AGENTS.md` § *Ask Before Assuming*.
-2. Read and apply `./references/workflow/user-facing-messages.md` § *Plain wording* only.
+1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 
 **Model invocation:** requires a confirmed proposal (`./references/workflow/skill-conventions.md` § *The invocation gate*).
 

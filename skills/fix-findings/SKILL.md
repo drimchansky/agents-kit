@@ -6,7 +6,7 @@ argument-hint: '[source] [-e native|codex|claude] [-1 (one health boundary and o
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
+1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 2. Apply `./references/engineering/rules.md` to code fixes and `./references/documentation/rules.md` to documentation fixes. Apply both to a mixed fix.
 
 **Model invocation:** requires a confirmed proposal (`./references/workflow/skill-conventions.md` § *The invocation gate*).
@@ -50,7 +50,7 @@ Before execution, known dependencies are source- or user-declared dependencies a
 - **Auto, non-functional:** a finding with any verdict or none, except Withdrawn or Inconclusive, whose fix is one unambiguous targeted change confined to reviewed files. The change must fall within the `low` tier of `./references/engineering/review-evidence.md` § *Risk*.
 - **Ask:** every other actionable finding, including findings with design choices, meaningful option trade-offs, unsettled intent, or broader scope.
 
-Route a consequential change in a document's claim, decision, or intended audience to Ask, even when its wording looks simple (`./AGENTS.md` § *Ask Before Assuming*).
+Route a consequential change in a document's claim, decision, or intended audience to Ask, even when its wording looks simple (`../../CORE_RULES.md` § *Ask Before Assuming*).
 Route a test edit to Ask unless its finding is Confirmed.
 Treat a file named only as a proposed remedy as outside the reviewed files for Auto. Route that fix to Ask.
 

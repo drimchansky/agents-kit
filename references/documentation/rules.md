@@ -1,6 +1,6 @@
 # Documentation Rules
 
-Apply with `../../CORE_RULES.md` for documentation tasks and pack skills, including RFCs, ADRs, architecture notes, diagrams, outreach, and replies.
+Apply on top of the core rules for documentation tasks and pack skills, including RFCs, ADRs, architecture notes, diagrams, outreach, and replies.
 
 ## Send & publish discipline
 

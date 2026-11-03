@@ -6,7 +6,7 @@ argument-hint: '[source: task-folder doc path, file path, URL, or pasted text] [
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
+1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 2. Load the domain pack: infer the effort's domain from the source (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core; each materialized part records its own `**Domain:**` in its seeded `CONTEXT.md`. If the domain has no pack, run the neutral methodology and say so.
 
 Decompose an **approved** ADR, accepted RFC, or epic-scale ask into sibling task folders under `./references/workflow/decomposition.md`. Propose in chat first; materialize only the confirmed cut through `../prepare-ticket/SKILL.md` and a context seed.
@@ -15,7 +15,7 @@ Phase 1 writes nothing. Phase 2's write surface is exactly the confirmed part fo
 
 Phase 2 runs `../prepare-ticket/SKILL.md`'s full protocol per part with five overrides:
 
-- **Core Rules blocks**: this skill's block covers the pipeline; the inner AGENTS.md read does not repeat.
+- **Core Rules blocks**: this skill's block covers the pipeline; the inner read of the project's `AGENTS.md` and `CLAUDE.md` does not repeat.
 - **Clarifying questions**: `prepare-ticket`'s per-ticket round folds into Phase 1's single batched confirmation. A gap discovered only at drafting time is asked then, not guessed.
 - **Decomposition assessment**: skip `prepare-ticket`'s § *3. Assess decomposition*; draft only the part Phase 1 already confirmed.
 - **Handoff**: `prepare-ticket`'s Handoff blocks are dropped; this skill's Output composes one block for the whole run.

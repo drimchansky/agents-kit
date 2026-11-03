@@ -6,13 +6,13 @@ argument-hint: "[task slug or path; defaults to the session's task] [-x (cross-v
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
+1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 
 Review through `review-task`, then reconcile its findings. Settle Questions or present them for input, preserving the post-loader, pre-edit assessment.
 
 Phase 1 runs `../review-task/SKILL.md`'s full protocol; Phase 2 runs the reference contract it names. Four overrides apply pipeline-wide:
 
-- **Core Rules blocks**: this block covers the pipeline; the inner AGENTS.md read does not repeat. `review-task`'s domain-pack step still runs.
+- **Core Rules blocks**: this block covers the pipeline; the inner read of the project's `AGENTS.md` and `CLAUDE.md` does not repeat. `review-task`'s domain-pack step still runs.
 - **Chat display**: the assessment prints in full at the end of Phase 1, before any reconciliation edit.
 - **Handoff**: `review-task`'s block is dropped; this Output composes one block for both phases.
 - **Loader baseline**: the run announces the resolved folder before its first write, the repairing load included. Phase 1 runs the inner skill's repairing load once and reports its structural repair before assessment. Phase 2 retains that repaired baseline and does not rerun repair.

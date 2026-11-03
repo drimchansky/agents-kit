@@ -5,7 +5,7 @@ description: Squash all commits belonging to the current Git branch into one com
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules.
+1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 2. Read `./references/engineering/rules.md` for the engineering overlay.
 
 ## Authorization

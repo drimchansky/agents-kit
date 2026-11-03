@@ -6,7 +6,7 @@ argument-hint: '[what to implement] [-e native|codex|claude]'
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
+1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 2. Load the domain pack: take the task's `**Domain:**` (default `engineering`; infer from the request when there's no `CONTEXT.md`) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for (`execution.md`, `verification.md`, …). If the domain has no pack, run the neutral methodology and say so.
 
 **Model invocation:** requires a confirmed proposal (`./references/workflow/skill-conventions.md` § *The invocation gate*).
@@ -34,7 +34,7 @@ An existing task uses `implement-task`. Multiple modules, competing approaches, 
 State each requested item and its verify criterion before implementation. The frame supplies both execution and acceptance contracts.
 
 - Optionally declare per-item file/directory surfaces when independent parallel work is plausible. Undeclared items delegate serially.
-- Keep adjacent work under Noticed but not touching (`./AGENTS.md`).
+- Keep adjacent work under Noticed but not touching (`../../CORE_RULES.md` § *NOTICED BUT NOT TOUCHING*).
 - Ask about ambiguity affecting scope; otherwise state the interpretation. Show the frame before work beyond one obvious change.
 - Escalate to plan-task when framing spans several modules, requires approach comparison, or exceeds a handful of items.
 

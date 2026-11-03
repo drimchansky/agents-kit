@@ -2,6 +2,7 @@
 import { lstatSync, readdirSync, readFileSync, readlinkSync, realpathSync, statSync } from "node:fs";
 import type { Dirent, Stats } from "node:fs";
 import { join, resolve, basename, dirname, relative, sep } from "node:path";
+import { isDeepStrictEqual } from "node:util";
 import {
   ARCHIVE_DIR,
   BACKLOG_DIR,
@@ -47,7 +48,23 @@ const THEMATIC_BREAK = /^[ \t]*(?:(?:\*[ \t]*){3,}|(?:-[ \t]*){3,}|(?:_[ \t]*){3
 const MARKER = ".agents-kit";
 const CORE_RULES_MARKER = ".agents-kit-core-rules";
 const AGENT_MARKER_PREFIX = ".agents-kit-";
-const AGENT_EXTENSIONS = new Map([[".claude", "md"], [".codex", "toml"]]);
+const CLAUDE_HOME_NAME = ".claude";
+const CODEX_HOME_NAME = ".codex";
+const AGENT_EXTENSIONS = new Map([[CLAUDE_HOME_NAME, "md"], [CODEX_HOME_NAME, "toml"]]);
+const RULE_NAME = "agents-kit-core-rules";
+const RULE_FILE = join("rules", `${RULE_NAME}.md`);
+const RULE_MARKER = join("rules", CORE_RULES_MARKER);
+const SETTINGS_FILE = "settings.json";
+const HOOK_EVENT = "SubagentStart";
+const HOOK_SCRIPT = `const p=require("path").join(require("os").homedir(),".claude","rules","${RULE_NAME}.md");process.stdout.write(JSON.stringify({hookSpecificOutput:{hookEventName:"${HOOK_EVENT}",additionalContext:require("fs").readFileSync(p,"utf8")}}))`;
+const HOOK_ENTRY = {
+  matcher: "^(Explore|Plan)$",
+  hooks: [{ type: "command", command: `node -e '${HOOK_SCRIPT}'` }],
+};
+const CODEX_AGENTS_FILE = "AGENTS.md";
+const CODEX_OVERRIDE_FILE = "AGENTS.override.md";
+const BLOCK_START = "<!-- agents-kit:core-rules:start -->";
+const BLOCK_END = "<!-- agents-kit:core-rules:end -->";
 const OS_ARTIFACTS = new Set<string>([".DS_Store", ".localized", "Thumbs.db"]);
 const STAGING_PREFIX = ".agents-kit-staging.";
 const skipInInstalls = (name: string): boolean => name === MARKER || OS_ARTIFACTS.has(name) || name.startsWith("._");
@@ -1145,6 +1162,171 @@ function sharedPayloadConflict(home: string, display: string, rel: string): Inst
   };
 }
 
+type JsonObject = { [key: string]: unknown };
+
+const isJsonObject = (value: unknown): value is JsonObject =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+function installDrift(path: string, detail: string): InstallFinding {
+  return { check: "install-drift", path, detail };
+}
+
+const DANGLING_LINK = "dangling symlink — setup.ts cannot write through it; repair or remove the link and rerun setup.ts";
+const DIRECTORY_FILE = "a directory — setup.ts cannot write it; move it aside and rerun setup.ts";
+
+function isDanglingLink(path: string, display: string): boolean {
+  if (kindOf(path, display) !== "link") return false;
+  try {
+    statSync(path);
+    return false;
+  } catch (err) {
+    if (err.code === "ENOENT") return true;
+    unreachable("path", path, display, err);
+    return false;
+  }
+}
+
+interface HomeText {
+  readonly text: string | null;
+  readonly missing: boolean;
+  readonly dangling: boolean;
+  readonly directory: boolean;
+}
+
+function homeText(path: string, display: string): HomeText {
+  try {
+    return { text: readFileSync(path, "utf8"), missing: false, dangling: false, directory: false };
+  } catch (err) {
+    if (err.code === "ENOENT") {
+      const dangling = kindOf(path, display) === "link";
+      return { text: null, missing: !dangling, dangling, directory: false };
+    }
+    if (err.code === "EISDIR") return { text: null, missing: false, dangling: false, directory: true };
+    unreachable("file", path, display, err);
+    return { text: null, missing: false, dangling: false, directory: false };
+  }
+}
+
+function occurrences(text: string, needle: string): number {
+  return text.split(needle).length - 1;
+}
+
+function isNonDirectory(path: string): boolean {
+  try {
+    return !statSync(path).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
+function ruleFileFindings(kitRoot: string, home: string, display: string, marker: MarkerState): InstallFinding[] {
+  const shown = join(display, RULE_FILE);
+  const rulesDir = dirname(RULE_FILE);
+  if (isDanglingLink(join(home, rulesDir), join(display, rulesDir))) return [installDrift(join(display, rulesDir), DANGLING_LINK)];
+  if (isNonDirectory(join(home, rulesDir))) {
+    return [installDrift(join(display, rulesDir), "not a directory — setup.ts cannot create the rule file; move it aside and rerun setup.ts")];
+  }
+  if (marker !== "unowned") {
+    const kind = kindOf(join(home, RULE_FILE), shown);
+    if (kind === "dir" || (kind === "link" && homeText(join(home, RULE_FILE), shown).directory)) {
+      return [installDrift(shown, DIRECTORY_FILE)];
+    }
+    if (kind === "link") {
+      return [installDrift(shown, "present but not kit-owned — setup.ts never replaces it; move it aside and rerun setup.ts")];
+    }
+    const out: InstallFinding[] = [];
+    comparePath(join(kitRoot, "CORE_RULES.md"), join(home, RULE_FILE), shown, out);
+    return out;
+  }
+  const kind = kindOf(join(home, RULE_FILE), shown);
+  if (kind === "unreadable") return [];
+  if (kind === "missing") return [installDrift(shown, "missing in install")];
+  return [installDrift(shown, "present but not kit-owned — setup.ts never replaces it; move it aside and rerun setup.ts")];
+}
+
+function isKitHookEntry(entry: unknown): boolean {
+  return (
+    isJsonObject(entry) &&
+    Array.isArray(entry.hooks) &&
+    entry.hooks.some((hook) => isJsonObject(hook) && hook.command === HOOK_ENTRY.hooks[0].command)
+  );
+}
+
+function hookFindings(home: string, display: string): InstallFinding[] {
+  const shown = join(display, SETTINGS_FILE);
+  const settings = homeText(join(home, SETTINGS_FILE), shown);
+  if (settings.dangling) return [installDrift(shown, DANGLING_LINK)];
+  if (settings.directory) return [installDrift(shown, DIRECTORY_FILE)];
+  if (settings.missing) return [installDrift(shown, `${HOOK_EVENT} hook entry missing in install`)];
+  if (settings.text === null) return [];
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(settings.text);
+  } catch {
+    return [installDrift(shown, `not valid JSON — setup.ts cannot merge the ${HOOK_EVENT} hook entry; fix the file and rerun setup.ts`)];
+  }
+  const hooks = isJsonObject(parsed) ? (parsed.hooks ?? {}) : undefined;
+  const entries = isJsonObject(hooks) ? (hooks[HOOK_EVENT] ?? []) : undefined;
+  if (!Array.isArray(entries)) {
+    return [installDrift(shown, `holds no hooks.${HOOK_EVENT} list — setup.ts cannot merge the hook entry; fix the file and rerun setup.ts`)];
+  }
+  const kitEntries = entries.filter(isKitHookEntry);
+  if (kitEntries.length === 0) return [installDrift(shown, `${HOOK_EVENT} hook entry missing in install`)];
+  if (kitEntries.length > 1 || !isDeepStrictEqual(kitEntries[0], HOOK_ENTRY)) {
+    return [installDrift(shown, `${HOOK_EVENT} hook entry differs from the entry setup.ts writes`)];
+  }
+  return [];
+}
+
+function codexBlockFindings(kitRoot: string, home: string, display: string): InstallFinding[] {
+  const shown = join(display, CODEX_AGENTS_FILE);
+  const current = homeText(join(home, CODEX_AGENTS_FILE), shown);
+  if (current.dangling) return [installDrift(shown, DANGLING_LINK)];
+  if (current.directory) return [installDrift(shown, DIRECTORY_FILE)];
+  if (current.missing) return [installDrift(shown, "core-rules block missing in install")];
+  if (current.text === null) return [];
+  const starts = occurrences(current.text, BLOCK_START);
+  const ends = occurrences(current.text, BLOCK_END);
+  if (starts === 0 && ends === 0) return [installDrift(shown, "core-rules block missing in install")];
+  const start = current.text.indexOf(BLOCK_START);
+  const end = current.text.indexOf(BLOCK_END);
+  if (starts !== 1 || ends !== 1 || end < start) {
+    return [installDrift(shown, "holds unmatched core-rules block markers — setup.ts leaves the file untouched; repair or remove the markers and rerun setup.ts")];
+  }
+  const kitRules = join(kitRoot, "CORE_RULES.md");
+  const rules = fileText(kitRules, kitRules);
+  if (rules === null) return [];
+  const block = current.text.slice(start, end + BLOCK_END.length);
+  if (block === `${BLOCK_START}\n${rules}${BLOCK_END}`) return [];
+  return [installDrift(shown, "core-rules block differs from kit source")];
+}
+
+function overrideFindings(home: string, display: string): InstallFinding[] {
+  const path = join(home, CODEX_OVERRIDE_FILE);
+  const shown = join(display, CODEX_OVERRIDE_FILE);
+  try {
+    if (!statSync(path).isFile()) return [];
+  } catch (err) {
+    if (err.code === "ENOENT") return [];
+    unreachable("file", path, shown, err);
+    return [];
+  }
+  const text = fileText(path, shown);
+  if (text === null || text.trim() === "") return [];
+  return [installDrift(shown, "non-empty — Codex reads it in place of AGENTS.md, hiding the core-rules block; empty or remove it")];
+}
+
+function coreRulesDeliveryFindings(kitRoot: string, home: string, display: string, ruleMarker: MarkerState): InstallFinding[] {
+  const name = basename(home);
+  if (name === CLAUDE_HOME_NAME) {
+    return [...ruleFileFindings(kitRoot, home, display, ruleMarker), ...hookFindings(home, display)];
+  }
+  if (name === CODEX_HOME_NAME) {
+    return [...codexBlockFindings(kitRoot, home, display), ...overrideFindings(home, display)];
+  }
+  return [];
+}
+
 interface InstallResult {
   readonly findings: InstallFinding[];
   readonly items: number;
@@ -1200,6 +1382,11 @@ function installFindings(kitRoot: string, homeArg: string): InstallResult {
     }
   }
 
+  const ruleMarker = basename(home) === CLAUDE_HOME_NAME && !isNonDirectory(join(home, dirname(RULE_MARKER)))
+    ? markerState(join(home, RULE_MARKER), join(display, RULE_MARKER))
+    : "unowned";
+  if (ruleMarker !== "unowned") items++;
+
   if (items === 0) {
     const named = conflicts.map((conflict) => basename(conflict.path)).join(" and ");
     findings.push({
@@ -1235,6 +1422,7 @@ function installFindings(kitRoot: string, homeArg: string): InstallResult {
       findings.push({ check: "install-drift", path, detail: "missing in install" });
     }
   }
+  findings.push(...coreRulesDeliveryFindings(kitRoot, home, display, ruleMarker));
   return { findings, items };
 }
 

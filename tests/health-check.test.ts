@@ -12,6 +12,7 @@ import {
   mkdtempSync,
   openSync,
   readdirSync,
+  readFileSync,
   rmSync,
   statSync,
   symlinkSync,
@@ -35,7 +36,18 @@ const VOLUME_TASKS = 250;
 const VOLUME_NAME_PADDING = 180;
 const MARKER = ".agents-kit";
 const CORE_RULES_MARKER = ".agents-kit-core-rules";
+const AGENT_MARKER_PREFIX = ".agents-kit-";
 const STAGING_PREFIX = ".agents-kit-staging.";
+const RULE_FILE = join("rules", "agents-kit-core-rules.md");
+const RULE_MARKER = join("rules", CORE_RULES_MARKER);
+const HOOK_EVENT = "SubagentStart";
+const KIT_HOOK_COMMAND =
+  `node -e 'const p=require("path").join(require("os").homedir(),".claude","rules","agents-kit-core-rules.md");` +
+  `process.stdout.write(JSON.stringify({hookSpecificOutput:{hookEventName:"SubagentStart",additionalContext:require("fs").readFileSync(p,"utf8")}}))'`;
+const USER_RULE_READER = "cat ~/.claude/rules/agents-kit-core-rules.md";
+const BLOCK_START = "<!-- agents-kit:core-rules:start -->";
+const BLOCK_END = "<!-- agents-kit:core-rules:end -->";
+const USER_CODEX_LINE = "Prefer short answers.\n";
 const TEST_ROOT = mkdtempSync(join(tmpdir(), "agents-kit-health-check-"));
 const STORE = join(TEST_ROOT, "store");
 const UNREADABLE_STORE = join(TEST_ROOT, "unreadable-store");
@@ -66,6 +78,36 @@ const PARTIAL_HOME = join(INSTALLS, "partial", ".claude");
 const FRESH_HOME = join(TEST_ROOT, "fresh", ".claude");
 const BLOCKED_FRESH_HOME = join(TEST_ROOT, "blocked-fresh", ".claude");
 const ABSENT_HOME = join(TEST_ROOT, "absent", ".claude");
+const DELIVERY = join(INSTALLS, "delivery");
+const CLEAN_CLAUDE_HOME = join(DELIVERY, "clean", ".claude");
+const CLEAN_CODEX_HOME = join(DELIVERY, "clean", ".codex");
+const RULE_MISSING_HOME = join(DELIVERY, "rule-missing", ".claude");
+const RULE_DIFFERS_HOME = join(DELIVERY, "rule-differs", ".claude");
+const RULE_UNMARKED_HOME = join(DELIVERY, "rule-unmarked", ".claude");
+const RULE_SYMLINK_HOME = join(DELIVERY, "rule-symlink", ".claude");
+const RULE_DIRECTORY_HOME = join(DELIVERY, "rule-directory", ".claude");
+const RULE_DIRECTORY_LINK_HOME = join(DELIVERY, "rule-directory-link", ".claude");
+const HOOK_MISSING_HOME = join(DELIVERY, "hook-missing", ".claude");
+const SETTINGS_MISSING_HOME = join(DELIVERY, "settings-missing", ".claude");
+const HOOK_DIFFERS_HOME = join(DELIVERY, "hook-differs", ".claude");
+const HOOK_DOUBLED_HOME = join(DELIVERY, "hook-doubled", ".claude");
+const SETTINGS_INVALID_HOME = join(DELIVERY, "settings-invalid", ".claude");
+const SETTINGS_NONLIST_HOME = join(DELIVERY, "settings-nonlist", ".claude");
+const SETTINGS_DANGLING_HOME = join(DELIVERY, "settings-dangling", ".claude");
+const RULES_DANGLING_HOME = join(DELIVERY, "rules-dangling", ".claude");
+const RULES_FILE_HOME = join(DELIVERY, "rules-file", ".claude");
+const RULES_FILE_LINK_HOME = join(DELIVERY, "rules-file-link", ".claude");
+const SETTINGS_DIRECTORY_HOME = join(DELIVERY, "settings-directory", ".claude");
+const BLOCK_MISSING_HOME = join(DELIVERY, "block-missing", ".codex");
+const BLOCK_DIFFERS_HOME = join(DELIVERY, "block-differs", ".codex");
+const BLOCK_UNMATCHED_HOME = join(DELIVERY, "block-unmatched", ".codex");
+const BLOCK_REVERSED_HOME = join(DELIVERY, "block-reversed", ".codex");
+const AGENTS_DANGLING_HOME = join(DELIVERY, "agents-dangling", ".codex");
+const AGENTS_DIRECTORY_HOME = join(DELIVERY, "agents-directory", ".codex");
+const OVERRIDE_HOME = join(DELIVERY, "override", ".codex");
+const LOCKED_OVERRIDE_HOME = join(DELIVERY, "locked-override", ".codex");
+const EMPTY_OVERRIDE_HOME = join(DELIVERY, "empty-override", ".codex");
+const BLANK_OVERRIDE_HOME = join(DELIVERY, "blank-override", ".codex");
 const VOLUME_STORE = join(TEST_ROOT, "big-report");
 const VOLUME_REPORT = join(TEST_ROOT, "big-report.json");
 const GROUPS = join(TEST_ROOT, "groups");
@@ -241,6 +283,134 @@ function writeVolumeStore(root: string): void {
   }
 }
 
+function hookEntry(command: string, matcher = "^(Explore|Plan)$"): object {
+  return { matcher, hooks: [{ type: "command", command }] };
+}
+
+function writeSettings(home: string, subagentStart: readonly object[]): void {
+  const settings = {
+    model: "fixture",
+    hooks: {
+      Stop: [hookEntry("echo user-stop", "")],
+      [HOOK_EVENT]: subagentStart,
+    },
+  };
+  writeFileSync(join(home, "settings.json"), `${JSON.stringify(settings, null, 2)}\n`);
+}
+
+function kitBlock(): string {
+  return `${BLOCK_START}\n${readFileSync(join(KIT, "CORE_RULES.md"), "utf8")}${BLOCK_END}`;
+}
+
+function writeCleanHome(home: string): void {
+  const extension = basename(home) === ".claude" ? "md" : "toml";
+  mkdirSync(join(home, "skills"), { recursive: true });
+  for (const name of readdirSync(join(KIT, "skills"))) {
+    copyFixture(join(KIT, "skills", name), join(home, "skills", name));
+    writeFileSync(join(home, "skills", name, MARKER), "");
+  }
+  copyFixture(join(KIT, "references"), join(home, "references"));
+  writeFileSync(join(home, "references", MARKER), "");
+  copyFileSync(join(KIT, "CORE_RULES.md"), join(home, "CORE_RULES.md"));
+  writeFileSync(join(home, CORE_RULES_MARKER), "");
+  mkdirSync(join(home, "agents"));
+  for (const file of readdirSync(join(KIT, "agents")).filter((name) => name.endsWith(`.${extension}`))) {
+    copyFileSync(join(KIT, "agents", file), join(home, "agents", file));
+    writeFileSync(join(home, "agents", `${AGENT_MARKER_PREFIX}${basename(file, `.${extension}`)}`), "");
+  }
+  if (extension === "md") {
+    mkdirSync(join(home, "rules"));
+    writeFileSync(join(home, RULE_MARKER), "");
+    copyFileSync(join(KIT, "CORE_RULES.md"), join(home, RULE_FILE));
+    writeSettings(home, [
+      hookEntry("echo user-subagent", "general-purpose"),
+      { hooks: [{ command: KIT_HOOK_COMMAND, type: "command" }], matcher: "^(Explore|Plan)$" },
+    ]);
+  } else {
+    writeFileSync(join(home, "AGENTS.md"), `${USER_CODEX_LINE}\n${kitBlock()}\n`);
+  }
+}
+
+function writeDeliveryFixtures(): void {
+  for (const home of [
+    CLEAN_CLAUDE_HOME,
+    RULE_MISSING_HOME,
+    RULE_DIFFERS_HOME,
+    RULE_UNMARKED_HOME,
+    RULE_SYMLINK_HOME,
+    RULE_DIRECTORY_HOME,
+    RULE_DIRECTORY_LINK_HOME,
+    HOOK_MISSING_HOME,
+    SETTINGS_MISSING_HOME,
+    HOOK_DIFFERS_HOME,
+    HOOK_DOUBLED_HOME,
+    SETTINGS_INVALID_HOME,
+    SETTINGS_NONLIST_HOME,
+    SETTINGS_DANGLING_HOME,
+    RULES_DANGLING_HOME,
+    RULES_FILE_HOME,
+    RULES_FILE_LINK_HOME,
+    SETTINGS_DIRECTORY_HOME,
+    CLEAN_CODEX_HOME,
+    BLOCK_MISSING_HOME,
+    BLOCK_DIFFERS_HOME,
+    BLOCK_UNMATCHED_HOME,
+    BLOCK_REVERSED_HOME,
+    AGENTS_DANGLING_HOME,
+    AGENTS_DIRECTORY_HOME,
+    OVERRIDE_HOME,
+    LOCKED_OVERRIDE_HOME,
+    EMPTY_OVERRIDE_HOME,
+    BLANK_OVERRIDE_HOME,
+  ]) {
+    writeCleanHome(home);
+  }
+
+  rmSync(join(RULE_MISSING_HOME, "rules"), { recursive: true });
+  writeFileSync(join(RULE_DIFFERS_HOME, RULE_FILE), "stale core rules\n");
+  rmSync(join(RULE_UNMARKED_HOME, RULE_MARKER));
+  writeFileSync(join(RULE_UNMARKED_HOME, RULE_FILE), "MY OWN RULES\n");
+  rmSync(join(RULE_SYMLINK_HOME, RULE_FILE));
+  writeFileSync(join(RULE_SYMLINK_HOME, "user-rules.md"), "MY OWN RULES\n");
+  symlinkSync(join(RULE_SYMLINK_HOME, "user-rules.md"), join(RULE_SYMLINK_HOME, RULE_FILE));
+  rmSync(join(RULE_DIRECTORY_HOME, RULE_FILE));
+  mkdirSync(join(RULE_DIRECTORY_HOME, RULE_FILE));
+  rmSync(join(RULE_DIRECTORY_LINK_HOME, RULE_FILE));
+  symlinkSync(join(RULE_DIRECTORY_HOME, RULE_FILE), join(RULE_DIRECTORY_LINK_HOME, RULE_FILE));
+
+  writeSettings(HOOK_MISSING_HOME, [hookEntry(USER_RULE_READER, "general-purpose")]);
+  rmSync(join(SETTINGS_MISSING_HOME, "settings.json"));
+  writeSettings(HOOK_DIFFERS_HOME, [
+    { matcher: "^(Explore|Plan)$", hooks: [{ type: "command", command: KIT_HOOK_COMMAND }, { type: "command", command: "echo user-explore" }] },
+  ]);
+  writeSettings(HOOK_DOUBLED_HOME, [hookEntry(KIT_HOOK_COMMAND), hookEntry(KIT_HOOK_COMMAND, "Plan")]);
+  writeFileSync(join(SETTINGS_INVALID_HOME, "settings.json"), '{\n  "hooks": {\n');
+  writeFileSync(join(SETTINGS_NONLIST_HOME, "settings.json"), JSON.stringify({ hooks: { [HOOK_EVENT]: {} } }));
+  rmSync(join(SETTINGS_DANGLING_HOME, "settings.json"));
+  symlinkSync(join(SETTINGS_DANGLING_HOME, "absent-settings.json"), join(SETTINGS_DANGLING_HOME, "settings.json"));
+  rmSync(join(RULES_DANGLING_HOME, "rules"), { recursive: true });
+  symlinkSync(join(RULES_DANGLING_HOME, "absent-rules"), join(RULES_DANGLING_HOME, "rules"));
+  rmSync(join(RULES_FILE_HOME, "rules"), { recursive: true });
+  writeFileSync(join(RULES_FILE_HOME, "rules"), "not a directory\n");
+  rmSync(join(RULES_FILE_LINK_HOME, "rules"), { recursive: true });
+  writeFileSync(join(RULES_FILE_LINK_HOME, "user-rules-file"), "not a directory\n");
+  symlinkSync(join(RULES_FILE_LINK_HOME, "user-rules-file"), join(RULES_FILE_LINK_HOME, "rules"));
+  rmSync(join(SETTINGS_DIRECTORY_HOME, "settings.json"));
+  mkdirSync(join(SETTINGS_DIRECTORY_HOME, "settings.json"));
+
+  writeFileSync(join(BLOCK_MISSING_HOME, "AGENTS.md"), USER_CODEX_LINE);
+  writeFileSync(join(BLOCK_DIFFERS_HOME, "AGENTS.md"), `${USER_CODEX_LINE}\n${BLOCK_START}\nstale core rules\n${BLOCK_END}\n`);
+  writeFileSync(join(BLOCK_UNMATCHED_HOME, "AGENTS.md"), `${BLOCK_START}\n${USER_CODEX_LINE}\n${kitBlock()}\n`);
+  writeFileSync(join(BLOCK_REVERSED_HOME, "AGENTS.md"), `${USER_CODEX_LINE}\n${BLOCK_END}\nUser instructions between markers.\n${BLOCK_START}\nUser instructions after markers.\n`);
+  rmSync(join(AGENTS_DANGLING_HOME, "AGENTS.md"));
+  symlinkSync(join(AGENTS_DANGLING_HOME, "absent-AGENTS.md"), join(AGENTS_DANGLING_HOME, "AGENTS.md"));
+  rmSync(join(AGENTS_DIRECTORY_HOME, "AGENTS.md"));
+  mkdirSync(join(AGENTS_DIRECTORY_HOME, "AGENTS.md"));
+  writeFileSync(join(OVERRIDE_HOME, "AGENTS.override.md"), "Temporary global override.\n");
+  writeFileSync(join(EMPTY_OVERRIDE_HOME, "AGENTS.override.md"), "");
+  writeFileSync(join(BLANK_OVERRIDE_HOME, "AGENTS.override.md"), "\n  \n\t\n");
+}
+
 function writeInstallFixtures(): void {
   mkdirSync(INSTALLS, { recursive: true });
   copyFixture(join(FIXTURES, "installs", "kit"), KIT);
@@ -298,6 +468,8 @@ function writeInstallFixtures(): void {
 
   mkdirSync(BLOCKED_FRESH_HOME, { recursive: true });
   writeFileSync(join(BLOCKED_FRESH_HOME, "CORE_RULES.md"), "MY OWN RULES\n");
+
+  writeDeliveryFixtures();
 }
 
 before(() => {
@@ -1334,7 +1506,16 @@ test("--installs reports each differing, missing, and extra path, per home and n
   const { report, stderr } = runCheck(INSTALLS_ARGS);
   assert.strictEqual(stderr, "", "readable install fixtures must produce no warnings");
   assert.strictEqual(report.scanned, 5, "scanned count of marker-owned items");
-  assert.strictEqual(findingCount(report, "install-drift"), 19, "install-drift finding count");
+  assert.strictEqual(findingCount(report, "install-drift"), 22, "install-drift finding count");
+  assert.deepStrictEqual(
+    [
+      findingDetail(report, "install-drift", ".claude/rules/agents-kit-core-rules.md"),
+      findingDetail(report, "install-drift", ".claude/settings.json"),
+      findingDetail(report, "install-drift", ".codex/AGENTS.md"),
+    ],
+    ["missing in install", `${HOOK_EVENT} hook entry missing in install`, "core-rules block missing in install"],
+    "a home installed before always-on delivery reports each delivery item it lacks",
+  );
   assert.strictEqual(
     findingDetail(report, "install-drift", ".claude/CORE_RULES.md"),
     "differs from kit source",
@@ -1569,6 +1750,211 @@ test("a missing install home reports the documented uninstalled state", () => {
     "an absent install home is classified as uninstalled",
   );
   assert.strictEqual(report.unreadable, 0, "an absent install home is not an unreadable coverage gap");
+});
+
+function assertOnlyDrift(home: string, path: string, detail: string, message: string): void {
+  const { report, stderr } = runCheck(["--installs", KIT, home]);
+  assert.strictEqual(stderr, "", `${message}: the run must produce no warnings`);
+  assert.deepStrictEqual(report.findings, [{ check: "install-drift", path, detail }], message);
+}
+
+test("install drift names a user action exactly when setup.ts cannot clear it", () => {
+  const userAction = /(?:move (?:it )?aside|fix the file|repair or remove (?:the link|the markers)) and rerun setup\.ts|empty or remove it/;
+  const userFixHomes = [
+    CONFLICT_HOME, BLOCKED_FRESH_HOME, RULE_UNMARKED_HOME, RULE_SYMLINK_HOME,
+    RULE_DIRECTORY_HOME, RULE_DIRECTORY_LINK_HOME, SETTINGS_INVALID_HOME,
+    SETTINGS_NONLIST_HOME, SETTINGS_DANGLING_HOME, RULES_DANGLING_HOME,
+    RULES_FILE_HOME, RULES_FILE_LINK_HOME, SETTINGS_DIRECTORY_HOME,
+    BLOCK_UNMATCHED_HOME, BLOCK_REVERSED_HOME, AGENTS_DANGLING_HOME,
+    AGENTS_DIRECTORY_HOME, OVERRIDE_HOME,
+  ];
+  const rerunHomes = [
+    CLAUDE_HOME, CODEX_HOME, STAGING_HOME, MATERIALIZED_HOME, PARTIAL_HOME,
+    FRESH_HOME, ABSENT_HOME, RULE_MISSING_HOME, RULE_DIFFERS_HOME,
+    HOOK_MISSING_HOME, SETTINGS_MISSING_HOME, HOOK_DIFFERS_HOME,
+    HOOK_DOUBLED_HOME, BLOCK_MISSING_HOME, BLOCK_DIFFERS_HOME,
+  ];
+  for (const [homes, needsUserAction] of [[userFixHomes, true], [rerunHomes, false]] as const) {
+    for (const home of homes) {
+      const { report } = runCheck(["--installs", KIT, home]);
+      const drift = report.findings.filter((finding) => finding.check === "install-drift");
+      assert.ok(drift.length > 0, `${home}: fixture must report drift`);
+      for (const finding of drift) {
+        const isConflict = [".claude/references", ".claude/CORE_RULES.md"].includes(finding.path);
+        const needsAction = needsUserAction && (home !== CONFLICT_HOME || isConflict);
+        assert.strictEqual(userAction.test(finding.detail), needsAction, `${home}: ${finding.path}: ${finding.detail}`);
+      }
+    }
+  }
+});
+
+test("a clean install reports no drift in either home, its core-rules delivery included", () => {
+  const { report, stderr } = runCheck(["--installs", KIT, CLEAN_CLAUDE_HOME, CLEAN_CODEX_HOME]);
+  assert.strictEqual(stderr, "", "a clean install must produce no warnings");
+  assert.deepStrictEqual(report.findings, [], "user hooks, user lines, and key order must not read as drift");
+  assert.strictEqual(report.unreadable, 0, "a clean install leaves nothing unread");
+  assert.strictEqual(report.scanned, 14, "eight Claude Code items, its marked rule file included, and six Codex items");
+});
+
+test("a missing Claude Code rule file is drift", () => {
+  assertOnlyDrift(RULE_MISSING_HOME, ".claude/rules/agents-kit-core-rules.md", "missing in install", "the rule file and its marker are gone");
+});
+
+test("a marked rule file that differs from CORE_RULES.md is drift", () => {
+  assertOnlyDrift(RULE_DIFFERS_HOME, ".claude/rules/agents-kit-core-rules.md", "differs from kit source", "the rule file holds stale rules");
+});
+
+test("an unmarked rule file is drift setup.ts cannot clear", () => {
+  assertOnlyDrift(
+    RULE_UNMARKED_HOME,
+    ".claude/rules/agents-kit-core-rules.md",
+    "present but not kit-owned — setup.ts never replaces it; move it aside and rerun setup.ts",
+    "a same-named user file keeps the core rules out of Claude Code",
+  );
+});
+
+test("a symlinked rule file with a marker is drift setup.ts cannot clear", () => {
+  assertOnlyDrift(
+    RULE_SYMLINK_HOME,
+    ".claude/rules/agents-kit-core-rules.md",
+    "present but not kit-owned — setup.ts never replaces it; move it aside and rerun setup.ts",
+    "a marked symlink remains user-owned",
+  );
+});
+
+test("settings without the kit SubagentStart entry report the hook missing", () => {
+  assertOnlyDrift(HOOK_MISSING_HOME, ".claude/settings.json", `${HOOK_EVENT} hook entry missing in install`, "a synced settings copy dropped the entry");
+  assertOnlyDrift(SETTINGS_MISSING_HOME, ".claude/settings.json", `${HOOK_EVENT} hook entry missing in install`, "no settings.json holds no entry");
+});
+
+test("a kit SubagentStart entry unlike the one setup.ts writes is drift", () => {
+  const detail = `${HOOK_EVENT} hook entry differs from the entry setup.ts writes`;
+  assertOnlyDrift(HOOK_DIFFERS_HOME, ".claude/settings.json", detail, "the kit entry also holds a user command");
+  assertOnlyDrift(HOOK_DOUBLED_HOME, ".claude/settings.json", detail, "setup.ts keeps one kit entry, so a second is drift");
+});
+
+test("invalid settings JSON is drift setup.ts cannot clear", () => {
+  assertOnlyDrift(
+    SETTINGS_INVALID_HOME,
+    ".claude/settings.json",
+    `not valid JSON — setup.ts cannot merge the ${HOOK_EVENT} hook entry; fix the file and rerun setup.ts`,
+    "setup.ts refuses to merge into a file it cannot parse",
+  );
+});
+
+test("settings with a non-list SubagentStart value are drift setup.ts cannot clear", () => {
+  assertOnlyDrift(
+    SETTINGS_NONLIST_HOME,
+    ".claude/settings.json",
+    `holds no hooks.${HOOK_EVENT} list — setup.ts cannot merge the hook entry; fix the file and rerun setup.ts`,
+    "setup.ts refuses to merge into a hook event that is not a list",
+  );
+});
+
+test("a Codex AGENTS.md without the core-rules block is drift", () => {
+  assertOnlyDrift(BLOCK_MISSING_HOME, ".codex/AGENTS.md", "core-rules block missing in install", "only the user's line remains");
+});
+
+test("a core-rules block that differs from CORE_RULES.md is drift", () => {
+  assertOnlyDrift(BLOCK_DIFFERS_HOME, ".codex/AGENTS.md", "core-rules block differs from kit source", "the block holds stale rules");
+});
+
+test("unmatched core-rules block markers are drift setup.ts cannot clear", () => {
+  assertOnlyDrift(
+    BLOCK_UNMATCHED_HOME,
+    ".codex/AGENTS.md",
+    "holds unmatched core-rules block markers — setup.ts leaves the file untouched; repair or remove the markers and rerun setup.ts",
+    "a second start marker blocks the block replacement",
+  );
+});
+
+test("reversed core-rules block markers are drift setup.ts cannot clear", () => {
+  assertOnlyDrift(
+    BLOCK_REVERSED_HOME,
+    ".codex/AGENTS.md",
+    "holds unmatched core-rules block markers — setup.ts leaves the file untouched; repair or remove the markers and rerun setup.ts",
+    "an end marker before the start marker blocks the block replacement",
+  );
+});
+
+test("dangling settings.json, AGENTS.md, and rules links are drift setup.ts cannot clear", () => {
+  const detail = "dangling symlink — setup.ts cannot write through it; repair or remove the link and rerun setup.ts";
+  assertOnlyDrift(SETTINGS_DANGLING_HOME, ".claude/settings.json", detail, "setup.ts refuses to write through a dangling settings link");
+  assertOnlyDrift(AGENTS_DANGLING_HOME, ".codex/AGENTS.md", detail, "setup.ts refuses to write through a dangling AGENTS.md link");
+  assertOnlyDrift(RULES_DANGLING_HOME, ".claude/rules", detail, "setup.ts cannot create the rule file under a dangling rules link");
+});
+
+test("a rules path that is not a directory is drift setup.ts cannot clear", () => {
+  const detail = "not a directory — setup.ts cannot create the rule file; move it aside and rerun setup.ts";
+  for (const [home, message] of [
+    [RULES_FILE_HOME, "setup.ts cannot create the rule file under a regular rules file"],
+    [RULES_FILE_LINK_HOME, "setup.ts cannot create the rule file under a rules link to a file"],
+  ]) {
+    assertOnlyDrift(home, ".claude/rules", detail, message);
+    assert.strictEqual(runCheck(["--installs", KIT, home]).report.unreadable, 0, `${message}: the rule marker is not an unreadable coverage gap`);
+  }
+});
+
+test("a marked Claude rule file that is a directory or a link to one is drift setup.ts cannot clear", () => {
+  const detail = "a directory — setup.ts cannot write it; move it aside and rerun setup.ts";
+  for (const home of [RULE_DIRECTORY_HOME, RULE_DIRECTORY_LINK_HOME]) {
+    assertOnlyDrift(home, ".claude/rules/agents-kit-core-rules.md", detail, "setup.ts cannot write the rule file over a directory");
+    assert.strictEqual(runCheck(["--installs", KIT, home]).report.unreadable, 0, "the directory is not an unreadable coverage gap");
+  }
+});
+
+test("a settings.json or AGENTS.md that is a directory is drift setup.ts cannot clear", () => {
+  const detail = "a directory — setup.ts cannot write it; move it aside and rerun setup.ts";
+  for (const [home, path, message] of [
+    [SETTINGS_DIRECTORY_HOME, ".claude/settings.json", "setup.ts cannot merge the hook entry into a settings.json directory"],
+    [AGENTS_DIRECTORY_HOME, ".codex/AGENTS.md", "setup.ts cannot write the core-rules block into an AGENTS.md directory"],
+  ]) {
+    assertOnlyDrift(home, path, detail, message);
+    assert.strictEqual(runCheck(["--installs", KIT, home]).report.unreadable, 0, `${message}: the directory is not an unreadable coverage gap`);
+  }
+});
+
+test("a non-empty AGENTS.override.md hides the core-rules block", () => {
+  assertOnlyDrift(
+    OVERRIDE_HOME,
+    ".codex/AGENTS.override.md",
+    "non-empty — Codex reads it in place of AGENTS.md, hiding the core-rules block; empty or remove it",
+    "Codex reads the override instead of AGENTS.md",
+  );
+});
+
+test("an empty or whitespace-only AGENTS.override.md hides nothing", () => {
+  const { report, stderr } = runCheck(["--installs", KIT, EMPTY_OVERRIDE_HOME, BLANK_OVERRIDE_HOME]);
+  assert.strictEqual(stderr, "", "an empty override must produce no warnings");
+  assert.deepStrictEqual(report.findings, [], "Codex skips an override whose trimmed text is empty");
+});
+
+test("an override symlink into an unreadable directory reports a coverage gap", (t: TestContext) => {
+  const lockedDir = join(DELIVERY, "locked-override", "locked");
+  const target = join(lockedDir, "override.md");
+  const override = join(LOCKED_OVERRIDE_HOME, "AGENTS.override.md");
+  mkdirSync(lockedDir);
+  writeFileSync(target, "Temporary global override.\n");
+  symlinkSync(target, override);
+  t.after(() => chmodSync(lockedDir, 0o755));
+  chmodSync(lockedDir, 0o000);
+  if (isReadable(target)) {
+    t.skip("the unreadable-override case needs a user that chmod 000 actually stops");
+    return;
+  }
+  const { report } = runCheck(["--installs", KIT, LOCKED_OVERRIDE_HOME]);
+  assert.strictEqual(report.unreadable, 1, "the inaccessible override must count as unreadable");
+  assert.deepStrictEqual(report.unreadablePaths, [override], "unreadablePaths names the override by absolute path");
+  assert.deepStrictEqual(report.findings, [], "the installed core-rules block matches the kit");
+});
+
+test("a never-installed home skips the core-rules delivery checks", () => {
+  const { report } = runCheck(["--installs", KIT, FRESH_HOME, ABSENT_HOME]);
+  assert.deepStrictEqual(
+    report.findings.map((finding) => finding.detail),
+    ["no kit markers — never installed", "no kit markers — never installed"],
+    "a markerless home keeps its one line instead of per-item delivery findings",
+  );
 });
 
 test("a report over 64 KB parses when read through a pipe, not only from a file", () => {

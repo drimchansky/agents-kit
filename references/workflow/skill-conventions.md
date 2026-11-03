@@ -119,7 +119,7 @@ An open skill using invocation as consent states the user/model split beside tha
 
 ## Cold citations
 
-In SKILL.md, skip citations marked same-line `<!-- cold -->` on typical invocations. Unmarked citations load when the skill runs. Its own SKILL.md and core-rules citation (`AGENTS.md`) stay hot regardless of markers.
+In SKILL.md, skip citations marked same-line `<!-- cold -->` on typical invocations. Unmarked citations load when the skill runs. Its own SKILL.md and Core Rules block stay hot regardless of markers.
 
 State each cold citation's trigger beside it: flag, file presence, or conditional branch. The marker supplies no condition.
 

@@ -7,7 +7,7 @@ effort: high
 
 ## Core Rules
 
-1. Read `./AGENTS.md` and apply its rules — the domain-neutral core.
+1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 
 This skill does not load the engineering pack; its own check gate below governs the staged change.
 
