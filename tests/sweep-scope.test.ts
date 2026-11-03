@@ -238,14 +238,13 @@ test("two pause sections under one heading sweep only the active one", () => {
   );
 });
 
-test("in-place compaction keeps duplicate pause identity and swept citations across repeated compaction", () => {
+test("a test-assembled compaction keeps the active duplicate pause and its swept citation across repeated notes", () => {
   const older = `## Step 1 — Work\n### Blocked\n\n${"Old narrative. ".repeat(100)}\n`;
   const newer = `## Step 1 — Work\n\n${"New narrative. ".repeat(100)}\n`;
   const pauses = `## Blocked\n**Blocked:** old ${SHARED}\n## Blocked\n**Blocked:** active ${PAUSE_ONLY}\n`;
   const before = "## Current state\nWaiting.\n" + older + newer + pauses;
   const after = "## Current state\nWaiting.\n## Step 1 — Work\nCompacted 2026-11-01; full text in git history (pre-compaction state).\n### Blocked\n## Step 1 — Work\nCompacted 2026-11-01; full text in git history (pre-compaction state).\n" + pauses;
   const expected = [{ url: PAUSE_ONLY, tag: null, occurrences: [{ surface: "result-pause", file: "result.md", section: "Blocked", text: `**Blocked:** active ${PAUSE_ONLY}` }] }];
-  assert.ok(after.length < before.length);
   for (const [index, result] of [before, after, after.replaceAll("2026-11-01;", "2026-11-02;")].entries()) {
     const scope = report(folder(`compaction-pause-${index}`, { plan: "**Status:** blocked\n", result }));
     assert.strictEqual(scope.planStatus, "blocked");
@@ -429,7 +428,7 @@ test("a folder citing nothing fetchable reports an empty scope", () => {
   assert.strictEqual(scope.deliverable, null);
 });
 
-test("the report is built without a fetch, from unresolvable hosts", () => {
+test("citations to unresolvable .invalid hosts are enumerated with exit 0", () => {
   const dir = fixture("no-fetch");
   const child = run([dir]);
   assert.strictEqual(child.status, 0, `expected exit 0, got ${child.status}: ${child.stderr}`);
