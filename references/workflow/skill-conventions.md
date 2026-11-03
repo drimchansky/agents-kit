@@ -34,8 +34,8 @@ A modal flag modifies one phase; scattered conditionals suggest a misclassified 
 
 - `run-knowledge-session` — selection, reading, discussion, note corrections, and topic discovery form one learning session. Its stages interleave without complete sibling-skill phase outputs.
 - `squash-push` — captures one rewrite range and remote expectation for squashing and publishing. Both mutations depend on that inspected state, without a complete sibling-skill output between them.
-- `start-secretary` — setup, the pending readout, reviews, accepted applies, and reports share one retained startup configuration: runbook, interval, helper, owner label, and store identity. Host capabilities select automatic wakes or on-demand follow-ups within the conversation. The secretary's reply is a contract return, not a sibling skill's output.
-- `sync-meeting-notes` — archiving past meetings and creating incoming notes share one resolved folder, its naming and pairing rules, and one proposal covering both write sets. Both phases feed one Report, without a complete sibling-skill output between them.
+- `start-secretary` — setup, duty dispatch, accepted runbook applies, and reports share one retained startup snapshot. Each enabled duty retains its physical target, interval, helper, owner, and store identity. Host capabilities select automatic wakes or on-demand follow-ups within the conversation. The secretary's reply is a contract return, not a sibling skill's output.
+- `sync-meeting-notes` — archiving past meetings and creating incoming notes share one folder, its naming and pairing rules, and one Report. No complete sibling-skill output sits between the two phases. Manual entry resolves the folder and uses one proposal covering both write sets. A `meeting-sync` packet from `start-secretary` selects secretary entry, a modal variation across matching, the write announcement, and archiving. Secretary entry takes the packet's physical folder and the enclosing start authorization in place of folder resolution and the proposal. It skips each connected ambiguous group instead of asking and reconciles duty receipts before classifying meetings. It routes every publication and deletion through the duty helper.
 
 ### Composites — sequential phases
 
@@ -98,7 +98,7 @@ Name cross-project, registered-root, or installed-state sweep scope in the propo
 - `sync-meeting-notes` — a filing write with no preview of its own; the proposal is its § *Resolve the folder*.
 - `maintain` — a sweep beyond the current project; the proposal is its § *Setup — resolve targets*.
 - `init-config` — a sweep beyond the current project; the proposal is its § *2. Select setup and inspect inputs*.
-- `start-secretary` — a sweep beyond the current project, reading the configured runbook and its cited sources; the proposal is its § *Setup*.
+- `start-secretary` — a sweep beyond the current project for runbook maintenance, and filing writes with no preview of their own for meeting sync; the proposal is its § *Setup*.
 
 Update this roster in the same change that adds or removes a skill's `**Model invocation:**` line.
 

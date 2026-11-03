@@ -188,6 +188,8 @@ Contract: `references/scripts/secretary-state.md`.
 
 `configuredInterval`, `intervalMinutes`, and `REVIEW_INTERVAL_MS` copy the interval rules of `references/secretary/runbook-maintenance.md` § *Configuration*. They read `secretary.duties["runbook-maintenance"].intervalMinutes`, default to 1440 minutes, and reject malformed known objects. A value must be a positive integer with safe milliseconds and a representable due date and wake minute. Change both together.
 
+`scripts/meeting-sync-state.ts` copies this helper's lock (`sleep`, `readOwner`, `readOwnerFile`, `alive`, `breakStaleLock`, `removeLock`, and `withLock`), a sanctioned copy per `references/maintenance/repository.md` § *Consumer lists*. Change both together.
+
 ## `scripts/session-triage.ts`
 
 Contract: `references/scripts/session-triage.md`.
@@ -265,3 +267,22 @@ Normalize receipt and removal worktree paths through `realpath`. This makes `/pr
 **Why the base check reads directory listings.** On a case-insensitive filesystem, `lstat` resolves a base path's old case after a case-only rename. That rename would read as a deletion still on disk. Compare each component against its parent's listing, NFC-normalized for macOS's decomposed names. An unreadable listing counts as present, keeping the refusal.
 
 **Why `check --out` drops the paths only its baseline measured.** A check keeps measuring a path its baseline measured, even one now ignored and untracked, so no false deletion appears. A fresh `baseline` drops that path. Keeping it in the written manifest would make `index` report it absent from the index and forfeit reuse.
+
+## `scripts/meeting-sync-state.ts`
+
+Contract: `references/scripts/meeting-sync-state.md`. Configuration mirrors `references/secretary/meeting-sync.md`; update both together.
+The dedicated store avoids changing runbook history or proposal authorization. Retained settings bypass configuration after startup.
+Exported functions accept a disposable home and explicit test clock.
+`create` and `archive` accept an in-process `beforePublish` test hook; `archive` also accepts `afterPublish`, and `remove` accepts `beforeDelete` and `afterDelete`.
+All three functions also accept an in-process `beforeLock` hook so tests can revoke or supersede a token before a mutation acquires the lock.
+JSON cannot supply hooks.
+A shared lock serializes attempt revocation and note publication. Identity and body checks preserve observed files, within Node's documented filesystem race limits.
+Create-only hard links prevent overwriting racing destinations. Staging stays on the destination filesystem; abandoned private stages are retained unless ownership is known.
+Archive receipts use a hash of the provider and stable operation ID, so title changes do not allocate another operation.
+Atomic receipt replacement precedes publication. The staged inode identifies publication across an interrupted receipt update, even when unrelated files contain identical bytes.
+Archive and incoming/template observations remain separate: recovery can recognize publication while refusing deletion of newer prep text.
+Receipt-backed stages survive interrupted calls; cleanup checks the recorded file and directory identities and body hash.
+Coverage and source-completeness attestations belong to the sync skill. The helper checks those attestations and filesystem observations, not semantic equivalence.
+Interruption guarantees cover process failure, not power-loss durability. External filesystem writers remain subject to the race limits in the caller contract.
+
+Its lock copies `scripts/secretary-state.ts`'s lock, a sanctioned copy per `references/maintenance/repository.md` § *Consumer lists*. Change both together.

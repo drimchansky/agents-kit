@@ -683,13 +683,20 @@ test("Codex shared skills, references, and CORE_RULES.md install unchanged", () 
   assertNoProblems(observed.clean.codexPayload, "the Codex home must hold the kit payload byte for byte");
 });
 
-test("both hosts install a regular runbook duty and secretary roles retain their authority boundaries", () => {
-  const relative = join("references", "secretary", "runbook-maintenance.md");
-  const source = readFileSync(join(REPO_DIR, relative));
+test("both hosts install regular secretary duties and retain authority and source helper boundaries", () => {
   for (const home of HOMES) {
-    const installed = join(home, relative);
-    assert.strictEqual(pathKind(installed), "file", `${installed} must be a regular file`);
-    assert.deepStrictEqual(readFileSync(installed), source);
+    for (const duty of ["runbook-maintenance", "meeting-sync"]) {
+      const relative = join("references", "secretary", `${duty}.md`);
+      const installed = join(home, relative);
+      assert.strictEqual(pathKind(installed), "file", `${installed} must be a regular file`);
+      assert.deepStrictEqual(readFileSync(installed), readFileSync(join(REPO_DIR, relative)));
+    }
+    const contract = readFileSync(join(home, "references", "workflow", "secretary-contract.md"), "utf8");
+    assert.match(contract, /\.\.\/secretary\/meeting-sync\.md/);
+    const coordinator = readFileSync(join(home, "skills", "start-secretary", "SKILL.md"), "utf8");
+    assert.match(coordinator, /<kit-root>\/scripts\/meeting-sync-state\.ts/);
+    assert.match(coordinator, /task-store\.md.*Resolving `<kit-root>`/);
+    assert.strictEqual(pathKind(join(home, "scripts")), "absent");
     const extension = home === CLAUDE_HOME ? "md" : "toml";
     const adapter = readFileSync(join(home, "agents", `secretary.${extension}`), "utf8");
     assert.match(adapter, /secretary-contract\.md/);

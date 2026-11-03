@@ -35,6 +35,7 @@ A task store groups folders under a directory tree. Detect optional files by exi
 - Absent `runbookRoot` opts out silently. When runbook context is needed, report malformed configuration or a missing or unreadable configured source. Do not infer its path from task roots.
 - `openStore` in `scripts/secretary-state.ts` preserves these `runbookRoot` rules, a sanctioned copy per `references/maintenance/repository.md` § *Consumer lists*.
 - `secretary.duties["runbook-maintenance"].intervalMinutes` configures the runbook duty under `../secretary/runbook-maintenance.md` § *Configuration*. Preserve unrelated and future settings.
+- `secretary.duties["meeting-sync"].folder` and `.intervalMinutes` configure the meeting duty under `../secretary/meeting-sync.md` § *Configuration*.
 - Every key is optional. Missing/empty taskRoots means canonical-only discovery; absent kitRoot means no registered source checkout. A file with none of these keys is inert. Omit derivable defaults.
 
 `WALK_SKIP_DIRS`, `TASK_STORE_DIR`, and `classifyWalkEntry` in `scripts/lifecycle-constants.ts` preserve the prunes and their ordering, a sanctioned copy per `references/maintenance/repository.md` § *Consumer lists*.

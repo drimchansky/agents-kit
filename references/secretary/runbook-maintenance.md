@@ -92,7 +92,7 @@ A run that launches no review reports its pending list from `../../skills/start-
 
 After a review, render these blocks as lists, in order:
 
-- **Secretary:** the reply's job and outcome, the physical root, the current `lastSeq`, and the `Secretary:` line from `../../skills/start-secretary/SKILL.md` § *Arm the wake* or the inactive result.
+- **Secretary:** the reply's job and outcome, the physical root, the current `lastSeq`, and the `Secretary:` line from `../../skills/start-secretary/SKILL.md` § *Arm the wake*, or the non-completion line from its § *Review* step 8.
 - **Findings:** grouped by the classes in § *Review*, in that order. Each line gives the entry path, the claim, and `<proposal>@<revision>` or `no proposal`. Open each `unavailable evidence` line with `⚠️ Unverified` and name the unread source with its error. Those claims stay unverified.
 - **Proposals:** each recorded proposal's `<proposal>@<revision>`, target, summary, and `before`. List its evidence sources with their publication and observation dates. Then show its replacement body, or the first chunk as an excerpt with its `bodyBytes` and offer the rest. When you ask for it, read the remaining chunks with `body --hash <bodyHash>`, passing each non-null `next` as `--offset`.
 - **Pending:** every pending proposal from the final `status` pages.

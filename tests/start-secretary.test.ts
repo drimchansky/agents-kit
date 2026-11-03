@@ -1,11 +1,14 @@
 import assert from "node:assert";
+import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readlinkSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { after, test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { applyProposal, openStore } from "../scripts/secretary-state.ts";
+import { applyProposal, openStore, append, status as runbookStatus } from "../scripts/secretary-state.ts";
+
+import { configure as configureMeeting, start as startMeeting, finish as finishMeeting, status as meetingStatus } from "../scripts/meeting-sync-state.ts";
 
 const TESTS_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_DIR = resolve(TESTS_DIR, "..");
@@ -113,8 +116,8 @@ test("the model-invocation line follows Core Rules and the roster points at the 
   const roster = CONVENTIONS.split("**Confirm-gated skills:**\n")[1]?.trimStart().split("\n\n")[0] ?? "";
   const entry = roster.split("\n").find((line) => line.startsWith("- `start-secretary` — "));
   assert.ok(entry, "the confirm-gated roster lists start-secretary");
-  assert.match(entry, /a sweep beyond the current project/);
-  assert.match(entry, /the proposal is its § \*Setup\*/);
+  assert.match(entry, /a sweep beyond the current project for runbook maintenance/);
+  assert.match(entry, /filing writes with no preview of their own for meeting sync; the proposal is its § \*Setup\*\.$/);
   const setup = section(SKILL, "## Setup");
   assert.match(setup, /A model-invoked run[^\n]*asks one proposal question here/);
   assert.match(setup, /runs no helper and launches nothing before the confirmation/);
@@ -274,25 +277,28 @@ test("every sentence about changing runbook content denies or limits that change
   assert.ok(sentences(SKILL).some((sentence) => write.test(sentence)), "the skill states its runbook-write boundary");
 });
 
-test("every automatic wake carries the store tag, and active is reported only after the wake is armed", () => {
+test("every automatic wake carries the owner-label tag, and active is reported only after the wake is armed", () => {
   const tag = "[agents-kit secretary <id>]";
   const arm = section(SKILL, "## Arm the wake");
   const prompt = /this prompt: `([^`]+)`/.exec(arm)?.[1] ?? "";
   assert.ok(prompt.startsWith(`${tag} `), `the wake prompt opens with ${tag}`);
-  assert.match(prompt, /"owner":"<owner label>"/);
+  assert.match(prompt, /<fixed startup settings JSON>/);
   assert.match(prompt, /§ Wake\.$/);
   for (const heading of ["## Existing session", "## Arm the wake", "## Wake", "## Stop"]) {
     assert.ok(section(SKILL, heading).includes(`starts with \`${tag}\``) || section(SKILL, heading).includes(`starting with \`${tag}\``), `${heading} matches jobs by ${tag}`);
   }
-  assert.match(section(SKILL, "## Host"), /`CronCreate` with `review\.wake\.cron`, `recurring: false`/);
-  assert.match(arm, /Only after creation succeeds or step 1 keeps a job, report `Secretary: active — next review due <wake\.at> UTC; wake <job id> at <local time>`/);
+  assert.match(section(SKILL, "## Host"), /`CronCreate` with `recurring: false`.*the `cron` printed by `node <retained wake helper path> wake --at <selected shared deadline as an ISO UTC instant>`\. Copy that cron verbatim; never compute one yourself\./);
+  assert.doesNotMatch(section(SKILL, "## Host"), /Move a minute of :00 or :30|first whole local minute/);
+  assert.match(section(SKILL, "## Setup"), /a meetings-only run calls it only for `wake`/);
+  assert.match(arm, /Only after creation succeeds or step 1 keeps a job, report `Secretary: active — next duty due <shared deadline> UTC; wake <job id> at <local time>`/);
   assert.match(arm, /A failed call reports `Secretary: inactive — wake not armed: <error>`/);
   assert.match(arm, /keep that job, arm no other/);
-  assert.match(arm, /settings equal this run's retained snapshot/);
+  assert.match(arm, /Use the owner label as the tag; it exists before any duty initializes\./);
+  assert.match(arm, /settings equal this run's fixed startup settings/);
   const actives = [...SKILL.matchAll(/`Secretary: active — ([^`]*)`/g)].map((match) => match[1]).sort();
   assert.deepStrictEqual(actives, [
     "already running in this session",
-    "next review due <wake.at> UTC; wake <job id> at <local time>",
+    "next duty due <shared deadline> UTC; wake <job id> at <local time>",
     "reviewing <physical root>",
   ], "the skill claims active only while reviewing, after arming, or for a run already in this session");
 });
@@ -310,14 +316,14 @@ test("a second start selects retained host state before any fresh configuration"
   assert.ok(setup.indexOf("§ *Existing session*") < setup.indexOf("Read `runbookRoot`"));
   const existing = section(SKILL, "## Existing session");
   assert.match(existing, /before resolving fresh configuration, helper location, or store/);
-  assert.match(existing, /list wakes.*retained store ID/);
+  assert.match(existing, /list wakes.*retained wake tag/);
   assert.match(existing, /Then list secretaries using retained owned IDs/);
   assert.match(existing, /A failed listing blocks selection/);
   assert.match(existing, /When either exists, report `Secretary: active — already running in this session`/);
   assert.match(existing, /open on-demand run/);
   assert.match(existing, /retained command for status, recovery, and every pending-page read/);
   assert.match(existing, /Launch nothing new and return without reading current configuration or selecting another helper or store/);
-  assert.match(existing, /missing snapshot item.*blocks continuation; never reload configuration as a fallback/);
+  assert.match(existing, /missing shared snapshot item.*blocks continuation; never reload configuration as a fallback/);
   assert.match(existing, /closes the selected run after the § \*Stop\* cleanup its retained items allow/);
   assert.match(existing, /stop followed by start applies new settings/);
 });
@@ -328,11 +334,12 @@ test("startup and every wake act on the helper's due state", () => {
     assert.ok(due.includes(named), `Due state names ${named}`);
   }
   assert.match(due, /listing shows no secretary in flight, that attempt was interrupted/);
+  assert.match(due, /A meeting-sync job returns to its collection, and this section runs again after it settles/);
   assert.match(due, /"reason":"interrupted"/);
   const wake = section(SKILL, "## Wake");
   assert.match(wake, /It is not a new invocation and asks no proposal question/);
-  assert.match(wake, /under § \*Due state\*/);
-  assert.match(wake, /fires before `wake\.at` finds no review due and arms the wake again/);
+  assert.match(wake, /§ \*Due state\*/);
+  assert.match(wake, /early wake performs no due work and replaces itself/);
   assert.match(section(SKILL, "## Session end"), /under § \*Due state\*/);
 });
 
@@ -346,13 +353,9 @@ test("a review announces completion and continues only after auditing its own co
   const incomplete = steps.findIndex((text) => /no matching completion was audited/.test(text));
   const complete = steps.findIndex((text) => text.includes("`✅ Complete: secretary review`"));
   assert.ok(incomplete >= 0 && complete > incomplete, "missing completion ends the run before the success announcement");
-  assert.match(steps[incomplete], /mark this run inactive/);
-  assert.match(steps[incomplete], /Close its on-demand invocation before cleanup/);
-  assert.match(steps[incomplete], /Cancel its wakes under § \*Stop\* step 1 and arm nothing/);
-  assert.match(steps[incomplete], /`Secretary: inactive — review <attempt> did not complete: <cause>`/);
-  assert.match(steps[incomplete], /what may still run.*§ \*Stop\* step 4's failure format/);
-  assert.match(steps[incomplete], /end this run without a completion announcement/);
-  assert.match(steps[complete], /Otherwise.*§ \*Arm the wake\*/);
+  assert.match(steps[incomplete], /record this duty's failure under § \*Scheduling\*/);
+  assert.match(steps[incomplete], /Continue other duties.*without a completion announcement/);
+  assert.match(steps[complete], /Otherwise.*§ \*Dispatch\*/);
   assert.doesNotMatch(review, /When `review\.due` is still true/);
 });
 
@@ -375,7 +378,7 @@ test("stop cancels the wake and the review before it is acknowledged", () => {
   }
   assert.match(stop, /on-demand.*closed before/i);
   assert.match(stop, /no wake controls.*skip.*cancellation/i);
-  assert.ok(steps[0].indexOf("no wake controls") < steps[0].indexOf("list wakes"), "a run without wake controls skips listing before cancellation");
+  assert.ok(steps[1].indexOf("no wake controls") < steps[1].indexOf("list wakes"), "a run without wake controls skips listing before cancellation");
 });
 
 test("stop keeps the original wake identity when configuration changes or becomes unavailable", () => {
@@ -397,14 +400,16 @@ test("stop keeps the original wake identity when configuration changes or become
   assert.match(startup, /Keep the first validated status's `id` and physical `runbook` as this run's original identity\./);
   assert.match(section(SKILL, "## Existing session"), /Keep any matching wake's job ID for § \*Stop\*\./);
   assert.match(section(SKILL, "## Arm the wake"), /Keep the kept or created wake's job ID with this run's original identity/);
-  assert.match(section(SKILL, "## Wake"), /Restore this run's original store ID, physical root, interval, absolute helper path, and owner label from the wake prompt\./);
+  assert.match(section(SKILL, "## Wake"), /Restore each duty's original store ID, physical root or folder, interval, absolute helper path, and owner label/);
   const stop = section(SKILL, "## Stop");
   const steps = [...stop.matchAll(/^\d+\. (.*)$/gm)].map((match) => match[1]);
-  assert.match(steps[0], /original store ID/);
-  assert.match(steps[0], /cancel the retained wake job when listed and each job whose prompt starts with `\[agents-kit secretary <id>\]`/);
-  assert.ok(stop.indexOf("cancel the retained wake") < stop.indexOf("Run `status`"), "wake cancellation precedes configuration-dependent status");
-  assert.ok(stop.indexOf("stop each in-flight secretary") < stop.indexOf("Run `status`"), "in-flight jobs stop independently of configuration");
-  assert.match(stop, /Attempt wake cancellation and job stopping independently, even when one fails\./);
+  assert.match(steps[1], /Use the retained wake tag, this run's owner label, as `<id>` below\./);
+  assert.doesNotMatch(steps[1], /original store ID/);
+  assert.match(steps[3], /compare it with this run's original store ID and physical root/);
+  assert.match(steps[1], /cancel the retained wake job when listed and each job whose prompt starts with `\[agents-kit secretary <id>\]`/);
+  assert.ok(stop.indexOf("cancel the retained wake") < stop.indexOf("run `status`"), "wake cancellation precedes configuration-dependent status");
+  assert.ok(stop.indexOf("stop each in-flight secretary") < stop.indexOf("run `status`"), "in-flight jobs stop independently of configuration");
+  assert.match(stop, /Attempt meeting revocation, wake cancellation, job stopping, and runbook record cleanup independently, even when one fails\./);
   assert.match(stop, /When it fails, or its `id` or `runbook` differs from this run's original identity, leave record cleanup unresolved and write no records\./);
   assert.match(stop, /`Secretary: stop incomplete — record cleanup: <cause>`/);
 
@@ -466,7 +471,7 @@ test("the helper commands and status fields the skill uses run against a tempora
     assert.ok(Object.hasOwn(report, field), `status carries ${field}`);
     assert.ok(SKILL.includes(`\`${field}\``), `the skill reads ${field}`);
   }
-  for (const field of ["due", "blockedBy", "wake"]) {
+  for (const field of ["due", "blockedBy"]) {
     assert.ok(Object.hasOwn(report.review, field), `status review carries ${field}`);
     assert.ok([`\`${field}\``, `\`${field}.`, `review.${field}`].some((spelling) => SKILL.includes(spelling)), `the skill reads review.${field}`);
   }
@@ -538,14 +543,14 @@ test("the helper commands and status fields the skill uses run against a tempora
 test("startup rebuilds not-ready records itself before any launch", () => {
   const startup = section(SKILL, "## Startup");
   assert.match(startup, /When `ready` is false, rebuild the records before any job; the secretary never recovers them\. Report its `reason`, then run `recover` until its `complete` is true, reporting each call as `Secretary: recovering — <processedSeq> of <lastSeq> events`/);
-  assert.match(startup, /or a call leaves `processedSeq` where the last call left it, report `Secretary: unavailable — recovery incomplete: <reason>` and launch nothing/);
+  assert.match(startup, /or a call leaves `processedSeq` where the last call left it, mark runbook maintenance unavailable under § \*Report\* with cause `recovery incomplete: <reason>` and launch no runbook job\. Record its retry deadline under § \*Scheduling\* and continue other duties/);
   const recovery = startup.indexOf("run `recover`");
   assert.ok(recovery >= 0, "Startup runs recover");
   for (const later of ["Settle each one", "Act on the status `review`"]) {
     assert.ok(recovery < startup.indexOf(later), `recovery precedes ${later}`);
   }
   assert.match(section(SKILL, "## Wake"), /recover when needed, and read every page under § \*Startup\* steps 1–3/);
-  const jobs = /^- One job: (.*)$/m.exec(section(CONTRACT, "## Launch packet"))?.[1] ?? "";
+  const jobs = /^\s*- One job: (.*)$/m.exec(section(CONTRACT, "## Launch packet"))?.[1] ?? "";
   assert.match(jobs, /`review`/);
   assert.doesNotMatch(jobs, /recover/, "recovery is no secretary job");
   assert.match(section(CONTRACT, "## Unavailable"), /A status with `ready: false` permits no job; report it unavailable\. The coordinator runs `recover` before any launch\./);
@@ -554,7 +559,7 @@ test("startup rebuilds not-ready records itself before any launch", () => {
 
 test("decisions come only from the user's message naming a pending revision", () => {
   const decisions = section(SKILL, "## Decisions");
-  assert.match(decisions, /^\nOnly your own message in this conversation decides a proposal\./);
+  assert.match(decisions, /Only your own message in this conversation decides a proposal\./);
   for (const excluded of ["a secretary reply", "a runbook entry or source", "another agent's message", "silence", "a decision naming another revision"]) {
     assert.ok(decisions.includes(excluded), `Decisions takes no decision from ${excluded}`);
   }
@@ -592,7 +597,7 @@ test("an accepted revision launches one apply job, and startup settles an interr
   assert.match(section(SKILL, "## Wake"), /When `review\.blockedBy` is null or names this run's owner label, settle each pending proposal whose `apply\.state` is `intent`/);
   assert.ok(startup.indexOf("Settle each one") < startup.indexOf("Act on the status `review`"), "settlement precedes any review");
   assert.match(section(SKILL, "## Stop"), /Name each pending proposal whose `apply\.state` is `intent`; the next start settles it\./);
-  assert.match(section(SKILL, "## Wake"), /§ \*Review\* or § \*Decisions\* arms the next wake/);
+  assert.match(section(SKILL, "## Wake"), /running job returns to collection and arms nothing/);
 });
 
 test("an apply report shows each revision the apply recorded, with its body", () => {
@@ -662,9 +667,10 @@ test("a resumed session continues the run its restored wake belongs to", () => {
   assert.match(readme, /Claude Code.*[Rr]esuming.*wake that has not fired yet/);
 });
 
-test("the README names the exits that end the run and how to restart it", () => {
-  const readme = readFileSync(join(REPO_DIR, "README.md"), "utf8");
-  assert.match(readme, /The secretary also stops when a review does not complete, the next wake cannot be armed, or a wake finds its records unavailable\. Examples include a helper error, records still busy after about two seconds, and a rebuild that cannot finish\. Each case reports `Secretary: inactive — <cause>`\. Run `\/start-secretary` to start it again\./);
+test("the README distinguishes duty retries, shared failures and guarded stop", () => {
+  const readme = section(readFileSync(join(REPO_DIR, "README.md"), "utf8"), "## Secretary");
+  for (const rule of [/other runnable duties continue/, /one interval from that duty’s failed outcome/, /explicit request can retry sooner/, /Shared host failures/, /unresolved cleanup/, /revoking meeting write authority/, /defaults to 60 minutes/, /Meeting sync works without `runbookRoot`/, /routine creates, archives, and conditional deletions/, /one shared wake/, /missing parent is reported/, /30-day Granola lookback and seven-day Calendar/]) assert.match(readme, rule);
+  assert.doesNotMatch(readme, /stops when a review does not complete/);
 });
 
 test("every active helper command and launch stays bound to the original runbook", () => {
@@ -674,7 +680,7 @@ test("every active helper command and launch stays bound to the original runbook
   assert.match(startup, /An identity refusal ends the current operation without recording a decision, launching a job, or arming a wake/);
   assert.match(startup, /Every launch packet and wake carries the original root, interval, helper path, owner, and store ID/);
   assert.match(section(SKILL, "## Decisions"), /Confirm its `id` and `runbook` match this run's original identity/);
-  assert.match(section(SKILL, "## Review"), /Supply this run's original physical root/);
+  assert.match(section(SKILL, "## Review"), /Supply duty `runbook-maintenance`, this run's original physical root/);
   assert.match(section(CONTRACT, "## Launch packet"), /original physical root retained by the coordinator/);
   assert.match(section(CONTRACT, "## Unavailable"), /On every helper invocation, use `node <packet helper path> <command> --runbook <packet root> --interval-minutes <packet interval>`/);
 });
@@ -787,15 +793,19 @@ test("wake settings preserve escaped paths, interval, owner, and store identity"
   const arm = section(SKILL, "## Arm the wake");
   const prompt = /this prompt: `([^`]+)`/.exec(arm)?.[1] ?? "";
   const fields = { runbook: '/physical/runbook, "private"', intervalMinutes: 17, helper: "/candidate kit/scripts/secretary-state.ts", owner: "session-retained" };
-  const substitutions: Record<string, string> = { "<id>": "runbook-original", "<physical root>": JSON.stringify(fields.runbook).slice(1, -1), "<interval minutes>": "17", "<absolute helper path>": JSON.stringify(fields.helper).slice(1, -1), "<owner label>": fields.owner };
-  const restored = Object.entries(substitutions).reduce((text, [key, value]) => text.replace(key, value), prompt);
-  assert.ok(restored.startsWith("[agents-kit secretary runbook-original]"));
-  assert.deepStrictEqual(JSON.parse(/settings (\{.*\}): continue/.exec(restored)?.[1] ?? ""), fields);
+  const snapshot = { owner: fields.owner, mode: "automatic", duties: { "runbook-maintenance": fields, "meeting-sync": null } };
+  const retries = { "runbook-maintenance": 1793620800000 };
+  const restored = prompt.replace("<id>", fields.owner).replace("<fixed startup settings JSON>", JSON.stringify(snapshot)).replace("<per-duty retry deadlines JSON>", JSON.stringify(retries));
+  assert.ok(restored.startsWith(`[agents-kit secretary ${fields.owner}]`));
+  assert.deepStrictEqual(JSON.parse(/settings (\{.*\}); retries/.exec(restored)?.[1] ?? ""), snapshot);
+  assert.deepStrictEqual(JSON.parse(/retries (\{.*\}): continue/.exec(restored)?.[1] ?? ""), retries);
   assert.match(arm, /JSON-escaping strings/);
   assert.doesNotMatch(prompt, /Daily/);
   const wake = section(SKILL, "## Wake");
-  assert.match(wake, /Missing retained data blocks the wake; read no current configuration and resolve no replacement helper/);
-  assert.match(wake, /prompt's settings differ from it.*arm nothing from it/);
+  assert.match(wake, /Missing retained duty data blocks only that duty in this wake\./);
+  assert.match(wake, /Missing shared owner label, mode, or wake controls blocks the wake; read no current configuration and resolve no replacement helper/);
+  assert.match(wake, /prompt's settings differ from its fixed startup settings.*arm nothing from it/);
+  assert.match(section(SKILL, "## Startup"), /Wake IDs, agent IDs, availability, outcomes, and retry deadlines are session state outside them\./);
   const packet = section(CONTRACT, "## Launch packet");
   assert.match(packet, /retained interval, absolute helper path, and original store ID/);
   assert.match(section(CONTRACT, "## Unavailable"), /Read no global configuration and substitute no later root, interval, or helper/);
@@ -803,19 +813,19 @@ test("wake settings preserve escaped paths, interval, owner, and store identity"
 
 test("startup activation and retained continuation rules cover automatic and on-demand sessions", () => {
   const setup = section(SKILL, "## Setup");
-  const disabled = setup.indexOf("no runbookRoot configured");
+  const disabled = setup.indexOf("no enabled duty");
   assert.ok(disabled > 0 && disabled < setup.indexOf("Resolve `<kit-root>`"));
   assert.match(setup, /Resolve and validate the interval/);
-  assert.match(setup, /run `node <retained helper path> status` once without them/);
+  assert.match(setup, /run `node <retained helper path> status` once without settings options/);
   const startup = section(SKILL, "## Startup");
   for (const field of ["original physical root", "effective interval", "absolute helper path", "owner label", "store ID", "mode", "wake controls", "wake IDs", "owned agent IDs"]) assert.ok(startup.includes(field), field);
-  assert.match(startup, /Missing retained data blocks continuation instead of reloading configuration/);
+  assert.match(startup, /Missing retained data blocks continuation of the affected duty instead of reloading configuration/);
   assert.match(section(SKILL, "## Stop"), /retained interval and helper path for record cleanup after configuration changes or deletion/);
   for (const heading of ["## Existing session", "## On-demand follow-up", "## Wake", "## Decisions", "## Stop", "## Status questions"]) {
     assert.doesNotMatch(section(SKILL, heading), /Read `runbookRoot`|Resolve `<kit-root>`/);
   }
   const existing = section(SKILL, "## Existing session");
-  assert.match(existing, /automatic mode.*list wakes.*retained store ID/);
+  assert.match(existing, /automatic mode.*list wakes.*retained wake tag/);
   assert.match(existing, /list secretaries using retained owned IDs/);
   assert.match(existing, /open on-demand run/);
   assert.match(existing, /Launch nothing new/);
@@ -864,10 +874,208 @@ test("init-config duty references and its proposal registration resolve to their
   assert.ok(cited.has("references/scripts/secretary-state.md"));
   const registry = CONVENTIONS.split("\n").find((line) => line.startsWith("- `init-config` —")) ?? "";
   assert.match(registry, /2\. Select setup and inspect inputs/);
-  assert.match(DOMAIN_PACKS, /`init-config` writes machine paths and runbook-duty settings/);
+  assert.match(DOMAIN_PACKS, /`init-config` writes machine paths and secretary-duty settings/);
   const readme = section(readFileSync(join(REPO_DIR, "README.md"), "utf8"), "## Secretary");
   assert.match(readme, /runbook-maintenance\.md#configuration/);
   assert.match(readme, /Stop the secretary and start it again to use new settings/);
   assert.match(readme, /Changing the interval preserves existing history, proposal IDs, and exact-revision approvals/);
   assert.match(readme, /without it, no review starts/);
+});
+
+
+test("meeting configuration is opt-in and setup preserves unrelated settings", () => {
+  const meeting = readFileSync(join(REPO_DIR, "references", "secretary", "meeting-sync.md"), "utf8");
+  assert.match(meeting, /absent folder disables it, without resolving its interval/);
+  assert.match(meeting, /Omission defaults to 60 minutes/);
+  assert.match(meeting, /nonempty absolute or `~\/\.\.\.` path/);
+  assert.match(meeting, /Reject other relative paths and non-string values/);
+  assert.match(meeting, /positive safe integer/);
+  assert.match(meeting, /nonnumeric, fractional, nonpositive, unsafe, or unrepresentable values without coercion/);
+  assert.match(meeting, /Configuration alone starts no sync, agent, or wake/);
+  const inputs = section(INIT_CONFIG, "### 2. Select setup and inspect inputs");
+  assert.match(inputs, /Restoring the default removes only the interval leaf/);
+  assert.match(inputs, /omitted interval preserves the existing value/);
+  assert.match(inputs, /Preserve unknown nested keys and future duties/);
+  assert.match(inputs, /Meeting-only setup skips task-root and kit-checkout discovery/);
+  assert.match(inputs, /read no notes and create no directory/);
+  assert.match(inputs, /cadence-only request preserves the folder without probing it/);
+  assert.match(section(INIT_CONFIG, "### 3. Compare, and preview the delta"), /complete final JSON/);
+  assert.match(section(INIT_CONFIG, "### 4. Gate the write"), /write exactly the approved file/);
+});
+
+const MEETING_HELPER = join(REPO_DIR, "scripts/meeting-sync-state.ts");
+function meetingCommand(home: string, command: string, request: unknown) {
+  const result = spawnSync(process.execPath, [MEETING_HELPER, command, "-"], { encoding: "utf8", env: { ...process.env, HOME: home }, input: JSON.stringify(request) });
+  assert.strictEqual(result.status, 0, result.stderr);
+  return JSON.parse(result.stdout);
+}
+
+test("startup isolates enabled duties and restores their complete snapshot without rereading configuration", () => {
+  const setup = section(SKILL, "## Setup");
+  const dispatch = section(SKILL, "## Dispatch");
+  assert.match(setup, /absent `runbookRoot` disables runbook maintenance/);
+  assert.match(setup, /absent meeting folder disables meeting sync/);
+  assert.match(setup, /no enabled duty/);
+  assert.match(setup, /Never call the runbook helper to establish meetings-only availability/);
+  assert.match(setup, /invalid duty value blocks only that duty/);
+  assert.match(setup, /check the host under § \*Host\* once/);
+  assert.match(dispatch, /one secretary job in flight across both duties/);
+  assert.match(dispatch, /failed duty check cannot close another runnable duty/);
+  assert.match(dispatch, /recheck both duties before dispatching another/);
+  assert.match(section(SKILL, "## Startup"), /Every run applies step 5 below\. The other numbered steps apply only to enabled, available runbook maintenance; meetings-only runs skip them\./);
+  assert.match(section(SKILL, "## Startup"), /including physical identity/);
+  assert.match(section(SKILL, "## Startup"), /compaction/);
+  assert.match(section(SKILL, "## Startup"), /never runs `configure` again/);
+  assert.match(section(SKILL, "## Existing session"), /missing duty setting instead makes only that duty unavailable/);
+  assert.match(section(SKILL, "## On-demand follow-up"), /explicit sync request.*retained meeting entry/);
+  assert.match(section(SKILL, "## Decisions"), /Meeting startup and sync packets grant none of its authority/);
+  assert.match(dispatch, /Status alone identifies no completed token or outcome/);
+});
+
+test("documented meetings-only commands sync without runbook records and retain targets until restart", () => {
+  const home = join(TEST_ROOT, "meetings-only");
+  const original = join(home, "original");
+  const replacement = join(home, "replacement");
+  const config = join(home, ".config/agents-kit/config.json");
+  mkdirSync(original, { recursive: true });
+  mkdirSync(replacement);
+  mkdirSync(dirname(config), { recursive: true });
+  const settings = (folder: string, intervalMinutes: number) => ({ secretary: { duties: { "meeting-sync": { folder, intervalMinutes } } } });
+  writeFileSync(config, JSON.stringify(settings(original, 17)));
+  const retained = meetingCommand(home, "configure", { owner: "session-original" });
+  assert.strictEqual(retained.folder, original);
+  assert.strictEqual(retained.intervalMinutes, 17);
+  const first = meetingCommand(home, "start", { retained });
+  meetingCommand(home, "create", { retained, token: first.token, path: "first.md", body: "prep" });
+  meetingCommand(home, "finish", { retained, token: first.token, outcome: "complete" });
+  writeFileSync(config, JSON.stringify(settings(replacement, 29)));
+  const restored = JSON.parse(JSON.stringify({ mode: "on-demand", owner: "session-original", duties: { "meeting-sync": { retained, helper: MEETING_HELPER } }, ownedAgentIds: [] }));
+  const next = meetingCommand(home, "start", { retained: restored.duties["meeting-sync"].retained, explicit: true });
+  rmSync(config);
+  meetingCommand(home, "create", { retained, token: next.token, path: "followup.md", body: "original target" });
+  meetingCommand(home, "finish", { retained, token: next.token, outcome: "stopped" });
+  assert.strictEqual(readFileSync(join(original, "followup.md"), "utf8"), "original target");
+  assert.ok(!existsSync(join(replacement, "followup.md")));
+  assert.ok(!existsSync(join(home, ".local/state/agents-kit/secretary/runbook")));
+  writeFileSync(config, JSON.stringify(settings(replacement, 29)));
+  const fresh = meetingCommand(home, "configure", { owner: "session-restarted" });
+  assert.strictEqual(fresh.folder, replacement);
+  assert.strictEqual(fresh.intervalMinutes, 29);
+  assert.notStrictEqual(fresh.store, retained.store);
+  const restarted = meetingCommand(home, "start", { retained: fresh });
+  meetingCommand(home, "create", { retained: fresh, token: restarted.token, path: "fresh.md", body: "new target" });
+  meetingCommand(home, "finish", { retained: fresh, token: restarted.token, outcome: "complete" });
+  assert.ok(!existsSync(join(original, "fresh.md")));
+  assert.strictEqual(readFileSync(join(replacement, "fresh.md"), "utf8"), "new target");
+});
+
+test("documented combined-duty commands preserve accepted runbook identifiers and history during sync", () => {
+  const { home, runbook } = configuredHome("combined-duty");
+  const folder = join(home, "meetings");
+  mkdirSync(folder);
+  writeFileSync(join(home, ".config/agents-kit/config.json"), JSON.stringify({ runbookRoot: runbook, secretary: { duties: { "meeting-sync": { folder } } } }));
+  const runbookCall = (args: string[], input?: unknown) => {
+    const result = helper(home, [...args, "--runbook", runbook, "--interval-minutes", "1440"], input === undefined ? undefined : JSON.stringify(input));
+    assert.strictEqual(result.status, 0, result.stderr);
+    return JSON.parse(result.stdout);
+  };
+  const append = (type: string, input: unknown) => runbookCall(["append", "--type", type, "--json", "-"], input).event;
+  const originalId = runbookCall(["status"]).id;
+  append("attempt-started", { attempt: "review-combined", owner: "session-combined", job: "review" });
+  const proposed = append("proposal", { attempt: "review-combined", target: "accepted.md", summary: "Accepted revision", evidence: [{ source: "source", published: null, observed: null }], before: null, body: "# Accepted\n" });
+  append("review-completed", { attempt: "review-combined", outcome: "complete", summary: "Reviewed", unavailable: [] });
+  append("decision", { proposal: proposed.payload.proposal, revision: 1, decision: "accepted", source: "user message: accept exact revision" });
+  const before = runbookCall(["history"]);
+  const digest = (value: unknown) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
+  const historyDigest = digest(before);
+  const pending = runbookCall(["status"]).pending;
+  const retained = meetingCommand(home, "configure", { owner: "session-combined" });
+  const attempt = meetingCommand(home, "start", { retained });
+  meetingCommand(home, "create", { retained, token: attempt.token, path: "meeting.md", body: "prep" });
+  meetingCommand(home, "finish", { retained, token: attempt.token, outcome: "complete" });
+  const second = meetingCommand(home, "start", { retained, explicit: true });
+  const duplicate = spawnSync(process.execPath, [MEETING_HELPER, "create", "-"], { encoding: "utf8", env: { ...process.env, HOME: home }, input: JSON.stringify({ retained, token: second.token, path: "meeting.md", body: "replacement" }) });
+  assert.strictEqual(duplicate.status, 1);
+  assert.match(duplicate.stderr, /destination exists/);
+  meetingCommand(home, "finish", { retained, token: second.token, outcome: "complete" });
+  assert.strictEqual(readFileSync(join(folder, "meeting.md"), "utf8"), "prep");
+  assert.strictEqual(digest(runbookCall(["history"])), historyDigest);
+  assert.strictEqual(digest(runbookCall(["status"]).pending), digest(pending));
+  assert.deepStrictEqual(runbookCall(["history"]), before);
+  assert.deepStrictEqual(runbookCall(["status"]).pending, pending);
+  assert.strictEqual(runbookCall(["status"]).id, originalId);
+  assert.ok(!existsSync(join(runbook, "accepted.md")));
+  append("attempt-started", { attempt: "apply-combined", owner: "session-combined", job: "apply" });
+  const applied = runbookCall(["apply", "--attempt", "apply-combined", "--proposal", proposed.payload.proposal, "--revision", "1"]);
+  assert.strictEqual(applied.event.payload.outcome, "applied");
+  assert.strictEqual(readFileSync(join(runbook, "accepted.md"), "utf8"), "# Accepted\n");
+});
+
+test("runbook-only and no-duty initialization leave meeting records absent", () => {
+  const { home } = configuredHome("runbook-only-duty");
+  assert.strictEqual(meetingCommand(home, "configure", { owner: "session-runbook" }), null);
+  assert.strictEqual(helper(home, ["status"]).status, 0);
+  assert.ok(!existsSync(join(home, ".local/state/agents-kit/secretary/meeting-sync")));
+  const empty = join(TEST_ROOT, "no-duty");
+  mkdirSync(empty);
+  assert.strictEqual(meetingCommand(empty, "configure", { owner: "session-empty" }), null);
+  assert.ok(!existsSync(join(empty, ".local/state")));
+});
+
+test("fixed-clock shared deadlines isolate failed meetings while runbook work continues", () => {
+  const { home, runbook } = configuredHome("independent-deadlines");
+  const folder = join(home, "meetings");
+  mkdirSync(folder);
+  writeFileSync(join(home, ".config/agents-kit/config.json"), JSON.stringify({ runbookRoot: runbook, secretary: { duties: { "meeting-sync": { folder, intervalMinutes: 60 } } } }));
+  const now = Date.parse("2026-11-02T10:00:00Z");
+  const retained = configureMeeting(home, "session-clock", now);
+  assert.ok(retained);
+  const store = openStore(home, { runbook, intervalMinutes: 15 });
+  assert.strictEqual(runbookStatus(store, null, new Date(now)).review.due, true);
+  assert.strictEqual(meetingStatus(home, retained, now).due, true);
+  append(store, "attempt-started", { attempt: "review-clock", owner: retained.owner, job: "review" }, new Date(now));
+  append(store, "review-completed", { attempt: "review-clock", outcome: "partial", summary: "Partial fixture", unavailable: ["source missing"] }, new Date(now));
+  const token = startMeeting(home, retained, { now });
+  finishMeeting(home, retained, { token, outcome: "failed", now: now + 60000 });
+  const meetingDeadline = meetingStatus(home, retained, now + 60000).eligible;
+  const reviewDeadline = Date.parse(runbookStatus(store, null, new Date(now + 60000)).review.dueAt!);
+  assert.strictEqual(Math.min(reviewDeadline, meetingDeadline), now + 15 * 60000);
+  assert.strictEqual(meetingDeadline, now + 61 * 60000);
+  append(store, "attempt-started", { attempt: "review-healthy", owner: retained.owner, job: "review" }, new Date(reviewDeadline));
+  append(store, "review-completed", { attempt: "review-healthy", outcome: "complete", summary: "Healthy fixture", unavailable: [] }, new Date(reviewDeadline));
+  assert.strictEqual(meetingStatus(home, retained, reviewDeadline).due, false);
+  const explicit = startMeeting(home, retained, { explicit: true, now: reviewDeadline });
+  assert.throws(() => startMeeting(home, retained, { explicit: true, now: reviewDeadline + 1 }), /leased/);
+  assert.strictEqual(meetingStatus(home, retained, reviewDeadline).eligible, reviewDeadline + 3600000);
+  finishMeeting(home, retained, { token: explicit, outcome: "partial", now: reviewDeadline + 1 });
+  assert.strictEqual(meetingStatus(home, retained, reviewDeadline + 1).retry, null);
+  const missed = now + 10 * 3600000;
+  assert.strictEqual(runbookStatus(store, null, new Date(missed)).review.due, true);
+  const coalesced = startMeeting(home, retained, { now: missed });
+  finishMeeting(home, retained, { token: coalesced, outcome: "complete", now: missed });
+  assert.strictEqual(meetingStatus(home, retained, missed).eligible, missed + 3600000);
+  assert.throws(() => startMeeting(home, retained, { now: missed }), /not due/);
+});
+
+test("scheduling retains unavailable retries and gates duplicate, stale and on-demand work", () => {
+  const schedule = section(SKILL, "## Scheduling");
+  for (const text of ["outcome time plus the duty's retained interval", "helper or connectors are unavailable", "Do not move the deadline merely by checking status", "later helper or session retry deadline wins", "never a live lease", "breaking ties by runbook then meetings", "coalesce missed intervals into one attempt", "failure permits healthy due work"]) assert.ok(schedule.includes(text), text);
+  const arm = section(SKILL, "## Arm the wake");
+  assert.ok(arm.indexOf("on-demand") < arm.indexOf("list wakes"));
+  assert.match(arm, /retry deadlines match.*selected shared deadline/);
+  assert.match(arm, /earliest deadline/);
+  const wake = section(SKILL, "## Wake");
+  assert.match(wake, /stale wake ID, replaced retry deadlines, or a stopped or closed owner/);
+  assert.match(wake, /Run no helper command for a rejected wake/);
+  assert.match(section(SKILL, "## Existing session"), /Launch nothing new/);
+});
+
+test("stop revokes meetings before host cleanup and retains unresolved cleanup without rearming", () => {
+  const stop = section(SKILL, "## Stop");
+  const revoke = stop.indexOf("run `finish`");
+  assert.ok(revoke > 0 && revoke < stop.indexOf("cancel the retained wake") && revoke < stop.indexOf("stop each in-flight secretary"));
+  for (const text of ["failed helper, mismatched identity, or unavailable status", "stopping an agent alone does not prove revocation", "Retain all unresolved cleanup identities and helpers", "configuration deletion grants no replacement target", "Collect delayed notifications only to establish termination", "Keep the run closed and arm nothing", "only after meeting revocation, owned-agent termination, wake cancellation, and required record cleanup"]) assert.ok(stop.includes(text), text);
+  assert.match(section(SKILL, "## Arm the wake"), /closed or stopping run arms nothing/);
+  assert.match(section(SKILL, "## Wake"), /stopped or closed owner/);
+  assert.match(CONTRACT, /stopped or superseded meeting token refuses, end the job/);
 });

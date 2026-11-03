@@ -97,7 +97,8 @@ const USAGE = [
   "       node scripts/secretary-state.ts history [--after <seq>] [--type <type>] [--proposal <id>]",
   "       node scripts/secretary-state.ts event --seq <seq>",
   "       node scripts/secretary-state.ts body --hash <sha256> [--offset <n>] [--limit <n>]",
-].map((line) => `${line} [--expect-runbook <physical-root> | --runbook <physical-root> --interval-minutes <n>]`).join("\n");
+].map((line) => `${line} [--expect-runbook <physical-root> | --runbook <physical-root> --interval-minutes <n>]`)
+  .concat("       node scripts/secretary-state.ts wake --at <iso-utc-instant>").join("\n");
 
 export class Exit extends Error {
   readonly code: number;
@@ -2074,6 +2075,15 @@ function main(argv: readonly string[]): void {
   });
   const [command, ...rest] = argv;
   switch (command) {
+    case "wake": {
+      const options = parseOptions(rest, ["--at"], ["--at"]);
+      if (options.size !== 1) fail(`wake takes only --at.\n${USAGE}`);
+      const value = options.get("--at") ?? "";
+      const at = new Date(value);
+      if (!/^(\d{4}|[+-]\d{6})-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/.test(value) || !Number.isFinite(at.getTime()) || at.toISOString() !== value.replace(/(?<!\.\d{3})Z$/, ".000Z")) fail("--at takes an ISO UTC instant.");
+      report({ wake: { at: at.toISOString(), cron: wakeCron(at, new Date()) } });
+      return;
+    }
     case "append": {
       const options = parseOptions(rest, ["--type", "--json"], ["--type", "--json"]);
       const type = appendTypeOption(options.get("--type"));
