@@ -17,18 +17,15 @@ A group failing alone implicates that dependency group. Groups passing alone but
 
 Rebuild the shared tree from the immutable concern-batch baseline plus survivor change sets in original order, within `fix-findings` § *Content baseline and immediate outcomes*' attribution bound. The concern batch's run-owned result must equal exactly those survivors; preserve all other baseline content and presence. Do not reverse-patch, reset, or check out user content.
 
-A survivor requiring an implicated fix joins its failed group and names that prerequisite in Fix failed. A later overlapping fix survives only if independently replayable or re-executable and re-provable on the rebuilt base:
-
-- An Auto fix may be re-executed.
-- An approved fix may only replay its recorded change set verbatim; the coordinator performs that replay. If that replay fails, ask for a fresh diff under `fix-findings` § *Content baseline and immediate outcomes*; a freshly approved diff re-executes through the selected executor.
+A survivor requiring an implicated fix joins its failed group and names that prerequisite in Fix failed. A later overlapping fix survives only if independently replayable or re-executable and re-provable on the rebuilt base. An Auto fix or a picked option may be re-executed through the selected executor. A re-execution that returns a pending impactful choice takes a fresh option question under `fix-findings` § *Content baseline and immediate outcomes*.
 
 Re-prove all survivors on the rebuilt final tree. After recording evidence, remove scratch copies and captures under the skill's write-surface rule.
 
 ## Approved decisions and changed evidence
 
-Proceed with an unchanged approved diff within agreed boundaries.
+Proceed with an unchanged picked option within agreed boundaries.
 When new evidence materially changes a consequential choice or exceeds those boundaries, apply `../../CORE_RULES.md` § *Ask Before Assuming*.
-Hold dependent edits until the user decides. Changed ask-routed edits require fresh concrete-diff approval (`fix-findings` § *The Gate: Auto vs Ask*).
+Hold dependent edits until the user decides. A changed ask-routed fix requires a fresh pick from an option question with a recommendation (`fix-findings` § *The Gate: Auto vs Ask*).
 A choice still open at report time lists under **Awaiting decision** (`fix-findings` § *Output*).
 
 ## Red boundary: comparison, disposition, recovery
@@ -51,7 +48,7 @@ Launch an **executor** through the selected route in `./executor-routing.md`, un
 
 Supply every `./executor-contract.md` § *Launch packet* item plus the binding's **Packet** and **Edit surface** items. The executor receives this packet without session history.
 
-Apply `./executor-contract.md` § *Write-mode routing* to every returned report, and the binding's approved-diff intake to an approved fix. Reject failed criteria and scope escapes; re-prove immediate outcomes when intake requires it. Only then capture the ordered change set. The coordinator performs final-integrated checks and health.
+Apply `./executor-contract.md` § *Write-mode routing* to every returned report, and the binding's picked-option intake to a picked option. Reject failed criteria and scope escapes; re-prove immediate outcomes when intake requires it. Only then capture the ordered change set. The coordinator performs final-integrated checks and health.
 
 Record delegation, selected engine, external receipt evidence, and announced fallback per `./executor-routing.md` § *External launches and recovery* in the finding's Fixed or Fix failed entry. Include parallel placement where used. For an inline exception, announce and record the applicable `./write-mode-posture.md` exception.
 
