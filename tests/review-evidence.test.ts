@@ -18,6 +18,8 @@ const TRIAGE = "skills/triage-findings/SKILL.md";
 const FIX = "skills/fix-findings/SKILL.md";
 const EXECUTOR = "references/workflow/executor-contract.md";
 const RECOVERY = "references/workflow/fix-findings-recovery.md";
+const FIX_RECONCILE = "skills/fix-findings-reconcile/SKILL.md";
+const CONVENTIONS = "references/workflow/skill-conventions.md";
 
 function source(path: string): string {
   return readFileSync(join(ROOT, path), "utf8");
@@ -411,4 +413,150 @@ test("pending endings retain the worktree and report evidence even without findi
   assert.match(section(LOOP, "Ending"), /Pending endings retain it[^\n]*Preserve evidence directories/);
   assert.match(section(LOOP, "Output"), /\*\*Evidence:\*\*[^\n]*name evidence gaps even with no findings/);
   assert.match(section(LOOP, "The pass"), /discards[^\n]*evidence confirmation[^\n]*Retain artifact directories as stale evidence/);
+});
+
+function override(name: string): string {
+  const line = section(FIX_RECONCILE, "Core Rules").split("\n").find((entry) => entry.startsWith(`- **${name}**: `));
+  assert.ok(line, `${FIX_RECONCILE} states the ${name} override`);
+  return line;
+}
+
+test("fix-findings-reconcile runs fix-findings in full, then reconcile-task in full", () => {
+  const skill = source(FIX_RECONCILE);
+  assert.match(section(FIX_RECONCILE, "Core Rules"), /Phase 1 runs `\.\.\/fix-findings\/SKILL\.md`'s full protocol; Phase 2 runs `\.\.\/reconcile-task\/SKILL\.md`'s full protocol\./);
+  assert.ok(skill.indexOf("\n## Phase 1 — Fix\n") < skill.indexOf("\n## Phase 2 — Reconcile\n"));
+  assert.match(section(FIX_RECONCILE, "Phase 1 — Fix"), /^\nExecute `\.\.\/fix-findings\/SKILL\.md` end to end/);
+  assert.match(section(FIX_RECONCILE, "Phase 2 — Reconcile"), /^\nExecute `\.\.\/reconcile-task\/SKILL\.md` end to end against the folder resolved before Phase 1, with Phase 1's Output as session evidence\./);
+});
+
+test("fix-findings-reconcile passes the source and fix flags through and takes no task argument", () => {
+  const frontmatter = source(FIX_RECONCILE).split("\n---\n")[0];
+  assert.match(frontmatter, /\nargument-hint: '\[source\] \[-e native\|codex\|claude\] \[-1 [^\n]*\] — passed through to the fix phase'/);
+  assert.doesNotMatch(frontmatter, /\nargument-hint:[^\n]*task/);
+  assert.match(section(FIX_RECONCILE, "Flags"), /`-e native\|codex\|claude` and `-1` pass through to `\.\.\/fix-findings\/SKILL\.md` unchanged[^\n]*Neither changes Phase 2\./);
+  assert.match(section(FIX_RECONCILE, "Phase 1 — Fix"), /passing the source argument and the flags through unchanged/);
+  assert.match(section(FIX_RECONCILE, "When to Use"), /\n`\/fix-findings-reconcile` takes no task argument; its one positional argument is the findings source\. A Handoff prints it bare, and a cold reader appends no handoff token\. A cold session picks the task from the active list, as `\.\.\/reconcile-task\/SKILL\.md` § \*1\. Resolve the Task Folder\* does when no task is established\.\n/);
+});
+
+test("fix-findings-reconcile resolves the task before Phase 1 and defers the loader's repair", () => {
+  const resolution = override("Task resolution first");
+  assert.match(resolution, /resolve the folder under `\.\.\/reconcile-task\/SKILL\.md` § \*1\. Resolve the Task Folder\* before Phase 1 starts\./);
+  assert.match(resolution, /Announce it before the run's first write\./);
+  assert.match(resolution, /With no active task, stop before any edit and point at `\/fix-findings`\./);
+  assert.match(resolution, /Resolution only reads; the loader's identifier repair \(`\.\.\/reconcile-task\/SKILL\.md` § \*2\. Load Artifacts\*\) waits for Phase 2\./);
+  assert.match(resolution, /Resolution still checks the plan's Status before loading \(`\.\/references\/workflow\/task-layout\.md` § \*Reading a resolved folder\*, step 1\)\. On a `skipped` plan, stop before any edit and point at `\/fix-findings`\./);
+  assert.match(resolution, /Phase 2 reuses the resolved folder\./);
+  assert.match(section(FIX_RECONCILE, "When to Use"), /\*\*Skip when\*\* no task applies, or the task's plan is `skipped` → `\/fix-findings`;/);
+});
+
+test("fix-findings-reconcile starts Phase 2 only after Phase 1 prints its Output", () => {
+  const boundary = override("Phase boundary");
+  assert.match(boundary, /Phase 2 starts only after Phase 1 prints its Output\./);
+  assert.match(boundary, /A Phase 1 stop that renders no Output[^\n]*no findings, staged content, or a rejected flag, ends the run with no task-doc write\./);
+  assert.match(override("Chat display"), /Phase 1's Output prints in full, except its Handoff, before Phase 2 starts\./);
+  assert.match(override("Phase 2 stop"), /a Phase 2 stop before any task-doc write, such as a loader exit 2 whose `recovery` is `none` or `restored` \(`\.\/references\/workflow\/task-layout\.md` § \*Reading a resolved folder\*\), ends the run with Phase 1's Output and commits standing\./);
+  const rules = section(FIX_RECONCILE, "Core Rules");
+  assert.strictEqual(rules.split("\n").filter((entry) => /^- \*\*[^*]+\*\*: /.test(entry)).length, 7);
+  assert.match(rules, /Seven overrides apply pipeline-wide:/);
+});
+
+test("fix-findings-reconcile composes one Handoff for both phases", () => {
+  assert.match(override("Handoff"), /neither inner Handoff prints; this skill's Output composes one block for both phases\./);
+  const output = section(FIX_RECONCILE, "Output");
+  assert.strictEqual(output.split("Close with the Handoff block").length, 2);
+  assert.match(output, /\*\*Fix\*\*: Phase 1's Output[^\n]*without its Handoff\./);
+  assert.match(output, /\*\*Reconcile\*\*: Phase 2's findings report[^\n]*without its Handoff\./);
+  assert.match(output, /- \*\*Done:\*\* the landed commits and fixed findings, pointing at \*\*Commits\*\* and \*\*Fixed\*\*, and the reconciled task docs, pointing at \*\*Reconciliation applied\*\*\. After a Phase 2 stop, Done drops the \*\*Reconciliation applied\*\* pointer\./);
+  assert.match(output, /\*\*Reconcile\*\*: [^\n]*After a Phase 2 stop, this section carries Phase 2's stop report instead\./);
+  assert.match(output, /- \*\*Know:\*\* [^\n]*After a Phase 2 stop, state that no task record was written and why\. When the loader's `recovery` is `partial`, name the `unrecovered` paths and their `recoveryErrors` instead\./);
+  assert.match(output, /- \*\*Know:\*\* [^\n]*Point at \*\*Health uncertifiable\*\*, \*\*Retained, failing\*\*, or \*\*Fix failed\*\* when they hold entries\./);
+  assert.match(output, /- \*\*Know:\*\* [^\n]*With mixed code and documentation fixes, name the second review: `\/review-docs` on each changed document\./);
+  assert.match(output, /- \*\*Know:\*\* [^\n]*Name any compaction trigger Phase 2 left untested\./);
+  assert.match(output, /- \*\*Awaiting you:\*\* point at Phase 1's \*\*Awaiting decision\*\* bucket and the \*\*Awaiting decision\*\* rows under \*\*Not reconciled:\*\*\. Name any compaction proposal Phase 2 left awaiting your confirmation\./);
+  assert.match(output, /- \*\*Next:\*\* a review of the landed fixes[^\n]*`\/review-code` or `\/review-code-triage-verify` over `<start>\.\.HEAD`, or `\/review-docs` for documentation-only fixes\./);
+  assert.match(output, /- \*\*Next:\*\* [^\n]*Uncommitted fixes take the `\/commit` route that `\.\.\/fix-findings\/SKILL\.md` § \*Output\* names\./);
+  assert.match(output, /- \*\*Next:\*\* [^\n]*Route each \*\*Needs work\*\* row under \*\*Not reconciled:\*\* to the skill or other owner it names, such as `\/plan-task` or `\/verify-issue`\./);
+});
+
+test("fix-findings-reconcile sanctions settled corrections alongside delegation and batch commits", () => {
+  const rules = section(FIX_RECONCILE, "Core Rules");
+  assert.match(rules, /\*\*Sanctioned writes\.\*\* Invocation sanctions three writes: executor delegation for every applied fix, a commit per concern batch or one commit under `-1`, and the settled corrections Phase 2 applies to the resolved folder\./);
+  assert.match(rules, /A proposal or Next line for this skill names all three \(`\.\/references\/workflow\/user-facing-messages\.md` § \*Blocks\* → \*\*The proposal line\*\*\)\./);
+  assert.match(rules, /Phase 2 writes task docs within `\.\/references\/workflow\/reconciliation-session-to-docs\.md` § \*Write surface\*\./);
+  assert.match(rules, /The run makes no push, source reply, thread resolution, live-page write, or other Git mutation\./);
+});
+
+test("fix-findings-reconcile's own gate replaces the fix phase's proposal and makes both phases user-invoked", () => {
+  const lines = source(FIX_RECONCILE).split("\n");
+  assert.strictEqual(lines[lines.indexOf("## Core Rules") + 4], "**Model invocation:** requires a confirmed proposal (`./references/workflow/skill-conventions.md` § *The invocation gate*).");
+  assert.doesNotMatch(source(FIX_RECONCILE).split("\n---\n")[0], /disable-model-invocation/);
+  const gate = override("Invocation gate");
+  assert.match(gate, /this skill's proposal \(§ \*Phase 1 — Fix\*\) replaces `fix-findings`' model-invoked proposal \(`\.\.\/fix-findings\/SKILL\.md` § \*The Gate: Auto vs Ask\*\)\./);
+  assert.match(gate, /A typed command or a confirmed proposal makes both phases user-invoked\./);
+  assert.match(gate, /Phase 1 takes its batch commits \(`\.\.\/fix-findings\/SKILL\.md` § \*Batch commits\*\) and executor delegation \(`\.\/references\/workflow\/executor-routing\.md` § \*The registry and its authorization\*\) from that invocation\./);
+  assert.match(gate, /Phase 2 takes its settled corrections from it \(`\.\/references\/workflow\/reconciliation\.md` § \*Consent model: findings apply, the record carries them\*\)\./);
+  assert.match(gate, /A proposal that left the corrections unnamed makes Phase 2 ask before each correction\./);
+  const phase = section(FIX_RECONCILE, "Phase 1 — Fix");
+  assert.match(phase, /After task resolution and once `fix-findings`' classification stands, a model-invoked run asks one proposal\. It comes before any edit, executor launch, staging, commit, or task-doc write\./);
+  assert.match(phase, /It names the task folder, the findings, and the Auto fixes applied unasked\. It names the executors for those fixes and for each option the Ask round approves\./);
+  assert.match(phase, /It names a commit per concern batch, or one commit under `-1`, and the settled corrections Phase 2 applies to the folder\./);
+  assert.match(phase, /The `Pre-existing` question and the Ask round still run through either door\./);
+});
+
+test("skill-conventions registers fix-findings-reconcile as a confirm-gated composite with fix-phase batch commits", () => {
+  assert.match(section(CONVENTIONS, "Current members"), /\n- `fix-findings-reconcile` — apply findings through `fix-findings`, then record them in the session's task through `reconcile-task`\./);
+  const invocation = section(CONVENTIONS, "The invocation gate");
+  assert.match(invocation, /\n- `fix-findings-reconcile` — the user's preference for explicit invocation; the proposal is its § \*Phase 1 — Fix\*\./);
+  assert.match(invocation, /A `fix-findings` run, or the fix phase of a `fix-findings-reconcile` run, grants concern-batch commits only under `skills\/fix-findings\/SKILL\.md` § \*Batch commits\*\. There, the invoked skill's invocation through either door is the explicit request `commit` requires\./);
+});
+
+test("fix-findings-reconcile maps each fix-findings bucket to a reconcile-task row", () => {
+  const phase = section(FIX_RECONCILE, "Phase 2 — Reconcile");
+  assert.match(phase, /Phase 1's buckets add these rows to its session mapping \(`\.\/references\/workflow\/reconciliation-session-to-docs\.md` § \*`reconcile-task` — session findings\*\)/);
+  assert.match(phase, /- \*\*Commits\*\* and \*\*Fixed\*\* take the session-narrative row\. The Reconciliation entry names each landed SHA, each fixed finding, and the label of each option the user picked\./);
+  assert.match(phase, /- \*\*Fix failed\*\*, \*\*Retained, failing\*\*, and \*\*Health uncertifiable\*\* findings go under Not reconciled as Needs work rows\. So do \*\*Decided\*\* findings the user deferred, \*\*Untouched\*\* findings the run's selection excluded, and \*\*Untouched\*\* findings listed `not attempted`\. Their owner is `\/fix-findings-reconcile`, or `\/plan-task` when the finding needs redesign\./);
+  assert.match(phase, /- \*\*Untouched\*\* Inconclusive findings, triage `verify` entries, and `anchor moved` entries go under Not reconciled as Needs work rows, owner `\/verify-issue`\./);
+  assert.match(phase, /- \*\*Untouched\*\* external-page fixes held back by the working-tree write limit go under Not reconciled as Needs work rows, owner the user\./);
+  assert.match(phase, /- Each Needs work row names its bucket and its reason\./);
+  assert.match(phase, /- \*\*Decided\*\* findings the user rejected or skipped, and excluded `Pre-existing` findings, take the session-narrative row with their reason\. So do \*\*Untouched\*\* Withdrawn findings, resolved threads, triage `addressed` entries, and `not actionable` complaints\. None of them gets a Not reconciled row\./);
+  assert.match(phase, /- Phase 1's \*\*Awaiting decision\*\* findings go under Not reconciled as Awaiting decision rows with their options and recommendation, owner `\/fix-findings-reconcile`\./);
+  assert.match(phase, /- \*\*No result owed\*\*: when the task has no result and is owed none \(`\.\/references\/workflow\/reconciliation\.md` § \*The record\*\), the printed change list and dated headings in the context or plan carry the record\. Phase 2 creates no result solely to log the fixes\./);
+});
+
+function nextLine(path: string): string {
+  const line = source(path).split("\n").find((entry) => entry.startsWith("- **Next:** "));
+  assert.ok(line, `${path} has a Handoff Next line`);
+  return line;
+}
+
+test("fix-findings-reconcile's When to Use states the proven-link condition and its three proof forms", () => {
+  const use = section(FIX_RECONCILE, "When to Use");
+  assert.match(use, /\*\*Route from a review\*\* to this skill only when the session has an established task and the reviewed work is provably that task's\. Proof is one of three forms:/);
+  assert.match(use, /\n- a reviewed branch or PR that matches the task's `result\.md` Pointers;\n- a review started on the task folder;\n- a reviewed document that is the task's deliverable or a path its plan names\.\n/);
+  assert.match(use, /With an established task but no proof, offer this skill and `\/fix-findings`, preferring `\/fix-findings` of the two\. That preference leaves the Handoff's overall recommendation open\./);
+  assert.match(use, /Without an established task, propose `\/fix-findings` alone\./);
+});
+
+test("the six review Handoff Next lines route to fix-findings-reconcile only on a proven link", () => {
+  const cite = "(`../fix-findings-reconcile/SKILL.md` § *When to Use*)";
+  const routes: [string, RegExp, RegExp][] = [
+    [REVIEW, /When the reviewed paths provably belong to the session's task \(`[^`]+` § \*When to Use\*\), they go to `\/fix-findings-reconcile` instead\./, /With a session task and no proof, offer both routes and recommend `\/fix-findings`\./],
+    [COMPOSITE, /`\/fix-findings-reconcile` takes the place of `\/fix-findings` when the reviewed object is provably the session task's work, as `\.\.\/fix-findings-reconcile\/SKILL\.md` § \*When to Use\* defines proof\./, /Without that proof but with a session task, list both fix routes and prefer `\/fix-findings` to `\/fix-findings-reconcile`\./],
+    ["skills/review-docs/SKILL.md", /Offer `\/fix-findings-reconcile` in place of `\/fix-findings` when the audited document is provably the session task's \(`[^`]+` § \*When to Use\*\)\./, /If a session task exists without that proof, show `\/fix-findings` and `\/fix-findings-reconcile`, favoring `\/fix-findings` of the two\./],
+    [LOOP, /When the PR provably carries the session task's work \(`[^`]+` § \*When to Use\*\), propose `\/fix-findings-reconcile` in place of `\/fix-findings`\./, /A session task without that proof gets both fix routes, with `\/fix-findings` preferred over `\/fix-findings-reconcile`\./],
+    [TRIAGE, /Where the triaged findings provably concern the session task's work \(`[^`]+` § \*When to Use\*\), name `\/fix-findings-reconcile` instead/, /Lacking proof while a session task exists, present both fix routes and rank `\/fix-findings` above `\/fix-findings-reconcile`\./],
+    ["skills/triage-findings-verify/SKILL.md", /Swap in `\/fix-findings-reconcile` for `\/fix-findings` when the findings' work is provably the session task's \(`[^`]+` § \*When to Use\*\)\./, /A session task with no proof shows `\/fix-findings` and `\/fix-findings-reconcile`, the first preferred over the second\./],
+  ];
+  for (const [path, proven, unproven] of routes) {
+    const next = nextLine(path);
+    assert.match(next, proven, `${path} routes a proven link to the composite`);
+    assert.match(next, unproven, `${path} prefers /fix-findings over the composite without proof`);
+    assert.ok(next.includes(path === COMPOSITE ? "`../fix-findings-reconcile/SKILL.md` § *When to Use*" : cite), `${path} cites the composite's When to Use`);
+  }
+  const [prRoute, pathsRoute] = nextLine(REVIEW).split("A `paths` object sits on no PR");
+  assert.ok(pathsRoute);
+  assert.match(prRoute, /on a `pr` object, `\/publish-pr-review` posts the selected severity tier/);
+  assert.doesNotMatch(prRoute, /fix-findings/);
+  assert.match(pathsRoute, /`\/fix-findings-reconcile`/);
+  assert.match(nextLine("skills/review-docs/SKILL.md"), /The request form, such as `apply findings 1 and 3`, is the explicit request's paste-ready line\./, "review-docs gives the request form to the explicit-request route");
 });

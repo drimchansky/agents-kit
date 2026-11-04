@@ -140,7 +140,7 @@ End with the Handoff block (`./references/workflow/user-facing-messages.md` § *
 - **Done:** the assessment and finding counts by severity, pointing at **Summary** and **Findings**; with `-d`, the drafted description, pointing at **PR description**.
 - **Know:** what limits the review's coverage: an inline or degraded **Review pass**, a denied or skipped script, **Divergence** entries, a **Cross-check** disagreement, or **Inaccessible context** that could shift findings. Name the reviewed object, its PR if any, and retained evidence directory.
 - **Awaiting you:** missing evidence or engineer confirmation, pointing at **Evidence** when approval remains pending.
-- **Next:** on a `pr` object, `/publish-pr-review` posts the selected severity tier, with approval subject to evidence eligibility. A `paths` object sits on no PR; its findings go to `/fix-findings`. With `-d`, add that `/update-pr-description` applies the draft to the PR once findings are addressed.
+- **Next:** on a `pr` object, `/publish-pr-review` posts the selected severity tier, with approval subject to evidence eligibility. A `paths` object sits on no PR; its findings go to `/fix-findings`. When the reviewed paths provably belong to the session's task (`../fix-findings-reconcile/SKILL.md` § *When to Use*), they go to `/fix-findings-reconcile` instead. With a session task and no proof, offer both routes and recommend `/fix-findings`. With `-d`, add that `/update-pr-description` applies the draft to the PR once findings are addressed.
 
 ## PR description
 

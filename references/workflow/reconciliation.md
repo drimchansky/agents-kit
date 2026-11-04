@@ -5,7 +5,7 @@ For session → docs, load `./reconciliation-compaction.md` only when the size c
 Load and report structural repair before either reconciliation direction assesses task content (`./task-layout.md` § *Reading a resolved folder*). For resume/review composites, Phase 1 assesses the repaired task once; Phase 2 uses that same baseline and does not rerun repair. An explicit read-only request applies to every nested phase and prevents all task writes.
 
 - **Docs → reality** (`./reconciliation-docs-to-reality.md`): resume-task-reconcile and review-task-reconcile compare docs with built work. Standalone resume-task/review-task may follow claim citations, but cannot sweep reference lists.
-- **Session → docs** (`./reconciliation-session-to-docs.md`): reconcile-task records session discoveries without a write flag.
+- **Session → docs** (`./reconciliation-session-to-docs.md`): reconcile-task records session discoveries without a write flag. fix-findings-reconcile runs reconcile-task as its second phase, recording the fix run's outcome.
 
 ## Consent model: findings apply, the record carries them
 
