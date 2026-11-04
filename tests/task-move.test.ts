@@ -1242,7 +1242,7 @@ test("an unreadable registry refuses the run rather than resolving as if no root
   assertUnmoved(registered);
 });
 
-test("a path-route move draws its bound from a registry it cannot read rather than refusing on it", {
+test("a path-route move under an unreadable registry archives beside the task without refusing or warning", {
   skip: process.getuid?.() === 0 && "root reads a file whose bits deny it",
 }, () => {
   const home = area("path-locked-home");

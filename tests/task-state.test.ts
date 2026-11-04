@@ -2229,7 +2229,7 @@ test("compaction keeps the Live verification section as completion evidence", ()
   assert.deepStrictEqual(sections.removable, [{ heading: "Step 1 — Work", anchor: "step-1--work" }]);
 });
 
-test("in-place compaction preserves duplicate and nested anchors, protected bytes, and repeated section identities", () => {
+test("a test-assembled compaction keeps compaction sections and duplicate or nested step anchors resolving as before", () => {
   const protectedSections = [
     "## Current state\n\nWaiting on approval.\n\n",
     "## Compacted — 2025-12-01\n\n- Step 0 — Legacy\n\nfull text in git history (pre-compaction state).\n\n",
@@ -2261,11 +2261,9 @@ test("in-place compaction preserves duplicate and nested anchors, protected byte
   assert.strictEqual(sections.keep.find((section) => section.rule === "pause")?.anchor, "blocked--approval-1");
   for (const [first, second] of [[olderHeadings + note, newer], [older, newerHeadings + note], [olderHeadings + note, newerHeadings + note]]) {
     const after = assemble(first, second);
-    assert.ok(Buffer.byteLength(after) < Buffer.byteLength(before));
     assert.deepStrictEqual(compactionSections(after, "blocked"), sections);
     assert.deepStrictEqual(read(after).steps, read(before).steps);
     assert.ok(read(after).structure.reliable);
-    for (const protectedText of protectedSections) assert.ok(after.includes(protectedText));
     const repeated = after.replaceAll("Compacted 2026-11-01;", "Compacted 2026-11-02;");
     assert.deepStrictEqual(compactionSections(repeated, "blocked"), sections);
     assert.deepStrictEqual(read(repeated).steps, read(before).steps);

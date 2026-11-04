@@ -15,7 +15,7 @@ import {
 } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { basename, delimiter, dirname, join, resolve, sep } from "node:path";
-import { after, before, test, type TestContext } from "node:test";
+import { after, before, describe, test, type TestContext } from "node:test";
 import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
 
@@ -42,79 +42,29 @@ const TOML_INTERPRETERS: readonly string[] = [
 const TEST_ROOT_PREFIX = join(tmpdir(), "agents-kit-setup-install.");
 const TEST_ROOT = mkdtempSync(TEST_ROOT_PREFIX);
 const OPERATOR_HOME = resolve(homedir());
-const PRIMARY_HOME = join(TEST_ROOT, "primary-home");
-const CLAUDE_HOME = join(PRIMARY_HOME, ".claude");
-const CODEX_HOME = join(PRIMARY_HOME, ".codex");
-const HOMES: readonly string[] = [CLAUDE_HOME, CODEX_HOME];
-const CLAUDE_EXECUTOR = join(CLAUDE_HOME, "agents", "executor.md");
-const CODEX_EXECUTOR = join(CODEX_HOME, "agents", "executor.toml");
-const CLAUDE_EXECUTOR_MARKER = join(CLAUDE_HOME, "agents", EXECUTOR_MARKER);
-const CODEX_EXECUTOR_MARKER = join(CODEX_HOME, "agents", EXECUTOR_MARKER);
-const CLAUDE_BYSTANDER = join(CLAUDE_HOME, "agents", "bystander.md");
-const CODEX_BYSTANDER = join(CODEX_HOME, "agents", "bystander.toml");
 const RULE_FILE = "agents-kit-core-rules.md";
 const RULE_FILE_SKIP = `  skipped (not kit-managed): rules/${RULE_FILE}`;
-const RULE_OWNER_HOME = join(TEST_ROOT, "rule-owner-home");
-const RULE_OWNER_FILE = join(RULE_OWNER_HOME, ".claude", "rules", RULE_FILE);
-const LINKED_RULE_HOME = join(TEST_ROOT, "linked-rule-home");
-const LINKED_RULE_FILE = join(LINKED_RULE_HOME, ".claude", "rules", RULE_FILE);
-const LINKED_RULE_TARGET = join(TEST_ROOT, "user-rule.md");
-const DANGLING_RULE_HOME = join(TEST_ROOT, "dangling-rule-home");
-const DANGLING_RULE_FILE = join(DANGLING_RULE_HOME, ".claude", "rules", RULE_FILE);
-const DANGLING_RULE_TARGET = join(TEST_ROOT, "missing-rule.md");
 const USER_RULE_FILE = "user-owned Claude rule file\n";
-const CLAUDE_RULE_FILE = join(CLAUDE_HOME, "rules", RULE_FILE);
-const CLAUDE_SETTINGS = join(CLAUDE_HOME, "settings.json");
 const HOOK_EVENT = "SubagentStart";
 const HOOK_MATCHER = "^(Explore|Plan)$";
 const HOOK_TOKEN = "agents-kit-core-rules";
 const HOOK_CONTEXT_LIMIT = 10_000;
 const HOOK_SKIP = `Skipping the ${HOOK_EVENT} hook: `;
 const USER_RULE_READER = `cat ~/.claude/rules/${HOOK_TOKEN}.md`;
-const HOOK_MERGE_HOME = join(TEST_ROOT, "hook-merge-home");
-const HOOK_MERGE_SETTINGS = join(HOOK_MERGE_HOME, ".claude", "settings.json");
-const INVALID_SETTINGS_HOME = join(TEST_ROOT, "invalid-settings-home");
-const INVALID_SETTINGS = join(INVALID_SETTINGS_HOME, ".claude", "settings.json");
 const INVALID_SETTINGS_TEXT = '{\n  "model": "opus",\n';
-const DANGLING_SETTINGS_HOME = join(TEST_ROOT, "dangling-settings-home");
-const DANGLING_SETTINGS = join(DANGLING_SETTINGS_HOME, ".claude", "settings.json");
-const DANGLING_SETTINGS_TARGET = join(TEST_ROOT, "missing-settings-parent", "settings.json");
-const MISSHAPEN_SETTINGS_HOME = join(TEST_ROOT, "misshapen-settings-home");
-const MISSHAPEN_SETTINGS = join(MISSHAPEN_SETTINGS_HOME, ".claude", "settings.json");
 const MISSHAPEN_SETTINGS_TEXT = '{\n  "hooks": {\n    "SubagentStart": {\n      "matcher": "Explore"\n    }\n  }\n}\n';
-const LINKED_FILES_HOME = join(TEST_ROOT, "linked-files-home");
-const LINKED_SETTINGS = join(LINKED_FILES_HOME, ".claude", "settings.json");
-const LINKED_CODEX_AGENTS = join(LINKED_FILES_HOME, ".codex", "AGENTS.md");
-const SYNCED_DIR = join(TEST_ROOT, "synced");
-const SYNCED_SETTINGS = join(SYNCED_DIR, "settings.json");
-const SYNCED_CODEX_AGENTS = join(SYNCED_DIR, "codex-AGENTS.md");
 const SYNCED_CODEX_LINE = "Synced user line without a trailing newline.";
 const BLOCK_START = "<!-- agents-kit:core-rules:start -->";
 const BLOCK_END = "<!-- agents-kit:core-rules:end -->";
 const CODEX_BLOCK = `${BLOCK_START}\n${readFileSync(join(REPO_DIR, "CORE_RULES.md"), "utf8")}${BLOCK_END}`;
 const BLOCK_SKIP = "Skipping the core-rules block: ";
-const CODEX_AGENTS = join(CODEX_HOME, "AGENTS.md");
-const CODEX_BLOCK_HOME = join(TEST_ROOT, "codex-block-home");
-const CODEX_BLOCK_AGENTS = join(CODEX_BLOCK_HOME, ".codex", "AGENTS.md");
 const USER_CODEX_LINE = "Prefer the user's own Codex instruction.\n";
 const USER_CODEX_HEAD = "# User instructions\n\nKeep this line above the kit block.\n\n";
 const USER_CODEX_TAIL = "\nKeep this line below the kit block.\n";
 const STALE_CODEX_BLOCK = `${BLOCK_START}\nstale core rules\n${BLOCK_END}`;
-const UNMATCHED_MARKER_HOME = join(TEST_ROOT, "unmatched-marker-home");
-const UNMATCHED_MARKER_AGENTS = join(UNMATCHED_MARKER_HOME, ".codex", "AGENTS.md");
 const UNMATCHED_MARKER_TEXT = `${USER_CODEX_LINE}${BLOCK_START}\nan unterminated kit block\n${USER_CODEX_TAIL}${STALE_CODEX_BLOCK}\n`;
-const REVERSED_MARKER_HOME = join(TEST_ROOT, "reversed-marker-home");
-const REVERSED_MARKER_AGENTS = join(REVERSED_MARKER_HOME, ".codex", "AGENTS.md");
 const REVERSED_MARKER_TEXT = `${USER_CODEX_HEAD}${BLOCK_END}\n${USER_CODEX_LINE}${BLOCK_START}\n${USER_CODEX_TAIL}`;
-const RENAMED_WRITES_HOME = join(TEST_ROOT, "renamed-writes-home");
-const RENAMED_SETTINGS = join(RENAMED_WRITES_HOME, ".claude", "settings.json");
-const RENAMED_CODEX_AGENTS = join(RENAMED_WRITES_HOME, ".codex", "AGENTS.md");
 const RULE_SKIP = "Skipping the rule file: ";
-const DANGLING_RULES_HOME = join(TEST_ROOT, "dangling-rules-home");
-const DANGLING_RULES = join(DANGLING_RULES_HOME, ".claude", "rules");
-const DANGLING_RULES_TARGET = join(TEST_ROOT, "missing-rules-parent", "rules");
-const RULES_FILE_HOME = join(TEST_ROOT, "rules-file-home");
-const RULES_FILE = join(RULES_FILE_HOME, ".claude", "rules");
 const RULES_FILE_TEXT = "user file where the rules directory belongs\n";
 
 interface HookCommand {
@@ -154,11 +104,6 @@ const SYNCED_USER_SETTINGS: ClaudeSettings = {
   theme: "dark",
   hooks: { Stop: [commandEntry("echo synced-stop")] },
 };
-const CONFLICT_HOME = join(TEST_ROOT, "conflict-home");
-const CONFLICT_CLAUDE = join(CONFLICT_HOME, ".claude");
-const CONFLICT_CODEX = join(CONFLICT_HOME, ".codex");
-const CONFLICT_REFERENCE = join(CONFLICT_CLAUDE, "references", "user.txt");
-const CONFLICT_CORE_RULES = join(CONFLICT_CODEX, "CORE_RULES.md");
 const CONFLICT_ENTRIES: readonly string[] = [
   ".claude",
   join(".claude", "references"),
@@ -167,17 +112,8 @@ const CONFLICT_ENTRIES: readonly string[] = [
   join(".codex", "CORE_RULES.md"),
 ];
 
-const REPO_LINK_HOME = join(TEST_ROOT, "repo-link-home");
-const DANGLING_LINK_HOME = join(TEST_ROOT, "dangling-link-home");
-const FOREIGN_KIT_HOME = join(TEST_ROOT, "foreign-kit-home");
-const USER_LINK_HOME = join(TEST_ROOT, "user-link-home");
-const FOREIGN_KIT = join(TEST_ROOT, "foreign-kit");
-const DANGLING_TARGET = join(TEST_ROOT, "never-created", "skills");
-const USER_LINK_TARGET = join(TEST_ROOT, "user-owned", "skills");
 const USER_LINK_SKILL = "user-owned linked skill\n";
-const LINKED_ENTRY_HOME = join(TEST_ROOT, "linked-entry-home");
 const LINKED_ENTRY_NAME = "linked-fixture";
-const LINKED_ENTRY_TARGET = join(TEST_ROOT, "user-owned-marked", LINKED_ENTRY_NAME);
 const LINKED_ENTRY_SKILL = "user-owned skill reached through a link\n";
 const RETIRED_SKILL = "retired-fixture";
 const USER_RETIRED_SKILL = "user-owned retired-name skill\n";
@@ -189,6 +125,13 @@ const UNRELATED_CODEX_AGENT = "unrelated Codex agent\n";
 const USER_CLAUDE_REFERENCE = "user-owned Claude references\n";
 const USER_CODEX_CORE_RULES = "user-owned Codex core rules\n";
 type PathKind = "absent" | "directory" | "file" | "symlink" | "other";
+
+interface Scenario {
+  readonly root: string;
+  readonly home: string;
+  readonly claude: string;
+  readonly codex: string;
+}
 
 interface SetupRun {
   readonly status: number | null;
@@ -205,6 +148,10 @@ interface CleanInstall {
   readonly codexRuleFile: readonly string[];
   readonly codexBlock: readonly string[];
   readonly claudeBlock: readonly string[];
+  readonly settingsCreated: readonly string[];
+  readonly codexSettings: readonly string[];
+  readonly hookOutput: readonly string[];
+  readonly rerun: readonly string[];
 }
 
 interface TomlProbe {
@@ -237,10 +184,16 @@ interface CollisionRun {
   readonly problems: readonly string[];
 }
 
+interface LiveNameCollision {
+  readonly collision: CollisionRun;
+  readonly recovery: readonly string[];
+}
+
 interface ExecutorCollision extends PreservedPair {
   readonly skips: number;
   readonly unrelatedClaude: readonly string[];
   readonly unrelatedCodex: readonly string[];
+  readonly reinstall: CollisionRun;
 }
 
 interface OrphanRecovery {
@@ -249,21 +202,8 @@ interface OrphanRecovery {
   readonly unrelated: readonly string[];
 }
 
-interface WholeHomeConflict {
-  readonly status: number | null;
-  readonly log: string;
+interface RefusedRun extends SetupRun {
   readonly problems: readonly string[];
-}
-
-interface RefusedFile extends SetupRun {
-  readonly problems: readonly string[];
-}
-
-interface CleanSettings {
-  readonly kitEntry: HookEntry | null;
-  readonly created: readonly string[];
-  readonly codexSettings: readonly string[];
-  readonly hookOutput: readonly string[];
 }
 
 interface SettingsMerge {
@@ -282,50 +222,34 @@ interface CodexBlockEdits {
   readonly replaced: readonly string[];
 }
 
-interface Observations {
-  readonly clean: CleanInstall;
-  readonly toml: TomlProbe;
-  readonly doctor: DoctorProbe | null;
-  readonly managed: ManagedReinstall;
-  readonly retiredSkill: readonly string[];
-  readonly userSkill: PreservedPair;
-  readonly liveName: CollisionRun;
-  readonly liveNameRecovery: readonly string[];
-  readonly executor: ExecutorCollision;
-  readonly executorReinstall: CollisionRun;
-  readonly orphan: OrphanRecovery;
-  readonly conflict: WholeHomeConflict;
-  readonly symlinkGate: SymlinkGate;
-  readonly ruleOwner: CollisionRun & SetupRun;
-  readonly linkedRule: CollisionRun & SetupRun;
-  readonly danglingRule: CollisionRun & SetupRun;
-  readonly cleanSettings: CleanSettings;
-  readonly cleanRerun: readonly string[];
-  readonly hookMerge: SettingsMerge;
-  readonly invalidSettings: RefusedFile;
-  readonly danglingSettings: RefusedFile;
-  readonly misshapenSettings: RefusedFile;
-  readonly linkedFiles: LinkedFiles;
-  readonly codexBlockEdits: CodexBlockEdits;
-  readonly unmatchedMarkers: RefusedFile;
-  readonly reversedMarkers: RefusedFile;
-  readonly renamedWrites: readonly string[];
-  readonly danglingRules: RefusedFile;
-  readonly rulesFile: RefusedFile;
+function frozen<T>(value: T): T {
+  if (typeof value === "object" && value !== null && !Object.isFrozen(value)) {
+    for (const nested of Object.values(value)) frozen(nested);
+    Object.freeze(value);
+  }
+  return value;
 }
 
-interface RefusedLink {
-  readonly status: number | null;
-  readonly log: string;
-  readonly problems: readonly string[];
+function scenarioPaths(name: string): Scenario {
+  const root = join(TEST_ROOT, name);
+  const home = join(root, "home");
+  return { root, home, claude: join(home, ".claude"), codex: join(home, ".codex") };
 }
 
-interface SymlinkGate {
-  readonly repoLink: readonly string[];
-  readonly dangling: readonly string[];
-  readonly foreignKit: readonly string[];
-  readonly userLink: RefusedLink;
-  readonly linkedEntry: readonly string[];
+function useScenario(name: string): Scenario {
+  const scenario = scenarioPaths(name);
+  before(() => {
+    mkdirSync(scenario.home, { recursive: true });
+  });
+  after(() => {
+    assert.ok(scenario.root.startsWith(TEST_ROOT + sep), `refusing to remove a scenario outside the test root: ${scenario.root}`);
+    rmSync(scenario.root, { recursive: true, force: true });
+  });
+  return scenario;
+}
+
+function hostHomes(scenario: Scenario): readonly string[] {
+  return [scenario.claude, scenario.codex];
 }
 
 function pathKind(path: string): PathKind {
@@ -425,10 +349,10 @@ function agentProblems(hostHome: string, extension: string): string[] {
   ]);
 }
 
-function foreignFormatProblems(): string[] {
+function foreignFormatProblems(scenario: Scenario): string[] {
   return [
-    ...agentSources("toml").flatMap((name) => absenceProblems(join(CLAUDE_HOME, "agents", name))),
-    ...agentSources("md").flatMap((name) => absenceProblems(join(CODEX_HOME, "agents", name))),
+    ...agentSources("toml").flatMap((name) => absenceProblems(join(scenario.claude, "agents", name))),
+    ...agentSources("md").flatMap((name) => absenceProblems(join(scenario.codex, "agents", name))),
   ];
 }
 
@@ -510,344 +434,6 @@ function runSetup(isolatedHome: string): string {
   return run.log;
 }
 
-function observeCleanInstall(): CleanInstall {
-  mkdirSync(PRIMARY_HOME);
-  runSetup(PRIMARY_HOME);
-  return {
-    claudeAgent: agentProblems(CLAUDE_HOME, "md"),
-    codexAgent: agentProblems(CODEX_HOME, "toml"),
-    foreignFormats: foreignFormatProblems(),
-    claudePayload: sharedPayloadProblems(CLAUDE_HOME),
-    codexPayload: sharedPayloadProblems(CODEX_HOME),
-    claudeRuleFile: ruleFileProblems(CLAUDE_HOME),
-    codexRuleFile: ruleFileAbsenceProblems(CODEX_HOME),
-    codexBlock: contentProblems(CODEX_AGENTS, `${CODEX_BLOCK}\n`),
-    claudeBlock: absenceProblems(join(CLAUDE_HOME, "AGENTS.md")),
-  };
-}
-
-function observeTomlParse(): TomlProbe {
-  for (const interpreter of TOML_INTERPRETERS) {
-    const available = spawnSync(interpreter, ["-c", "import tomllib"], { encoding: "utf8" });
-    if (available.error !== undefined || available.status !== 0) continue;
-    const run = spawnSync(
-      interpreter,
-      [
-        "-c",
-        [
-          "import sys, tomllib",
-          'permission_keys = {"sandbox_mode", "sandbox_workspace_write", "sandbox_read_only", "approval_policy", "approvals_reviewer", "default_permissions", "permissions"}',
-          "for path in sys.argv[1:]:",
-          '    agent = tomllib.load(open(path, "rb"))',
-          "    overrides = sorted(permission_keys.intersection(agent))",
-          '    assert not overrides, f"{path}: permission overrides prevent inheritance: {overrides}"',
-          '    assert "network_proxy" not in agent.get("features", {}), f"{path}: network proxy configuration must inherit"',
-        ].join("\n"),
-        ...agentSources("toml").map((name) => join(CODEX_HOME, "agents", name)),
-      ],
-      { encoding: "utf8", maxBuffer: MAX_BUFFER_BYTES },
-    );
-    return { interpreter, status: run.status, output: `${run.stdout ?? ""}\n${run.stderr ?? ""}` };
-  }
-  return { interpreter: null, status: null, output: "" };
-}
-
-function runDoctor(args: readonly string[]): SetupRun {
-  const run = spawnSync("codex", ["--strict-config", "doctor", ...args], {
-    encoding: "utf8",
-    env: { ...process.env, CODEX_HOME },
-    maxBuffer: MAX_BUFFER_BYTES,
-  });
-  return {
-    status: run.error === undefined ? run.status : null,
-    log: run.error === undefined ? `${run.stdout ?? ""}\n${run.stderr ?? ""}` : "",
-  };
-}
-
-function doctorConfigLine(log: string): string {
-  const lines = log.split("\n");
-  const heading = lines.indexOf("Configuration");
-  if (heading === -1) return "";
-  return lines.slice(heading + 1).find((line) => /config\s+loaded/.test(line)) ?? "";
-}
-
-function observeDoctor(): DoctorProbe {
-  const summary = runDoctor(["--summary"]);
-  if (summary.status === null) return { available: false, configLine: "", summary: "", detail: "" };
-  const configLine = doctorConfigLine(summary.log);
-  const detail = configLine.includes(WARNED_CONFIG) ? runDoctor(["--no-color", "--ascii"]).log : "";
-  return { available: true, configLine, summary: summary.log, detail };
-}
-
-function observeManagedReinstall(): ManagedReinstall {
-  for (const name of agentSources("md")) writeFileSync(join(CLAUDE_HOME, "agents", name), "stale managed Claude definition\n");
-  for (const name of agentSources("toml")) writeFileSync(join(CODEX_HOME, "agents", name), "stale managed Codex definition\n");
-  for (const home of HOMES) {
-    writeFileSync(join(home, "skills", "translate", "SKILL.md"), "stale managed skill\n");
-    writeFileSync(join(home, "references", "workflow", "executor-contract.md"), "stale managed reference\n");
-    writeFileSync(join(home, "CORE_RULES.md"), "stale managed core rules\n");
-  }
-  writeFileSync(join(CLAUDE_HOME, "rules", RULE_FILE), "stale managed rule file\n");
-  runSetup(PRIMARY_HOME);
-  return {
-    claudeAgent: agentProblems(CLAUDE_HOME, "md"),
-    codexAgent: agentProblems(CODEX_HOME, "toml"),
-    payload: HOMES.flatMap((home) => sharedPayloadProblems(home)),
-    ruleFile: ruleFileProblems(CLAUDE_HOME),
-  };
-}
-
-function observeRetiredSkill(): string[] {
-  for (const home of HOMES) {
-    const skill = join(home, "skills", RETIRED_SKILL);
-    mkdirSync(skill);
-    writeFileSync(join(skill, MARKER), "");
-    writeFileSync(join(skill, "SKILL.md"), "retired managed skill\n");
-  }
-  runSetup(PRIMARY_HOME);
-  return [
-    ...HOMES.flatMap((home) => absenceProblems(join(home, "skills", RETIRED_SKILL))),
-    ...HOMES.flatMap((home) => sharedPayloadProblems(home)),
-  ];
-}
-
-function observeUserOwnedSkill(): PreservedPair {
-  for (const home of HOMES) {
-    const skill = join(home, "skills", RETIRED_SKILL);
-    mkdirSync(skill);
-    writeFileSync(join(skill, "SKILL.md"), USER_RETIRED_SKILL);
-  }
-  runSetup(PRIMARY_HOME);
-  return {
-    claude: preservedSkillProblems(CLAUDE_HOME, RETIRED_SKILL, USER_RETIRED_SKILL),
-    codex: preservedSkillProblems(CODEX_HOME, RETIRED_SKILL, USER_RETIRED_SKILL),
-  };
-}
-
-function observeLiveNameCollision(collidingSkill: string): CollisionRun {
-  for (const home of HOMES) {
-    const skill = join(home, "skills", collidingSkill);
-    rmSync(skill, { recursive: true, force: true });
-    mkdirSync(skill);
-    writeFileSync(join(skill, "SKILL.md"), USER_LIVE_SKILL);
-  }
-  const log = runSetup(PRIMARY_HOME);
-  return {
-    skips: countExactLines(log, `  skipped (not kit-managed): ${collidingSkill}`),
-    problems: HOMES.flatMap((home) => [
-      ...preservedSkillProblems(home, collidingSkill, USER_LIVE_SKILL),
-      ...unchangedTreeProblems(join(home, "skills", collidingSkill), ["SKILL.md"]),
-    ]),
-  };
-}
-
-function observeLiveNameRecovery(collidingSkill: string): string[] {
-  for (const home of HOMES) rmSync(join(home, "skills", collidingSkill), { recursive: true, force: true });
-  runSetup(PRIMARY_HOME);
-  return HOMES.flatMap((home) => sharedPayloadProblems(home));
-}
-
-function preservedExecutorProblems(): string[] {
-  return [
-    ...contentProblems(CLAUDE_EXECUTOR, USER_CLAUDE_EXECUTOR),
-    ...absenceProblems(CLAUDE_EXECUTOR_MARKER),
-    ...contentProblems(CODEX_EXECUTOR, USER_CODEX_EXECUTOR),
-    ...absenceProblems(CODEX_EXECUTOR_MARKER),
-  ];
-}
-
-function preservedUnrelatedProblems(): string[] {
-  return [
-    ...contentProblems(CLAUDE_BYSTANDER, UNRELATED_CLAUDE_AGENT),
-    ...contentProblems(CODEX_BYSTANDER, UNRELATED_CODEX_AGENT),
-  ];
-}
-
-function observeExecutorCollision(): ExecutorCollision {
-  rmSync(CLAUDE_EXECUTOR_MARKER);
-  rmSync(CODEX_EXECUTOR_MARKER);
-  writeFileSync(CLAUDE_EXECUTOR, USER_CLAUDE_EXECUTOR);
-  writeFileSync(CODEX_EXECUTOR, USER_CODEX_EXECUTOR);
-  writeFileSync(CLAUDE_BYSTANDER, UNRELATED_CLAUDE_AGENT);
-  writeFileSync(CODEX_BYSTANDER, UNRELATED_CODEX_AGENT);
-  const log = runSetup(PRIMARY_HOME);
-  return {
-    skips: countMatchingLines(log, EXECUTOR_SKIP),
-    claude: [...contentProblems(CLAUDE_EXECUTOR, USER_CLAUDE_EXECUTOR), ...absenceProblems(CLAUDE_EXECUTOR_MARKER)],
-    codex: [...contentProblems(CODEX_EXECUTOR, USER_CODEX_EXECUTOR), ...absenceProblems(CODEX_EXECUTOR_MARKER)],
-    unrelatedClaude: contentProblems(CLAUDE_BYSTANDER, UNRELATED_CLAUDE_AGENT),
-    unrelatedCodex: contentProblems(CODEX_BYSTANDER, UNRELATED_CODEX_AGENT),
-  };
-}
-
-function observeExecutorReinstall(): CollisionRun {
-  const log = runSetup(PRIMARY_HOME);
-  return {
-    skips: countMatchingLines(log, EXECUTOR_SKIP),
-    problems: [...preservedExecutorProblems(), ...preservedUnrelatedProblems()],
-  };
-}
-
-function orphanAgents(hostHome: string, extension: string): void {
-  for (const name of agentSources(extension)) {
-    rmSync(join(hostHome, "agents", name));
-    writeFileSync(join(hostHome, "agents", `${AGENT_MARKER_PREFIX}${basename(name, `.${extension}`)}`), "");
-  }
-}
-
-function observeOrphanRecovery(): OrphanRecovery {
-  orphanAgents(CLAUDE_HOME, "md");
-  orphanAgents(CODEX_HOME, "toml");
-  runSetup(PRIMARY_HOME);
-  return {
-    claudeAgent: agentProblems(CLAUDE_HOME, "md"),
-    codexAgent: agentProblems(CODEX_HOME, "toml"),
-    unrelated: preservedUnrelatedProblems(),
-  };
-}
-
-function observeWholeHomeConflict(): WholeHomeConflict {
-  mkdirSync(dirname(CONFLICT_REFERENCE), { recursive: true });
-  mkdirSync(CONFLICT_CODEX, { recursive: true });
-  writeFileSync(CONFLICT_REFERENCE, USER_CLAUDE_REFERENCE);
-  writeFileSync(CONFLICT_CORE_RULES, USER_CODEX_CORE_RULES);
-  const run = spawnSetup(CONFLICT_HOME);
-  return {
-    status: run.status,
-    log: run.log,
-    problems: [
-      ...contentProblems(CONFLICT_REFERENCE, USER_CLAUDE_REFERENCE),
-      ...contentProblems(CONFLICT_CORE_RULES, USER_CODEX_CORE_RULES),
-      ...unchangedTreeProblems(CONFLICT_HOME, CONFLICT_ENTRIES),
-    ],
-  };
-}
-
-function linkedHome(home: string, target: string): void {
-  mkdirSync(join(home, ".claude"), { recursive: true });
-  symlinkSync(target, join(home, ".claude", "skills"));
-}
-
-function reclaimedProblems(home: string): string[] {
-  const skills = join(home, ".claude", "skills");
-  const kind = pathKind(skills);
-  if (kind !== "directory") return [`expected a reclaimed skills directory, found ${kind}: ${skills}`];
-  return skillNames().flatMap((name) => markerProblems(join(skills, name, MARKER)));
-}
-
-function preservedTargetProblems(target: string): string[] {
-  return pathKind(target) === "directory" ? [] : [`a link target was removed through the symlink: ${target}`];
-}
-
-function observeSymlinkGate(): SymlinkGate {
-  linkedHome(REPO_LINK_HOME, join(REPO_DIR, "skills"));
-  runSetup(REPO_LINK_HOME);
-  const repoLink = [
-    ...reclaimedProblems(REPO_LINK_HOME),
-    ...preservedTargetProblems(join(REPO_DIR, "skills")),
-  ];
-
-  linkedHome(DANGLING_LINK_HOME, DANGLING_TARGET);
-  runSetup(DANGLING_LINK_HOME);
-  const dangling = reclaimedProblems(DANGLING_LINK_HOME);
-
-  mkdirSync(join(FOREIGN_KIT, "skills"), { recursive: true });
-  mkdirSync(join(FOREIGN_KIT, "references"), { recursive: true });
-  writeFileSync(join(FOREIGN_KIT, "setup.ts"), "// a second kit checkout\n");
-  writeFileSync(join(FOREIGN_KIT, "CORE_RULES.md"), "# a second kit checkout\n");
-  linkedHome(FOREIGN_KIT_HOME, join(FOREIGN_KIT, "skills"));
-  runSetup(FOREIGN_KIT_HOME);
-  const foreignKit = [
-    ...reclaimedProblems(FOREIGN_KIT_HOME),
-    ...preservedTargetProblems(join(FOREIGN_KIT, "skills")),
-  ];
-
-  mkdirSync(LINKED_ENTRY_TARGET, { recursive: true });
-  writeFileSync(join(LINKED_ENTRY_TARGET, MARKER), "");
-  writeFileSync(join(LINKED_ENTRY_TARGET, "SKILL.md"), LINKED_ENTRY_SKILL);
-  for (const home of [".claude", ".codex"]) {
-    mkdirSync(join(LINKED_ENTRY_HOME, home, "skills"), { recursive: true });
-    symlinkSync(LINKED_ENTRY_TARGET, join(LINKED_ENTRY_HOME, home, "skills", LINKED_ENTRY_NAME));
-  }
-  runSetup(LINKED_ENTRY_HOME);
-  const linkedEntry = [
-    ...[".claude", ".codex"].flatMap((home) => {
-      const link = join(LINKED_ENTRY_HOME, home, "skills", LINKED_ENTRY_NAME);
-      const kind = pathKind(link);
-      return kind === "symlink" ? [] : [`the sweep removed a linked entry whose target holds a marker: ${link} (found ${kind})`];
-    }),
-    ...preservedTargetProblems(LINKED_ENTRY_TARGET),
-    ...contentProblems(join(LINKED_ENTRY_TARGET, "SKILL.md"), LINKED_ENTRY_SKILL),
-  ];
-
-  mkdirSync(USER_LINK_TARGET, { recursive: true });
-  writeFileSync(join(USER_LINK_TARGET, "SKILL.md"), USER_LINK_SKILL);
-  linkedHome(USER_LINK_HOME, USER_LINK_TARGET);
-  const run = spawnSetup(USER_LINK_HOME);
-  return {
-    repoLink,
-    dangling,
-    foreignKit,
-    linkedEntry,
-    userLink: {
-      status: run.status,
-      log: run.log,
-      problems: [
-        pathKind(join(USER_LINK_HOME, ".claude", "skills")) === "symlink"
-          ? []
-          : ["the user's skills symlink was reclaimed rather than refused"],
-        contentProblems(join(USER_LINK_TARGET, "SKILL.md"), USER_LINK_SKILL),
-        markerProblems(join(USER_LINK_HOME, ".codex", CORE_RULES_MARKER)),
-      ].flat(),
-    },
-  };
-}
-
-function observeRuleOwner(): CollisionRun & SetupRun {
-  mkdirSync(dirname(RULE_OWNER_FILE), { recursive: true });
-  writeFileSync(RULE_OWNER_FILE, USER_RULE_FILE);
-  const run = spawnSetup(RULE_OWNER_HOME);
-  return {
-    ...run,
-    skips: countExactLines(run.log, RULE_FILE_SKIP),
-    problems: [
-      ...contentProblems(RULE_OWNER_FILE, USER_RULE_FILE),
-      ...absenceProblems(join(dirname(RULE_OWNER_FILE), CORE_RULES_MARKER)),
-    ],
-  };
-}
-
-function observeLinkedRule(): CollisionRun & SetupRun {
-  mkdirSync(dirname(LINKED_RULE_FILE), { recursive: true });
-  writeFileSync(join(dirname(LINKED_RULE_FILE), CORE_RULES_MARKER), "");
-  writeFileSync(LINKED_RULE_TARGET, USER_RULE_FILE);
-  symlinkSync(LINKED_RULE_TARGET, LINKED_RULE_FILE);
-  const run = spawnSetup(LINKED_RULE_HOME);
-  return {
-    ...run,
-    skips: countExactLines(run.log, RULE_FILE_SKIP),
-    problems: [
-      ...linkProblems(LINKED_RULE_FILE, LINKED_RULE_TARGET),
-      ...contentProblems(LINKED_RULE_TARGET, USER_RULE_FILE),
-    ],
-  };
-}
-
-function observeDanglingRule(): CollisionRun & SetupRun {
-  mkdirSync(dirname(DANGLING_RULE_FILE), { recursive: true });
-  symlinkSync(DANGLING_RULE_TARGET, DANGLING_RULE_FILE);
-  const run = spawnSetup(DANGLING_RULE_HOME);
-  return {
-    ...run,
-    skips: countExactLines(run.log, RULE_FILE_SKIP),
-    problems: [
-      ...linkProblems(DANGLING_RULE_FILE, DANGLING_RULE_TARGET),
-      ...absenceProblems(DANGLING_RULE_TARGET),
-      ...absenceProblems(join(dirname(DANGLING_RULE_FILE), CORE_RULES_MARKER)),
-    ],
-  };
-}
-
 function settingsText(settings: unknown): string {
   return `${JSON.stringify(settings, null, 2)}\n`;
 }
@@ -863,6 +449,15 @@ function installedKitEntry(settingsPath: string): HookEntry | null {
   } catch {
     return null;
   }
+}
+
+function referenceKitEntry(scenario: Scenario): HookEntry {
+  const referenceHome = join(scenario.root, "reference-home");
+  mkdirSync(referenceHome);
+  runSetup(referenceHome);
+  const entry = installedKitEntry(join(referenceHome, ".claude", "settings.json"));
+  assert.ok(entry !== null, `the reference install wrote no ${HOOK_EVENT} entry`);
+  return entry;
 }
 
 function kitEntryProblems(entry: HookEntry | null): string[] {
@@ -908,19 +503,6 @@ function hookOutputProblems(isolatedHome: string, entry: HookEntry | null): stri
   ];
 }
 
-function observeCleanSettings(): CleanSettings {
-  const kitEntry = installedKitEntry(CLAUDE_SETTINGS);
-  return {
-    kitEntry,
-    created: [
-      ...kitEntryProblems(kitEntry),
-      ...contentProblems(CLAUDE_SETTINGS, settingsText({ hooks: { [HOOK_EVENT]: [kitEntry] } })),
-    ],
-    codexSettings: absenceProblems(join(CODEX_HOME, "settings.json")),
-    hookOutput: hookOutputProblems(PRIMARY_HOME, kitEntry),
-  };
-}
-
 function fileSnapshot(paths: readonly string[]): (Buffer | null)[] {
   return paths.map((path) => (pathKind(path) === "absent" ? null : readFileSync(path)));
 }
@@ -934,18 +516,390 @@ function rerunProblems(isolatedHome: string, paths: readonly string[]): string[]
   );
 }
 
-function observeHookMerge(kitEntry: HookEntry | null): SettingsMerge {
-  const kitHooks = kitEntry?.hooks ?? [];
+function linkProblems(link: string, target: string): string[] {
+  return pathKind(link) === "symlink" && readlinkSync(link) === target
+    ? []
+    : [`expected ${link} to remain a symlink to ${target} (found ${pathKind(link)})`];
+}
+
+function observeCleanInstall(scenario: Scenario): CleanInstall {
+  runSetup(scenario.home);
+  const settings = join(scenario.claude, "settings.json");
+  const codexAgents = join(scenario.codex, "AGENTS.md");
+  const kitEntry = installedKitEntry(settings);
+  const install = {
+    claudeAgent: agentProblems(scenario.claude, "md"),
+    codexAgent: agentProblems(scenario.codex, "toml"),
+    foreignFormats: foreignFormatProblems(scenario),
+    claudePayload: sharedPayloadProblems(scenario.claude),
+    codexPayload: sharedPayloadProblems(scenario.codex),
+    claudeRuleFile: ruleFileProblems(scenario.claude),
+    codexRuleFile: ruleFileAbsenceProblems(scenario.codex),
+    codexBlock: contentProblems(codexAgents, `${CODEX_BLOCK}\n`),
+    claudeBlock: absenceProblems(join(scenario.claude, "AGENTS.md")),
+    settingsCreated: [
+      ...kitEntryProblems(kitEntry),
+      ...contentProblems(settings, settingsText({ hooks: { [HOOK_EVENT]: [kitEntry] } })),
+    ],
+    codexSettings: absenceProblems(join(scenario.codex, "settings.json")),
+    hookOutput: hookOutputProblems(scenario.home, kitEntry),
+  };
+  return {
+    ...install,
+    rerun: rerunProblems(scenario.home, [join(scenario.claude, "rules", RULE_FILE), settings, codexAgents]),
+  };
+}
+
+function observeTomlParse(codexHome: string): TomlProbe {
+  for (const interpreter of TOML_INTERPRETERS) {
+    const available = spawnSync(interpreter, ["-c", "import tomllib"], { encoding: "utf8" });
+    if (available.error !== undefined || available.status !== 0) continue;
+    const run = spawnSync(
+      interpreter,
+      [
+        "-c",
+        [
+          "import sys, tomllib",
+          'permission_keys = {"sandbox_mode", "sandbox_workspace_write", "sandbox_read_only", "approval_policy", "approvals_reviewer", "default_permissions", "permissions"}',
+          "for path in sys.argv[1:]:",
+          '    agent = tomllib.load(open(path, "rb"))',
+          "    overrides = sorted(permission_keys.intersection(agent))",
+          '    assert not overrides, f"{path}: permission overrides prevent inheritance: {overrides}"',
+          '    assert "network_proxy" not in agent.get("features", {}), f"{path}: network proxy configuration must inherit"',
+        ].join("\n"),
+        ...agentSources("toml").map((name) => join(codexHome, "agents", name)),
+      ],
+      { encoding: "utf8", maxBuffer: MAX_BUFFER_BYTES },
+    );
+    return { interpreter, status: run.status, output: `${run.stdout ?? ""}\n${run.stderr ?? ""}` };
+  }
+  return { interpreter: null, status: null, output: "" };
+}
+
+function runDoctor(codexHome: string, args: readonly string[]): SetupRun {
+  const run = spawnSync("codex", ["--strict-config", "doctor", ...args], {
+    encoding: "utf8",
+    env: { ...process.env, CODEX_HOME: codexHome },
+    maxBuffer: MAX_BUFFER_BYTES,
+  });
+  return {
+    status: run.error === undefined ? run.status : null,
+    log: run.error === undefined ? `${run.stdout ?? ""}\n${run.stderr ?? ""}` : "",
+  };
+}
+
+function doctorConfigLine(log: string): string {
+  const lines = log.split("\n");
+  const heading = lines.indexOf("Configuration");
+  if (heading === -1) return "";
+  return lines.slice(heading + 1).find((line) => /config\s+loaded/.test(line)) ?? "";
+}
+
+function observeDoctor(codexHome: string): DoctorProbe {
+  const summary = runDoctor(codexHome, ["--summary"]);
+  if (summary.status === null) return { available: false, configLine: "", summary: "", detail: "" };
+  const configLine = doctorConfigLine(summary.log);
+  const detail = configLine.includes(WARNED_CONFIG) ? runDoctor(codexHome, ["--no-color", "--ascii"]).log : "";
+  return { available: true, configLine, summary: summary.log, detail };
+}
+
+function observeManagedReinstall(scenario: Scenario): ManagedReinstall {
+  runSetup(scenario.home);
+  for (const name of agentSources("md")) writeFileSync(join(scenario.claude, "agents", name), "stale managed Claude definition\n");
+  for (const name of agentSources("toml")) writeFileSync(join(scenario.codex, "agents", name), "stale managed Codex definition\n");
+  for (const home of hostHomes(scenario)) {
+    writeFileSync(join(home, "skills", "translate", "SKILL.md"), "stale managed skill\n");
+    writeFileSync(join(home, "references", "workflow", "executor-contract.md"), "stale managed reference\n");
+    writeFileSync(join(home, "CORE_RULES.md"), "stale managed core rules\n");
+  }
+  writeFileSync(join(scenario.claude, "rules", RULE_FILE), "stale managed rule file\n");
+  runSetup(scenario.home);
+  return {
+    claudeAgent: agentProblems(scenario.claude, "md"),
+    codexAgent: agentProblems(scenario.codex, "toml"),
+    payload: hostHomes(scenario).flatMap((home) => sharedPayloadProblems(home)),
+    ruleFile: ruleFileProblems(scenario.claude),
+  };
+}
+
+function observeRetiredSkill(scenario: Scenario): string[] {
+  runSetup(scenario.home);
+  for (const home of hostHomes(scenario)) {
+    const skill = join(home, "skills", RETIRED_SKILL);
+    mkdirSync(skill);
+    writeFileSync(join(skill, MARKER), "");
+    writeFileSync(join(skill, "SKILL.md"), "retired managed skill\n");
+  }
+  runSetup(scenario.home);
+  return [
+    ...hostHomes(scenario).flatMap((home) => absenceProblems(join(home, "skills", RETIRED_SKILL))),
+    ...hostHomes(scenario).flatMap((home) => sharedPayloadProblems(home)),
+  ];
+}
+
+function observeUserOwnedSkill(scenario: Scenario): PreservedPair {
+  runSetup(scenario.home);
+  for (const home of hostHomes(scenario)) {
+    const skill = join(home, "skills", RETIRED_SKILL);
+    mkdirSync(skill);
+    writeFileSync(join(skill, "SKILL.md"), USER_RETIRED_SKILL);
+  }
+  runSetup(scenario.home);
+  return {
+    claude: preservedSkillProblems(scenario.claude, RETIRED_SKILL, USER_RETIRED_SKILL),
+    codex: preservedSkillProblems(scenario.codex, RETIRED_SKILL, USER_RETIRED_SKILL),
+  };
+}
+
+function observeLiveNameCollision(scenario: Scenario, collidingSkill: string): LiveNameCollision {
+  runSetup(scenario.home);
+  for (const home of hostHomes(scenario)) {
+    const skill = join(home, "skills", collidingSkill);
+    rmSync(skill, { recursive: true, force: true });
+    mkdirSync(skill);
+    writeFileSync(join(skill, "SKILL.md"), USER_LIVE_SKILL);
+  }
+  const log = runSetup(scenario.home);
+  const collision = {
+    skips: countExactLines(log, `  skipped (not kit-managed): ${collidingSkill}`),
+    problems: hostHomes(scenario).flatMap((home) => [
+      ...preservedSkillProblems(home, collidingSkill, USER_LIVE_SKILL),
+      ...unchangedTreeProblems(join(home, "skills", collidingSkill), ["SKILL.md"]),
+    ]),
+  };
+  for (const home of hostHomes(scenario)) rmSync(join(home, "skills", collidingSkill), { recursive: true, force: true });
+  runSetup(scenario.home);
+  return { collision, recovery: hostHomes(scenario).flatMap((home) => sharedPayloadProblems(home)) };
+}
+
+function writeUnrelatedAgents(scenario: Scenario): void {
+  writeFileSync(join(scenario.claude, "agents", "bystander.md"), UNRELATED_CLAUDE_AGENT);
+  writeFileSync(join(scenario.codex, "agents", "bystander.toml"), UNRELATED_CODEX_AGENT);
+}
+
+function preservedUnrelatedProblems(scenario: Scenario): string[] {
+  return [
+    ...contentProblems(join(scenario.claude, "agents", "bystander.md"), UNRELATED_CLAUDE_AGENT),
+    ...contentProblems(join(scenario.codex, "agents", "bystander.toml"), UNRELATED_CODEX_AGENT),
+  ];
+}
+
+function preservedExecutorProblems(hostHome: string, extension: string, content: string): string[] {
+  return [
+    ...contentProblems(join(hostHome, "agents", `executor.${extension}`), content),
+    ...absenceProblems(join(hostHome, "agents", EXECUTOR_MARKER)),
+  ];
+}
+
+function observeExecutorCollision(scenario: Scenario): ExecutorCollision {
+  runSetup(scenario.home);
+  rmSync(join(scenario.claude, "agents", EXECUTOR_MARKER));
+  rmSync(join(scenario.codex, "agents", EXECUTOR_MARKER));
+  writeFileSync(join(scenario.claude, "agents", "executor.md"), USER_CLAUDE_EXECUTOR);
+  writeFileSync(join(scenario.codex, "agents", "executor.toml"), USER_CODEX_EXECUTOR);
+  writeUnrelatedAgents(scenario);
+  const log = runSetup(scenario.home);
+  const collision = {
+    skips: countMatchingLines(log, EXECUTOR_SKIP),
+    claude: preservedExecutorProblems(scenario.claude, "md", USER_CLAUDE_EXECUTOR),
+    codex: preservedExecutorProblems(scenario.codex, "toml", USER_CODEX_EXECUTOR),
+    unrelatedClaude: contentProblems(join(scenario.claude, "agents", "bystander.md"), UNRELATED_CLAUDE_AGENT),
+    unrelatedCodex: contentProblems(join(scenario.codex, "agents", "bystander.toml"), UNRELATED_CODEX_AGENT),
+  };
+  const rerunLog = runSetup(scenario.home);
+  return {
+    ...collision,
+    reinstall: {
+      skips: countMatchingLines(rerunLog, EXECUTOR_SKIP),
+      problems: [
+        ...preservedExecutorProblems(scenario.claude, "md", USER_CLAUDE_EXECUTOR),
+        ...preservedExecutorProblems(scenario.codex, "toml", USER_CODEX_EXECUTOR),
+        ...preservedUnrelatedProblems(scenario),
+      ],
+    },
+  };
+}
+
+function orphanAgents(hostHome: string, extension: string): void {
+  for (const name of agentSources(extension)) {
+    rmSync(join(hostHome, "agents", name));
+    writeFileSync(join(hostHome, "agents", `${AGENT_MARKER_PREFIX}${basename(name, `.${extension}`)}`), "");
+  }
+}
+
+function observeOrphanRecovery(scenario: Scenario): OrphanRecovery {
+  runSetup(scenario.home);
+  writeUnrelatedAgents(scenario);
+  orphanAgents(scenario.claude, "md");
+  orphanAgents(scenario.codex, "toml");
+  runSetup(scenario.home);
+  return {
+    claudeAgent: agentProblems(scenario.claude, "md"),
+    codexAgent: agentProblems(scenario.codex, "toml"),
+    unrelated: preservedUnrelatedProblems(scenario),
+  };
+}
+
+function observeWholeHomeConflict(scenario: Scenario): RefusedRun {
+  const reference = join(scenario.claude, "references", "user.txt");
+  const coreRules = join(scenario.codex, "CORE_RULES.md");
+  mkdirSync(dirname(reference), { recursive: true });
+  mkdirSync(scenario.codex, { recursive: true });
+  writeFileSync(reference, USER_CLAUDE_REFERENCE);
+  writeFileSync(coreRules, USER_CODEX_CORE_RULES);
+  const run = spawnSetup(scenario.home);
+  return {
+    ...run,
+    problems: [
+      ...contentProblems(reference, USER_CLAUDE_REFERENCE),
+      ...contentProblems(coreRules, USER_CODEX_CORE_RULES),
+      ...unchangedTreeProblems(scenario.home, CONFLICT_ENTRIES),
+    ],
+  };
+}
+
+function linkSkills(scenario: Scenario, target: string): void {
+  mkdirSync(scenario.claude, { recursive: true });
+  symlinkSync(target, join(scenario.claude, "skills"));
+}
+
+function reclaimedProblems(scenario: Scenario): string[] {
+  const skills = join(scenario.claude, "skills");
+  const kind = pathKind(skills);
+  if (kind !== "directory") return [`expected a reclaimed skills directory, found ${kind}: ${skills}`];
+  return skillNames().flatMap((name) => markerProblems(join(skills, name, MARKER)));
+}
+
+function preservedTargetProblems(target: string): string[] {
+  return pathKind(target) === "directory" ? [] : [`a link target was removed through the symlink: ${target}`];
+}
+
+function observeRepoLink(scenario: Scenario): string[] {
+  linkSkills(scenario, join(REPO_DIR, "skills"));
+  runSetup(scenario.home);
+  return [...reclaimedProblems(scenario), ...preservedTargetProblems(join(REPO_DIR, "skills"))];
+}
+
+function observeDanglingLink(scenario: Scenario): string[] {
+  linkSkills(scenario, join(scenario.root, "never-created", "skills"));
+  runSetup(scenario.home);
+  return reclaimedProblems(scenario);
+}
+
+function observeForeignKitLink(scenario: Scenario): string[] {
+  const foreignKit = join(scenario.root, "foreign-kit");
+  mkdirSync(join(foreignKit, "skills"), { recursive: true });
+  mkdirSync(join(foreignKit, "references"), { recursive: true });
+  writeFileSync(join(foreignKit, "setup.ts"), "// a second kit checkout\n");
+  writeFileSync(join(foreignKit, "CORE_RULES.md"), "# a second kit checkout\n");
+  linkSkills(scenario, join(foreignKit, "skills"));
+  runSetup(scenario.home);
+  return [...reclaimedProblems(scenario), ...preservedTargetProblems(join(foreignKit, "skills"))];
+}
+
+function observeLinkedEntry(scenario: Scenario): string[] {
+  const target = join(scenario.root, "user-owned-marked", LINKED_ENTRY_NAME);
+  mkdirSync(target, { recursive: true });
+  writeFileSync(join(target, MARKER), "");
+  writeFileSync(join(target, "SKILL.md"), LINKED_ENTRY_SKILL);
+  for (const home of hostHomes(scenario)) {
+    mkdirSync(join(home, "skills"), { recursive: true });
+    symlinkSync(target, join(home, "skills", LINKED_ENTRY_NAME));
+  }
+  runSetup(scenario.home);
+  return [
+    ...hostHomes(scenario).flatMap((home) => {
+      const link = join(home, "skills", LINKED_ENTRY_NAME);
+      const kind = pathKind(link);
+      return kind === "symlink" ? [] : [`the sweep removed a linked entry whose target holds a marker: ${link} (found ${kind})`];
+    }),
+    ...preservedTargetProblems(target),
+    ...contentProblems(join(target, "SKILL.md"), LINKED_ENTRY_SKILL),
+  ];
+}
+
+function observeUserLink(scenario: Scenario): RefusedRun {
+  const target = join(scenario.root, "user-owned", "skills");
+  mkdirSync(target, { recursive: true });
+  writeFileSync(join(target, "SKILL.md"), USER_LINK_SKILL);
+  linkSkills(scenario, target);
+  const run = spawnSetup(scenario.home);
+  return {
+    ...run,
+    problems: [
+      pathKind(join(scenario.claude, "skills")) === "symlink"
+        ? []
+        : ["the user's skills symlink was reclaimed rather than refused"],
+      contentProblems(join(target, "SKILL.md"), USER_LINK_SKILL),
+      markerProblems(join(scenario.codex, CORE_RULES_MARKER)),
+    ].flat(),
+  };
+}
+
+function claudeRuleFile(scenario: Scenario): string {
+  return join(scenario.claude, "rules", RULE_FILE);
+}
+
+function observeRuleOwner(scenario: Scenario): CollisionRun & SetupRun {
+  const ruleFile = claudeRuleFile(scenario);
+  mkdirSync(dirname(ruleFile), { recursive: true });
+  writeFileSync(ruleFile, USER_RULE_FILE);
+  const run = spawnSetup(scenario.home);
+  return {
+    ...run,
+    skips: countExactLines(run.log, RULE_FILE_SKIP),
+    problems: [
+      ...contentProblems(ruleFile, USER_RULE_FILE),
+      ...absenceProblems(join(dirname(ruleFile), CORE_RULES_MARKER)),
+    ],
+  };
+}
+
+function observeLinkedRule(scenario: Scenario): CollisionRun & SetupRun {
+  const ruleFile = claudeRuleFile(scenario);
+  const target = join(scenario.root, "user-rule.md");
+  mkdirSync(dirname(ruleFile), { recursive: true });
+  writeFileSync(join(dirname(ruleFile), CORE_RULES_MARKER), "");
+  writeFileSync(target, USER_RULE_FILE);
+  symlinkSync(target, ruleFile);
+  const run = spawnSetup(scenario.home);
+  return {
+    ...run,
+    skips: countExactLines(run.log, RULE_FILE_SKIP),
+    problems: [...linkProblems(ruleFile, target), ...contentProblems(target, USER_RULE_FILE)],
+  };
+}
+
+function observeDanglingRule(scenario: Scenario): CollisionRun & SetupRun {
+  const ruleFile = claudeRuleFile(scenario);
+  const target = join(scenario.root, "missing-rule.md");
+  mkdirSync(dirname(ruleFile), { recursive: true });
+  symlinkSync(target, ruleFile);
+  const run = spawnSetup(scenario.home);
+  return {
+    ...run,
+    skips: countExactLines(run.log, RULE_FILE_SKIP),
+    problems: [
+      ...linkProblems(ruleFile, target),
+      ...absenceProblems(target),
+      ...absenceProblems(join(dirname(ruleFile), CORE_RULES_MARKER)),
+    ],
+  };
+}
+
+function observeHookMerge(scenario: Scenario): SettingsMerge {
+  const kitEntry = referenceKitEntry(scenario);
+  const settings = join(scenario.claude, "settings.json");
   const input = withSubagentEntries(USER_SETTINGS, [
     USER_SUBAGENT_ENTRY,
-    { matcher: "Explore", hooks: [...kitHooks, USER_EXPLORE_HOOK] },
+    { matcher: "Explore", hooks: [...kitEntry.hooks, USER_EXPLORE_HOOK] },
     USER_PLAN_ENTRY,
-    { matcher: "Plan", hooks: kitHooks },
+    { matcher: "Plan", hooks: kitEntry.hooks },
     USER_RULE_READER_ENTRY,
   ]);
-  mkdirSync(dirname(HOOK_MERGE_SETTINGS), { recursive: true });
-  writeFileSync(HOOK_MERGE_SETTINGS, settingsText(input));
-  runSetup(HOOK_MERGE_HOME);
+  mkdirSync(dirname(settings), { recursive: true });
+  writeFileSync(settings, settingsText(input));
+  runSetup(scenario.home);
   const expected = withSubagentEntries(USER_SETTINGS, [
     USER_SUBAGENT_ENTRY,
     kitEntry,
@@ -954,92 +908,94 @@ function observeHookMerge(kitEntry: HookEntry | null): SettingsMerge {
     USER_RULE_READER_ENTRY,
   ]);
   return {
-    merged: contentProblems(HOOK_MERGE_SETTINGS, settingsText(expected)),
-    rerun: rerunProblems(HOOK_MERGE_HOME, [HOOK_MERGE_SETTINGS]),
+    merged: contentProblems(settings, settingsText(expected)),
+    rerun: rerunProblems(scenario.home, [settings]),
   };
 }
 
-function observeRefusedFile(isolatedHome: string, path: string, text: string): RefusedFile {
+function observeRefusedFile(scenario: Scenario, path: string, text: string): RefusedRun {
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, text);
-  const run = spawnSetup(isolatedHome);
+  const run = spawnSetup(scenario.home);
   return {
     ...run,
     problems: [
       ...contentProblems(path, text),
-      ...ruleFileProblems(join(isolatedHome, ".claude")),
-      ...sharedPayloadProblems(join(isolatedHome, ".codex")),
+      ...ruleFileProblems(scenario.claude),
+      ...sharedPayloadProblems(scenario.codex),
     ],
   };
 }
 
-function linkProblems(link: string, target: string): string[] {
-  return pathKind(link) === "symlink" && readlinkSync(link) === target
-    ? []
-    : [`expected ${link} to remain a symlink to ${target} (found ${pathKind(link)})`];
-}
-
-function observeDanglingSettings(): RefusedFile {
-  mkdirSync(dirname(DANGLING_SETTINGS), { recursive: true });
-  symlinkSync(DANGLING_SETTINGS_TARGET, DANGLING_SETTINGS);
-  const run = spawnSetup(DANGLING_SETTINGS_HOME);
+function observeDanglingSettings(scenario: Scenario): RefusedRun {
+  const settings = join(scenario.claude, "settings.json");
+  const target = join(scenario.root, "missing-settings-parent", "settings.json");
+  mkdirSync(dirname(settings), { recursive: true });
+  symlinkSync(target, settings);
+  const run = spawnSetup(scenario.home);
   return {
     ...run,
     problems: [
-      ...linkProblems(DANGLING_SETTINGS, DANGLING_SETTINGS_TARGET),
-      ...(pathKind(DANGLING_SETTINGS_TARGET) === "absent" ? [] : ["the settings link target must remain absent"]),
-      ...sharedPayloadProblems(join(DANGLING_SETTINGS_HOME, ".codex")),
-      ...contentProblems(join(DANGLING_SETTINGS_HOME, ".codex", "AGENTS.md"), `${CODEX_BLOCK}\n`),
+      ...linkProblems(settings, target),
+      ...(pathKind(target) === "absent" ? [] : ["the settings link target must remain absent"]),
+      ...sharedPayloadProblems(scenario.codex),
+      ...contentProblems(join(scenario.codex, "AGENTS.md"), `${CODEX_BLOCK}\n`),
     ],
   };
 }
 
-function observeLinkedFiles(kitEntry: HookEntry | null): LinkedFiles {
-  mkdirSync(SYNCED_DIR, { recursive: true });
-  mkdirSync(dirname(LINKED_SETTINGS), { recursive: true });
-  mkdirSync(dirname(LINKED_CODEX_AGENTS), { recursive: true });
-  writeFileSync(SYNCED_SETTINGS, settingsText(SYNCED_USER_SETTINGS));
-  writeFileSync(SYNCED_CODEX_AGENTS, SYNCED_CODEX_LINE);
-  symlinkSync(SYNCED_SETTINGS, LINKED_SETTINGS);
-  symlinkSync(SYNCED_CODEX_AGENTS, LINKED_CODEX_AGENTS);
-  runSetup(LINKED_FILES_HOME);
+function observeLinkedFiles(scenario: Scenario): LinkedFiles {
+  const kitEntry = referenceKitEntry(scenario);
+  const synced = join(scenario.root, "synced");
+  const syncedSettings = join(synced, "settings.json");
+  const syncedCodexAgents = join(synced, "codex-AGENTS.md");
+  const settings = join(scenario.claude, "settings.json");
+  const codexAgents = join(scenario.codex, "AGENTS.md");
+  mkdirSync(synced, { recursive: true });
+  mkdirSync(dirname(settings), { recursive: true });
+  mkdirSync(dirname(codexAgents), { recursive: true });
+  writeFileSync(syncedSettings, settingsText(SYNCED_USER_SETTINGS));
+  writeFileSync(syncedCodexAgents, SYNCED_CODEX_LINE);
+  symlinkSync(syncedSettings, settings);
+  symlinkSync(syncedCodexAgents, codexAgents);
+  runSetup(scenario.home);
   return {
     settings: [
-      ...linkProblems(LINKED_SETTINGS, SYNCED_SETTINGS),
-      ...contentProblems(SYNCED_SETTINGS, settingsText(withSubagentEntries(SYNCED_USER_SETTINGS, [kitEntry]))),
+      ...linkProblems(settings, syncedSettings),
+      ...contentProblems(syncedSettings, settingsText(withSubagentEntries(SYNCED_USER_SETTINGS, [kitEntry]))),
     ],
     codexAgents: [
-      ...linkProblems(LINKED_CODEX_AGENTS, SYNCED_CODEX_AGENTS),
-      ...contentProblems(SYNCED_CODEX_AGENTS, `${SYNCED_CODEX_LINE}\n\n${CODEX_BLOCK}\n`),
+      ...linkProblems(codexAgents, syncedCodexAgents),
+      ...contentProblems(syncedCodexAgents, `${SYNCED_CODEX_LINE}\n\n${CODEX_BLOCK}\n`),
     ],
   };
 }
 
-function observeCodexBlockEdits(): CodexBlockEdits {
-  mkdirSync(dirname(CODEX_BLOCK_AGENTS), { recursive: true });
-  writeFileSync(CODEX_BLOCK_AGENTS, USER_CODEX_LINE);
-  runSetup(CODEX_BLOCK_HOME);
-  const appended = contentProblems(CODEX_BLOCK_AGENTS, `${USER_CODEX_LINE}\n${CODEX_BLOCK}\n`);
-  const rerun = rerunProblems(CODEX_BLOCK_HOME, [CODEX_BLOCK_AGENTS]);
-  writeFileSync(CODEX_BLOCK_AGENTS, `${USER_CODEX_HEAD}${STALE_CODEX_BLOCK}${USER_CODEX_TAIL}`);
-  runSetup(CODEX_BLOCK_HOME);
+function observeCodexBlockEdits(scenario: Scenario): CodexBlockEdits {
+  const codexAgents = join(scenario.codex, "AGENTS.md");
+  mkdirSync(dirname(codexAgents), { recursive: true });
+  writeFileSync(codexAgents, USER_CODEX_LINE);
+  runSetup(scenario.home);
+  const appended = contentProblems(codexAgents, `${USER_CODEX_LINE}\n${CODEX_BLOCK}\n`);
+  const rerun = rerunProblems(scenario.home, [codexAgents]);
+  writeFileSync(codexAgents, `${USER_CODEX_HEAD}${STALE_CODEX_BLOCK}${USER_CODEX_TAIL}`);
+  runSetup(scenario.home);
   return {
     appended,
     rerun,
-    replaced: contentProblems(CODEX_BLOCK_AGENTS, `${USER_CODEX_HEAD}${CODEX_BLOCK}${USER_CODEX_TAIL}`),
+    replaced: contentProblems(codexAgents, `${USER_CODEX_HEAD}${CODEX_BLOCK}${USER_CODEX_TAIL}`),
   };
 }
 
-function observeRenamedWrites(): string[] {
-  const paths = [RENAMED_SETTINGS, RENAMED_CODEX_AGENTS];
-  mkdirSync(dirname(RENAMED_SETTINGS), { recursive: true });
-  mkdirSync(dirname(RENAMED_CODEX_AGENTS), { recursive: true });
-  writeFileSync(RENAMED_SETTINGS, settingsText(USER_SETTINGS));
-  writeFileSync(RENAMED_CODEX_AGENTS, USER_CODEX_LINE);
+function observeRenamedWrites(scenario: Scenario): string[] {
+  const paths = [join(scenario.claude, "settings.json"), join(scenario.codex, "AGENTS.md")];
+  for (const path of paths) mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(paths[0], settingsText(USER_SETTINGS));
+  writeFileSync(paths[1], USER_CODEX_LINE);
   const modes = [0o600, 0o640];
   paths.forEach((path, index) => chmodSync(path, modes[index]));
   const inodes = paths.map((path) => statSync(path).ino);
-  runSetup(RENAMED_WRITES_HOME);
+  runSetup(scenario.home);
   const octal = (mode: number): string => mode.toString(8).padStart(4, "0");
   return paths.flatMap((path, index) => {
     const stats = statSync(path);
@@ -1054,35 +1010,34 @@ function observeRenamedWrites(): string[] {
   });
 }
 
-function blockedRulesProblems(isolatedHome: string): string[] {
+function blockedRulesProblems(scenario: Scenario): string[] {
   return [
-    ...kitEntryProblems(installedKitEntry(join(isolatedHome, ".claude", "settings.json"))),
-    ...sharedPayloadProblems(join(isolatedHome, ".codex")),
-    ...contentProblems(join(isolatedHome, ".codex", "AGENTS.md"), `${CODEX_BLOCK}\n`),
+    ...kitEntryProblems(installedKitEntry(join(scenario.claude, "settings.json"))),
+    ...sharedPayloadProblems(scenario.codex),
+    ...contentProblems(join(scenario.codex, "AGENTS.md"), `${CODEX_BLOCK}\n`),
   ];
 }
 
-function observeDanglingRules(): RefusedFile {
-  mkdirSync(dirname(DANGLING_RULES), { recursive: true });
-  symlinkSync(DANGLING_RULES_TARGET, DANGLING_RULES);
-  const run = spawnSetup(DANGLING_RULES_HOME);
+function observeDanglingRules(scenario: Scenario): RefusedRun {
+  const rules = join(scenario.claude, "rules");
+  const target = join(scenario.root, "missing-rules-parent", "rules");
+  mkdirSync(dirname(rules), { recursive: true });
+  symlinkSync(target, rules);
+  const run = spawnSetup(scenario.home);
   return {
     ...run,
-    problems: [
-      ...linkProblems(DANGLING_RULES, DANGLING_RULES_TARGET),
-      ...absenceProblems(DANGLING_RULES_TARGET),
-      ...blockedRulesProblems(DANGLING_RULES_HOME),
-    ],
+    problems: [...linkProblems(rules, target), ...absenceProblems(target), ...blockedRulesProblems(scenario)],
   };
 }
 
-function observeRulesFile(): RefusedFile {
-  mkdirSync(dirname(RULES_FILE), { recursive: true });
-  writeFileSync(RULES_FILE, RULES_FILE_TEXT);
-  const run = spawnSetup(RULES_FILE_HOME);
+function observeRulesFile(scenario: Scenario): RefusedRun {
+  const rules = join(scenario.claude, "rules");
+  mkdirSync(dirname(rules), { recursive: true });
+  writeFileSync(rules, RULES_FILE_TEXT);
+  const run = spawnSetup(scenario.home);
   return {
     ...run,
-    problems: [...contentProblems(RULES_FILE, RULES_FILE_TEXT), ...blockedRulesProblems(RULES_FILE_HOME)],
+    problems: [...contentProblems(rules, RULES_FILE_TEXT), ...blockedRulesProblems(scenario)],
   };
 }
 
@@ -1090,370 +1045,515 @@ function assertNoProblems(problems: readonly string[], message: string): void {
   assert.ok(problems.length === 0, `${message}:\n  ${problems.join("\n  ")}`);
 }
 
-let observed: Observations;
+function assertRefusal(refused: SetupRun, diagnostic: string, message: string): void {
+  assert.strictEqual(refused.status, 1, `setup.ts must exit 1 when ${message}:\n${refused.log}`);
+  assert.ok(refused.log.includes(diagnostic), `the refusal must name the file:\n${refused.log}`);
+}
 
-before(() => {
-  assertTestRootIsolated();
-  const collidingSkill = skillNames()[0];
-  assert.ok(collidingSkill !== undefined, "no source skill is available for the name-collision case");
-  const clean = observeCleanInstall();
-  const cleanSettings = observeCleanSettings();
-  const cleanRerun = rerunProblems(PRIMARY_HOME, [CLAUDE_RULE_FILE, CLAUDE_SETTINGS, CODEX_AGENTS]);
-  observed = {
-    clean,
-    cleanSettings,
-    cleanRerun,
-    toml: observeTomlParse(),
-    doctor: process.env.AGENTS_KIT_LIVE_CODEX_DOCTOR === "1" ? observeDoctor() : null,
-    managed: observeManagedReinstall(),
-    retiredSkill: observeRetiredSkill(),
-    userSkill: observeUserOwnedSkill(),
-    liveName: observeLiveNameCollision(collidingSkill),
-    liveNameRecovery: observeLiveNameRecovery(collidingSkill),
-    executor: observeExecutorCollision(),
-    executorReinstall: observeExecutorReinstall(),
-    orphan: observeOrphanRecovery(),
-    conflict: observeWholeHomeConflict(),
-    symlinkGate: observeSymlinkGate(),
-    ruleOwner: observeRuleOwner(),
-    linkedRule: observeLinkedRule(),
-    danglingRule: observeDanglingRule(),
-    hookMerge: observeHookMerge(cleanSettings.kitEntry),
-    invalidSettings: observeRefusedFile(INVALID_SETTINGS_HOME, INVALID_SETTINGS, INVALID_SETTINGS_TEXT),
-    danglingSettings: observeDanglingSettings(),
-    misshapenSettings: observeRefusedFile(MISSHAPEN_SETTINGS_HOME, MISSHAPEN_SETTINGS, MISSHAPEN_SETTINGS_TEXT),
-    linkedFiles: observeLinkedFiles(cleanSettings.kitEntry),
-    codexBlockEdits: observeCodexBlockEdits(),
-    unmatchedMarkers: observeRefusedFile(UNMATCHED_MARKER_HOME, UNMATCHED_MARKER_AGENTS, UNMATCHED_MARKER_TEXT),
-    reversedMarkers: observeRefusedFile(REVERSED_MARKER_HOME, REVERSED_MARKER_AGENTS, REVERSED_MARKER_TEXT),
-    renamedWrites: observeRenamedWrites(),
-    danglingRules: observeDanglingRules(),
-    rulesFile: observeRulesFile(),
-  };
-});
+before(assertTestRootIsolated);
 
 after(() => {
   assert.ok(TEST_ROOT.startsWith(TEST_ROOT_PREFIX), `refusing to remove an unexpected test root: ${TEST_ROOT}`);
   rmSync(TEST_ROOT, { recursive: true, force: true });
 });
 
-test("Claude clean install agent definitions match their sources", () => {
-  assertNoProblems(observed.clean.claudeAgent, "a clean install must deploy every Claude agent under its marker");
-});
+describe("a clean install into an empty home", () => {
+  const scenario = useScenario("clean-install");
+  let clean: CleanInstall;
+  before(() => {
+    clean = frozen(observeCleanInstall(scenario));
+  });
 
-test("Codex clean install agent definitions match their sources", () => {
-  assertNoProblems(observed.clean.codexAgent, "a clean install must deploy every Codex agent under its marker");
-});
+  test("clean install agent definitions match their sources in both homes", () => {
+    assertNoProblems(clean.claudeAgent, "a clean install must deploy every Claude agent under its marker");
+    assertNoProblems(clean.codexAgent, "a clean install must deploy every Codex agent under its marker");
+  });
 
-test("clean install excludes foreign native agent formats", () => {
-  assertNoProblems(observed.clean.foreignFormats, "each host takes only the agent format it consumes");
-});
+  test("clean install excludes foreign native agent formats", () => {
+    assertNoProblems(clean.foreignFormats, "each host takes only the agent format it consumes");
+  });
 
-test("Claude shared skills, references, and CORE_RULES.md install unchanged", () => {
-  assertNoProblems(observed.clean.claudePayload, "the Claude home must hold the kit payload byte for byte");
-});
+  test("shared skills, references, and CORE_RULES.md install unchanged in both homes", () => {
+    assertNoProblems(clean.claudePayload, "the Claude home must hold the kit payload byte for byte");
+    assertNoProblems(clean.codexPayload, "the Codex home must hold the kit payload byte for byte");
+  });
 
-test("Codex shared skills, references, and CORE_RULES.md install unchanged", () => {
-  assertNoProblems(observed.clean.codexPayload, "the Codex home must hold the kit payload byte for byte");
-});
+  test("Claude clean install places CORE_RULES.md in rules/ under its marker", () => {
+    assertNoProblems(clean.claudeRuleFile, "a clean install must deliver the core rules as a marked Claude rule file");
+  });
 
-test("Claude clean install places CORE_RULES.md in rules/ under its marker", () => {
-  assertNoProblems(observed.clean.claudeRuleFile, "a clean install must deliver the core rules as a marked Claude rule file");
-});
+  test("Codex clean install receives no Claude rule file", () => {
+    assertNoProblems(clean.codexRuleFile, "only the Claude home loads rules/ instruction files");
+  });
 
-test("Codex clean install receives no Claude rule file", () => {
-  assertNoProblems(observed.clean.codexRuleFile, "only the Claude home loads rules/ instruction files");
-});
+  test("a second run leaves the always-on core-rules files byte-identical", () => {
+    assertNoProblems(clean.rerun, "a rerun with no source change must reproduce every always-on file");
+  });
 
-test("a second run leaves the always-on core-rules files byte-identical", () => {
-  assertNoProblems(observed.cleanRerun, "a rerun with no source change must reproduce every always-on file");
-});
+  test("a missing Claude settings.json is created holding only the kit SubagentStart entry", () => {
+    assertNoProblems(clean.settingsCreated, "a clean install must create settings.json with the Explore/Plan hook");
+  });
 
-test("managed reinstall refreshes the Claude rule file", () => {
-  assertNoProblems(observed.managed.ruleFile, "a rerun must restore an edited marker-owned rule file");
-});
+  test("Codex clean install receives no settings.json hook", () => {
+    assertNoProblems(clean.codexSettings, "only the Claude home runs SubagentStart hooks");
+  });
 
-test("an unmarked Claude rule file is reported, preserved, and left unmarked", () => {
-  assert.strictEqual(observed.ruleOwner.status, 1, "setup.ts must exit 1 when an unmarked rule file prevents installation");
-  assert.ok(observed.ruleOwner.log.includes(`${RULE_SKIP}${RULE_OWNER_FILE}`), "the refusal must name the file");
-  assert.strictEqual(observed.ruleOwner.skips, 1, "the Claude home must report the rule file skipped");
-  assertNoProblems(observed.ruleOwner.problems, "a same-named rule file without the marker is the user's");
-});
+  test("the installed SubagentStart command prints the rule file as additionalContext", () => {
+    assertNoProblems(clean.hookOutput, "Explore and Plan must receive the installed rule file verbatim");
+  });
 
-test("a marked Claude rule symlink is reported and preserves its link and target", () => {
-  assert.strictEqual(observed.linkedRule.status, 1, "setup.ts must exit 1 when a marked rule symlink prevents installation");
-  assert.ok(observed.linkedRule.log.includes(`${RULE_SKIP}${LINKED_RULE_FILE}`), "the refusal must name the file");
-  assert.strictEqual(observed.linkedRule.skips, 1, "the Claude home must report the rule symlink skipped exactly once");
-  assertNoProblems(observed.linkedRule.problems, "a rule symlink and its user's target must survive even with a marker");
-});
+  test("a missing Codex AGENTS.md is created holding only the core-rules block", () => {
+    assertNoProblems(clean.codexBlock, "a clean install must deliver the core rules between the kit markers");
+  });
 
-test("an unmarked dangling Claude rule symlink is reported, preserved, and left unmarked", () => {
-  assert.strictEqual(observed.danglingRule.status, 1, "setup.ts must exit 1 when a dangling rule symlink prevents installation");
-  assert.ok(observed.danglingRule.log.includes(`${RULE_SKIP}${DANGLING_RULE_FILE}`), "the refusal must name the file");
-  assert.strictEqual(observed.danglingRule.skips, 1, "the Claude home must report the dangling rule symlink skipped exactly once");
-  assertNoProblems(observed.danglingRule.problems, "a dangling rule symlink must survive without creating its target or marker");
-});
+  test("the Claude home receives no AGENTS.md block", () => {
+    assertNoProblems(clean.claudeBlock, "only the Codex home reads its global AGENTS.md");
+  });
 
-test("a dangling rules link is preserved and exits 1 after the hook merges and the Codex home installs", () => {
-  const refused = observed.danglingRules;
-  assert.strictEqual(refused.status, 1, `setup.ts must exit 1 when the rule file cannot be installed:\n${refused.log}`);
-  assert.ok(refused.log.includes(`${RULE_SKIP}${join(DANGLING_RULES, RULE_FILE)}`), `the refusal must name the file:\n${refused.log}`);
-  assertNoProblems(refused.problems, "the dangling link must survive while the rest of the install runs");
-});
-
-test("a file where rules/ belongs is preserved and exits 1 after the hook merges and the Codex home installs", () => {
-  const refused = observed.rulesFile;
-  assert.strictEqual(refused.status, 1, `setup.ts must exit 1 when the rule file cannot be installed:\n${refused.log}`);
-  assert.ok(refused.log.includes(`${RULE_SKIP}${join(RULES_FILE, RULE_FILE)}`), `the refusal must name the file:\n${refused.log}`);
-  assertNoProblems(refused.problems, "the user's file must survive while the rest of the install runs");
-});
-
-test("a missing Claude settings.json is created holding only the kit SubagentStart entry", () => {
-  assertNoProblems(observed.cleanSettings.created, "a clean install must create settings.json with the Explore/Plan hook");
-});
-
-test("Codex clean install receives no settings.json hook", () => {
-  assertNoProblems(observed.cleanSettings.codexSettings, "only the Claude home runs SubagentStart hooks");
-});
-
-test("the installed SubagentStart command prints the rule file as additionalContext", () => {
-  assertNoProblems(observed.cleanSettings.hookOutput, "Explore and Plan must receive the installed rule file verbatim");
-});
-
-test("the kit SubagentStart entry takes the first kit command's place, keeps user hook commands, and leaves other settings unchanged", () => {
-  assertNoProblems(observed.hookMerge.merged, "the merge may move or remove only the kit's own command");
-});
-
-test("a rerun leaves merged settings.json byte-identical", () => {
-  assertNoProblems(observed.hookMerge.rerun, "rewriting an already-merged settings file must reproduce its bytes");
-});
-
-test("invalid settings JSON is left untouched, reported on stderr, and exits 1 after the rest installs", () => {
-  const refused = observed.invalidSettings;
-  assert.strictEqual(refused.status, 1, `setup.ts must exit 1 when settings.json cannot be parsed:\n${refused.log}`);
-  assert.ok(refused.log.includes(`${HOOK_SKIP}${INVALID_SETTINGS} is not valid JSON`), `the refusal must name the file:\n${refused.log}`);
-  assertNoProblems(refused.problems, "an unparsable settings file must survive while every other item installs");
-});
-
-test("settings whose SubagentStart hooks are not a list are left untouched and exit 1", () => {
-  const refused = observed.misshapenSettings;
-  assert.strictEqual(refused.status, 1, `setup.ts must exit 1 when it cannot merge into settings.json:\n${refused.log}`);
-  assert.ok(refused.log.includes(`${HOOK_SKIP}${MISSHAPEN_SETTINGS}`), `the refusal must name the file:\n${refused.log}`);
-  assertNoProblems(refused.problems, "settings the merge cannot place an entry in must survive unchanged");
-});
-
-test("a dangling settings link is preserved and exits 1 after the Codex home installs", () => {
-  const refused = observed.danglingSettings;
-  assert.strictEqual(refused.status, 1, `setup.ts must exit 1 when settings.json cannot be written:\n${refused.log}`);
-  assert.ok(refused.log.includes(`${HOOK_SKIP}${DANGLING_SETTINGS}`), `the refusal must name the file:\n${refused.log}`);
-  assert.ok(refused.log.includes("ENOENT"), `the refusal must include the error code:\n${refused.log}`);
-  assertNoProblems(refused.problems, "the dangling link must survive while the Codex home installs");
-});
-
-test("a symlinked settings.json is merged through its link", () => {
-  assertNoProblems(observed.linkedFiles.settings, "the merge must write the link target and keep the link");
-});
-
-test("a missing Codex AGENTS.md is created holding only the core-rules block", () => {
-  assertNoProblems(observed.clean.codexBlock, "a clean install must deliver the core rules between the kit markers");
-});
-
-test("the Claude home receives no AGENTS.md block", () => {
-  assertNoProblems(observed.clean.claudeBlock, "only the Codex home reads its global AGENTS.md");
-});
-
-test("the core-rules block is appended after the user's Codex line", () => {
-  assertNoProblems(observed.codexBlockEdits.appended, "an unmarked AGENTS.md must keep its lines and gain the block after a blank line");
-});
-
-test("a rerun leaves a Codex AGENTS.md holding user lines byte-identical", () => {
-  assertNoProblems(observed.codexBlockEdits.rerun, "replacing an up-to-date block must reproduce the file");
-});
-
-test("a stale core-rules block is replaced in place between the user's lines", () => {
-  assertNoProblems(observed.codexBlockEdits.replaced, "only the bytes between the kit markers may change");
-});
-
-test("a symlinked Codex AGENTS.md is written through its link", () => {
-  assertNoProblems(observed.linkedFiles.codexAgents, "the block must land in the link target and keep the link");
-});
-
-test("settings.json and Codex AGENTS.md are replaced by rename rather than rewritten in place", () => {
-  assertNoProblems(observed.renamedWrites, "a failed merge write must not be able to truncate the user's file");
-});
-
-test("unmatched core-rules markers leave Codex AGENTS.md untouched and exit 1 after the rest installs", () => {
-  const refused = observed.unmatchedMarkers;
-  assert.strictEqual(refused.status, 1, `setup.ts must exit 1 when it cannot place the block:\n${refused.log}`);
-  assert.ok(refused.log.includes(`${BLOCK_SKIP}${UNMATCHED_MARKER_AGENTS}`), `the refusal must name the file:\n${refused.log}`);
-  assertNoProblems(refused.problems, "a file with unmatched kit markers must survive while every other item installs");
-});
-
-test("reversed core-rules markers leave Codex AGENTS.md untouched and exit 1 after the rest installs", () => {
-  const refused = observed.reversedMarkers;
-  assert.strictEqual(refused.status, 1, `setup.ts must exit 1 when it cannot place the block:\n${refused.log}`);
-  assert.ok(refused.log.includes(`${BLOCK_SKIP}${REVERSED_MARKER_AGENTS}`), `the refusal must name the file:\n${refused.log}`);
-  assertNoProblems(refused.problems, "a file with reversed kit markers must survive while every other item installs");
-});
-
-test("both hosts install regular secretary duties and retain authority and source helper boundaries", () => {
-  for (const home of HOMES) {
-    for (const duty of ["runbook-maintenance", "meeting-sync"]) {
-      const relative = join("references", "secretary", `${duty}.md`);
-      const installed = join(home, relative);
-      assert.strictEqual(pathKind(installed), "file", `${installed} must be a regular file`);
-      assert.deepStrictEqual(readFileSync(installed), readFileSync(join(REPO_DIR, relative)));
+  test("both hosts install regular secretary duties with their contract citations, permission fields, and no helper scripts", () => {
+    for (const home of hostHomes(scenario)) {
+      for (const duty of ["runbook-maintenance", "meeting-sync"]) {
+        const relative = join("references", "secretary", `${duty}.md`);
+        const installed = join(home, relative);
+        assert.strictEqual(pathKind(installed), "file", `${installed} must be a regular file`);
+        assert.deepStrictEqual(readFileSync(installed), readFileSync(join(REPO_DIR, relative)));
+      }
+      const contract = readFileSync(join(home, "references", "workflow", "secretary-contract.md"), "utf8");
+      assert.match(contract, /\.\.\/secretary\/meeting-sync\.md/);
+      const coordinator = readFileSync(join(home, "skills", "start-secretary", "SKILL.md"), "utf8");
+      assert.match(coordinator, /<kit-root>\/scripts\/meeting-sync-state\.ts/);
+      assert.match(coordinator, /task-store\.md.*Resolving `<kit-root>`/);
+      assert.strictEqual(pathKind(join(home, "scripts")), "absent");
+      const extension = home === scenario.claude ? "md" : "toml";
+      const adapter = readFileSync(join(home, "agents", `secretary.${extension}`), "utf8");
+      assert.match(adapter, /secretary-contract\.md/);
+      if (extension === "md") assert.match(adapter, /^disallowedTools: Write, Edit, NotebookEdit, Agent, SendMessage, Monitor, TaskStop$/m);
+      else assert.doesNotMatch(adapter, /^(?:sandbox_mode|approval_policy|approvals_reviewer|default_permissions|permissions|network_access)\s*=/m);
     }
-    const contract = readFileSync(join(home, "references", "workflow", "secretary-contract.md"), "utf8");
-    assert.match(contract, /\.\.\/secretary\/meeting-sync\.md/);
-    const coordinator = readFileSync(join(home, "skills", "start-secretary", "SKILL.md"), "utf8");
-    assert.match(coordinator, /<kit-root>\/scripts\/meeting-sync-state\.ts/);
-    assert.match(coordinator, /task-store\.md.*Resolving `<kit-root>`/);
-    assert.strictEqual(pathKind(join(home, "scripts")), "absent");
-    const extension = home === CLAUDE_HOME ? "md" : "toml";
-    const adapter = readFileSync(join(home, "agents", `secretary.${extension}`), "utf8");
-    assert.match(adapter, /secretary-contract\.md/);
-    assert.match(adapter, /parent sandbox, approval setting, and managed security policy/);
-    if (extension === "md") assert.match(adapter, /^disallowedTools: Write, Edit, NotebookEdit, Agent, SendMessage, Monitor, TaskStop$/m);
-    else assert.doesNotMatch(adapter, /^(?:sandbox_mode|approval_policy|approvals_reviewer|default_permissions|permissions|network_access)\s*=/m);
-  }
+  });
+
+  test("installed Codex agent TOML definitions parse without permission overrides", (t: TestContext) => {
+    const probe = observeTomlParse(scenario.codex);
+    if (probe.interpreter === null) {
+      t.skip("no Python carrying tomllib is installed, so the deployed TOML was not parsed");
+      return;
+    }
+    assert.strictEqual(
+      probe.status,
+      0,
+      `${probe.interpreter} rejected an installed Codex agent TOML or its permission overrides:\n${probe.output}`,
+    );
+  });
+
+  test("Codex strict-config doctor reports a valid configuration (its exit status only reflects environmental diagnostics)", (t: TestContext) => {
+    if (process.env.AGENTS_KIT_LIVE_CODEX_DOCTOR !== "1") {
+      t.skip("set AGENTS_KIT_LIVE_CODEX_DOCTOR=1 to run Codex diagnostics with network access");
+      return;
+    }
+    const probe = observeDoctor(scenario.codex);
+    if (!probe.available) {
+      t.skip("codex is not installed, so its strict-config doctor was not run");
+      return;
+    }
+    assert.match(probe.configLine, CONFIG_VERDICT, `codex doctor reported no configuration verdict:\n${probe.summary}`);
+    if (probe.configLine.includes(WARNED_CONFIG)) {
+      assert.doesNotMatch(probe.detail, CUSTOM_AGENT_ERROR, `codex doctor reported a custom-agent error:\n${probe.detail}`);
+    }
+  });
 });
 
-test("installed Codex agent TOML definitions parse and inherit parent permissions", (t: TestContext) => {
-  const probe = observed.toml;
-  if (probe.interpreter === null) {
-    t.skip("no Python carrying tomllib is installed, so the deployed TOML was not parsed");
-    return;
-  }
-  assert.strictEqual(
-    probe.status,
-    0,
-    `${probe.interpreter} rejected an installed Codex agent TOML or its permission overrides:\n${probe.output}`,
-  );
+describe("a managed reinstall over edited kit-owned files", () => {
+  const scenario = useScenario("managed-reinstall");
+  let managed: ManagedReinstall;
+  before(() => {
+    managed = frozen(observeManagedReinstall(scenario));
+  });
+
+  test("managed reinstall agent definitions match their sources in both homes", () => {
+    assertNoProblems(managed.claudeAgent, "a reinstall must restore every edited Claude agent");
+    assertNoProblems(managed.codexAgent, "a reinstall must restore every edited Codex agent");
+  });
+
+  test("managed reinstall refreshes the unchanged shared payload", () => {
+    assertNoProblems(managed.payload, "a reinstall must restore every edited marker-owned payload");
+  });
+
+  test("managed reinstall refreshes the Claude rule file", () => {
+    assertNoProblems(managed.ruleFile, "a rerun must restore an edited marker-owned rule file");
+  });
 });
 
-test("Codex strict-config doctor reports a valid configuration (its exit status only reflects environmental diagnostics)", (t: TestContext) => {
-  const probe = observed.doctor;
-  if (probe === null) {
-    t.skip("set AGENTS_KIT_LIVE_CODEX_DOCTOR=1 to run Codex diagnostics with network access");
-    return;
-  }
-  if (!probe.available) {
-    t.skip("codex is not installed, so its strict-config doctor was not run");
-    return;
-  }
-  assert.match(probe.configLine, CONFIG_VERDICT, `codex doctor reported no configuration verdict:\n${probe.summary}`);
-  if (probe.configLine.includes(WARNED_CONFIG)) {
-    assert.doesNotMatch(probe.detail, CUSTOM_AGENT_ERROR, `codex doctor reported a custom-agent error:\n${probe.detail}`);
-  }
+describe("a reinstall after a marked skill leaves the source set", () => {
+  const scenario = useScenario("retired-skill");
+  let retired: readonly string[];
+  before(() => {
+    retired = frozen(observeRetiredSkill(scenario));
+  });
+
+  test("reinstall removes a marker-owned skill dropped from the source set", () => {
+    assertNoProblems(retired, "a marked skill the kit no longer ships must be swept, payload intact");
+  });
 });
 
-test("Claude managed reinstall agent definitions match their sources", () => {
-  assertNoProblems(observed.managed.claudeAgent, "a reinstall must restore every edited Claude agent");
+describe("a reinstall beside an unmarked user skill", () => {
+  const scenario = useScenario("user-owned-skill");
+  let userSkill: PreservedPair;
+  before(() => {
+    userSkill = frozen(observeUserOwnedSkill(scenario));
+  });
+
+  test("an unmarked user-owned skill directory is byte-preserved in both homes", () => {
+    assertNoProblems(userSkill.claude, "an unmarked Claude skill directory is the user's, not the kit's");
+    assertNoProblems(userSkill.codex, "an unmarked Codex skill directory is the user's, not the kit's");
+  });
 });
 
-test("Codex managed reinstall agent definitions match their sources", () => {
-  assertNoProblems(observed.managed.codexAgent, "a reinstall must restore every edited Codex agent");
+describe("a user directory at a live skill name, then removed", () => {
+  const scenario = useScenario("live-name");
+  let liveName: LiveNameCollision;
+  before(() => {
+    const collidingSkill = skillNames()[0];
+    assert.ok(collidingSkill !== undefined, "no source skill is available for the name-collision case");
+    liveName = frozen(observeLiveNameCollision(scenario, collidingSkill));
+  });
+
+  test("an unmarked directory at a live skill name is reported, preserved, and never entered", () => {
+    assert.strictEqual(liveName.collision.skips, 2, "both homes must report the colliding skill name skipped");
+    assertNoProblems(liveName.collision.problems, "a user directory at a shipped skill name must be left untouched");
+  });
+
+  test("removing the user directory lets the kit skill reinstall marked", () => {
+    assertNoProblems(liveName.recovery, "clearing the collision must let the kit skill install marked again");
+  });
 });
 
-test("managed reinstall refreshes the unchanged shared payload", () => {
-  assertNoProblems(observed.managed.payload, "a reinstall must restore every edited marker-owned payload");
+describe("unmarked executor definitions beside unrelated agents, installed twice", () => {
+  const scenario = useScenario("executor-collision");
+  let executor: ExecutorCollision;
+  before(() => {
+    executor = frozen(observeExecutorCollision(scenario));
+  });
+
+  test("unmarked executor collisions are reported and byte-preserved in both homes", () => {
+    assert.strictEqual(executor.skips, 2, "both homes must report their executor collision skipped");
+    assertNoProblems(executor.claude, "an unmarked Claude executor is the user's file");
+    assertNoProblems(executor.codex, "an unmarked Codex executor is the user's file");
+  });
+
+  test("unrelated agents remain byte-preserved in both homes", () => {
+    assertNoProblems(executor.unrelatedClaude, "a Claude agent the kit never ships is out of its reach");
+    assertNoProblems(executor.unrelatedCodex, "a Codex agent the kit never ships is out of its reach");
+  });
+
+  test("native collisions and unrelated agents remain byte-preserved on reinstall", () => {
+    assert.strictEqual(executor.reinstall.skips, 2, "the collisions must stay skipped on a second run");
+    assertNoProblems(executor.reinstall.problems, "a rerun must not reclaim what the first run refused");
+  });
 });
 
-test("reinstall removes a marker-owned skill dropped from the source set", () => {
-  assertNoProblems(observed.retiredSkill, "a marked skill the kit no longer ships must be swept, payload intact");
+describe("agent markers whose definitions were removed", () => {
+  const scenario = useScenario("orphan-markers");
+  let orphan: OrphanRecovery;
+  before(() => {
+    orphan = frozen(observeOrphanRecovery(scenario));
+  });
+
+  test("orphan-marker recovery agent definitions match their sources in both homes", () => {
+    assertNoProblems(orphan.claudeAgent, "a marker without its payload must reinstall every Claude agent");
+    assertNoProblems(orphan.codexAgent, "a marker without its payload must reinstall every Codex agent");
+  });
+
+  test("orphan recovery leaves unrelated native agents unchanged", () => {
+    assertNoProblems(orphan.unrelated, "reclaiming an orphaned marker must not reach the user's agents");
+  });
 });
 
-test("Claude unmarked user-owned skill directory is byte-preserved", () => {
-  assertNoProblems(observed.userSkill.claude, "an unmarked Claude skill directory is the user's, not the kit's");
+describe("a home holding user-owned shared roots", () => {
+  const scenario = useScenario("whole-home-conflict");
+  let conflict: RefusedRun;
+  before(() => {
+    conflict = frozen(observeWholeHomeConflict(scenario));
+  });
+
+  test("whole-home conflict safeguards preserve both native homes without partial installation", () => {
+    assert.notStrictEqual(conflict.status, 0, `setup.ts must refuse a home holding user-owned shared roots:\n${conflict.log}`);
+    for (const home of hostHomes(scenario)) {
+      assert.ok(conflict.log.includes(`Skipping ${home}`), `the refusal must name ${home}:\n${conflict.log}`);
+    }
+    assertNoProblems(conflict.problems, "a refused install must leave both native homes exactly as it found them");
+  });
 });
 
-test("Codex unmarked user-owned skill directory is byte-preserved", () => {
-  assertNoProblems(observed.userSkill.codex, "an unmarked Codex skill directory is the user's, not the kit's");
+describe("a skills symlink into this repo", () => {
+  const scenario = useScenario("repo-link");
+  let problems: readonly string[];
+  before(() => {
+    problems = frozen(observeRepoLink(scenario));
+  });
+
+  test("a skills symlink into this repo is reclaimed", () => {
+    assertNoProblems(problems, "a link into the running checkout is the kit's own to reclaim");
+  });
 });
 
-test("an unmarked directory at a live skill name is reported, preserved, and never entered", () => {
-  assert.strictEqual(observed.liveName.skips, 2, "both homes must report the colliding skill name skipped");
-  assertNoProblems(observed.liveName.problems, "a user directory at a shipped skill name must be left untouched");
+describe("a dangling skills symlink", () => {
+  const scenario = useScenario("dangling-link");
+  let problems: readonly string[];
+  before(() => {
+    problems = frozen(observeDanglingLink(scenario));
+  });
+
+  test("a dangling skills symlink is reclaimed", () => {
+    assertNoProblems(problems, "a link resolving to nothing blocks no one and is reclaimed");
+  });
 });
 
-test("removing the user directory lets the kit skill reinstall marked", () => {
-  assertNoProblems(observed.liveNameRecovery, "clearing the collision must let the kit skill install marked again");
+describe("a skills symlink into another kit checkout", () => {
+  const scenario = useScenario("foreign-kit-link");
+  let problems: readonly string[];
+  before(() => {
+    problems = frozen(observeForeignKitLink(scenario));
+  });
+
+  test("a skills symlink to another kit checkout is reclaimed", () => {
+    assertNoProblems(problems, "a link into a second checkout is kit-owned and reclaimable");
+  });
 });
 
-test("Claude unmarked executor collision is reported and byte-preserved", () => {
-  assert.strictEqual(observed.executor.skips, 2, "both homes must report their executor collision skipped");
-  assertNoProblems(observed.executor.claude, "an unmarked Claude executor is the user's file");
+describe("a linked skill entry whose target holds a marker", () => {
+  const scenario = useScenario("linked-entry");
+  let problems: readonly string[];
+  before(() => {
+    problems = frozen(observeLinkedEntry(scenario));
+  });
+
+  test("the reclaim sweep skips a linked entry even when its target holds a marker", () => {
+    assertNoProblems(
+      problems,
+      "the marker probe follows a link, so only the entry-level symlink skip keeps a user's link off the reclaim list",
+    );
+  });
 });
 
-test("Codex unmarked executor collision is reported and byte-preserved", () => {
-  assert.strictEqual(observed.executor.skips, 2, "both homes must report their executor collision skipped");
-  assertNoProblems(observed.executor.codex, "an unmarked Codex executor is the user's file");
+describe("a skills symlink into a user directory", () => {
+  const scenario = useScenario("user-link");
+  let userLink: RefusedRun;
+  before(() => {
+    userLink = frozen(observeUserLink(scenario));
+  });
+
+  test("a skills symlink the kit does not own is refused, leaving the home uninstalled", () => {
+    assert.notStrictEqual(
+      userLink.status,
+      0,
+      `setup.ts must refuse a home whose skills/ is a user symlink:\n${userLink.log}`,
+    );
+    assert.ok(
+      userLink.log.includes(`Skipping ${scenario.claude}`),
+      `the refusal must name the skipped home:\n${userLink.log}`,
+    );
+    assertNoProblems(userLink.problems, "a refused link must survive with its target, and spare the other home");
+  });
 });
 
-test("unrelated Claude agent remains byte-preserved", () => {
-  assertNoProblems(observed.executor.unrelatedClaude, "a Claude agent the kit never ships is out of its reach");
+describe("an unmarked Claude rule file", () => {
+  const scenario = useScenario("rule-owner");
+  let ruleOwner: CollisionRun & SetupRun;
+  before(() => {
+    ruleOwner = frozen(observeRuleOwner(scenario));
+  });
+
+  test("an unmarked Claude rule file is reported, preserved, and left unmarked", () => {
+    assertRefusal(ruleOwner, `${RULE_SKIP}${claudeRuleFile(scenario)}`, "an unmarked rule file prevents installation");
+    assert.strictEqual(ruleOwner.skips, 1, "the Claude home must report the rule file skipped");
+    assertNoProblems(ruleOwner.problems, "a same-named rule file without the marker is the user's");
+  });
 });
 
-test("unrelated Codex agent remains byte-preserved", () => {
-  assertNoProblems(observed.executor.unrelatedCodex, "a Codex agent the kit never ships is out of its reach");
+describe("a marked Claude rule symlink", () => {
+  const scenario = useScenario("linked-rule");
+  let linkedRule: CollisionRun & SetupRun;
+  before(() => {
+    linkedRule = frozen(observeLinkedRule(scenario));
+  });
+
+  test("a marked Claude rule symlink is reported and preserves its link and target", () => {
+    assertRefusal(linkedRule, `${RULE_SKIP}${claudeRuleFile(scenario)}`, "a marked rule symlink prevents installation");
+    assert.strictEqual(linkedRule.skips, 1, "the Claude home must report the rule symlink skipped exactly once");
+    assertNoProblems(linkedRule.problems, "a rule symlink and its user's target must survive even with a marker");
+  });
 });
 
-test("native collisions and unrelated agents remain byte-preserved on reinstall", () => {
-  assert.strictEqual(observed.executorReinstall.skips, 2, "the collisions must stay skipped on a second run");
-  assertNoProblems(observed.executorReinstall.problems, "a rerun must not reclaim what the first run refused");
+describe("an unmarked dangling Claude rule symlink", () => {
+  const scenario = useScenario("dangling-rule");
+  let danglingRule: CollisionRun & SetupRun;
+  before(() => {
+    danglingRule = frozen(observeDanglingRule(scenario));
+  });
+
+  test("an unmarked dangling Claude rule symlink is reported, preserved, and left unmarked", () => {
+    assertRefusal(danglingRule, `${RULE_SKIP}${claudeRuleFile(scenario)}`, "a dangling rule symlink prevents installation");
+    assert.strictEqual(danglingRule.skips, 1, "the Claude home must report the dangling rule symlink skipped exactly once");
+    assertNoProblems(danglingRule.problems, "a dangling rule symlink must survive without creating its target or marker");
+  });
 });
 
-test("Claude orphan-marker recovery agent definitions match their sources", () => {
-  assertNoProblems(observed.orphan.claudeAgent, "a marker without its payload must reinstall every Claude agent");
+describe("a dangling Claude rules link", () => {
+  const scenario = useScenario("dangling-rules");
+  let refused: RefusedRun;
+  before(() => {
+    refused = frozen(observeDanglingRules(scenario));
+  });
+
+  test("a dangling rules link is preserved and exits 1 after the hook merges and the Codex home installs", () => {
+    assertRefusal(refused, `${RULE_SKIP}${join(scenario.claude, "rules", RULE_FILE)}`, "the rule file cannot be installed");
+    assertNoProblems(refused.problems, "the dangling link must survive while the rest of the install runs");
+  });
 });
 
-test("Codex orphan-marker recovery agent definitions match their sources", () => {
-  assertNoProblems(observed.orphan.codexAgent, "a marker without its payload must reinstall every Codex agent");
+describe("a user file where the Claude rules directory belongs", () => {
+  const scenario = useScenario("rules-file");
+  let refused: RefusedRun;
+  before(() => {
+    refused = frozen(observeRulesFile(scenario));
+  });
+
+  test("a file where rules/ belongs is preserved and exits 1 after the hook merges and the Codex home installs", () => {
+    assertRefusal(refused, `${RULE_SKIP}${join(scenario.claude, "rules", RULE_FILE)}`, "the rule file cannot be installed");
+    assertNoProblems(refused.problems, "the user's file must survive while the rest of the install runs");
+  });
 });
 
-test("orphan recovery leaves unrelated native agents unchanged", () => {
-  assertNoProblems(observed.orphan.unrelated, "reclaiming an orphaned marker must not reach the user's agents");
+describe("user settings holding moved and duplicated kit hook commands", () => {
+  const scenario = useScenario("hook-merge");
+  let hookMerge: SettingsMerge;
+  before(() => {
+    hookMerge = frozen(observeHookMerge(scenario));
+  });
+
+  test("the kit SubagentStart entry takes the first kit command's place, keeps user hook commands, and leaves other settings unchanged", () => {
+    assertNoProblems(hookMerge.merged, "the merge may move or remove only the kit's own command");
+  });
+
+  test("a rerun leaves merged settings.json byte-identical", () => {
+    assertNoProblems(hookMerge.rerun, "rewriting an already-merged settings file must reproduce its bytes");
+  });
 });
 
-test("whole-home conflict safeguards preserve both native homes without partial installation", () => {
-  const conflict = observed.conflict;
-  assert.notStrictEqual(conflict.status, 0, `setup.ts must refuse a home holding user-owned shared roots:\n${conflict.log}`);
-  for (const home of [CONFLICT_CLAUDE, CONFLICT_CODEX]) {
-    assert.ok(conflict.log.includes(`Skipping ${home}`), `the refusal must name ${home}:\n${conflict.log}`);
-  }
-  assertNoProblems(conflict.problems, "a refused install must leave both native homes exactly as it found them");
+describe("invalid settings JSON", () => {
+  const scenario = useScenario("invalid-settings");
+  const settings = join(scenario.claude, "settings.json");
+  let refused: RefusedRun;
+  before(() => {
+    refused = frozen(observeRefusedFile(scenario, settings, INVALID_SETTINGS_TEXT));
+  });
+
+  test("invalid settings JSON is left untouched, reported on stderr, and exits 1 after the rest installs", () => {
+    assertRefusal(refused, `${HOOK_SKIP}${settings} is not valid JSON`, "settings.json cannot be parsed");
+    assertNoProblems(refused.problems, "an unparsable settings file must survive while every other item installs");
+  });
 });
 
-test("a skills symlink into this repo is reclaimed", () => {
-  assertNoProblems(observed.symlinkGate.repoLink, "a link into the running checkout is the kit's own to reclaim");
+describe("settings whose SubagentStart hooks are not a list", () => {
+  const scenario = useScenario("misshapen-settings");
+  const settings = join(scenario.claude, "settings.json");
+  let refused: RefusedRun;
+  before(() => {
+    refused = frozen(observeRefusedFile(scenario, settings, MISSHAPEN_SETTINGS_TEXT));
+  });
+
+  test("settings whose SubagentStart hooks are not a list are left untouched and exit 1", () => {
+    assertRefusal(refused, `${HOOK_SKIP}${settings}`, "it cannot merge into settings.json");
+    assertNoProblems(refused.problems, "settings the merge cannot place an entry in must survive unchanged");
+  });
 });
 
-test("a dangling skills symlink is reclaimed", () => {
-  assertNoProblems(observed.symlinkGate.dangling, "a link resolving to nothing blocks no one and is reclaimed");
+describe("a dangling settings link", () => {
+  const scenario = useScenario("dangling-settings");
+  let refused: RefusedRun;
+  before(() => {
+    refused = frozen(observeDanglingSettings(scenario));
+  });
+
+  test("a dangling settings link is preserved and exits 1 after the Codex home installs", () => {
+    assertRefusal(refused, `${HOOK_SKIP}${join(scenario.claude, "settings.json")}`, "settings.json cannot be written");
+    assert.ok(refused.log.includes("ENOENT"), `the refusal must include the error code:\n${refused.log}`);
+    assertNoProblems(refused.problems, "the dangling link must survive while the Codex home installs");
+  });
 });
 
-test("a skills symlink to another kit checkout is reclaimed", () => {
-  assertNoProblems(observed.symlinkGate.foreignKit, "a link into a second checkout is kit-owned and reclaimable");
+describe("settings.json and Codex AGENTS.md linked into a synced directory", () => {
+  const scenario = useScenario("linked-files");
+  let linkedFiles: LinkedFiles;
+  before(() => {
+    linkedFiles = frozen(observeLinkedFiles(scenario));
+  });
+
+  test("a symlinked settings.json is merged through its link", () => {
+    assertNoProblems(linkedFiles.settings, "the merge must write the link target and keep the link");
+  });
+
+  test("a symlinked Codex AGENTS.md is written through its link", () => {
+    assertNoProblems(linkedFiles.codexAgents, "the block must land in the link target and keep the link");
+  });
 });
 
-test("the reclaim sweep skips a linked entry even when its target holds a marker", () => {
-  assertNoProblems(
-    observed.symlinkGate.linkedEntry,
-    "the marker probe follows a link, so only the entry-level symlink skip keeps a user's link off the reclaim list",
-  );
+describe("a Codex AGENTS.md holding user lines, rerun and then given a stale block", () => {
+  const scenario = useScenario("codex-block");
+  let edits: CodexBlockEdits;
+  before(() => {
+    edits = frozen(observeCodexBlockEdits(scenario));
+  });
+
+  test("the core-rules block is appended after the user's Codex line", () => {
+    assertNoProblems(edits.appended, "an unmarked AGENTS.md must keep its lines and gain the block after a blank line");
+  });
+
+  test("a rerun leaves a Codex AGENTS.md holding user lines byte-identical", () => {
+    assertNoProblems(edits.rerun, "replacing an up-to-date block must reproduce the file");
+  });
+
+  test("a stale core-rules block is replaced in place between the user's lines", () => {
+    assertNoProblems(edits.replaced, "only the bytes between the kit markers may change");
+  });
 });
 
-test("a skills symlink the kit does not own is refused, leaving the home uninstalled", () => {
-  const userLink = observed.symlinkGate.userLink;
-  assert.notStrictEqual(
-    userLink.status,
-    0,
-    `setup.ts must refuse a home whose skills/ is a user symlink:\n${userLink.log}`,
-  );
-  assert.ok(
-    userLink.log.includes(`Skipping ${join(USER_LINK_HOME, ".claude")}`),
-    `the refusal must name the skipped home:\n${userLink.log}`,
-  );
-  assertNoProblems(userLink.problems, "a refused link must survive with its target, and spare the other home");
+describe("user-owned settings.json and Codex AGENTS.md with restrictive modes", () => {
+  const scenario = useScenario("renamed-writes");
+  let problems: readonly string[];
+  before(() => {
+    problems = frozen(observeRenamedWrites(scenario));
+  });
+
+  test("settings.json and Codex AGENTS.md are replaced by rename rather than rewritten in place", () => {
+    assertNoProblems(problems, "a failed merge write must not be able to truncate the user's file");
+  });
+});
+
+describe("unmatched core-rules markers in Codex AGENTS.md", () => {
+  const scenario = useScenario("unmatched-markers");
+  const codexAgents = join(scenario.codex, "AGENTS.md");
+  let refused: RefusedRun;
+  before(() => {
+    refused = frozen(observeRefusedFile(scenario, codexAgents, UNMATCHED_MARKER_TEXT));
+  });
+
+  test("unmatched core-rules markers leave Codex AGENTS.md untouched and exit 1 after the rest installs", () => {
+    assertRefusal(refused, `${BLOCK_SKIP}${codexAgents}`, "it cannot place the block");
+    assertNoProblems(refused.problems, "a file with unmatched kit markers must survive while every other item installs");
+  });
+});
+
+describe("reversed core-rules markers in Codex AGENTS.md", () => {
+  const scenario = useScenario("reversed-markers");
+  const codexAgents = join(scenario.codex, "AGENTS.md");
+  let refused: RefusedRun;
+  before(() => {
+    refused = frozen(observeRefusedFile(scenario, codexAgents, REVERSED_MARKER_TEXT));
+  });
+
+  test("reversed core-rules markers leave Codex AGENTS.md untouched and exit 1 after the rest installs", () => {
+    assertRefusal(refused, `${BLOCK_SKIP}${codexAgents}`, "it cannot place the block");
+    assertNoProblems(refused.problems, "a file with reversed kit markers must survive while every other item installs");
+  });
 });

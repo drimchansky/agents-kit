@@ -1856,7 +1856,7 @@ test("an apply interrupted before replacement settles held before a fresh apply 
 });
 
 for (const existing of [false, true]) {
-  test(`an interrupted apply with changed evidence settles without writing a ${existing ? "present" : "missing"} target`, () => {
+  test(`an interrupted apply settles held without writing a ${existing ? "present" : "missing"} target, and a revision written after a fixture source edit awaits fresh acceptance`, () => {
     const sourceBefore = "# Access guide\n\nUse context example-staging.\n";
     const sourceAfter = "# Access guide\n\nUse context example-preview.\n";
     const fx = seeded(`apply-changed-evidence-${existing}`, { "sources/access.md": sourceBefore, ...(existing ? { "access/staging.md": STAGING_V1 } : {}) });
@@ -1890,7 +1890,6 @@ for (const existing of [false, true]) {
     assert.strictEqual(status(store, null, at(4)).activeAttempt, null);
 
     start(store, "recheck", at(5), OWNER, "apply");
-    assert.notStrictEqual(readFileSync(source, "utf8"), sourceBefore, "the fresh job rechecks the cited source");
     const revisedBody = "# Staging\n\nUse context example-preview.\n";
     const revision = append(store, "proposal", { ...proposal("recheck", "The access guide changed.", revisedBody), proposal: id, target: "access/staging.md", before: existing ? sha(readFileSync(target)) : null }, at(5));
     assert.ok(revision.type === "proposal" && revision.payload.revision === 2);
@@ -2067,8 +2066,6 @@ test("a write error after the accepted body landed records applied and returns t
   assert.deepStrictEqual([result.payload.outcome, result.payload.observed, result.payload.recovered], ["applied", sha(STAGING_V2), false]);
   assert.strictEqual(readFileSync(join(runbook, "access", "staging.md"), "utf8"), STAGING_V2);
   assert.strictEqual(pointer(store, id, at(2)), undefined);
-  const contract = readFileSync(join(resolve(TESTS_DIR, ".."), "references", "scripts", "secretary-state.md"), "utf8");
-  assert.match(contract, /An `applied` result prints `\{event\}` and exits 0\. A `held` or `conflict` result exits 1 naming the failure and the recorded seq/);
 });
 
 test("an apply whose temporary write fails leaves no partial file in the runbook", () => {

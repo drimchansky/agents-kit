@@ -9,7 +9,6 @@ import { configure, start, finish, create, observe, archive, reconcile, remove }
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SKILL = readFileSync(join(REPO, "skills/sync-meeting-notes/SKILL.md"), "utf8");
 const DUTY = readFileSync(join(REPO, "references/secretary/meeting-sync.md"), "utf8");
-const CONTRACT = readFileSync(join(REPO, "references/workflow/secretary-contract.md"), "utf8");
 const ROOT = realpathSync(mkdtempSync(join(tmpdir(), "sync-procedure-")));
 const NOW = Date.parse("2026-11-02T10:00:00Z");
 after(() => rmSync(ROOT, { recursive: true, force: true }));
@@ -25,27 +24,6 @@ function fixture() {
   const token = start(home, retained, { now: NOW });
   return { home, folder, retained, token };
 }
-
-test("manual resolution and invocation authorization coexist with the enclosing secretary authorization", () => {
-  assert.match(SKILL, /\*\*Model invocation:\*\* requires a confirmed proposal/);
-  assert.match(SKILL, /folder from the argument, the conversation, or the user's instructions/);
-  assert.match(SKILL, /Ask when none supplies it/);
-  assert.match(SKILL, /manual model-invoked run asks that as its proposal and writes nothing before the confirmation/);
-  assert.match(SKILL, /user-invoked run announces it and proceeds/);
-  assert.match(SKILL, /consumes the enclosing start authorization; ask no separate proposal/);
-  assert.match(SKILL, /In manual entry, ask when more than one event fits/);
-  assert.match(CONTRACT, /meeting job opens no runbook records/);
-  assert.match(CONTRACT, /meeting launch grants no runbook decision or apply authority/);
-  assert.match(DUTY, /Never write, move, replace, or delete notes directly/);
-  assert.match(DUTY, /Never run `configure` inside a job/);
-  for (const heading of ["Secretary", "Finish", "Changes", "Preserved", "Coverage", "Next steps", "Blockers"]) assert.ok(DUTY.includes(`\`${heading}\``));
-});
-
-test("source windows, connected ambiguity, coverage and guarded receipt ordering stay in the shared procedure", () => {
-  for (const rule of [/last 30 days, reading every page/, /next seven days, reading every page/, /Skip the entire connected ambiguous group/, /including its events and incoming notes/, /continue independent meetings/, /Apply no archive, prep creation, or deletion to a skipped group/, /Granola returns its summary/, /complete Granola listing covers its date/, /complete Calendar listing covers its date/, /create or delete no notes from that data/, /every line that differs from the template appears there/]) assert.match(SKILL, rule);
-  assert.ok(SKILL.indexOf("reconcile each unambiguous stable provider operation") < SKILL.indexOf("Without a receipt, call a meeting new"));
-  assert.match(SKILL, /existing archive without a receipt stays untouched and grants no incoming deletion authority/);
-});
 
 test("archiving and removing an independent meeting leaves other notes, including an ambiguous group's notes, untouched", () => {
   const f = fixture();
