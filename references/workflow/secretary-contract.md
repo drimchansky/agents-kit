@@ -40,7 +40,7 @@ A status with `ready: false` permits no job; report it unavailable. The coordina
 - Arm no timer, cron, background command, or other wait; waiting and stopping belong to the coordinator.
 - After a stopped or superseded meeting token refuses, end the job; a delayed reply grants no further work.
 - Record no `attempt-stopped`. The coordinator records it when it stops a job or finds one interrupted.
-- Record no decision. The coordinator records each one from the user's own message.
+- Record no decision. The coordinator records each one from the user's own message or question answer.
 - Take no duty beyond the packet's selected duty. A meeting launch grants no runbook decision or apply authority.
 
 ## Consumers
