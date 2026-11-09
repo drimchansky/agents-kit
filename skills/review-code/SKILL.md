@@ -16,7 +16,7 @@ Review the object Setup resolves (the current branch's diff against its base wit
 - `-n N`: launch N independent reviewers over the identical review object and pool their returns into one findings list before verdicts are assigned. Default 1, no ceiling. N is a positive whole integer; anything else stops the review with a question, and a count that reads as a stray digit is confirmed before launching. Only reviewer 1 runs the project's verification scripts; every reviewer fetches the extracted links itself.
   For `-n N` above 1, apply `./references/workflow/reviewer-fleet.md` at launch, intake, pooling, and Output. <!-- cold -->
 - `-x`: cross-check. Launch one independent cold review of the same object on the cross-vendor engine and merge it before findings are finalized (`./references/workflow/probe-cross-check.md`; shape `./references/workflow/probe-shape-cold-review.md`; contract `./references/workflow/agent-fanout.md`; engine `./references/workflow/probe-engines-cross-vendor.md`). Off by default. The probe is read-only; its outcome is recorded on the `Cross-check:` line. <!-- cold -->
-- `-d`: draft a body-only PR description under `./references/workflow/pr-description.md`. The session drafts on either pass; never tell the reviewer the flag is set or request a draft from it. Off by default. Render refusal as `-d refused: <reason>` in Output's **PR description** slot. <!-- cold -->
+- `-d`: draft a PR title and description body under `./references/workflow/pr-description.md`. The session drafts on either pass; never tell the reviewer the flag is set or request a draft from it. Off by default. Render refusal as `-d refused: <reason>` in Output's **PR description** slot. <!-- cold -->
 
 ## References
 
@@ -133,7 +133,7 @@ After settlement, a standalone run presents evidence and requests sign-off under
 - **Cross-check** (only with `-x`): the probe's `Cross-check:` outcome line per `./references/workflow/agent-fanout.md`. <!-- cold -->
 - **Improvements** (optional): non-blocking suggestions; on a delegated pass the return's `Improvements`, passed through.
 - **Inaccessible context** (only if any): links that could not be fetched, with URL and reason, and which findings might shift with that context.
-- **PR description** (only with `-d`): a ready-to-paste description (body only), per § *PR description*.
+- **PR description** (only with `-d`): the `Title:` line, then a ready-to-paste body in a fenced block, per § *PR description*.
 
 End with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
 
