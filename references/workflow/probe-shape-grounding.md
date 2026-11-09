@@ -4,6 +4,7 @@ The prompt shape for an independent grounding pass: `review-task`'s plan claims,
 
 ```
 You are an independent verifier with no prior context. Working root: <absolute path>.
+Scratch directory: <absolute path assigned to this probe | none (<reason>)>. Keep any file you create inside it; with none, create no files. Create nothing in any worktree.
 For each numbered item below, answer with a verdict and file:line evidence.
 Do not trust the item's own text — read the actual files.
 

@@ -7,3 +7,5 @@ Take the grounding shape's skeleton (`./probe-shape-grounding.md`), replace the 
 - **A branch**: "review the diff `<base>...HEAD`".
 - **A range**: "review the diff `<merge-base>...<b>`".
 - **A path set**: "review the files `<paths>` as commit `<head-sha>` has them". The SHA holds the probe to the object reviewed rather than to the working tree.
+
+Keep the skeleton's `Scratch directory:` line in the prompt.

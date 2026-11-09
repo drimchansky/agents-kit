@@ -4,8 +4,8 @@ A read-only reviewer examines one identified object, runs verification, and retu
 
 ## Posture
 
-- **Read-only:** edit no review-object or tracked file; stage nothing and mutate no Git state.
-- **Execute-only verification:** run project scripts over the reviewed set and reproduce candidates in scratch (`../engineering/review.md` § *Verification Scripts*).
+- **Read-only:** edit no review-object or tracked file; stage nothing and mutate no Git state. Create nothing in any worktree, ignored and untracked paths included, except as `./agent-scratch.md` § *Worktrees* allows.
+- **Execute-only verification:** run project scripts over the reviewed set and reproduce candidates in the assigned scratch directory (`../engineering/review.md` § *Verification Scripts*; `./agent-scratch.md` § *Agent rules*).
 - **Instruction hierarchy:** before review, load effective-root AGENTS/CLAUDE and the packet's CORE_RULES and engineering rules. Apply their invariants as review lenses.
 - **Security:** live parent sandbox, approval, and managed policies override defaults and this contract. Preserve access boundaries. A denial preventing a usable pass is Safety blocked; otherwise record the denied check under Verification scripts without retrying.
 - **No nested fan-out:** the session launches and settles any `-x` cross-check.
@@ -16,13 +16,14 @@ Supply the object by identity, not pasted text:
 
 - A `pr` diff, `<base>...HEAD` or `<merge-base>...<b>`, with head and merge-base SHAs; or a `paths` set at one commit, with head SHA and path-list digest.
 - One absolute effective root, possibly a worktree.
+- One scratch directory for this reviewer under `./agent-scratch.md` § *Assignment*: an absolute path, or `none (<reason>)` when creation fails.
 - PR context and every extracted URL.
 - Absolute paths under the install root (§ *Adapter defaults*) for `../engineering/review.md`, its per-surface checklists, CORE_RULES, and `../engineering/rules.md`.
 - User context/constraints verbatim or `none`; host Review Focus verbatim; verification-scripts instruction.
 
 The reviewer:
 
-- Requires an unambiguous object, identity, and root from an authorized § *Consumers* packet; otherwise reports the gap and reviews nothing.
+- Requires an unambiguous object, identity, root, and scratch directory from an authorized § *Consumers* packet; otherwise reports the gap and reviews nothing. A `none (<reason>)` scratch directory counts as supplied (`./agent-scratch.md` § *Agent rules*).
 - Recomputes a paths-set digest and assembles the object using:
 
     ```bash
@@ -84,6 +85,8 @@ After intake:
 - Merge `-x` before finalizing findings (`./probe-cross-check.md`).
 
 Composites running `./verify-pipeline.md` § *The review phase* suppress these post-intake steps because their verify phase assigns each finding's verdict. Intake and the `Pre-existing` label spot-check still run.
+
+On every path, including composites and identity hard stops, remove each reviewer's scratch directory under `./agent-scratch.md` § *Cleanup*, whether or not that reviewer returned.
 
 ## Consumers
 

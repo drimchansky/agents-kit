@@ -9,7 +9,7 @@ The engines the opt-in `-x` cross-check runs on. The contract binding every engi
     -C <working-root> -o <scratch>/probe.md - < <scratch>/probe-prompt.md
   ```
 
-  Write the filled prompt (findings verbatim) to `<scratch>/probe-prompt.md` with the file tool and feed it on stdin through the trailing `-`, never as a command-line argument, so a `$`, backtick, or apostrophe in a finding stays data. `<scratch>` is absolute. `--sandbox read-only` enforces the read-only promise; `-o` captures the final message; `--ephemeral` leaves no session files. Parallel probes are shell jobs (`&` + `wait`), one prompt file and one `-o` file each. Launch early in the background where the host supports it; collect at the merge point.
+  Write the filled prompt (findings verbatim) to `<scratch>/probe-prompt.md` with the file tool and feed it on stdin through the trailing `-`, never as a command-line argument, so a `$`, backtick, or apostrophe in a finding stays data. `<scratch>` is the probe's assigned scratch directory (`./agent-scratch.md` § *Assignment*), an absolute path. `--sandbox read-only` enforces the read-only promise; `-o` captures the final message; `--ephemeral` leaves no session files. Parallel probes are shell jobs (`&` + `wait`), each with its own `<scratch>` holding one prompt file and one `-o` file. Launch early in the background where the host supports it; collect at the merge point.
 
 - **`claude`**: Claude Code, headless. The cross-vendor engine when the host is Codex.
 
