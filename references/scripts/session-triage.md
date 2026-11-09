@@ -25,6 +25,7 @@ Later copied session_meta records and inherited session_id values cannot replace
 Claude uses sessionId with isSidechain and agentId, or its explicit `<sessionId>/subagents/agent-<agentId>.jsonl` layout.
 Uncertain identities remain separate. Working directory and temporal proximity establish no relationship.
 Child prompts do not count as user interventions. Dated child records predating their creation metadata are inherited history.
+Codex child records up to and including the last developer `response_item` message starting with `You are now a newly spawned child agent` are also inherited history, whatever their timestamps.
 
 `sampled` selects at most three otherwise unflagged groups with parent user activity, ordered by parent path.
 `sampleOmitted` counts other eligible groups. Sampling is deterministic and offers no statistical or complete conversational coverage.
