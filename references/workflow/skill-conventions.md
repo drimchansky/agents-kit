@@ -44,6 +44,7 @@ A modal flag modifies one phase; scattered conditionals suggest a misclassified 
 - `maintain` — format sweep, health sweep, active-task listing, then session analysis. Its phases run inline without invoking sibling skills. It reconciles no task content; its Handoff's Next hands that to `resume-task-reconcile`. This composite has no base skill.
 - `resume-task-reconcile` — print the resume brief, then reconcile docs to it.
 - `review-task-reconcile` — print the plan assessment, then reconcile docs and incorporate answers.
+- `fix-findings-reconcile` — apply findings through `fix-findings`, then record them in the session's task through `reconcile-task`.
 - `decompose-task` — propose ordered sibling parts from an approved source; after confirmation, materialize each through `prepare-ticket` and seeded `CONTEXT.md`.
 - `review-pr-loop` — review a PR and publish available findings before waiting for checks, then watch its head. Whole-phase iteration: the cap is 10 passes; a clean pass ends after an evidence-eligible verdict, and a closed PR ends it too. Each pass displays progress, provenance, evidence state, and every submission or its no-submission reason. It pins `publish-pr-review`'s supplied tiers and selection, with publishing consent from its own gate. Engineer confirmation follows `../engineering/review-evidence.md`. PR checks substitute for verification scripts while evidence capture remains active. Its head checks run inside the review phase under § *The rule*'s supervision exception.
 
@@ -90,6 +91,7 @@ Name cross-project, registered-root, or installed-state sweep scope in the propo
 
 - `implement` — the user's preference for explicit invocation; the proposal is its § *1. Frame the Ask*.
 - `fix-findings` — the user's preference for explicit invocation; the proposal is its § *The Gate: Auto vs Ask*.
+- `fix-findings-reconcile` — the user's preference for explicit invocation; the proposal is its § *Phase 1 — Fix*.
 - `explore` — the user's preference for explicit invocation; the proposal is its § *Determine Scope*.
 - `update-pr-description` — a publishing write with no preview of its own; the proposal is its § *Preconditions — stop if unmet*.
 - `review-pr-loop` — a publishing write with no preview of its own; the proposal is its § *Setup*.
@@ -113,7 +115,7 @@ Skills that gate their own write another way stay off the roster:
 
 Other skills produce local work or chat output, or preview their own write, as `decompose-task` does.
 
-`skills/commit/SKILL.md`, `skills/rebase/SKILL.md`, and `skills/squash-push/SKILL.md` require an explicit request for their Git operations, including natural language. Skill selection alone authorizes none of those writes. An explicit request to implement an engineering task grants checkpoint and final commits under `./task-delivery.md` § *Checkpoint and final commits*; through the second door, only the commit gates a proposal named. When `implement-task` runs `commit` there, that request is the explicit request `commit` requires. A `fix-findings` run grants concern-batch commits only under `skills/fix-findings/SKILL.md` § *Batch commits*. There, the invocation through either door is the explicit request `commit` requires. Through the second door, the proposal must have named the batch commits, or the one commit under `-1`. Those sanctions change nothing on this roster.
+`skills/commit/SKILL.md`, `skills/rebase/SKILL.md`, and `skills/squash-push/SKILL.md` require an explicit request for their Git operations, including natural language. Skill selection alone authorizes none of those writes. An explicit request to implement an engineering task grants checkpoint and final commits under `./task-delivery.md` § *Checkpoint and final commits*; through the second door, only the commit gates a proposal named. When `implement-task` runs `commit` there, that request is the explicit request `commit` requires. A `fix-findings` run, or the fix phase of a `fix-findings-reconcile` run, grants concern-batch commits only under `skills/fix-findings/SKILL.md` § *Batch commits*. There, the invoked skill's invocation through either door is the explicit request `commit` requires. Through the second door, the proposal must have named the batch commits, or the one commit under `-1`. Those sanctions change nothing on this roster.
 
 An open skill using invocation as consent states the user/model split beside that permission. Apply `./reconciliation.md` § *Consent model: findings apply, the record carries them* for reconcilers, or `./executor-routing.md` § *The registry and its authorization* for write-mode consumers.
 

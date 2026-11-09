@@ -33,6 +33,6 @@ Results carry no status header. Repairing out of `done` removes `**Completed:**`
 ## Adding or renaming statuses
 
 1. Update this registry and `./task-lifecycle.md`'s vocabulary.
-2. Update that file's propagate list: `plan-task`, `implement-task`, `resume-task`, `review-task`, `resume-task-reconcile`, `review-task-reconcile`, and `reconcile-task`.
+2. Update that file's propagate list: `plan-task`, `implement-task`, `resume-task`, `review-task`, `resume-task-reconcile`, `review-task-reconcile`, `fix-findings-reconcile`, and `reconcile-task`.
 3. Update the machine-readable vocabulary in `scripts/lifecycle-constants.ts` (`references/maintenance/repository.md` § *Consumer lists*).
 4. Run `grep -rn '<old-status>' skills/ references/ scripts/` and update remaining vocabulary uses, including templates.

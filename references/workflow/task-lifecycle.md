@@ -1,6 +1,6 @@
 # Task Lifecycle: Status Registry
 
-When a status name or transition changes, propagate it to `plan-task`, `implement-task`, `resume-task`, `review-task`, `resume-task-reconcile`, `review-task-reconcile`, and `reconcile-task`. This registry includes field consumers without direct citations. `archive-task`, `backlog-task`, and `maintain` read the vocabulary at run time and need no update.
+When a status name or transition changes, propagate it to `plan-task`, `implement-task`, `resume-task`, `review-task`, `resume-task-reconcile`, `review-task-reconcile`, `fix-findings-reconcile`, and `reconcile-task`. This registry includes field consumers without direct citations. `archive-task`, `backlog-task`, and `maintain` read the vocabulary at run time and need no update.
 
 Layout: `./task-layout.md`; authorship: `./task-authorship.md`; goals/observations: `./task-goals.md`, `./task-observations.md`; containers: `./task-archiving.md`, `./task-backlog.md`.
 
@@ -14,7 +14,7 @@ Only `plan.md` carries task lifecycle status. A documentation deliverable uses i
 
 Context has no Status header or lifecycle. Apply `./task-authorship.md` for authorship.
 
-**Reconciliation carve-out.** `reconcile-task`, `resume-task-reconcile`, and `review-task-reconcile` may minimally annotate References/Open Questions: dated broken links, moved URLs, contradiction rulings, and pending Awaiting decision choices in Open Questions. They may replace an answered Open Questions prompt under `./reconciliation.md` § *Annotation formats*, adding its dated decision heading when no result exists. They may rewrite prose as judged edits under `./reconciliation.md` § *Grounding docs change on evidence, never silently*. Findings must evidence every edit; add nothing outside those annotations, answers, and rewrites. Evidence-settled corrections and prior decisions need no renewed input; unresolved impactful choices remain pending under that consent contract. `implement-task` may correct only sections its execution disproves, under its Correcting Grounding rules.
+**Reconciliation carve-out.** `reconcile-task`, including its run as `fix-findings-reconcile`'s Phase 2, `resume-task-reconcile`, and `review-task-reconcile` may minimally annotate References/Open Questions: dated broken links, moved URLs, contradiction rulings, and pending Awaiting decision choices in Open Questions. They may replace an answered Open Questions prompt under `./reconciliation.md` § *Annotation formats*, adding its dated decision heading when no result exists. They may rewrite prose as judged edits under `./reconciliation.md` § *Grounding docs change on evidence, never silently*. Findings must evidence every edit; add nothing outside those annotations, answers, and rewrites. Evidence-settled corrections and prior decisions need no renewed input; unresolved impactful choices remain pending under that consent contract. `implement-task` may correct only sections its execution disproves, under its Correcting Grounding rules.
 
 ### `goals.md` — no status field
 

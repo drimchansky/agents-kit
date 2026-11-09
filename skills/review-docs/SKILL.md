@@ -93,7 +93,7 @@ Close the audit with the Handoff block (`./references/workflow/user-facing-messa
 - **Done:** the claim verdicts, gaps, and quality findings, pointing at **Accuracy Assessment**, **Gaps**, and **Quality**.
 - **Know:** claims left unchecked, commands checked only by definition, and a skipped or contradicting Cross-check.
 - **Awaiting you:** point at **Questions** whose answers gate a fix.
-- **Next:** an explicit request naming the findings to apply, which this skill then edits without committing; or `/fix-findings`, which applies them and commits each concern batch. The request form, such as `apply findings 1 and 3`, is that route's paste-ready line.
+- **Next:** an explicit request naming the findings to apply, which this skill then edits without committing; or `/fix-findings`, which applies them and commits each concern batch. Offer `/fix-findings-reconcile` in place of `/fix-findings` when the audited document is provably the session task's (`../fix-findings-reconcile/SKILL.md` § *When to Use*). If a session task exists without that proof, show `/fix-findings` and `/fix-findings-reconcile`, favoring `/fix-findings` of the two. The request form, such as `apply findings 1 and 3`, is the explicit request's paste-ready line.
 
 ## Applying Fixes (only on explicit request)
 
