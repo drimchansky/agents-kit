@@ -45,7 +45,7 @@ First re-confirm the reviewed identity in the form its kind takes:
 
 - **`branch`:** `git rev-parse HEAD` still resolves to the reviewed head, and the merge-base recomputed against Setup's own base (not the PR's `baseRefName`) still matches.
 - **`range`:** re-run Setup's ancestry condition; the recorded SHAs are constants, so comparing them proves nothing.
-- **`paths`:** `git rev-parse HEAD` still matches the reviewed head, and the digest recomputed over Setup's pathspecs still matches.
+- **`paths`:** re-run Setup's ancestry condition with the reviewed head as `b`, and confirm the digest recomputed over Setup's pathspecs still matches. When a commit in `b..HEAD` touches a reviewed path, name each such path.
 
 Setup's working-tree check still passes on every kind. Any mismatch is drift: stop and report.
 
