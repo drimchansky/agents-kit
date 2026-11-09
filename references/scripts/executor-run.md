@@ -68,7 +68,7 @@ A rule is a tool name with an optional parenthesized specifier, or a whole-serve
 Names start with a letter and contain only letters, digits, `_`, and `-`, as in `mcp__figma-dev-mode__get_code`.
 Entries holding more than one rule, specifiers containing `)` or a comma, and blanket Bash, PowerShell, and Monitor rules are refused.
 A refusal names the rejected entry.
-The check refuses only literal blanket rules. An interpreter rule such as `Bash(sh *)` or a path rule such as `Edit(//**)` is just as broad, so keep every allowance scoped to a required check.
+The check refuses only literal blanket rules. An interpreter rule such as `Bash(sh *)` or a path rule such as `Edit(//**)` is just as broad, so keep every allowance scoped to a required check or to the executor's scratch directory [`<assigned directory>/work`](../workflow/executor-engines-cross-vendor.md#claude).
 The helper appends read-only `Read(//<path>/references/**)` and `Read(//<path>/CORE_RULES.md)` rules for `contractRoot` and its resolved path, so the executor can read its contract and the core rules outside `root`.
 A Claude `contractRoot` containing `*`, `?`, `[`, `]`, `!`, `\`, `(`, or `)` is refused.
 `network: "inherit"` records existing Claude and host network controls; it adds no network restriction.

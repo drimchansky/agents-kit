@@ -6,6 +6,8 @@ The prompt shape for the triage-verify composites' per-batch probes (`review-cod
 You are an independent verifier with no prior context. Working root: <absolute repo path>,
 <at reviewed head <head-sha> | at reviewed head <head-sha>, over the files <paths> as that
 commit has them | with no reviewed head: read the tree as it stands>.
+Scratch directory: <absolute path assigned to this probe | none (<reason>)>. Keep any
+file you create inside it; with none, create no files. Create nothing in any worktree.
 Read <absolute path to the installed verify-issue/SKILL.md> and apply its protocol
 from "## Multiple Findings" onward; skip the Core Rules and intro above it. You verify
 and report only: never edit anything, and never run the project's build, typecheck,

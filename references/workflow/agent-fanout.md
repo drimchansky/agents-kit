@@ -9,13 +9,14 @@ A **probe** is one self-contained, read-only question posed to a separate agent,
 ## Probe contract (every engine)
 
 - **Self-contained prompt.** Paste in everything the probe must judge: the claims under check, the diff scope or doc paths, absolute paths to the artifacts. The probe cannot see the session.
+- **Own scratch directory.** Assign each probe a directory under `./agent-scratch.md` § *Assignment*, and name its absolute path in the prompt. Tell the probe to keep any file it creates in that directory and to create nothing in any worktree (`./agent-scratch.md` § *Agent rules*, § *Worktrees*). Remove the directory after intake under `./agent-scratch.md` § *Cleanup*.
 - **One concern per probe.** A claim list for one check is one probe with one merged answer, not a per-claim swarm.
 - **Read-only, promised always, enforced where the engine can.** Probes verify by reading, never by mutating and never by running the project's build or suite. Never pass an engine's sandbox-bypass flags.
 - **Demand cited verdicts.** Require a locator with each verdict: `file:line` for file-backed claims, a stable source or record locator for external facts. A verdict that no evidence bears lists the sources and locations searched instead. An uncited answer is an opinion, not evidence.
 - **Evidence, not authority.** Weigh the answer and spot-check it where surprising. It assigns no verdict and overrides no session pass; the invoking skill owns its verdicts.
 - **Degrade gracefully.** Report a missing engine, failed login, or dead probe as `Cross-check: skipped (<reason>)` and proceed on the session's own pass. A probe never blocks a skill, but slowness alone is not failure: wait on a probe still making progress per `./delegated-waiting.md` § *How to wait*. Skipping it is the user's call.
 - **Content leaves the machine.** A probe ships its prompt to the engine's vendor. Run a cross-vendor probe only on work the user already uses that vendor's CLI on; when in doubt, ask first.
-- **Scratch, not record.** Probe output lands in the host's scratch area, never in the task folder. Result files record the merged outcome, not probe transcripts.
+- **Scratch, not record.** Probe output lands in the probe's assigned scratch directory, never in the task folder. Result files record the merged outcome, not probe transcripts.
 
 ## Merge contract
 

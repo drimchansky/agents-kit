@@ -12,7 +12,7 @@ argument-hint: '[kit path and/or task-root path — defaults to the registered r
 
 Run four phases in order: kit task-format sweep, health sweep, active-task listing, and session analysis. Work on task envelopes, lifecycle bookkeeping, store artifacts, and session logs. Resolve no Domain pack, invoke no sibling skill, and reconcile no task content; hand that work to `resume-task-reconcile` in the Handoff's Next.
 
-Report first. Only the `.maintain-last-run` marker updates without confirmation, as derived run metadata. Preview and confirm every other mutation separately, or hand it off: format fixes, archive moves, installation, worktree removals, findings-file writes, and folder removals. Detection authorizes reporting, never automatic document edits or deletion.
+Report first. Apart from assigned scratch-directory creation and removal (`./references/workflow/agent-scratch.md` § *Assignment*), only the `.maintain-last-run` marker updates without confirmation, as derived run metadata. Preview and confirm every other mutation separately, or hand it off: format fixes, archive moves, installation, worktree removals, findings-file writes, and folder removals. Detection authorizes reporting, never automatic document edits or deletion.
 
 The only Git writes are confirmed removal of spent task worktrees and their branches, or recorded branches whose worktrees are gone. The removal predicate may first run `git fetch origin <default-branch>`, updating only that remote-tracking ref. Never add, commit, push, checkout, stash, or revert in any repository. Report dirty paths for the user to handle.
 
@@ -155,7 +155,7 @@ On confirmation, create the state directory if needed and write only that file. 
 
 ## Output
 
-Use lists, not tables. Confine writes to the resolved kit/task roots, listed linked worktrees, state directory, and confirmed installation homes. Apply the narrower phase-specific scopes above.
+Use lists, not tables. Confine writes to the resolved kit/task roots, listed linked worktrees, state directory, and confirmed installation homes, apart from assigned scratch-directory creation and removal (`./references/workflow/agent-scratch.md` § *Assignment*). Apply the narrower phase-specific scopes above.
 
 - **Targets:** resolved kit and task roots with labels; every absent registered path named as skipped.
 - **Format:** `N conformant, M structurally-fixable, K needs-judgment`; each issue and whether fixes applied or were declined. Include strays and unsupported expected rules. Report a missing canonical root as no sweep.

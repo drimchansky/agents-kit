@@ -4,7 +4,7 @@ Load only when `review-code -n N` requests more than one reviewer. These rules r
 
 ## Launch
 
-With `-n N`, send the N packets in one message, on the primitive `./delegated-waiting.md` § *Per-host primitives* names for this host. They differ on the verification-scripts instruction alone.
+With `-n N`, send the N packets in one message, on the primitive `./delegated-waiting.md` § *Per-host primitives* names for this host. They differ only in the scratch directory (`./agent-scratch.md` § *Assignment*) and the verification-scripts instruction.
 
 ## Intake and verification
 

@@ -14,6 +14,7 @@ The coordinator supplies:
 - Domain guidance: universal per-unit sections verbatim, including code-style Comments for code and documentation's link sweep for documents; overlays/triggered pack files as absolute paths, or explicit `none`.
 - Required checks: the criterion and every domain per-unit check (`./execution-loop.md` § *Two verification tiers*). Each names its owner (`executor` by default, or `coordinator`), exact command/procedure, assertion, passing condition, absolute execution root, and needed capability. Preserve assertions and passing conditions when assigning ownership or retargeting paths. Every check leaves the runner's cache on (`../engineering/boundary-scope.md` § *Never disable the runner's cache*).
 - One absolute effective root and its placement (§ *Execution boundaries*).
+- One absolute scratch directory assigned under `./agent-scratch.md` § *Assignment*. Keep scratch files there under its § *Agent rules*.
 - Consumer label selecting a binding below. Supply all context; interpreting the packet requires no skill/consumer-definition fetch.
 
 Report missing/ambiguous items or unregistered packets without editing. Infer no root from adapter, installation, or shell.
@@ -22,8 +23,8 @@ Report missing/ambiguous items or unregistered packets without editing. Infer no
 
 Placement is independent of engine. Serial units use the shared tree; eligible parallel units use coordinator-managed worktrees (`./parallel-batch.md`).
 
-- Work within the effective root; creating, switching, or substituting worktrees is coordinator-only.
-- Edit only the packet's surface. Report a needed outside edit as an attempted scope escape.
+- Work within the effective root; creating, switching, or substituting worktrees is coordinator-only. Outside that root, keep any file you create yourself in the assigned scratch directory.
+- Edit only the packet's surface. Report a needed outside edit as an attempted scope escape. Writes in the assigned scratch directory are not scope escapes. Neither is output that required checks and their tools write outside the root, such as temp directories and runner or package caches.
 - Change work products only; records, statuses, and completion verdicts remain with the coordinator.
 - Apply the effective root's instruction hierarchy and packet guidance before editing. Exclude adjacent cleanup and unlisted units; execute segment units in packet order.
 - Return unresolved impactful choices to the coordinator before dependent edits. Continue independent authorized work under the supplied decision rule.
@@ -44,7 +45,7 @@ Use the same report for native and external execution. Report each unit in packe
 
 - `Outcome`: `ready` means ready for coordinator intake, never accepted completion. Use `blocked` when execution or required verification cannot proceed, apart from checks the packet declared open. Use `needs-decision` for work held on an impactful choice. Use `not-started` for unreached work, naming what prevented its start.
 - `Commands run`: every command/tool action materially reading, changing, or verifying the unit.
-- `Changes`: each changed `file:line` and its change.
+- `Changes`: each changed `file:line` within the effective root, and its change.
 - `Comments added or edited`: each comment and its non-obvious invariant.
 - `Verification`: retain each required check's packet definition and identify its proof owner. Executed checks give the exact command/procedure, its output or evidence, exit status or pass/fail result, and absolute execution root. All four are required evidence. A command gives its raw output verbatim. Past 50 lines, a whole-line verbatim excerpt may stand in when it keeps the command's result and summary lines and every failure diagnostic. The excerpt marks each elision with its line count. A procedure gives the observable evidence its domain's `verification.md` names. Anything else in place of a command's raw output counts as a missing field, including a summary, paraphrase, or unmarked elision. Label assigned coordinator checks `pending`; checks unavailable to both parties remain `open`, naming the missing capability.
 - `Sources consulted`: external sources, linked where available.
@@ -60,7 +61,7 @@ Send the report only as the coordinator reply. Make no completion claims, status
 
 ## Segment launches
 
-A segment contains consecutive units sharing context. Supply all packet items per unit, shared guidance/root/consumer once. Bindings define eligibility/bounds; without bounds, launch singly. Serial segments use the shared root.
+A segment contains consecutive units sharing context. Supply all packet items per unit, shared guidance/root/scratch directory/consumer once. Bindings define eligibility/bounds; without bounds, launch singly. Serial segments use the shared root.
 
 End a serial segment at the first unit with a coordinator-owned required check. Complete that unit's intake before launching the remaining units in a fresh packet.
 
@@ -74,7 +75,7 @@ Registered `./executor-routing.md` consumers delegate unless an announced, recor
 
 **Coordinator-only judgment:** unit framing, health boundaries, report buckets, statuses, intake, and consequential-choice selection under the user's decision.
 
-**Intake.** Read the report before advancing the unit. Require every § *Evidence report* heading and substantively filled fields where work requires them. Process exit status and the reported `Outcome` do not establish completion. A missing field, inappropriate `None`, failing required check, active blocker, scope concern, or pending choice prevents advancement. `Dependency problems` entries do not prevent advancement; carry them into the coordinator's Noticed block. Apply Fallback for execution failure, asking first before an inline fallback replaces an explicitly selected external engine (`./executor-routing.md` § *External launches and recovery*), and Stop-the-Line for criterion failure. Scope escapes cannot silently retry; failure reports cannot count as passing evidence. A recovered incident permits intake when its successful replacement supplies the required evidence and no active failure remains.
+**Intake.** Read the report before advancing the unit. Require every § *Evidence report* heading and substantively filled fields where work requires them. Process exit status and the reported `Outcome` do not establish completion. A missing field, inappropriate `None`, failing required check, active blocker, scope concern, or pending choice prevents advancement. `Dependency problems` entries do not prevent advancement; carry them into the coordinator's Noticed block. Apply Fallback for execution failure, asking first before an inline fallback replaces an explicitly selected external engine (`./executor-routing.md` § *External launches and recovery*), and Stop-the-Line for criterion failure. Scope escapes cannot silently retry; failure reports cannot count as passing evidence. A recovered incident permits intake when its successful replacement supplies the required evidence and no active failure remains. When intake of a launch's report ends, or the launch ends with no report, remove its scratch directory under `./agent-scratch.md` § *Cleanup*.
 
 **Coordinator-owned checks.** Run each assigned pending check with its original assertion, passing condition, and packet root. Launch the unit's dependent successor only after its executor-owned and assigned coordinator checks pass. Advance the unit only after every required check passes. If neither party can perform a check, retain its definition and explicitly open state. An open check does not hold the successor. Take the consumer's existing pause (`./implement-task-edges.md` § *An open criterion leg* for implement-task); partial proof cannot close that leg. Ownership grants no additional permission or access.
 
@@ -90,9 +91,9 @@ A pending choice does not excuse an independent failed required check, active bl
 
 **Surface check.** Use declared paths, else resolve the stated scope to paths before launch; no resolvable paths makes the check unavailable. Capture the shared tree before launch, once per segment:
 
-`node <kit-root>/scripts/worktree-merge.ts baseline <shared-tree> --out <scratch>/unit-<n>.json`
+`node <kit-root>/scripts/worktree-merge.ts baseline <shared-tree> --out <session scratch>/unit-<n>.json`
 
-Resolve `<kit-root>` via `./task-store.md` § *Resolving `<kit-root>`*. On return, inspect `Changes` first; an outside entry takes the failure path before invoking the script. Then run `check <shared-tree> --baseline <that manifest> --surface <each path>` against the segment's surface union. Attribute changes per unit from `Changes`. Exit 0 passes; 1 means escape; 2 or unavailable kit root requires re-proof (`../scripts/worktree-merge.md`). Serial re-execution owes the same check against its own pre-unit capture.
+Resolve `<kit-root>` via `./task-store.md` § *Resolving `<kit-root>`*. Set `<session scratch>` to the shared scratch root (`./agent-scratch.md` § *Session-owned scratch*), outside every assigned directory. On return, inspect `Changes` first; an outside entry takes the failure path before invoking the script. Then run `check <shared-tree> --baseline <that manifest> --surface <each path>` against the segment's surface union. Attribute changes per unit from `Changes`. Exit 0 passes; 1 means escape; 2 or unavailable kit root requires re-proof (`../scripts/worktree-merge.md`). Serial re-execution owes the same check against its own pre-unit capture.
 
 Record proof ownership by check, distinguishing assigned coordinator checks from re-proofs, plus changed file:lines under the consumer binding. Keep pending/open checks explicit; engine and recovery evidence follow `./executor-routing.md` § *External launches and recovery*. Concurrency: `./parallel-batch.md`.
 

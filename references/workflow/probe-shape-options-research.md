@@ -7,6 +7,7 @@ This shape reads whole files and compares across them, so a Plan-type agent is t
 ```
 You are an independent researcher with no prior context. Working root: <absolute project root>.
 Task folder, read-only context: <absolute task-folder path>.
+Scratch directory: <absolute path assigned to this probe | none (<reason>)>. Keep any file you create inside it; with none, create no files. Create nothing in any worktree.
 
 Questions under research — do not trust their framing; read the actual files:
 1. <the question, with the plan step, goal, or drift finding it arose from, verbatim>

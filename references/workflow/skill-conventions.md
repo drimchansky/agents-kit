@@ -75,7 +75,7 @@ Two doors establish a **user-invoked** run, the first a typed command and the se
 
 Every other run, including a loose request, is **model-invoked**. Do not infer user invocation.
 
-Silence or replies without a pending question grant nothing. Confirm omitted writes separately; the run remains user-invoked. Grants cover one run; later runs propose again.
+Silence or replies without a pending question grant nothing. Confirm omitted writes separately; the run remains user-invoked. Assigned scratch-directory creation and removal need no naming in a proposal and no separate confirmation (`./agent-scratch.md` § *Assignment*). Grants cover one run; later runs propose again.
 
 A confirmed proposal carries the sanctions the first door carries. They are the task branch and worktree lifecycle (`./task-delivery.md` § *Branch and worktree creation* → **The sanction**), executor delegation (`./executor-routing.md` § *The registry and its authorization*), and reconciler auto-apply (`./reconciliation.md` § *Consent model: findings apply, the record carries them*). Every sanctioned write, these three included, holds only when the proposal named it. `fix-findings`' commit per concern batch, or one commit for the run under `-1`, is one such write (`skills/fix-findings/SKILL.md` § *Batch commits*).
 
