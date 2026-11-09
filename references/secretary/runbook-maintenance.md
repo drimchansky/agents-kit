@@ -103,7 +103,7 @@ Repeat no credential value from the reply or a source; name its location instead
 
 After an apply, report its `Secretary:` outcome, its recorded `apply-result` outcome and seq, **Proposals**, **Pending**, and **Blockers**. Without a recorded result, say so instead. **Proposals** renders each revision this apply recorded as the review report's **Proposals** block does. Under **Pending**, mark each accepted revision left unapplied, as `../../skills/start-secretary/SKILL.md` § *Startup* step 4 does.
 
-Name each revision whose `apply-result` in this run is `applied`, with its target, or state that nothing was applied. A decision must name `<proposal>@<revision>` under `../../skills/start-secretary/SKILL.md` § *Decisions*; every other proposal stays pending.
+Name each revision whose `apply-result` in this run is `applied`, with its target, or state that nothing was applied. A decision names `<proposal>@<revision>` in your message or through its question under `../../skills/start-secretary/SKILL.md` § *Decisions*; every other proposal stays pending.
 
 Close with the Handoff block (`../workflow/user-facing-messages.md` § *Blocks*):
 
