@@ -14,7 +14,7 @@ Paths without `./` are relative to the source checkout. Entry rules and the supp
 - `setup.ts` owns installation and distribution. This file's § *Source contracts* owns its CLI, stdout, exit behavior, and rationale.
 - `.claude-plugin/` owns the Claude Code plugin and its single-plugin marketplace. The plugin root is the repository root, so skill `./references` links and `../../CORE_RULES.md` citations resolve inside the plugin cache. The plugin delivers no always-on core rules; only `setup.ts` installs them. Neither manifest pins `version`, so every commit is a new version for `/plugin update`.
 - `scripts/` owns zero-dependency Node helpers. For a helper skills run, `references/scripts/<name>.md` owns CLI and stdout contracts, installed with other references. Its `references/maintenance/scripts.md` section owns rationale and mirror notes. For maintainer-only helpers, that section owns all three. Sources carry no comments; change a contract at its owner in the same edit.
-- `tests/` owns verification. `references/maintenance/tests.md` explains suite commands and dependencies; § *Change routing* maps scripts to suites. `tests/dup-allow.json` records intentional prose mirrors, each entry explaining why its copy stays.
+- `tests/` owns verification. `references/maintenance/tests.md` owns the testing strategy and explains suite commands and dependencies; § *Change routing* maps scripts to suites. `tests/dup-allow.json` records intentional prose mirrors, each entry explaining why its copy stays.
 - `.agents/tasks/` owns task artifacts and active work context.
 
 ## Type stripping and verification
@@ -27,7 +27,7 @@ No linter, formatter, or graph-aware runner exposes a narrowing class, so every 
 
 ## Source contracts
 
-Run-time helper contracts live in `references/scripts/<name>.md`. This section holds shared conventions and installation behavior. `references/maintenance/scripts.md` holds maintainer-only helper contracts, helper rationale, and mirrors. `references/maintenance/tests.md` holds suite commands and dependencies. Read the relevant helper or suite section before editing its source. Callers read decisions in these places before assembling commands; sources contain no comments.
+Run-time helper contracts live in `references/scripts/<name>.md`. This section holds shared conventions and installation behavior. `references/maintenance/scripts.md` holds maintainer-only helper contracts, helper rationale, and mirrors. `references/maintenance/tests.md` holds the testing strategy, suite commands, and dependencies. Read the relevant helper or suite section before editing its source. Callers read decisions in these places before assembling commands; sources contain no comments.
 
 `setup.ts` installs `CORE_RULES.md` at each home's root, where skills' `../../CORE_RULES.md` citations resolve. Keep maintainer citations as source-root-relative text; they do not add runtime reading.
 
