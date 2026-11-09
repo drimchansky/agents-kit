@@ -54,6 +54,7 @@ const CODEX_OUTPUT_HEADER = /^(?:(?:(?:Chunk ID|Wall time|Original token count|T
 const CODEX_EXIT_CODE = /^(?:Process exited with code|Exit code:) (-?\d+)[ \t]*$/gm;
 const USER_INTERVENTION = /^(?:any open questions\??|no ticket\b|(?:please\s+)?continue\b|(?:please\s+)?(?:try again|keep going)\b|no,\s|correction:\s|(?:i (?:already|said|asked)|you (?:already|didn't|did not)|that's not|that is not)\b)/i;
 const INJECTED_USER = /^(?:# AGENTS\.md\b|<environment_context>|<INSTRUCTIONS>|<skills_instructions>|<system-reminder>|<local-command-(?:stdout|stderr)>|\[Request interrupted by user|You are (?:an? |Codex\b)|Base directory for this skill:)/i;
+const CODEX_FORK_MESSAGE = "You are now a newly spawned child agent";
 type Host = "claude" | "codex";
 type SignalCounts = Partial<Record<SignalClass, number>>;
 type CandidateClass = "user-intervention" | "repeated-request";
@@ -126,6 +127,7 @@ interface Transcript extends SessionFile {
   readonly parent: string | null;
   readonly isChild: boolean;
   readonly startedMs: number | null;
+  readonly forkLine: number | null;
 }
 
 interface Diagnostic {
@@ -439,13 +441,24 @@ function readTranscript(file: SessionFile): Transcript | null {
   const spawn = object(object(object(payload.source).subagent).thread_spawn);
   const parentId = host === "codex" ? string(payload.parent_thread_id) || string(spawn.parent_thread_id) : isChild && id ? sessionId : "";
   if (!id) diagnostics.push({ kind: "identity-uncertain", path: file.path, line: meta?.line ?? firstIdentity?.line ?? 1 });
+  const fork = host === "codex" ? content.findLast(({ record }) => {
+    const payload = object(record.payload);
+    return record.type === "response_item" && payload.type === "message" && payload.role === "developer" &&
+      textOf(payload.content).startsWith(CODEX_FORK_MESSAGE);
+  }) : undefined;
   return {
     ...file, records: content.map((record) => summarizeRecord(record, host)).filter(({ user, actions }) => user || actions.length),
     host, project: firstProject(content, host), key: id ? `${host}:${id}` : file.path,
     parent: id && parentId ? `${host}:${parentId}` : null,
     isChild: host === "claude" ? isChild : !!parentId || Object.hasOwn(object(payload.source), "subagent") || payload.source === "subagent",
-    startedMs: meta?.timeMs ?? null,
+    startedMs: meta?.timeMs ?? null, forkLine: fork?.line ?? null,
   };
+}
+
+function isInherited(file: Transcript, { line, timeMs }: RecordSummary): boolean {
+  if (!file.isChild) return false;
+  if (file.forkLine !== null && line <= file.forkLine) return true;
+  return timeMs !== null && file.startedMs !== null && timeMs < file.startedMs;
 }
 
 function conversationRoot(file: Transcript, identities: ReadonlyMap<string, Transcript>): string {
@@ -504,8 +517,7 @@ function classifyConversation(members: readonly Transcript[], sinceMs: number) {
     const { file, parsed } = source;
     const { line, timestamp, timeMs, messageId } = parsed;
     const callId = source.callId ?? parsed.callId;
-    const inherited = file.isChild && timeMs !== null && file.startedMs !== null && timeMs < file.startedMs;
-    if ((timeMs ?? file.mtimeMs) < sinceMs || inherited) return;
+    if ((timeMs ?? file.mtimeMs) < sinceMs || isInherited(file, parsed)) return;
     const ids = counts.get(cls) ?? new Set<string>();
     ids.add(operation || callId || messageId || `${file.path}:${line}`);
     counts.set(cls, ids);
@@ -521,8 +533,7 @@ function classifyConversation(members: readonly Transcript[], sinceMs: number) {
     for (const parsed of file.records) {
       const { line, timeMs, messageId, user } = parsed;
       let callId = parsed.callId;
-      const inherited = file.isChild && timeMs !== null && file.startedMs !== null && timeMs < file.startedMs;
-      const inWindow = (timeMs ?? file.mtimeMs) >= sinceMs && !inherited;
+      const inWindow = (timeMs ?? file.mtimeMs) >= sinceMs && !isInherited(file, parsed);
       const retry = (signature: string, toolId: string, failed: boolean) => {
         if (!failed || !inWindow) { runKey = ""; runLength = 0; return; }
         if (toolId && seenResults.has(toolId)) return;

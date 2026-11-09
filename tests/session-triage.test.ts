@@ -1092,6 +1092,68 @@ test("explicit Codex thread relationships group paths without copied history or 
   assert.strictEqual(truncated.remainder, 0);
 });
 
+test("Codex child history through the last developer fork message or before session_meta raises no signals and extends no retry run while later child aborts still count", () => {
+  const forkMessage = (timestamp: string) => codex("response_item", {
+    type: "message", role: "developer",
+    content: [{ type: "input_text", text: "You are now a newly spawned child agent. The preceding conversation is inherited parent context." }],
+  }, timestamp);
+  const abort = (turnId: string, timestamp: string) => codex("event_msg", { type: "turn_aborted", turn_id: turnId, reason: "interrupted" }, timestamp);
+  const failedBuild = (callId: string, timestamp: string) => [
+    codex("response_item", { type: "function_call", call_id: callId, name: "shell", arguments: "{\"command\":\"pnpm build\"}" }, timestamp),
+    codex("response_item", { type: "function_call_output", call_id: callId, output: "exec_command failed for `/bin/zsh -lc 'pnpm build'`" }, timestamp),
+  ];
+  const root = scenario("codex-fork-boundary", {
+    "parent.jsonl": [codex("session_meta", { id: "fork-parent", cwd: "/fixture" }, "2026-03-14T08:00:00.000Z")],
+    "child-a.jsonl": [
+      codex("session_meta", { id: "child-a", parent_thread_id: "fork-parent" }, "2026-03-14T09:00:00.000Z"),
+      codex("session_meta", { id: "fork-parent", cwd: "/fixture" }, "2026-03-14T09:00:00.002Z"),
+      codex("event_msg", { type: "error", id: "parent-error" }, "2026-03-14T09:00:00.002Z"),
+      abort("parent-turn-a", "2026-03-14T09:00:00.002Z"),
+      forkMessage("2026-03-14T09:00:00.002Z"),
+      abort("child-a-turn-1", "2026-03-14T09:01:00.000Z"),
+      abort("child-a-turn-2", "2026-03-14T09:02:00.000Z"),
+      codex("response_item", {
+        type: "message", role: "user",
+        content: [{ type: "input_text", text: "You are now a newly spawned child agent. Why does the log say that?" }],
+      }, "2026-03-14T09:03:00.000Z"),
+    ],
+    "grandchild.jsonl": [
+      codex("session_meta", { id: "grandchild", parent_thread_id: "child-a" }, "2026-03-14T09:05:00.000Z"),
+      forkMessage("2026-03-14T09:05:00.002Z"),
+      abort("child-a-turn-3", "2026-03-14T09:05:00.002Z"),
+      forkMessage("2026-03-14T09:05:00.002Z"),
+    ],
+    "child-b.jsonl": [
+      codex("session_meta", { id: "child-b", parent_thread_id: "fork-parent" }, "2026-03-14T09:10:00.000Z"),
+      codex("session_meta", { id: "fork-parent", cwd: "/fixture" }, "2026-03-14T09:10:00.002Z"),
+      abort("parent-turn-b", "2026-03-14T09:10:00.002Z"),
+      forkMessage("2026-03-14T09:10:00.002Z"),
+    ],
+    "child-c.jsonl": [
+      codex("session_meta", { id: "child-c", parent_thread_id: "fork-parent" }, "2026-03-14T09:20:00.000Z"),
+      codex("session_meta", { id: "fork-parent", cwd: "/fixture" }, "2026-03-14T08:00:00.000Z"),
+      abort("parent-turn-c1", "2026-03-14T08:05:00.000Z"),
+      abort("parent-turn-c2", "2026-03-14T08:06:00.000Z"),
+    ],
+    "child-d.jsonl": [
+      codex("session_meta", { id: "child-d", parent_thread_id: "fork-parent" }, "2026-03-14T09:30:00.000Z"),
+      codex("session_meta", { id: "fork-parent", cwd: "/fixture" }, "2026-03-14T09:30:00.002Z"),
+      ...failedBuild("parent-build-1", "2026-03-14T09:30:00.002Z"),
+      ...failedBuild("parent-build-2", "2026-03-14T09:30:00.002Z"),
+      forkMessage("2026-03-14T09:30:00.002Z"),
+      ...failedBuild("child-d-build", "2026-03-14T09:31:00.000Z"),
+    ],
+  });
+  const { report } = runTriage(["--since", "2026-03-10", root]);
+  assert.strictEqual(report.conversations, 1);
+  assert.strictEqual(report.flagged.length, 1);
+  assert.deepStrictEqual(report.flagged[0].classes, { "user-abort": 2 });
+  assert.deepStrictEqual(report.flagged[0].evidence.filter(({ kind }) => kind === "user-abort").map(({ path, line }) => ({ path, line })), [
+    { path: join(root, "child-a.jsonl"), line: 6 },
+    { path: join(root, "child-a.jsonl"), line: 7 },
+  ]);
+});
+
 test("Claude sidechains group by explicit agent identity and directory relationships", () => {
   const user = { type: "user", sessionId: "claude-root", uuid: "same-user", timestamp: "2026-03-14T08:00:00.000Z", message: { content: "Any open questions?" } };
   const root = scenario("claude-family", {
