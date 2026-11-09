@@ -135,7 +135,6 @@ test("Codex accepts a linked root outside Git whose target lies inside a Git rep
 
 function fake(f: ReturnType<typeof fixture>, scenario: Record<string, any> = {}) {
   writeFileSync(join(f.dir, "scenario.json"), JSON.stringify(scenario));
-  writeFileSync(join(f.dir, "codex-config.json"), JSON.stringify({ approval_policy: "on-request", approvals_reviewer: "auto_review" }));
   writeFileSync(join(f.dir, f.request.engine), `#!${process.execPath}
 const fs = require("node:fs");
 const cp = require("node:child_process");
@@ -176,18 +175,7 @@ if (args.includes("--help")) {
   process.stdin.setEncoding("utf8");
   process.stdin.on("data", x => input += x);
   process.stdin.on("end", () => {
-    const effectiveConfig = JSON.parse(fs.readFileSync(dir + "/codex-config.json", "utf8"));
-    if (engine === "codex") {
-      for (let index = args.indexOf("exec") + 1; index < args.length; index++) {
-        if (args[index] === "-c" || args[index] === "--config") {
-          const setting = args[++index];
-          const separator = setting.indexOf("=");
-          effectiveConfig[setting.slice(0, separator)] = JSON.parse(setting.slice(separator + 1));
-        } else if (args[index] === "--sandbox") effectiveConfig.sandbox_mode = args[++index];
-        else if (args[index] === "--model") effectiveConfig.model = args[++index];
-      }
-    }
-    fs.writeFileSync(dir + "/observed.json", JSON.stringify({ args, cwd: process.cwd(), input, effectiveConfig,
+    fs.writeFileSync(dir + "/observed.json", JSON.stringify({ args, cwd: process.cwd(), input,
       effortVariable: process.env.CLAUDE_CODE_EFFORT_LEVEL ?? null }));
     if (scenario.edit) fs.writeFileSync("partial.txt", "partial fixture edit");
     if (scenario.linger) {
@@ -276,20 +264,18 @@ test("Codex receives literal stdin, exact cwd and contract bootstrap with explic
   assert(readFileSync(receipt.artifacts.events, "utf8").includes("fixture warning"));
 });
 
-test("Codex exec policy overrides a conflicting saved approval default", () => {
+test("Codex receives the requested policy, model and effort as exec argv without an approval flag in its help", () => {
   const f = fixture();
   fake(f, { missingFlag: "--ask-for-approval" });
   const { status, receipt } = run(f);
   assert.equal(status, 0);
   const observed = JSON.parse(readFileSync(join(f.dir, "observed.json"), "utf8"));
-  assert.equal(observed.effectiveConfig.approval_policy, receipt.policy.approval);
-  assert.equal(observed.effectiveConfig.approvals_reviewer, "auto_review");
-  assert.equal(observed.effectiveConfig.sandbox_mode, receipt.policy.sandbox);
-  assert.equal(observed.effectiveConfig["sandbox_workspace_write.network_access"], receipt.policy.networkAccess);
-  assert.equal(observed.effectiveConfig.model, receipt.model.name);
-  assert.equal(observed.effectiveConfig.model_reasoning_effort, receipt.model.effort);
-  assert.equal(observed.args.includes("--ignore-user-config"), false);
-  assert.equal(observed.args.includes("--no-daemon"), false);
+  assert.deepEqual(observed.args, ["exec", "--json", "--color", "never", "-C", f.root, "--sandbox", "workspace-write",
+    "--model", "fixture-model", "-c", 'approval_policy="never"', "-c", 'model_reasoning_effort="high"',
+    "-c", "sandbox_workspace_write.network_access=false", "-"]);
+  assert.equal(observed.cwd, f.root);
+  assert.deepEqual(receipt.policy, f.request.policy);
+  assert.deepEqual(receipt.model, f.request.model);
   assert.equal(receipt.child.exitCode, 0);
   assert.equal(readFileSync(receipt.report, "utf8"), "Outcome: blocked\nBlockers: fixture permission denied\n");
 });
@@ -702,21 +688,34 @@ test("Claude refuses missing role definitions, unresolved settings and unsupport
   }
 });
 
-test("Claude rejects unscoped shell allowances before launching", () => {
+test("Claude request validation rejects unscoped shell allowances and names each one", () => {
+  const f = fixture("claude");
+  if (f.request.engine !== "claude") assert.fail("Claude fixture required");
   for (const rule of ["Bash", "Bash(*)", "Bash( *)", "Bash()", "Bash(:*)", "Bash( :*)", "PowerShell", "PowerShell(:*)",
     "Monitor", "Monitor(*)", "Monitor(:*)",
     "Bash(git status) Bash(*)", "Read(a) Bash(*)", "Bash(git *)\tEdit", 'Bash(node -e "f()")', "Bash(git diff,Bash)",
     "Read(src\nCORE_RULES.md)"]) {
-    const f = fixture("claude");
-    if (f.request.engine !== "claude") assert.fail("Claude fixture required");
     f.request.policy.allowedTools = [rule];
     f.save();
-    const { status, receipt } = run(f);
-    assert.equal(status, 2);
-    assert.match(receipt.diagnostics[0], /scoped tool allowances/);
-    assert.ok(receipt.diagnostics[0].includes(JSON.stringify(rule)));
-    assert.equal(receipt.child.started, false);
+    assert.throws(() => readRequest(f.requestPath),
+      (error: Error) => /scoped tool allowances/.test(error.message) && error.message.includes(JSON.stringify(rule)));
   }
+});
+
+test("Claude refuses an unscoped shell allowance with status 2 before probing or launching the CLI", () => {
+  const f = fixture("claude");
+  if (f.request.engine !== "claude") assert.fail("Claude fixture required");
+  f.request.policy.allowedTools = ["Bash(git status)", "Bash(*)"];
+  f.save();
+  fake(f);
+  const { status, receipt } = run(f);
+  assert.equal(status, 2);
+  assert.match(receipt.diagnostics[0], /scoped tool allowances/);
+  assert.ok(receipt.diagnostics[0].includes(JSON.stringify("Bash(*)")));
+  assert.equal(receipt.diagnostics[0].includes(JSON.stringify("Bash(git status)")), false);
+  assert.equal(receipt.child.started, false);
+  assert.deepEqual(receipt.probes, []);
+  assert.equal(existsSync(join(f.dir, "calls.jsonl")), false);
 });
 
 test("Claude accepts hyphenated tool names, MCP server wildcards, and scoped Monitor rules, and names each refused entry", () => {
