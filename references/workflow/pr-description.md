@@ -5,9 +5,15 @@ Load only for `review-code -d`. Drafting remains session-owned on delegated and 
 
 Only with `-d`, and only where the object has a PR of its own to carry the description: the current branch's diff, or a range whose `b` is that branch's HEAD and whose `merge-base(a, b)` is that branch's own base. Elsewhere the draft is refused with the one line the `-d` flag entry fixes, the review still rendering in full. On the branch the draft is made whether or not an open PR exists.
 
-The session drafts it on either pass, body only, no title, from the return's `Change map` and `Summary` and the links Setup extracted (the session's own map and fetched links on the inline fallback). Where the map leaves an intent unclear, read the diff. Print it in a fenced block, in the PR-description shape `./user-facing-messages.md` § *Surface adapters* fixes.
+The session drafts a title and a body on either pass, from the return's `Change map` and `Summary` and the links Setup extracted (the session's own map and fetched links on the inline fallback). Where the map leaves an intent unclear, read the diff. Print the `Title:` line on its own line, then the body in a fenced block below it. The `Title:` line never enters the fence. The body takes the PR-description shape `./user-facing-messages.md` § *Surface adapters* fixes.
 
-Format:
+Title line:
+
+- **Shape:** `Title: <live title> → <drafted title>` when Setup read an open PR, its live title taken from that PR context. Otherwise, `Title: <drafted title>`, whether no open PR exists or the lookup was skipped or failed.
+- **Drafted title:** follow the **First line** rule in `../../skills/commit/SKILL.md` § *Process* step 1. Take the prefix, ticket key, and capitalization from the recent merged PR titles that `gh pr list --state merged --limit 10 --json title` returns. When `gh` is missing, or that lookup fails or returns an empty list, take them from `git log --no-merges --oneline -10 <base>`, `<base>` being the base Setup determined.
+- **No arrow:** the drafted title never contains `→`. `../../skills/update-pr-description/SKILL.md` § *Preconditions — stop if unmet* splits the line at its last arrow.
+
+Body format:
 
 ```
 Task: <primary ticket/issue link>
