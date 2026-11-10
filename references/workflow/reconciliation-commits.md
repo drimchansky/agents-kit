@@ -26,6 +26,7 @@ For externally stored tasks, the script's `no-checkout` means **unscanned**; nam
 ## The record — reconcile phase only
 
 - Write dated commit lines on Reconciliation's `**Commits:**` (`./reconciliation.md` § *The record*). Apply the 20-commit cap explicitly with `showing 20 of M since <sha>`; never silently truncate.
+- A `no-checkout` scan writes no `**Commits:**` line.
 - Without a Reconciliation entry, never seed, re-seed, or advance. This covers no actionable findings (`./reconciliation.md` § *Sequence and output*) and no result holding an entry.
 - With the record, advance Pointers to the scanned tip and re-date during `./reconciliation.md` § *Current state refresh*.
 - Checked boxes link this run's entry: `([result](./result.md#reconciliation--YYYY-MM-DD))`; same-day second entries use `-2`.

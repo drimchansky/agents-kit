@@ -246,7 +246,19 @@ Markdown mirrors follow § *`scripts/health-check.ts`*.
 
 **Why the entry check goes through `realpath`.** Only a direct run reads task files. Tests import the pure layer, so a module-scope walk would introduce filesystem effects on import. The symlinked-invocation mismatch and normalization are the same as § *`scripts/pr-comments.ts`* describes.
 
-The `structure` report adds reliability and diagnostics without changing the existing coverage fields. The direct CLI scans supplementary task Markdown before reporting; pure callers can supply those documents. `--repair` is the only writing mode. Default and compaction invocations remain read-only. Its command and output contract live in `references/scripts/task-state.md`.
+The `structure` report adds reliability and diagnostics without changing the existing coverage fields. The direct CLI scans supplementary task Markdown before reporting; pure callers can supply those documents. `--repair` writes task files, and `--compaction-snapshot` writes only under `~/.local/state/agents-kit/compaction/`. Default and `--compaction-plan` invocations remain read-only. Its command and output contract live in `references/scripts/task-state.md`.
+
+**Why the snapshot copies raw bytes.** Decoding would replace invalid UTF-8 with U+FFFD, so the copy could not restore the original file. Hashing those same bytes keeps the name tied to the content the copy holds.
+
+**Why the name uses the slug and a content hash.** The path stays valid after the folder moves, and same-slug tasks with different content get different files.
+
+**Why a snapshot path holding other bytes is refused.** Copies land whole through a hard link, so a mismatch there means a hash-prefix collision or an outside edit. Overwriting it could destroy the text another task's compaction note names. Another writer can create the path between the existence check and publication. `renameSync` would replace that entry silently, and the re-read would then see the helper's own bytes. `linkSync` fails with `EEXIST` instead, and the helper compares the entry it finds. A home on a filesystem without hard links therefore cannot take snapshots. The exported `compactionSnapshot` accepts an in-process `beforePublish` test hook that runs just before the link.
+
+**Why the source descriptor stays open through the identity check.** Reading bytes and identity through one descriptor prevents separate path lookups from observing different files. Keeping it open prevents inode reuse before the final check. A writer can replace result.md with identical bytes and hard-link the replacement to the snapshot path. Comparing against the original inode alone would accept that link. Rechecking result.md's device and inode before success detects the replacement and refuses the snapshot with exit 2. The refusal preserves both entries instead of risking removal of another writer's file.
+
+**Why each snapshot read rechecks the path.** A writer can replace the snapshot path with a hard link to result.md after the snapshot descriptor opens. The descriptor still yields the old copy's bytes, and a later byte comparison accepts the alias. After reading, compare the path's device and inode with the open descriptor's identity; a mismatch refuses with exit 2, preserving both entries. The exported `compactionSnapshot` accepts an in-process `afterFinalRead` test hook after the final descriptor read and before this path recheck. The pre-write check in `references/workflow/reconciliation-compaction.md` also rejects aliasing introduced after the helper returns.
+
+**Why neither compaction mode reads Git.** Compaction recovers removed text from the snapshot, so tracked, untracked, ignored, and uncommitted results follow the same path.
 
 ## `scripts/task-repair.ts`
 

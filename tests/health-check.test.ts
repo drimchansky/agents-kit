@@ -1502,14 +1502,17 @@ test("the folder and record budgets fire only past their thresholds, and never u
   assert.strictEqual(findingCount(report, "oversized-task"), 1, "oversized-task count at a lowered budget");
   assert.strictEqual(
     findingDetail(report, "oversized-task", "budgets/over-budget"),
-    "folder holds 2.1 KB of .md excluding ticket.md, over the 1 KB folder budget",
+    "folder holds 3.5 KB of .md excluding ticket.md, over the 1 KB folder budget",
     "oversized-task measures the non-ticket .md bytes, not everything the folder holds",
   );
-  assert.strictEqual(findingCount(report, "oversized-record"), 1, "oversized-record count at a lowered budget");
-  assert.strictEqual(
-    findingDetail(report, "oversized-record", "budgets/over-budget"),
-    'result.md section "Full Run — Padded record" is 1.5 KB, over the 1 KB record budget',
-    "oversized-record names the offending section and its size",
+  assert.strictEqual(findingCount(report, "oversized-record"), 2, "oversized-record count at a lowered budget");
+  assert.deepStrictEqual(
+    findingDetails(report, "oversized-record", "budgets/over-budget"),
+    [
+      'result.md section "Full Run — Padded record" is 1.5 KB, over the 1 KB record budget',
+      'result.md section "Reconciliation — 2020-01-02" is 1.4 KB, over the 1 KB record budget',
+    ],
+    "oversized-record names each offending Full Run or Reconciliation section and its size",
   );
   for (const check of ["oversized-task", "oversized-record"]) {
     assert.strictEqual(

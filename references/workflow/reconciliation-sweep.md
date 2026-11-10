@@ -1,6 +1,6 @@
 # Reconciliation: The Reference Sweep
 
-Sweep under `./reconciliation.md` § *The reference sweep*, following its § *Sequence and output*.
+`resume-task-reconcile` and `review-task-reconcile` sweep under `./reconciliation.md` § *The reference sweep*, following its § *Sequence and output*. `reconcile-task` never sweeps (`./reconciliation-session-to-docs.md` § *`reconcile-task` — session findings*).
 
 ## Ledger
 
