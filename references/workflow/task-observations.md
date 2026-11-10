@@ -1,6 +1,6 @@
 # The Observations File: Optional, Derived, Rewritten by the Sweep
 
-`observations.md` records one dated line per external URL cited from an actionable surface (`./reconciliation-sweep.md` § *Scope*). Only reconciliation's sweep rewrites it wholesale (§ *Ledger* there); do not append or hand-maintain it. Absence means no sweep or no actionable citation, never a gap. It carries `_Swept:_`, no Status, and no companion-result obligation (`./task-lifecycle.md`).
+`observations.md` records one dated line per external URL cited from an actionable surface (`./reconciliation-sweep.md` § *Scope*). Only the docs-to-reality composites' sweep rewrites it wholesale (§ *Ledger* there); do not append or hand-maintain it. Absence means no sweep or no actionable citation, never a gap. It carries `_Swept:_`, no Status, and no companion-result obligation (`./task-lifecycle.md`).
 
 ```markdown
 # Observations: <task title>
@@ -14,7 +14,7 @@ _Swept: YYYY-MM-DD_
 - [block] [Spec doc](https://docs.google.com/document/d/…) — 404, gone (observed YYYY-MM-DD)
 ```
 
-Keep observed state here; other surfaces cite or timestamp its digest under `./one-home.md` § *One home per fact*. A pointer moved from the ≤1 KB Current-state block into historical log leaves sweep scope. Each URL is a ledger key; the identifier remains on its original citing surface.
+Keep swept state here; other surfaces cite or timestamp its digest, or date a session observation at its home, under `./one-home.md` § *One home per fact*. A pointer moved from the ≤1 KB Current-state block into historical log leaves sweep scope. Each URL is a ledger key; the identifier remains on its original citing surface.
 
 Quote every observation with its date as cache, never live verification. Only the next sweep refreshes it.
 

@@ -1,10 +1,11 @@
 # `scripts/task-state.ts`
 
-Reports task state, compaction eligibility, or an explicit structural repair. The default and compaction modes are read-only.
+Reports task state or compaction eligibility, writes a compaction snapshot, or applies an explicit structural repair. The default and `--compaction-plan` modes are read-only.
 
 ```
 node scripts/task-state.ts <task-dir>
 node scripts/task-state.ts --compaction-plan <task-dir>
+node scripts/task-state.ts --compaction-snapshot <task-dir>
 node scripts/task-state.ts --repair <task-dir>
 ```
 
@@ -60,11 +61,15 @@ Any `incomplete-reference-scan` gap blocks every edit, since an unread file coul
 
 `currentState` returns result.md's level-2 Current-state block verbatim, trimming trailing blank space. Include its heading through closing `---`, or through the line before the next level-2 heading when no separator exists. Return null without the file/block; a deeper Current-state heading does not qualify.
 
-**`--compaction-plan` mode** requires result.md; plan.md is optional and supplies the active-pause status. stdout is one object: `{taskDir,resultFile,bytes,maxKb,due,precondition,keep,removable}`.
+**`--compaction-plan` mode** requires result.md; plan.md is optional and supplies the active-pause status. stdout is one object: `{taskDir,resultFile,bytes,maxKb,due,keep,removable,resultSha256,planStatus}`.
+
+It opens result.md without following symlinks and reads its bytes through that descriptor, like snapshot mode. A symlinked result.md is unreadable: exit 1 with empty stdout.
+
+`resultSha256` is the full lowercase SHA-256 hex digest of result.md's raw bytes, matching the snapshot's `sha256`. `planStatus` is the parsed plan.md status used to protect the active pause, or null when absent, unreadable, or missing a status. Unrecognized statuses report `unknown`. Retain both fields with the proposal for the input checks in `../workflow/reconciliation-compaction.md` § *Compaction (size trigger)*.
 
 Due means bytes strictly exceed `maxKb * 1024`. Bytes is decoded-file UTF-8 length; maxKb uses `RESULT_MAX_KB` from `scripts/lifecycle-constants.ts`, without override. Maintain may override the health walk's trigger separately.
 
-`precondition` is `{state,detail,uncommitted}`. Run `git -C <task-dir> cat-file -e HEAD:./result.md`: state is `ok` on success, otherwise `fails`; detail is null or Git's failure reason. Uncommitted reports pending file changes from `git status --porcelain`, or null when the precondition failed or status was unavailable. Only a clean, HEAD-resolvable result permits a compaction proposal; staged-but-never-committed and ignored files do not qualify. Only when `due` is true, follow `../workflow/reconciliation-compaction.md` for consent.
+The report reads no Git state, so tracked, untracked, ignored, and uncommitted results report alike. Only when `due` is true, follow `../workflow/reconciliation-compaction.md` for consent.
 
 `keep` and `removable` partition level-2 result sections in file order, as `{heading,anchor,rule}` and `{heading,anchor}`. The pre-section header is ineligible; deeper headings belong to their enclosing section. Anchors use the same slug allocation as result-link checks. Select sections by allocated anchor; apply the heading-retention recipe in `../workflow/reconciliation-compaction.md` § *What may be collapsed*.
 
@@ -77,4 +82,14 @@ Keep-rule values:
 
 **Lists report eligibility, never permission.** Callers choose superseded narrative and whether to propose compaction.
 
-**Exit status for read-only modes.** 0: report written. 1: no readable plan.md, or no readable result.md in compaction mode. 2: bad usage, unavailable Git, or unexpected failure. Warnings go to stderr; a crash does not mean missing input.
+**Exit status for read-only modes.** 0: report written. 1: no readable plan.md, or no readable result.md in compaction mode, including a symlinked result.md. 2: bad usage or unexpected failure. Warnings go to stderr; a crash does not mean missing input.
+
+**`--compaction-snapshot` mode** copies result.md's raw bytes to `~/.local/state/agents-kit/compaction/<slug>-<hash>.md`, where `~` is the user's home directory (`$HOME` on POSIX). `<slug>` is the task folder's name and `<hash>` the first 12 hex digits of the bytes' SHA-256. The copy exists only on the machine that ran the helper. It reads no plan.md and no Git state, and never writes result.md.
+
+It opens result.md once without following symlinks and reads its bytes and file identity through that descriptor. A symlinked result.md is refused as unreadable. Before returning success, it checks that result.md still has the opened file's device and inode. If result.md was replaced during the run, it exits 2 without accepting the snapshot or changing either entry further.
+
+It creates missing directories with mode 0700 and writes the copy with mode 0600 to a temporary file in the snapshot directory. It then hard-links that file to the path and removes the temporary file, whether or not the link succeeds. The link never replaces an entry, so an entry another writer creates there first is checked like one already present. The home's filesystem must support hard links; otherwise the write fails. An existing entry at the path must be a regular file other than result.md itself. A symlink, another non-regular entry, or a hard link to result.md is refused and left unchanged. A regular file already holding the same bytes is reused without a write; one holding other bytes is left unchanged. It then re-reads the copy and compares bytes. stdout is one object: `{path,bytes,sha256}`, giving the absolute copy path, its byte count, and the full lowercase SHA-256 hex digest.
+
+After each snapshot read, including the final re-read, it checks that the path still names the opened file's device and inode. A replaced snapshot path exits 2 without accepting the snapshot or changing either entry further.
+
+**Exit status for snapshot mode.** 0: copy written or reused and confirmed. 1: no readable result.md, including a symlinked result.md; nothing is written. 2: bad usage, a failed directory creation, write, re-read, or source or snapshot identity check, a replaced result.md or snapshot path, a refused or mismatched entry at the path, or unexpected failure; stdout stays empty.

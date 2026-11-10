@@ -11,7 +11,7 @@ argument-hint: "[task slug or path; defaults to the session's task]"
 
 Brief status, completed work, drift, and next action in chat. Apply `./references/workflow/task-layout.md` § *Reading a resolved folder*, including proven identifier repair on either invocation route and its read-only exemption. Beyond that repair and a user-confirmed Backlog activation (`./references/workflow/implement-task-edges.md` § *Activating a backlogged task*), edit no task file, code, or Git state; execute no plan work.
 
-Run no reference sweep. The reconcilers sweep cited links (`./references/workflow/reconciliation-sweep.md` § *Scope*); this citation marks the boundary and is not loaded on any path. <!-- cold -->
+Run no reference sweep. `resume-task-reconcile` and `review-task-reconcile` sweep cited links (`./references/workflow/reconciliation-sweep.md` § *Scope*); this citation marks the boundary and is not loaded on any path. <!-- cold -->
 
 Quote `observations.md` with its dates as cached observations, never live state. Claim verification may read URL-hosted domain artifacts under the domain's `verification.md`. Create no `BRIEF.md` or scratch briefing file.
 
@@ -36,7 +36,7 @@ Apply `./references/workflow/task-layout.md` § *Reading a resolved folder*, inc
 Then read what the brief needs beyond the report:
 
 - `goals.md`: the full Goals list by `G<n>`, including unresolved markers.
-- `result.md`: orient from `currentState`, then read the latest Step or Full Run. Capture every Blocked and In review block and any Acceptance section verbatim. Treat the digest as derived, unverified metadata. Ignore its legacy Status header (`./references/workflow/task-lifecycle.md` § *`result.md` — no status field*).
+- `result.md`: orient from `currentState`, then read the latest Step or Full Run. Capture every Blocked block and any Acceptance section verbatim. Read goal verdicts in Reconciliation entries too; use the latest verdict by ID across Acceptance and Reconciliation. Capture the most recent In review section verbatim as the active pending list; skip earlier, superseded ones (`./references/workflow/task-lifecycle.md` § *Companion result file*). Treat the digest as derived, unverified metadata. Ignore its legacy Status header (`./references/workflow/task-lifecycle.md` § *`result.md` — no status field*).
 - `CONTEXT.md`: the Domain header, Open Questions, and dated decision anchors cited by current guidance.
 - `plan.md`: the next step's Due, Lead time, and touched paths, plus Open Questions and cited dated decision anchors. Take status and goal-file state from the report.
 - `ticket.md`, when present: the ask and acceptance criteria.
@@ -99,9 +99,9 @@ Print the template to chat; its closing Handoff follows `./references/workflow/u
 
 ## Goals
 
-- G1 — <goal verbatim, preserving (external)> — _<acceptance tag by ID>_
+- G1 — <goal verbatim, preserving (external)> — _<latest verdict by ID across Acceptance and Reconciliation>_
 
-<Keep met-with-caveats notes and pending-external requirements. Without Acceptance, use not yet checked; unresolved-marked goals use unresolved.>
+<Keep met-with-caveats notes and pending-external requirements. Without a recorded verdict in either place, use not yet checked; unresolved-marked goals use unresolved.>
 
 ## Done
 
@@ -121,7 +121,7 @@ Print the template to chat; its closing Handoff follows `./references/workflow/u
 
 ## In review
 
-<In review blocks verbatim, including awaited external goals>
+<The most recent In review section verbatim, including awaited external goals>
 
 ## Drift since plan
 

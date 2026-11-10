@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-import { execFileSync } from "node:child_process";
-import { readFileSync, realpathSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { createHash, randomUUID } from "node:crypto";
+import { closeSync, constants, fstatSync, linkSync, lstatSync, mkdirSync, openSync, readFileSync, realpathSync, rmSync, writeFileSync, type Stats } from "node:fs";
+import { homedir } from "node:os";
+import { basename, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { PLAN_VOCAB, RESULT_MAX_KB } from "./lifecycle-constants.ts";
 import { GOAL_FIELD, markdownLines, parseGoalDefinitions, sameDiagnostic, SCOPE_HEADING, validateGoalStructure, type StructureReport } from "./goal-structure.ts";
@@ -11,12 +12,16 @@ const PLAN_FILE = "plan.md";
 const RESULT_FILE = "result.md";
 const GOALS_FILE = "goals.md";
 const COMPACTION_FLAG = "--compaction-plan";
+const SNAPSHOT_FLAG = "--compaction-snapshot";
 const REPAIR_FLAG = "--repair";
 const USAGE = [
   "usage: node scripts/task-state.ts <task-dir>",
   "       node scripts/task-state.ts --compaction-plan <task-dir>",
+  "       node scripts/task-state.ts --compaction-snapshot <task-dir>",
   "       node scripts/task-state.ts --repair <task-dir>",
 ].join("\n");
+const SNAPSHOT_DIR = [".local", "state", "agents-kit", "compaction"];
+const SNAPSHOT_HASH_DIGITS = 12;
 const HEADING = /^#{1,6}[ \t]+(.+?)[ \t]*#*$/;
 const STEP_TITLE = /^Step[ \t]+(\d+[a-z]*)\b[ \t]*[—–:-]?[ \t]*(.*)$/i;
 const CHECKPOINT_TITLE = /^Checkpoint after Step[ \t]+(\d+[a-z]*)\b/i;
@@ -611,7 +616,7 @@ export function compactionSections(resultText: string, planStatus: string | null
   };
 }
 
-class Exit extends Error {
+export class Exit extends Error {
   readonly code: number;
 
   constructor(code: number, message: string) {
@@ -631,65 +636,131 @@ function readOptional(path: string): string | null {
   }
 }
 
-export interface Precondition {
-  readonly state: "ok" | "fails";
-  readonly detail: string | null;
-  readonly uncommitted: boolean | null;
-}
-
 export interface CompactionPlan {
   readonly taskDir: string;
   readonly resultFile: string;
   readonly bytes: number;
   readonly maxKb: number;
   readonly due: boolean;
-  readonly precondition: Precondition;
   readonly keep: readonly KeptSection[];
   readonly removable: readonly ResultSection[];
-}
-
-interface GitRun {
-  readonly ok: boolean;
-  readonly stdout: string;
-  readonly stderr: string;
-}
-
-function git(cwd: string, args: readonly string[]): GitRun {
-  try {
-    return { ok: true, stdout: execFileSync("git", ["-C", cwd, ...args], { stdio: "pipe", encoding: "utf8" }), stderr: "" };
-  } catch (err) {
-    const failure = err as NodeJS.ErrnoException & { stdout?: string; stderr?: string };
-    if (failure.code === "ENOENT") throw new Exit(2, `git is not available: ${failure.message}`);
-    return { ok: false, stdout: failure.stdout ?? "", stderr: (failure.stderr ?? "").trim() };
-  }
-}
-
-function resultAtHead(taskDir: string): Precondition {
-  const target = `HEAD:./${RESULT_FILE}`;
-  const resolved = git(taskDir, ["cat-file", "-e", target]);
-  if (!resolved.ok) {
-    return { state: "fails", detail: resolved.stderr || `${target} does not resolve`, uncommitted: null };
-  }
-  const pending = git(taskDir, ["status", "--porcelain", "--", `./${RESULT_FILE}`]);
-  return { state: "ok", detail: null, uncommitted: pending.ok ? pending.stdout.trim() !== "" : null };
+  readonly resultSha256: string;
+  readonly planStatus: string | null;
 }
 
 function compactionPlan(taskDir: string): CompactionPlan {
-  const resultText = readOptional(join(taskDir, RESULT_FILE));
-  if (resultText === null) throw new Exit(1, `${taskDir} has no readable ${RESULT_FILE}.`);
+  const { fd, content } = readCompactionResult(taskDir);
+  closeSync(fd);
+  const resultText = content.toString("utf8");
   const planText = readOptional(join(taskDir, PLAN_FILE));
+  const planStatus = planText === null ? null : readPlanStatus(planText).status;
   const size = resultSize(resultText, RESULT_MAX_KB);
-  const sections = compactionSections(resultText, planText === null ? null : readPlanStatus(planText).status);
+  const sections = compactionSections(resultText, planStatus);
   return {
     taskDir,
     resultFile: RESULT_FILE,
     bytes: size.bytes,
     maxKb: RESULT_MAX_KB,
     due: size.over,
-    precondition: resultAtHead(taskDir),
     keep: sections.keep,
     removable: sections.removable,
+    resultSha256: createHash("sha256").update(content).digest("hex"),
+    planStatus,
   };
+}
+
+export interface CompactionSnapshot {
+  readonly path: string;
+  readonly bytes: number;
+  readonly sha256: string;
+}
+
+function reason(err: unknown): string {
+  return (err as NodeJS.ErrnoException).code ?? (err as Error).message;
+}
+
+function readCompactionResult(taskDir: string): { fd: number; content: Buffer; source: Stats } {
+  let fd: number | undefined;
+  try {
+    fd = openSync(join(taskDir, RESULT_FILE), constants.O_RDONLY | constants.O_NOFOLLOW);
+    const content = readFileSync(fd);
+    const source = fstatSync(fd);
+    return { fd, content, source };
+  } catch (err) {
+    if (fd !== undefined) closeSync(fd);
+    throw new Exit(1, `${taskDir} has no readable ${RESULT_FILE}: ${reason(err)}`);
+  }
+}
+
+function readExisting(path: string, source: Stats, afterRead?: () => void): Buffer | null {
+  let fd: number | undefined;
+  try {
+    const stat = lstatSync(path, { throwIfNoEntry: false });
+    if (stat === undefined) return null;
+    if (!stat.isFile()) throw new Exit(2, `snapshot ${path} is not a regular file; left unchanged.`);
+    fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+    const opened = fstatSync(fd);
+    if (opened.dev === source.dev && opened.ino === source.ino) throw new Exit(2, `snapshot ${path} is the same file as ${RESULT_FILE}; left unchanged.`);
+    const content = readFileSync(fd);
+    afterRead?.();
+    const current = lstatSync(path);
+    if (current.dev !== opened.dev || current.ino !== opened.ino) throw new Exit(2, `snapshot ${path} was replaced; snapshot is not accepted; entries left unchanged.`);
+    return content;
+  } catch (err) {
+    if (err instanceof Exit) throw err;
+    throw new Exit(2, `cannot read snapshot ${path}: ${reason(err)}`);
+  } finally {
+    if (fd !== undefined) closeSync(fd);
+  }
+}
+
+function publish(temp: string, path: string): boolean {
+  try {
+    linkSync(temp, path);
+    return true;
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "EEXIST") return false;
+    throw err;
+  }
+}
+
+export function compactionSnapshot(taskDir: string, options: { beforePublish?: () => void; afterFinalRead?: () => void } = {}): CompactionSnapshot {
+  const resultPath = join(taskDir, RESULT_FILE);
+  const { fd, content, source } = readCompactionResult(taskDir);
+  try {
+    const sha256 = createHash("sha256").update(content).digest("hex");
+    const dir = join(homedir(), ...SNAPSHOT_DIR);
+    const path = join(dir, `${basename(taskDir)}-${sha256.slice(0, SNAPSHOT_HASH_DIGITS)}.md`);
+    let existing = readExisting(path, source);
+    if (existing === null) {
+      const temp = join(dir, `.${randomUUID()}.tmp`);
+      let published: boolean;
+      try {
+        mkdirSync(dir, { recursive: true, mode: 0o700 });
+        writeFileSync(temp, content, { mode: 0o600, flag: "wx" });
+        options.beforePublish?.();
+        published = publish(temp, path);
+      } catch (err) {
+        throw new Exit(2, `cannot write snapshot ${path}: ${reason(err)}`);
+      } finally {
+        rmSync(temp, { force: true });
+      }
+      if (!published) existing = readExisting(path, source);
+    }
+    if (existing !== null && !existing.equals(content)) throw new Exit(2, `snapshot ${path} already holds other bytes; left unchanged.`);
+    const written = readExisting(path, source, options.afterFinalRead);
+    if (written === null || !written.equals(content)) throw new Exit(2, `snapshot ${path} does not match ${RESULT_FILE} on re-read.`);
+    let current: Stats;
+    try {
+      current = lstatSync(resultPath);
+    } catch (err) {
+      throw new Exit(2, `cannot confirm ${resultPath} identity for snapshot ${path}: ${reason(err)}`);
+    }
+    if (current.dev !== source.dev || current.ino !== source.ino) throw new Exit(2, `${resultPath} was replaced; snapshot ${path} is not accepted; entries left unchanged.`);
+    return { path, bytes: content.length, sha256 };
+  } finally {
+    closeSync(fd);
+  }
 }
 
 function main(): void {
@@ -699,8 +770,9 @@ function main(): void {
 
   const args = process.argv.slice(2);
   const compacting = args[0] === COMPACTION_FLAG;
+  const snapshotting = args[0] === SNAPSHOT_FLAG;
   const repairing = args[0] === REPAIR_FLAG;
-  const positional = compacting || repairing ? args.slice(1) : args;
+  const positional = compacting || snapshotting || repairing ? args.slice(1) : args;
   if (positional.length !== 1) throw new Exit(2, USAGE);
   const taskDir = resolve(positional[0]);
 
@@ -742,6 +814,8 @@ function main(): void {
     else if (unresolved.length > 0) process.exitCode = 1;
   } else if (compacting) {
     process.stdout.write(JSON.stringify(compactionPlan(taskDir)) + "\n");
+  } else if (snapshotting) {
+    process.stdout.write(JSON.stringify(compactionSnapshot(taskDir)) + "\n");
   } else {
     const planText = readOptional(join(taskDir, PLAN_FILE));
     if (planText === null) throw new Exit(1, `${taskDir} has no readable ${PLAN_FILE}.`);

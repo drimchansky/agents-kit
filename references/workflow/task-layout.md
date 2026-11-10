@@ -26,7 +26,7 @@ Use these exact role names and casing. Resolve files by role, not a typed stem. 
 
 `scripts/lifecycle-constants.ts` holds the recognition lists and membership test, a sanctioned copy per `references/maintenance/repository.md` § *Consumer lists*.
 
-**Size budgets.** A folder holds at most **64 KB** of Markdown, excluding the ticket but including legacy files. Each `## Step` or `## Full Run` result record holds at most **2 KB**. Oversize records are narrative for reconciliation to trim; `maintain` surfaces both budgets as findings, not write refusals.
+**Size budgets.** A folder holds at most **64 KB** of Markdown, excluding the ticket but including legacy files. Each `## Step`, `## Full Run`, or `## Reconciliation` result record holds at most **2 KB**. `maintain` surfaces both budgets as findings, not write refusals. An over-budget `## Reconciliation` record follows `./reconciliation.md` § *The record*. Trimming toward these budgets follows `./reconciliation-compaction.md` § *What may be collapsed*.
 
 `TASK_MAX_KB` and `RECORD_MAX_KB` in `scripts/lifecycle-constants.ts` are a sanctioned copy per `references/maintenance/repository.md` § *Consumer lists*.
 

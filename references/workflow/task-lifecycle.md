@@ -44,7 +44,7 @@ Check file existence and required sections against plan status:
 - `to-do`: no result yet.
 - `executing`: result exists.
 - `blocked`: Blocked names the external wait or unresolved failure; no closing Completed. A complete paused pair is conformant.
-- `in-review`: In review lists pending `(external)` goals and verifiers, plus each engineering pending check's target, check, owner, and next action. Acceptance tags marked goals pending external; no closing Completed. A pending check needs no goal ID. A complete parked pair is conformant.
+- `in-review`: In review lists pending `(external)` goals and verifiers, plus each engineering pending check's target, check, owner, and next action. Acceptance tags marked goals pending external; no closing Completed. A pending check needs no goal ID. A complete parked pair is conformant. When result holds several In review sections, the most recent one is the active pending list and receives any In review edit. Earlier ones are superseded history.
 - `done`: Acceptance and closing `**Completed:** YYYY-MM-DD` exist.
 - `skipped`: result is optional; when present it records abandonment, with no closing Completed.
 

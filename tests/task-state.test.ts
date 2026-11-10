@@ -1,12 +1,13 @@
 import assert from "node:assert";
 import { spawnSync } from "node:child_process";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { chmodSync, existsSync, linkSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { after, test } from "node:test";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { RESULT_MAX_KB } from "../scripts/lifecycle-constants.ts";
-import { compactionSections, taskState, type CompactionPlan, type TaskState } from "../scripts/task-state.ts";
+import { compactionSections, compactionSnapshot, Exit, taskState, type CompactionPlan, type CompactionSnapshot, type TaskState } from "../scripts/task-state.ts";
 import { repairTask } from "../scripts/task-repair.ts";
 import { carriesStatusHeader, markdownLines, parseGoalDefinitions, scanGoalReferences } from "../scripts/goal-structure.ts";
 
@@ -15,10 +16,17 @@ const REPO_DIR = resolve(TESTS_DIR, "..");
 const SCRIPT = join(REPO_DIR, "scripts", "task-state.ts");
 const HEALTH_CHECK = join(REPO_DIR, "scripts", "health-check.ts");
 const TEST_ROOT = mkdtempSync(join(tmpdir(), "agents-kit-task-state-"));
+const HOME_ROOT = mkdtempSync(join(tmpdir(), "agents-kit-task-state-home-"));
+const HELPER_HOME = join(HOME_ROOT, "default");
+const HELPER_ENV = { ...process.env, HOME: HELPER_HOME };
 const FENCE = "```";
 const TRIGGER_BYTES = RESULT_MAX_KB * 1024;
 
-after(() => rmSync(TEST_ROOT, { recursive: true, force: true }));
+mkdirSync(HELPER_HOME);
+after(() => {
+  rmSync(TEST_ROOT, { recursive: true, force: true });
+  rmSync(HOME_ROOT, { recursive: true, force: true });
+});
 
 interface Folder {
   readonly plan?: string;
@@ -42,8 +50,8 @@ interface Run {
   readonly stderr: string;
 }
 
-function run(args: readonly string[]): Run {
-  const child = spawnSync(process.execPath, [SCRIPT, ...args], { encoding: "utf8" });
+function run(args: readonly string[], home = HELPER_HOME): Run {
+  const child = spawnSync(process.execPath, [SCRIPT, ...args], { encoding: "utf8", env: { ...process.env, HOME: home } });
   return { status: child.status, stdout: child.stdout, stderr: child.stderr };
 }
 
@@ -998,7 +1006,7 @@ test("repair sweeps staging files whose writer is gone and keeps a live writer's
 test("a staging write that fails after creating its file leaves no staging file behind", () => {
   const dir = folder("repair-staging-write-failure", { goals: `## Goals\n- G1: — ${"delivered ".repeat(1024)}\n` });
   const original = readFileSync(join(dir, "goals.md"));
-  const limited = spawnSync("/bin/sh", ["-c", 'ulimit -f 1 && exec "$0" "$@"', process.execPath, SCRIPT, "--repair", dir], { encoding: "utf8" });
+  const limited = spawnSync("/bin/sh", ["-c", 'ulimit -f 1 && exec "$0" "$@"', process.execPath, SCRIPT, "--repair", dir], { encoding: "utf8", env: HELPER_ENV });
   assert.strictEqual(limited.status, 2, limited.stderr + limited.stdout);
   const repaired = JSON.parse(limited.stdout);
   assert.match(repaired.error, /EFBIG/);
@@ -1748,7 +1756,7 @@ test("goals listed under Retired stay valid in task history without Git", () => 
   const accepted = report(dir);
   assert.strictEqual(accepted.structure.reliable, true, JSON.stringify(accepted.structure.diagnostics));
   assert.deepStrictEqual(accepted.goalCoverage.goals, [{ id: "G1", steps: ["1"] }]);
-  const health = spawnSync(process.execPath, [HEALTH_CHECK, TEST_ROOT], { encoding: "utf8" });
+  const health = spawnSync(process.execPath, [HEALTH_CHECK, TEST_ROOT], { encoding: "utf8", env: HELPER_ENV });
   assert.strictEqual(health.status, 0, health.stderr);
   assert.deepStrictEqual((JSON.parse(health.stdout).findings as { check: string; path: string }[])
     .filter((item) => item.check === "goal-id" && item.path.endsWith("retired-list")), []);
@@ -1758,7 +1766,7 @@ test("goals listed under Retired stay valid in task history without Git", () => 
     { code: "retired-goal-reference", file: "plan.md", line: 5, detail: "G2" },
     { code: "retired-goal-reference", file: "plan.md", line: 9, detail: "G2" },
   ]);
-  const retiredCited = spawnSync(process.execPath, [HEALTH_CHECK, TEST_ROOT], { encoding: "utf8" });
+  const retiredCited = spawnSync(process.execPath, [HEALTH_CHECK, TEST_ROOT], { encoding: "utf8", env: HELPER_ENV });
   assert.strictEqual(retiredCited.status, 0, retiredCited.stderr);
   assert.deepStrictEqual((JSON.parse(retiredCited.stdout).findings as { check: string; path: string; detail: string }[])
     .filter((item) => item.check === "goal-id" && item.path.endsWith("retired-list")).map((item) => item.detail), [
@@ -1766,7 +1774,7 @@ test("goals listed under Retired stay valid in task history without Git", () => 
     "retired-goal-reference G2 in plan.md:9",
   ]);
   writeFileSync(join(dir, "plan.md"), plan.replace("**Goal:** G1", "**Goal:** G1, `G9`"));
-  const codeCited = spawnSync(process.execPath, [HEALTH_CHECK, TEST_ROOT], { encoding: "utf8" });
+  const codeCited = spawnSync(process.execPath, [HEALTH_CHECK, TEST_ROOT], { encoding: "utf8", env: HELPER_ENV });
   assert.strictEqual(codeCited.status, 0, codeCited.stderr);
   assert.deepStrictEqual((JSON.parse(codeCited.stdout).findings as { check: string; path: string; detail: string }[])
     .filter((item) => item.check === "goal-id" && item.path.endsWith("retired-list")).map((item) => item.detail), [
@@ -1830,7 +1838,7 @@ test("rollback preserves permissions changed after replacement and reports parti
 test("repair and rollback keep each replaced file's permission bits under a narrowing umask", () => {
   const dir = historicalRepairFolder("repair-mode");
   chmodSync(join(dir, "goals.md"), 0o664);
-  const repaired = spawnSync("/bin/sh", ["-c", 'umask 077 && exec "$0" "$@"', process.execPath, SCRIPT, "--repair", dir], { encoding: "utf8" });
+  const repaired = spawnSync("/bin/sh", ["-c", 'umask 077 && exec "$0" "$@"', process.execPath, SCRIPT, "--repair", dir], { encoding: "utf8", env: HELPER_ENV });
   assert.strictEqual(repaired.status, 0, repaired.stderr + repaired.stdout);
   assert.ok(JSON.parse(repaired.stdout).applied.some((item: { file: string }) => item.file === "goals.md"));
   assert.strictEqual(statSync(join(dir, "goals.md")).mode & 0o7777, 0o664);
@@ -2212,6 +2220,37 @@ function plan(dir: string): CompactionPlan {
   return JSON.parse(child.stdout) as CompactionPlan;
 }
 
+test("compaction plans hash the raw result bytes and detect changes hidden by UTF-8 decoding", () => {
+  const dir = folder("compaction-input-hash", {});
+  const content = Buffer.concat([Buffer.from("## Step 1\r\nNarrative\r\n"), Buffer.from([0xff])]);
+  writeFileSync(join(dir, "result.md"), content);
+  const before = plan(dir);
+  const child = run(["--compaction-snapshot", dir]);
+  assert.strictEqual(child.status, 0, child.stderr);
+  const snapshot = JSON.parse(child.stdout) as CompactionSnapshot;
+  assert.strictEqual(before.resultSha256, createHash("sha256").update(content).digest("hex"));
+  assert.strictEqual(before.resultSha256, snapshot.sha256);
+  content[content.length - 1] = 0xfe;
+  writeFileSync(join(dir, "result.md"), content);
+  assert.notStrictEqual(plan(dir).resultSha256, before.resultSha256);
+});
+
+test("compaction plans report the plan status used to protect active pauses", () => {
+  const dir = folder("compaction-input-status", { result: COMPACTION_RESULT });
+  assert.strictEqual(plan(dir).planStatus, null);
+  mkdirSync(join(dir, "plan.md"));
+  assert.strictEqual(plan(dir).planStatus, null);
+  rmSync(join(dir, "plan.md"), { recursive: true });
+  writeFileSync(join(dir, "plan.md"), "**Status:** blocked\n");
+  const blocked = plan(dir);
+  assert.strictEqual(blocked.planStatus, "blocked");
+  writeFileSync(join(dir, "plan.md"), "**Status:** in-review\n");
+  const inReview = plan(dir);
+  assert.strictEqual(inReview.planStatus, "in-review");
+  assert.strictEqual(inReview.resultSha256, blocked.resultSha256);
+  assert.notDeepStrictEqual(inReview.keep, blocked.keep);
+});
+
 test("a result under the trigger is not due for compaction", () => {
   const dir = folder("compaction-small", { plan: COMPACTION_PLAN, result: COMPACTION_RESULT });
   const report = plan(dir);
@@ -2270,20 +2309,27 @@ test("a test-assembled compaction keeps compaction sections and duplicate or nes
   }
 });
 
-test("an oversized result committed at HEAD passes the precondition and lists both section sets", () => {
-  const repo = checkout("compaction-committed");
-  const dir = join(repo, "task");
-  mkdirSync(dir, { recursive: true });
-  writeFileSync(join(dir, "plan.md"), COMPACTION_PLAN);
-  writeFileSync(join(dir, "result.md"), sized(COMPACTION_RESULT, TRIGGER_BYTES + 1));
-  git(repo, ["add", "-f", "--", "task/plan.md", "task/result.md"]);
+test("a committed and an untracked copy of one oversized result report the same compaction plan", () => {
+  const repo = checkout("compaction-commit-state");
+  const committed = join(repo, "committed");
+  const untracked = join(repo, "untracked");
+  for (const dir of [committed, untracked]) {
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, "plan.md"), COMPACTION_PLAN);
+    writeFileSync(join(dir, "result.md"), sized(COMPACTION_RESULT, TRIGGER_BYTES + 1));
+  }
+  git(repo, ["add", "-f", "--", "committed/plan.md", "committed/result.md"]);
   git(repo, ["commit", "-q", "-m", "the pre-compaction state"]);
 
-  const report = plan(dir);
-  assert.strictEqual(report.due, true);
-  assert.strictEqual(report.bytes, TRIGGER_BYTES + 1);
-  assert.deepStrictEqual(report.precondition, { state: "ok", detail: null, uncommitted: false });
-  assert.deepStrictEqual(report.keep, [
+  const [fromCommitted, fromUntracked] = [committed, untracked].map(plan);
+  for (const report of [fromCommitted, fromUntracked]) {
+    assert.deepStrictEqual(Object.keys(report), ["taskDir", "resultFile", "bytes", "maxKb", "due", "keep", "removable", "resultSha256", "planStatus"]);
+  }
+  const verdict = ({ due, keep, removable }: CompactionPlan) => ({ due, keep, removable });
+  assert.deepStrictEqual(verdict(fromUntracked), verdict(fromCommitted));
+  assert.strictEqual(fromCommitted.due, true);
+  assert.strictEqual(fromCommitted.bytes, TRIGGER_BYTES + 1);
+  assert.deepStrictEqual(fromCommitted.keep, [
     { heading: "Current state", anchor: "current-state", rule: "current-state" },
     { heading: "Compacted — 2025-12-01", anchor: "compacted--2025-12-01", rule: "compacted" },
     { heading: "Reconciliation — 2026-01-04", anchor: "reconciliation--2026-01-04", rule: "reconciliation" },
@@ -2291,32 +2337,296 @@ test("an oversized result committed at HEAD passes the precondition and lists bo
     { heading: "Acceptance", anchor: "acceptance", rule: "acceptance" },
     { heading: "Health boundary — 2026-01-04", anchor: "health-boundary--2026-01-04", rule: "health-boundary" },
   ]);
-  assert.deepStrictEqual(report.removable, [
+  assert.deepStrictEqual(fromCommitted.removable, [
     { heading: "Step 1 — First thing", anchor: "step-1--first-thing" },
     { heading: "Reconciliation — 2025-12-20", anchor: "reconciliation--2025-12-20" },
     { heading: "Blocked — 2026-01-01", anchor: "blocked--2026-01-01" },
     { heading: "Review — 2026-01-03", anchor: "review--2026-01-03" },
   ]);
-
-  writeFileSync(join(dir, "result.md"), sized(COMPACTION_RESULT, TRIGGER_BYTES + 2));
-  assert.strictEqual(plan(dir).precondition.uncommitted, true);
 });
 
-test("a result that does not resolve at HEAD fails the precondition", () => {
-  const repo = checkout("compaction-untracked");
-  const dir = join(repo, "task");
-  mkdirSync(dir, { recursive: true });
-  writeFileSync(join(repo, "seed.md"), "the checkout needs a HEAD\n");
-  git(repo, ["add", "-f", "--", "seed.md"]);
-  git(repo, ["commit", "-q", "-m", "seed"]);
-  writeFileSync(join(dir, "plan.md"), COMPACTION_PLAN);
-  writeFileSync(join(dir, "result.md"), sized(COMPACTION_RESULT, TRIGGER_BYTES + 1));
+function snapshotHome(name: string): string {
+  const home = join(HOME_ROOT, name);
+  rmSync(home, { recursive: true, force: true });
+  mkdirSync(home, { recursive: true });
+  return home;
+}
 
-  const report = plan(dir);
-  assert.strictEqual(report.due, true);
-  assert.strictEqual(report.precondition.state, "fails");
-  assert.strictEqual(report.precondition.uncommitted, null);
-  assert.match(report.precondition.detail ?? "", /result\.md/);
+function snapshotDir(home: string): string {
+  return join(home, ".local", "state", "agents-kit", "compaction");
+}
+
+function snapshot(dir: string, home: string): CompactionSnapshot {
+  const child = run(["--compaction-snapshot", dir], home);
+  assert.strictEqual(child.status, 0, `expected exit 0, got ${child.status}: ${child.stderr}`);
+  return JSON.parse(child.stdout) as CompactionSnapshot;
+}
+
+function snapshotPath(dir: string, home: string, original: Buffer): string {
+  const sha256 = createHash("sha256").update(original).digest("hex");
+  return join(snapshotDir(home), `${basename(dir)}-${sha256.slice(0, 12)}.md`);
+}
+
+function assertCopy(report: CompactionSnapshot, dir: string, home: string, original: Buffer): void {
+  const sha256 = createHash("sha256").update(original).digest("hex");
+  const path = snapshotPath(dir, home, original);
+  assert.deepStrictEqual(report, { path, bytes: original.length, sha256 });
+  assert.ok(readFileSync(path).equals(original), `${path} differs from ${join(dir, "result.md")}`);
+}
+
+function assertLinkedSnapshotRefused(name: string, link: (target: string, path: string) => void, refusal: RegExp): void {
+  const home = snapshotHome(name);
+  const dir = folder(name, { result: COMPACTION_RESULT });
+  const result = join(dir, "result.md");
+  const path = snapshotPath(dir, home, Buffer.from(COMPACTION_RESULT));
+  mkdirSync(snapshotDir(home), { recursive: true });
+  link(result, path);
+  const before = lstatSync(path);
+
+  const child = run(["--compaction-snapshot", dir], home);
+  assert.strictEqual(child.status, 2, `expected exit 2, got ${child.status}: ${child.stderr}`);
+  assert.strictEqual(child.stdout, "");
+  assert.match(child.stderr, refusal);
+  assert.strictEqual(readFileSync(result, "utf8"), COMPACTION_RESULT);
+  const after = lstatSync(path);
+  assert.strictEqual(after.isSymbolicLink(), before.isSymbolicLink());
+  assert.strictEqual(after.ino, before.ino);
+  assert.deepStrictEqual(readdirSync(snapshotDir(home)), [basename(path)]);
+}
+
+function snapshotInProcess(dir: string, home: string, beforePublish?: () => void, afterFinalRead?: () => void): CompactionSnapshot {
+  const previous = process.env.HOME;
+  process.env.HOME = home;
+  try {
+    return compactionSnapshot(dir, { beforePublish, afterFinalRead });
+  } finally {
+    if (previous === undefined) delete process.env.HOME;
+    else process.env.HOME = previous;
+  }
+}
+
+test("an untracked and a Git-ignored result each snapshot byte for byte under the home's state directory", () => {
+  const home = snapshotHome("snapshot-git-state");
+  const repo = checkout("snapshot-git-state");
+  writeFileSync(join(repo, ".gitignore"), "ignored/\n");
+  git(repo, ["add", "-f", "--", ".gitignore"]);
+  git(repo, ["commit", "-q", "-m", "ignore one task"]);
+  const copies = ["untracked", "ignored"].map((name) => {
+    const dir = join(repo, name);
+    mkdirSync(dir, { recursive: true });
+    const original = Buffer.from(sized(COMPACTION_RESULT.replace("compaction fixture", `${name} fixture`), TRIGGER_BYTES + 1));
+    writeFileSync(join(dir, "result.md"), original);
+    return { dir, original };
+  });
+
+  const previous = process.umask(0o022);
+  try {
+    for (const { dir, original } of copies) {
+      const written = snapshot(dir, home);
+      assertCopy(written, dir, home, original);
+      assert.strictEqual(statSync(written.path).mode & 0o777, 0o600, written.path);
+    }
+  } finally {
+    process.umask(previous);
+  }
+  assert.strictEqual(readdirSync(snapshotDir(home)).length, 2);
+  assert.strictEqual(statSync(snapshotDir(home)).mode & 0o777, 0o700);
+});
+
+test("a result holding invalid UTF-8 snapshots its raw bytes", () => {
+  const home = snapshotHome("snapshot-raw-bytes");
+  const dir = folder("snapshot-raw-bytes", {});
+  const original = Buffer.concat([Buffer.from("# Result\n\n## Step 1 — Work\n"), Buffer.from([0xff, 0xfe, 0xc3, 0x28, 0x0a])]);
+  writeFileSync(join(dir, "result.md"), original);
+
+  assertCopy(snapshot(dir, home), dir, home, original);
+});
+
+test("a rerun on unchanged bytes reuses the existing snapshot", () => {
+  const home = snapshotHome("snapshot-rerun");
+  const dir = folder("snapshot-rerun", { result: COMPACTION_RESULT });
+  const first = snapshot(dir, home);
+  const before = statSync(first.path);
+
+  const second = snapshot(dir, home);
+  const after = statSync(second.path);
+  assert.deepStrictEqual(second, first);
+  assert.strictEqual(after.ino, before.ino);
+  assert.strictEqual(after.mtimeMs, before.mtimeMs);
+  assert.deepStrictEqual(readdirSync(snapshotDir(home)), [basename(first.path)]);
+});
+
+test("a snapshot path already holding other bytes exits 2 and keeps them", () => {
+  const home = snapshotHome("snapshot-mismatch");
+  const dir = folder("snapshot-mismatch", { result: COMPACTION_RESULT });
+  const path = snapshot(dir, home).path;
+  writeFileSync(path, "edited elsewhere\n");
+
+  const child = run(["--compaction-snapshot", dir], home);
+  assert.strictEqual(child.status, 2);
+  assert.strictEqual(child.stdout, "");
+  assert.match(child.stderr, /other bytes/);
+  assert.strictEqual(readFileSync(path, "utf8"), "edited elsewhere\n");
+});
+
+test("a snapshot path symlinked to result.md exits 2 and leaves result.md unchanged", () => {
+  assertLinkedSnapshotRefused("snapshot-symlink", symlinkSync, /not a regular file/);
+});
+
+test("a snapshot path hard-linked to result.md exits 2 and leaves result.md unchanged", () => {
+  assertLinkedSnapshotRefused("snapshot-hard-link", linkSync, /same file as result\.md/);
+});
+
+test("a same-bytes result replacement hard-linked to the snapshot before publication exits 2 and keeps both entries", () => {
+  const home = snapshotHome("snapshot-replaced-source");
+  const dir = folder("snapshot-replaced-source", { result: COMPACTION_RESULT });
+  const result = join(dir, "result.md");
+  const path = snapshotPath(dir, home, Buffer.from(COMPACTION_RESULT));
+  let replacementIno: number | undefined;
+
+  assert.throws(
+    () => snapshotInProcess(dir, home, () => {
+      const replacement = join(dir, "replacement.md");
+      writeFileSync(replacement, COMPACTION_RESULT);
+      renameSync(replacement, result);
+      linkSync(result, path);
+      replacementIno = statSync(result).ino;
+    }),
+    (err: unknown) => err instanceof Exit && err.code === 2 && err.message.includes(result) && err.message.includes(path),
+  );
+  assert.strictEqual(readFileSync(result, "utf8"), COMPACTION_RESULT);
+  assert.strictEqual(readFileSync(path, "utf8"), COMPACTION_RESULT);
+  assert.strictEqual(lstatSync(result).ino, replacementIno);
+  assert.strictEqual(lstatSync(path).ino, replacementIno);
+  assert.deepStrictEqual(readdirSync(snapshotDir(home)), [basename(path)]);
+});
+
+test("a result replaced before publication exits 2 even when the snapshot is an independent copy", () => {
+  const home = snapshotHome("snapshot-replaced-independent");
+  const dir = folder("snapshot-replaced-independent", { result: COMPACTION_RESULT });
+  const result = join(dir, "result.md");
+  const path = snapshotPath(dir, home, Buffer.from(COMPACTION_RESULT));
+
+  assert.throws(
+    () => snapshotInProcess(dir, home, () => {
+      const replacement = join(dir, "replacement.md");
+      writeFileSync(replacement, COMPACTION_RESULT);
+      renameSync(replacement, result);
+    }),
+    (err: unknown) => err instanceof Exit && err.code === 2 && err.message.includes(result) && err.message.includes(path),
+  );
+  assert.strictEqual(readFileSync(result, "utf8"), COMPACTION_RESULT);
+  assert.strictEqual(readFileSync(path, "utf8"), COMPACTION_RESULT);
+  assert.notStrictEqual(lstatSync(result).ino, lstatSync(path).ino);
+  assert.deepStrictEqual(readdirSync(snapshotDir(home)), [basename(path)]);
+});
+
+test("a snapshot replaced with a hard link to result.md during the final re-read exits 2 and keeps both entries", () => {
+  const home = snapshotHome("snapshot-replaced-final-read");
+  const dir = folder("snapshot-replaced-final-read", { result: COMPACTION_RESULT });
+  const result = join(dir, "result.md");
+  const path = snapshotPath(dir, home, Buffer.from(COMPACTION_RESULT));
+  const original = lstatSync(result);
+
+  assert.throws(
+    () => snapshotInProcess(dir, home, undefined, () => {
+      rmSync(path);
+      linkSync(result, path);
+    }),
+    (err: unknown) => err instanceof Exit && err.code === 2 && err.message.includes(path) && /was replaced/.test(err.message),
+  );
+  assert.strictEqual(readFileSync(result, "utf8"), COMPACTION_RESULT);
+  assert.strictEqual(readFileSync(path, "utf8"), COMPACTION_RESULT);
+  assert.strictEqual(lstatSync(result).ino, original.ino);
+  assert.strictEqual(lstatSync(path).ino, original.ino);
+  assert.deepStrictEqual(readdirSync(snapshotDir(home)), [basename(path)]);
+});
+
+test("a snapshot path another writer fills with other bytes before publication exits 2 and keeps them", () => {
+  const home = snapshotHome("snapshot-raced-other");
+  const dir = folder("snapshot-raced-other", { result: COMPACTION_RESULT });
+  const path = snapshotPath(dir, home, Buffer.from(COMPACTION_RESULT));
+
+  assert.throws(
+    () => snapshotInProcess(dir, home, () => writeFileSync(path, "written elsewhere\n")),
+    (err: unknown) => err instanceof Exit && err.code === 2 && /other bytes/.test(err.message),
+  );
+  assert.strictEqual(readFileSync(path, "utf8"), "written elsewhere\n");
+  assert.strictEqual(readFileSync(join(dir, "result.md"), "utf8"), COMPACTION_RESULT);
+  assert.deepStrictEqual(readdirSync(snapshotDir(home)), [basename(path)]);
+});
+
+test("a snapshot path another writer fills with the same bytes before publication is reused", () => {
+  const home = snapshotHome("snapshot-raced-same");
+  const dir = folder("snapshot-raced-same", { result: COMPACTION_RESULT });
+  const original = Buffer.from(COMPACTION_RESULT);
+  const path = snapshotPath(dir, home, original);
+  let raced: number | undefined;
+
+  const written = snapshotInProcess(dir, home, () => {
+    writeFileSync(path, original);
+    raced = statSync(path).ino;
+  });
+  assertCopy(written, dir, home, original);
+  assert.strictEqual(statSync(path).ino, raced);
+  assert.deepStrictEqual(readdirSync(snapshotDir(home)), [basename(path)]);
+});
+
+test("an unwritable state directory exits 2 and leaves result.md unchanged", { skip: process.getuid?.() === 0 && "root writes paths whose bits deny it" }, () => {
+  const home = snapshotHome("snapshot-unwritable");
+  const state = snapshotDir(home);
+  mkdirSync(state, { recursive: true });
+  const dir = folder("snapshot-unwritable", { plan: COMPACTION_PLAN, result: COMPACTION_RESULT });
+  chmodSync(state, 0o500);
+  try {
+    const child = run(["--compaction-snapshot", dir], home);
+    assert.strictEqual(child.status, 2);
+    assert.strictEqual(child.stdout, "");
+    assert.match(child.stderr, /cannot write snapshot/);
+    assert.deepStrictEqual(readdirSync(state), []);
+  } finally {
+    chmodSync(state, 0o700);
+  }
+  assert.strictEqual(readFileSync(join(dir, "result.md"), "utf8"), COMPACTION_RESULT);
+});
+
+test("--compaction-snapshot on a folder with no result.md exits 1 and writes nothing", () => {
+  const home = snapshotHome("snapshot-missing");
+  const dir = folder("snapshot-missing", { plan: COMPACTION_PLAN });
+
+  const child = run(["--compaction-snapshot", dir], home);
+  assert.strictEqual(child.status, 1);
+  assert.strictEqual(child.stdout, "");
+  assert.match(child.stderr, /result\.md/);
+  assert.deepStrictEqual(readdirSync(home), []);
+});
+
+test("--compaction-plan on a symlinked result.md exits 1 with empty stdout", () => {
+  const dir = folder("compaction-linked-source", {});
+  const target = join(dir, "target.md");
+  writeFileSync(target, sized(COMPACTION_RESULT, TRIGGER_BYTES + 1));
+  symlinkSync(target, join(dir, "result.md"));
+
+  const child = run(["--compaction-plan", dir]);
+  assert.strictEqual(child.status, 1);
+  assert.strictEqual(child.stdout, "");
+  assert.match(child.stderr, /no readable result\.md/);
+});
+
+test("--compaction-snapshot on a symlinked result.md exits 1 and writes nothing", () => {
+  const home = snapshotHome("snapshot-linked-source");
+  const dir = folder("snapshot-linked-source", {});
+  const target = join(dir, "target.md");
+  writeFileSync(target, COMPACTION_RESULT);
+  symlinkSync(target, join(dir, "result.md"));
+
+  const child = run(["--compaction-snapshot", dir], home);
+  assert.strictEqual(child.status, 1);
+  assert.strictEqual(child.stdout, "");
+  assert.match(child.stderr, /no readable result\.md/);
+  assert.strictEqual(readFileSync(target, "utf8"), COMPACTION_RESULT);
+  assert.ok(lstatSync(join(dir, "result.md")).isSymbolicLink());
+  assert.deepStrictEqual(readdirSync(home), []);
 });
 
 test("the active pause section is the one the plan's status owes, and only the most recent", () => {
@@ -2355,7 +2665,7 @@ test("the compaction trigger reads the same bytes health-check's oversized-resul
     writeFileSync(join(dir, "result.md"), sized(COMPACTION_RESULT, bytes));
   }
 
-  const walk = spawnSync(process.execPath, [HEALTH_CHECK, root], { encoding: "utf8" });
+  const walk = spawnSync(process.execPath, [HEALTH_CHECK, root], { encoding: "utf8", env: HELPER_ENV });
   assert.strictEqual(walk.status, 0, `health-check failed: ${walk.stderr}`);
   const oversized = (JSON.parse(walk.stdout).findings as { check: string; path: string }[])
     .filter((finding) => finding.check === "oversized-result")

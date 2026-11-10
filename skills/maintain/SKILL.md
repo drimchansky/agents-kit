@@ -196,7 +196,7 @@ Close with one Handoff block for the whole run (`./references/workflow/user-faci
 
 Use a bare slug only where `./references/workflow/task-layout.md` § *One task, one flat folder* resolves it. For grouped tasks in an unregistered canonical root, use paths. Resolve duplicate-slug ambiguity before other slug-based handoffs.
 
-- Route oversized results, folders, and records to `/reconcile-task <slug>` for confirmed compaction or trimming; documentation deliverables may need their author.
+- Route oversized results to `/reconcile-task <slug>` for confirmed compaction. Route an `oversized-task` or `oversized-record` finding there for trimming only when the same task also reports `oversized-result`, meaning compaction is due (`./references/workflow/reconciliation-compaction.md` § *Compaction (size trigger)*). Report every other `oversized-task` or `oversized-record` finding as accepted, with no route. Documentation deliverables in an oversized folder may need their author.
 - Route dead-anchor, goal-id, no-current-state, and active tasks to `/resume-task-reconcile <slug>` for content reconciliation and cited-link checks. Use `/plan-task <slug>` for no-plan tasks.
 - Route dead-citation there only when the composite writes its citing file. Hand-repair deliverables and skipped-plan tasks (`./references/workflow/reconciliation-docs-to-reality.md`; `./references/workflow/reconciliation.md` § *Skipped plans are exempt*).
 - Hand-rewrite citation-form findings under `./references/workflow/one-home.md` § *One home per fact*. An outside-store target requires moving it into a walked root or registering its root. A citation to the store root itself must name something it holds; neither case is fixed by rewriting form alone.

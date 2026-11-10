@@ -4,8 +4,8 @@ For session → docs, load `./reconciliation-compaction.md` only when the size c
 
 Load and report structural repair before either reconciliation direction assesses task content (`./task-layout.md` § *Reading a resolved folder*). For resume/review composites, Phase 1 assesses the repaired task once; Phase 2 uses that same baseline and does not rerun repair. An explicit read-only request applies to every nested phase and prevents all task writes.
 
-- **Docs → reality** (`./reconciliation-docs-to-reality.md`): resume-task-reconcile and review-task-reconcile compare docs with built work. Standalone resume-task/review-task may follow claim citations, but cannot sweep reference lists.
-- **Session → docs** (`./reconciliation-session-to-docs.md`): reconcile-task records session discoveries without a write flag. fix-findings-reconcile runs reconcile-task as its second phase, recording the fix run's outcome.
+- **Docs → reality** (`./reconciliation-docs-to-reality.md`): resume-task-reconcile and review-task-reconcile compare docs with built work. These two composites alone sweep cited references (§ *The reference sweep*). Standalone resume-task/review-task may follow claim citations, but cannot sweep reference lists.
+- **Session → docs** (`./reconciliation-session-to-docs.md`): reconcile-task records session discoveries without a write flag, including link facts the session observed. It runs no reference sweep (`./reconciliation-session-to-docs.md` § *`reconcile-task` — session findings*). fix-findings-reconcile runs reconcile-task as its second phase, recording the fix run's outcome.
 
 ## Consent model: findings apply, the record carries them
 
@@ -32,10 +32,11 @@ Flag redesign when the repair exceeds the finding or reconciliation's write surf
 
 ## Docs, not the world
 
-Write task docs only: no code, Git, or external-system mutation. Each edit maps to a printed finding, except these sweep/watermark writes:
+Write task docs only: no code, Git, or external-system mutation. The compaction snapshot below is the one write outside the task folder and its inherited group files. Each edit maps to a printed finding, except these sweep, watermark, and compaction writes:
 
-- Rewrite/remove observations.md under `./reconciliation-sweep.md`.
+- Composites rewrite/remove observations.md under `./reconciliation-sweep.md`; reconcile-task never writes it (`./reconciliation-session-to-docs.md` § *Write surface*).
 - Seed/re-seed watermarks under `./reconciliation-commits.md` § *Degenerate cases*; advance them under its § *The record*.
+- On a confirmed compaction, reconcile-task snapshots result.md under `~/.local/state/agents-kit/compaction/`, then collapses only approved sections (`./reconciliation-compaction.md`). The snapshot is kit run state that compaction notes cite; never delete it as scratch.
 
 Read-only verification grants no work-product edit permission.
 
@@ -78,7 +79,7 @@ Report abandonment; perform no reference sweep or writes, regardless of drift.
 
 ## The reference sweep
 
-Sweep while assembling findings under `./reconciliation-sweep.md`. Only this sweep re-derives cited-reference freshness (`./one-home.md` § *One home per fact*).
+The composites sweep while assembling findings under `./reconciliation-sweep.md`. Only this sweep re-derives cited-reference freshness (`./one-home.md` § *One home per fact*). reconcile-task records link facts its session observed at their homes (`./reconciliation-session-to-docs.md` § *`reconcile-task` — session findings*).
 
 ## Authored surfaces are never written
 
@@ -86,15 +87,17 @@ Keep deliverables unchanged. Flag divergence by section and required content for
 
 ## Never-annotated surfaces
 
-Sweep Published and active pause sections without writing either (`./reconciliation-sweep.md` § *Scope*). Flag warn/block to the user for Published or implement-task for paused work. Record alongside other edits only. Re-report until the owner records repair at the owning surface.
+The composites sweep Published and active pause sections without writing either (`./reconciliation-sweep.md` § *Scope*). Flag a warn/block, or a change or break the session observed there, to the user for Published or implement-task for paused work. Record alongside other edits only. Re-report until the owner records repair at the owning surface.
 
-Ticket/group writes follow upstream-ask terms. Ticket block takes Annotation formats; warn takes Cited reference changed. Group URLs remain unswept, unannotated, and undated.
+Never edit an active pause section. On an in-review plan, reconcile-task alone may append a superseding In review section after it (`./reconciliation-session-to-docs.md`, *In review superseded* row). That section repairs a pending list that a moved expected source or a passed item made stale; Blocked sections are never superseded.
+
+Ticket/group writes follow upstream-ask terms. A broken ticket link takes Annotation formats; a changed one takes Cited reference changed. Group URLs remain unswept, unannotated, and undated.
 
 ## Flag-only findings are re-reported
 
 Re-report every flag-only finding in full with its owner until that owner records repair; ledger entries alone do not resolve it.
 
-For tagged findings, re-report fetched block and carried warn/block. Report warn once more after a clean fetch retags it info, then stop (`./reconciliation-sweep.md` § *Tags*).
+Only the composites carry tagged findings. They re-report fetched block and carried warn/block, and report warn once more after a clean fetch retags it info, then stop (`./reconciliation-sweep.md` § *Tags*).
 
 Re-report an Awaiting decision choice in full from its Open Questions entry until the answer lands; a clean fetch retagging its originating reference `info` does not retire it.
 
@@ -106,21 +109,27 @@ Re-report untagged findings while disk or Reconciliation shows them. Report unre
 - Refresh Current state in place (`./task-authorship.md`). Decision log accepts appended dated pointers only.
 - Without an existing or owed result (to-do plan), the printed change list records the edit; create no result solely for logging. Preserve settled decision evidence under a dated heading in the owning context or plan, and cite it from the concise current guidance (`./one-home.md` § *One home per fact*).
 - Report loader repairs in the change list using their `applied` files and `mappings`; do not create a result or reconciliation record solely to log structural repair.
-- Judged edits include `— chose <reading> over <reading>: <deciding evidence>`, plus the required grounding quotes and external-surface details. Where a result exists, cite its dated record from concise current guidance instead of retaining alternatives in the live goal or direction.
-- Summarize each new outcome, verification result, material failure or deviation, and its evidence location. Record a shared health boundary once with its required reference, delta, command results, and manifest evidence (`../engineering/verification.md` § *What a boundary records*). Keep the commit scan's watermark and explicit 20-commit cap (`./reconciliation-commits.md` § *The record*). Do not copy tool transcripts, repeated command tails, or request/response narration; preserve older evidence unless compaction is separately confirmed.
+- An entry records decisions, state changes, and pointers to their evidence, and fits `RECORD_MAX_KB` (`./task-layout.md` § *One task, one flat folder*). State changes include status, checkbox, goal-verdict, delivery-target, and pending-check changes, plus verification failures and material deviations. Never shorten or omit required content to meet `RECORD_MAX_KB`. Required content covers the `**Health:**` and `**Commits:**` lines, the identifiers and labels naming commits, findings, and picked options, and the **Not reconciled:** rows. It also covers each quote, option, rejected reading, and deciding evidence that a judged edit or answered question requires. An entry that content pushes over the budget takes an expected `oversized-record` finding.
+- Name review findings, commits, and picked options by identifier or label. Point to evidence that lives elsewhere instead of restating it: no finding text, no fix, squash, push, or request/response narration, and no command transcripts or output.
+- Omit lines that only report unchanged state, such as untouched status, checkboxes, goals, or pause sections, or a loader without repairs.
+- Judged edits include `— chose <reading> over <reading>: <deciding evidence>`, plus the required grounding quotes and external-surface details. Each decision appears once, in its judged-edit row. Where a result exists, cite its dated record from concise current guidance instead of retaining alternatives in the live goal or direction.
+- Write `**Health:**` only when an advance required a fresh boundary. Record that boundary once with its required reference, delta, command results, and manifest evidence (`../engineering/verification.md` § *What a boundary records*).
+- Write `**Commits:**` for a scanned range, seed, or re-seed, with the watermark and explicit 20-commit cap (`./reconciliation-commits.md` § *The record*). Omit it when the scan reports `no-checkout`.
+- Preserve older evidence unless compaction is separately confirmed.
 
 ```markdown
 ## Reconciliation — YYYY-MM-DD
 
-**Trigger:** `<skill>`; report printed this session from pre-reconcile state.
-**Health:** <fresh boundary evidence in the resolved domain's shape; omit when no advance required a boundary>
-**Commits:** <dated commit lines when scanned; follow `./reconciliation-commits.md` § The record for content and cap>
+**Trigger:** `<skill>`
+**Health:** <fresh boundary in the resolved domain's shape; only when an advance required one>
+**Commits:** <scanned range, seed, or re-seed; omit on `no-checkout`>
 
-- plan.md — <edit> — finding: <section> [tag]. Prior record: <anchor when superseding>
-- CONTEXT.md — <edit> — finding: <section> [tag]
-- goals.md — was "<prior>", now "<new>" — finding: <section> [tag] — chose <reading> over <alternative>: <evidence>
-- ticket.md — external surface: `ticket.md` § <section>; was "<prior>", now "<new>" — finding: <section> [tag] — chose <reading> over <alternative>: <evidence>
-- GROUP_CONTEXT.md — external surface: `<root-relative-path>` § <section>; was "<prior>", now "<new>" — finding: <section> [tag] — chose <reading> over <alternative>: <evidence>
+- result.md — <outcome or state change> — <identifiers and evidence pointers>
+- plan.md § <section> — <edit> [tag]. Prior record: <anchor when superseding>
+- CONTEXT.md § <section> — <edit> [tag]
+- goals.md § G<n> — was "<prior>", now "<new>" [tag] — chose <reading> over <alternative>: <evidence>
+- ticket.md — external surface: `ticket.md` § <section>; was "<prior>", now "<new>" [tag] — chose <reading> over <alternative>: <evidence>
+- GROUP_CONTEXT.md — external surface: `<root-relative-path>` § <section>; was "<prior>", now "<new>" [tag] — chose <reading> over <alternative>: <evidence>
 
 **Not reconciled:**
 
@@ -130,28 +139,26 @@ Re-report untagged findings while disk or Reconciliation shows them. Report unre
 ---
 ```
 
-Code boundaries: `../engineering/verification.md` § *What a boundary records*. Commit lines: `./reconciliation-commits.md` § *The record*.
-
 ## Annotation formats
 
 Annotate only direction-writable surfaces:
 
-- **Broken external link, auto:** append `— _broken as of YYYY-MM-DD (404)_` on context References/Open Questions, plan steps/Open Questions, or ticket citing lines. Replace known redirects with target URLs. Exclude Never-annotated surfaces, prior results, goals, and group URLs (`./reconciliation-sweep.md` § *Scope*).
+- **Broken external link, auto:** for a sweep `block` or a break the session observed, append `— _broken as of YYYY-MM-DD (404)_` on context References/Open Questions, plan steps/Open Questions, or ticket citing lines. Replace known redirects with target URLs. Exclude Never-annotated surfaces, prior results, goals, and group URLs (`./reconciliation-sweep.md` § *Scope*).
 - **Answered open question:** replace the unresolved prompt with concise current guidance and a dated answer citing its decision record. Preserve the original question, options, rejected readings, and selection basis in dated result history or under a dated heading in the owning context/plan when no result exists (`./one-home.md` § *One home per fact*). Unambiguous quotation/paraphrase is auto; otherwise judge and record close alternatives. Group questions follow upstream-ask terms. Resolve goals' unresolved markers through the direction's goal row, not annotations.
 
 Correct broken-link/Pointers gone/moved notes are no-ops. Re-date only changed failures; avoid duplicates. Carried tags cause no edits (`./reconciliation-sweep.md` § *Tags*); flag-only findings still re-report.
 
 ## Cited reference changed
 
-Refresh warn/block Pointers entries (§ *Current state refresh*). For block, retain the identifier and add a dated gone/moved note. Record only alongside other edits. Answers take Annotation formats.
+Refresh Pointers entries for a sweep warn/block or a change the session observed, such as a cited PR's new head (§ *Current state refresh*). For a gone or moved reference, retain the identifier and add a dated gone/moved note. Record only alongside other edits. Answers take Annotation formats.
 
 - Changed references alone cannot change status. PR merge proves no acceptance; reconciliation cannot resume blocked work.
-- Context/plan/ticket block uses Annotation formats; excluded surfaces follow Never-annotated surfaces.
-- Judge ticket warn only on fetched requester wording that changes the ask, applying upstream-ask quotes and plan-task referral. Otherwise record alongside other edits only.
+- A broken context/plan/ticket link uses Annotation formats; excluded surfaces follow Never-annotated surfaces.
+- Judge a ticket change only on requester wording, fetched or observed in session, that changes the ask, applying upstream-ask quotes and plan-task referral. Otherwise record alongside other edits only.
 - Route each occurrence by its surface (`./reconciliation-sweep.md` § *Fetching*); a URL shared by Pointers and Published gets both outcomes.
 - Carried tags and correct gone/moved notes create no edit; flag-only findings remain reportable.
 
-Fetched contradictions permit judged context rewrites with evidence and rejected readings recorded under the grounding rules above.
+Fetched or session-observed contradictions permit judged context rewrites with evidence and rejected readings recorded under the grounding rules above.
 
 ## Current state refresh
 
@@ -177,13 +184,13 @@ Preserve existing step numbers in both directions. Permitted insertions use Step
 
 ## Sequence and output
 
-1. Print the full report from post-loader, pre-reconciliation state and preserve it after reconciliation edits. Reconcile-task sweeps before composing and renders References inline.
-2. Sweep before reconciliation edits (`./reconciliation-sweep.md`). Composites print References at reconciliation start, after reported loader repair. Tags supply finding evidence; the ledger rewrite lands with the check.
+1. Print the full report from post-loader, pre-reconciliation state and preserve it after reconciliation edits.
+2. Composites sweep before reconciliation edits (`./reconciliation-sweep.md`) and print References at reconciliation start, after reported loader repair. Tags supply finding evidence; the ledger rewrite lands with the check. reconcile-task skips this step (`./reconciliation-session-to-docs.md` § *`reconcile-task` — session findings*).
 3. Apply obvious fixes by file: owed result, plan, then context.
 4. Apply settled judged fixes in that order, then goals, ticket, and groups. Record each judged edit as it lands.
 5. Present unresolved impactful choices after reusing their existing research. Apply answered edits in the same order; keep unanswered ones under Awaiting decision.
 6. Refresh Current state.
-7. Print the change list below. With no actionable findings, print `Nothing to reconcile.` and write only the sweep ledger. Append no empty Reconciliation section or watermark advance (`./reconciliation-commits.md` § *The record*).
+7. Print the change list below. With no actionable findings, print `Nothing to reconcile.` and write only a composite's sweep ledger or a confirmed compaction's `result.md` and snapshot. Append no empty Reconciliation section or watermark advance (`./reconciliation-commits.md` § *The record*).
 
 ```markdown
 ## Reconciliation applied

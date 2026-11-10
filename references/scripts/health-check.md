@@ -64,7 +64,7 @@ Store-root and outside-store targets receive notes, not replacements or empty pa
 
 **The size trigger has one measure.** Oversized-result uses `scripts/task-state.ts`'s exported `resultSize`, matching that script's compaction-plan due measurement.
 
-**The two budget measures have no second reader.** Oversized-task sums on-disk bytes of direct `.md` files, excluding ticket.md and legacy `*.ticket.md`. Oversized-record measures each result `## Step` or `## Full Run` section through the line before the next level-2 heading, including fences. Both trigger strictly above budget, default from `scripts/lifecycle-constants.ts`, accept their respective flags, and exempt archived tasks.
+**The two budget measures have no second reader.** Oversized-task sums on-disk bytes of direct `.md` files, excluding ticket.md and legacy `*.ticket.md`. Oversized-record measures each result `## Step`, `## Full Run`, or `## Reconciliation` section through the line before the next level-2 heading, including fences. Both trigger strictly above budget, default from `scripts/lifecycle-constants.ts`, accept their respective flags, and exempt archived tasks.
 
 **`--installs` mode** compares marked kit items and kit items wholly absent from a home. An unreadable marker is a coverage gap, not proof of user ownership; compare that item anyway. Ignore `.DS_Store`, `.localized`, `Thumbs.db`, and `._*` sidecars, not dotfiles generally. Marked staging entries are interrupted installs. Compare two symlinks by target; a link on only one side is drift. `setup.ts` preserves skill symlinks and materializes reference symlinks.
 
