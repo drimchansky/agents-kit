@@ -21,7 +21,9 @@ There are no flags. The only argument is the triage source, passed to phase 1.
 
 Phase 1 runs `../triage-findings/SKILL.md` § *Sources* in full, with no pinning and no source narrowing.
 
-There is no working-tree precondition and no drift re-check: the findings pre-exist, and the `triage-findings` classify step routes a finding whose anchored code changed into **verify**. If the source yields nothing to triage, phase 1 says so and stops.
+Before triaging session findings, apply **Check the PR-form reviewed head** in `./references/workflow/pr-lookup.md`.
+
+Beyond that PR-form head check, there is no working-tree precondition and no drift re-check: the findings pre-exist, and the `triage-findings` classify step routes a finding whose anchored code changed into **verify**. If the source yields nothing to triage, phase 1 says so and stops.
 
 ## Phase 1 — Triage
 
@@ -36,7 +38,7 @@ Fan out under `./references/workflow/agent-fanout.md`, `./references/workflow/pr
 The **review object** depends on the source:
 
 - **PR mode:** the PR's diff (`gh pr diff <number>`).
-- **This session's review findings:** the reviewed diff (`<base>...HEAD`, or `<merge-base>...<b>` on a range); for a `paths` review, the reviewed path set and the head from `review-code`'s **Reviewed** line.
+- **This session's review findings:** the reviewed diff `<merge-base>...<head-sha>`, both SHAs taken from a branch, range, or PR-form **Reviewed** line; for a `paths` review, the reviewed path set and the head from `review-code`'s **Reviewed** line. When `HEAD` differs from a branch, range, or PR-form reviewed head, the probe prompt's working-root line names that head as one `HEAD` has moved past. `./references/workflow/probe-shape-verify.md` sets how the probe establishes each defect and when it checks the working tree.
 - **A file, pasted text, or any standalone finding:** no diff. Say so in the prompt; the probe verifies each finding as a claim against current code.
 
 A batch spanning change-based and standalone findings is split along that line.

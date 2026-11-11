@@ -42,6 +42,7 @@ Every finding lands in exactly one bucket: **open**, **verify**, or **addressed*
 - A verify composite's **Withdrawn** entry → **addressed**, citing the verdict.
 - Unresolved thread whose last comment is the PR author acknowledging the fix → **Verify**.
 - Any anchored finding whose code changed after it was produced (thread `isOutdated: true`, blame on those lines, or a quoted snippet that no longer matches) → **Verify**. Code unchanged, or nothing to establish "after" by → **open**.
+  For session findings whose **Reviewed** line names `in <host>/<owner>/<repo>#<n>`, run `git merge-base --is-ancestor <head-sha> HEAD` with that line's head SHA. When it succeeds, `HEAD` is the reviewed head or descends from it: classify against the working tree. When it fails, compare those findings' anchors with `git show <head-sha>:<path>`, not the working tree.
 - No anchor and no resolution state → **open**, unless its own source shows it superseded → **addressed**.
 
 ## Batch

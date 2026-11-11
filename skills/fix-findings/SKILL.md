@@ -38,6 +38,8 @@ For PRs, use `../triage-findings/SKILL.md` § *Fetch*, including its incomplete-
 
 Check external PR, file, and pasted findings against the current work product. A mismatched location or quoted snippet goes to Untouched as `anchor moved`. A finding too vague for one specific change goes there as `not actionable`.
 
+Once per run, before classifying session findings, apply **Check the PR-form reviewed head** in `./references/workflow/pr-lookup.md`.
+
 ## The Gate: Auto vs Ask
 
 Process concern batches in source order. Within a concern batch, process findings in dependency order, then severity order (critical, major, minor), or source order when severity is absent. A finding with a known prerequisite in a later concern batch joins that batch. Use that order for execution, executor packets, and merges (`./references/workflow/executor-contract.md` § *Bindings*). <!-- cold -->
