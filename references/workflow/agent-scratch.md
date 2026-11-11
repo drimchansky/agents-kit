@@ -12,7 +12,7 @@ mktemp -d "<host scratch area>/<role>-XXXXXX"
 
 Substitute the absolute path of the host's scratch area, and set `<role>` to `reviewer`, `probe`, or `executor`. Put the printed absolute path in that agent's launch packet or prompt as its scratch directory. Never give one directory to two agents in a session.
 
-If `mktemp -d` fails, still launch the agent. In place of the path, give `none (<reason>)` as its scratch directory, using the `mktemp` error as the reason.
+If `mktemp -d` fails, still launch the agent. In place of the path, give `none (<reason>)` as its scratch directory, using the `mktemp` error as the reason. Cross-vendor probes are the exception. Do not launch one with `none (<reason>)`; its recipe keeps its prompt and output files in its scratch directory (`./probe-engines-cross-vendor.md`).
 
 Creating an assigned directory and removing it under § *Cleanup* count as launch bookkeeping. Both fall outside every skill's write limits and confirmation gates.
 

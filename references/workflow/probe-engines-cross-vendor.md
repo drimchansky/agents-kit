@@ -9,7 +9,7 @@ The engines the opt-in `-x` cross-check runs on. The contract binding every engi
     -C <working-root> -o <scratch>/probe.md - < <scratch>/probe-prompt.md
   ```
 
-  Write the filled prompt (findings verbatim) to `<scratch>/probe-prompt.md` with the file tool and feed it on stdin through the trailing `-`, never as a command-line argument, so a `$`, backtick, or apostrophe in a finding stays data. `<scratch>` is the probe's assigned scratch directory (`./agent-scratch.md` § *Assignment*), an absolute path. `--sandbox read-only` enforces the read-only promise; `-o` captures the final message; `--ephemeral` leaves no session files. Parallel probes are shell jobs (`&` + `wait`), each with its own `<scratch>` holding one prompt file and one `-o` file. Launch early in the background where the host supports it; collect at the merge point.
+  Write the filled prompt (findings verbatim) to `<scratch>/probe-prompt.md` with the file tool and feed it on stdin through the trailing `-`, never as a command-line argument, so a `$`, backtick, or apostrophe in a finding stays data. `<scratch>` is the probe's assigned scratch directory (`./agent-scratch.md` § *Assignment*), an absolute path. `--sandbox read-only` enforces the read-only promise; `-o` captures the final message; `--ephemeral` leaves no session files.
 
 - **`claude`**: Claude Code, headless. The cross-vendor engine when the host is Codex.
 
@@ -20,3 +20,5 @@ The engines the opt-in `-x` cross-check runs on. The contract binding every engi
   ```
 
   The `cd` pins the working root (`claude` has no `-C`); `--no-session-persistence` mirrors `--ephemeral`. `--setting-sources user` loads only the user's settings, so the working root's project and local settings, including their hooks, stay unloaded. `--strict-mcp-config` uses only MCP servers from `--mcp-config`, so the working root's `.mcp.json` servers stay unconnected. Prompt passing mirrors codex, both `<scratch>` paths absolute because the `cd` changes directory. Its stdout reaches `<scratch>/probe.md` only at exit. State a 30-minute silence interval at launch (`./delegated-waiting.md` § *How to wait*).
+
+Launch each probe as its own background command under `./delegated-waiting.md` § *Shell commands*, including probes launched together. Each probe has its own `<scratch>` holding its prompt and output files, its own pid file there on a Claude Code host, and its own silence watch. Launch the probes early, in the background where the host supports it. Collect each one at the merge point through its own completion and exit status. Launch no probe whose scratch directory is `none (<reason>)` (`./agent-scratch.md` § *Assignment*); both recipes need `<scratch>` for the prompt and output files.
