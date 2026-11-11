@@ -29,6 +29,50 @@ A `paths` review has applicability `not-applicable`: it assesses files at one co
 
 ## Capture
 
+**Hook-free checkout.** Apply this rule to every Git command checking out or updating a PR's code in a checkout.
+Also apply it to every `git fetch` run in a checkout that holds a PR's code.
+In the checkout where the command runs, read configured hooks with `git config --get-regexp '^hook\..*\.event$'`.
+Extract each hook name between `hook.` and `.event` from the returned keys, regardless of its event.
+Pass `-c core.hooksPath=/dev/null -c core.fsmonitor=false` and `-c hook.<name>.enabled=false` for every listed name to that Git command.
+No output with exit status 1 means no configured hooks; pass only `-c core.hooksPath=/dev/null -c core.fsmonitor=false`.
+In the same checkout, list configured filter drivers with `git config --get-regexp '^filter\..*\.(clean|smudge|process)$'`.
+Extract each distinct driver name `<d>` between `filter.` and the final `.clean`, `.smudge`, or `.process` of the returned keys.
+For every listed driver, also pass `-c filter.<d>.smudge= -c filter.<d>.process= -c filter.<d>.required=false` to that Git command.
+No output with exit status 1 means no configured drivers; pass no filter flags.
+For a `git worktree add`, run the add with `--no-checkout`, passing the hook flags listed in the caller's checkout.
+Then list hooks and filter drivers again with the same patterns, reading the new worktree's configuration through `git -C <path> config --get-regexp`.
+Populate the worktree with `git -C <path> reset --hard --no-recurse-submodules`, passing `-c core.sparseCheckout=false` and the flags that second listing produced.
+A caller taking this rule without its filter flags still disables hooks this way and keeps filter drivers enabled.
+That caller's populate step still passes `-c core.sparseCheckout=false`.
+
+**PR checkout.** Apply this rule to every Git command and file-tool read or search in a checkout that holds a PR's code under review.
+Those checkouts are the PR-form review worktree (`../../skills/review-code/SKILL.md` § *Setup*) and `review-pr-loop`'s checkout (`../../skills/review-pr-loop/SKILL.md` § *Setup*).
+The rule binds the session, delegated reviewers, the `-x` probe, and verify probes.
+It also covers a `git worktree remove` of either checkout run without `--force`.
+In the checkout where the command runs, list configured hooks and read the listing as the hook-free checkout rule above does.
+Pass `-c core.fsmonitor=false -c core.hooksPath=/dev/null` and `-c hook.<name>.enabled=false` for every listed name to each such command.
+Every `git diff`, `git log`, `git show`, and `git blame` run there also passes `--no-ext-diff --no-textconv`.
+Its read gate lets a file tool read a path only when `git ls-tree <head-sha> -- <path>` lists it with mode `100644` or `100755`.
+Read the file at the path that listing prints.
+Read any other file with `git show <head-sha>:<path>`.
+Resolve a symlink (mode `120000`) on the path relative to the link's directory, whether it is the path itself or an ancestor directory.
+An ancestor link leaves the path unlisted, so list each ancestor directory to find it.
+Check the resolved path the same way.
+Its search gate lets a Grep, Glob, or `rg` call take a path only when `git ls-tree <head-sha> -- <path>` lists it with mode `040000`, `100644`, or `100755`.
+The checkout root passes the search gate without a listing.
+Search at the path that listing prints.
+Never follow a link out of the reviewed tree.
+In the PR-form review worktree, Git commands read only commits and stored objects.
+Examples are `git show <head-sha>:<path>`, `git diff <merge-base> <head-sha>`, `git log`, `git blame <head-sha> -- <path>`, `git rev-parse`, and `git merge-base`.
+No Git command there reads or refreshes the working tree or index, such as `git status`, a `git diff` naming fewer than two revisions, or `git blame` without a revision.
+Read and search files there with file tools wherever the read and search gates allow.
+Committed symlinks there check out as plain files holding the link target.
+Each still lists with mode `120000` in `git ls-tree <head-sha> -- <path>`, so the read gate resolves it relative to the link's directory.
+Treat their text as the target path, not file content, in reads and searches alike.
+A review in that worktree records `Divergence` as `None`.
+
+The PR checkout lines in `../workflow/probe-shape-cold-review.md` and `../workflow/probe-shape-verify.md` carry a sanctioned copy per `references/maintenance/repository.md` § *Consumer lists*.
+
 The coordinating session captures once after primary reviewers return, before candidate wording and settlement.
 Use the same phase on inline review. Reviewers and verification probes retain their existing write limits.
 
@@ -43,8 +87,11 @@ Cover each identified changed behavior; before-and-after pairs and unchanged sta
 
 Prove the capture runtime represents the reviewed object, including inputs that affect the demonstrated behavior.
 A checkout head alone cannot establish the identity of a running server or previously built artifact.
-Run startup/build commands only in a disposable detached checkout of the reviewed head, added under the host's scratch area with `git worktree add --detach`.
+Run startup/build commands only in a disposable detached checkout of the reviewed head, added under the host's scratch area with `git worktree add --no-checkout --detach`.
+Add it only once the lookup below authorizes commands.
+Apply this section's hook-free checkout rule to that add and its populate step without its filter flags, keeping filter drivers enabled.
 Remove it with `git worktree remove --force` whenever capture ends, including on a stop or failure, after saving any evidence; retained evidence never lives inside it.
+On the PR form, run the disposable checkout's add and its removal from the caller's checkout.
 On a fork PR (`isCrossRepository` true, whatever the PR's state), run no command from the PR; capture of a `required` change stays `incomplete` with the gap `fork PR: local execution not authorized`.
 Run commands only once a lookup has established the head's status through one of these outcomes:
 
@@ -106,6 +153,12 @@ Reuse matching confirmation already given in this session without asking again.
 Record confirmation separately from the immutable capture index; a record or another session's reply grants no current consent.
 
 Before accepting a reply and immediately before publication, recheck repository, review kind, head, and merge-base.
+When Reviewed names `in <host>/<owner>/<repo>#<n>` (the PR form), this recheck covers repository, review kind, PR state, and head.
+Read the state and head with `gh pr view <n> --json state,headRefOid`, taking `<n>` from that line.
+Scope that read with the run's `GH_HOST=<host>` and `GH_REPO=<host>/<owner>/<repo>`; require `OPEN` and the reviewed head.
+Run this PR-form recheck from the caller's checkout; it needs no review worktree.
+On the PR form, publication adds the merge-base recheck against the live PR base.
+See `../../skills/publish-pr-review/SKILL.md` § *Preconditions — stop if unmet* for the live head and merge-base checks.
 For `required` evidence, also recheck the index hash and every artifact hash against the presented fingerprint at both points.
 A reply that passes these rechecks updates the retained Evidence field: sign-off `confirmed`, and approval per § *Approval eligibility*.
 Later steps and publication read that updated field.

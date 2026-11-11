@@ -14,6 +14,7 @@ const SOURCES = [
   "references/workflow/verify-pipeline.md",
   "references/workflow/executor-contract.md",
   "references/workflow/fix-findings-recovery.md",
+  "references/workflow/pr-lookup.md",
   "skills/review-code/SKILL.md",
   "skills/review-code-triage-verify/SKILL.md",
   "skills/review-docs/SKILL.md",

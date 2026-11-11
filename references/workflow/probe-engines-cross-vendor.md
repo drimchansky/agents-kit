@@ -15,7 +15,8 @@ The engines the opt-in `-x` cross-check runs on. The contract binding every engi
 
   ```bash
   cd <working-root> && claude -p --permission-mode plan \
-    --no-session-persistence < <scratch>/probe-prompt.md > <scratch>/probe.md
+    --no-session-persistence --setting-sources user --strict-mcp-config \
+    < <scratch>/probe-prompt.md > <scratch>/probe.md
   ```
 
-  The `cd` pins the working root (`claude` has no `-C`); `--no-session-persistence` mirrors `--ephemeral`. Prompt passing mirrors codex, both `<scratch>` paths absolute because the `cd` changes directory. Its stdout reaches `<scratch>/probe.md` only at exit. State a 30-minute silence interval at launch (`./delegated-waiting.md` § *How to wait*).
+  The `cd` pins the working root (`claude` has no `-C`); `--no-session-persistence` mirrors `--ephemeral`. `--setting-sources user` loads only the user's settings, so the working root's project and local settings, including their hooks, stay unloaded. `--strict-mcp-config` uses only MCP servers from `--mcp-config`, so the working root's `.mcp.json` servers stay unconnected. Prompt passing mirrors codex, both `<scratch>` paths absolute because the `cd` changes directory. Its stdout reaches `<scratch>/probe.md` only at exit. State a 30-minute silence interval at launch (`./delegated-waiting.md` § *How to wait*).
