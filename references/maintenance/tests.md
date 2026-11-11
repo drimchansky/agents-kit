@@ -70,6 +70,8 @@ Each health-check `describe` scenario runs its argument sets once, in its `befor
 
 **The `session-triage` suite launches each `describe` scenario's argument set once.** The main corpus and its `--top`, `--since`, retry, and absent-directory variants each spawn the helper in their scenario's `before` hook. Each test reads status, stdout, and stderr from that frozen capture and parses its own report. Selecting one test launches only its own scenario. Built fixture scenarios, the locked-directory and locked-file cases, and the file, pipe-buffer, and early-close runs keep separate executions. The determinism cases run their arguments twice on purpose.
 
+**The `silence-watch` suite drives the watch loop with a fake clock.** Loop cases call the exported `watch` with a clock whose sleep advances time, edits fixture files, and stops the loop by throwing. Fixture modification times fall on whole seconds, so the silence arithmetic is exact. Usage variants call the exported `parseArgs`; one CLI case checks the refusal status and message. One CLI case runs the real clock with a one-second interval for about two seconds. It reads the first notice, closes stdout, and expects status 0.
+
 ## Opt-in live executor smoke
 
 Run this procedure only when live model calls are requested. Use disposable fixture repositories and existing authenticated CLIs. Preserve installed payloads, authentication files, and user configuration. Fingerprint protected configuration, auth files, and installed definitions before calls; retain hashes without copying credential contents.

@@ -21,7 +21,7 @@ The PR's checks stand in for the project's verification scripts, so no pass runs
 
 ## Host
 
-Launch and collect the check poll and watch through `./references/workflow/delegated-waiting.md` § *Shell commands*. If the host's named shell tools are unavailable, stop under § *Output* and name the missing capability.
+Launch and collect the check poll and watch through `./references/workflow/delegated-waiting.md` § *Shell commands*. The check poll and the watch take the default silence interval despite their own deadlines, because a `gh` read inside each can block past them (`./references/workflow/delegated-waiting.md` § *How to wait*). If the host's named shell tools are unavailable, stop under § *Output* and name the missing capability. When the silence watch for the check poll or the watch is missing, denied, or failed, do not run that program unwatched. If it was launched, stop it under `./references/workflow/delegated-waiting.md` § *Per-host primitives*, including its cooperative-termination fallback. Then stop under § *Output* and name the missing watch.
 
 ## Setup
 
@@ -97,13 +97,13 @@ During **Review**, the session reads `gh pr view <number> --json state,headRefOi
 
 Launch delegated reviewers in the background so the session can check the PR while they work. Use bounded waits or a condition monitor through `./references/workflow/delegated-waiting.md` § *Per-host primitives* and § *Shell commands*. Cap shell collection waits at 60 seconds while supervising a review, overriding that reference's longer default. These remote reads do no work against the reviewed tree. Run capture's build and start commands in the background the same way.
 
-When a check reports a head mismatch or a non-OPEN PR, or a recheck before acceptance or rendering fails, stop adopting evidence. Cancel the pass's active reviewers, review commands, and capture processes through the stop primitive `./references/workflow/delegated-waiting.md` § *Per-host primitives* names for the host, and remove the capture checkout under `./references/engineering/review-evidence.md` § *Capture*. Where cancellation is unavailable, request cooperative termination and collect confirmation; a collected completion also confirms termination. Discard partial and late returns; intentional cancellation never takes `reviewer failed`, inline fallback, or clean-review output. Confirm all review work has stopped before another **Sync** can change the checkout. Then remove the scratch directory of each reviewer the pass launched under `./references/workflow/agent-scratch.md` § *Cleanup*. If termination cannot be confirmed, keep those directories, stop the loop, and name the outstanding handles and kept directories.
+When a check reports a head mismatch or a non-OPEN PR, or a recheck before acceptance or rendering fails, stop adopting evidence. Cancel the pass's active reviewers, review commands, and capture processes through the stop primitive `./references/workflow/delegated-waiting.md` § *Per-host primitives* names for the host, and remove the capture checkout under `./references/engineering/review-evidence.md` § *Capture*. Where cancellation is unavailable, use the cooperative-termination fallback in `./references/workflow/delegated-waiting.md` § *Per-host primitives*. Discard partial and late returns; intentional cancellation never takes `reviewer failed`, inline fallback, or clean-review output. Confirm all review work has stopped before another **Sync** can change the checkout. Then remove the scratch directory of each reviewer the pass launched under `./references/workflow/agent-scratch.md` § *Cleanup*. If termination cannot be confirmed, keep those directories, stop the loop, and name the outstanding handles and kept directories.
 
 On a head mismatch, report `Review stopped: head moved (<expected-head> -> <live-head>)` and take **Head moved**. A non-OPEN PR ends the loop with that reason. A failed or malformed interval read is a skipped check, retried at the next interval. A failed or malformed recheck before accepting a reviewer return or rendering output ends the loop with that reason. Remove any condition monitor when Review completes or stops. A head-moved pass counts toward the cap and retains no partial findings for the next pass.
 
 ## Check poll
 
-Write this program to a temporary scratch file, substituting the resolved number, host, repository, and reviewed head. Launch it as `sh <scratch-file>` and collect it in the selected checkout (`./references/workflow/delegated-waiting.md` § *Shell commands*). Remove the scratch file once collected. A nonzero exit or missing `settled`/`pending`/`moved:` outcome stops the loop. A changed head prints `moved: <sha>` and ends the poll early; a failed head read falls through to the checks read. The poll settles only when the `--json bucket` read reports no check in bucket `pending`. One failed check beside running ones therefore keeps it polling. A read returning no JSON settles it too, leaving a PR with no checks and a failed `gh` call to step 3.
+Write this program to a temporary scratch file, substituting the resolved number, host, repository, and reviewed head. Substitute `<heartbeat-file>` with an absolute path beside that scratch file. Launch it as `sh <scratch-file>` and collect it in the selected checkout (`./references/workflow/delegated-waiting.md` § *Shell commands*). Each iteration touches the heartbeat file after its `gh` reads return. Name that file as the silence watch's progress log (`./references/workflow/delegated-waiting.md` § *How to wait*). Remove the scratch file, the pid file, and the heartbeat file once collected. A nonzero exit or missing `settled`/`pending`/`moved:` outcome stops the loop. A changed head prints `moved: <sha>` and ends the poll early; a failed head read falls through to the checks read. The poll settles only when the `--json bucket` read reports no check in bucket `pending`. One failed check beside running ones therefore keeps it polling. A read returning no JSON settles it too, leaving a PR with no checks and a failed `gh` call to step 3.
 
 ```sh
 export GH_HOST=<host> GH_REPO=<host>/<owner>/<repo>
@@ -112,6 +112,7 @@ while :; do
   head=$(gh pr view <number> --json headRefOid --jq .headRefOid 2>/dev/null)
   [ -n "$head" ] && [ "$head" != "<reviewed-head>" ] && { echo "moved: $head"; exit 0; }
   pending=$(gh pr checks <number> --json bucket --jq '[.[] | select(.bucket == "pending")] | length' 2>/dev/null)
+  touch "<heartbeat-file>"
   [ "${pending:-0}" = 0 ] && { echo "settled"; exit 0; }
   [ "$(date +%s)" -ge "$end" ] && { echo "pending"; exit 0; }
   sleep 60
@@ -122,7 +123,7 @@ It polls every minute and gives up after 30 minutes, which a check awaiting manu
 
 ## The watch
 
-Write this program to a temporary scratch file, substituting the resolved number, host, repository, and the head the pass reviewed. Launch it as `sh <scratch-file>` and collect it in the selected checkout (`./references/workflow/delegated-waiting.md` § *Shell commands*). Run nothing against the PR while it is in flight, and report one progress line per check-in. Remove the scratch file once collected. A nonzero exit or missing `updated:`/`closed:`/`error:`/`stalled:` outcome stops the loop.
+Write this program to a temporary scratch file, substituting the resolved number, host, repository, and the head the pass reviewed. Substitute `<heartbeat-file>` with an absolute path beside that scratch file. Launch it as `sh <scratch-file>` and collect it in the selected checkout (`./references/workflow/delegated-waiting.md` § *Shell commands*). Each iteration touches the heartbeat file after its `gh` read returns. Name that file as the silence watch's progress log (`./references/workflow/delegated-waiting.md` § *How to wait*). Run nothing against the PR while it is in flight, and report one progress line per check-in. Remove the scratch file, the pid file, and the heartbeat file once collected. A nonzero exit or missing `updated:`/`closed:`/`error:`/`stalled:` outcome stops the loop.
 
 ```sh
 export GH_HOST=<host> GH_REPO=<host>/<owner>/<repo>
@@ -139,6 +140,7 @@ while :; do
   now=$(date +%s)
   [ "$now" -ge "$deadline" ] && { echo "stalled: $head"; exit 0; }
   line=$(gh pr view <number> --json state,headRefOid --jq '.state + " " + .headRefOid') || { echo "error: gh pr view failed"; exit 0; }
+  touch "<heartbeat-file>"
   case "$line" in
     OPEN\ *) ;;
     *) echo "closed: ${line%% *}"; exit 0 ;;

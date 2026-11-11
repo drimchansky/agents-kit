@@ -70,6 +70,8 @@ The effective root is the tree the object lives on, and every git command in thi
 - the review object named concretely (`<base>...HEAD`, `<merge-base>...<b>` with the SHA `b` resolved to, or the path set at the head SHA), never pasted diff or file text, with the identity Setup resolved
 - the absolute effective working root
 - one scratch directory per reviewer under `./references/workflow/agent-scratch.md` § *Assignment*: an absolute path, or `none (<reason>)` when creation fails
+- the silence-watch command `node <kit-root>/scripts/silence-watch.ts` with an absolute kit root, or `none (<reason>)` when none resolves.
+  Supply it under `./references/workflow/delegated-waiting.md` § *Shell commands*.
 - the kind, `pr` or `paths`
 - the PR context Setup gathered and every extracted URL, or an explicit `none`
 - the absolute paths of `references/engineering/review.md`, the checklist directory beside it, `references/engineering/rules.md`, and `CORE_RULES.md` under the install root (`./references/workflow/reviewer-contract.md` § *Adapter defaults*)

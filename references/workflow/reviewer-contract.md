@@ -17,6 +17,7 @@ Supply the object by identity, not pasted text:
 - A `pr` diff, `<base>...HEAD` or `<merge-base>...<b>`, with head and merge-base SHAs; or a `paths` set at one commit, with head SHA and path-list digest.
 - One absolute effective root, possibly a worktree.
 - One scratch directory for this reviewer under `./agent-scratch.md` § *Assignment*: an absolute path, or `none (<reason>)` when creation fails.
+- The silence-watch command `node <kit-root>/scripts/silence-watch.ts` or `none (<reason>)`, which the session supplies under `./delegated-waiting.md` § *Shell commands*.
 - PR context and every extracted URL.
 - Absolute paths under the install root (§ *Adapter defaults*) for `../engineering/review.md`, its per-surface checklists, CORE_RULES, and `../engineering/rules.md`.
 - User context/constraints verbatim or `none`; host Review Focus verbatim; verification-scripts instruction.

@@ -21,6 +21,8 @@ node setup.ts
 
 This installs the kit into `~/.claude` and `~/.codex`, including always-on [core rules](./CORE_RULES.md) on both hosts. Pull changes and rerun `node setup.ts` to update.
 
+On Claude Code, awaited background shell commands use the kit's `scripts/silence-watch.ts`. It needs your checkout recorded as `kitRoot` through `init-config`, or a plugin install. Without either, the session asks for the checkout path. The session passes the watch command to reviewers and executors. A delegated agent given no watch command looks for `kitRoot` or a plugin install itself and never asks for the path. Without either, it runs awaited commands in the foreground.
+
 For Claude Code, the plugin is an alternative:
 
 ```text

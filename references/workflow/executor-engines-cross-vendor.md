@@ -20,6 +20,7 @@ Select permission settings within the user's grant and live restrictions, then r
 Native adapters retain their existing permission inheritance.
 
 Invoke the helper as [the launcher contract](../scripts/executor-run.md) shows, using the host's [existing collection primitives](./delegated-waiting.md).
+Watch `run.stdout`, `run.stderr`, and `events.jsonl` in `outputDir` as the command's progress logs under the [silence watch](./delegated-waiting.md#how-to-wait).
 The helper command needs network access and write access to the vendor CLI's home directory. Under a sandboxed host shell, request the host's approval for that command before launch, and report a denial instead of working around it.
 Read the receipt and its available report through [executor intake](./executor-contract.md#write-mode-routing).
 When no receipt arrived, stop any surviving process group the output directory's `child.json` names, after confirming it still runs the recorded command.
@@ -43,6 +44,9 @@ Use `acceptEdits` with permission prompts `none` for conservative write-capable 
 Supply only applicable scoped shell allowances for required checks; the helper adds read access to the contract root's `references/` and `CORE_RULES.md`. Existing permission rules and hooks continue to apply.
 Add scoped `Read(//<assigned directory>/work/**)` and `Edit(//<assigned directory>/work/**)` allowances for the executor's scratch directory from [Prepare and collect](#prepare-and-collect).
 Add the same pair for its resolved path when that path differs.
+Beyond the check allowances, add the scoped `Bash(node <kit-root>/scripts/silence-watch.ts *)` allowance, using the absolute `<kit-root>` from [Prepare and collect](#prepare-and-collect).
+Claude Code applies `Bash` rules to [`Monitor` commands](https://code.claude.com/docs/en/tools-reference#monitor-tool), so this allowance lets the executor arm its [silence watch](./delegated-waiting.md#shell-commands).
+Supply the silence-watch command from `./executor-contract.md` § *Launch packet*: `node <kit-root>/scripts/silence-watch.ts` with that same absolute kit root.
 Claude's file tools otherwise reach only `root` and the contract paths. Supply other packet context verbatim, or add a scoped `Read(//<absolute-path>/**)` allowance.
 Each added `Read` or `Edit` allowance path holds no `*`, `?`, `[`, `]`, `!`, `\`, `(`, or `)`.
 Unresolved permission requests are denied after those controls run, as defined by [unattended permissions](https://code.claude.com/docs/en/headless#turn-off-permission-prompts-in-unattended-runs).
