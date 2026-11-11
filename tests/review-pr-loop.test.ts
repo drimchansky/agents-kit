@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { delimiter, dirname, join, resolve } from "node:path";
 import { test } from "node:test";
@@ -20,7 +20,7 @@ test("the check poll and watch cite the shared shell-commands section, which exi
   }
 });
 
-function embeddedProgram(heading: string): string {
+function embeddedProgram(heading: string, heartbeat: string): string {
   const source = readFileSync(SKILL, "utf8");
   const match = source.split(`## ${heading}\n`)[1]?.match(/```sh\n([\s\S]*?)```/);
   assert.ok(match, `embedded program under ${heading} is present`);
@@ -28,15 +28,16 @@ function embeddedProgram(heading: string): string {
     .replaceAll("<host>/<owner>/<repo>", "example.com/acme/widgets")
     .replaceAll("<host>", "example.com")
     .replaceAll("<number>", "42")
-    .replaceAll("<reviewed-head>", "reviewed");
+    .replaceAll("<reviewed-head>", "reviewed")
+    .replaceAll("<heartbeat-file>", heartbeat);
 }
 
 function runWatch(responses: readonly string[], sleepMultiplier = 1, readAdvances: readonly number[] = []) {
-  return runProgram(embeddedProgram("The watch"), responses, sleepMultiplier, readAdvances);
+  return runProgram("The watch", responses, sleepMultiplier, readAdvances);
 }
 
 function runProgram(
-  program: string,
+  heading: string,
   responses: readonly string[],
   sleepMultiplier = 1,
   readAdvances: readonly number[] = [],
@@ -47,6 +48,10 @@ function runProgram(
   const index = join(root, "index");
   const responsePrefix = join(root, "response");
   const sleepLog = join(root, "sleeps");
+  const heartbeat = join(root, "heartbeat");
+  const beatLog = join(root, "beats");
+  const readBeatLog = join(root, "read-beats");
+  const beatReference = join(root, "beat-reference");
   const date = join(bin, "date");
   const sleep = join(bin, "sleep");
   const gh = join(bin, "gh");
@@ -54,6 +59,10 @@ function runProgram(
   writeFileSync(clock, "0\n");
   writeFileSync(index, "0\n");
   writeFileSync(sleepLog, "");
+  writeFileSync(beatLog, "");
+  writeFileSync(readBeatLog, "");
+  writeFileSync(beatReference, "");
+  utimesSync(beatReference, new Date(1970, 0, 3), new Date(1970, 0, 3));
   responses.forEach((response, index) => writeFileSync(`${responsePrefix}.${index + 1}`, `${response}\n`));
   readAdvances.forEach((advance, index) => writeFileSync(`${responsePrefix}.${index + 1}.advance`, `${advance}\n`));
   writeFileSync(
@@ -62,24 +71,28 @@ function runProgram(
   );
   writeFileSync(
     sleep,
-    "#!/bin/sh\nIFS= read -r now < \"$WATCH_CLOCK\"\nprintf '%s\\n' \"$1\" >> \"$WATCH_SLEEP_LOG\"\nprintf '%s\\n' \"$((now + $1 * WATCH_SLEEP_MULTIPLIER))\" > \"$WATCH_CLOCK\"\n",
+    "#!/bin/sh\nIFS= read -r now < \"$WATCH_CLOCK\"\nprintf '%s\\n' \"$1\" >> \"$WATCH_SLEEP_LOG\"\n{ [ \"$WATCH_HEARTBEAT\" -nt \"$WATCH_BEAT_REFERENCE\" ] && printf 1 || printf 0; } >> \"$WATCH_BEAT_LOG\"\ntouch -c -t 197001020000 \"$WATCH_HEARTBEAT\"\nprintf '%s\\n' \"$((now + $1 * WATCH_SLEEP_MULTIPLIER))\" > \"$WATCH_CLOCK\"\n",
   );
   writeFileSync(
     gh,
-    "#!/bin/sh\n[ \"$GH_HOST\" = example.com ] && [ \"$GH_REPO\" = example.com/acme/widgets ] || exit 1\nIFS= read -r index < \"$WATCH_INDEX\"\nindex=$((index + 1))\nprintf '%s\\n' \"$index\" > \"$WATCH_INDEX\"\n[ -f \"$WATCH_RESPONSE_PREFIX.$index.advance\" ] && { IFS= read -r advance < \"$WATCH_RESPONSE_PREFIX.$index.advance\"; IFS= read -r now < \"$WATCH_CLOCK\"; printf '%s\\n' \"$((now + advance))\" > \"$WATCH_CLOCK\"; }\n[ -f \"$WATCH_RESPONSE_PREFIX.$index\" ] || exit 1\nIFS= read -r line < \"$WATCH_RESPONSE_PREFIX.$index\"\n[ \"$line\" = ERROR ] && exit 1\nprintf '%s\\n' \"$line\"\n",
+    "#!/bin/sh\n{ [ \"$WATCH_HEARTBEAT\" -nt \"$WATCH_BEAT_REFERENCE\" ] && printf 1 || printf 0; } >> \"$WATCH_READ_BEAT_LOG\"\n[ \"$GH_HOST\" = example.com ] && [ \"$GH_REPO\" = example.com/acme/widgets ] || exit 1\nIFS= read -r index < \"$WATCH_INDEX\"\nindex=$((index + 1))\nprintf '%s\\n' \"$index\" > \"$WATCH_INDEX\"\n[ -f \"$WATCH_RESPONSE_PREFIX.$index.advance\" ] && { IFS= read -r advance < \"$WATCH_RESPONSE_PREFIX.$index.advance\"; IFS= read -r now < \"$WATCH_CLOCK\"; printf '%s\\n' \"$((now + advance))\" > \"$WATCH_CLOCK\"; }\n[ -f \"$WATCH_RESPONSE_PREFIX.$index\" ] || exit 1\nIFS= read -r line < \"$WATCH_RESPONSE_PREFIX.$index\"\n[ \"$line\" = ERROR ] && exit 1\nprintf '%s\\n' \"$line\"\n",
   );
   chmodSync(date, 0o755);
   chmodSync(sleep, 0o755);
   chmodSync(gh, 0o755);
   try {
-    const result = spawnSync("sh", ["-c", program], {
+    const result = spawnSync("sh", ["-c", embeddedProgram(heading, heartbeat)], {
       cwd: REPO_DIR,
       encoding: "utf8",
       env: {
         ...process.env,
         PATH: `${bin}${delimiter}${process.env.PATH ?? ""}`,
+        WATCH_BEAT_LOG: beatLog,
+        WATCH_BEAT_REFERENCE: beatReference,
         WATCH_CLOCK: clock,
+        WATCH_HEARTBEAT: heartbeat,
         WATCH_INDEX: index,
+        WATCH_READ_BEAT_LOG: readBeatLog,
         WATCH_RESPONSE_PREFIX: responsePrefix,
         WATCH_SLEEP_LOG: sleepLog,
         WATCH_SLEEP_MULTIPLIER: String(sleepMultiplier),
@@ -97,6 +110,8 @@ function runProgram(
         .split("\n")
         .filter(Boolean)
         .map(Number),
+      beats: readFileSync(beatLog, "utf8"),
+      readBeats: readFileSync(readBeatLog, "utf8"),
     };
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -146,6 +161,14 @@ test("watch reports the latest unstable head at the deadline", () => {
   assert.deepEqual(result.sleeps, [60, 60, 60, 60, 60, 60, 10]);
 });
 
+test("watch touches its heartbeat after each read", () => {
+  const result = runWatch(Array.from({ length: 6 }, () => "OPEN updated"));
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, "updated: updated");
+  assert.equal(result.beats, "011111");
+  assert.equal(result.readBeats, "000000");
+});
+
 test("watch reports a closed pull request", () => {
   const result = runWatch(["CLOSED reviewed"]);
   assert.equal(result.status, 0, result.stderr);
@@ -163,7 +186,7 @@ test("watch reports a GitHub read failure", () => {
 });
 
 test("check poll exits early when the head moves", () => {
-  const result = runProgram(embeddedProgram("Check poll"), ["reviewed", "1", "pushed"]);
+  const result = runProgram("Check poll", ["reviewed", "1", "pushed"]);
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.stdout, "moved: pushed");
   assert.equal(result.clock, 60);
@@ -171,7 +194,7 @@ test("check poll exits early when the head moves", () => {
 });
 
 test("check poll settles on the reviewed head once no check is pending", () => {
-  const result = runProgram(embeddedProgram("Check poll"), ["reviewed", "1", "reviewed", "0"]);
+  const result = runProgram("Check poll", ["reviewed", "1", "reviewed", "0"]);
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.stdout, "settled");
   assert.equal(result.clock, 60);
@@ -179,7 +202,7 @@ test("check poll settles on the reviewed head once no check is pending", () => {
 });
 
 test("check poll falls through to the checks read when the head read fails", () => {
-  const result = runProgram(embeddedProgram("Check poll"), ["ERROR", "2", "reviewed", "0"]);
+  const result = runProgram("Check poll", ["ERROR", "2", "reviewed", "0"]);
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.stdout, "settled");
   assert.equal(result.clock, 60);
@@ -188,9 +211,17 @@ test("check poll falls through to the checks read when the head read fails", () 
 
 test("check poll gives up as pending after 30 minutes", () => {
   const responses = Array.from({ length: 31 }, () => ["reviewed", "1"]).flat();
-  const result = runProgram(embeddedProgram("Check poll"), responses);
+  const result = runProgram("Check poll", responses);
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.stdout, "pending");
   assert.equal(result.clock, 1800);
   assert.equal(result.calls, 62);
+});
+
+test("check poll touches its heartbeat on every iteration", () => {
+  const result = runProgram("Check poll", ["reviewed", "1", "reviewed", "1", "reviewed", "0"]);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, "settled");
+  assert.equal(result.beats, "11");
+  assert.equal(result.readBeats, "000000");
 });

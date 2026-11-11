@@ -218,6 +218,16 @@ Contract: `references/scripts/session-triage.md`.
 
 When the window cannot parse, mark every directory unread; stderr alone would leave JSON indistinguishable from a complete clean walk. Parsed JSON `null` and other non-objects count as malformed rather than being dereferenced. Unreadable mtime counts as in-window rather than being assumed out.
 
+## `scripts/silence-watch.ts`
+
+Contract: `references/scripts/silence-watch.md`.
+
+**Why the watch is a helper.** Claude Code checks a `Monitor` command against `Bash` permission rules. A `claude -p` executor denies unresolved requests, and a watch command written at run time cannot match an allowance prepared before launch. One fixed command prefix lets the coordinator allow it with a scoped rule (`references/workflow/executor-engines-cross-vendor.md` § *Claude*).
+
+**Why each sleep is capped.** Node's `setTimeout` replaces a delay above `2 ** 31 - 1` milliseconds with 1, which would turn a long interval into a busy loop. A capped wake finds no new multiple and sleeps again.
+
+**Why a closed stdout ends the watch.** Without a reader, the watch can notify no one. On EPIPE or ENOTCONN it clears its pending sleep, so the process ends with status 0 instead of running until killed.
+
 ## `scripts/sweep-scope.ts`
 
 Contract: `references/scripts/sweep-scope.md`.

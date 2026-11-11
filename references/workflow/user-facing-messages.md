@@ -24,7 +24,7 @@ Downstream copy rules preserve the prepared text. Their existing marker, corrobo
 A marker is a text label with a fixed emoji before it. The pair reads the same on every host without color; the emoji never stands alone, and the label never takes another emoji.
 
 - Severity: `🔴 Critical`, `🟡 Major`, `🟢 Minor`. Meaning: `../engineering/review.md` § *Calibrate Severity*.
-- Progress and outcome: `🔵 In progress` for launched or still-running work; `✅ Complete` for collected work.
+- Progress and outcome: `🔵 In progress` for launched or still-running work; `⚠️ Silent` for a watched background command whose measured silence has reached its interval (`./delegated-waiting.md` § *How to wait*); `✅ Complete` for collected work.
 - Informational PR note: `🔵 FYI`.
 - Fact verification: `✅ Verified`, `❌ Incorrect`, `⚠️ Unverified`.
 
@@ -40,7 +40,7 @@ Each item carries exactly one marker, at its start. A finding whose source suppl
 
 - **Headline.** Optional. One sentence, outcome first.
 - **Finding entry.** The marker, then `(Pre-existing)` where the finding carries that label (`../engineering/review.md` § *Pre-existing findings*), then the locator in backticks (`file:line`, or the locator the workflow names), the text retained under § *Finding entry wording* with its recommendation and impact verbatim, then the verdict or note when the workflow carries one. One entry per issue, never collapsed, ordered by severity where the workflow fixes no other order. Example: 🟡 Major `src/export.ts:42`: rows load into memory before streaming; stream from the cursor; large tenants time out. Confirmed: the loop awaits `toArray()`. A labeled entry opens 🟡 Major (Pre-existing) `src/export.ts:42`, then its text.
-- **Progress line.** Launched or still-running work takes `🔵 In progress: <action> <target>`. Example: `🔵 In progress: reviewer on abc1234...HEAD`. Collected work takes `✅ Complete: <what finished>`.
+- **Progress line.** Launched or still-running work takes `🔵 In progress: <action> <target>`. Example: `🔵 In progress: reviewer on abc1234...HEAD`. A silent background command takes `⚠️ Silent since <time>: <action> <target>; last output: <last output line>; activity: <verdict and evidence>`. Fill `<time>` and `<last output line>` under `./delegated-waiting.md` § *How to wait*. Fill `<verdict and evidence>` from that section's activity check. Its verdicts are `silent but working` with the signal that moved, `no activity` with its evidence, `sample unavailable`, and `activity not yet measured`. Collected work takes `✅ Complete: <what finished>`.
 - **Fact ledger.** One line per checked claim, each claim once, quoted: `✅ Verified: "<claim>" (<evidence>)`, `❌ Incorrect: "<claim>" is <corrected fact> (<evidence>)`, `⚠️ Unverified: "<claim>" (<missing evidence>)`.
 - **Handoff.** Chat only: the last element of the final response that renders the skill's Output, whatever ended the run. A response that only asks a question, requests approval, refuses, or reports an error renders no Output and carries none. A `**Handoff**` lead line opens it, then one `- **<Slot>:**` item per non-empty slot, in the order Done, Know, Awaiting you, Next. Omit an empty slot. The skill names what fills each slot. A skill that another skill runs as a step prints no block; the run the user invoked composes one for the whole run, a composite's pipeline included (`./skill-conventions.md` § *Adding a behavior*).
     - **Done:** at most three bullets. Each names an outcome of the run and points at the body section holding its detail, repeating none of its entries.

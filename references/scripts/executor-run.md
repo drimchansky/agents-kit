@@ -68,7 +68,7 @@ A rule is a tool name with an optional parenthesized specifier, or a whole-serve
 Names start with a letter and contain only letters, digits, `_`, and `-`, as in `mcp__figma-dev-mode__get_code`.
 Entries holding more than one rule, specifiers containing `)` or a comma, and blanket Bash, PowerShell, and Monitor rules are refused.
 A refusal names the rejected entry.
-The check refuses only literal blanket rules. An interpreter rule such as `Bash(sh *)` or a path rule such as `Edit(//**)` is just as broad, so keep every allowance scoped to a required check or to the executor's scratch directory [`<assigned directory>/work`](../workflow/executor-engines-cross-vendor.md#claude).
+The check refuses only literal blanket rules. An interpreter rule such as `Bash(sh *)` or a path rule such as `Edit(//**)` is just as broad. Keep every allowance scoped to a required check, to the executor's scratch directory `<assigned directory>/work`, or to its silence-watch command `node <kit-root>/scripts/silence-watch.ts`, as [Claude preparation](../workflow/executor-engines-cross-vendor.md#claude) defines.
 The helper appends read-only `Read(//<path>/references/**)` and `Read(//<path>/CORE_RULES.md)` rules for `contractRoot` and its resolved path, so the executor can read its contract and the core rules outside `root`.
 A Claude `contractRoot` containing `*`, `?`, `[`, `]`, `!`, `\`, `(`, or `)` is refused.
 `network: "inherit"` records existing Claude and host network controls; it adds no network restriction.
@@ -105,6 +105,8 @@ That run returns `2` unless cancellation was requested.
 
 `artifacts` names the copied request, exact stdin, argument array and cwd, raw stdout, raw stderr, [parsed event JSONL](https://learn.chatgpt.com/docs/non-interactive-mode), and the child record.
 It lists only files the helper created, so a refused launch names fewer artifacts.
+In `outputDir`, raw stdout is `run.stdout`, raw stderr is `run.stderr`, and the parsed event log is `events.jsonl`.
+The helper creates these three files after its required-flag check passes, then appends to them as the child produces output.
 Help output remains beside these artifacts. Raw stdout retains malformed or truncated event bytes.
 Codex's final reply is the text of its last completed `agent_message` event.
 A Codex stream without a `turn.completed` or `turn.failed` event returns `2`; its last message stays saved as `report`.

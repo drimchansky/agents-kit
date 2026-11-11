@@ -35,11 +35,11 @@ Run-time helper contracts live in `references/scripts/<name>.md`. This section h
 
 **Zero dependencies; direct Node type stripping.** The supported floor is stated in root `AGENTS.md` § *The `.ts` sources are unchecked by design*.
 
-**Exit conventions.** `task-move.ts`, `task-state.ts`, `pr-comments.ts`, `dup-check.ts`, `worktree-merge.ts`, `secretary-state.ts`, and `meeting-sync-state.ts` share 0/1/2. Zero completes the job; 1 reports a decided outcome; 2 means the run could not reach that decision. `commit-scan.ts` and `sweep-scope.ts` use only 0 and 2 because their reports are not decided outcomes. `health-check.ts` and `session-triage.ts` always exit 0, keeping reports parseable when part of the corpus is unreadable.
+**Exit conventions.** `task-move.ts`, `task-state.ts`, `pr-comments.ts`, `dup-check.ts`, `worktree-merge.ts`, `secretary-state.ts`, and `meeting-sync-state.ts` share 0/1/2. Zero completes the job; 1 reports a decided outcome; 2 means the run could not reach that decision. `commit-scan.ts` and `sweep-scope.ts` use only 0 and 2 because their reports are not decided outcomes. `health-check.ts` and `session-triage.ts` always exit 0, keeping reports parseable when part of the corpus is unreadable. `silence-watch.ts` runs until stopped. It exits 2 on bad usage and 0 at its first notice after its stdout reader closes.
 
 **Piped stdout is asynchronous.** After emitting JSON, let the module end so buffered output flushes. Calling `process.exit` would truncate reports exceeding the pipe buffer, often 64 KB. Swallow EPIPE and ENOTCONN from readers closing early so that unawaited stream error does not change the promised status.
 
-**No script calls `process.exit` to set status.** Write the non-zero reason before assigning `process.exitCode`, preserving both the explanation and pending output. `task-move.ts`, `task-state.ts`, `pr-comments.ts`, `commit-scan.ts`, `sweep-scope.ts`, `secretary-state.ts`, and `meeting-sync-state.ts` throw an `Exit` carrying the code. `worktree-merge.ts` throws `Refused` or `Unrunnable`. One handler at each module's end reports every refusal. `dup-check.ts` handles thrown `Refused` as status 2, but assigns status 1 after writing its findings report. `task-state.ts --repair` also writes its JSON report first, carrying the reason in `unresolved` or `error`. It then assigns status 1 or 2 directly instead of throwing `Exit`.
+**No script calls `process.exit` to set status.** Write the non-zero reason before assigning `process.exitCode`, preserving both the explanation and pending output. `task-move.ts`, `task-state.ts`, `pr-comments.ts`, `commit-scan.ts`, `sweep-scope.ts`, `silence-watch.ts`, `secretary-state.ts`, and `meeting-sync-state.ts` throw an `Exit` carrying the code. `worktree-merge.ts` throws `Refused` or `Unrunnable`. One handler at each module's end reports every refusal. `dup-check.ts` handles thrown `Refused` as status 2, but assigns status 1 after writing its findings report. `task-state.ts --repair` also writes its JSON report first, carrying the reason in `unresolved` or `error`. It then assigns status 1 or 2 directly instead of throwing `Exit`.
 
 `executor-run.ts` uses process-specific 0/1/2 meanings defined in `references/scripts/executor-run.md`. It emits its receipt before assigning `process.exitCode`.
 
@@ -94,6 +94,7 @@ Run the suite covering each changed surface:
 - `scripts/commit-scan.ts`: `node --test tests/commit-scan.test.ts`.
 - `scripts/sweep-scope.ts`: `node --test tests/sweep-scope.test.ts`.
 - `scripts/session-triage.ts`: `node --test tests/session-triage.test.ts`.
+- `scripts/silence-watch.ts` or `references/scripts/silence-watch.md`: `node --test tests/silence-watch.test.ts`.
 - `scripts/pr-comments.ts`: `node --test tests/pr-comments.test.ts`.
 - `scripts/dup-check.ts` or its `corpus.ts` import: `node --test tests/dup-check.test.ts`.
 - `scripts/worktree-merge.ts`: `node --test tests/worktree-merge.test.ts`.
