@@ -109,7 +109,7 @@ One plan step from a task folder.
 - **Unit:** the step, verified against its Verify line.
 - **Segment bound:** full-plan segments span consecutive dependency-ordered steps between checkpoints or a plan edge and checkpoint. A single step is a segment of one. Parallel-eligible steps leave the segment for a batch; step-by-step mode launches separately.
 - **Packet:** What/Verify text, cited goals in full, edit surface, relevant context, and absolute task-folder path. Include applicable GROUP_CONTEXT sources identified by selected root and root-relative path (`./task-store.md` § *Shared group context*); supply outside-root content verbatim. Domain comes from CONTEXT's Domain header, default engineering.
-- **Edit surface:** Touches paths, else What's scope. Exclude task folders/records and GROUP_CONTEXT files; grounding corrections and records belong to the coordinator.
+- **Edit surface:** Touches paths, else What's scope. Exclude task folders/records, GROUP_CONTEXT files, and `GROUP_LOG.md`, which only `start-group` writes; grounding corrections and records belong to the coordinator.
 - **Fallback:** inline for serial steps; serial re-execution for batch steps.
 - **Merge order:** plan order.
 

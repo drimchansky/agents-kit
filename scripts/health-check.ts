@@ -770,6 +770,10 @@ function rootHolding(abs: string, rootDirs: readonly string[]): string | null {
 
 type Span = readonly [number, number];
 
+function notRootRelative(path: string): boolean {
+  return path.startsWith("/") || path.startsWith("~") || path.startsWith("./") || path.startsWith("../");
+}
+
 function storeLevelFindings(
   task: Task,
   file: string,
@@ -786,18 +790,21 @@ function storeLevelFindings(
     while (start > 0 && PATH_RUN_CHAR.test(line[start - 1])) start--;
     if (!line.slice(start, at).includes("/")) continue;
     const written = line.slice(start, stop);
-    if (written.startsWith("/") || written.startsWith("~")) continue;
-    if (written.startsWith("./") || written.startsWith("../")) continue;
+    if (notRootRelative(written)) continue;
     let resolved = resolveListed(ctx.rootDir, written, ctx.dirs, ctx.rootDirs);
+    let skipped = false;
     for (let from = start; resolved.path === null && !resolved.concealed; ) {
       if (from === 0 || line[from - 1] !== " ") break;
       let prior = from - 1;
       while (prior > 0 && PATH_RUN_CHAR.test(line[prior - 1])) prior--;
       if (prior === from - 1) break;
-      resolved = resolveListed(ctx.rootDir, line.slice(prior, stop), ctx.dirs, ctx.rootDirs);
+      const candidate = line.slice(prior, stop);
+      skipped = notRootRelative(candidate);
+      if (skipped) break;
+      resolved = resolveListed(ctx.rootDir, candidate, ctx.dirs, ctx.rootDirs);
       from = prior;
     }
-    if (resolved.path !== null || resolved.concealed) continue;
+    if (skipped || resolved.path !== null || resolved.concealed) continue;
     out.push({
       check: "dead-citation",
       path: task.path,

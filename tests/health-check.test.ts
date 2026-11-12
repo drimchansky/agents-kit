@@ -1476,6 +1476,56 @@ describe("the citation fixtures, scanned once", () => {
   });
 });
 
+test("a plain-text path whose spaces widen it to an absolute, home, or file-relative start is skipped, not reported dead", () => {
+  const root = join(TEST_ROOT, "widened-off-root", "My Store");
+  const group = join(root, "Spaced Group");
+  const task = join(group, "t1");
+  mkdirSync(task, { recursive: true });
+  writeFileSync(join(group, "GROUP_CONTEXT.md"), "# Group\n");
+  writeFileSync(join(task, "plan.md"), EXECUTING_PLAN);
+  writeFileSync(
+    join(task, "CONTEXT.md"),
+    "# Context\n\n" +
+      `- GQ1: see ${group}/GROUP_CONTEXT.md\n` +
+      "- The home copy is ~/My Notes/Spaced Group/GROUP_CONTEXT.md\n" +
+      "- From this folder it is ../../Spaced Group/GROUP_CONTEXT.md\n" +
+      "- A local copy is ./Old Notes/GROUP_CONTEXT.md\n" +
+      "- The old home was Old Hub/GROUP_CONTEXT.md\n",
+  );
+  const { report } = runCheck([root]);
+  assert.deepStrictEqual(
+    findingDetails(report, "dead-citation", "My Store/Spaced Group/t1"),
+    ["CONTEXT.md: store-level citation Hub/GROUP_CONTEXT.md resolves to nothing from the root"],
+    "a space inside an absolute, ~, ./, or ../ path widens into a candidate the root cannot hold, so " +
+      "the citation is skipped as its narrow token would be, while a root-relative path still reports",
+  );
+});
+
+test("an unrelated earlier word with an absolute, home, or file-relative start also skips a dead root-relative citation on its line", () => {
+  const root = join(TEST_ROOT, "widened-unrelated-word", "Store");
+  const task = join(root, "t1");
+  mkdirSync(task, { recursive: true });
+  writeFileSync(join(task, "plan.md"), EXECUTING_PLAN);
+  writeFileSync(
+    join(task, "CONTEXT.md"),
+    "# Context\n\n" +
+      "- Copied ~/Downloads/spec.pdf into Old Hub/GROUP_CONTEXT.md\n" +
+      "- Took ~2 days to fill Old Hub/GROUP_CONTEXT.md\n" +
+      "- Moved /tmp/spec.pdf into Old Hub/GROUP_CONTEXT.md\n" +
+      "- Ran ./sync.sh against Old Hub/GROUP_CONTEXT.md\n" +
+      "- Linked ../notes.md from Old Hub/GROUP_CONTEXT.md\n" +
+      "- The old home was Gone Area/DECISIONS.md\n",
+  );
+  const { report } = runCheck([root]);
+  assert.deepStrictEqual(
+    findingDetails(report, "dead-citation", "Store/t1"),
+    ["CONTEXT.md: store-level citation Area/DECISIONS.md resolves to nothing from the root"],
+    "widening reaches every earlier word made of path characters, so a /, ~, ./, or ../ word that is " +
+      "not part of the citation still skips the dead Hub/GROUP_CONTEXT.md, while a dead root-relative " +
+      "citation with no such word before it on its line still reports",
+  );
+});
+
 test("a slug citation across two walked roots is named from the root that holds the target", () => {
   const { report } = runCheck(CROSS_ROOT_ARGS);
   assert.deepStrictEqual(
