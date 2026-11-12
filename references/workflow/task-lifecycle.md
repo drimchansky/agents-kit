@@ -1,6 +1,6 @@
 # Task Lifecycle: Status Registry
 
-When a status name or transition changes, propagate it to `plan-task`, `implement-task`, `resume-task`, `review-task`, `resume-task-reconcile`, `review-task-reconcile`, `fix-findings-reconcile`, and `reconcile-task`. This registry includes field consumers without direct citations. `archive-task`, `backlog-task`, and `maintain` read the vocabulary at run time and need no update.
+When a status name or transition changes, propagate it to `plan-task`, `implement-task`, `resume-task`, `review-task`, `resume-task-reconcile`, `review-task-reconcile`, `fix-findings-reconcile`, `reconcile-task`, and `start-group`. This registry includes field consumers without direct citations. `archive-task`, `backlog-task`, and `maintain` read the vocabulary at run time and need no update.
 
 Layout: `./task-layout.md`; authorship: `./task-authorship.md`; goals/observations: `./task-goals.md`, `./task-observations.md`; containers: `./task-archiving.md`, `./task-backlog.md`.
 

@@ -39,7 +39,7 @@ Citation parsing excludes:
 
 The same blanked lines supply plain-text `DECISIONS.md`, `DOC_CONVENTIONS.md`, and `GROUP_CONTEXT.md` citations outside recognized links. Backticked paths are illustrations. Recognized links cover text and target, preventing duplicate plain-text findings.
 
-A plain path must contain `/` before the filename and start with none of `/`, `~`, `./`, or `../`. Resolve it from the walked root holding the citing task. Begin with the narrow path-character run around the filename, widening across preceding spaces until a candidate resolves. This supports group names with spaces. If none resolves, report only the narrow token.
+A plain path must contain `/` before the filename and start with none of `/`, `~`, `./`, or `../`. Resolve it from the walked root holding the citing task. Begin with the narrow path-character run around the filename, widening across preceding spaces until a candidate resolves. This supports group names with spaces. Skip the citation once a widened candidate starts with `/`, `~`, `./`, or `../`, as for the narrow token. Otherwise, if none resolves, report only the narrow token. Widening can reach an earlier word made only of path characters, even one unrelated to the citation. If that word starts with `/`, `~`, `./`, or `../`, the skip still applies. A dead root-relative citation after such a word on the same line therefore goes unreported, as in `Copied ~/Downloads/spec.pdf into Old Hub/GROUP_CONTEXT.md`.
 
 `citation-form` reports:
 
