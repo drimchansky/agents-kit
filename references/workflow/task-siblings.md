@@ -4,13 +4,15 @@ Propose sibling tasks when an effort has delivery seams that can land and be ver
 
 When the user explicitly requests one task, keep one folder and one plan. Use the useful seams to bound its steps by verifiable outcomes, dependencies, and checkpoints.
 
-When parts have a blocking order, express it only through `NN-` folder prefixes:
+When parts have a blocking order, the `NN-` folder prefixes give that order:
 
 ```
 .agents/tasks/01-schema/
 .agents/tasks/02-api/
 .agents/tasks/03-ui/
 ```
+
+A plan step that waits on a sibling names that sibling, or one of its steps, on its `**Depends on:**` line (`../templates/plan.md`).
 
 Siblings share no sibling-level context file or cross-folder links. Duplicate needed facts into each context when no applicable ancestor holds them. Within a registered root, cite group-wide constraints from `GROUP_CONTEXT.md` (`./task-store.md` § *Shared group context*). Name and source each inherited fact; every folder remains independently discoverable, movable, and archivable.
 

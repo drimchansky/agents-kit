@@ -34,7 +34,7 @@ Assess delivery independence before proposing folders. A monitoring effort may s
 
 ## Ordering and numbering
 
-Ordering lives in folder names only (`task-siblings.md`):
+Folder names give the parts' order (`task-siblings.md`):
 
 - `NN-` prefixes (two digits and a hyphen) only when the parts have a blocking order; unordered parts get plain slugs.
 - Continue an existing sequence: `01-`/`02-` present → new parts start at `03-`. A fresh parent starts at `01-`.

@@ -1,6 +1,6 @@
 ---
 name: start-group
-description: Use when asked to start, open, create, or manage a task group — opens a read/write session on one group of tasks. Prints a brief of the group's direction, scope, decisions, open questions, and each child task's plan status, and prints it again from disk when asked what's next. Applies each instruction as one change set across the group file and the CONTEXT.md and ticket.md of every task below it outside Archive and Backlog, including tasks in nested groups. Leaves plan.md and goals.md to their owning skills, and child creation, parking, and archiving to theirs. Compacts a group file over its size budget, restructures an older one, or creates a new group only after you confirm.
+description: Use when asked to start, open, create, or manage a task group — opens a read/write session on one group of tasks. Prints a brief of the group's direction, scope, a Decisions summary, open questions, and each child task's plan status, next step, owner, and blockers. The brief then lists the group's blockers and the children ready now, ending with a paste-ready command for each. Prints it again from disk when asked what's next. Drafts a team status for the group's thread in chat on request, without posting it. Applies each instruction as one change set across the group file and the CONTEXT.md and ticket.md of every task below it outside Archive and Backlog, including tasks in nested groups. Leaves plan.md and goals.md to their owning skills, and child creation, parking, and archiving to theirs. Compacts a group file over its size budget, restructures an older one, or creates a new group only after you confirm.
 argument-hint: "[group path or name]"
 ---
 
@@ -34,14 +34,40 @@ Print the brief at start, when you ask what's next, and when the session continu
 1. **Group files.** Read the group's `GROUP_CONTEXT.md` in full. Report a `GROUP_CONTEXT.md` or `GROUP_LOG.md` that is a symlink or other non-regular entry as unsupported instead of following it (`task-store.md` § *Shared group context*). Measure a `GROUP_CONTEXT.md` that is a regular file by its size on disk in bytes, for example with `wc -c`. When that size exceeds the budget in `task-store.md` § *Shared group context*, print the **Size:** line with the size and the budget. Inside a registered root, also read the ancestor group files from the root down, without writing them. Report material contradictions with the group's file under `task-store.md` § *Shared group context*.
 2. **Children.** Take the group's direct subdirectories under the walk's prunes (`task-store.md` § *The root registry*), skipping Archive and Backlog containers case-insensitively. Report each symlink, and each entry that is neither a file nor a directory, as unsupported (`task-store.md` § *Shared group context*). A subdirectory holding a role file as a regular file is a child task. Another that holds `GROUP_CONTEXT.md` or a task below it is a nested group, listed by name only.
 3. **Plan status.** Before the first run, check that `<kit-root>/scripts/task-state.ts` exists. Run `node <kit-root>/scripts/task-state.ts <child-dir>` for each child, never with `--repair` (`./references/scripts/task-state.md`; `<kit-root>`: `task-store.md` § *Resolving `<kit-root>`*).
-    - Exit 0: take `plan.status`, the next pending step and its title, and each `structure.diagnostics` entry.
+    - Exit 0: take `plan.status`, each step's number, title and checkbox, `nextPendingStep`, `currentState`, and each `structure.diagnostics` entry.
     - Exit 1 with a stderr line starting `[task-state]`: check the child's `plan.md` entry without following links, for example with `ls -ld`. An existing entry is an unreadable plan; report it with its path. Without one, check the child for legacy `*.plan.md` entries the same way. Report each one's path as a legacy plan file (`./references/workflow/task-layout.md` § *One task, one flat folder*). For a child under `<kit-root>/.agents/tasks/`, name `maintain` to rename it; `maintain` renames legacy files nowhere else. For any other child, tell the user to rename the file to `plan.md` by hand. Also tell them to repoint links in that folder that name the old file. A child with neither entry has no plan.
     - Exit 2: report the child's state as unavailable, with the stderr line.
     - Helper unavailable: the script is missing, an exit 1 has no stderr line starting `[task-state]`, or the exit is not 0, 1, or 2. Stop running the helper. Show every child's state as unavailable, citing the missing path, or the exit code and the stderr line naming the error.
-4. **Questions.** Read only the `## Open Questions` section of each child's `CONTEXT.md` and `plan.md`, where each exists. Skip only fully answered entries, and show a partly answered entry by its open part. Add the group file's `## Open Questions`. Group all of them by the addressee each entry states, with unaddressed ones apart. Apply § *Change sets* step 5's citation test to each child entry in either citation form of `task-store.md` § *Shared group context*. For an entry that cites this group's file, look up its id in the group file step 1 read. The lookup has the four outcomes of `task-store.md` § *Shared group context* and reads no other file. An answered-form entry whose id the lookup finds answered is fully answered. Show an open part of its own as that child's question. Each id answered this way gets one line under Answered in Decisions. That line shows the id as answered for every child citing it, and repeats no Decisions line text. An entry of either form that the lookup finds unresolvable appears under Unresolvable, with its child and file. Any other child entry that cites one of this group's questions under § *Change sets* step 5 appears once, under that question. Those include an answered-form entry whose id the lookup finds open or waiting. When the id instead starts a `## Decisions` line, the entry appears beside that line under Answered in Decisions. The brief leaves the entry unchanged. An open part of its own shows beside its child there. Any other child entry citing a `GQ<n>` id of another file, in either citation form, appears apart with that file's path.
+4. **Questions.** Read only the `## Open Questions` section of each child's `CONTEXT.md` and `plan.md`, where each exists. Skip only fully answered entries, and show a partly answered entry by its open part. Add the group file's `## Open Questions`. Group all of them by the addressee each entry states. List under **You** each group question addressed `ask you`. Also list there each entry, or open part, marked "Awaiting decision" or recording a held choice with its options and a recommendation, when it states no other addressee (`reconciliation.md` § *Consent model: findings apply, the record carries them*). List the other entries without an addressee under **No addressee**. Apply § *Change sets* step 5's citation test to each child entry in either citation form of `task-store.md` § *Shared group context*. For an entry that cites this group's file, look up its id in the group file step 1 read. The lookup has the four outcomes of `task-store.md` § *Shared group context* and reads no other file. An answered-form entry whose id the lookup finds answered is fully answered. Show an open part of its own as that child's question. Each id answered this way gets one line under Answered in Decisions. That line shows the id as answered for every child citing it, and repeats no Decisions line text. An entry of either form that the lookup finds unresolvable appears under Unresolvable, with its child and file. Any other child entry that cites one of this group's questions under § *Change sets* step 5 appears once, under that question. Those include an answered-form entry whose id the lookup finds open or waiting. When the id instead starts a `## Decisions` line, the entry appears beside that line under Answered in Decisions. The brief leaves the entry unchanged. An open part of its own shows beside its child there. Any other child entry citing a `GQ<n>` id of another file, in either citation form, appears apart with that file's path.
 5. **Older group files.** For each of the four sections the group file lacks, print "none recorded". List the file's other `##` headings by name. A group with no `GROUP_CONTEXT.md` entry is reported as having none.
 6. **Scope drift.** When the group file read in step 1 holds a `## Scope` section, compare its lines with the step 2 child tasks. A Scope line names a child when it names the child's directory. Report each child task no Scope line names, and each Scope line that names no child task.
 7. **Offers.** Offer § *Restructure* when `GROUP_CONTEXT.md` holds text outside the four sections, apart from its title. Otherwise, offer § *Compact* when the step 1 size exceeds the budget. Offer § *New group file* for a group with no `GROUP_CONTEXT.md` entry. Make no offer while `GROUP_CONTEXT.md` or `GROUP_LOG.md` is unsupported.
+8. **Child lines.** Give each child task its owner. Treat a `done` or `skipped` plan as having no pending step, even when it has an unchecked step. Give a child with a pending step its next step and that step's blockers. Give a child without a plan its planning blockers.
+    - **Owner:** take it from the group's `## Scope` line that names the child's directory (step 6). Print `owner <name>`, else `owner not stated`.
+    - **Next step:** take the earliest unchecked step, in plan order, of the child's own plan that Current state's **Next:** names. When Next names no unchecked step of that plan, take `nextPendingStep`. When Next names steps of that plan and all are checked, mark Current state out of date.
+    - **Depends on:** also read the `**Depends on:**` line under the next step's `### Step` heading in the child's `plan.md`. Never take it from task-state's `steps[].dependsOn`. A line that starts with `none` cites nothing.
+    - **Blockers** of the next step come from three sources:
+        - Current state: each item it says the next step waits on. When it holds the step without naming an item, the hold itself. The Depends on line's checks below also apply to an item that names another step 2 child, a task in the group's Archive container, or a step of either. For a `blocked` or `in-review` child whose `currentState` is null, this source gives one item the task files record. That item is `Blocked section in result.md (no Current state)` or `In review section in result.md (no Current state)`, matching the status.
+        - The Depends on line: a step of the child's own plan while unchecked, and a group question while open. Another child the line cites, or a cited step of it, blocks until that child's task-state shows the step checked or its plan `done`. A cited child without a plan, or a cited step of it, blocks nothing when that child is recorded done as step 9 defines it. When the line cites a task that is not a step 2 child, look for its folder in the group's Archive container, matched case-insensitively. Run task-state on a folder found there as step 3 runs it, never with `--repair`. When the run exits 0, the check for another child applies to that archived task and its cited steps. A run that exits non-zero keeps the cited task or step blocking. Either way, a blocking archived task or step is named as that task. Any other item, such as a PR, a ticket, or a review, blocks unless Current state or an answered Open Questions entry records it done. A cited task that is neither a child nor in that Archive container, such as one inside a nested group, is such an item. An item the line names a fallback for blocks nothing.
+        - Open Questions from step 4: an open entry, or its open part, blocks only when the Depends on line cites it, it names the next step, or Current state names it as what the step waits on. A group entry names a child's step only beside that child's directory.
+    - **Planning blockers:** only an open Open Questions entry that says the child's planning waits on it blocks a child without a plan.
+    - **Kinds:** name each blocker once, as a group question `GQ<n>` with its addressee, a person, a PR, another child task, or another item the task files record, such as a ticket. Name a child's own question by its addressee, else by its subject. Print `nothing` when no blocker remains.
+    - The blockers of an `in-review` or `blocked` child with no pending step are the items its Current state says it waits on. The Depends on line's checks apply to these items as the Current state source above applies them. Such a child shows `nothing` when none of them blocks. Such a child whose `currentState` is null shows the item the Current state source above gives it, instead of `nothing`. Any other child whose plan has no pending step shows no blockers. A child with an unreadable plan, a legacy plan file, or unavailable state also shows no blockers.
+9. **Ready.** List each child that has work left and nothing blocking it:
+    - A child without a plan whose planning shows `nothing`. A child without a plan is recorded done instead when the group file or its Open Questions record its work, or the ticket its Scope line names, as done. Its line shows `no plan; recorded done` and one file that records it, preferring the group file.
+    - A child whose plan is `to-do`, `executing`, or `blocked` and whose next step shows `nothing`.
+    - An `executing` or `blocked` child with no pending step, shown as `next: acceptance`. A `blocked` one qualifies only when its child line shows `waits on: nothing`.
+    - For each ready child, print `/plan-task <token>` when it has no plan, else `/implement-task <token>`. The token follows `./references/workflow/task-layout.md` § *One task, one flat folder*: the bare slug where discovery resolves it, the folder path otherwise.
+10. **Blockers list.** Name each distinct blocker from the child lines once, with the children it holds. Two lines name the same blocker when they name the same group question, person, PR, child task, or item. Order the list from the most children held to the fewest, and break ties by Children order.
+11. **Decisions summary.** Print the number of Decisions lines and how many of them hold no log citation. Then print at most 8 lines that cite one of three kept change sets. A Decisions line is a line of the group file's `## Decisions` section that starts with `- `.
+    - A line holds no log citation when it names no `GROUP_LOG.md § <heading>`, such as a line citing another writer's record (`task-store.md` § *Shared group context*, § *Change sets* step 6). Leave that count out when it is 0.
+    - Read only the `## Change set` headings of `GROUP_LOG.md`, for example with `grep '^## Change set' GROUP_LOG.md`, and no other line of the log. A later heading is a more recent change set.
+    - A line cites a change set when it names `GROUP_LOG.md § <heading>` with that heading's full text (§ *Group file entries*). Take the change sets that any Decisions line cites.
+    - Skip each change set whose topic is `restructure` or `compaction`, alone or followed by a space and a number, such as `restructure 2` (§ *Change sets* step 8). Keep the three most recent of the rest.
+    - Rank each line that cites a kept change set by the most recent kept change set it cites. Order those lines from the newest rank to the oldest, in section order within a rank.
+    - Print the first 8 of them as written, and state how many of them are left out.
+    - Print the counts alone when `GROUP_LOG.md` is missing or unsupported, or when no change set is kept.
+    - When you ask for the full Decisions section, read `GROUP_CONTEXT.md` again and print that section as it stands on disk.
 
 ```markdown
 # Group: <directory name>
@@ -63,10 +89,15 @@ Print the brief at start, when you ask what's next, and when the session continu
 **Scope drift:** no Scope line: `<child>`, …; no child task: "<Scope line>", … (omit when none)
 
 ## Decisions
-<section text> | none recorded
+<n> lines, <r> without a log citation; showing <k> citing `<date>: <topic>`, … (<m> more; ask for the full section) | <n> lines, <r> without a log citation (ask for the full section) | none recorded (omit `, <r> without a log citation` when <r> is 0)
+- <Decisions line, as written>
 
 ## Open Questions
 Group list: none recorded (only when the section is missing)
+
+### You
+- GQ<n> — <question> (asked: <where>) — answered: <answer>; awaits record in <home> (omit when not waiting); cited by `<child>` (also open: <its own open part>; omit when none)
+- `<child>` (`<file>`) — <question>
 
 ### <addressee>
 - GQ<n> — <question> (asked: <where>) — answered: <answer>; awaits record in <home> (omit when not waiting); cited by `<child>` (also open: <its own open part>; omit when none)
@@ -87,17 +118,53 @@ Group list: none recorded (only when the section is missing)
 
 ## Children
 none (when the group has no child task)
-- `<child>` — <status>; next: Step <n> — <title> | no pending step
-- `<child>` — no plan
-- `<child>` — plan unreadable: `<path>`
-- `<child>` — legacy plan file: `<path>`, …; run `maintain` to rename it (when the child is under `<kit-root>/.agents/tasks/`)
-- `<child>` — legacy plan file: `<path>`, …; rename it to `plan.md` by hand and repoint links in `<child>` that name it (for any other child)
-- `<child>` — state unavailable: <stderr line> | helper unavailable: <reason>
+- `<child>` (<owner>) — <status>; next: Step <n> — <title>; Current state out of date (omit when not); blocked by: <blocker>, … | nothing
+- `<child>` (<owner>) — <status>; no pending step; waits on: <blocker>, … | nothing (omit `waits on` unless `in-review` or `blocked`)
+- `<child>` (<owner>) — no plan; planning blocked by: <blocker>, … | nothing
+- `<child>` (<owner>) — no plan; recorded done: `<file>`
+- `<child>` (<owner>) — plan unreadable: `<path>`
+- `<child>` (<owner>) — legacy plan file: `<path>`, …; run `maintain` to rename it (when the child is under `<kit-root>/.agents/tasks/`)
+- `<child>` (<owner>) — legacy plan file: `<path>`, …; rename it to `plan.md` by hand and repoint links in `<child>` that name it (for any other child)
+- `<child>` (<owner>) — state unavailable: <stderr line> | helper unavailable: <reason>
     - `<diagnostic code>` `<file>:<line>` <detail>
 
 **Nested groups:** <names> | none
 
+## Blockers
+none (when no child line names a blocker)
+- <blocker> — `<child>`, …
+
+## Ready
+none (when no child is ready)
+- `<child>` — plan it | next: Step <n> — <title> | next: acceptance
+
 **Offer:** <the § *Restructure*, § *Compact*, or § *New group file* offer> (omit when none)
+
+**Run in a fresh session:** (omit when no child is ready)
+- `/plan-task <token>` | `/implement-task <token>`
+```
+
+## Team status
+
+When you ask for a team status, draft in chat a progress update for the group's discussion thread. Never post or send it, and write no file or Slack draft for it.
+
+1. **Period.** Cover today, or the period you name.
+2. **Reads.** Build § *Brief* from disk without printing it. Read no other file.
+3. **Children.** Give each child task one line, in Children order:
+    - Its ticket, from its Scope line, else from its Current state **Pointers:**. With no ticket in either, its subject: what its Scope line says it covers. A Scope line whose coverage reads "not stated" gives no subject. A child with neither a ticket nor a subject is unnamed.
+    - Its status in plain words, from its plan status and Current state, or as recorded done.
+    - A moved mark when its Current state `_Updated:` date falls in the period.
+    - Its PRs, each with its role. Take the PRs its **Pointers:** record as its own. Add those its Current state, its child line, or a group file line naming it records as its base or blocker.
+    - What it waits on, from its child line's blockers.
+4. **Group events.** Add the group's events from each change set whose `## Change set` heading is dated in the period. Read each from its heading and the Decisions lines that cite it (§ *Brief* step 11). When no Decisions line cites such a change set, report it by its heading's topic and say its details are not shown. Leave out `restructure` and `compaction` change sets, as § *Brief* step 11 defines them.
+5. **Language.** Write in the thread language that a group file Decisions line records, else in your request's language.
+6. **Wording.** Name a child by its ticket, else by its subject from step 3, also where another child waits on it. Call an unnamed child an unnamed task, on its own line and where another child waits on it. Name each other blocker by a person, a ticket, a PR, or its subject. Leave out local step names and numbers, goal ids, group question ids, task folder names, and file paths. These rules bind only the draft. Above the draft, name each unnamed child by its folder name and say what it lacks.
+
+```markdown
+**Team status** — <period>; language: <language> (<Decisions line> | your request)
+**Unnamed:** `<child>` (no ticket; no Scope line | no ticket; Scope line coverage not stated), … (omit when none)
+
+<draft>
 ```
 
 ## Group file entries
