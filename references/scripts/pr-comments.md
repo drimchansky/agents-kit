@@ -10,7 +10,9 @@ A number uses the current directory's repository, owner, and host through `gh`. 
 
 **Contract.** stdout is one JSON object: `{"pullRequest":{"number":N|null,"url":U|null,"author":LOGIN|null},"threadsTotal":N|null,"paginationComplete":BOOL,"threads":[…]}`.
 
-Each thread is `{id,isResolved,isOutdated,path,line,acknowledgmentCandidate,commentsComplete,comments:[…]}`; each comment is `{author,body,createdAt,url}`. Preserve GitHub's thread/comment order; the last comment is most recent.
+Each thread is `{id,isResolved,isOutdated,path,line,acknowledgmentCandidate,commentsComplete,comments:[…]}`; each comment is `{author,body,createdAt,url,reviewId}`. Preserve GitHub's thread/comment order; the last comment is most recent.
+
+`reviewId` is the string node ID of the review that posted the comment, or null when GitHub returns no review. It equals that review's `id` in `gh pr view <number> --json reviews`.
 
 `acknowledgmentCandidate` requires an unresolved thread, complete comments, and a last comment by the PR author. It does not establish acknowledgment of a fix; the skill reads and judges that comment. Incomplete comments force false, meaning acknowledgment is unestablished and the thread remains open.
 

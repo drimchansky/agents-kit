@@ -63,3 +63,4 @@ A missing matching remote or a failed fetch takes the consumer's outcome:
 - `publish-pr-review` and `update-pr-description` stop. Name the remotes and their URLs when none matches, or the remote and Git's error when the fetch fails.
 - `review-code` stops the review on the PR form and with supplied `review-pr-loop` context.
 - A standalone no-argument review, or a range's `-d` guard without supplied `review-pr-loop` context, first tries `refs/remotes/<pr-remote>/<baseRefName>` when a remote matched, then `refs/heads/<baseRefName>`. Resolve each with `git rev-parse --verify <ref>^{commit}`; use the first resolved SHA as the base, marked possibly stale. Only when neither resolves use the local heuristics in **Determine base branch** (`../../skills/review-code/SKILL.md` § *Setup*).
+- `review-pr-loop`'s **Already reviewed** check matches no candidate, so the pass continues to step 2 (`../../skills/review-pr-loop/SKILL.md` § *The pass*).

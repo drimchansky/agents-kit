@@ -20,6 +20,7 @@ interface FixtureComment {
   readonly body: string;
   readonly createdAt: string;
   readonly url: string;
+  readonly pullRequestReview?: { readonly id: string } | null;
 }
 
 interface FixtureThread {
@@ -49,12 +50,13 @@ interface PageOptions {
   readonly author?: string | null;
 }
 
-function comment(author: string, body: string): FixtureComment {
+function comment(author: string, body: string, reviewId: string | null = null): FixtureComment {
   return {
     author: { login: author },
     body,
     createdAt: "2026-08-01T12:00:00Z",
     url: `${PR_URL}#discussion_r1`,
+    pullRequestReview: reviewId === null ? null : { id: reviewId },
   };
 }
 
@@ -133,8 +135,19 @@ test("a comment carries exactly the contract keys", () => {
   const report = normalize([threadPage([thread("T1")])], []);
   assert.deepStrictEqual(
     Object.keys(report.threads[0].comments[0]).sort(),
-    ["author", "body", "createdAt", "url"].sort(),
+    ["author", "body", "createdAt", "reviewId", "url"].sort(),
     "each comment holds the contract keys and nothing else",
+  );
+});
+
+test("a comment GitHub returns without a review reports its review id as null", () => {
+  const unlinked = comment(REVIEWER, "review is null");
+  const { pullRequestReview: _, ...fieldless } = comment(REVIEWER, "review field is absent");
+  const report = normalize([threadPage([thread("T1", { comments: [unlinked, fieldless] })])], []);
+  assert.deepStrictEqual(
+    report.threads[0].comments.map((entry) => entry.reviewId),
+    [null, null],
+    "a missing review is null rather than a fabricated id",
   );
 });
 
@@ -542,6 +555,30 @@ test("a thread's own comment continuation is fetched and appended", () => {
   const report = JSON.parse(run.stdout);
   assert.deepStrictEqual(report.threads[0].comments.map((entry: { body: string }) => entry.body), ["first", "second"]);
   assert.strictEqual(report.threads[0].commentsComplete, true, "a fully paged thread is not short");
+});
+
+test("both queries request each comment's review, and every comment reports its review id", () => {
+  const short = thread("T1", { comments: [comment(REVIEWER, "first", "PRR_first")], hasMoreComments: true });
+  const gh = fakeGh("comment-review", [
+    { page: threadPage([short]) },
+    { page: commentPage("T1", [comment(REVIEWER, "second", "PRR_second")]) },
+  ]);
+  const run = gh.run([String(PR_NUMBER)]);
+  assert.strictEqual(run.status, 0, `a served walk exits 0, got "${run.stderr}"`);
+  const calls = gh.calls();
+  assert.strictEqual(calls.length, 2, "one thread page and one comment continuation");
+  calls.forEach((argv, index) => {
+    assert.ok(
+      argv.some((line) => /pullRequestReview\s*\{\s*id\s*\}/.test(line)),
+      `call ${index} asks GitHub for each comment's review id, got ${argv.join(" ")}`,
+    );
+  });
+  const report = JSON.parse(run.stdout);
+  assert.deepStrictEqual(
+    report.threads[0].comments.map((entry: { reviewId: string | null }) => entry.reviewId),
+    ["PRR_first", "PRR_second"],
+    "the first page and the continuation each keep their own review id",
+  );
 });
 
 test("a first fetch that fails exits 1 carrying gh's own reason", () => {

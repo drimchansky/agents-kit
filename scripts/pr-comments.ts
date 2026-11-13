@@ -26,7 +26,7 @@ query($owner:String!, $repo:String!, $number:Int!, $cursor:String) {
           line
           comments(first:${PAGE_SIZE}) {
             pageInfo { hasNextPage endCursor }
-            nodes { author { login } body createdAt url }
+            nodes { author { login } body createdAt url pullRequestReview { id } }
           }
         }
       }
@@ -41,7 +41,7 @@ query($thread:ID!, $cursor:String) {
       id
       comments(first:${PAGE_SIZE}, after:$cursor) {
         pageInfo { hasNextPage endCursor }
-        nodes { author { login } body createdAt url }
+        nodes { author { login } body createdAt url pullRequestReview { id } }
       }
     }
   }
@@ -58,11 +58,16 @@ interface RawAuthor {
   readonly login?: string;
 }
 
+interface RawReview {
+  readonly id?: string;
+}
+
 interface RawComment {
   readonly author?: RawAuthor | null;
   readonly body?: string;
   readonly createdAt?: string;
   readonly url?: string;
+  readonly pullRequestReview?: RawReview | null;
 }
 
 interface RawCommentConnection {
@@ -107,6 +112,7 @@ export interface Comment {
   readonly body: string;
   readonly createdAt: string | null;
   readonly url: string | null;
+  readonly reviewId: string | null;
 }
 
 export interface Thread {
@@ -169,6 +175,7 @@ function toComments(nodes: readonly (RawComment | null)[] | null | undefined): C
       body: typeof node.body === "string" ? node.body : "",
       createdAt: typeof node.createdAt === "string" ? node.createdAt : null,
       url: typeof node.url === "string" ? node.url : null,
+      reviewId: typeof node.pullRequestReview?.id === "string" ? node.pullRequestReview.id : null,
     });
   }
   return comments;

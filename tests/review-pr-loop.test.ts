@@ -20,7 +20,7 @@ test("the check poll and watch cite the shared shell-commands section, which exi
   }
 });
 
-function embeddedProgram(heading: string, heartbeat: string): string {
+function embeddedProgram(heading: string, heartbeat: string, ciChecks: string): string {
   const source = readFileSync(SKILL, "utf8");
   const match = source.split(`## ${heading}\n`)[1]?.match(/```sh\n([\s\S]*?)```/);
   assert.ok(match, `embedded program under ${heading} is present`);
@@ -29,28 +29,26 @@ function embeddedProgram(heading: string, heartbeat: string): string {
     .replaceAll("<host>", "example.com")
     .replaceAll("<number>", "42")
     .replaceAll("<reviewed-head>", "reviewed")
-    .replaceAll("<heartbeat-file>", heartbeat);
+    .replaceAll("<heartbeat-file>", heartbeat)
+    .replaceAll("<ci-checks>", () => ciChecks);
 }
 
-function runWatch(responses: readonly string[], sleepMultiplier = 1, readAdvances: readonly number[] = []) {
-  return runProgram("The watch", responses, sleepMultiplier, readAdvances);
+type ProgramOptions = { sleepMultiplier?: number; ciChecks?: string };
+
+function runWatch(responses: readonly string[], options: ProgramOptions = {}) {
+  return runProgram("The watch", responses, options);
 }
 
-function runProgram(
-  heading: string,
-  responses: readonly string[],
-  sleepMultiplier = 1,
-  readAdvances: readonly number[] = [],
-) {
+function runProgram(heading: string, responses: readonly string[], { sleepMultiplier = 1, ciChecks = "" }: ProgramOptions = {}) {
   const root = mkdtempSync(join(tmpdir(), "review-pr-loop-watch-"));
   const bin = join(root, "bin");
   const clock = join(root, "clock");
   const index = join(root, "index");
   const responsePrefix = join(root, "response");
-  const sleepLog = join(root, "sleeps");
   const heartbeat = join(root, "heartbeat");
   const beatLog = join(root, "beats");
   const readBeatLog = join(root, "read-beats");
+  const checksLog = join(root, "checks");
   const beatReference = join(root, "beat-reference");
   const date = join(bin, "date");
   const sleep = join(bin, "sleep");
@@ -58,30 +56,29 @@ function runProgram(
   mkdirSync(bin);
   writeFileSync(clock, "0\n");
   writeFileSync(index, "0\n");
-  writeFileSync(sleepLog, "");
   writeFileSync(beatLog, "");
   writeFileSync(readBeatLog, "");
+  writeFileSync(checksLog, "");
   writeFileSync(beatReference, "");
   utimesSync(beatReference, new Date(1970, 0, 3), new Date(1970, 0, 3));
   responses.forEach((response, index) => writeFileSync(`${responsePrefix}.${index + 1}`, `${response}\n`));
-  readAdvances.forEach((advance, index) => writeFileSync(`${responsePrefix}.${index + 1}.advance`, `${advance}\n`));
   writeFileSync(
     date,
     "#!/bin/sh\nIFS= read -r now < \"$WATCH_CLOCK\"\nprintf '%s\\n' \"$now\"\n",
   );
   writeFileSync(
     sleep,
-    "#!/bin/sh\nIFS= read -r now < \"$WATCH_CLOCK\"\nprintf '%s\\n' \"$1\" >> \"$WATCH_SLEEP_LOG\"\n{ [ \"$WATCH_HEARTBEAT\" -nt \"$WATCH_BEAT_REFERENCE\" ] && printf 1 || printf 0; } >> \"$WATCH_BEAT_LOG\"\ntouch -c -t 197001020000 \"$WATCH_HEARTBEAT\"\nprintf '%s\\n' \"$((now + $1 * WATCH_SLEEP_MULTIPLIER))\" > \"$WATCH_CLOCK\"\n",
+    "#!/bin/sh\nIFS= read -r now < \"$WATCH_CLOCK\"\n{ [ \"$WATCH_HEARTBEAT\" -nt \"$WATCH_BEAT_REFERENCE\" ] && printf 1 || printf 0; } >> \"$WATCH_BEAT_LOG\"\ntouch -c -t 197001020000 \"$WATCH_HEARTBEAT\"\nprintf '%s\\n' \"$((now + $1 * WATCH_SLEEP_MULTIPLIER))\" > \"$WATCH_CLOCK\"\n",
   );
   writeFileSync(
     gh,
-    "#!/bin/sh\n{ [ \"$WATCH_HEARTBEAT\" -nt \"$WATCH_BEAT_REFERENCE\" ] && printf 1 || printf 0; } >> \"$WATCH_READ_BEAT_LOG\"\n[ \"$GH_HOST\" = example.com ] && [ \"$GH_REPO\" = example.com/acme/widgets ] || exit 1\nIFS= read -r index < \"$WATCH_INDEX\"\nindex=$((index + 1))\nprintf '%s\\n' \"$index\" > \"$WATCH_INDEX\"\n[ -f \"$WATCH_RESPONSE_PREFIX.$index.advance\" ] && { IFS= read -r advance < \"$WATCH_RESPONSE_PREFIX.$index.advance\"; IFS= read -r now < \"$WATCH_CLOCK\"; printf '%s\\n' \"$((now + advance))\" > \"$WATCH_CLOCK\"; }\n[ -f \"$WATCH_RESPONSE_PREFIX.$index\" ] || exit 1\nIFS= read -r line < \"$WATCH_RESPONSE_PREFIX.$index\"\n[ \"$line\" = ERROR ] && exit 1\nprintf '%s\\n' \"$line\"\n",
+    "#!/bin/sh\n{ [ \"$WATCH_HEARTBEAT\" -nt \"$WATCH_BEAT_REFERENCE\" ] && printf 1 || printf 0; } >> \"$WATCH_READ_BEAT_LOG\"\n[ \"$2\" = checks ] && printf '%s\\n' \"${CI_CHECKS-}\" >> \"$WATCH_CHECKS_LOG\"\n[ \"$GH_HOST\" = example.com ] && [ \"$GH_REPO\" = example.com/acme/widgets ] || exit 1\nIFS= read -r index < \"$WATCH_INDEX\"\nindex=$((index + 1))\nprintf '%s\\n' \"$index\" > \"$WATCH_INDEX\"\n[ -f \"$WATCH_RESPONSE_PREFIX.$index\" ] || exit 1\nIFS= read -r line < \"$WATCH_RESPONSE_PREFIX.$index\"\n[ \"$line\" = ERROR ] && exit 1\nprintf '%s\\n' \"$line\"\n",
   );
   chmodSync(date, 0o755);
   chmodSync(sleep, 0o755);
   chmodSync(gh, 0o755);
   try {
-    const result = spawnSync("sh", ["-c", embeddedProgram(heading, heartbeat)], {
+    const result = spawnSync("sh", ["-c", embeddedProgram(heading, heartbeat, ciChecks)], {
       cwd: REPO_DIR,
       encoding: "utf8",
       env: {
@@ -89,12 +86,12 @@ function runProgram(
         PATH: `${bin}${delimiter}${process.env.PATH ?? ""}`,
         WATCH_BEAT_LOG: beatLog,
         WATCH_BEAT_REFERENCE: beatReference,
+        WATCH_CHECKS_LOG: checksLog,
         WATCH_CLOCK: clock,
         WATCH_HEARTBEAT: heartbeat,
         WATCH_INDEX: index,
         WATCH_READ_BEAT_LOG: readBeatLog,
         WATCH_RESPONSE_PREFIX: responsePrefix,
-        WATCH_SLEEP_LOG: sleepLog,
         WATCH_SLEEP_MULTIPLIER: String(sleepMultiplier),
       },
       timeout: 30_000,
@@ -105,35 +102,21 @@ function runProgram(
       stderr: result.stderr.trim(),
       clock: Number(readFileSync(clock, "utf8").trim()),
       calls: Number(readFileSync(index, "utf8").trim()),
-      sleeps: readFileSync(sleepLog, "utf8")
-        .trim()
-        .split("\n")
-        .filter(Boolean)
-        .map(Number),
       beats: readFileSync(beatLog, "utf8"),
       readBeats: readFileSync(readBeatLog, "utf8"),
+      checkNames: readFileSync(checksLog, "utf8"),
     };
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
 }
 
-test("watch keeps its absolute deadline while the head keeps changing", () => {
-  const responses = Array.from({ length: 23 }, (_, index) => `OPEN push-${index + 1}`);
-  const result = runWatch(responses, 10);
+test("watch keeps polling past four hours when no push arrives", () => {
+  const result = runWatch([...Array.from({ length: 25 }, () => "OPEN reviewed"), "CLOSED reviewed"], { sleepMultiplier: 10 });
   assert.equal(result.status, 0, result.stderr);
-  assert.equal(result.stdout, "stalled: push-23");
-  assert.equal(result.clock, 14_400);
-  assert.equal(result.calls, 23);
-  assert.ok(result.sleeps.every((seconds) => seconds <= 60));
-});
-
-test("watch stalls at four hours when no push arrives", () => {
-  const result = runWatch(Array.from({ length: 23 }, () => "OPEN reviewed"), 10);
-  assert.equal(result.status, 0, result.stderr);
-  assert.equal(result.stdout, "stalled: reviewed");
-  assert.equal(result.clock, 14_400);
-  assert.equal(result.calls, 23);
+  assert.equal(result.stdout, "closed: CLOSED");
+  assert.equal(result.clock, 15_600);
+  assert.equal(result.calls, 26);
 });
 
 test("watch reports a push after five stable minutes", () => {
@@ -152,15 +135,6 @@ test("watch restarts the stability interval after another push", () => {
   assert.equal(result.calls, 8);
 });
 
-test("watch reports the latest unstable head at the deadline", () => {
-  const result = runWatch(["OPEN reviewed", ...Array.from({ length: 5 }, () => "OPEN late")], 1, [14_030]);
-  assert.equal(result.status, 0, result.stderr);
-  assert.equal(result.stdout, "stalled: late");
-  assert.equal(result.clock, 14_400);
-  assert.equal(result.calls, 6);
-  assert.deepEqual(result.sleeps, [60, 60, 60, 60, 60, 60, 10]);
-});
-
 test("watch touches its heartbeat after each read", () => {
   const result = runWatch(Array.from({ length: 6 }, () => "OPEN updated"));
   assert.equal(result.status, 0, result.stderr);
@@ -177,12 +151,93 @@ test("watch reports a closed pull request", () => {
   assert.equal(result.calls, 1);
 });
 
-test("watch reports a GitHub read failure", () => {
-  const result = runWatch(["ERROR"]);
+test("watch reports a GitHub read failure after five consecutive failed head reads", () => {
+  const result = runWatch(Array.from({ length: 5 }, () => "ERROR"));
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.stdout, "error: gh pr view failed");
-  assert.equal(result.clock, 60);
-  assert.equal(result.calls, 1);
+  assert.equal(result.clock, 300);
+  assert.equal(result.calls, 5);
+});
+
+test("watch keeps polling when fewer than five head reads fail before a successful read", () => {
+  const result = runWatch([...Array.from({ length: 4 }, () => "ERROR"), "CLOSED reviewed"]);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, "closed: CLOSED");
+  assert.equal(result.clock, 300);
+  assert.equal(result.calls, 5);
+});
+
+test("watch restarts the failed-read count after a successful head read", () => {
+  const failures = Array.from({ length: 4 }, () => "ERROR");
+  const result = runWatch([...failures, "OPEN reviewed", ...failures, "CLOSED reviewed"]);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, "closed: CLOSED");
+  assert.equal(result.clock, 600);
+  assert.equal(result.calls, 10);
+});
+
+test("watch touches its heartbeat after a failed head read and skips that poll's checks read", () => {
+  const result = runWatch(["ERROR", "OPEN reviewed", "failing", "CLOSED reviewed"], { ciChecks: '["build"]' });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, "closed: CLOSED");
+  assert.equal(result.calls, 4);
+  assert.equal(result.beats, "011");
+  assert.equal(result.readBeats, "0000");
+});
+
+test("watch reports cleared checks once a named failing check passes on the reviewed head", () => {
+  const result = runWatch(["OPEN reviewed", "failing", "OPEN reviewed", "cleared"], { ciChecks: '["build"]' });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, "cleared: reviewed");
+  assert.equal(result.clock, 120);
+  assert.equal(result.calls, 4);
+});
+
+test("watch keeps polling while a named check still fails", () => {
+  const result = runWatch(["OPEN reviewed", "failing", "OPEN reviewed", "failing", "CLOSED reviewed"], { ciChecks: '["build"]' });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, "closed: CLOSED");
+  assert.equal(result.clock, 180);
+  assert.equal(result.calls, 5);
+});
+
+test("watch keeps polling while a check is pending", () => {
+  const result = runWatch(["OPEN reviewed", "pending", "OPEN reviewed", "pending", "CLOSED reviewed"], { ciChecks: '["build"]' });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, "closed: CLOSED");
+  assert.equal(result.clock, 180);
+  assert.equal(result.calls, 5);
+});
+
+test("watch keeps polling when the checks read fails", () => {
+  const result = runWatch(["OPEN reviewed", "ERROR", "OPEN reviewed", "cleared"], { ciChecks: '["build"]' });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, "cleared: reviewed");
+  assert.equal(result.clock, 120);
+  assert.equal(result.calls, 4);
+});
+
+test("watch with check names reports a push without reading checks on the moved head", () => {
+  const result = runWatch(["OPEN reviewed", "failing", ...Array.from({ length: 6 }, () => "OPEN pushed")], { ciChecks: '["build"]' });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, "updated: pushed");
+  assert.equal(result.clock, 420);
+  assert.equal(result.calls, 8);
+});
+
+test("watch touches its heartbeat once per iteration after the checks read", () => {
+  const result = runWatch(["OPEN reviewed", "failing", "OPEN reviewed", "failing", "CLOSED reviewed"], { ciChecks: '["build"]' });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.beats, "011");
+  assert.equal(result.readBeats, "00000");
+});
+
+test("watch passes a check name with spaces and quotes to the checks read intact", () => {
+  const ciChecks = JSON.stringify(['e2e "smoke" it\'s $HOME `id`', "build"]);
+  const result = runWatch(["OPEN reviewed", "failing", "OPEN reviewed", "cleared"], { ciChecks });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, "cleared: reviewed");
+  assert.equal(result.checkNames, `${ciChecks}\n${ciChecks}\n`);
 });
 
 test("check poll exits early when the head moves", () => {
