@@ -59,7 +59,7 @@ A marker-only settlement that preserves the goal's acceptance outcome leaves ear
 Both directions judge ticket/group edits (`./task-store.md` § *Shared group context*). Ticket broken-link/group-answer annotations owe term 1; content edits owe all four:
 
 1. Mark the record's external surface, naming the selected-root-relative group path or ticket section.
-2. Quote prior/new wording there.
+2. Quote prior/new wording there. A `start-group` change set's `GROUP_CONTEXT.md` edits follow `start-group` § *Change sets* step 8 instead.
 3. Require evidence that the ask/constraint changed. Do not fit the ask to built work or relax constraints after failure; flag such drift Needs work for plan-task.
 4. Refer new criteria absent from goals to plan-task under Not reconciled; derive no goals beside the ticket edit.
 
