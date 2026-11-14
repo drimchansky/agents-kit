@@ -12,7 +12,9 @@ When parts have a blocking order, the `NN-` folder prefixes give that order:
 .agents/tasks/03-ui/
 ```
 
-A plan step that waits on a sibling names that sibling, or one of its steps, on its `**Depends on:**` line (`../templates/plan.md`).
+A plan step that waits on a sibling names that sibling, or one of its steps, on its `**Depends on:**` line (`../templates/plan.md`). Name the sibling by its folder name, written `<folder>` or `<folder> Step <n>`, such as `01-schema Step 2`.
+
+A citation of a sibling is met once that sibling's plan is `done`. A citation of one of its steps is met once that step is checked or the sibling's plan is `done`. Read both from a read-only task-state run (`../scripts/task-state.md`) on the sibling's folder in the same parent or under `<parent>/Archive/`.
 
 Siblings share no sibling-level context file or cross-folder links. Duplicate needed facts into each context when no applicable ancestor holds them. Within a registered root, cite group-wide constraints from `GROUP_CONTEXT.md` (`./task-store.md` § *Shared group context*). Name and source each inherited fact; every folder remains independently discoverable, movable, and archivable.
 

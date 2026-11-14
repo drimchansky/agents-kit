@@ -83,7 +83,7 @@ Run the loop in `./references/workflow/execution-loop.md`: the five beats, the t
 
 **This skill's bindings:**
 
-- **Source**: one unit is one plan step; its criterion is that step's `Verify` line. Stay inside the plan's scope; respect `Depends on:` ordering in both modes.
+- **Source**: one unit is one plan step; its criterion is that step's `Verify` line. Stay inside the plan's scope; respect `Depends on:` ordering in both modes. Before launching a step whose `**Depends on:**` line cites a sibling task or one of its steps, check each such citation under `./references/workflow/task-siblings.md`. When one is unmet, stop under **Blocked** and name that sibling task or step as what the step awaits.
 - **Inherited grounding**: the group sources §1 loaded travel with the step, identified by root and path, per the `implement-task` binding in `./references/workflow/executor-contract.md` § *Bindings*. A step whose grounding contradicts it does not launch until §1 has ruled. None of those files is ever on an executor's edit surface; a grounding correction is the coordinator's, never delegated.
 - **Record**: append a result section (§5) once the step's outcome and, where it carries one, its health boundary have run.
 - **Mark done**: flip `- [ ]` to `- [x]` and append the result-section link:
