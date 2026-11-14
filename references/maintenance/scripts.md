@@ -256,7 +256,7 @@ Markdown mirrors follow § *`scripts/health-check.ts`*.
 
 **Why the entry check goes through `realpath`.** Only a direct run reads task files. Tests import the pure layer, so a module-scope walk would introduce filesystem effects on import. The symlinked-invocation mismatch and normalization are the same as § *`scripts/pr-comments.ts`* describes.
 
-The `structure` report adds reliability and diagnostics without changing the existing coverage fields. The direct CLI scans supplementary task Markdown before reporting; pure callers can supply those documents. `--repair` writes task files, and `--compaction-snapshot` writes only under `~/.local/state/agents-kit/compaction/`. Default and `--compaction-plan` invocations remain read-only. Its command and output contract live in `references/scripts/task-state.md`.
+The `structure` report adds reliability and diagnostics without changing the existing coverage fields. The direct CLI scans supplementary task Markdown before reporting; pure callers can supply those documents. It also lists sibling task folders for `dependsOn`; pure callers pass them as `siblingTasks`, and without them `dependsOn` removes no task citation. `--repair` writes task files, and `--compaction-snapshot` writes only under `~/.local/state/agents-kit/compaction/`. Default and `--compaction-plan` invocations remain read-only. Its command and output contract live in `references/scripts/task-state.md`.
 
 **Why the snapshot copies raw bytes.** Decoding would replace invalid UTF-8 with U+FFFD, so the copy could not restore the original file. Hashing those same bytes keeps the name tied to the content the copy holds.
 

@@ -52,6 +52,8 @@ Establish ground truth per `./references/workflow/execution-loop.md` § *Ground 
 
 **A branch in `**Pointers:**` identifies delivery work**: after the verification-only decision above, resolve it for implementation per `./references/workflow/implement-task-edges.md` § *Task worktree*. A removed-branch marker remains a delivery pointer, not a worktree to recreate. <!-- cold -->
 
+**A `to-do` plan checks sibling citations before §2.** Check the sibling citations on the `**Depends on:**` line of the first step this run would launch, as §4's **Source** binding does. When one is unmet, stop and close with §9's hand-off. Create no branch, worktree, or `result.md`, leave the plan at `to-do`, and write no `**Blocked:**` section.
+
 ### 2. Decide Execution Mode
 
 Ask the user, or infer from the request:
@@ -83,7 +85,7 @@ Run the loop in `./references/workflow/execution-loop.md`: the five beats, the t
 
 **This skill's bindings:**
 
-- **Source**: one unit is one plan step; its criterion is that step's `Verify` line. Stay inside the plan's scope; respect `Depends on:` ordering in both modes.
+- **Source**: one unit is one plan step; its criterion is that step's `Verify` line. Stay inside the plan's scope; respect `Depends on:` ordering in both modes. Before launching a step whose `**Depends on:**` line cites a sibling task or one of its steps, check each such citation under `./references/workflow/task-siblings.md`. When one is unmet, stop under **Blocked** and name that sibling task or step as what the step awaits. When that rule leaves it unmet awaiting merge of the sibling's branch, also name that branch as awaiting merge. When that rule leaves a step citation unmet awaiting commit, also name that sibling step as awaiting its commit. When that rule leaves it unmet awaiting update of the local default branch, name updating the local default branch as the user's action. When it instead awaits updating the task's own branch, name updating that branch from the default branch as the user's action.
 - **Inherited grounding**: the group sources §1 loaded travel with the step, identified by root and path, per the `implement-task` binding in `./references/workflow/executor-contract.md` § *Bindings*. A step whose grounding contradicts it does not launch until §1 has ruled. None of those files is ever on an executor's edit surface; a grounding correction is the coordinator's, never delegated.
 - **Record**: append a result section (§5) once the step's outcome and, where it carries one, its health boundary have run.
 - **Mark done**: flip `- [ ]` to `- [x]` and append the result-section link:
@@ -168,12 +170,12 @@ In **both** branches, rewrite `## Current state` last, after the removal, so `**
 
 ### 9. Hand Off
 
-Close each completed run with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*), composed after §8's *Before presenting* summary. A step-by-step pause and a **Blocked** stop close with it too.
+Close each completed run with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*), composed after §8's *Before presenting* summary. A step-by-step pause, a **Blocked** stop, and §1's sibling-citation stop close with it too.
 
 - **Done:** the steps and checkpoints this run completed and the plan status reached, each pointing at its `result.md` section.
 - **Know:** goals short of `met` and verification still outstanding, pointing at `## Acceptance` or `**In review:**`. Name the task's handoff token, the task branch and worktree, checkpoint and final commits, uncommitted changes, and a refused removal's reason. Name each surface a grounding correction changed.
-- **Awaiting you:** what the result's `**Blocked:**` section needs or awaits, pointing at it and repeating none of its options or recommendation.
-- **Next:** `/implement-task` continues after a pause or an `executing` stop, resumes once a blocker clears, and re-gates an `in-review` plan once its awaited verification is reported. Once implementation is complete (`in-review` or `done`) and the task branch is unmerged, `/review-code` reviews committed work. When automatic commits were off, `/commit` takes staged changes first. A `done` plan whose work merged takes `/archive-task`.
+- **Awaiting you:** what the result's `**Blocked:**` section needs or awaits, pointing at it and repeating none of its options or recommendation. After §1's sibling-citation stop, what the first step awaits and any user action, named as in §4's **Source** binding.
+- **Next:** `/implement-task` continues after a pause or an `executing` stop, resumes once a blocker clears or §1's awaited citation is met, and re-gates an `in-review` plan once its awaited verification is reported. Once implementation is complete (`in-review` or `done`) and the task branch is unmerged, `/review-code` reviews committed work. When automatic commits were off, `/commit` takes staged changes first. A `done` plan whose work merged takes `/archive-task`.
 
 ## Correcting Grounding Where It's Wrong
 

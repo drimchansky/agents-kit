@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 import { createHash, randomUUID } from "node:crypto";
-import { closeSync, constants, fstatSync, linkSync, lstatSync, mkdirSync, openSync, readFileSync, realpathSync, rmSync, writeFileSync, type Stats } from "node:fs";
+import { closeSync, constants, fstatSync, linkSync, lstatSync, mkdirSync, openSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync, type Dirent, type Stats } from "node:fs";
 import { homedir } from "node:os";
-import { basename, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { PLAN_VOCAB, RESULT_MAX_KB } from "./lifecycle-constants.ts";
+import { ARCHIVE_DIR, BACKLOG_DIR, PLAN_VOCAB, RESULT_MAX_KB } from "./lifecycle-constants.ts";
 import { GOAL_FIELD, markdownLines, parseGoalDefinitions, sameDiagnostic, SCOPE_HEADING, validateGoalStructure, type StructureReport } from "./goal-structure.ts";
 import { readTaskMarkdown, repairTask, type StructureValidator, type TaskMarkdown } from "./task-repair.ts";
 
@@ -35,6 +35,7 @@ const GOAL_ID = /\bG\d+\b/g;
 const GOAL_ESCAPE = /^[ \t]*none[ \t]*\(infra\/refactor\)[ \t]*$/i;
 const STEP_REF = /\bStep[ \t]+(\d+[a-z]*)\b/gi;
 const BARE_STEP_REF = /\b(\d+[a-z]*)\b/g;
+const REGEXP_SPECIAL = /[.*+?^${}()|[\]\\]/g;
 const RESULT_LINK = /\(\[result\]\(([^()]*)\)\)/g;
 const COMPACTED_HEADING = /^Compacted\b/;
 const TOMBSTONE_BULLET = /^[ \t]*-[ \t]+(.+?)[ \t]*$/;
@@ -135,6 +136,7 @@ export interface TaskStateInput {
   readonly otherMarkdown?: Readonly<Record<string, string>>;
   readonly unreadableMarkdown?: readonly string[];
   readonly nestedTasks?: readonly string[];
+  readonly siblingTasks?: readonly string[];
 }
 
 const warnings: string[] = [];
@@ -245,11 +247,18 @@ function goalIdsIn(value: string): string[] {
   return [...new Set([...value.matchAll(GOAL_ID)].map((match) => match[0]))];
 }
 
-function stepRefsIn(value: string): string[] {
-  const labelled = [...value.matchAll(STEP_REF)].map((match) => match[1].toLowerCase());
+function taskCitation(siblingTasks: readonly string[]): RegExp | null {
+  if (siblingTasks.length === 0) return null;
+  const names = [...siblingTasks].sort((a, b) => b.length - a.length).map((name) => name.replace(REGEXP_SPECIAL, "\\$&"));
+  return new RegExp(`(?<![\\w-])(?:${names.join("|")})(?![\\w-])(?:\`?[ \\t]+Step[ \\t]+\\d+[a-z]*\\b)?`, "gi");
+}
+
+function stepRefsIn(value: string, citation: RegExp | null): string[] {
+  const own = citation === null ? value : value.replace(citation, " ");
+  if (/^\s*none\b/i.test(own)) return [];
+  const labelled = [...own.matchAll(STEP_REF)].map((match) => match[1].toLowerCase());
   if (labelled.length > 0) return [...new Set(labelled)];
-  if (/^\s*none\b/i.test(value)) return [];
-  return [...new Set([...value.matchAll(BARE_STEP_REF)].map((match) => match[1].toLowerCase()))];
+  return [...new Set([...own.matchAll(BARE_STEP_REF)].map((match) => match[1].toLowerCase()))];
 }
 
 interface DraftStep {
@@ -310,7 +319,8 @@ function readScopeLine(line: string, delivered: Set<string>, deferred: Set<strin
   return [...cited];
 }
 
-function parsePlan(text: string): ParsedPlan {
+function parsePlan(text: string, siblingTasks: readonly string[]): ParsedPlan {
+  const citation = taskCitation(siblingTasks);
   const steps: DraftStep[] = [];
   const checkpoints: string[] = [];
   const delivered = new Set<string>();
@@ -381,7 +391,7 @@ function parsePlan(text: string): ParsedPlan {
     const depends = line.match(DEPENDS_FIELD);
     if (depends && !step.sawDepends) {
       step.sawDepends = true;
-      step.dependsOn = stepRefsIn(depends[1]);
+      step.dependsOn = stepRefsIn(depends[1], citation);
     }
   }
   return { steps, checkpoints, delivered, deferred, fieldCitations };
@@ -425,7 +435,7 @@ function currentStateBlock(text: string): string | null {
 }
 
 export function taskState(input: TaskStateInput): TaskState {
-  const plan = parsePlan(input.planText);
+  const plan = parsePlan(input.planText, input.siblingTasks ?? []);
   const slugs = input.resultText === null ? null : headingSlugs(input.resultText);
   const outcomes = input.resultText === null ? new Map<string, string>() : checkpointOutcomes(input.resultText);
   const parsedGoals = input.goalsText === null ? null : parseGoalDefinitions(input.goalsText);
@@ -763,6 +773,26 @@ export function compactionSnapshot(taskDir: string, options: { beforePublish?: (
   }
 }
 
+function folderEntries(dir: string): Dirent[] {
+  try {
+    return readdirSync(dir, { withFileTypes: true }).filter((entry) => entry.isDirectory() && !entry.name.startsWith("."));
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== "ENOENT") warnings.push(`cannot list sibling tasks in ${dir}: ${reason(err)}`);
+    return [];
+  }
+}
+
+function listSiblingTasks(taskDir: string): string[] {
+  const parent = dirname(taskDir);
+  const group = ARCHIVE_DIR.test(basename(parent)) || BACKLOG_DIR.test(basename(parent)) ? dirname(parent) : parent;
+  const names: string[] = [];
+  for (const entry of folderEntries(group)) {
+    if (ARCHIVE_DIR.test(entry.name) || BACKLOG_DIR.test(entry.name)) names.push(...folderEntries(join(group, entry.name)).map((child) => child.name));
+    else names.push(entry.name);
+  }
+  return names.filter((name) => name !== basename(taskDir) && !ARCHIVE_DIR.test(name) && !BACKLOG_DIR.test(name));
+}
+
 function main(): void {
   process.stdout.on("error", (err: NodeJS.ErrnoException) => {
     if (err.code !== "EPIPE" && err.code !== "ENOTCONN") throw err;
@@ -777,6 +807,7 @@ function main(): void {
   const taskDir = resolve(positional[0]);
 
   if (repairing) {
+    const siblings = listSiblingTasks(taskDir);
     const validate: StructureValidator = (documents, options) => {
       const direct = (file: string): string | null => documents[file] ?? readOptional(join(taskDir, file));
       const planText = direct(PLAN_FILE);
@@ -790,6 +821,7 @@ function main(): void {
           otherMarkdown: documents,
           unreadableMarkdown: options.unreadableMarkdown ?? [],
           nestedTasks: options.nestedTasks,
+          siblingTasks: siblings,
         }).structure;
     };
     const repaired = repairTask(taskDir, {}, validate);
@@ -804,6 +836,7 @@ function main(): void {
       otherMarkdown: documents,
       unreadableMarkdown: repaired.gaps,
       nestedTasks: repaired.nested,
+      siblingTasks: siblings,
     });
     const unresolved = [...repaired.report.unresolved];
     for (const issue of state?.structure.diagnostics ?? []) {
@@ -836,6 +869,7 @@ function main(): void {
       otherMarkdown: markdown.documents,
       unreadableMarkdown: markdown.gaps,
       nestedTasks: markdown.nested,
+      siblingTasks: listSiblingTasks(taskDir),
     });
     process.stdout.write(JSON.stringify(state) + "\n");
   }

@@ -1917,6 +1917,106 @@ test("revision-inserted step numbers keep their letter suffix", () => {
   assert.deepStrictEqual(state.goalCoverage.goals[1], { id: "G2", steps: ["3a", "3b"] });
 });
 
+function dependsOnPlan(lines: readonly string[]): string {
+  return `# Plan: sibling citations
+
+**Status:** executing
+
+## Steps
+${lines.map((line, index) => `
+### Step ${index + 1} — Case ${index + 1}
+
+- [ ] **What:** case
+- **Goal:** G1
+- **Depends on:** ${line}
+`).join("")}`;
+}
+
+test("dependsOn keeps the plan's own steps and drops a cited sibling task and the step after its name", () => {
+  const cases: readonly (readonly [string, readonly string[]])[] = [
+    ["02-history-upload-api Step 5", []],
+    ["02-history-upload-api", []],
+    ["schema-migration Step 3", []],
+    ["Schema-Migration Step 3", []],
+    ["schema Step 3", []],
+    ["1, schema Step 3", ["1"]],
+    ["after Step 3", ["3"]],
+    ["Step 2 and 01-schema Step 3", ["2"]],
+    ["01-schema Steps 2-3", ["2", "3"]],
+    ["01-schema Step 3 and 4", ["4"]],
+    ["01-schema's Step 3", ["3"]],
+    ["Step 1; `04-sync-group-sources` Step 2", ["1"]],
+    ["3, after 02-history-upload-api lands", ["3"]],
+    ["Step 2 and the follow-up Step 3", ["2", "3"]],
+    ["Step 1, plus end-to-end Step 2", ["1", "2"]],
+    ["Step 2; re-run Step 3 first", ["2", "3"]],
+    ["Step 1 and 01-schema-v2 Step 4", ["1", "4"]],
+    ["Steps 1-2", ["1", "2"]],
+    ["Step 1", ["1"]],
+    ["1", ["1"]],
+    ["none", []],
+    ["none. It merges with Step 9b.", []],
+  ];
+  const state = taskState({
+    taskDir: "/fixture/03-current",
+    planText: dependsOnPlan(cases.map(([line]) => line)),
+    resultText: null,
+    goalsText: null,
+    siblingTasks: ["02-history-upload-api", "schema-migration", "01-schema", "04-sync-group-sources", "schema"],
+  });
+  assert.deepStrictEqual(state.steps.map((step) => step.dependsOn), cases.map(([, expected]) => expected));
+});
+
+test("dependsOn strips nothing when no sibling tasks are supplied", () => {
+  const plan = dependsOnPlan(["Step 2 and 01-schema Step 3"]);
+  assert.deepStrictEqual(parse(plan).steps.map((step) => step.dependsOn), [["2", "3"]]);
+});
+
+test("the CLI reads sibling task folders from the parent and its Archive container", () => {
+  const parent = join(TEST_ROOT, "sibling-citations");
+  rmSync(parent, { recursive: true, force: true });
+  const dir = join(parent, "03-current");
+  mkdirSync(dir, { recursive: true });
+  mkdirSync(join(parent, "01-schema"));
+  mkdirSync(join(parent, "Archive", "02-history-upload-api"), { recursive: true });
+  writeFileSync(join(parent, "follow-up"), "");
+  writeFileSync(join(dir, "goals.md"), "## Goals\n- G1 — first\n");
+  writeFileSync(join(dir, "plan.md"), dependsOnPlan([
+    "none",
+    "Step 1 and 01-schema Step 3",
+    "Step 2; `02-history-upload-api` Step 5",
+    "Step 1 and the follow-up Step 2",
+  ]).replace("## Steps", "## Scope\n- delivered: G1\n\n## Steps"));
+  const expected = [[], ["1"], ["2"], ["1", "2"]];
+  assert.deepStrictEqual(report(dir).steps.map((step) => step.dependsOn), expected);
+  const repaired = run(["--repair", dir]);
+  assert.strictEqual(repaired.status, 0, repaired.stderr + repaired.stdout);
+  assert.deepStrictEqual((JSON.parse(repaired.stdout).state as TaskState).steps.map((step) => step.dependsOn), expected);
+});
+
+test("the CLI drops citations of sibling task folders inside Backlog", () => {
+  const parent = join(TEST_ROOT, "backlog-sibling-citations");
+  const dir = join(parent, "03-current");
+  mkdirSync(dir, { recursive: true });
+  mkdirSync(join(parent, "Backlog", "05-parked"), { recursive: true });
+  writeFileSync(join(dir, "plan.md"), dependsOnPlan(["05-parked Step 2"]));
+  assert.deepStrictEqual(report(dir).steps.map((step) => step.dependsOn), [[]]);
+});
+
+test("the CLI reads active and parked siblings for a task inside Backlog", () => {
+  const parent = join(TEST_ROOT, "parked-task-sibling-citations");
+  const dir = join(parent, "Backlog", "03-current");
+  mkdirSync(dir, { recursive: true });
+  mkdirSync(join(parent, "01-active"));
+  mkdirSync(join(parent, "Backlog", "05-parked"));
+  writeFileSync(join(dir, "plan.md"), dependsOnPlan([
+    "01-active Step 3",
+    "05-parked Step 2",
+    "03-current Step 1",
+  ]));
+  assert.deepStrictEqual(report(dir).steps.map((step) => step.dependsOn), [[], [], ["1"]]);
+});
+
 test("fenced content is illustration, not structure", () => {
   const plan = `# Plan: fenced
 

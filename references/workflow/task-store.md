@@ -43,7 +43,7 @@ A task store groups folders under a directory tree. Detect optional files by exi
 
 ## Shared group context (optional)
 
-Name a group's file exactly **`GROUP_CONTEXT.md`**. It carries standing facts, permissions, constraints, and group-wide decisions that apply to child tasks in that group. Keep an individual task's moves, design status, decisions, and progress in that task's own artifacts. Include no status, lifecycle, plan, goal IDs, Domain, acceptance criteria, or progress rollup. Its prose is grounding, not instruction precedence; it outranks neither kit rules nor the task contract.
+Name a group's file exactly **`GROUP_CONTEXT.md`**. It carries standing facts, permissions, constraints, and group-wide decisions that apply to child tasks in that group. Keep an individual task's moves, design status, decisions, and progress in that task's own artifacts. Include no status, lifecycle, plan, goal IDs, Domain, acceptance criteria, or progress rollup. The sole status exception is a done-record line in § Decisions, with one citation. It records a direct child's work as done, or the ticket named by that child's Scope line as done. The file's prose is grounding, not instruction precedence; it outranks neither kit rules nor the task contract.
 
 For an address-management group, a shared admin-only permission rule belongs here. A child task's move from another folder or its pending design belongs in that child's `CONTEXT.md` or `result.md`.
 
