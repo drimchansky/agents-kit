@@ -63,7 +63,8 @@ Print the brief at start, when you ask what's next, and when the session continu
     - An `executing` or `blocked` child with no pending step, shown as `next: acceptance`. A `blocked` one qualifies only when its child line shows `waits on: nothing`.
     - For each ready child, print `/plan-task <token>` when it has no plan, else `/implement-task <token>`. The token follows `./references/workflow/task-layout.md` § *One task, one flat folder*: the bare slug where discovery resolves it, the folder path otherwise.
 10. **Blockers list.** Name each distinct blocker from the child lines once, with the children it holds. Two lines name the same blocker when they name the same group question, person, PR, child task, or item. Order the list from the most children held to the fewest, and break ties by Children order.
-11. **Decisions summary.** Print the number of Decisions lines and how many of them hold no log citation. Then print at most 8 lines that cite one of three kept change sets. A Decisions line is a line of the group file's `## Decisions` section that starts with `- `.
+11. **Decisions summary.** Print the number of Decisions lines and how many of them hold no log citation. Then print at most 8 lines that cite one of three kept change sets. A Decisions line is a list item of the group file's `## Decisions` section. A list item is a line that starts with `- `, `* `, `+ `, or a number followed by `. `, such as `1. `.
+    - When the section holds non-blank lines but no Decisions line, print how many non-blank lines it holds in place of the counts.
     - A line holds no log citation when it names no `GROUP_LOG.md § <heading>`, such as a line citing another writer's record (`task-store.md` § *Shared group context*, § *Change sets* step 6). Leave that count out when it is 0.
     - Read only the `## Change set` headings of `GROUP_LOG.md`, for example with `grep '^## Change set' GROUP_LOG.md`, and no other line of the log. A later heading is a more recent change set.
     - A line cites a change set when it names `GROUP_LOG.md § <heading>` with that heading's full text (§ *Group file entries*). Take the change sets that any Decisions line cites.
@@ -93,7 +94,7 @@ Print the brief at start, when you ask what's next, and when the session continu
 **Scope drift:** no Scope line: `<child>`, …; no child task: "<Scope line>", … (omit when none)
 
 ## Decisions
-<n> lines, <r> without a log citation; showing <k> citing `<date>: <topic>`, … (<m> more; ask for the full section) | <n> lines, <r> without a log citation (ask for the full section) | none recorded (omit `, <r> without a log citation` when <r> is 0)
+<n> lines, <r> without a log citation; showing <k> citing `<date>: <topic>`, … (<m> more; ask for the full section) | <n> lines, <r> without a log citation (ask for the full section) | <p> non-blank lines, no list item (ask for the full section) | none recorded (omit `, <r> without a log citation` when <r> is 0)
 - <Decisions line, as written>
 
 ## Open Questions
