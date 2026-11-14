@@ -68,6 +68,10 @@ URL search params for shareable state; ephemeral state for transient UI concerns
 
 If the change is UI-facing, verify against the design source. `design-to-code.md` § *Verify* names what the implementation should have reported; its § *Hint priority* orders how a discrepancy is judged.
 
+### Group Direction Alignment
+
+When group grounding is supplied, check the reviewed behavior against the selected group's Direction and Decisions. Report a contradiction at the reviewed code's `file:line`, quoting the contradicted line and naming its source in words, such as "group decision". Keep the grounding file path out of the finding text; return its exact location separately under `../workflow/reviewer-contract.md` § *The return*. Apply § *Calibrate Severity* without changing its thresholds.
+
 ### Cross-Project Consistency
 
 If sibling projects exist, flag naming divergence for equivalent concepts, reinvented utilities a shared one covers, and pattern drift from established conventions.

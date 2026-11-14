@@ -1,7 +1,7 @@
 ---
 name: review-code-triage-verify
 description: Use when asked for a verified review of a PR, branch, range, or file set. Reviews, batches, and verifies findings; classifies change risk, retains evidence for user-visible changes, and requests engineer sign-off where risk or evidence requires it before approval. Capture may build and start the app in a disposable checkout and drive a browser. Edits no code and posts nowhere.
-argument-hint: '[scope, or an open PR as #<n> or its URL; defaults to the current branch against its base] [-n N (independent reviewers, default 1)] [-x [N] (cross-vendor second reviews, default 1)] [-d (draft PR description)]'
+argument-hint: '[scope, or an open PR as #<n> or its URL; defaults to the current branch against its base] [-g <group>] [-n N (independent reviewers, default 1)] [-x [N] (cross-vendor second reviews, default 1)] [-d (draft PR description)]'
 ---
 
 ## Core Rules
@@ -17,13 +17,15 @@ The pipeline reads and displays findings and retains local review evidence. The 
 
 ## Flags
 
+`-g <group>` passes through to phase 1 under `../review-code/SKILL.md`'s Flags and Setup. Quote a group value containing spaces. Verify probes receive source locations through § *Phase 3 — Verify*, not the flag.
+
 `-n N` passes through to the review phase. The standing returns pool by location inside phase 1 (`./references/workflow/verify-pipeline.md` § *The review phase*), so phase 2 batches one candidate per distinct claim with its `cited by k/N` marker.
 
 `-x`, with its count when given, and `-d` pass through to the review phase (`../review-code/SKILL.md`; `./references/workflow/verify-pipeline.md` § *Flags through the review phase*). The review phase pools the `-x` probes' novel candidates, one per distinct claim, without verifying them (`./references/workflow/verify-pipeline.md` § *The review phase*). Phase 3 verifies each, and one it scopes out takes `Unverified (out of probe scope — candidate never settled)`.
 
 ## Setup
 
-Resolve the object per `../review-code/SKILL.md`'s Setup and hand it to phase 1.
+Resolve the group, when supplied, then the object per `../review-code/SKILL.md`'s Setup and hand both to phase 1. A group-resolution stop ends this composite before any reviewer launches.
 
 On the PR form, keep the worktree that Setup's **Resolve the PR** adds until Phase 3 ends. Remove it from the caller's checkout with `git worktree remove --force <path>` after Phase 3, or where the run ends sooner: a stop, a failure, or the no-findings route. Before removing it, collect each finished `-x` probe and stop each one still running in it, each through its own background command (`./references/workflow/delegated-waiting.md` §§ *Per-host primitives* and *Shell commands*). Remove only a worktree this run's Setup added; when its `worktree add` failed, remove nothing.
 
@@ -37,9 +39,13 @@ Run `./references/workflow/verify-pipeline.md` § *The review phase* with `../re
 
 Retain the review phase's Evidence field and artifact directory. Suppress its sign-off question; this composite presents final evidence after verification.
 
+With `-g`, also retain its **Group** field and each finding's separate `Group sources` association after pooling and wording preparation.
+
 ## Phase 2 — Triage
 
 Run `./references/workflow/verify-pipeline.md` § *The triage phase* over the findings phase 1 held.
+
+Carry each source association with its finding into the batches, translating finding numbers without matching by code location or quote.
 
 ## Phase 3 — Verify
 
@@ -53,6 +59,8 @@ Setup's working-tree check still passes on every kind outside the PR form, which
 
 Fan out under `./references/workflow/agent-fanout.md`, `./references/workflow/probe-engines.md`, and `./references/workflow/probe-shape-verify.md`, per `./references/workflow/verify-pipeline.md`. The review object is the reviewed diff from Setup's base to the reviewed head on a `pr` object, and the reviewed paths at the reviewed head SHA on a `paths` one. Each probe prompt's working root is the effective root. On the PR form, each probe prompt carries the PR checkout line per `./references/workflow/probe-shape-verify.md`.
 
+For every contradiction finding, fill that shape's `Group sources` line from its retained association, using absolute paths and the probe's finding numbers. Every such finding receives a probe verdict; do not scope it out by severity. Preserve the same sources in Output's Group field.
+
 ## Output
 
 Lists, not tables.
@@ -62,6 +70,7 @@ After Phase 3, or after the vacuous triage/verify route with no findings, presen
 - **Summary:** what changed, intent, and the code assessment restated after verification and evidence eligibility. When CI is unknown on the PR form, report the assessment without an approval recommendation. A forwarded **Review pass** showing `scripts: skipped (fork PR)` also leaves the assessment without an approval recommendation. On a `paths` object retain the health verdict `review-code` fixes.
 - **Evidence:** forward the retained field and artifact links, updating confirmation and eligibility from this composite's final presentation. The no-findings route still reports it.
 - **Batches** and **Verified:** per `./references/workflow/verify-pipeline.md` § *Output: Batches and the Verified line*; `Batches` takes the whole reviewed object as its no-anchor locator and carries one entry per distinct claim with its `cited by k/N` marker. Batches is the only render of the findings: no separate Findings list follows it.
+- **Group** (only with `-g`): forward the retained field under `review-code`'s output contract, identifying each source association by its final batch and finding number. Keep grounding paths in this field and verification evidence, outside the original finding text.
 - **Cross-check** (only with `-x`), **Improvements**, **Inaccessible context** (only if any), **PR description** (only with `-d`): forwarded from the review phase as `review-code` specs them. Improvements pass through unverified.
 - **Reviewed:** the provenance line exactly as `review-code` specs it, in its kind's form; `/publish-pr-review` reads it to anchor and to pick its currency-check base.
 - **Review pass** and **Divergence:** forwarded from the review phase as `review-code` specs each.
