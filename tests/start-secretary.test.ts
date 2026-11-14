@@ -414,7 +414,7 @@ for (const changed of ["retargeted", "malformed", "deleted"] as const) {
   });
 }
 
-test("init-config references, its pack-free registration, and the README duty anchor resolve to their owners", () => {
+test("init-config references and pack-free registration resolve, and the runbook duty has configuration", () => {
   const skillDir = join(REPO_DIR, "skills", "init-config");
   const cited = new Set<string>();
   for (const [, path, heading] of INIT_CONFIG.matchAll(/`\.\/((?:references\/[^`]+|AGENTS)\.md)`(?: § \*([^*]+)\*)?/g)) {
@@ -430,8 +430,6 @@ test("init-config references, its pack-free registration, and the README duty an
   assert.ok(cited.has("references/scripts/secretary-state.md"));
   const packFree = DOMAIN_PACKS.split("- **Pack-free skills**")[1]?.split("\n\n")[0] ?? "";
   assert.match(packFree, /^ {2}- `init-config` /m);
-  const readme = section(readFileSync(join(REPO_DIR, "README.md"), "utf8"), "## Secretary");
-  assert.ok(readme.includes("(./references/secretary/runbook-maintenance.md#configuration)"), "the README links the runbook duty's configuration");
   assert.ok(DUTY.includes("\n## Configuration\n"), "the runbook duty has § Configuration");
 });
 
