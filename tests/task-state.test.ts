@@ -1917,6 +1917,33 @@ test("revision-inserted step numbers keep their letter suffix", () => {
   assert.deepStrictEqual(state.goalCoverage.goals[1], { id: "G2", steps: ["3a", "3b"] });
 });
 
+test("dependsOn keeps the plan's own steps and drops a cited sibling task and the step after its name", () => {
+  const cases: readonly (readonly [string, readonly string[]])[] = [
+    ["02-history-upload-api Step 5", []],
+    ["02-history-upload-api", []],
+    ["schema-migration Step 3", []],
+    ["Step 2 and 01-schema Step 3", ["2"]],
+    ["Step 1; `04-sync-group-sources` Step 2", ["1"]],
+    ["3, after 02-history-upload-api lands", ["3"]],
+    ["Steps 1-2", ["1", "2"]],
+    ["Step 1", ["1"]],
+    ["1", ["1"]],
+    ["none", []],
+  ];
+  const plan = `# Plan: sibling citations
+
+**Status:** executing
+
+## Steps
+${cases.map(([line], index) => `
+### Step ${index + 1} — Case ${index + 1}
+
+- [ ] **What:** case
+- **Depends on:** ${line}
+`).join("")}`;
+  assert.deepStrictEqual(parse(plan).steps.map((step) => step.dependsOn), cases.map(([, expected]) => expected));
+});
+
 test("fenced content is illustration, not structure", () => {
   const plan = `# Plan: fenced
 

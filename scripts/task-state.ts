@@ -35,6 +35,8 @@ const GOAL_ID = /\bG\d+\b/g;
 const GOAL_ESCAPE = /^[ \t]*none[ \t]*\(infra\/refactor\)[ \t]*$/i;
 const STEP_REF = /\bStep[ \t]+(\d+[a-z]*)\b/gi;
 const BARE_STEP_REF = /\b(\d+[a-z]*)\b/g;
+const TASK_CITATION = /(?<![\w-])([a-z0-9]+(?:-[a-z0-9]+)+)(?![\w-])(?:`?[ \t]+Step[ \t]+\d+[a-z]*\b)?/gi;
+const TASK_NAME_WORD = /(?:^|-)[a-z]/i;
 const RESULT_LINK = /\(\[result\]\(([^()]*)\)\)/g;
 const COMPACTED_HEADING = /^Compacted\b/;
 const TOMBSTONE_BULLET = /^[ \t]*-[ \t]+(.+?)[ \t]*$/;
@@ -245,11 +247,16 @@ function goalIdsIn(value: string): string[] {
   return [...new Set([...value.matchAll(GOAL_ID)].map((match) => match[0]))];
 }
 
+function withoutTaskCitations(value: string): string {
+  return value.replace(TASK_CITATION, (citation: string, name: string) => (TASK_NAME_WORD.test(name) ? " " : citation));
+}
+
 function stepRefsIn(value: string): string[] {
-  const labelled = [...value.matchAll(STEP_REF)].map((match) => match[1].toLowerCase());
+  const own = withoutTaskCitations(value);
+  const labelled = [...own.matchAll(STEP_REF)].map((match) => match[1].toLowerCase());
   if (labelled.length > 0) return [...new Set(labelled)];
-  if (/^\s*none\b/i.test(value)) return [];
-  return [...new Set([...value.matchAll(BARE_STEP_REF)].map((match) => match[1].toLowerCase()))];
+  if (/^\s*none\b/i.test(own)) return [];
+  return [...new Set([...own.matchAll(BARE_STEP_REF)].map((match) => match[1].toLowerCase()))];
 }
 
 interface DraftStep {
