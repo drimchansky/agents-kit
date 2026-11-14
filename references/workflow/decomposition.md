@@ -25,7 +25,7 @@ Propose 2–3 genuinely different cuts when more than one is viable, with a reco
 
 ## Part-quality bar
 
-- **Independent**: lands and verifies without a sibling's unfinished internals; cross-part needs flow through the ordering, never through shared work-in-progress.
+- **Independent**: lands and verifies without a sibling's unfinished internals. Cross-part needs flow through the ordering, not through shared work-in-progress. One exception: a plan step may wait on an unfinished sibling's step named on its `**Depends on:**` line (`./task-siblings.md`).
 - **Demoable**: ends in behavior exercised or an artifact verifiable. "Code exists" is not done.
 - **One ticket ↔ one folder**: a part too big for one plan splits further; a part smaller than its own ticket folds into its nearest neighbor.
 - **No leftovers bucket**: a "misc" part's contents belong to real parts or are out of scope.
@@ -34,7 +34,7 @@ Assess delivery independence before proposing folders. A monitoring effort may s
 
 ## Ordering and numbering
 
-Ordering lives in folder names only (`task-siblings.md`):
+Folder names give the parts' order (`task-siblings.md`):
 
 - `NN-` prefixes (two digits and a hyphen) only when the parts have a blocking order; unordered parts get plain slugs.
 - Continue an existing sequence: `01-`/`02-` present → new parts start at `03-`. A fresh parent starts at `01-`.

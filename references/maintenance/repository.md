@@ -159,7 +159,7 @@ These seven homes carry eight mirror notes because scripts cannot consume prose 
 
 - `scripts/health-check.ts`: `PLAN_VOCAB`, `LIVE_STATUSES`, `TERMINAL_STATUSES`, `UNSTARTED_STATUS`, `RECORD_MAX_KB`, `RESULT_MAX_KB`, `TASK_MAX_KB`, `ARCHIVE_DIR`, `BACKLOG_DIR`, `classifyWalkEntry`, `angledTargetText`.
 - `scripts/task-move.ts`: `PLAN_VOCAB`, `TERMINAL_STATUSES`, `UNSTARTED_STATUS`, `ARCHIVE_DIR`, `BACKLOG_DIR`, `TASK_STORE_DIR`, `holdsRoleFile`, `classifyWalkEntry`.
-- `scripts/task-state.ts`: `PLAN_VOCAB`, `RESULT_MAX_KB`.
+- `scripts/task-state.ts`: `PLAN_VOCAB`, `RESULT_MAX_KB`, `ARCHIVE_DIR`, `BACKLOG_DIR`.
 - `scripts/commit-scan.ts`: `holdsRoleFile`.
 - `scripts/sweep-scope.ts`: `holdsRoleFile`, `angledTargetText`.
 - `scripts/task-repair.ts`: `holdsRoleFile`, `WALK_SKIP_DIRS`.

@@ -25,6 +25,6 @@ Elsewhere, system state appears only timestamped in the Current-state digest or 
 
 `review-task` flags duplicated grounding, verbatim or reworded. Keep its home and replace the sibling copy with a citation.
 
-Across independent sibling tasks, duplicate needed grounding into each context when no applicable shared home exists (`./task-siblings.md`). In a registered ancestor chain, put standing constraints needed by child tasks in `GROUP_CONTEXT.md` (`./task-store.md` § *Shared group context*). Keep each child's own decisions and progress at its task home. Name and source inherited facts by root-relative path so each task remains complete; do not copy them into every folder.
+Across independent sibling tasks, duplicate needed grounding into each context when no applicable shared home exists (`./task-siblings.md`). In a registered ancestor chain, put standing constraints needed by child tasks in `GROUP_CONTEXT.md` (`./task-store.md` § *Shared group context*). Keep each child's own decisions and progress at its task home, except for `./task-store.md` § *Shared group context*'s done record. Name and source inherited facts by root-relative path so each task remains complete; do not copy them into every folder.
 
 Apply the same rule to the kit's prose corpus, defined in `references/maintenance/scripts.md` § *`scripts/corpus.ts`*. Use `scripts/dup-check.ts` to find cross-file restatements; its contract and deliberate-copy allow-file rules are in that file's `scripts/dup-check.ts` section.
