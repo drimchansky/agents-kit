@@ -66,7 +66,7 @@ codex mcp add chrome-devtools-isolated -- npx -y chrome-devtools-mcp@latest --is
 
 Tasks normally live in `.agents/tasks/<slug>/`, with `CONTEXT.md`, `goals.md`, `plan.md`, and `result.md` as work progresses. Use `resume-task` to pick up later and `reconcile-task` to save decisions and findings.
 
-Use `start-group` on a group of related tasks, by path or name, to see their status and open questions and apply decisions across them. Given a path with no group yet, it offers to create one.
+Use `start-group` on a group of related tasks, by path or name, to see their status and open questions and apply decisions across them. Its brief shows what blocks each task and lists the tasks ready now, with a command to run for each. On request, it drafts a team status for the group's thread without posting it. It also drafts group questions for people you name and records which were sent and answered when you report back. It sends no messages. Given a path with no group yet, it offers to create one.
 
 Small changes can go straight to `implement` without a task folder. Use `init-config` to register task folders elsewhere and `maintain` to check task and installation health.
 
