@@ -15,13 +15,13 @@ The loader's proven identifier repair runs before this consent gate because it c
 
 An **obvious** fix needs no interpretation, alternatives, or invented annotation. A **judged** finding admits several defensible edits. Apply evidence-settled facts, prior decisions, and routine details within agreed scope, recording rejected readings and the selection basis (§ *The record*).
 
-An unresolved impactful judged choice follows `../../CORE_RULES.md` § *Ask Before Assuming*. Present researched viable options, material trade-offs, and a reasoned recommendation. Hold its dependent edit, continue independent fixes, and list an unanswered choice under Not reconciled as **Awaiting decision**. Record the held choice at its home before the run ends: append it to the owning file's Open Questions (grounding in `CONTEXT.md`, execution in `plan.md`) with its options and recommendation, so a later run finds it without a result file.
+An unresolved impactful judged choice follows `../../CORE_RULES.md` § *Ask Before Assuming*, including its question and recommendation sequence. Hold its dependent edit, continue independent fixes, and list an unresolved choice under Not reconciled as **Awaiting decision**. Record the held choice at its home before the run ends: append it to the owning file's Open Questions (grounding in `CONTEXT.md`, execution in `plan.md`). Include its researched options, material trade-offs, any user preference already supplied, and a recommendation only when that sequence permits presenting one.
 
 Flag redesign when the repair exceeds the finding or reconciliation's write surface. List unapplied findings under Not reconciled:
 
 - **Needs work:** docs cannot fix it or verification failed. Name implement-task/plan-task, explain non-rerunnable criteria, and include all unverified steps/goals.
 - **Yours to apply:** deliverable Published changes (§ *Never-annotated surfaces*). Supply paste-ready text for the user.
-- **Awaiting decision:** an unresolved impactful choice, its options and recommendation, and the dependent edits held for the answer.
+- **Awaiting decision:** an unresolved impactful choice with the same details as its Open Questions entry above, and the dependent edits held for the answer.
 
 ## The mapping legend
 

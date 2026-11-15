@@ -72,9 +72,9 @@ Explore before designing, per the domain's exploration guide (`./references/engi
 
 ### 5. Evaluate Approaches
 
-Compare viable approaches, including ones the user may not have considered, and recommend a better one when warranted. With only one viable approach, explain the constraint without fabricating alternatives. Weigh alignment with existing patterns, minimum complexity, risk and reversibility, and effort, a line per axis.
+Compare viable approaches, including ones the user may not have considered. Weigh alignment with existing patterns, minimum complexity, risk and reversibility, and effort, a line per axis.
 
-Take unresolved impactful approach choices through `../../CORE_RULES.md` § *Ask Before Assuming*, even when goals are clear.
+Take unresolved impactful approach choices through `../../CORE_RULES.md` § *Ask Before Assuming*, including its recommendation sequence, even when goals are clear.
 When an approach decision is needed, `## Approach` cites CONTEXT's `## Recommended Direction` if present and records only plan-time refinements.
 
 ### 6. Define Scope

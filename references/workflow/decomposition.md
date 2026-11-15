@@ -16,7 +16,7 @@ A source that is not decided (competing directions, unresolved gating scope) sto
 
 ## Cut-line lenses
 
-Propose 2–3 genuinely different cuts when more than one is viable, with a recommendation; do not fabricate alternatives when the source dictates one.
+Propose 2–3 distinct cuts when several are viable. Follow `../../CORE_RULES.md` § *Ask Before Assuming* for the question and recommendation sequence.
 
 - **Rollout stages**: the source's own sequencing (mock → consumer migration → live cutover, a flag-flip order). The strongest default: each stage lands and is observed on its own.
 - **Layers / components**: a shared lib, a service leg, a UI leg. The weakest cut when parts cannot verify alone; acceptable for a foundational piece with no vertical seam.
@@ -47,12 +47,12 @@ The proposal states the numbering; the user confirms it with the cut.
 Chat-only; nothing is written before the user confirms. It carries:
 
 - **Source + parent directory.**
-- **The recommended cut**, per part: `NN-<slug>` · a title in ticket voice (imperative, outcome-first, `ticket-format.md`) · an acceptance sketch of 2–4 plain-sentence outcome bullets, sharpened to the full ticket bar at materialization · dependency notes (which siblings it builds on, which source sections it implements).
-- **Alternatives considered**, each in a line with why it lost; omitted when the source dictates the cut.
+- **Each viable cut**, per part: `NN-<slug>` · a title in ticket voice (imperative, outcome-first, `ticket-format.md`) · an acceptance sketch of 2–4 plain-sentence outcome bullets, sharpened to the full ticket bar at materialization · dependency notes (which siblings it builds on, which source sections it implements).
+- **Material consequences of each cut**, under § *Cut-line lenses*. Include a recommendation only when that section permits presenting one.
 - **Jira mapping**, when the user names existing keys: per part, *absorb into `<KEY>`* (the materialized ticket doubles as that key's paste-ready description) or *needs a new ticket* under a named parent. The method never writes to Jira.
 - **Open items that gate no part**, carried visibly.
 
-Confirmation is one batched round: the cut, the numbering, the parent directory, missing Jira keys, and any per-part gap that would stall ticket drafting. Apply exactly what the user answers; a dropped part leaves the others unrenumbered.
+Batch independent questions about the cut, numbering, parent directory, missing Jira keys, and gaps that would stall ticket drafting. Resolve remaining trade-offs under § *Cut-line lenses* before confirmation. Apply exactly what the user confirms; a dropped part leaves the others unrenumbered.
 
 ## Materialization contract
 

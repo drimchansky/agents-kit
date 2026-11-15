@@ -66,7 +66,7 @@ Execute `../reconcile-task/SKILL.md` end to end against the folder resolved befo
 - **Untouched** external-page fixes held back by the working-tree write limit go under Not reconciled as Needs work rows, owner the user.
 - Each Needs work row names its bucket and its reason.
 - **Decided** findings the user rejected or skipped, and excluded `Pre-existing` findings, take the session-narrative row with their reason. So do **Untouched** Withdrawn findings, resolved threads, triage `addressed` entries, and `not actionable` complaints. None of them gets a Not reconciled row.
-- Phase 1's **Awaiting decision** findings go under Not reconciled as Awaiting decision rows with their options and recommendation, owner `/fix-findings-reconcile`.
+- Phase 1's **Awaiting decision** findings go under Not reconciled as Awaiting decision rows, preserving their choice details under `./references/workflow/reconciliation.md` § *Consent model: findings apply, the record carries them*. Their owner is `/fix-findings-reconcile`.
 - **No result owed**: when the task has no result and is owed none (`./references/workflow/reconciliation.md` § *The record*), the printed change list and dated headings in the context or plan carry the record. Phase 2 creates no result solely to log the fixes.
 
 Phase 1's health boundaries do not satisfy Phase 2's gate for status advances (`./references/workflow/reconciliation.md` § *Strengthen only on verified evidence*).

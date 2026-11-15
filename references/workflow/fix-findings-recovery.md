@@ -25,7 +25,7 @@ Re-prove all survivors on the rebuilt final tree. After recording evidence, remo
 
 Proceed with an unchanged picked option within agreed boundaries.
 When new evidence materially changes a consequential choice or exceeds those boundaries, apply `../../CORE_RULES.md` § *Ask Before Assuming*.
-Hold dependent edits until the user decides. A changed ask-routed fix requires a fresh pick from an option question with a recommendation (`fix-findings` § *The Gate: Auto vs Ask*).
+Hold dependent edits until the user decides. A changed ask-routed fix requires a fresh pick from an option question (`fix-findings` § *The Gate: Auto vs Ask*).
 A choice still open at report time lists under **Awaiting decision** (`fix-findings` § *Output*).
 
 ## Red boundary: comparison, disposition, recovery
