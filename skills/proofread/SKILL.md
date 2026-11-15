@@ -30,7 +30,7 @@ Fix real problems, leaving clear wording alone. Explain each suggestion briefly 
 
 Resolve routine choices from the supplied text and context. Preserve the author's decisions and explicit preferences.
 When an unsettled choice could change intent, ask the smallest clarifying question and hold that change.
-Use available context to explain the viable interpretations and recommend one when evidence supports it.
+Use `../../CORE_RULES.md` § *Ask Before Assuming* for the question and recommendation sequence.
 
 Write concise, concrete feedback without unnecessary repetition, abstractions, or staged contrasts.
 Compare proposed revisions with the source, preserving facts, conditions, permissions, uncertainty, negation, comparisons, thresholds, identifiers, and logical scope.

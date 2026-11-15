@@ -110,7 +110,7 @@ Print the findings report **first**, from pre-reconcile state, never regenerated
 ## Not reconciled
 - Needs work — <finding> — via `/implement-task`
 - Yours to apply — <finding> — a deliverable's `**Published:**` line; proposed text: <…>
-- Awaiting decision — <finding> — <researched options, material trade-offs, recommendation, and held edits>
+- Awaiting decision — <finding> — <choice details and held edits under reconciliation.md's Consent model>
 
 (Or, when the session adds nothing beyond the docs: `Nothing to reconcile.`)
 ```

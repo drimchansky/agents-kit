@@ -48,7 +48,7 @@ Report **Inconclusive**, investigation performed, missing information/access/rep
 
 ## 4. Discover Fix Options (Confirmed Issues Only)
 
-Present concrete options from targeted to thorough. For each, name approach and locations, tradeoffs/risks, and affected files/consumers/flows. Note whether it also addresses matching problems elsewhere. State them once: as the Handoff's Next (§5) when the run has exactly one Confirmed verdict, otherwise in each verdict with its recommendation. Leave selection and implementation to the user's next instruction.
+Present concrete options from targeted to thorough. For each, name approach and locations, tradeoffs/risks, and affected files/consumers/flows. Note whether it also addresses matching problems elsewhere. State them once: as the Handoff's Next (§5) when the run has exactly one Confirmed verdict, otherwise in each verdict. For unresolved consequential choices, follow `../../CORE_RULES.md` § *Ask Before Assuming*, including its recommendation sequence. Leave selection and implementation to the user's next instruction.
 
 ## 5. Close with the Handoff
 
@@ -56,4 +56,4 @@ End with the Handoff block (`./references/workflow/user-facing-messages.md` § *
 
 - **Done:** the verdicts, as counts when several, pointing at each verdict's report.
 - **Know:** what changes the fix's urgency or reach, such as a workaround or matching patterns elsewhere, and any assumption a verdict rests on. Beside a Confirmed verdict, name what would settle an Inconclusive one.
-- **Next:** when exactly one verdict is Confirmed, §4's options with one recommended; its last line applies that option, such as `/implement <option>`. Several Confirmed verdicts collapse to one line applying each verdict's recommended option. With no Confirmed verdict, an **Inconclusive** one names what would settle it, then `/verify-issue <claim>` once supplied. Omit Next when every verdict is **Not an issue**.
+- **Next:** when exactly one verdict is Confirmed, show §4's options; use the Handoff contract for any recommendation and closing command, such as `/implement <option>`. For several Confirmed verdicts, point at their options. Close with one line applying them when each has a selected, permitted recommended, or sole option; otherwise ask under §4. With no Confirmed verdict, an **Inconclusive** one names what would settle it, then `/verify-issue <claim>` once supplied. Omit Next when every verdict is **Not an issue**.
