@@ -38,7 +38,7 @@ Then read what the brief needs beyond the report:
 - `goals.md`: the full Goals list by `G<n>`, including unresolved markers.
 - `result.md`: orient from `currentState`, then read the latest Step or Full Run. Capture every Blocked block and any Acceptance section verbatim. Read goal verdicts in Reconciliation entries too; use the latest verdict by ID across Acceptance and Reconciliation. Capture the most recent In review section verbatim as the active pending list; skip earlier, superseded ones (`./references/workflow/task-lifecycle.md` § *Companion result file*). Treat the digest as derived, unverified metadata. Ignore its legacy Status header (`./references/workflow/task-lifecycle.md` § *`result.md` — no status field*).
 - `CONTEXT.md`: the Domain header, Open Questions, and dated decision anchors cited by current guidance.
-- `plan.md`: the next step's Due, Lead time, and touched paths, plus Open Questions and cited dated decision anchors. Take status and goal-file state from the report.
+- `plan.md`: the next step's `**Depends on:**` line, Due, Lead time, and touched paths, plus Open Questions and cited dated decision anchors. Take status and goal-file state from the report.
 - `ticket.md`, when present: the ask and acceptance criteria.
 - `observations.md`, when present: dated cached observations (`./references/workflow/task-observations.md`). Absence is normal. <!-- cold -->
 
@@ -111,7 +111,7 @@ Print the template to chat; its closing Handoff follows `./references/workflow/u
 
 - Step <N> — <title>
     - **Verify:** <criterion>
-    - **Depends on:** <prior steps>
+    - **Depends on:** <prior step numbers, a sibling task or one of its steps, or "none", as the plan writes it>
     - **Due / Lead time:** <when set>
     - **Touches:** <when set>
 

@@ -22,4 +22,4 @@
 - [ ] **What:** <one-sentence change>
 - **Verify:** <how to confirm>
 - **Goal:** <goal ID(s) this step delivers, or `none (infra/refactor)`>
-- **Depends on:** <prior step numbers, or "none">
+- **Depends on:** <prior step numbers, a sibling task or one of its steps that this step waits on, named by the sibling's folder name as `<folder>` or `<folder> Step <n>`, or "none">
