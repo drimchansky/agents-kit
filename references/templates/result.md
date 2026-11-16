@@ -8,7 +8,7 @@
 ## Current state
 _Updated: YYYY-MM-DD_
 - **Status:** executing — <one line: where things stand; for done, distinguish accepted scope from later confirmed delivery>
-- **Pointers:** <branch `…`, PR #… (url), SHA …, ticket …, plus the `SHA <sha> (recorded YYYY-MM-DD)` watermark entry when one is present — or "none yet">
+- **Pointers:** <branch `…` (base `…`), PR #… (url), SHA …, ticket …, plus the `SHA <sha> (recorded YYYY-MM-DD)` watermark entry when one is present — or "none yet">
 - **Next:** <one current action, or `none`; refresh after confirmed delivery changes even when plan Status is done>
 
 ---
@@ -30,7 +30,7 @@ _Updated: YYYY-MM-DD_
 
 **Sources:** <official-doc URLs grounding framework-specific code in this step, plus any pattern shipped without one and why; otherwise omit>
 
-**Executed:** <any explicit engine selection, and how this step deviated from the default launch; otherwise omit>
+**Executed:** <`verification-only continuation` for that path; otherwise any explicit engine selection, and how this step deviated from the default launch; otherwise omit>
 
 **Deviations from plan:** <if any — what differed and why; otherwise omit>
 

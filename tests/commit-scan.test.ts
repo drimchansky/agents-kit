@@ -383,6 +383,11 @@ test("the Pointers line yields the watermark, the branch, and whether the branch
     branch: "feat/x",
     branchRemoved: true,
   });
+  assert.deepStrictEqual(parsePointers(pointers("branch `feat/x` (removed 2026-08-30; merged at abc1234)")), {
+    watermark: null,
+    branch: "feat/x",
+    branchRemoved: true,
+  });
   assert.deepStrictEqual(parsePointers("# Result: fixture\n"), {
     watermark: null,
     branch: null,

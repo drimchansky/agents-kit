@@ -65,7 +65,9 @@ Both directions judge ticket/group edits (`./task-store.md` § *Shared group con
 
 ## Strengthen only on verified evidence
 
-Both directions may check steps, mark goals met, or advance to-do→executing, executing→done/in-review, and in-review→done.
+Both directions may check steps that no commit record covers, mark goals met, or advance to-do→executing, executing→done/in-review, and in-review→done.
+
+A commit record covers a step when it follows the step's latest result section in `result.md`. Count the latest `Final implementation commit` record and each `Checkpoint after Step <m>` record with a `**Commit:**` line. Step `<m>` must be that step or a later step in plan order. Work missing from every such record's commit, such as a session edit or a newer nominating commit, leaves the step uncovered. After a covered step's verification passes, leave it unchecked and flag **Needs work** naming `implement-task`. `implement-task` checks it through `./implement-task-edges.md` § *Verification-only continuation*. Keep the plan out of `done` until that step is checked.
 
 Re-prove nominated claims in-session: full unit outcomes (`./execution-loop.md` § *Two verification tiers*) or goal acceptance, using resolved-domain verification.md (`../engineering/verification.md` for code). Findings/conversational claims are not proof. Flag unverifiable claims without advancement.
 

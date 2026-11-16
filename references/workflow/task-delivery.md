@@ -17,6 +17,8 @@ Treat a declaration absent from both files as absent. Branch names, history, and
 
 **Which repository.** Apply `./reconciliation-commits.md` § *The scan*: project-local `.agents/tasks/` work uses its containing repository; externally stored tasks use the session's repository. The task folder's location alone does not identify the implementation repository (`./task-store.md`, `./context-schema.md`). Ask when multiple roots remain plausible.
 
+A read of the branches or commits an externally stored task records needs a repository holding that work. Without a `` branch `<branch>` `` entry on the task's `result.md` Current state `**Pointers:**`, a resolved session repository serves. With branch entries, the session's repository must hold one of them. It holds a live entry when `git rev-parse --verify --quiet refs/heads/<branch>` exits 0. It holds an entry marked `(removed …)` when `git cat-file -e <sha>^{commit}` finds its `merged at <sha>` commit. Ask the user for the task's repository when no session repository resolves, or when the task has branch entries and the session's repository holds none. Ask once per task in a session, and reuse the answer for that task's later reads. An answer that names no Git repository leaves the task's repository unresolved.
+
 **When it fires.** At execution start, require engineering domain, a resolved Git repository (`git rev-parse --git-dir` succeeds), and at least one plan-named path existing inside it. Containment without existence is insufficient.
 
 - Non-engineering or no repository: skip silently and continue on the invoked checkout/folder. Record no pointer or degrade.
@@ -36,7 +38,7 @@ Before failed recovery falls back onto `<default-branch>`, apply the continue-or
 git worktree add -b <branch> <main-checkout-path>.worktrees/<slug> <base>
 ```
 
-Announce branch, path, and base as creation happens. Add `` branch `<branch>` `` to result Current-state Pointers without replacing its existing identifiers (`./one-home.md`, `./reconciliation-commits.md` § *The watermark*). Derive the worktree path; record no separate path pointer.
+Announce branch, path, and base as creation happens. Add `` branch `<branch>` (base `<base>`) `` to result Current-state Pointers without replacing its existing identifiers (`./one-home.md`, `./reconciliation-commits.md` § *The watermark*). Write `<base>` as the name of the branch it starts from, without a remote prefix such as `origin/`. Add `` branch `<branch>` `` alone when the branch existed before this run or its base is not a branch. Derive the worktree path; record no separate path pointer.
 
 `scripts/commit-scan.ts` carries the branch-entry shape, a sanctioned copy per `references/maintenance/repository.md` § *Consumer lists*.
 

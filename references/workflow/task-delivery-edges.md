@@ -35,8 +35,18 @@ At finalization, resolve the actual worktree path by its recorded branch using t
 
 Require both predicates:
 
-- **merged**: accept the first successful proof in order: observed PR state `MERGED` from `gh pr view <branch> --json state`; branch ancestry in freshly fetched `origin/<default-branch>`; or patch equivalence of every branch commit in that fetched ref. For ancestry run `git fetch origin <default-branch>`, then `git merge-base --is-ancestor <branch> origin/<default-branch>`. For patch equivalence use `git cherry origin/<default-branch> <branch>` and require no `+` lines. Resolve the default branch under `./task-delivery.md` § *Branch and worktree creation*. Neither `git branch --merged` nor the local default branch substitutes. A multi-commit squash without readable merged PR state may remain unproved; refuse it.
+- **merged**: accept the first successful proof in order: merged PR, branch ancestry, or patch equivalence of every branch commit. For the PR proof, read `gh pr view <branch> --json number,state,mergeCommit,headRefOid`. Accept `MERGED` only when the **Head check** below on `<branch>` passes, so `<headRefOid>` holds the branch's tip. A failed read, another state, or a failed head check gives no PR proof. Without PR proof, run `git fetch origin <default-branch>`. Then try **Ancestry** and then **Patch equivalence** below on `<branch>`, with freshly fetched `origin/<default-branch>` as `<target>`. Retain `<sha>` from the successful proof for the removed marker. For the merged-PR proof, use `mergeCommit.oid`. For ancestry, use the branch tip SHA that `git rev-parse <branch>` prints before deletion. For patch equivalence, use the freshly fetched `origin/<default-branch>` commit the proof ran against. Resolve the default branch under `./task-delivery.md` § *Branch and worktree creation*. Neither `git branch --merged` nor the local default branch substitutes. A multi-commit squash without readable merged PR state may remain unproved; refuse it. When the merged predicate fails after the PR proof's head check failed on a missing PR head, give the missing-PR-head refusal under **Missing PR head** below.
 - **clean**: in the resolved worktree, require empty `git status --porcelain` and empty `git log --oneline <branch> --not --remotes`. This excludes staged, unstaged, untracked, and unpushed work.
+
+The merge proofs below test a commit `<commit>`, written as a branch or a SHA. Ancestry and patch equivalence test it against a target ref `<target>`.
+
+**Head check.** This check proves that the PR head `<headRefOid>` holds `<commit>`. First test `git cat-file -e <headRefOid>^{commit}`. When that exits 0, require `git merge-base --is-ancestor <commit> <headRefOid>` to exit 0. When it exits non-zero, read `gh api repos/{owner}/{repo}/compare/<tip>...<headRefOid> --jq .status`. Take `<tip>` as `<commit>` for a SHA, or as the SHA `git rev-parse <commit>` prints for a branch. Accept `identical` or `ahead`. Any other exit or status, or a failed read such as a 404, fails the head check.
+
+**Ancestry.** Require `git merge-base --is-ancestor <commit> <target>` to exit 0.
+
+**Patch equivalence.** First require `git rev-list --merges <target>..<commit>` to exit 0 and print nothing. A merge commit in that range gives no patch-equivalence proof. Then require `git cherry <target> <commit>` to exit 0 and print no `+` lines.
+
+**Missing PR head.** A head check fails on a missing PR head when `git cat-file -e <headRefOid>^{commit}` exits non-zero and the host query does not pass. Name that `<headRefOid>` as not available locally. Tell the user to fetch `refs/pull/<n>/head`, with `<n>` from the PR read's `number`.
 
 Before removing anything, preflight `git branch -d`'s containment from the main checkout: `git merge-base --is-ancestor <branch> <upstream, else HEAD>`. This differs from the merged predicate; a newly created task branch may have no upstream. If containment fails, refuse the entire cleanup and leave branch and worktree together.
 
@@ -47,7 +57,7 @@ git worktree remove <resolved worktree path>
 git branch -d <branch>
 ```
 
-Never force worktree removal or replace `-d` with `-D`. Record the actual outcome. After successful removal, retain the branch identifier as `` branch `<branch>` (removed YYYY-MM-DD) `` in Current-state Pointers.
+Never force worktree removal or replace `-d` with `-D`. Record the actual outcome. After successful removal, retain `` branch `<branch>` (removed YYYY-MM-DD; merged at <sha>) `` in Current-state Pointers. Keep a recorded base as the marker's last item: `` branch `<branch>` (removed YYYY-MM-DD; merged at <sha>; base `<base>`) ``.
 
 `scripts/commit-scan.ts` matches this removed marker, a sanctioned copy per `references/maintenance/repository.md` § *Consumer lists*.
 
