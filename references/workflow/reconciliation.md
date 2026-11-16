@@ -15,7 +15,7 @@ The loader's proven identifier repair runs before this consent gate because it c
 
 An **obvious** fix needs no interpretation, alternatives, or invented annotation. A **judged** finding admits several defensible edits. Apply evidence-settled facts, prior decisions, and routine details within agreed scope, recording rejected readings and the selection basis (§ *The record*).
 
-An unresolved impactful judged choice follows `../../CORE_RULES.md` § *Ask Before Assuming*, including its question and recommendation sequence. Hold its dependent edit, continue independent fixes, and list an unresolved choice under Not reconciled as **Awaiting decision**. Record the held choice at its home before the run ends: append it to the owning file's Open Questions (grounding in `CONTEXT.md`, execution in `plan.md`). Include its researched options, material trade-offs, any user preference already supplied, and a recommendation only when that sequence permits presenting one.
+An unresolved impactful judged choice follows `../../CORE_RULES.md` § *Ask Before Assuming*, including its question and recommendation sequence. Hold its dependent edit, continue independent fixes, and list an unresolved choice under Not reconciled as **Awaiting decision**. Record the held choice at its home before the run ends: append it to the owning file's Open Questions (grounding in `CONTEXT.md`, execution in `plan.md`). Include its researched options, material trade-offs, any user preference already supplied, and a recommendation with its reasons.
 
 Flag redesign when the repair exceeds the finding or reconciliation's write surface. List unapplied findings under Not reconciled:
 

@@ -193,7 +193,7 @@ A wake, and any job it launches, reports without a question; your next message t
 Use the host's interactive question tool when permitted and available; otherwise ask in chat and wait. Batch the questions within the tool's limits, and ask the rest in the next round.
 
 - Ask one question per revision. Name its `<proposal>@<revision>`, its target, and a one-sentence summary of the change.
-- Offer `Accept`, `Reject`, and `Defer` under `../../CORE_RULES.md` § *Ask Before Assuming*, including its question and recommendation sequence. When a recommendation is permitted, ground it in the recorded evidence and the body you read; recommend `Defer` when a cited source was unavailable.
+- Offer `Accept`, `Reject`, and `Defer`. Recommend one from the recorded evidence and the body you read, and give the reason. Recommend `Defer` when a cited source was unavailable.
 - An answer decides only the revision its question named. A free-text answer that picks none of the three records nothing; respond to it and ask again.
 - Record every answer of a round under § *Decisions* steps 1–3 before launching its first apply.
 

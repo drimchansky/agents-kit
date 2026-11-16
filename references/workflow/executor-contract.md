@@ -52,7 +52,7 @@ Use the same report for native and external execution. Report each unit in packe
 - `Sources consulted`: external sources, linked where available.
 - `Dependency problems`: material out-of-scope dependency problems met during the unit, including those a rerun cleared or a recovered incident overcame. Use the entry shape the packet supplies from `../../CORE_RULES.md` § *NOTICED BUT NOT TOUCHING*.
 - `Blockers or attempted scope escapes`: active denials, missing capabilities, host failures, outstanding required-check failures, and outside edits considered or made.
-- `Pending choices`: researched viable options, material trade-offs, any user preference already supplied, and the held dependent work. Include a recommendation only when `../../CORE_RULES.md` § *Ask Before Assuming* permits presenting one.
+- `Pending choices`: researched viable options, material trade-offs, any user preference already supplied, a recommendation with its reasons, and the held dependent work.
 - `Recovered incidents`: failures of a tool or step that no required check names, overcome within the authorized packet, with successful replacement evidence under `Verification`. A required check stays under `Blockers or attempted scope escapes` while the latest run of its unchanged packet definition fails. A failure that rerun cleared needs no entry beyond `Commands run` and the passing run under `Verification`. A dependency problem behind it still takes a `Dependency problems` entry.
 
 Keep security denials, scope concerns, pending choices, and outstanding required-check failures in their active fields, and dependency problems under `Dependency problems`. A recovered incident cannot conceal them.

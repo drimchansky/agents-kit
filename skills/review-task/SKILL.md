@@ -129,7 +129,7 @@ Launch as soon as Step 7 closes, while Step 8 runs. Use one read-only native pro
 Re-check each classification before adopting it:
 
 - **ANSWERED**: verify the citation settles the question. Move it to Answered by research. Clear its originating finding only if that same re-check disproves the finding. When the answer supplies repair content, retain the finding and cite the answered entry.
-- **OPTIONS**: verify every citation and trade-off; attach 2–3 grounded options to the surviving question. Present a recommendation only under `../../CORE_RULES.md` § *Ask Before Assuming*.
+- **OPTIONS**: verify every citation and trade-off; attach 2–3 grounded options and a reasoned recommendation to the surviving question.
 - **NO-EVIDENCE**: repeat the named source-and-location search enough to support absence. Mark a genuine preference question; invent no options.
 
 Promote surviving candidates into numbered Questions. Their originating sections retain the finding and cite its question number.
@@ -166,7 +166,7 @@ Group missing execution details by category. Include delivery-boundary candidate
 
 When research answered candidates, open with **Answered by research**: question, verified answer, and evidence locator. Retained originating findings cite these entries as repair evidence.
 
-Then number surviving questions. Each names its plan location, the implementation decision it affects, and researched options with trade-offs. Apply `../../CORE_RULES.md` § *Ask Before Assuming* to their presentation and any recommendation. For a genuine preference, explicitly mark that no available source bears on it.
+Then number surviving questions. Each names its plan location and the implementation decision it affects. A question with researched options also carries their trade-offs and a reasoned recommendation. For a genuine preference, explicitly mark that no available source bears on it.
 
 Close with `Question research:` per `./references/workflow/probe-shape-options-research.md` whenever any candidates existed, even if research answered them all.
 
