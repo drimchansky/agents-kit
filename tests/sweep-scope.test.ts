@@ -351,6 +351,15 @@ test("a research file with no status header is not a deliverable", () => {
   assert.deepStrictEqual(scope.deliverableCandidates, ["adr.md"]);
 });
 
+test("an approach comparison with a stray status header is not a deliverable candidate", () => {
+  const dir = fixture("deliverable-approaches");
+  writeFileSync(join(dir, "approaches.md"), `# Approaches: export format\n\n**Decision:** pending\n**Status:** draft\n\n## Current decision\n\nRecommend A1.\n`);
+  const scope = report(dir);
+  assert.strictEqual(scope.deliverable, "adr.md");
+  assert.deepStrictEqual(scope.deliverableCandidates, ["adr.md"]);
+  assert.deepStrictEqual(cited(scope, PUBLISHED).occurrences.map((occurrence) => occurrence.surface), ["deliverable-published"]);
+});
+
 test("fenced content is illustration, not a citation", () => {
   const dir = folder("fenced", {
     plan: `# Plan: fenced

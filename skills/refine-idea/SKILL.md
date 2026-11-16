@@ -29,7 +29,7 @@ The slug is 2–5 lowercase kebab-case words capturing the gist (`weekly-digest-
 
 ### What belongs in CONTEXT.md (and what doesn't)
 
-Keep framing, direction, assumptions, MVP scope, "Not Doing," external references, and standing decisions/constraints here. Put implementation notes, approach rationale, steps, and verification in the plan/result; acceptance in `goals.md`. Exclude conversation summaries and scratchpads.
+Keep framing, direction, assumptions, MVP scope, "Not Doing," external references, and standing decisions/constraints here. Put implementation notes, steps, and verification in the plan/result; acceptance in `goals.md`. An existing approach comparison stays at the home defined by `./references/workflow/task-approaches.md`; cite it without copying or revising it. Without one, planning owns implementation approach rationale. Exclude conversation summaries and scratchpads.
 
 ## Process
 

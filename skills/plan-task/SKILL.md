@@ -15,18 +15,18 @@ Write `goals.md` (acceptance) and `plan.md` (execution) into the resolved task f
 
 **Plan when** the work spans several areas or artifacts, approaches carry real trade-offs, the change hits shared pieces with wide blast radius, requirements need decomposition, or the change is hard to reverse.
 
-**Skip when** the change is single and obvious, the fix is already clear and localized, the user fixed the approach, or the task is smaller than its plan: say so and suggest implementing directly. An idea too vague to scope goes to `refine-idea` first. For code, `./references/engineering/planning.md` gives these heuristics in file counts.
+**Skip when** the change is single and obvious, the fix is already clear and localized, the user fixed the approach, or the task is smaller than its plan: say so and suggest implementing directly. A selection retained in `approaches.md` does not alone mean the user fixed the approach. Only real trade-offs, wide blast radius, requirements needing decomposition, or difficulty reversing the change override these exceptions. An idea too vague to scope goes to `refine-idea` first. For code, `./references/engineering/planning.md` gives these heuristics in file counts.
 
 ## Inputs
 
-The user's request with any constraints or prior discussion; a slug or destination path when given; the folder's `CONTEXT.md` and, when present, `ticket.md`. Their content is read-only here, apart from the loader's identifier repair in `CONTEXT.md` (§ *Invariants*).
+The user's request with any constraints or prior discussion; a slug or destination path when given; the folder's `CONTEXT.md` and, when present, `ticket.md` and `approaches.md`. Their content is read-only here, apart from the loader's identifier repair in `CONTEXT.md` (§ *Invariants*).
 
 ## Invariants
 
 - **One folder, fixed names.** `goals.md` and `plan.md` land beside `CONTEXT.md` in the folder Step 2 resolves, one plan per folder, no slug prefix.
 - **Slug.** The folder name is 2–5 lowercase kebab-case words capturing the gist (`add-csv-export`). Derive it; do not ask. Pick a more specific one when it collides with a different effort's folder.
 - **Multi-part efforts.** Assess independently useful, verifiable delivery seams before drafting steps (`./references/workflow/task-siblings.md`). Apply `./references/workflow/decomposition.md`'s one-task boundary when deciding whether to propose siblings through `decompose-task`; materialize a confirmed cut only after its proposal.
-- **Existing content.** An existing `CONTEXT.md` and hand-authored goal acceptance wording are read, not rewritten. The loader's proven identifier repair is the sole exception for `CONTEXT.md` and `goals.md` (`./references/workflow/task-authorship.md`). `ticket.md` is `/prepare-ticket`'s. Refine `plan.md` through conversation and write it once, unless the user asks for revisions in place. A requested in-place revision applies `./references/workflow/task-siblings.md` § *Revising a cited plan* before it removes, defers, or renumbers a step.
+- **Existing content.** Keep `approaches.md` byte-for-byte unchanged throughout this run. An existing `CONTEXT.md` and hand-authored goal acceptance wording are read, not rewritten. The loader's proven identifier repair is the sole exception for `CONTEXT.md` and `goals.md` (`./references/workflow/task-authorship.md`). `ticket.md` is `/prepare-ticket`'s. Refine `plan.md` through conversation and write it once, unless the user asks for revisions in place. A requested in-place revision applies `./references/workflow/task-siblings.md` § *Revising a cited plan* before it removes, defers, or renumbers a step.
 - **One home per fact.** Cite what the folder already records; the plan carries only this pass's deltas (`./references/workflow/one-home.md` § *One home per fact*).
 
 `goals.md` is a static acceptance input: a `## Goals` list of `G<n>` criteria, no description prose, no `**Status:**` field (`./references/workflow/task-goals.md`). Its proven identifier repair changes no acceptance wording. The reconcilers and `implement-task` may edit semantic content as a judged edit; the latter grades it in the next run (`./references/workflow/task-authorship.md`).
@@ -43,7 +43,7 @@ Resolve under `./references/workflow/task-layout.md` § *Discovery rules for ski
 
 For existing folders, apply `./references/workflow/task-layout.md` § *Reading a resolved folder*, including pre-plan and explicit read-only handling. Report repair before drafting; ambiguous identities or failed repair cannot establish valid intake.
 
-Read `CONTEXT.md` and `ticket.md`. Surface a missing `./ticket.md` citation in chat rather than editing it in.
+Read `CONTEXT.md` and `ticket.md`. When `approaches.md` exists, read its current decision, criteria, unresolved questions, and cited decision evidence under `./references/workflow/task-approaches.md`. It remains optional. Surface a missing `./ticket.md` citation in chat rather than editing it in.
 
 Before Step 3, load inherited grounding under `./references/workflow/task-store.md` § *Shared group context*. It constrains goals, approach, and steps without adding requirements. Cite each inherited fact's group file in References, Exploration Findings, or Approach (`./references/workflow/context-schema.md`).
 
@@ -70,12 +70,18 @@ Lead each goal with the benefit or observable behavior for a user, caller, or op
 
 Explore before designing, per the domain's exploration guide (`./references/engineering/exploration.md` for code): prior work to model on, blast radius, existing constraints. Confirm what `CONTEXT.md` settles still holds; add `## Exploration Findings` only for this pass's deltas and cite CONTEXT for the rest.
 
+When an approach comparison exists, verify its selected option against current sources and inherited constraints during exploration. Record new evidence without changing its history.
+
 ### 5. Evaluate Approaches
 
-Compare viable approaches, including ones the user may not have considered, and recommend one with its reasons. Weigh alignment with existing patterns, minimum complexity, risk and reversibility, and effort, a line per axis.
+With `approaches.md`, apply `./references/workflow/task-approaches.md` § *Other readers and writers*. A selected choice produces a citation to its existing dated decision in `## Approach`, with only plan-time refinements. Do not repeat the comparison or copy its rationale.
+
+A pending comparison, an open approach-wait entry in `CONTEXT.md` (`./references/workflow/task-approaches.md` § *Approach-wait entries*), or material evidence contradicting a selected choice holds this run under that section; § *Output* gives its ending. Independent clarification may continue. Preserve a contradicted selection and present the evidence; never silently choose a replacement.
+
+Without a comparison record, compare viable approaches, including ones the user may not have considered, and recommend one with its reasons. Weigh alignment with existing patterns, minimum complexity, risk and reversibility, and effort, a line per axis.
 
 Take unresolved impactful approach choices through `../../CORE_RULES.md` § *Ask Before Assuming*, even when goals are clear.
-When an approach decision is needed, `## Approach` cites CONTEXT's `## Recommended Direction` if present and records only plan-time refinements.
+Without a comparison record, when an approach decision is needed, `## Approach` cites CONTEXT's `## Recommended Direction` if present and records only plan-time refinements.
 
 ### 6. Define Scope
 
@@ -117,7 +123,7 @@ Only risks specific to this task: the concrete scenario, its likelihood given ex
 
 ## Scaling Plan Depth
 
-Step 3 and Step 5's unresolved-choice gate run at every depth.
+Step 3 and Step 5's unresolved-choice gate run at every depth. So does Step 5's `approaches.md` handling: citing a selected decision and holding the run on a pending comparison, an open approach-wait entry, or a contradicted selection.
 
 - **Medium** (small, clear pattern): Steps 1–4 and 6–10, with Step 5 reduced to its gate: no comparison, but an impactful approach choice the exploration surfaces is still asked; explore only the touched files; scope as the partition plus boundaries; risks only where a step carries the mitigation; open questions only where one gates a step.
 - **Large** (bigger, some ambiguity): all steps, moderate detail.
@@ -129,7 +135,7 @@ For code, `./references/engineering/planning.md` gives file-count proxies.
 
 **`goals.md`**: copy `./references/templates/goals.md`; `(external)` and `_(unresolved: …)_` are its optional bullet glosses.
 
-**`plan.md`**: copy `./references/templates/plan.md`, adapting the layout to task size. Its link-headers point at `./CONTEXT.md` and `./goals.md`. When the folder holds a ticket, add `**Ticket:** [./ticket.md](./ticket.md)`. A doc task's `**Deliverable:**` names the file `./references/workflow/doc-task-files.md` assigns. Keep `**Result:** not yet started` until execution creates `result.md`. Add `## Exploration Findings`, `## Approach`, `## Risks`, and `## Open Questions` only when they contain this pass's content. A settled choice's evidence takes the dated decision heading in `./references/workflow/context-schema.md` § *Field notes*. Omit empty optional fields, sections, and literal template prompts.
+**`plan.md`**: copy `./references/templates/plan.md`, adapting the layout to task size. Its link-headers point at `./CONTEXT.md` and `./goals.md`. When the folder holds a ticket, add `**Ticket:** [./ticket.md](./ticket.md)`. A doc task's `**Deliverable:**` names the file `./references/workflow/doc-task-files.md` assigns. Keep `**Result:** not yet started` until execution creates `result.md`. Add `## Exploration Findings`, `## Approach`, `## Risks`, and `## Open Questions` only when they contain this pass's content. A choice already retained in `approaches.md` keeps its original dated anchor; cite it without copying history. Other settled choices' evidence takes the dated decision heading in `./references/workflow/context-schema.md` § *Field notes*. Omit empty optional fields, sections, and literal template prompts.
 
 Place each Step 8 checkpoint after the step it follows, under a `### Checkpoint after Step N` heading where N is that step's number. Beneath it, list each end-to-end outcome as a plain bullet without a `- [ ]` checkbox. Keep that exact heading: `task-state`, `implement-task`, and checkpoint commits match it, so other wording silently drops the gate.
 
@@ -143,3 +149,9 @@ After writing both files, close the chat with the Handoff block (`./references/w
 - **Know:** the task's handoff token, unresolved loader diagnostics, live-verification targets left pending, a missing `./ticket.md` citation, and an answer to a CONTEXT open question that awaits a reconciler.
 - **Awaiting you:** goals marked `_(unresolved: …)_` and `## Open Questions` entries that gate a step, pointing at their files.
 - **Next:** `/review-task` for a Large or Complex plan, or one with integration points, shared changes, or new patterns; `/implement-task` otherwise. Both resolve the session's task, so the command prints bare and Know carries the handoff token (`./references/workflow/user-facing-messages.md` § *Blocks*).
+
+A run that Step 5 holds writes no `plan.md` (`./references/workflow/task-approaches.md` § *Other readers and writers*). It may write `goals.md` once Step 7 selects the one-task boundary (Step 3). Close it with the same Handoff block, changing three entries:
+
+- **Done:** `goals.md` only when this run wrote it, plus a scaffolded `CONTEXT.md` or the loader's applied repair.
+- **Awaiting you:** also the deciding questions in the current decision of `approaches.md`, the open approach-wait entry in `CONTEXT.md`, or the evidence contradicting its selection, pointing at its file.
+- **Next:** `/choose-approach`, which also resolves the session's task and prints bare.

@@ -32,6 +32,7 @@ A modal flag modifies one phase; scattered conditionals suggest a misclassified 
 
 ### Standalone protocols
 
+- `choose-approach` — source research, comparison, and engineer discussion interleave around one retained approach record; selection can remain pending.
 - `run-knowledge-session` — selection, reading, discussion, note corrections, and topic discovery form one learning session. Its stages interleave without complete sibling-skill phase outputs.
 - `squash-push` — captures one rewrite range and remote expectation for squashing and publishing. Both mutations depend on that inspected state, without a complete sibling-skill output between them.
 - `start-group` — the brief, the team status draft, change sets, and lifecycle hand-offs form one session on one task group, in the order the user asks. They interleave without complete sibling-skill phase outputs. A lifecycle skill the session starts runs inside that loop, not as a sequential phase.
@@ -56,9 +57,9 @@ Pass each phase's modal flags through unchanged, except the `review-code-triage-
 - `--amend` (`commit`) — replace the latest commit, changing message selection, state guards, and verification within the commit workflow. The long form matches Git and avoids its staging flag `-a`.
 - `-e native|codex|claude` (`implement`, `implement-task`, `fix-findings`) — select the write executor within execution and recovery (`./executor-routing.md` § *Selection*). It changes no deliverable or authorization gate.
 - `-1` (`fix-findings`) — coalesce every concern batch into one health boundary and one commit (`skills/fix-findings/SKILL.md` § *Integrated health boundary*). Inside execution, it changes where the boundary runs and how many commits the run makes.
-- `-x` (`review-code`, `review-docs`, `review-task`) — use a cross-vendor read-only probe (`./probe-cross-check.md`), merging before verdicts finalize. `review-code` accepts `-x [N]` and launches N probes; the other two take no count. A composite passes it to its review phase. Document one Flags entry, one launch line, and one `Cross-check:` output line per skill. `review-code-triage-verify` suppresses the review's standalone reviewer settle and, with `-x`, the probe's verify-before-adopt step. Its phase 3 verifies every candidate (`./reviewer-contract.md` § *The settle*).
+- `-x` (`review-code`, `review-docs`, `review-task`, `choose-approach`) — use a cross-vendor read-only probe (`./probe-cross-check.md`), merging before verdicts or comparisons finalize. `review-code` and `choose-approach` accept `-x [N]`: bare requests one, omission none. The two grounding reviews take no count. A composite passes it to its review phase. Document one Flags entry, one launch line, and one `Cross-check:` output line per skill. `review-code-triage-verify` suppresses the review's standalone reviewer settle and, with `-x`, the probe's verify-before-adopt step. Its phase 3 verifies every candidate (`./reviewer-contract.md` § *The settle*).
 - `-d` (`review-code`) — draft a PR title and description body from the review's existing change map.
-- `-n N` (`review-code`) — launch N independent reviewers within the review pass and pool returns before finalizing findings.
+- `-n N` (`review-code`, `choose-approach`) — vary independent native passes within one comparison or review. Review-code pools reviewers before findings; choose-approach defaults to one researcher and consolidates options before discussion.
 - `-f` (`proofread`) — verify facts during analysis, merging incorrect ones into its errors list before finalization. Render checked claims through `skills/proofread/SKILL.md` § *Output Format*.
 
 ## Adding a behavior

@@ -6,7 +6,7 @@ Read the applicable branch when triggered. `implement-task §N` refers to that s
 
 First check placement. Slug discovery may resolve Archive (`./task-layout.md`). If archived, stop and have the user move the folder out with manual `mv`, then rerun; archiving is one-way.
 
-Otherwise take the registered `skipped → executing` edge and resume normally. Preserve existing results and append new sections under implement-task §5.
+Otherwise take the registered `skipped → executing` edge (`./task-lifecycle.md` § *Status values*). Create a missing `result.md` under implement-task §3; preserve existing results and append the revival record under §5. Point the plan's `**Result:**` line at `./result.md`. Rewrite `## Current state` under §5 for the revived plan and any approach hold before returning to §3's reload.
 
 ## Activating a backlogged task
 

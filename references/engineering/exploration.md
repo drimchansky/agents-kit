@@ -1,6 +1,6 @@
 # Engineering Exploration
 
-How to explore reality when the domain is code: the recipe the neutral spine loads before planning (`plan-task`), grounding a review (`review-task`), grounding idea variations (`refine-idea`, via `../workflow/ideation.md`), re-verifying shipped claims on resume (`resume-task`), or grounding a standalone exploration (`explore`).
+How to explore reality when the domain is code: the recipe the neutral spine loads before planning (`plan-task`), comparing implementation approaches (`choose-approach`), grounding a review (`review-task`), grounding idea variations (`refine-idea`, via `../workflow/ideation.md`), re-verifying shipped claims on resume (`resume-task`), or grounding a standalone exploration (`explore`).
 
 ## Ground before designing
 

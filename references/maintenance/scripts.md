@@ -124,6 +124,8 @@ This module holds machine-readable copies of the task values whose prose homes `
 
 `holdsRoleFile` accepts names rather than a path, avoiding duplicate reads when callers already listed the directory. Suffix matching excludes the bare suffix itself, which is a dotfile rather than a role file.
 
+`NON_DELIVERABLE_FILES` holds the fixed-name role files outside the recognition set (`references/workflow/task-layout.md` § *One task, one flat folder*). Goal-structure's deliverable exemption and sweep-scope's candidate filter both exclude them beside `holdsRoleFile` matches. Separate copies let the readers disagree on a file's role. An `approaches.md` with a stray Status header would then skip goal-reference diagnostics, although sweep-scope never sweeps it as the deliverable.
+
 `angledTargetText` is a shared helper, not a prose-home copy; its rationale is under § *`scripts/health-check.ts`*.
 
 ## `scripts/pr-comments.ts`

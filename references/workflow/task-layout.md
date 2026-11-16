@@ -1,6 +1,6 @@
 # Task Layout: Directories and Discovery
 
-Placement: `./task-destinations.md`; registry and group context: `./task-store.md`; lifecycle: `./task-lifecycle.md`. File contracts: `./one-home.md`, `./task-goals.md`, `./task-observations.md`, and `./doc-task-files.md`. Siblings: `./task-siblings.md`; filing: `./task-archiving.md` and `./task-backlog.md`.
+Placement: `./task-destinations.md`; registry and group context: `./task-store.md`; lifecycle: `./task-lifecycle.md`. File contracts: `./one-home.md`, `./task-goals.md`, `./task-observations.md`, `./task-approaches.md`, and `./doc-task-files.md`. Siblings: `./task-siblings.md`; filing: `./task-archiving.md` and `./task-backlog.md`.
 
 ## One task, one flat folder
 
@@ -14,6 +14,7 @@ The handoff token between skills is the bare slug wherever § *Discovery rules f
 .agents/tasks/<slug>/
 ├── ticket.md       # optional upstream ask
 ├── CONTEXT.md      # grounding
+├── approaches.md   # optional research and selection
 ├── goals.md        # acceptance
 ├── plan.md         # execution contract
 ├── observations.md # optional derived reference state
@@ -22,9 +23,9 @@ The handoff token between skills is the bare slug wherever § *Discovery rules f
 
 Use these exact role names and casing. Resolve files by role, not a typed stem. Link headers use `./CONTEXT.md`, `./goals.md`, `./plan.md`, and `./result.md`; the optional Ticket header uses `./ticket.md`. The result's first `##` section is Current state (`./task-authorship.md`); the log below its closing separator is append-only.
 
-**Recognition set.** A folder qualifies when it holds at least one file named `CONTEXT.md`, `goals.md`, `plan.md`, `result.md`, or `ticket.md`, or a legacy `*.plan.md`, `*.result.md`, `*.spec.md`, or `*.ticket.md`. `observations.md` alone does not qualify. A ticket-only or context-only folder qualifies; a folder holding none of the set does not. Report that absence rather than guessing. New work uses role names; `maintain` renames legacy forms.
+**Recognition set.** A folder qualifies when it holds at least one file named `CONTEXT.md`, `goals.md`, `plan.md`, `result.md`, or `ticket.md`, or a legacy `*.plan.md`, `*.result.md`, `*.spec.md`, or `*.ticket.md`. `observations.md` or `approaches.md` alone does not qualify. A ticket-only or context-only folder qualifies; a folder holding none of the set does not. Report that absence rather than guessing. New work uses role names; `maintain` renames legacy forms.
 
-`scripts/lifecycle-constants.ts` holds the recognition lists and membership test, a sanctioned copy per `references/maintenance/repository.md` § *Consumer lists*.
+`scripts/lifecycle-constants.ts` holds the recognition lists, membership test, and `NON_DELIVERABLE_FILES` (role files outside the recognition set). These are a sanctioned copy per `references/maintenance/repository.md` § *Consumer lists*.
 
 **Size budgets.** A folder holds at most **64 KB** of Markdown, excluding the ticket but including legacy files. Each `## Step`, `## Full Run`, or `## Reconciliation` result record holds at most **2 KB**. `maintain` surfaces both budgets as findings, not write refusals. An over-budget `## Reconciliation` record follows `./reconciliation.md` § *The record*. Trimming toward these budgets follows `./reconciliation-compaction.md` § *What may be collapsed*.
 
@@ -48,7 +49,7 @@ A token containing a path separator is a path; a bare kebab-case token is a slug
 
 **When no task was named:**
 
-- **resolve-or-create** (`refine-idea`, `plan-task`, `prepare-ticket`, `decompose-task`): derive a slug and check active, archived, and backlogged folders across every registered root and the canonical root before creating. A match is reported with its root, never worked around. Active means existing; Backlog means existing and planned in place (`./task-backlog.md`); archived-only asks whether to un-archive or start fresh. Creation destination still follows `./task-destinations.md`. `plan-task` given no argument takes the task this session established, as resolve-current-or-ask does, only when the request names no other work, and otherwise derives the slug from the request; the other members keep their argument semantics.
+- **resolve-or-create** (`refine-idea`, `choose-approach`, `plan-task`, `prepare-ticket`, `decompose-task`): derive a slug and check active, archived, and backlogged folders across every registered root and the canonical root before creating. A match is reported with its root, never worked around. Active means existing; Backlog means existing and planned in place (`./task-backlog.md`); archived-only asks whether to un-archive or start fresh. Creation destination still follows `./task-destinations.md`. `plan-task` and `choose-approach` given no argument take the task this session established, as resolve-current-or-ask does, only when the request names no other work, and otherwise derive the slug from the request; the other members keep their argument semantics.
 - **resolve-current-or-ask** (`implement-task`, `resume-task`, `reconcile-task`, `review-task`, `archive-task`, `backlog-task`): use the task already established in this session, when exactly one was. Otherwise list active tasks across all roots, grouped by label, and ask.
 
 Archived and backlogged tasks are excluded from default listings. Tasks outside canonical/registered roots require paths. So do tasks under groups in an unregistered canonical root: its shallow discovery cannot resolve their slugs or list them. Register the root to enable recursive discovery.
@@ -59,5 +60,5 @@ Archived and backlogged tasks are excluded from default listings. Tasks outside 
 2. An explicit read-only request replaces that invocation with `node <kit-root>/scripts/task-state.ts <task-dir>` throughout the run, including nested skills. Report `structure.diagnostics` and do not treat unreliable coverage as complete. This read-only command needs a plan; for pre-plan goals, inspect definitions and task-local references against `./task-goals.md` manually without writing. The entire invocation writes no task artifact.
 3. Read `goals.md` in full and `currentState` from `state` (or the read-only report) when a plan exists. Use the same post-repair state for the run's initial assessment; later phases of a composite must not silently repair and replace its subject.
 4. Read applicable `GROUP_CONTEXT.md` files root-to-task under `./task-store.md` § *Shared group context*, before task-local grounding. No registered containing root or no files means no inherited grounding. A `## Decisions` line in those files may point at a `Decision #N` in a `DECISIONS.md` instead of stating its rule. Read each pointed-at decision as inherited grounding, also before task-local grounding. Resolve the line's root-relative `DECISIONS.md` path against the selected root. Read only the pointed-at decisions, not the whole file. Name a pointed-at file or decision that cannot be read and why, and treat grounding as incomplete.
-5. Read only needed sections: context's Domain header and relevant prose; plan Scope and the current step; result Blocked/In review when status requires them. Do not open whole files merely to reach these sections.
+5. When `approaches.md` is present, read the current decision and its cited evidence where the task's direction matters (`./task-approaches.md`). Read only needed sections: context's Domain header and relevant prose; plan Scope and the current step; result Blocked/In review when status requires them. Do not open whole files merely to reach these sections.
 6. If kit root, script, or Node is unavailable, report that and read plan, goals, context, and result in full, in that order. Reconstruct structural diagnostics manually before relying on coverage. Still load step 4's group grounding from disk before the task's context, pointed-at decisions included.

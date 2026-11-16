@@ -23,9 +23,9 @@ Apply `./references/workflow/execution-loop.md`, the resolved domain's execution
 
 ## When to Use
 
-Use when a plan would cost more than a clear, small change; apply the domain's planning.md test (`./references/engineering/planning.md` § *When a code change warrants a plan* for code).
+Use when a plan would cost more than a clear, small change. Apply the domain's planning.md test to each framed item, not to the whole request (`./references/engineering/planning.md` § *When a code change warrants a plan* for code).
 
-An existing task uses `implement-task`. Multiple modules, competing approaches, or requirements needing decomposition use `plan-task`. Assessment without implementation uses `review-code`.
+An existing task uses `implement-task`. Use `plan-task` for an item when the planning test requires a plan after applying its Skip-when precedence. Assessment without implementation uses `review-code`.
 
 ## Process
 
@@ -36,7 +36,7 @@ State each requested item and its verify criterion before implementation. The fr
 - Optionally declare per-item file/directory surfaces when independent parallel work is plausible. Undeclared items delegate serially.
 - Keep adjacent work under Noticed but not touching (`../../CORE_RULES.md` § *NOTICED BUT NOT TOUCHING*).
 - Ask about ambiguity affecting scope; otherwise state the interpretation. Show the frame before work beyond one obvious change.
-- Escalate to plan-task when framing spans several modules, requires approach comparison, or exceeds a handful of items.
+- Escalate to plan-task when the planning test requires it (§ *When to Use*) or the frame exceeds a handful of items.
 
 The frame is this skill's proposal. A model-invoked run (`./references/workflow/skill-conventions.md` § *The invocation gate*) asks it as one question naming the items and the executor edits they will make, and edits and launches nothing before the confirmation; a user-invoked run has passed it.
 

@@ -1,11 +1,12 @@
 # The `-x` Cross-Check
 
-The opt-in cross-vendor second pass the review skills accept. The probe contract and the merge contract are `./agent-fanout.md`; the engines and their launch recipes are `./probe-engines-cross-vendor.md`; the prompt is the citing skill's own shape (`./probe-shape-grounding.md` for a grounding pass, `./probe-shape-cold-review.md` for a cold review).
+The opt-in cross-vendor second pass the review skills and `choose-approach` accept. The probe contract and the merge contract are `./agent-fanout.md`; the engines and their launch recipes are `./probe-engines-cross-vendor.md`; the prompt is the citing skill's own shape (`./probe-shape-grounding.md` for a grounding pass, `./probe-shape-cold-review.md` for a cold review, `./probe-shape-approach-research.md` for an approach-research pass).
 
-With `-x`, run probes on the **cross-vendor engine** (host Claude Code → `codex`; host Codex → `claude`), each an independent second pass over the skill's own object. `review-code` runs N probes for `-x N` and one for bare `-x`. `review-task` and `review-docs` take no count and always run exactly one. Off by default. Every other probe fan-out stays `native`.
+With `-x`, run probes on the **cross-vendor engine** (host Claude Code → `codex`; host Codex → `claude`), each an independent second pass over the skill's own object. `review-code` and `choose-approach` run N probes for `-x N` and one for bare `-x`. `review-task` and `review-docs` take no count and always run exactly one. Off by default. Every other probe fan-out stays `native`.
 
 What each probe checks, per skill:
 
+- **`choose-approach`:** independent approach research from the same common brief (`./probe-shape-approach-research.md`), supplementing native passes. Its skill validates counts and task inputs. Pool equivalent options under the dedicated prompt's synthesis before merging with native research. Its native and inline coverage stays separate. These rules change no review consumer's merge or outcome grammar.
 - **`review-task`:** independent grounding of the plan's reality claims, verdict per claim.
 - **`review-code`:** a cold second review of the resolved object, findings with severity.
 - **`review-docs`:** independent grounding of the doc's verifiable claims, verdict per claim.
