@@ -18,7 +18,7 @@ Sections end at the next heading of equal or shallower level. Except plan steps,
 
 `planStatus` comes from `scripts/task-state.ts`. Its `compactionSections` selects the active pause: latest Blocked section for blocked, latest In review for in-review, none otherwise.
 
-`deliverable` resolves under `../workflow/doc-task-files.md`, ignoring the plan's optional Deliverable header. Candidates are Markdown files other than recognized role files and `observations.md`, with a Status line above the first `##` heading. Ignore fences and blockquotes. `deliverableCandidates` names all matches; multiple matches yield null deliverable and a stderr warning, not a guessed selection. Sweep only the resolved deliverable's Published lines.
+`deliverable` resolves under `../workflow/doc-task-files.md`, ignoring the plan's optional Deliverable header. Candidates are Markdown files other than recognized role files, `observations.md`, and `approaches.md`, with a Status line above the first `##` heading. Ignore fences and blockquotes. `deliverableCandidates` names all matches; multiple matches yield null deliverable and a stderr warning, not a guessed selection. Sweep only the resolved deliverable's Published lines.
 
 **The skip rules.** Accept `<scheme>://` URLs, excluding `file://` and loopback hosts `localhost`, `127.0.0.1`, `[::1]`, `0.0.0.0`. Read Markdown targets and bare URLs; deduplicate within each line.
 

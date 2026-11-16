@@ -39,6 +39,7 @@ interface HealthReport {
 
 interface SweepReport {
   readonly planStatus: string | null;
+  readonly deliverableCandidates: readonly string[];
   readonly citations: readonly { readonly url: string; readonly occurrences: readonly { readonly surface: string }[] }[];
 }
 
@@ -173,3 +174,41 @@ test("an in-review result sweeps the links its In review section awaits", () => 
     ["result-pause"],
   );
 });
+
+for (const decision of ["pending", "selected"]) {
+  test(`a ${decision} comparison preserves task, deliverable, and sweep boundaries`, () => {
+    const root = mkdtempSync(join(TEST_ROOT, `comparison-${decision}-`));
+    const task = join(root, "task");
+    const alone = join(root, "comparison-only");
+    mkdirSync(task);
+    mkdirSync(alone);
+    for (const file of ["CONTEXT.md", "goals.md", "plan.md"]) {
+      writeFileSync(join(task, file), readFileSync(join(MINIMAL_DIR, file)));
+    }
+    const source = "https://example.invalid/approach-source";
+    const comparison = fill(template("approaches.md")
+      .replace("**Decision:** pending", `**Decision:** ${decision}`)
+      .replace("<source links and observations; distinguish inference>", `[Source](${source}) describes the existing cache.`)
+      .replace("<recommendation with its reasons and unresolved deciding questions; after a reopen, also cite the dated reopen record below; once selected, cite the dated decision below>", decision === "pending"
+        ? "Recommend A1 because it keeps the existing cache. Does compatibility outweigh maintenance cost for this task?"
+        : "Selected A1; see [the decision](#decision--2026-01-05-cache-choice)."))
+      + (decision === "selected" ? "\n## Decision — 2026-01-05: Cache choice\n\nThe engineer selected A1 to retain compatibility. No other viable option was found.\n" : "");
+    assert.ok(comparison.includes(source));
+    assert.ok(comparison.includes(decision === "pending" ? "Recommend A1 because it keeps the existing cache." : "#decision--2026-01-05-cache-choice"));
+    assert.match(comparison, new RegExp(`^\\*\\*Decision:\\*\\* ${decision}$`, "m"));
+    writeFileSync(join(task, "approaches.md"), comparison);
+    writeFileSync(join(alone, "approaches.md"), comparison);
+    const state = run<TaskState>(TASK_STATE, task);
+    assert.equal(state.structure.reliable, true);
+    assert.deepEqual(state.goalCoverage.uncoveredGoals, []);
+    const health = run<HealthReport>(HEALTH_CHECK, root);
+    assert.equal(health.scanned, 1);
+    assert.deepEqual(health.findings, []);
+    const sweep = run<SweepReport>(SWEEP_SCOPE, task);
+    assert.equal(sweep.planStatus, "to-do");
+    assert.deepEqual(sweep.deliverableCandidates, []);
+    assert.deepEqual(sweep.citations, []);
+    const rejected = spawnSync(process.execPath, [SWEEP_SCOPE, alone], { encoding: "utf8" });
+    assert.equal(rejected.status, 2);
+  });
+}

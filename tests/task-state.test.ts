@@ -470,6 +470,22 @@ test("ID-like vocabulary in the ticket or the deliverable is not a structural de
   assert.deepStrictEqual(report(dir).structure.diagnostics.map((item) => [item.code, item.file]), [["malformed-goal-reference", "notes.md"]]);
 });
 
+for (const file of ["approaches.md", "observations.md"]) {
+  test(`a stray status header leaves ${file} goal references diagnosed`, () => {
+    const text = "# Notes\n\n**Status:** draft\n\n## Findings\n\nOption A1 covers G9.\n";
+    const dir = folder(`stray-status-${file.replace(/\W/g, "-")}`, {
+      goals: "## Goals\n- G1 — first\n",
+      plan: "## Scope\n- delivered: G1\n## Steps\n### Step 1 — First\n- [ ] **What:** first\n- **Goal:** G1\n",
+    });
+    writeFileSync(join(dir, file), text);
+    writeFileSync(join(dir, "adr.md"), text);
+    assert.deepStrictEqual(report(dir).structure, {
+      reliable: false,
+      diagnostics: [{ code: "unknown-goal-reference", file, line: 7, detail: "G9" }],
+    });
+  });
+}
+
 test("structural validation covers duplicates, anchors, and every task Markdown reference", () => {
   const dir = folder("structural-references", {
     goals: "## Goals\n- G1 — first\n- G1 — conflicting first\n- G3 (external) — deferred\n",
@@ -1045,7 +1061,7 @@ test("commented goal bullets are neither definitions nor repair targets", () => 
 });
 
 test("repair leaves the ticket, deliverables, and supplementary documents unchanged", () => {
-  for (const file of ["ticket.md", "adr.md", "docs/notes.md"]) {
+  for (const file of ["ticket.md", "adr.md", "approaches.md", "docs/notes.md"]) {
     const dir = historicalRepairFolder(`repair-guarded-${file.replace(/\W/g, "-")}`);
     mkdirSync(join(dir, "docs"), { recursive: true });
     writeFileSync(join(dir, file), "Deliver G4a.\n");

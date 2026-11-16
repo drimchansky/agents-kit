@@ -53,7 +53,7 @@ Use assessment and sweep findings. References take `./reconciliation.md` § *Ann
 
 Route numbered Questions using assessment evidence under `./reconciliation.md` § *Consent model: findings apply, the record carries them*. Reuse the assessment's researched options. Apply evidence-settled answers at home and record declined options; leave unresolved impactful choices pending. Stay within findings. Disproved findings route nowhere.
 
-For a settled question, keep the original wording, options, and basis in dated history. Put only current guidance and a citation at its live home (`./one-home.md` § *One home per fact*). A to-do task without result keeps the dated decision anchor in context or plan; neither composite creates result solely for that decision.
+For retained approach decisions, use `./reconciliation.md` § *One home per fact* instead of copying comparison history. For other settled questions, keep the original wording, options, and basis in dated history. Put only current guidance and a citation at its live home (`./one-home.md` § *One home per fact*). A to-do task without result keeps the dated decision anchor in context or plan; neither composite creates result solely for that decision.
 
 - **Scope partition not total** — **judged**: use verified step reach and prior decisions to settle delivered/deferred placement. Leave an unresolved impactful partition choice pending. Retire only requirements dropped by ticket/context, under `./reconciliation.md` § *Grounding docs change on evidence, never silently*; repair retired-ID citations below.
 - **Ticket criterion maps to no goal** — **judged**: add a goal with the next free `G<n>`. Remove ticket criteria only on changed-ask evidence (§ *Write surface*), never because work is missing.
@@ -61,6 +61,7 @@ For a settled question, keep the original wording, options, and basis in dated h
 - **Vague or untestable Verify criterion** — **judged**: apply the assessment's rewrite; check only through verification (§ *Repairs weaken; advances go through the shared engine*).
 - **Gaps and needs-clarification steps** — **judged**: apply the assessment's answer within What/Verify or Scope.
 - **Goal quality findings** (`weak`/`vague-or-untestable`/`unresolved`) — **judged**: apply the suggested goal rewrite; drop resolved `_(unresolved: …)_`. Without a rewrite, flag for `plan-task`.
+- **Approach comparison ↔ plan drift** — **flag only** for selection or comparison changes, naming `choose-approach`. After its owner records a selection, cite that dated evidence for permitted plan corrections; route redesign to `plan-task`. Copy no historical comparison into result.
 - **CONTEXT ↔ goals / CONTEXT ↔ plan contradictions** — **judged**: prefer later evidence; rewrite Scope/steps, goals, or context. With no section change, annotate context Open Questions. Record the losing side; flag plan redesign for `plan-task`.
 - **Restated grounding** — **judged**: resolve diverged copies and their home (`./one-home.md` § *One home per fact*). Replace plan-side copies with citations, retaining plan-time deltas. Change context only when newer plan content supplies surviving grounding.
 - **Infeasible or conflicts-with-existing steps** — **flag only**, naming `plan-task`.

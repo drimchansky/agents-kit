@@ -9,6 +9,7 @@ export const TASK_MAX_KB = 64;
 export const RECORD_MAX_KB = 2;
 const ROLE_FILES: readonly string[] = ["CONTEXT.md", "goals.md", "plan.md", "result.md", "ticket.md"];
 const ROLE_SUFFIXES: readonly string[] = [".plan.md", ".result.md", ".spec.md", ".ticket.md"];
+export const NON_DELIVERABLE_FILES: ReadonlySet<string> = new Set(["observations.md", "approaches.md"]);
 
 export function holdsRoleFile(fileNames: readonly string[]): boolean {
   return fileNames.some((name) => ROLE_FILES.includes(name) || ROLE_SUFFIXES.some((suffix) => name.endsWith(suffix) && name !== suffix));

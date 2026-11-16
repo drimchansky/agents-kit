@@ -6,7 +6,7 @@ Engineering specifics for `plan-task`: how to slice code work into steps, size t
 
 **Plan when:** the task spans multiple files or modules; multiple viable approaches exist with meaningful trade-offs; changes affect shared code with wide blast radius; requirements are ambiguous and need decomposition; high-risk changes to critical paths.
 
-**Skip when:** single-file change with an obvious implementation; bug fix with a clear root cause and location; the user already specified the exact approach; the task is smaller than the plan would be.
+**Skip when:** single-file change with an obvious implementation; bug fix with a clear root cause and location; the user already specified the exact approach (a task's `approaches.md` selection does not count on its own); the task is smaller than the plan would be. Only the trade-off, wide-blast-radius, ambiguity, and high-risk Plan-when triggers override these entries.
 
 ## Evaluating approaches
 

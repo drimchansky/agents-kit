@@ -2,7 +2,7 @@
 import { readFileSync, readdirSync, realpathSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { angledTargetText, holdsRoleFile } from "./lifecycle-constants.ts";
+import { angledTargetText, holdsRoleFile, NON_DELIVERABLE_FILES } from "./lifecycle-constants.ts";
 import { carriesStatusHeader, markdownLines } from "./goal-structure.ts";
 import { compactionSections, slugAllocator, taskState } from "./task-state.ts";
 
@@ -11,7 +11,6 @@ const PLAN_FILE = "plan.md";
 const TICKET_FILE = "ticket.md";
 const RESULT_FILE = "result.md";
 const LEDGER_FILE = "observations.md";
-const DERIVED_ROLE_FILES: ReadonlySet<string> = new Set([LEDGER_FILE]);
 const USAGE = "usage: node scripts/sweep-scope.ts <task-dir>";
 
 const HEADING = /^#{1,6}[ \t]+(.+?)[ \t]*#*$/;
@@ -272,7 +271,7 @@ function scope(taskDir: string): SweepScope {
   if (!holdsRoleFile(names)) throw new Exit(2, `${taskDir} is not a task folder. ${USAGE}`);
 
   const deliverables = names
-    .filter((name) => name.endsWith(".md") && !holdsRoleFile([name]) && !DERIVED_ROLE_FILES.has(name))
+    .filter((name) => name.endsWith(".md") && !holdsRoleFile([name]) && !NON_DELIVERABLE_FILES.has(name))
     .sort()
     .map((file) => ({ file, text: readOptional(join(taskDir, file)) }))
     .filter((candidate): candidate is { file: string; text: string } =>

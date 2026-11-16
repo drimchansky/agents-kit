@@ -14,13 +14,13 @@ A **probe** is one self-contained, read-only question posed to a separate agent,
 - **Read-only, promised always, enforced where the engine can.** Probes verify by reading, never by mutating and never by running the project's build or suite. Never pass an engine's sandbox-bypass flags.
 - **Demand cited verdicts.** Require a locator with each verdict: `file:line` for file-backed claims, a stable source or record locator for external facts. A verdict that no evidence bears lists the sources and locations searched instead. An uncited answer is an opinion, not evidence.
 - **Evidence, not authority.** Weigh the answer and spot-check it where surprising. It assigns no verdict and overrides no session pass; the invoking skill owns its verdicts.
-- **Degrade gracefully.** Report a missing engine found before launch as `Cross-check: skipped (<reason>)`, and a dead probe the same way when it is the only probe. Among several `-x` probes, a dead probe is a drop and the completed probes stand; `./probe-cross-check.md` gives the line form. Either way, proceed on the session's own pass. A probe never blocks a skill, but slowness alone is not failure: wait on a probe still making progress per `./delegated-waiting.md` § *How to wait*. Skipping it is the user's call.
+- **Degrade gracefully.** Native approach research uses its skill's coverage and inline-fallback rules. For cross-checks, report a missing engine found before launch as `Cross-check: skipped (<reason>)`, and a dead probe the same way when it is the only probe. Among several `-x` probes, a dead probe is a drop and the completed probes stand; `./probe-cross-check.md` gives the line form. Either way, proceed on the session's own pass. A probe never blocks a skill, but slowness alone is not failure: wait on a probe still making progress per `./delegated-waiting.md` § *How to wait*. Skipping it is the user's call.
 - **Content leaves the machine.** A probe ships its prompt to the engine's vendor. Run a cross-vendor probe only on work the user already uses that vendor's CLI on; when in doubt, ask first.
 - **Scratch, not record.** Probe output lands in the probe's assigned scratch directory, never in the task folder. Result files record the merged outcome, not probe transcripts.
 
 ## Merge contract
 
-Compare the probe's answer against the session's own pass:
+Approach research uses `./probe-shape-approach-research.md` § *Synthesis* instead of the review-specific rules below. Other consumers compare the probe's answer against the session's own pass:
 
 - **Agreement** strengthens the evidence: cite it and move on.
 - **Contradiction is never silently dropped.** Re-check the spot before assigning the verdict; a confirmed contradiction becomes a finding. In `review-task`, a `CONTRADICTED` claim is evidence toward `conflicts with what exists` / `infeasible as stated`, and a `NOT FOUND` on a load-bearing reference is a gap.

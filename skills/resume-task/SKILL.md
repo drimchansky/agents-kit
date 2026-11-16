@@ -31,7 +31,7 @@ For a folder under Backlog, offer activation using `./references/workflow/implem
 
 ### 2. Load Artifacts
 
-Apply `./references/workflow/task-layout.md` § *Reading a resolved folder*, including current inherited group grounding. Report its repair, or `structure.diagnostics` from a read-only load, before using the report. When no readable `plan.md` exists, say so and suggest `plan-task`. Do not present coverage as complete when structure is unreliable.
+Apply `./references/workflow/task-layout.md` § *Reading a resolved folder*, including current inherited group grounding. Report its repair, or `structure.diagnostics` from a read-only load, before using the report. When no readable plan exists, say so. Read any `approaches.md` and test each approach-wait entry in `CONTEXT.md` under `./references/workflow/task-approaches.md` § *Approach-wait entries*. Check for execution holds and route the handoff under that file's § *Other readers and writers*. Cite a selected comparison's dated decision in the brief. For a planless task without a comparison, keep the `plan-task` handoff. Do not present coverage as complete when structure is unreliable.
 
 Then read what the brief needs beyond the report:
 
@@ -39,6 +39,7 @@ Then read what the brief needs beyond the report:
 - `result.md`: orient from `currentState`, then read the latest Step or Full Run. Capture every Blocked block and any Acceptance section verbatim. Read goal verdicts in Reconciliation entries too; use the latest verdict by ID across Acceptance and Reconciliation. Capture the most recent In review section verbatim as the active pending list; skip earlier, superseded ones (`./references/workflow/task-lifecycle.md` § *Companion result file*). Treat the digest as derived, unverified metadata. Ignore its legacy Status header (`./references/workflow/task-lifecycle.md` § *`result.md` — no status field*).
 - `CONTEXT.md`: the Domain header, Open Questions, and dated decision anchors cited by current guidance.
 - `plan.md`: the next step's `**Depends on:**` line, Due, Lead time, and touched paths, plus Open Questions and cited dated decision anchors. Take status and goal-file state from the report.
+- `approaches.md`, when present: current decision, unresolved questions, and original dated selection evidence. Surface pending discussion without treating it as an approved approach.
 - `ticket.md`, when present: the ask and acceptance criteria.
 - `observations.md`, when present: dated cached observations (`./references/workflow/task-observations.md`). Absence is normal. <!-- cold -->
 
@@ -142,13 +143,13 @@ Unscanned — the task acts on <repo>, which the scan cannot reach from a store-
 
 ## Open questions
 
-<Deduplicate context/plan questions and unresolved goals. Replace questions the result already answers with their answers.>
+<Deduplicate context/plan/comparison questions and unresolved goals. Replace questions the result already answers with their answers.>
 
 **Handoff**
 - **Done:** <a goal-identifier repair the load applied; otherwise omit>
 - **Know:** <the task's handoff token; `block` and `warn` drift and stale Current-state claims that change the next action, in brief>
-- **Awaiting you:** <point at Open questions where one blocks the next step>
-- **Next:** <the first file, step, or drift item to take up, ending with its paste-ready command, such as `/implement-task`>
+- **Awaiting you:** <point at Open questions where one blocks the next step; name any approach hold and what it awaits>
+- **Next:** <for an approach hold, use `/choose-approach` or `/plan-task` as Step 2 directs. Otherwise name the first file, step, or drift item and its paste-ready command, such as `/implement-task`.>
 ```
 
 Omit empty sections except Drift since plan. Commits since watermark follows Step 4's rendering conditions.

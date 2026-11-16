@@ -41,9 +41,10 @@ Establish ground truth per `./references/workflow/execution-loop.md` § *Ground 
 
 **Then load it** in the order `./references/workflow/task-layout.md` § *Reading a resolved folder* fixes:
 
-- Report the loader's `applied`, `mappings`, and `unresolved` before relying on its returned `state`. A null `state` with no readable plan goes to `plan-task`; a failed repair stops execution. Unresolved structure cannot count as complete goal coverage.
+- Report the loader's `applied`, `mappings`, and `unresolved` before relying on its returned `state`. A null `state` with no readable plan routes by any `approaches.md` decision and open approach-wait entry under `./references/workflow/task-approaches.md` § *Other readers and writers*, else to `plan-task`. A failed repair stops execution. Unresolved structure cannot count as complete goal coverage.
+- `approaches.md`, when present: read its `**Decision:**` line and any plan `## Open Questions` entry citing it. When it reads `selected`, also read the decision anchor its `## Current decision` cites and the plan's `## Approach` citation. Also read each approach-wait entry in the task's `CONTEXT.md` `## Open Questions` and test whether it is open (`./references/workflow/task-approaches.md` § *Approach-wait entries*). Launch no step that `./references/workflow/task-approaches.md` § *Other readers and writers* holds. Stop before a held step and close with §9's Handoff block, pointing at what the hold awaits. The block's Next is `/plan-task` for that section's approach-citation stop, else `/choose-approach`. When it is the first step this run would launch, stop before any status flip or worktree re-entry. The sole exception is a confirmed `skipped` revival: take only §3's revival and reload, then apply this hold.
 - `goals.md` missing: stop and tell the user. Never invent goals.
-- `CONTEXT.md`: its header for `**Domain:**`; its prose when a step's packet (§4) turns on it.
+- `CONTEXT.md`: its header for `**Domain:**`; the approach-wait entries the bullet above reads; its prose when a step's packet (§4) turns on it.
 - Read shared grounding from the folder's current location on every invocation. Resolve material contradictions before dependent steps or acceptance under § *Correcting Grounding Where It's Wrong*. Record both statements and sources. Unresolved material contradictions or impactful choices take `../../CORE_RULES.md` § *Ask Before Assuming* before dependent writes.
 - `ticket.md` is the product-facing ask; the gate runs against `goals.md`, not the ticket.
 - A `currentState` block or any checked step means a prior session got partway: pick up there, never redoing completed steps. Then branch on the plan status (`./references/workflow/task-lifecycle.md`):
@@ -69,7 +70,7 @@ Step-by-step pauses after each step's unit outcome and health boundary (§4). Au
 
 Create `<task-dir>/result.md` when absent, from the header and `## Current state` block of `./references/templates/result.md`, dated today; it carries no `**Status:**` header of its own.
 
-When current guidance cites a pre-result decision under a dated context or plan heading, add a Decision log pointer to that original anchor on result creation (`./references/workflow/task-authorship.md`).
+When current guidance cites a pre-result decision under a dated approaches, context, or plan heading, add a Decision log pointer to that original anchor on result creation (`./references/workflow/task-authorship.md`).
 
 When §2 granted implementation commits, capture and inspect the shared tree's existing staged and unstaged changes before the first step, per `./references/workflow/task-delivery.md` § *Checkpoint and final commits*. <!-- cold -->
 
@@ -77,7 +78,7 @@ When §2 granted implementation commits, capture and inspect the shared tree's e
 
 Then point the plan's `**Result:**` line at `./result.md` and flip its `**Status:**` from `to-do` to `executing`.
 
-**Reviving a `skipped` plan**, only after the confirmation *Skip when* requires: `./references/workflow/implement-task-edges.md` § *Reviving a skipped plan*. Reload with structural repair after the plan leaves `skipped` and before executing a step. <!-- cold -->
+**Reviving a `skipped` plan**, only after the confirmation *Skip when* requires: `./references/workflow/implement-task-edges.md` § *Reviving a skipped plan*. Reload with structural repair after the plan leaves `skipped`. After reloading, apply any §1 approach hold before proceeding to worktree re-entry or step execution. <!-- cold -->
 
 ### 4. Execute Steps
 
@@ -170,12 +171,12 @@ In **both** branches, rewrite `## Current state` last, after the removal, so `**
 
 ### 9. Hand Off
 
-Close each completed run with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*), composed after §8's *Before presenting* summary. A step-by-step pause, a **Blocked** stop, and §1's sibling-citation stop close with it too.
+Close each completed run with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*), composed after §8's *Before presenting* summary. A step-by-step pause, a **Blocked** stop, §1's sibling-citation stop, and §1's approach hold close with it too.
 
 - **Done:** the steps and checkpoints this run completed and the plan status reached, each pointing at its `result.md` section.
 - **Know:** goals short of `met` and verification still outstanding, pointing at `## Acceptance` or `**In review:**`. Name the task's handoff token, the task branch and worktree, checkpoint and final commits, uncommitted changes, and a refused removal's reason. Name each surface a grounding correction changed.
-- **Awaiting you:** what the result's `**Blocked:**` section needs or awaits, pointing at it and repeating none of its choice details. After §1's sibling-citation stop, what the first step awaits and any user action, named as in §4's **Source** binding. Include §4's manual commit-record action for awaiting-commit stops.
-- **Next:** `/implement-task` continues after a pause or an `executing` stop, resumes once a blocker clears or §1's awaited citation is met, and re-gates an `in-review` plan once its awaited verification is reported. Once implementation is complete (`in-review` or `done`) and the task branch is unmerged, `/review-code` reviews committed work. When automatic commits were off, `/commit` takes staged changes first. A `done` plan whose work merged takes `/archive-task`.
+- **Awaiting you:** what the result's `**Blocked:**` section needs or awaits, pointing at it and repeating none of its choice details. After §1's sibling-citation stop, what the first step awaits and any user action, named as in §4's **Source** binding. Include §4's manual commit-record action for awaiting-commit stops. After §1's approach hold, what that hold awaits: the pending approach choice, the gating `## Open Questions` entry, the open approach-wait entry, or the plan revision the approach-citation stop needs.
+- **Next:** `/implement-task` continues after a pause or an `executing` stop, resumes once a blocker clears or §1's awaited citation is met, and re-gates an `in-review` plan once its awaited verification is reported. Once implementation is complete (`in-review` or `done`) and the task branch is unmerged, `/review-code` reviews committed work. When automatic commits were off, `/commit` takes staged changes first. A `done` plan whose work merged takes `/archive-task`. After §1's approach hold, `/choose-approach` takes a pending comparison, a gating `## Open Questions` entry, or an open approach-wait entry, and `/plan-task` takes the approach-citation stop.
 
 ## Correcting Grounding Where It's Wrong
 

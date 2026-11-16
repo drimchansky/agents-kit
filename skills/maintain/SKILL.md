@@ -37,7 +37,7 @@ Sweep only `<kit-root>/.agents/tasks/`, including its groups. Other registered r
 
 **Derive the format at run time** from `./references/workflow/`:
 
-- `task-layout.md`, `task-goals.md`, `task-observations.md`, `doc-task-files.md`, and `task-siblings.md` for folder and role-file shapes.
+- `task-layout.md`, `task-goals.md`, `task-observations.md`, `task-approaches.md`, `doc-task-files.md`, and `task-siblings.md` for folder and role-file shapes.
 - `task-archiving.md`, `task-backlog.md`, and `task-store.md` for containers, store files, and § *Shared group context*.
 - `task-lifecycle.md` and `task-authorship.md` for status and Current-state requirements.
 - `context-schema.md`, `ticket-format.md`, or `acceptance-criteria.md` when classifying their internal shapes.
@@ -197,7 +197,7 @@ Close with one Handoff block for the whole run (`./references/workflow/user-faci
 Use a bare slug only where `./references/workflow/task-layout.md` § *One task, one flat folder* resolves it. For grouped tasks in an unregistered canonical root, use paths. Resolve duplicate-slug ambiguity before other slug-based handoffs.
 
 - Route oversized results to `/reconcile-task <slug>` for confirmed compaction. Route an `oversized-task` or `oversized-record` finding there for trimming only when the same task also reports `oversized-result`, meaning compaction is due (`./references/workflow/reconciliation-compaction.md` § *Compaction (size trigger)*). Report every other `oversized-task` or `oversized-record` finding as accepted, with no route. Documentation deliverables in an oversized folder may need their author.
-- Route dead-anchor, goal-id, no-current-state, and active tasks to `/resume-task-reconcile <slug>` for content reconciliation and cited-link checks. Use `/plan-task <slug>` for no-plan tasks.
+- Route dead-anchor, goal-id, no-current-state, and active tasks to `/resume-task-reconcile <slug>` for content reconciliation and cited-link checks. Route a no-plan task by its `approaches.md` decision under `./references/workflow/task-approaches.md` § *Other readers and writers*, using `/choose-approach <slug>` or `/plan-task <slug>`. Use `/plan-task <slug>` for a no-plan task without a comparison.
 - Route dead-citation there only when the composite writes its citing file. Hand-repair deliverables and skipped-plan tasks (`./references/workflow/reconciliation-docs-to-reality.md`; `./references/workflow/reconciliation.md` § *Skipped plans are exempt*).
 - Hand-rewrite citation-form findings under `./references/workflow/one-home.md` § *One home per fact*. An outside-store target requires moving it into a walked root or registering its root. A citation to the store root itself must name something it holds; neither case is fixed by rewriting form alone.
 - Let the user decide stale tasks: `/resume-task <slug>` or archive once finished. For started-in-backlog, activate with `mv` under `./references/workflow/task-backlog.md` if work is underway, otherwise repair lifecycle. Archive backlogged terminal tasks by hand out of Backlog once confirmed.

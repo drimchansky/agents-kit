@@ -1,4 +1,4 @@
-import { holdsRoleFile } from "./lifecycle-constants.ts";
+import { holdsRoleFile, NON_DELIVERABLE_FILES } from "./lifecycle-constants.ts";
 
 export interface GoalDefinition {
   readonly id: string;
@@ -211,7 +211,7 @@ export function carriesStatusHeader(text: string): boolean {
 }
 
 function authoredElsewhere(file: string, text: string): boolean {
-  return file === TICKET_FILE || (!file.includes("/") && !holdsRoleFile([file]) && carriesStatusHeader(text));
+  return file === TICKET_FILE || (!file.includes("/") && !holdsRoleFile([file]) && !NON_DELIVERABLE_FILES.has(file) && carriesStatusHeader(text));
 }
 
 export function anchorLines(text: string): Set<number> {

@@ -44,6 +44,8 @@ Read-only verification grants no work-product edit permission.
 
 Place grounding in CONTEXT, acceptance in goals, execution in plan, history in result, and answers beside questions (`./one-home.md` § *One home per fact*). Ticket edits follow the upstream-ask terms below. Siblings link to the home with `./` paths instead of copying it.
 
+A retained approach comparison follows `./task-approaches.md` across both reconciliation directions, including answer and decision-record rows. Read and cite its current selection and original dated evidence; keep comparison history at that home. Flag a new, pending, or superseding choice requiring a comparison revision for `choose-approach`. Record only the pointer and dependent work held on writable surfaces; this grants no comparison write or source sweep.
+
 ## Grounding docs change on evidence, never silently
 
 Judge scope/acceptance changes: goals, step scope, and CONTEXT's Recommended Direction, MVP Scope, Not Doing, and Key Assumptions. Record each separately with prior/new wording, rejected readings, and deciding evidence.
@@ -85,7 +87,7 @@ The composites sweep while assembling findings under `./reconciliation-sweep.md`
 
 ## Authored surfaces are never written
 
-Keep deliverables unchanged. Flag divergence by section and required content for implement-task; absent deliverables raise nothing. Published follows the next section.
+Keep `approaches.md` unchanged under § *One home per fact*. Keep deliverables unchanged. Flag divergence by section and required content for implement-task; absent deliverables raise nothing. Published follows the next section.
 
 ## Never-annotated surfaces
 
@@ -109,7 +111,7 @@ Re-report untagged findings while disk or Reconciliation shows them. Report unre
 
 - Append all edits to an existing/repaired result's `## Reconciliation — YYYY-MM-DD`; suffix same-day repeats `(2)`, then increment. Preserve prior sections, including Acceptance; supersede by new entry/status flip.
 - Refresh Current state in place (`./task-authorship.md`). Decision log accepts appended dated pointers only.
-- Without an existing or owed result (to-do plan), the printed change list records the edit; create no result solely for logging. Preserve settled decision evidence under a dated heading in the owning context or plan, and cite it from the concise current guidance (`./one-home.md` § *One home per fact*).
+- Without an existing or owed result (to-do plan), the printed change list records the edit; create no result solely for logging. For decisions not retained in `approaches.md`, preserve settled decision evidence under a dated heading in the owning context or plan, and cite it from the concise current guidance (`./one-home.md` § *One home per fact*).
 - Report loader repairs in the change list using their `applied` files and `mappings`; do not create a result or reconciliation record solely to log structural repair.
 - An entry records decisions, state changes, and pointers to their evidence, and fits `RECORD_MAX_KB` (`./task-layout.md` § *One task, one flat folder*). State changes include status, checkbox, goal-verdict, delivery-target, and pending-check changes, plus verification failures and material deviations. Never shorten or omit required content to meet `RECORD_MAX_KB`. Required content covers the `**Health:**` and `**Commits:**` lines, the identifiers and labels naming commits, findings, and picked options, and the **Not reconciled:** rows. It also covers each quote, option, rejected reading, and deciding evidence that a judged edit or answered question requires. An entry that content pushes over the budget takes an expected `oversized-record` finding.
 - Name review findings, commits, and picked options by identifier or label. Point to evidence that lives elsewhere instead of restating it: no finding text, no fix, squash, push, or request/response narration, and no command transcripts or output.
@@ -146,7 +148,7 @@ Re-report untagged findings while disk or Reconciliation shows them. Report unre
 Annotate only direction-writable surfaces:
 
 - **Broken external link, auto:** for a sweep `block` or a break the session observed, append `— _broken as of YYYY-MM-DD (404)_` on context References/Open Questions, plan steps/Open Questions, or ticket citing lines. Replace known redirects with target URLs. Exclude Never-annotated surfaces, prior results, goals, and group URLs (`./reconciliation-sweep.md` § *Scope*).
-- **Answered open question:** replace the unresolved prompt with concise current guidance and a dated answer citing its decision record. Preserve the original question, options, rejected readings, and selection basis in dated result history or under a dated heading in the owning context/plan when no result exists (`./one-home.md` § *One home per fact*). Unambiguous quotation/paraphrase is auto; otherwise judge and record close alternatives. Group questions follow upstream-ask terms. Resolve goals' unresolved markers through the direction's goal row, not annotations.
+- **Answered open question:** for retained approach decisions, apply § *One home per fact*'s owner rule. Otherwise replace the unresolved prompt with concise current guidance and a dated answer citing its decision record. Preserve the original question, options, rejected readings, and selection basis in dated result history or under a dated heading in the owning context/plan when no result exists (`./one-home.md` § *One home per fact*). Unambiguous quotation/paraphrase is auto; otherwise judge and record close alternatives. Group questions follow upstream-ask terms. Resolve goals' unresolved markers through the direction's goal row, not annotations.
 
 Correct broken-link/Pointers gone/moved notes are no-ops. Re-date only changed failures; avoid duplicates. Carried tags cause no edits (`./reconciliation-sweep.md` § *Tags*); flag-only findings still re-report.
 

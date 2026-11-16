@@ -63,4 +63,4 @@ Close with the Handoff block (`./references/workflow/user-facing-messages.md` §
 - **Done:** the docs reconciled and the Questions answered into them, pointing at **Reconciliation applied**, and a goal-identifier repair Phase 1's load applied.
 - **Know:** the task's handoff token, `block` and `warn` rows under **References**, **Yours to apply** rows, and what limited the assessment's evidence, such as a skipped or contradicting `Cross-check:`.
 - **Awaiting you:** point at the **Awaiting decision** rows, which hold the review's unanswered Questions.
-- **Next:** `/implement-task` when the plan is ready, or `/plan-task` when a **Needs work** row calls for redesign.
+- **Next:** `/implement-task` when the plan is ready, or `/plan-task` when a **Needs work** row calls for redesign. Before either, `/choose-approach` takes a flag-only **Approach comparison ↔ plan drift** row that names it.
