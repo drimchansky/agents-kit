@@ -47,7 +47,7 @@ Apply the assessment's findings per `./references/workflow/reconciliation.md` an
 
 Run the reference sweep, `./references/workflow/reconciliation-sweep.md`, in this phase, its `## References` block printed before any reconciliation edit. It is this pipeline's only source of dead-link and reference-answered-question findings.
 
-Route every numbered Question through § *Consent model: findings apply, the record carries them*. Reuse `review-task`'s researched options and trade-offs without repeating research; that consent model governs whether to present a recommendation. An entry whose options exceed the finding is redesign and goes to `plan-task`. A ruling never attests work; advances still require § *Strengthen only on verified evidence*. Disproved findings need no action. A deliverable's `**Published:**` line remains Yours to apply.
+Route every numbered Question through § *Consent model: findings apply, the record carries them*. Reuse `review-task`'s researched options, trade-offs, and recommendation without repeating research. An entry whose options exceed the finding is redesign and goes to `plan-task`. A ruling never attests work; advances still require § *Strengthen only on verified evidence*. Disproved findings need no action. A deliverable's `**Published:**` line remains Yours to apply.
 
 Findings that need real work (a step to rethink, code changes) stay unfixed, listed as *Needs work* under "Not reconciled" with the next skill named (`plan-task`, `implement-task`).
 

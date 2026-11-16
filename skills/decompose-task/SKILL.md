@@ -34,8 +34,8 @@ Phase 2 runs `../prepare-ticket/SKILL.md`'s full protocol per part with five ove
 1. **Resolve the source** per `./references/workflow/decomposition.md` § *Source intake*. Confirm it is decided material; otherwise stop and name `refine-idea`.
 2. **Resolve the parent directory** once for the whole set: the destination the user named, else the source task folder's own parent when the source lives in a task store (continuing its `NN-` sequence), else the container `./references/workflow/task-destinations.md` § *Destination paths* selects (the matched project area or the canonical root, never a `<slug>` folder), its destination notice printed once here. Then read what a part landing there inherits: every applicable `GROUP_CONTEXT.md` from the selected root down, root to task, per `./references/workflow/task-store.md` § *Shared group context*. An inherited constraint may move a cut line or sharpen an acceptance sketch; no part gains a requirement the source does not decide.
 3. **Ground the cut**: read the source in full. For code, check its as-built pointers against current main (`./references/workflow/decomposition.md` § *Engineering heuristics*) so staleness lands in the affected parts' seeds.
-4. **Propose** per `./references/workflow/decomposition.md` § *The proposal*: viable cuts with numbering, per-part acceptance sketches, dependency notes, and material trade-offs; the Jira mapping when keys were passed; open items that gate nothing.
-5. **Clarify and confirm** under that proposal contract, including its question and recommendation sequence. Apply exactly what the user confirms; a dropped part leaves the others unrenumbered.
+4. **Propose** per `./references/workflow/decomposition.md` § *The proposal*: viable cuts with numbering, per-part acceptance sketches, dependency notes, material trade-offs, and the recommended cut with its reasons; the Jira mapping when keys were passed; open items that gate nothing.
+5. **Clarify and confirm** under that proposal contract. Apply exactly what the user confirms; a dropped part leaves the others unrenumbered.
 
 ### Phase 2 — Materialize (per confirmed part, in plan order)
 

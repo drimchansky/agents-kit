@@ -1,6 +1,6 @@
 ---
 name: fix-findings
-description: Use when asked to fix code or documentation findings from a session review, PR comments, or a pasted or saved list. Applies eligible Confirmed and non-functional fixes automatically; other actionable fixes ask the user to pick from analyzed options. Commits each concern batch through the commit skill, or the whole run as one commit under -1; never pushes or replies to sources.
+description: Use when asked to fix code or documentation findings from a session review, PR comments, or a pasted or saved list. Applies eligible Confirmed and non-functional fixes automatically; other actionable fixes ask the user to pick from analyzed options with a recommendation. Commits each concern batch through the commit skill, or the whole run as one commit under -1; never pushes or replies to sources.
 argument-hint: '[source] [-e native|codex|claude] [-1 (one health boundary and one commit for the whole run)]'
 ---
 
@@ -56,7 +56,7 @@ Route a consequential change in a document's claim, decision, or intended audien
 Route a test edit to Ask unless its finding is Confirmed.
 Treat a file named only as a proposed remedy as outside the reviewed files for Auto. Route that fix to Ask.
 
-**Batch ask-routed findings before execution.** Classify all selected findings across every concern batch before applying any fixes. For each Ask finding, show the finding, its viable fix options, and their material trade-offs. Follow `../../CORE_RULES.md` § *Ask Before Assuming* for the question and recommendation sequence. Describe each option's change in words, and draft no edit to work products.
+**Batch ask-routed findings before execution.** Classify all selected findings across every concern batch before applying any fixes. Open each Ask finding's question by naming the finding: its locator, plus its severity, `Pre-existing` label, and verdict where the source supplies them. Next, state its problem in plain words: what the work product does now, what goes wrong, and when. A locator or short label alone does not state the problem. Then show its viable fix options and their material trade-offs. Follow `../../CORE_RULES.md` § *Ask Before Assuming* for the question and recommendation sequence. Describe each option's change in words, and draft no edit to work products.
 
 **`Pre-existing` findings.** In the same batched round, ask one question whether to include the selected actionable findings labeled `Pre-existing` (`./references/engineering/review.md` § *Pre-existing findings*). A `Pre-existing` finding the user named individually, by number, anchor, or quoted text, counts as included and stays out of the question. Route included findings like any other finding. Ask an included finding's option question after the inclusion answer. An included finding routed to Ask counts as an initial Ask finding. Report excluded ones under **Decided** as excluded `Pre-existing` findings.
 
@@ -141,7 +141,7 @@ Use lists; omit empty buckets. Preserve the finding's original text, severity, a
 - **Health uncertifiable:** surviving changes and the same immediate and final outcome evidence, plus the baseline-failing check and its resolved targets. Apply target exclusions from `./references/workflow/execution-recovery.md` § *Evidence lifecycle*. State that no boundary certifies the tree.
 - **Retained, failing:** never-reverted fixes whose current outcome or health evidence fails. Name the commit SHA, or `uncommitted`, the failed check, and what would unblock them.
 - **Decided:** ask-routed findings without an applied fix, with the user's decision and reason: skipped, deferred, or rejected. Also list `Pre-existing` findings the user excluded through the inclusion question, with that reason.
-- **Awaiting decision:** findings whose impactful choice remains unresolved, with the offered options and the edits held for the answer. Include a recommendation only when § *The Gate: Auto vs Ask* permits presenting one. Their fixes are not applied; edits landed before the choice was returned were restored to the pre-fix capture (§ *Content baseline and immediate outcomes*).
+- **Awaiting decision:** findings whose impactful choice remains unresolved, with the offered options, the recommendation and its reasons, and the edits held for the answer. Their fixes are not applied; edits landed before the choice was returned were restored to the pre-fix capture (§ *Content baseline and immediate outcomes*).
 - **Fix failed:** reverted fixes and unattempted dependents, with the reason and what would unblock them. Distinguish one fix, a dependency group, and an interaction group. Name an unestablished control or unconverged health recovery when applicable. Name a coalesced group whose restore reverted every member's fixes. Say `not attempted` for skipped dependents, not `reverted`. Include execution and immediate-evidence details as for Fixed.
 - **Untouched:** excluded findings, non-open triage buckets, barred verdicts, moved anchors, and non-actionable complaints, each with its reason. After a stop, list later concern batches' findings as `not attempted`, naming the concern batch that stopped the run.
 

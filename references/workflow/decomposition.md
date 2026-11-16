@@ -48,7 +48,7 @@ Chat-only; nothing is written before the user confirms. It carries:
 
 - **Source + parent directory.**
 - **Each viable cut**, per part: `NN-<slug>` · a title in ticket voice (imperative, outcome-first, `ticket-format.md`) · an acceptance sketch of 2–4 plain-sentence outcome bullets, sharpened to the full ticket bar at materialization · dependency notes (which siblings it builds on, which source sections it implements).
-- **Material consequences of each cut**, under § *Cut-line lenses*. Include a recommendation only when that section permits presenting one.
+- **Material consequences of each cut**, under § *Cut-line lenses*, and the recommended cut with its reasons.
 - **Jira mapping**, when the user names existing keys: per part, *absorb into `<KEY>`* (the materialized ticket doubles as that key's paste-ready description) or *needs a new ticket* under a named parent. The method never writes to Jira.
 - **Open items that gate no part**, carried visibly.
 
