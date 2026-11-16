@@ -4,6 +4,8 @@ Execute the supplied unit/segment and return evidence (§ *Bindings*, § *Segmen
 
 ## Launch packet
 
+Before preparing each launch, the coordinator applies `./executor-routing.md` § *Effort selection*, including capability checks and execution records.
+
 The coordinator supplies:
 
 - Unit text, verify criterion, and the full text of cited completion contracts.

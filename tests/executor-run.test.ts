@@ -9,6 +9,11 @@ import { exitStatus, readRequest, type Request } from "../scripts/executor-run.t
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SCRIPT = join(REPO, "scripts/executor-run.ts");
+const EFFORT_CASES = [
+  ["medium", "clear mechanical fixture work"],
+  ["high", "routine fixture work"],
+  ["xhigh", "complex interacting fixture constraints"],
+] as const;
 const TEMP = realpathSync(mkdtempSync(join(tmpdir(), "executor-run-tests-")));
 after(() => rmSync(TEMP, { recursive: true, force: true }));
 
@@ -264,21 +269,31 @@ test("Codex receives literal stdin, exact cwd and contract bootstrap with explic
   assert(readFileSync(receipt.artifacts.events, "utf8").includes("fixture warning"));
 });
 
-test("Codex receives the requested policy, model and effort as exec argv without an approval flag in its help", () => {
-  const f = fixture();
-  fake(f, { missingFlag: "--ask-for-approval" });
-  const { status, receipt } = run(f);
-  assert.equal(status, 0);
-  const observed = JSON.parse(readFileSync(join(f.dir, "observed.json"), "utf8"));
-  assert.deepEqual(observed.args, ["exec", "--json", "--color", "never", "-C", f.root, "--sandbox", "workspace-write",
-    "--model", "fixture-model", "-c", 'approval_policy="never"', "-c", 'model_reasoning_effort="high"',
-    "-c", "sandbox_workspace_write.network_access=false", "-"]);
-  assert.equal(observed.cwd, f.root);
-  assert.deepEqual(receipt.policy, f.request.policy);
-  assert.deepEqual(receipt.model, f.request.model);
-  assert.equal(receipt.child.exitCode, 0);
-  assert.equal(readFileSync(receipt.report, "utf8"), "Outcome: blocked\nBlockers: fixture permission denied\n");
-});
+for (const [effort, reason] of EFFORT_CASES) {
+  test(`Codex transports ${effort} with the requested policy and model without an approval flag in its help`, () => {
+    const f = fixture();
+    f.request.model.effort = effort;
+    f.request.model.provenance += `; automatic ${effort}: ${reason}`;
+    f.save();
+    fake(f, { missingFlag: "--ask-for-approval" });
+    const { status, receipt } = run(f);
+    assert.equal(status, 0);
+    const observed = JSON.parse(readFileSync(join(f.dir, "observed.json"), "utf8"));
+    assert.deepEqual(observed.args, ["exec", "--json", "--color", "never", "-C", f.root, "--sandbox", "workspace-write",
+      "--model", "fixture-model", "-c", 'approval_policy="never"', "-c", `model_reasoning_effort=${JSON.stringify(effort)}`,
+      "-c", "sandbox_workspace_write.network_access=false", "-"]);
+    assert.equal(observed.cwd, f.root);
+    assert(observed.input.includes(JSON.stringify(join(f.request.contractRoot, "references/workflow/executor-contract.md"))));
+    assert(observed.input.endsWith(readFileSync(f.request.packet, "utf8")));
+    assert.equal(receipt.engine, "codex");
+    assert.equal(receipt.root, f.root);
+    assert.equal(receipt.contractRoot, f.request.contractRoot);
+    assert.deepEqual(receipt.policy, f.request.policy);
+    assert.deepEqual(receipt.model, f.request.model);
+    assert.equal(receipt.child.exitCode, 0);
+    assert.equal(readFileSync(receipt.report, "utf8"), "Outcome: blocked\nBlockers: fixture permission denied\n");
+  });
+}
 
 test("nonzero child status retains its final reply and partial fixture edit", () => {
   const f = fixture();
@@ -567,41 +582,53 @@ test("a failed turn remains distinct from zero OS exit and malformed streams rem
   assert(readFileSync(unreadable.receipt.artifacts.stdout, "utf8").includes('{"type":'));
 });
 
-test("Claude receives a local executor definition referencing an independent contract root and literal packet", () => {
-  const f = fixture("claude");
-  fake(f, { denied: true, report: "Outcome: needs-decision\nPending choices: fixture unresolved\n" });
-  const { status, receipt } = run(f, SCRIPT, { CLAUDE_CODE_EFFORT_LEVEL: "low" });
-  assert.equal(status, 0);
-  const observed = JSON.parse(readFileSync(join(f.dir, "observed.json"), "utf8"));
-  assert.equal(observed.effortVariable, null);
-  const args: string[] = observed.args;
-  const name = args[args.indexOf("--agent") + 1];
-  assert.match(name, /^agents-kit-executor-[0-9a-f]{12}$/);
-  const definitions = JSON.parse(args[args.indexOf("--agents") + 1]);
-  assert.deepEqual(Object.keys(definitions), [name]);
-  const definition = definitions[name];
-  assert.equal(observed.cwd, f.root);
-  assert.equal(observed.input, readFileSync(f.request.packet, "utf8"));
-  assert.equal(definition.model, f.request.model.name);
-  assert.equal(definition.effort, f.request.model.effort);
-  assert.equal(definition.permissionMode, "acceptEdits");
-  assert(definition.prompt.includes(JSON.stringify(f.request.contractRoot)));
-  assert(definition.prompt.includes("references/workflow/executor-contract.md"));
-  assert.equal(definition.prompt.includes("CLAUDE_PLUGIN_ROOT"), false);
-  assert.equal(existsSync(join(f.request.contractRoot, "agents/executor.md")), false);
-  assert.equal(receipt.roleSource, join(REPO, "agents/executor.md"));
-  assert.deepEqual(JSON.parse(readFileSync(receipt.artifacts.role, "utf8")), definitions);
-  assert.equal(args[args.indexOf("--permission-prompts") + 1], "none");
-  assert.equal(args[args.indexOf("--permission-mode") + 1], "acceptEdits");
-  assert.deepEqual(args.slice(args.indexOf("--allowedTools") + 1),
-    ["Bash(node --test tests/*.test.ts)", `Read(/${f.request.contractRoot}/references/**)`, `Read(/${f.request.contractRoot}/CORE_RULES.md)`]);
-  assert.deepEqual(JSON.parse(args[args.indexOf("--settings") + 1]), { env: { CLAUDE_CODE_EFFORT_LEVEL: f.request.model.effort }, fallbackModel: [] });
-  for (const flag of ["--bare", "--system-prompt", "--dangerously-skip-permissions", "--fallback-model"]) assert.equal(args.includes(flag), false);
-  assert.equal("outcome" in receipt, false);
-  assert.equal(readFileSync(receipt.report, "utf8"), "Outcome: needs-decision\nPending choices: fixture unresolved\n");
-  assert(readFileSync(receipt.artifacts.events, "utf8").includes("fixture denied"));
-  assert.deepEqual(receipt.engineStatus.permissionDenials, ["Bash"]);
-});
+for (const [effort, reason] of EFFORT_CASES) {
+  test(`Claude transports ${effort} through its local role, settings and argv with the original model, contract and packet`, () => {
+    const f = fixture("claude");
+    f.request.model.effort = effort;
+    f.request.model.provenance += `; automatic ${effort}: ${reason}`;
+    f.save();
+    fake(f, { denied: true, report: "Outcome: needs-decision\nPending choices: fixture unresolved\n" });
+    const { status, receipt } = run(f, SCRIPT, { CLAUDE_CODE_EFFORT_LEVEL: "low" });
+    assert.equal(status, 0);
+    const observed = JSON.parse(readFileSync(join(f.dir, "observed.json"), "utf8"));
+    assert.equal(observed.effortVariable, null);
+    const args: string[] = observed.args;
+    assert.equal(args[args.indexOf("--model") + 1], f.request.model.name);
+    assert.equal(args[args.indexOf("--effort") + 1], effort);
+    assert.equal(receipt.engine, "claude");
+    assert.equal(receipt.root, f.root);
+    assert.equal(receipt.contractRoot, f.request.contractRoot);
+    assert.deepEqual(receipt.model, f.request.model);
+    assert.deepEqual(receipt.policy, f.request.policy);
+    const name = args[args.indexOf("--agent") + 1];
+    assert.match(name, /^agents-kit-executor-[0-9a-f]{12}$/);
+    const definitions = JSON.parse(args[args.indexOf("--agents") + 1]);
+    assert.deepEqual(Object.keys(definitions), [name]);
+    const definition = definitions[name];
+    assert.equal(observed.cwd, f.root);
+    assert.equal(observed.input, readFileSync(f.request.packet, "utf8"));
+    assert.equal(definition.model, f.request.model.name);
+    assert.equal(definition.effort, f.request.model.effort);
+    assert.equal(definition.permissionMode, "acceptEdits");
+    assert(definition.prompt.includes(JSON.stringify(f.request.contractRoot)));
+    assert(definition.prompt.includes("references/workflow/executor-contract.md"));
+    assert.equal(definition.prompt.includes("CLAUDE_PLUGIN_ROOT"), false);
+    assert.equal(existsSync(join(f.request.contractRoot, "agents/executor.md")), false);
+    assert.equal(receipt.roleSource, join(REPO, "agents/executor.md"));
+    assert.deepEqual(JSON.parse(readFileSync(receipt.artifacts.role, "utf8")), definitions);
+    assert.equal(args[args.indexOf("--permission-prompts") + 1], "none");
+    assert.equal(args[args.indexOf("--permission-mode") + 1], "acceptEdits");
+    assert.deepEqual(args.slice(args.indexOf("--allowedTools") + 1),
+      ["Bash(node --test tests/*.test.ts)", `Read(/${f.request.contractRoot}/references/**)`, `Read(/${f.request.contractRoot}/CORE_RULES.md)`]);
+    assert.deepEqual(JSON.parse(args[args.indexOf("--settings") + 1]), { env: { CLAUDE_CODE_EFFORT_LEVEL: f.request.model.effort }, fallbackModel: [] });
+    for (const flag of ["--bare", "--system-prompt", "--dangerously-skip-permissions", "--fallback-model"]) assert.equal(args.includes(flag), false);
+    assert.equal("outcome" in receipt, false);
+    assert.equal(readFileSync(receipt.report, "utf8"), "Outcome: needs-decision\nPending choices: fixture unresolved\n");
+    assert(readFileSync(receipt.artifacts.events, "utf8").includes("fixture denied"));
+    assert.deepEqual(receipt.engineStatus.permissionDenials, ["Bash"]);
+  });
+}
 
 test("Claude engine error and permission diagnostics preserve the raw zero exit and unchanged reply", () => {
   const f = fixture("claude");

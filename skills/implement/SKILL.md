@@ -61,7 +61,7 @@ Respect dependencies. Pause when the user requested inspection between items; ot
 
 Apply `./references/workflow/write-mode-posture.md` to every item. Before launch, complete the contract's packet with the original ask, item/criterion, established grounding, and edit surface.
 
-Launch the selected engine through `./references/workflow/executor-routing.md` under `./references/workflow/executor-contract.md` § *Bindings*, implement binding. Serial items use the shared tree. Announce inline exceptions and record them under Executed.
+Launch the selected engine through `./references/workflow/executor-routing.md`, applying § *Effort selection* before each launch, under `./references/workflow/executor-contract.md` § *Bindings*, implement binding. Serial items use the shared tree. Announce inline exceptions and record them under Executed.
 
 **Parallel batches.** Apply `./references/workflow/parallel-batch.md` § *Coordinator-side parallel batch*. Require declared, pairwise-disjoint surfaces and independent items; undeclared items remain serial. Merge in frame order. Bound a tail batch at §4; otherwise finish merges and required re-proofs before one boundary preceding dependent work. Do not run health per merged item. <!-- cold -->
 
@@ -81,7 +81,7 @@ Use chat lists; apply `./references/workflow/execution-acceptance.md` § *Before
 - **Verified:** per item and required check, proof owner, coordinator assignment/re-run case where applicable, command/test/observed behavior, status, and evidence. Retain pending/open checks under `./references/workflow/executor-contract.md` § *Write-mode routing*.
 - **Asserted:** whole-ask outcome and how exercised, separate from Health.
 - **Health:** every boundary under the domain's format (`./references/engineering/verification.md` § *What a boundary records*).
-- **Executed:** explicit engine selection and launch evidence under `./references/workflow/executor-routing.md` § *External launches and recovery*, frame-ordered parallel merges, or inline exception/reason and any announced fallback; omit only for default-selected native with unchanged default delegation.
+- **Executed:** explicit engine selection and launch evidence under `./references/workflow/executor-routing.md` § *External launches and recovery*, effort decisions under its § *Effort records*, frame-ordered parallel merges, or inline exception/reason and any announced fallback. Omit only for default-selected native with unchanged default delegation when *Effort records* also permits omission.
 - **Sources:** framework URLs and unsourced patterns with reasons; omit when none.
 - **Deviations:** changes from the frame and reasons; omit when none.
 - **Follow-ups:** remaining work; omit when none.

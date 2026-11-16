@@ -19,6 +19,53 @@ Omission retains the prior selection only within the active run; otherwise use `
 Keep the selected engine for subsequent units, batches, and corrective relaunches unless the user explicitly changes it.
 Selection changes neither the consumer's authorization nor its delegation eligibility. Review `-x` remains a read-only cross-check (`./probe-cross-check.md`).
 
+## Effort selection
+
+Before every executor launch, assess its assigned work on either coordinator host, Claude Code or Codex.
+Respect explicit user effort instructions and live constraints before applying this automatic policy:
+
+- **`medium`:** clear requirements, detailed launch instructions, and straightforward work following familiar patterns with few interacting constraints.
+- **`high`:** ordinary work, or insufficient evidence for either adjustment.
+- **`xhigh`:** very complex work requiring substantial reasoning across interacting constraints, such as concurrency, migrations, or cross-component compatibility.
+
+A detailed plan alone does not justify `medium`. Resolve missing requirements or consequential choices under `../../CORE_RULES.md` § *Ask Before Assuming*.
+For several units in one launch, use the highest effort any included unit needs.
+Assess independent parallel launches separately. Reassess each fresh launch, including existing recovery launches, from its current assigned work.
+Do not change a running executor's effort or add an effort-triggered retry.
+Keep the selected model, named executor role, engine, permissions, delegation eligibility, verification, intake, and recovery requirements unchanged.
+
+### Native capability
+
+Inspect the named executor's configured pins, the live launch tool's schema and restrictions, and the host's documented precedence.
+A generic effort parameter does not establish support for the named role or launch form.
+Use an actual supported effort parameter when it can select the requested level without changing the role or model.
+Prompt text naming an effort is not a runtime control.
+
+- **Claude Code:** [per-invocation effort](https://code.claude.com/docs/en/sub-agents#choose-an-effort-level) requires v2.1.292 or later and a non-fork subagent. Its `effort` parameter overrides agent frontmatter; `CLAUDE_CODE_EFFORT_LEVEL` overrides both. Confirm the live tool exposes that parameter and no governing setting prevents selection.
+- **Codex:** [custom-agent pins](https://learn.chatgpt.com/docs/agent-configuration/subagents#custom-agents) override spawn model and effort values. Request effort only when the named executor and live launch form permit it; a fixed role or fork restriction cannot be bypassed with another role.
+
+When selection is unavailable, retain an established `high` setting and report the limiting pin, control, or precedence rule.
+If the fixed setting is unknown or differs from `high`, report the unmet host prerequisite and hold the launch.
+A held launch is not `./write-mode-posture.md` exception 2; never run its unit inline.
+The consumer's **Fallback** in `./executor-contract.md` § *Bindings* does not apply to it.
+The held unit and its dependents wait; independent units continue.
+Record a hold still open at run end in the consumer's existing record, naming the held unit and the unmet prerequisite.
+That record is `implement-task`'s **Blocked** binding, `fix-findings`' **Untouched** bucket as `not attempted`, or `implement`'s chat report.
+Do not claim that `high` was applied or retune host configuration or agent definitions; leave that work to the user.
+Do not replace an explicit user effort choice with automatic `high`.
+When the host cannot apply that choice, report the fixed setting and the pin, control, or precedence rule that prevents it.
+Ask the user under `../../CORE_RULES.md` § *Ask Before Assuming*, and launch at that setting only after they agree.
+When the live schema is unavailable, label documentation-backed capability conclusions and leave runtime behavior unverified.
+
+### Effort records
+
+In the consumer's existing execution record, identify the launch's item, fix, or covered segment units.
+Record each non-default effort request with its level and a short reason, including a user override when applicable.
+For unavailable selection, record the retained setting and limitation, or the unmet prerequisite when no fallback is established.
+Distinguish requested effort from observed host behavior; an ignored or capped request is not proof of the selected level.
+Leave a native launch's effort implicit only when it equals the named executor's `high` adapter pin and nothing else needs reporting.
+Record a native launch whose requested or applied effort differs from that pin.
+
 ## Write-mode engine registry
 
 - **`native`**: Claude Code's native subagents on Claude, Codex multi-agent on Codex. The coordinator launches the named `executor` adapter and supplies its effective root under `./executor-contract.md` § *Execution boundaries*. The adapter loads its installed copy of that contract.
@@ -39,6 +86,6 @@ An inline fallback for an explicitly selected external engine runs on the host's
 An announced inline fallback requires the existing authorization and live policy to permit it. It cannot bypass a denial's governing restriction.
 Use the selected engine again when delegated recovery relaunches the unit.
 
-In the consumer's execution record, name explicit selections, external launches, and every announced fallback; only native selected by default may remain implicit.
+In the consumer's execution record, name explicit selections, external launches, and every announced fallback. Apply § *Effort records* even for default-selected native launches.
 Record the receipt's model, effort, and policy with their provenance, its `helperExitCode`, and a short diagnostic summary. Process success does not accept the unit.
 The receipt's model and effort are the requested values, not proof of what the CLI applied.

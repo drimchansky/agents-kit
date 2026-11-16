@@ -30,7 +30,7 @@ _Updated: YYYY-MM-DD_
 
 **Sources:** <official-doc URLs grounding framework-specific code in this step, plus any pattern shipped without one and why; otherwise omit>
 
-**Executed:** <any explicit engine selection, and how this step deviated from the default launch; otherwise omit>
+**Executed:** <explicit engine selection or launch deviation; effort request and reason, or unavailable-selection setting and limitation/unmet prerequisite, under executor-routing.md § Effort records; identify all steps covered by a segment; omit only when none requires a record>
 
 **Deviations from plan:** <if any — what differed and why; otherwise omit>
 
@@ -52,7 +52,7 @@ _Updated: YYYY-MM-DD_
 
 **Sources:** <as above, across all steps; otherwise omit>
 
-**Executed:** <one `Step N …` entry per step with an explicit engine selection or a deviation from the default launch; otherwise omit>
+**Executed:** <record each launch as above, using `Step N …` or `Steps M–N segment (<engine>) …`; retain effort decisions even for default native launches; otherwise omit>
 
 **Deviations from plan:** <if any>
 

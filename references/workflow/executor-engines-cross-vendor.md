@@ -13,9 +13,13 @@ Keep the request, packet, and `outputDir` outside `work`.
 Keep the effective root and placement chosen by the coordinator; apply [parallel placement](./parallel-batch.md) where required.
 Pass the coordinator's [install root](./reviewer-contract.md#adapter-defaults) as `contractRoot`, even when the helper comes from another source checkout or plugin.
 
-Resolve model and effort from the selected engine's installed executor adapter or an applicable authorized override. For `codex` that adapter is `~/.codex/agents/executor.toml`; for `claude` it is `agents/executor.md` under the Claude install root.
-When neither the adapter nor an override supplies them, ask the user for the model and effort before launch.
-Put the source of that choice in `model.provenance`; the launcher carries no model pins.
+Resolve the model from the selected engine's installed executor adapter or an applicable authorized override. For `codex` that adapter is `~/.codex/agents/executor.toml`; for `claude` it is `agents/executor.md` under the Claude install root.
+When neither the adapter nor an override supplies the model, ask the user for it before launch.
+Select effort under [Effort selection](./executor-routing.md#effort-selection) for this launch, including a fresh recovery launch on the retained engine.
+Set the existing `model.effort` request field to that selection; preserve `model.name` and the selected policy.
+Keep the adapter or override source in `model.provenance` and append the effort-selection basis.
+Apply the [launcher contract's](../scripts/executor-run.md) effort controls and precedence limits; report unavailable selection under the routing contract.
+The launcher carries no model pins.
 Select permission settings within the user's grant and live restrictions, then record their source in `policy.provenance`.
 Native adapters retain their existing permission inheritance.
 
