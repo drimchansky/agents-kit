@@ -48,7 +48,7 @@ A retained approach comparison follows `./task-approaches.md` across both reconc
 
 ## Grounding docs change on evidence, never silently
 
-Judge scope/acceptance changes: goals, step scope, and CONTEXT's Recommended Direction, MVP Scope, Not Doing, and Key Assumptions. Record each separately with prior/new wording, rejected readings, and deciding evidence.
+Judge scope/acceptance changes: goals, step scope, and CONTEXT's Recommended Direction, MVP Scope, Not Doing, and Key Assumptions. Record each separately with prior/new wording, rejected readings, and deciding evidence. A `start-group` change set records its task-prose edits only as `start-group` § *Change sets* steps 7 and 8 do.
 
 Assign new goals the next free G<n>; preserve existing and retired IDs (`./task-goals.md`). Goals have no Status or Description section.
 
@@ -148,7 +148,7 @@ Re-report untagged findings while disk or Reconciliation shows them. Report unre
 Annotate only direction-writable surfaces:
 
 - **Broken external link, auto:** for a sweep `block` or a break the session observed, append `— _broken as of YYYY-MM-DD (404)_` on context References/Open Questions, plan steps/Open Questions, or ticket citing lines. Replace known redirects with target URLs. Exclude Never-annotated surfaces, prior results, goals, and group URLs (`./reconciliation-sweep.md` § *Scope*).
-- **Answered open question:** for retained approach decisions, apply § *One home per fact*'s owner rule. Otherwise replace the unresolved prompt with concise current guidance and a dated answer citing its decision record. Preserve the original question, options, rejected readings, and selection basis in dated result history or under a dated heading in the owning context/plan when no result exists (`./one-home.md` § *One home per fact*). Unambiguous quotation/paraphrase is auto; otherwise judge and record close alternatives. Group questions follow upstream-ask terms. Resolve goals' unresolved markers through the direction's goal row, not annotations.
+- **Answered open question:** for retained approach decisions, apply § *One home per fact*'s owner rule. Otherwise replace the unresolved prompt with concise current guidance and a dated answer citing its decision record. Preserve the original question, options, rejected readings, and selection basis in dated result history or under a dated heading in the owning context/plan when no result exists (`./one-home.md` § *One home per fact*). A `start-group` change set that answers the question preserves them only as `start-group` § *Change sets* steps 7 and 8 record its decisions. Unambiguous quotation/paraphrase is auto; otherwise judge and record close alternatives. Group questions follow upstream-ask terms. Resolve goals' unresolved markers through the direction's goal row, not annotations.
 
 Correct broken-link/Pointers gone/moved notes are no-ops. Re-date only changed failures; avoid duplicates. Carried tags cause no edits (`./reconciliation-sweep.md` § *Tags*); flag-only findings still re-report.
 
