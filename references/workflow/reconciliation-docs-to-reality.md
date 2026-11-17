@@ -26,6 +26,8 @@ Use brief drift, assessment cross-file findings, or either sweep. Routes: `./rec
 - **Unbacked `- [x]` step**, work gone or result absent: **auto**-uncheck, drop its link, and cite the dropped anchor in Reconciliation. Preserve prior records, What/Verify, and numbering.
 - **Lifecycle repairs** — **auto** downward repairs; invent no Acceptance, cause, or pending goal.
   - `done` without Acceptance: take `done → executing` and remove `**Completed:**`.
+  - `done` with an unchecked step, or with a current goal that meets the goal-verdict condition of `done → executing` (`./status-transitions.md` § *Downward reconciliation and upward advances*): take `done → executing` and remove `**Completed:**`. Name `implement-task` under Not reconciled for each such step and goal.
+  - `in-review` with a result, and with an unexecuted step or a current goal that meets the goal-verdict condition of `in-review → executing` (`./status-transitions.md` § *Downward reconciliation and upward advances*): take `in-review → executing`. Name `implement-task` under Not reconciled for each such step and goal.
   - `executing` without result: checked steps or verified work warrant a skeleton result (`implement-task`'s init header) holding the Reconciliation section, with the plan's Result link pointed at it. With no evidence, take `executing → to-do`, restore `**Result:** not yet started`, create nothing. Judge ambiguity downward.
   - `blocked`/`in-review` without result: **flag only**.
   - `done` without result: repair to `executing`, then apply its missing-result rule above.

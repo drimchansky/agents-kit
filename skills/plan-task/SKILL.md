@@ -29,7 +29,7 @@ The user's request with any constraints or prior discussion; a slug or destinati
 - **Existing content.** Keep `approaches.md` byte-for-byte unchanged throughout this run. An existing `CONTEXT.md` and hand-authored goal acceptance wording are read, not rewritten. The loader's proven identifier repair is the sole exception for `CONTEXT.md` and `goals.md` (`./references/workflow/task-authorship.md`). `ticket.md` is `/prepare-ticket`'s. Refine `plan.md` through conversation and write it once, unless the user asks for revisions in place. A requested in-place revision applies `./references/workflow/task-siblings.md` § *Revising a cited plan* before it removes, defers, or renumbers a step.
 - **One home per fact.** Cite what the folder already records; the plan carries only this pass's deltas (`./references/workflow/one-home.md` § *One home per fact*).
 
-`goals.md` is a static acceptance input: a `## Goals` list of `G<n>` criteria, no description prose, no `**Status:**` field (`./references/workflow/task-goals.md`). Its proven identifier repair changes no acceptance wording. The reconcilers and `implement-task` may edit semantic content as a judged edit; the latter grades it in the next run (`./references/workflow/task-authorship.md`).
+`goals.md` is a static acceptance input: a `## Goals` list of `G<n>` criteria, no description prose, no `**Status:**` field (`./references/workflow/task-goals.md`). Its proven identifier repair changes no acceptance wording. The reconcilers, `start-group` (`../start-group/SKILL.md` § *Change sets* step 4), and `implement-task` may edit semantic content as a judged edit; `implement-task` grades its own edit in the next run (`./references/workflow/task-authorship.md`).
 
 ## Planning Process
 
