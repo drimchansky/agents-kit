@@ -1,7 +1,7 @@
 ---
 name: secretary
 description: Secretary for agents-kit's `start-secretary`. Runs the packet's runbook-maintenance or meeting-sync duty through its retained helper. Runbook edits require an accepted proposal revision; meeting writes use the session's routine-write authorization. Launched only by `start-secretary` under a secretary packet; it launches no agents.
-model: claude-opus-5-5[1m]
+model: claude-sonnet-5-5[1m]
 effort: high
 disallowedTools: Write, Edit, NotebookEdit, Agent, SendMessage, Monitor, TaskStop
 ---
