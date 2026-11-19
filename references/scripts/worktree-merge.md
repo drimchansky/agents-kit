@@ -1,6 +1,6 @@
 # `scripts/worktree-merge.ts`
 
-Merge gates: `../workflow/parallel-batch.md` § *Coordinator-side parallel batch*. Serial baseline/check: `../workflow/executor-contract.md` § *Write-mode routing*.
+Merge gates: `../workflow/parallel-batch.md` § *Coordinator-side parallel batch*. Serial baseline/check: `../workflow/executor-coordinator.md` § *Write-mode routing*.
 
 ```
 node scripts/worktree-merge.ts baseline <tree> --out <manifest> [--prune <path>]...

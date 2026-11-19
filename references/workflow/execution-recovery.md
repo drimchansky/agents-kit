@@ -5,7 +5,7 @@ The execution loop's failure path: the evidence lifecycle that continues `./exec
 ## Evidence lifecycle
 
 - **Serial success**: prove each unit's outcome immediately and continue while health is pending; at the declared boundary the recipe passes on the accumulated tree and health becomes current.
-- **Parallel batch success**: in consumer order, incorporate each unit or run its serial fallback, prove only that unit's outcome on the integrated tree as the intake requires (`./executor-contract.md` § *Write-mode routing*), and record its incorporated change set. After all executor worktrees are removed, run the recipe once where the consumer's boundary places it; no unit merge runs it on its own.
+- **Parallel batch success**: in consumer order, incorporate each unit or run its serial fallback, prove only that unit's outcome on the integrated tree as the intake requires (`./executor-coordinator.md` § *Write-mode routing*), and record its incorporated change set. After all executor worktrees are removed, run the recipe once where the consumer's boundary places it; no unit merge runs it on its own.
 - **Unit-outcome failure**: Stop-the-Line before recording that outcome or starting another unit; repair it, then prove the outcome on the coordinator's own tree. A report of failure is never evidence the intake accepts.
 - **Health-boundary failure**: Stop-the-Line, keeping earlier outcome evidence distinct from the failed health claim; repair the shared tree, re-prove affected outcomes, and rerun the recipe at its resolved scope.
 - **Integration-assertion failure**: Stop-the-Line, keeping the assertion failure distinct from health; repair the named outcome, rerun the assertion, and run a fresh boundary if the recovery changed the work product.

@@ -44,11 +44,11 @@ Collection rollback preserves earlier concern batches and the Decided, Awaiting 
 
 ## Delegation mechanics
 
-Launch an **executor** through the selected route in `./executor-routing.md`, under `./executor-contract.md` § *Bindings*. Retain that selection for delegated recovery. Delegate the fixes named in `fix-findings` § *Execution strategy: every fix delegates*.
+Launch an **executor** through the selected route in `./executor-routing.md`, under `./executor-coordinator.md` § *Bindings*. Retain that selection for delegated recovery. Delegate the fixes named in `fix-findings` § *Execution strategy: every fix delegates*.
 
-Supply every `./executor-contract.md` § *Launch packet* item plus the binding's **Packet** and **Edit surface** items. The executor receives this packet without session history.
+Supply every `./executor-contract.md` § *Launch packet* item plus the binding's **Packet** item and its edit surface from `./executor-contract.md` § *Consumers*. The executor receives this packet without session history.
 
-Apply `./executor-contract.md` § *Write-mode routing* to every returned report, and the binding's picked-option intake to a picked option. Reject failed criteria and scope escapes; re-prove immediate outcomes when intake requires it. Only then capture the ordered change set. The coordinator performs final-integrated checks and health.
+Apply `./executor-coordinator.md` § *Write-mode routing* to every returned report, and the binding's picked-option intake to a picked option. Reject failed criteria and scope escapes; re-prove immediate outcomes when intake requires it. Only then capture the ordered change set. The coordinator performs final-integrated checks and health.
 
 Record delegation, selected engine, external receipt evidence, and announced fallback per `./executor-routing.md` § *External launches and recovery* in the finding's Fixed or Fix failed entry. Include parallel placement where used. For an inline exception, announce and record the applicable `./write-mode-posture.md` exception.
 
