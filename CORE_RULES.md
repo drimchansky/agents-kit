@@ -51,6 +51,7 @@ Prefer purpose-built tools when they improve task precision or inspectability; o
 - Combine repeated searches, such as `grep -rnE "a|b|c"`.
 - Put multiline programs in host scratch files. Remove them with other scratch artifacts (§ *Workflow*).
 - Use variables or loops when repeated values or unreadable alternation make the simpler form worse.
+- When an `rm` target expands a variable, guard it as `"${VAR:?}"` or use a literal path.
 
 ## NOTICED BUT NOT TOUCHING
 
