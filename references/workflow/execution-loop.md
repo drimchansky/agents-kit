@@ -56,7 +56,7 @@ A boundary is mandatory when the consumer's cadence reaches it:
 
 Never reuse a previous boundary after any work-product change, including a rollback: re-run the recipe on the state that remains. Across runs, reuse would need durable evidence naming the exact work-product identity the boundary evaluated; no consumer's **Record** binding persists one, so a later run reaching a completion claim always runs a fresh boundary. The `commit` gate is the one exception, and only within a session: it reuses a boundary whose manifest proves the index holds exactly the bytes that boundary evaluated (`skills/commit/SKILL.md`, verification gate).
 
-A parallel merge is not a health boundary. Each incorporated unit is proved and recorded first (`./executor-contract.md` § *Write-mode routing*); once all units and serial fallbacks have settled and every executor worktree is removed, the consumer's binding places the one boundary that covers the accumulated tree.
+A parallel merge is not a health boundary. Each incorporated unit is proved and recorded first (`./executor-coordinator.md` § *Write-mode routing*); once all units and serial fallbacks have settled and every executor worktree is removed, the consumer's binding places the one boundary that covers the accumulated tree.
 
 Evidence reuse across failures, the green control an isolation needs, and mid-run scope changes: `./execution-recovery.md`.
 

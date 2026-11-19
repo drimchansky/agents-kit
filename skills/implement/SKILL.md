@@ -59,13 +59,13 @@ Respect dependencies. Pause when the user requested inspection between items; ot
 
 #### Execution strategy: every item delegates
 
-Apply `./references/workflow/write-mode-posture.md` to every item. Before launch, complete the contract's packet with the original ask, item/criterion, established grounding, and edit surface.
+Apply `./references/workflow/write-mode-posture.md` to every item. Before launch, complete the `./references/workflow/executor-contract.md` § *Launch packet* items with the original ask, item/criterion, established grounding, and edit surface.
 
-Launch the selected engine through `./references/workflow/executor-routing.md` under `./references/workflow/executor-contract.md` § *Bindings*, implement binding. Serial items use the shared tree. Announce inline exceptions and record them under Executed.
+Launch the selected engine through `./references/workflow/executor-routing.md` under `./references/workflow/executor-coordinator.md` § *Bindings*, implement binding. Serial items use the shared tree. Announce inline exceptions and record them under Executed.
 
 **Parallel batches.** Apply `./references/workflow/parallel-batch.md` § *Coordinator-side parallel batch*. Require declared, pairwise-disjoint surfaces and independent items; undeclared items remain serial. Merge in frame order. Bound a tail batch at §4; otherwise finish merges and required re-proofs before one boundary preceding dependent work. Do not run health per merged item. <!-- cold -->
 
-**Judgment stays here.** Keep framing, evidence decisions, all health boundaries, and reporting with the coordinator. Capture a pre-launch baseline, then apply `./references/workflow/executor-contract.md` § *Write-mode routing* intake to every return. Read every evidence heading; route failures and escapes to failure handling. Re-prove outcomes when intake requires it.
+**Judgment stays here.** Keep framing, evidence decisions, all health boundaries, and reporting with the coordinator. Capture a pre-launch baseline, then apply `./references/workflow/executor-coordinator.md` § *Write-mode routing* intake to every return. Read every evidence heading; route failures and escapes to failure handling. Re-prove outcomes when intake requires it.
 
 **Fallback is inline execution.** Report failed, hung, or unavailable executors and execute their items inline. Ask first when the failed executor was an explicitly selected external engine (`./references/workflow/executor-routing.md` § *External launches and recovery*). Surface escapes or merge conflicts discard the worktree under the merge gates, then rerun inline or serially. Remove all coordinator-managed worktrees after incorporation; no executor writes a record or status.
 
@@ -78,7 +78,7 @@ In order: exercise the whole end-to-end outcome, run the integrated-health bound
 Use chat lists; apply `./references/workflow/execution-acceptance.md` § *Before presenting* and domain checks on the full changed surface. Health must cover final unchanged bytes. For code, check shared/export consumers and cite framework grounding; stop or record ungrounded patterns under the domain's rules.
 
 - **Shipped:** `file:line` (or the domain's equivalent) per change, with what changed.
-- **Verified:** per item and required check, proof owner, coordinator assignment/re-run case where applicable, command/test/observed behavior, status, and evidence. Retain pending/open checks under `./references/workflow/executor-contract.md` § *Write-mode routing*.
+- **Verified:** per item and required check, proof owner, coordinator assignment/re-run case where applicable, command/test/observed behavior, status, and evidence. Retain pending/open checks under `./references/workflow/executor-coordinator.md` § *Write-mode routing*.
 - **Asserted:** whole-ask outcome and how exercised, separate from Health.
 - **Health:** every boundary under the domain's format (`./references/engineering/verification.md` § *What a boundary records*).
 - **Executed:** explicit engine selection and launch evidence under `./references/workflow/executor-routing.md` § *External launches and recovery*, frame-ordered parallel merges, or inline exception/reason and any announced fallback; omit only for default-selected native with unchanged default delegation.

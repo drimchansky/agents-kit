@@ -1,6 +1,6 @@
 # Cross-Vendor Executors
 
-Prepare external launches under [executor routing](./executor-routing.md) and the selected consumer's [binding](./executor-contract.md#bindings).
+Prepare external launches under [executor routing](./executor-routing.md) and the selected consumer's [binding](./executor-coordinator.md#bindings).
 Select only a route admitted by that routing contract.
 
 ## Prepare and collect
@@ -11,7 +11,7 @@ Write both files inside the executor's [assigned scratch directory](./agent-scra
 Create `<assigned directory>/work` and name it in the packet as the executor's scratch directory, in place of the assigned directory.
 Keep the request, packet, and `outputDir` outside `work`.
 Keep the effective root and placement chosen by the coordinator; apply [parallel placement](./parallel-batch.md) where required.
-Pass the coordinator's [install root](./reviewer-contract.md#adapter-defaults) as `contractRoot`, even when the helper comes from another source checkout or plugin.
+Pass the coordinator's [install root](./reviewer-session.md#adapter-defaults) as `contractRoot`, even when the helper comes from another source checkout or plugin.
 
 Resolve model and effort from the selected engine's installed executor adapter or an applicable authorized override. For `codex` that adapter is `~/.codex/agents/executor.toml`; for `claude` it is `agents/executor.md` under the Claude install root.
 When neither the adapter nor an override supplies them, ask the user for the model and effort before launch.
@@ -22,9 +22,9 @@ Native adapters retain their existing permission inheritance.
 Invoke the helper as [the launcher contract](../scripts/executor-run.md) shows, using the host's [existing collection primitives](./delegated-waiting.md).
 Watch `run.stdout`, `run.stderr`, and `events.jsonl` in `outputDir` as the command's progress logs under the [silence watch](./delegated-waiting.md#how-to-wait).
 The helper command needs network access and write access to the vendor CLI's home directory. Under a sandboxed host shell, request the host's approval for that command before launch, and report a denial instead of working around it.
-Read the receipt and its available report through [executor intake](./executor-contract.md#write-mode-routing).
+Read the receipt and its available report through [executor intake](./executor-coordinator.md#write-mode-routing).
 When no receipt arrived, stop any surviving process group the output directory's `child.json` names, after confirming it still runs the recorded command.
-After a failed or interrupted process, confirm that no process the executor started still runs, then apply [interrupted execution](./executor-contract.md#write-mode-routing) before consumer recovery.
+After a failed or interrupted process, confirm that no process the executor started still runs, then apply [interrupted execution](./executor-coordinator.md#write-mode-routing) before consumer recovery.
 Copy needed diagnostics into the coordinator's record, then remove the assigned directory under [scratch cleanup](./agent-scratch.md#cleanup).
 
 ## Codex
