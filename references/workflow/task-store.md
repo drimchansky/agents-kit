@@ -85,7 +85,7 @@ Read files from disk on every invocation; introduce no cache, manifest, CLI, or 
 
 ## Resolving `<kit-root>`
 
-For `node <kit-root>/scripts/<name>.ts`, use the source checkout from config's `kitRoot`, expanding tilde before joining the path. Without that key, a Claude Code plugin install root (`./reviewer-contract.md` § *Adapter defaults*) serves, since the plugin ships `scripts/`. A `setup.ts` home cannot substitute: it contains no scripts directory.
+For `node <kit-root>/scripts/<name>.ts`, use the source checkout from config's `kitRoot`, expanding tilde before joining the path. Without that key, a Claude Code plugin install root (`./reviewer-session.md` § *Adapter defaults*) serves, since the plugin ships `scripts/`. A `setup.ts` home cannot substitute: it contains no scripts directory.
 
 - Missing config or key outside a plugin install: ask for the checkout path, rather than infer one from the installation.
 - No available checkout: report the helper unavailable and use only the citing skill's stated fallback; otherwise stop.

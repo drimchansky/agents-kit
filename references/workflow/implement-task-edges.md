@@ -50,7 +50,7 @@ At a checkpoint, run its assertions after every batch step finishes, then one he
 
 ## An open criterion leg
 
-A check unavailable to both executor and coordinator remains part of the criterion. Assign checks through `./executor-contract.md` § *Launch packet* and take its § *Write-mode routing* → **Coordinator-owned checks** before leaving a leg open. Carry unavailable checks under `./parallel-batch.md` § *Coordinator-side parallel batch* → **An unexecutable leg is carried open**. Removing a leg cannot turn partial proof into a pass.
+A check unavailable to both executor and coordinator remains part of the criterion. Assign checks through `./executor-contract.md` § *Launch packet* and take `./executor-coordinator.md` § *Write-mode routing* → **Coordinator-owned checks** before leaving a leg open. Carry unavailable checks under `./parallel-batch.md` § *Coordinator-side parallel batch* → **An unexecutable leg is carried open**. Removing a leg cannot turn partial proof into a pass.
 
 Leave the step unchecked and retain the open check's definition, owner, and missing capability in its record. When it gates an external goal or engineering live check, park in-review with the pending goal verdict or named check. Resume through § *Reaching done from in-review*.
 
