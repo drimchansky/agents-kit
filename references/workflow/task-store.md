@@ -52,7 +52,24 @@ The user and `start-group` author the file's sections. `implement-task` and reco
 - `## Direction`: where the group's work is heading.
 - `## Scope`: what the group covers, one line per direct child task. `start-group` writes these lines, and its § *Brief* reports their drift from the child tasks on disk.
 - `## Decisions`: group-wide current rules and standing facts, one line each, citing the `GROUP_LOG.md` entry that names its sources or the task record that holds the evidence.
-- `## Open Questions`: group questions, each with a `GQ<n>` id, its addressee, and where it was asked. After each `start-group` change set other than a compaction, it lists only unanswered and waiting questions. A waiting question's answer awaits its record in `DECISIONS.md` or an ancestor group. Its entry states that answer and names that file.
+- `## Open Questions`: group questions, each with a `GQ<n>` id, its addressee, and a parenthesized outreach slot. After each `start-group` change set other than a compaction, it lists only unanswered and waiting questions. A waiting question's answer awaits its record in `DECISIONS.md` or an ancestor group. Its entry states that answer and names that file.
+
+**Outreach slot:** keep events in order, separated by semicolons; the last event gives the current state. Use these forms:
+
+- `not asked`
+- `drafted: <date>, chat`
+- `drafted: <date>, Slack draft <id> in <channel or thread>`
+- `drafted: <date>, Slack draft in <channel or thread>, no ID returned`
+- `drafted: <date>, chat fallback for preceding Slack draft`
+- `asked: <where>, <date>, [message](<link>)`, meaning sent; omit the link when none exists.
+
+In the Slack forms, `<channel or thread>` is the place in the user's words, such as `group chat` or `DM with <name>`. It holds no user or conversation id.
+
+Put a replacement fallback immediately after the displaced Slack event and use that event's date, under `start-group` § *Draft*. Read the pair as one draft at the fallback's position, with location `chat`. Keep the pair adjacent when editing the slot.
+
+A plain `chat` event immediately after a same-date Slack event could be an older fallback. Ask whether they represent one draft when that affects a match or an edit and their relationship is unclear. Leave older slots as written on read.
+
+Append follow-ups to this slot, preserving earlier events. Read existing `(asked: …)` entries as sent without rewriting them. A missing slot means the state is not recorded. Waiting entries keep their slot and add `— answered: <answer>; awaits record in <home>` after it. `start-group` § *Group file entries* governs new entries.
 
 **`GROUP_CONTEXT.md` has a 40 KB budget**, measured as the file's size on disk with 1 KB = 1,024 bytes (40,960 bytes). The `start-group` brief reports a file over the budget.
 
