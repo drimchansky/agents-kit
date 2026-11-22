@@ -9,6 +9,7 @@ A read-only reviewer examines one identified object, runs verification, and retu
 - **Instruction hierarchy:** before review, load effective-root AGENTS/CLAUDE and the packet's engineering rules. Load the packet's CORE_RULES only when its rules are not already in your context. A `setup.ts` install supplies them always-on; a plugin install does not. Apply the invariants of all these rules as review lenses. Under a packet carrying `instruction files: merge-base only — fork PR`, take AGENTS/CLAUDE from the merge-base instead (§ *Launch packet*).
 - **Security:** live parent sandbox, approval, and managed policies override defaults and this contract. Preserve access boundaries. A denial preventing a usable pass is Safety blocked; otherwise record the denied check under Verification scripts without retrying.
 - **No nested fan-out:** the session launches and settles any `-x` cross-check.
+- **Batched reads:** send independent reads and searches in one turn, shell reads included. A call that needs an earlier result waits for it.
 
 ## Launch packet
 
