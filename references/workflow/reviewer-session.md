@@ -24,7 +24,7 @@ A blocked fleet member is unavailable; usable returns stand with reduced coverag
 
 The host owns final verdicts (`./agent-fanout.md`). Classify explicit safety signals first under § *Safety blocks*. Before settlement or post-return launches, check in order:
 
-1. **Identity:** match the Setup-recorded identity. On mismatch, stop and report without settlement or further launches.
+1. **Identity:** match the Setup-recorded identity, including any delta base. On mismatch, stop and report without settlement or further launches.
 2. **Completeness:** require every return heading; an explicit None counts as present. Identity, Verification scripts, Change map, and Summary require the content `./reviewer-contract.md` § *The return* states. Malformed returns take § *Degrade rule* as `reviewer failed`.
 
 For fleets, check every return. Record unavailable members and reasons; pool survivors by location under `./agent-fanout.md` § *Merge contract*, with completed/requested coverage. If none survives, prioritize identity hard stop, then safety-block outcome, then degrade. Losing reviewer 1 requires session-run verification before output, subject to Safety blocks if that reviewer was blocked. Under a packet substituting its own evidence, or carrying the PR-form skip (`verification scripts: skip — the session reads the PR's checks`) or the fork-PR skip, the session runs nothing instead.

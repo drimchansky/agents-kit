@@ -8,6 +8,8 @@ Take the grounding shape's skeleton (`./probe-shape-grounding.md`), replace the 
 - **A range**: "review the diff `<merge-base>...<b>`".
 - **A path set**: "review the files `<paths>` as commit `<head-sha>` has them". The SHA holds the probe to the object reviewed rather than to the working tree.
 
+Under a resolved delta (`review-code -i`), the branch item reviews `<prev-head>...<head-sha>` instead of `<base>...HEAD` (`../../skills/review-code/SKILL.md` § *Setup*).
+
 Keep the skeleton's `Scratch directory:` line in the prompt.
 
 When the working root is the PR-form review worktree (`../engineering/review-evidence.md` § *Capture*), add this line after the `Scratch directory:` line:

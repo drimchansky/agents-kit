@@ -1,7 +1,7 @@
 ---
 name: review-code-triage-verify
 description: Use when asked for a verified review of a PR, branch, range, or file set. Reviews, batches, and verifies findings; classifies change risk, retains evidence for user-visible changes, and requests engineer sign-off where risk or evidence requires it before approval. Capture may build and start the app in a disposable checkout and drive a browser. Edits no code and posts nowhere.
-argument-hint: '[scope, or an open PR as #<n> or its URL; defaults to the current branch against its base] [-n N (independent reviewers, default 1)] [-x [N] (cross-vendor second reviews, default 1)] [-d (draft PR description)]'
+argument-hint: '[scope, or an open PR as #<n> or its URL; defaults to the current branch against its base] [-n N (independent reviewers, default 1)] [-x [N] (cross-vendor second reviews, default 1)] [-d (draft PR description)] [-i (delta: only commits after your last published review)]'
 ---
 
 ## Core Rules
@@ -21,6 +21,8 @@ The pipeline reads and displays findings and retains local review evidence. The 
 
 `-x`, with its count when given, and `-d` pass through to the review phase (`../review-code/SKILL.md`; `./references/workflow/verify-pipeline.md` § *Flags through the review phase*). The review phase pools the `-x` probes' novel candidates, one per distinct claim, without verifying them (`./references/workflow/verify-pipeline.md` § *The review phase*). Phase 3 verifies each, and one it scopes out takes `Unverified (out of probe scope — candidate never settled)`.
 
+`-i` passes through to the review phase (`../review-code/SKILL.md` § *Flags*). Phase 1 prints the review skill's `delta from <prev-head>` or `full review (<reason>)` announcement. A refused `-i` reaches Output through the forwarded **Delta refused** slot. Under a resolved delta, phases 2 and 3 batch and verify per `./references/workflow/review-delta.md` § *Verify probes*. The review phase's **Still open** entries skip both phases and reach Output unverified.
+
 ## Setup
 
 Resolve the object per `../review-code/SKILL.md`'s Setup and hand it to phase 1.
@@ -39,7 +41,7 @@ Retain the review phase's Evidence field and artifact directory. Suppress its si
 
 ## Phase 2 — Triage
 
-Run `./references/workflow/verify-pipeline.md` § *The triage phase* over the findings phase 1 held.
+Run `./references/workflow/verify-pipeline.md` § *The triage phase* over the findings phase 1 held. Under a resolved delta, batch whole-object findings apart from delta findings (`./references/workflow/review-delta.md` § *Verify probes*).
 
 ## Phase 3 — Verify
 
@@ -51,7 +53,7 @@ First re-confirm the reviewed identity at the effective root, the PR-form worktr
 
 Setup's working-tree check still passes on every kind outside the PR form, which skips it again. Any mismatch is drift: stop and report.
 
-Fan out under `./references/workflow/agent-fanout.md`, `./references/workflow/probe-engines.md`, and `./references/workflow/probe-shape-verify.md`, per `./references/workflow/verify-pipeline.md`. The review object is the reviewed diff from Setup's base to the reviewed head on a `pr` object, and the reviewed paths at the reviewed head SHA on a `paths` one. Each probe prompt's working root is the effective root. On the PR form, each probe prompt carries the PR checkout line per `./references/workflow/probe-shape-verify.md`.
+Fan out under `./references/workflow/agent-fanout.md`, `./references/workflow/probe-engines.md`, and `./references/workflow/probe-shape-verify.md`, per `./references/workflow/verify-pipeline.md`. The review object is the reviewed diff from Setup's base to the reviewed head on a `pr` object, and the reviewed paths at the reviewed head SHA on a `paths` one. Under a resolved delta, each batch's probe names the diff `./references/workflow/review-delta.md` § *Verify probes* assigns it. Each probe prompt's working root is the effective root. On the PR form, each probe prompt carries the PR checkout line per `./references/workflow/probe-shape-verify.md`.
 
 ## Output
 
@@ -59,16 +61,17 @@ Lists, not tables.
 
 After Phase 3, or after the vacuous triage/verify route with no findings, present the retained evidence and request sign-off under `./references/engineering/review-evidence.md` § *Presentation and sign-off*. Apply `./references/engineering/review-evidence.md` § *Approval eligibility* to the final assessment. Verification verdicts do not replace evidence or confirmation.
 
-- **Summary:** what changed, intent, and the code assessment restated after verification and evidence eligibility. When CI is unknown on the PR form, report the assessment without an approval recommendation. A forwarded **Review pass** showing `scripts: skipped (fork PR)` also leaves the assessment without an approval recommendation. On a `paths` object retain the health verdict `review-code` fixes.
+- **Summary:** what changed, intent, and the code assessment restated after verification and evidence eligibility. When CI is unknown on the PR form, report the assessment without an approval recommendation. A forwarded **Review pass** showing `scripts: skipped (fork PR)` also leaves the assessment without an approval recommendation. On a `paths` object retain the health verdict `review-code` fixes. Under a delta, a **Still open** entry or a re-entered earlier finding that is not **Withdrawn** leaves the assessment without an approval recommendation (`./references/workflow/review-delta.md` § *Earlier findings*).
 - **Evidence:** forward the retained field and artifact links, updating confirmation and eligibility from this composite's final presentation. The no-findings route still reports it.
 - **Batches** and **Verified:** per `./references/workflow/verify-pipeline.md` § *Output: Batches and the Verified line*; `Batches` takes the whole reviewed object as its no-anchor locator and carries one entry per distinct claim with its `cited by k/N` marker. Batches is the only render of the findings: no separate Findings list follows it.
-- **Cross-check** (only with `-x`), **Improvements**, **Inaccessible context** (only if any), **PR description** (only with `-d`): forwarded from the review phase as `review-code` specs them. Improvements pass through unverified.
+- **Still open** (only under a delta with any): forwarded from the review phase unverified, as `review-code` specs it.
+- **Cross-check** (only with `-x`), **Improvements**, **Inaccessible context** (only if any), **PR description** (only with `-d`), **Delta refused** (only when `-i` was refused): forwarded from the review phase as `review-code` specs them. Improvements pass through unverified.
 - **Reviewed:** the provenance line exactly as `review-code` specs it, in its kind's form; `/publish-pr-review` reads it to anchor and to pick its currency-check base.
 - **Review pass** and **Divergence:** forwarded from the review phase as `review-code` specs each.
 
 Close with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
 
 - **Done:** the verified assessment and verdict counts, pointing at **Summary** and the **Verified** line; with `-d`, the drafted description, pointing at **PR description**.
-- **Know:** what the verdicts leave unsettled: Inconclusive and Unverified entries, and the unverified **Improvements** where the review returned any. Name what narrowed the review: batches verified inline, an inline or degraded **Review pass**, **Divergence** entries, a **Cross-check** disagreement or dropped probe, or **Inaccessible context**. Name the reviewed object, any PR it sits on, and retained evidence directory. On the PR form, name what leaves CI unknown, as `../review-code/SKILL.md` § *Output* Know lists it.
+- **Know:** what the verdicts leave unsettled: Inconclusive and Unverified entries, the unverified **Improvements** where the review returned any, and any **Still open** entry. Name what narrowed the review: batches verified inline, an inline or degraded **Review pass**, **Divergence** entries, a **Cross-check** disagreement or dropped probe, or **Inaccessible context**. When phase 1 announced `full review (<reason>)` for an `-i` run, name that fallback and its reason, as `../review-code/SKILL.md` § *Output* Know does. Name the reviewed object, any PR it sits on, and retained evidence directory. On the PR form, name what leaves CI unknown, as `../review-code/SKILL.md` § *Output* Know lists it.
 - **Awaiting you:** evidence prerequisites from `./references/engineering/review-evidence.md` § *Approval eligibility*, pointing at **Evidence**. When **PR description** holds a draft, add its leftover placeholders as `../review-code/SKILL.md` § *Output* Awaiting you names them.
 - **Next:** the options are `/publish-pr-review` on a `pr` object, `/fix-findings`, and `/implement-task`. Publication remains subject to evidence eligibility. `/fix-findings` addresses the batches and commits each one; `/implement-task` addresses them through a task plan, then `/commit`. `/fix-findings-reconcile` takes the place of `/fix-findings` when the reviewed object is provably the session task's work, as `../fix-findings-reconcile/SKILL.md` § *When to Use* defines proof. Without that proof but with a session task, list both fix routes and prefer `/fix-findings` to `/fix-findings-reconcile`. On the PR form, name a same-repository PR's `headRefName` beside each fix and task-plan route as the checkout that route must run in. When the PR form names a fork PR (`isCrossRepository` true), say this run has no pushable checkout for those routes, and offer none of them. A `paths` object sits on no PR, leaving the fix and task-plan routes. When **PR description** holds a draft, also name `/update-pr-description` with the reviewed-head condition and redraft route that `../review-code/SKILL.md` § *Output* Next states. When `-d` was refused, name the no-argument `-d` review on the branch instead, as that Next states.
