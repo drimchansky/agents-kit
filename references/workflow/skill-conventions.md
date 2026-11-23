@@ -96,7 +96,7 @@ Name cross-project, registered-root, or installed-state sweep scope in the propo
 - `fix-findings` — the user's preference for explicit invocation; the proposal is its § *The Gate: Auto vs Ask*.
 - `fix-findings-reconcile` — the user's preference for explicit invocation; the proposal is its § *Phase 1 — Fix*.
 - `explore` — the user's preference for explicit invocation; the proposal is its § *Determine Scope*.
-- `update-pr-description` — a publishing write with no preview of its own; the proposal is its § *Preconditions — stop if unmet*.
+- `update-pr-description` — a publishing write with no preview of its own; the proposal for a matching draft is its § *Preconditions — stop if unmet*, and for a description it drafts, its § *Drafting path*.
 - `review-pr-loop` — a publishing write with no preview of its own; the proposal is its § *Setup*.
 - `archive-task` — a filing write with no preview of its own; the proposal is its § *1. Resolve the target task folder*.
 - `backlog-task` — a filing write with no preview of its own; the proposal is its § *1. Resolve the target task folder*.
