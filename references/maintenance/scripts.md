@@ -128,6 +128,28 @@ This module holds machine-readable copies of the task values whose prose homes `
 
 `angledTargetText` is a shared helper, not a prose-home copy; its rationale is under § *`scripts/health-check.ts`*.
 
+## `scripts/orca-status-timer.ts`
+
+Contract: `references/scripts/orca-status-timer.md`.
+
+**Why status wakes need a helper.** Codex exposes no idle wake timer, and an Orca automation persists apart from the coordinator's session. A detached one-shot process gives both hosts the same session-bound wake, with no extra model worker.
+
+**Why the wake is Run mail.** Coordinators often run as Orca chats, which have no terminal to type into. Mail to the Run's coordinator mailbox wakes chat and terminal coordinators alike. The source fixes the send argv, and the suite's literal-transport case pins it. Recheck that argv against the installed Orca CLI's help when Orca changes.
+
+**Why the Orca executable is an argument.** The coordinator selects the executable under Orca's installed guide. Passing it keeps every wake on that same binary and lets the suite substitute a fake.
+
+**Why sending takes an exclusive claim.** The timer process and a `cancel` or `arm` can act on one token at the same moment. Linking a prepared claim file fails with `EEXIST` for the later caller, so exactly one of send and cancel wins. A process that loses sends nothing. A cancel that loses reports `untouched`, and the coordinator rejects that token's wake.
+
+**Why the process also checks the current token.** Two `arm` calls racing on one Run can each launch a process, and only the last becomes current. The other token was never claimed, so only the current-token check stops it. `arm` prunes an earlier token's claim once its recorded process is gone, and the same check covers a process that outlives that prune.
+
+**Why cancel checks the command line.** A recorded pid can belong to an unrelated process after the timer exits. Cancel signals only a process whose full command line names this Run and token. `ps -ww` prints that line whole, whatever the terminal width.
+
+**Why the wait sleeps at most a minute.** Node timers run on a monotonic clock that pauses while the machine sleeps. Rechecking wall-clock time at least once a minute keeps a wake after system sleep at most a minute late.
+
+**Why the deadline is absolute.** The caller states the instant, so tests can pass near-future instants as `scripts/secretary-state.ts wake --at` does. A past deadline would send at once, so `arm` refuses it.
+
+**Why the send has a time limit.** A hung CLI would leave the token `sending` with no wake. The 60-second limit records `failed`, which the coordinator reports and replaces.
+
 ## `scripts/pr-comments.ts`
 
 Contract: `references/scripts/pr-comments.md`.

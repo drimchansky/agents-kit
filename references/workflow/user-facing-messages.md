@@ -1,6 +1,6 @@
 # User-Facing Messages: Markers, Blocks, and Surface Adapters
 
-Markers, Blocks, and Surface adapters govern final chat responses, progress updates, PR comments and descriptions, and Jira drafts. They fix visual grammar and ordering; Handoff also fixes what each slot admits. Each skill's Output owns its content. Those sections exclude questions, approvals, refusals, errors, and internal returns. Plain wording has its own scope, set in `../../CORE_RULES.md` § *Communication*.
+Markers, Blocks, and Surface adapters govern final chat responses, progress updates, PR comments and descriptions, and Jira drafts. They fix visual grammar and ordering; Handoff also fixes what each slot admits. Each skill's Output owns its content. Those sections exclude questions, approvals, refusals, errors, and internal returns. Only § *Coordinator attention requests* formats user questions and actions in the Orca coordinator conversation. Plain wording has its own scope, set in `../../CORE_RULES.md` § *Communication*.
 
 ## Plain wording
 
@@ -66,6 +66,24 @@ Example, closing an implementation run:
     - Once committed, review `feat/csv-export` against `main` with `review-code`? It saves evidence under `~/.local/state/agents-kit/review-evidence/` and may build and start the app in a disposable checkout. It posts nothing. Say go.
     - `/review-code`
 ```
+
+## Coordinator attention requests
+
+In `start-orca`, use `⏸️ Awaiting you: <affected task or group>` when the user must decide, grant permission, or take an action. State the exact decision or action, what waits, what independent work can continue, and how to answer here. Apply existing consent and evidence gates to the content.
+
+Use the progress and outcome markers under § *Markers* for running work and collected returns. Name what finished. A collected worker result does not assert task acceptance. Report waits on workers, CI, or other dependencies as status unless the user has an action to take.
+
+Only the coordinator formats these requests in its conversation. Create no other notification surface. Internal returns and standalone skill outputs keep their own formats.
+
+## Coordinator status reports
+
+In `start-orca`, open each timed status with `Status: <task or group> at <time>`. Then give three labeled parts in this order:
+
+- **Work:** each current item with its task, its stage, and a progress marker under § *Markers*. Stages are refinement, planning, plan review, implementation, and review. Mark work collected since the last status `✅ Complete`.
+- **Awaiting you:** each open attention request, named by its task and its existing question identity, such as its `GQ<n>` entry or Orca question. Point to the original request instead of asking again.
+- **Blockers and changes:** important blockers, failed checks or timer sends, held work, and other changes since the last status.
+
+Write `none` for an empty part. A status asks nothing new. Post each attention request when its need arises; never hold one for the next status. A status appears only in the coordinator conversation and adds no notification surface.
 
 ## Surface adapters
 
