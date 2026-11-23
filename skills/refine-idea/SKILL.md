@@ -37,11 +37,11 @@ Keep framing, direction, assumptions, MVP scope, "Not Doing," external reference
 
 Run **Phase 1 (Diverge)** and **Phase 2 (Converge)** from `./references/workflow/ideation.md`, then Phase 3 below. Testable goals are `plan-task`'s, not written here.
 
-Show an **Open questions** list at the end of each substantive refinement reply, except for Phase 3's Handoff ordering. Carry forward all unresolved questions, removing answered ones and adding newly surfaced ones. List blockers first. When empty, write `Open questions: None.`
+Show an **Open questions** list at the end of each substantive refinement reply. Phase 3 prints it once, before its closing dialog. Carry forward all unresolved questions, removing answered ones and adding newly surfaced ones. List blockers first. When empty, write `Open questions: None.`
 
 ### Phase 3 — Sharpen
 
-Write the one-pager to the resolved folder's `CONTEXT.md`. Repeat the Open questions list immediately before the required Handoff block that closes the chat (`./references/workflow/user-facing-messages.md` § *Blocks*):
+Print the Open questions list once in the Output body. Ask its questions in the closing dialog where `../../CORE_RULES.md` § *Ask Before Assuming* rule 9 calls for one. Then write the one-pager to the resolved folder's `CONTEXT.md` once, including the answers. Close the chat with the required Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
 
 - **Done:** the recommended direction and the weightiest "Not Doing" entry, each pointing at its `CONTEXT.md` section.
 - **Know:** the task's handoff token and the `CONTEXT.md` path.

@@ -156,6 +156,8 @@ none (when no child is ready)
 - `/plan-task <token>` | `/choose-approach <token>` | `/implement-task <token>`
 ```
 
+After printing the brief, ask under `../../CORE_RULES.md` § *Ask Before Assuming* only the **You** entries a change set can close. Those are the group questions addressed `ask you`, and the `CONTEXT.md` entries that § *Change sets* step 3 lets a change set edit. They exclude an approach decision for a task holding an `approaches.md` entry. Leave the other **You** entries listed without asking them. A `plan.md` entry closes through `plan-task` (§ *Change sets* step 4), and such an approach decision through `choose-approach` (§ *Change sets* step 7). A waiting question already holds your answer and is not asked. A later brief in this session asks no question the session already asked, whether you answered, declined, or deferred it. Treat each answer as a decision you state, and apply it as an instruction under § *Change sets*.
+
 ## Team status
 
 When you ask for a team status, draft in chat a progress update for the group's discussion thread. Never post or send it, and write no file or Slack draft for it.
@@ -190,7 +192,7 @@ When you ask to draft questions for one or more people, prepare one message in c
 3. **Message.** Print one message covering those questions, grouped by person. Label each question with an earlier `asked:` event as a follow-up. Keep the draft's text in chat, without copying it into either group file.
 4. **Slack draft.** When you request one, check for an available tool that saves Slack drafts. Without one, say Slack drafts are unavailable and keep `chat` as the location. With one, save only in the channel, DM, or thread you name.
     - In the reply that prints the message, warn that saving replaces any unsent draft already in that conversation. Call the draft tool only after your go-ahead. Until you answer, make no Slack or file writes for this request. When you decline the save, keep the chat copy as the draft, with location `chat`.
-    - When no place is named, ask for it in that same reply, beside the warning. Suggest the conversation of the covered questions' latest message link when exactly one exists. Your answer naming the place is the go-ahead.
+    - When no place is named, ask for it under `../../CORE_RULES.md` § *Ask Before Assuming*, with the warning on the question. Suggest the conversation of the covered questions' latest message link when exactly one exists. Your answer naming the place is the go-ahead.
     - After your go-ahead, re-read `GROUP_CONTEXT.md` just before saving. Recheck the approved text and covered ids under steps 1–3. If step 2 finds no eligible question, stop there. If the text or coverage changes, print the revised message with the replacement warning and wait for a new go-ahead.
     - From that read, find the unsent draft the save would replace, if any. Check current Slack `drafted:` events and earlier ones that could become current if later drafts were omitted. Match the conversation and the thread, if any. Exclude drafts already recorded as sent or replaced. Match replacement fallbacks under `task-store.md` § *Shared group context*. If the draft or its coverage is unclear, ask which draft and question ids the save would displace. Repeat both checks after any further reply before calling the tool.
     - Call the draft tool once with the approved message and that destination, including the thread when named. On an error, report the tool's error and keep the chat copy as the draft, with location `chat`. Retry only on a new request.

@@ -180,6 +180,6 @@ List the aspects verified and ready to execute.
 Close the review with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
 
 - **Done:** step verdicts and goal coverage, pointing at **Feasibility Assessment** and **Acceptance Coverage**; drift found, pointing at **Cross-File Drift**; a goal-identifier repair the loader applied.
-- **Know:** the task's handoff token, then what limits the evidence: hand-mapped coverage, unrepaired diagnostics from a read-only load, a skipped or contradicting `Cross-check:`, and research the `Question research:` line counts as skipped.
-- **Awaiting you:** point at **Questions**, which already carries the researched options.
-- **Next:** `/implement-task` when no step needs redesign, `/plan-task` when one does, or `/review-task-reconcile` to write drift and gap corrections back. Before `/implement-task` or `/plan-task`, `/choose-approach` takes a pending comparison, an open approach-wait entry, or a selection change that **Cross-File Drift** flags.
+- **Know:** the task's handoff token, then what limits the evidence: hand-mapped coverage, unrepaired diagnostics from a read-only load, a skipped or contradicting `Cross-check:`, and research the `Question research:` line counts as skipped. After a dialog, say that each answer to a **Questions** entry remains only in the conversation.
+- **Awaiting you:** point at the **Questions** entries still unanswered, which already carry the researched options.
+- **Next:** `/implement-task` when no step needs redesign, `/plan-task` when one does, or `/review-task-reconcile` to write drift and gap corrections back. When the user answered **Questions** entries in the dialog, name `/review-task-reconcile` as the command that records those answers. Before `/implement-task` or `/plan-task`, `/choose-approach` takes a pending comparison, an open approach-wait entry, or a selection change that **Cross-File Drift** flags.

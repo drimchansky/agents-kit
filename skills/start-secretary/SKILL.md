@@ -190,12 +190,12 @@ Defer every startup decision question until § *Startup* steps 6–7 finish and 
 
 A wake, and any job it launches, reports without a question; your next message to the secretary asks. Ask nothing while runbook maintenance is unavailable or the run is closed. A request to decide, or a message such as "accept all" that names no revision, asks about every pending revision without an acceptance.
 
-Use the host's interactive question tool when permitted and available; otherwise ask in chat and wait. Batch the questions within the tool's limits, and ask the rest in the next round.
+Ask the revision questions under `../../CORE_RULES.md` § *Ask Before Assuming*.
 
 - Ask one question per revision. Name its `<proposal>@<revision>`, its target, and a one-sentence summary of the change.
 - Offer `Accept`, `Reject`, and `Defer`. Recommend one from the recorded evidence and the body you read, and give the reason. Recommend `Defer` when a cited source was unavailable.
 - An answer decides only the revision its question named. A free-text answer that picks none of the three records nothing; respond to it and ask again.
-- Record every answer of a round under § *Decisions* steps 1–3 before launching its first apply.
+- Record every answer that one question dialog or chat reply returns under § *Decisions* steps 1–3 before launching its first apply.
 
 ## Decisions
 
