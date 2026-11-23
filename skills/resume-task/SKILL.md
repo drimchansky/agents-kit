@@ -147,9 +147,9 @@ Unscanned — the task acts on <repo>, which the scan cannot reach from a store-
 
 **Handoff**
 - **Done:** <a goal-identifier repair the load applied; otherwise omit>
-- **Know:** <the task's handoff token; `block` and `warn` drift and stale Current-state claims that change the next action, in brief>
-- **Awaiting you:** <point at Open questions where one blocks the next step; name any approach hold and what it awaits>
-- **Next:** <for an approach hold, use `/choose-approach` or `/plan-task` as Step 2 directs. Otherwise name the first file, step, or drift item and its paste-ready command, such as `/implement-task`.>
+- **Know:** <the task's handoff token; `block` and `warn` drift and stale Current-state claims that change the next action, in brief; after a dialog, that each answer to an Open questions entry remains only in the conversation>
+- **Awaiting you:** <point at the Open questions entries still unanswered where one blocks the next step; name any approach hold and what it awaits>
+- **Next:** <for an approach hold, use `/choose-approach` or `/plan-task` as Step 2 directs. Otherwise name the first file, step, or drift item and its paste-ready command, such as `/implement-task`. When the user answered Open questions entries in the dialog, name `/reconcile-task` as the command that records those answers.>
 ```
 
 Omit empty sections except Drift since plan. Commits since watermark follows Step 4's rendering conditions.

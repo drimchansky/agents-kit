@@ -95,7 +95,7 @@ After each stage, reread the affected records before selecting another. On worke
 
 ## Advance a group
 
-Use `../start-group/SKILL.md` § *Brief* for the selected group's direct children and current prerequisites. Resolve each child's canonical folder and apply § *Advance one task* with its own grounding. Recompute readiness from current kit records on each wake. Verify sibling dependencies under `./references/workflow/task-siblings.md`. Orca Task completion does not settle a kit dependency.
+Use `../start-group/SKILL.md` § *Brief* for the selected group's direct children and current prerequisites. Skip that section's ask step after the brief. Carry each **You** question it would ask as an attention request under § *Handle questions and record answers*. Resolve each child's canonical folder and apply § *Advance one task* with its own grounding. Recompute readiness from current kit records on each wake. Verify sibling dependencies under `./references/workflow/task-siblings.md`. Orca Task completion does not settle a kit dependency.
 
 Dispatch every ready child that passes the checks below. Holding one child does not hold independent children. Dispatch children whose implementation would share one Git working tree one at a time.
 

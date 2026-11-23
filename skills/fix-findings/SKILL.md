@@ -62,7 +62,7 @@ Treat a file named only as a proposed remedy as outside the reviewed files for A
 
 A model-invoked run (`./references/workflow/skill-conventions.md` § *The invocation gate*) proposes the whole run as one question once that classification stands: the findings it will fix, the Auto fixes it will apply unasked, the executors it will launch for those fixes and for each option the Ask round approves, and a commit per concern batch, or one commit for the run under `-1`. It holds every edit, launch, staging, and commit until that answer. A user-invoked run has passed it; the Ask round below runs through either door.
 
-Use the host's interactive question tool when permitted and available; otherwise ask in chat and wait. Batch related questions within the tool's limits.
+Ask the inclusion question and the Ask round under `../../CORE_RULES.md` § *Ask Before Assuming*.
 
 Hold all fix edits, executor launches, staging, and commits until the inclusion question and every initial Ask finding have an explicit user decision. This includes Auto fixes. A decision picks one shown option, or skips, defers, or rejects the finding. A general go-ahead that names no option picks none, unless the question showed only one option. With no unnamed selected actionable `Pre-existing` findings and no Ask findings, proceed directly.
 
