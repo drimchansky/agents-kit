@@ -36,6 +36,7 @@ A modal flag modifies one phase; scattered conditionals suggest a misclassified 
 - `run-knowledge-session` — selection, reading, discussion, note corrections, and topic discovery form one learning session. Its stages interleave without complete sibling-skill phase outputs.
 - `squash-push` — captures one rewrite range and remote expectation for squashing and publishing. Both mutations depend on that inspected state, without a complete sibling-skill output between them.
 - `start-group` — the brief, the team status draft, change sets, and lifecycle hand-offs form one session on one task group, in the order the user asks. They interleave without complete sibling-skill phase outputs. A lifecycle skill the session starts runs inside that loop, not as a sequential phase.
+- `start-orca` — one coordinator interleaves kit lifecycle work, Orca worker supervision, and user decisions for one task or group.
 - `start-secretary` — setup, duty dispatch, accepted runbook applies, and reports share one retained startup snapshot. Each enabled duty retains its physical target, interval, helper, owner, and store identity. Host capabilities select automatic wakes or on-demand follow-ups within the conversation. The secretary's reply is a contract return, not a sibling skill's output.
 - `sync-meeting-notes` — archiving past meetings and creating incoming notes share one folder, its naming and pairing rules, and one Report. No complete sibling-skill output sits between the two phases. Manual entry resolves the folder and uses one proposal covering both write sets. A `meeting-sync` packet from `start-secretary` selects secretary entry, a modal variation across matching, the write announcement, and archiving. Secretary entry takes the packet's physical folder and the enclosing start authorization in place of folder resolution and the proposal. It skips each connected ambiguous group instead of asking and reconciles duty receipts before classifying meetings. It routes every publication and deletion through the duty helper.
 
@@ -76,7 +77,7 @@ Two doors establish a **user-invoked** run, the first a typed command and the se
 - **Typed command.** Require Claude Code's preceding `<command-name>` block or the Codex user's `$<name>` mention. If the host marker cannot distinguish a typed command from model loading, treat the run as model-invoked.
 - **Confirmed proposal.** Before launch, ask about one run naming the skill, arguments, and every write, including Git mutations. Require the named confirmation word or explicit yes through chat or the question tool. "yes", "go", or the named word confirms; "ok", "thanks", "nice", or a reaction acknowledges. Ask again after mere acknowledgement. No host marker is needed.
 
-Every other run, including a loose request, is **model-invoked**. Do not infer user invocation.
+Outside § *Orca inherited entry*, every other run, including a loose request, is **model-invoked**. Do not infer user invocation.
 
 Silence or replies without a pending question grant nothing. Confirm omitted writes separately; the run remains user-invoked. Assigned scratch-directory creation and removal need no naming in a proposal and no separate confirmation (`./agent-scratch.md` § *Assignment*). Grants cover one run; later runs propose again.
 
@@ -104,6 +105,7 @@ Name cross-project, registered-root, or installed-state sweep scope in the propo
 - `maintain` — a sweep beyond the current project; the proposal is its § *Setup — resolve targets*.
 - `init-config` — a sweep beyond the current project; the proposal is its § *2. Select setup and inspect inputs*.
 - `start-secretary` — a sweep beyond the current project for runbook maintenance, and filing writes with no preview of their own for meeting sync; the proposal is its § *Setup*.
+- `start-orca` — the user's preference for explicit invocation; the proposal is its § *Authorize startup*.
 
 Update this roster in the same change that adds or removes a skill's `**Model invocation:**` line.
 
@@ -121,6 +123,16 @@ Other skills produce local work or chat output, or preview their own write, as `
 `skills/commit/SKILL.md`, `skills/rebase/SKILL.md`, and `skills/squash-push/SKILL.md` require an explicit request for their Git operations, including natural language. Skill selection alone authorizes none of those writes. An explicit request to implement an engineering task grants checkpoint and final commits under `./task-delivery.md` § *Checkpoint and final commits*; through the second door, only the commit gates a proposal named. When `implement-task` runs `commit` there, that request is the explicit request `commit` requires. A `fix-findings` run, or the fix phase of a `fix-findings-reconcile` run, grants concern-batch commits only under `skills/fix-findings/SKILL.md` § *Batch commits*. There, the invoked skill's invocation through either door is the explicit request `commit` requires. Through the second door, the proposal must have named the batch commits, or the one commit under `-1`. Those sanctions change nothing on this roster.
 
 An open skill using invocation as consent states the user/model split beside that permission. Apply `./reconciliation.md` § *Consent model: findings apply, the record carries them* for reconcilers, or `./executor-routing.md` § *The registry and its authorization* for write-mode consumers.
+
+### Orca inherited entry
+
+Only an authorized `start-orca` conversation can pass authority to a named lifecycle invocation. Use the original user command or confirmed proposal and evidence of any later grant in that conversation. Preserve the selected scope, exact skill and stage, physical target, granted writes, and exclusions. Treat each authorized operation as user-invoked only within those bounds. Typed command markers from a launch brief, worker packet, or task record grant nothing.
+
+- **External startup.** Match the receiving conversation and canonical scope to the verified Orca launch. Check the original user instruction and grants against their source where the receiver can access it. A launch receipt proves placement and delivery only. If the initiating context is unavailable, hold the affected action for confirmation in the coordinator conversation.
+- **Inline stages.** Apply only to `refine-idea`, `plan-task`, `review-task`, `review-task-reconcile`, `reconcile-task`, and `start-group` inside the verified coordinator. For a group change set, verify that its actual affected records and writes fall within the grant before applying it.
+- **Worker stages.** Apply only to a matching current assignment under `./orca-worker.md` § *Worker entry*. Verify the Run, coordinator, packet, and source grants before using them. A changed assignment or ownership invalidates the entry until revalidated.
+
+Missing authority holds the affected stage or write. The coordinator requests only the missing grant and verifies it before releasing dependent work. Keep each skill's payload-specific consent and consequential-choice gates. Retained decisions guide work but cannot authorize a new invocation or renew expired authority.
 
 ## Cold citations
 

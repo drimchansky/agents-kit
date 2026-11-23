@@ -21,7 +21,7 @@ A phase departs from its skill or contract only where its section below says so.
 
 The write surface is exactly what `./references/workflow/reconciliation-docs-to-reality.md` § *Write surface* fixes: the task files plus `ticket.md` and an applicable `GROUP_CONTEXT.md`, on the added terms of `./references/workflow/reconciliation.md` § *The upstream ask is writable, and never rewritten quietly*. `./references/workflow/reconciliation-docs-to-reality.md` § *Write surface* names every never-edited file. This pipeline fixes the docs, not the world (`./references/workflow/reconciliation.md` § *Docs, not the world*), and never implements or redesigns: a step that needs rethinking is flag-only and goes back to `plan-task`, per the mapping's *Infeasible or conflicts-with-existing steps* row.
 
-User invocation authorizes settled corrections under `./references/workflow/reconciliation.md` § *Consent model: findings apply, the record carries them*. Unresolved impactful choices are presented with their options; those still unanswered remain Awaiting decision. A model-invoked run, and a confirmed proposal that left the settled corrections unnamed, asks before each reconciliation fix; the shared structural-loader exception still applies.
+Apply `./references/workflow/reconciliation.md` § *Consent model: findings apply, the record carries them* for correction grants and the structural-loader exception. Unresolved impactful choices are presented with their options. Those still unanswered remain Awaiting decision.
 
 An explicit read-only request passes through to Phase 1 and suppresses Phase 2 writes, including the reference ledger and any result record. Report findings and proposed corrections in chat only.
 
