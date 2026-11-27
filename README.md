@@ -1,6 +1,6 @@
 # Agents Kit
 
-My personal collection of skills, agents, and workflows for Claude Code and Codex, shaped around my preferences and habits.
+My personal collection of skills, agents, and workflows for Claude Code, Codex, and Antigravity, shaped around my preferences and habits.
 
 ## Features
 

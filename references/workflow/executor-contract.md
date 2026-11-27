@@ -10,7 +10,7 @@ The coordinator supplies:
 - Exact edit paths, or the unit's stated scope.
 - Context unavailable to the executor, with absolute paths. For reachable files, give paths and non-obvious facts; otherwise provide verbatim content.
 - Prior user decisions and agreed boundaries.
-- The `../../CORE_RULES.md` excerpts below, verbatim, only when the coordinator's session did not start with the always-on core rules. Those rules come from the `setup.ts` Claude Code rule file `~/.claude/rules/agents-kit-core-rules.md` or the marked core-rules block in `~/.codex/AGENTS.md`. Reading `CORE_RULES.md` during the session does not count.
+- The `../../CORE_RULES.md` excerpts below, verbatim, only when the coordinator's session did not start with the always-on core rules. Those rules come from the `setup.ts` Claude Code rule file `~/.claude/rules/agents-kit-core-rules.md`, the Antigravity rule file `~/.gemini/config/rules/agents-kit-core-rules.md`, or the marked core-rules block in `~/.codex/AGENTS.md`. Reading `CORE_RULES.md` during the session does not count.
     - Relevant § *Ask Before Assuming* text.
     - The entry template and dependency-problem paragraphs of § *NOTICED BUT NOT TOUCHING*.
 - Domain guidance: universal per-unit sections verbatim, including code-style Comments for code and documentation's link sweep for documents; overlays/triggered pack files as absolute paths, or explicit `none`.

@@ -50,7 +50,21 @@ const CORE_RULES_MARKER = ".agents-kit-core-rules";
 const AGENT_MARKER_PREFIX = ".agents-kit-";
 const CLAUDE_HOME_NAME = ".claude";
 const CODEX_HOME_NAME = ".codex";
-const AGENT_EXTENSIONS = new Map([[CLAUDE_HOME_NAME, "md"], [CODEX_HOME_NAME, "toml"]]);
+const ANTIGRAVITY_PARENT_NAME = ".gemini";
+const ANTIGRAVITY_HOME_NAME = "config";
+const ANTIGRAVITY_DISPLAY_NAME = join(ANTIGRAVITY_PARENT_NAME, ANTIGRAVITY_HOME_NAME);
+const ANTIGRAVITY_RULE_FRONTMATTER =
+  "---\ntrigger: always_on\ndescription: \"Always-on core rules for agents-kit.\"\n---\n\n";
+type HomeKind = "claude" | "codex" | "antigravity";
+interface AgentSpec {
+  readonly dir: readonly string[];
+  readonly extension: string;
+}
+const AGENT_SPECS: Readonly<Record<HomeKind, AgentSpec>> = {
+  claude: { dir: ["agents"], extension: "md" },
+  codex: { dir: ["agents"], extension: "toml" },
+  antigravity: { dir: ["antigravity", "agents"], extension: "md" },
+};
 const RULE_NAME = "agents-kit-core-rules";
 const RULE_FILE = join("rules", `${RULE_NAME}.md`);
 const RULE_MARKER = join("rules", CORE_RULES_MARKER);
@@ -1226,7 +1240,21 @@ function isNonDirectory(path: string): boolean {
   }
 }
 
-function ruleFileFindings(kitRoot: string, home: string, display: string, marker: MarkerState): InstallFinding[] {
+function homeKind(home: string): HomeKind | null {
+  const name = basename(home);
+  if (name === CLAUDE_HOME_NAME) return "claude";
+  if (name === CODEX_HOME_NAME) return "codex";
+  if (name === ANTIGRAVITY_HOME_NAME && basename(dirname(home)) === ANTIGRAVITY_PARENT_NAME) return "antigravity";
+  return null;
+}
+
+function ruleFileFindings(
+  kitRoot: string,
+  home: string,
+  display: string,
+  marker: MarkerState,
+  frontmatter = "",
+): InstallFinding[] {
   const shown = join(display, RULE_FILE);
   const rulesDir = dirname(RULE_FILE);
   if (isDanglingLink(join(home, rulesDir), join(display, rulesDir))) return [installDrift(join(display, rulesDir), DANGLING_LINK)];
@@ -1241,9 +1269,20 @@ function ruleFileFindings(kitRoot: string, home: string, display: string, marker
     if (kind === "link") {
       return [installDrift(shown, "present but not kit-owned — setup.ts never replaces it; move it aside and rerun setup.ts")];
     }
-    const out: InstallFinding[] = [];
-    comparePath(join(kitRoot, "CORE_RULES.md"), join(home, RULE_FILE), shown, out);
-    return out;
+    if (frontmatter === "") {
+      const out: InstallFinding[] = [];
+      comparePath(join(kitRoot, "CORE_RULES.md"), join(home, RULE_FILE), shown, out);
+      return out;
+    }
+    if (kind === "unreadable") return [];
+    if (kind === "missing") return [installDrift(shown, "missing in install")];
+    if (kind !== "file") return [installDrift(shown, "differs from kit source")];
+    const kitRules = join(kitRoot, "CORE_RULES.md");
+    const kitBytes = bytesOf(kitRules, kitRules);
+    const installBytes = bytesOf(join(home, RULE_FILE), shown);
+    if (kitBytes == null || installBytes == null) return [];
+    const expected = Buffer.concat([Buffer.from(frontmatter, "utf8"), kitBytes]);
+    return expected.equals(installBytes) ? [] : [installDrift(shown, "differs from kit source")];
   }
   const kind = kindOf(join(home, RULE_FILE), shown);
   if (kind === "unreadable") return [];
@@ -1323,13 +1362,21 @@ function overrideFindings(home: string, display: string): InstallFinding[] {
   return [installDrift(shown, "non-empty — Codex reads it in place of AGENTS.md, hiding the core-rules block; empty or remove it")];
 }
 
-function coreRulesDeliveryFindings(kitRoot: string, home: string, display: string, ruleMarker: MarkerState): InstallFinding[] {
-  const name = basename(home);
-  if (name === CLAUDE_HOME_NAME) {
+function coreRulesDeliveryFindings(
+  kitRoot: string,
+  home: string,
+  display: string,
+  kind: HomeKind | null,
+  ruleMarker: MarkerState,
+): InstallFinding[] {
+  if (kind === "claude") {
     return [...ruleFileFindings(kitRoot, home, display, ruleMarker), ...hookFindings(home, display)];
   }
-  if (name === CODEX_HOME_NAME) {
+  if (kind === "codex") {
     return [...codexBlockFindings(kitRoot, home, display), ...overrideFindings(home, display)];
+  }
+  if (kind === "antigravity") {
+    return ruleFileFindings(kitRoot, home, display, ruleMarker, ANTIGRAVITY_RULE_FRONTMATTER);
   }
   return [];
 }
@@ -1339,9 +1386,15 @@ interface InstallResult {
   readonly items: number;
 }
 
+interface MissingKitItem {
+  readonly kitPath: string;
+  readonly installRel: string;
+}
+
 function installFindings(kitRoot: string, homeArg: string): InstallResult {
   const home = resolve(homeArg);
-  const display = basename(home) || homeArg;
+  const kind = homeKind(home);
+  const display = kind === "antigravity" ? ANTIGRAVITY_DISPLAY_NAME : (basename(home) || homeArg);
   const findings: InstallFinding[] = [];
   let items = 0;
 
@@ -1377,19 +1430,21 @@ function installFindings(kitRoot: string, homeArg: string): InstallResult {
 
   const markers = listEntriesIfPresent(join(home, "agents"), join(display, "agents"))
     .filter((entry) => entry.isFile() && entry.name.startsWith(AGENT_MARKER_PREFIX));
-  const extension = AGENT_EXTENSIONS.get(basename(home));
-  if (markers.length > 0 && !extension) {
+  const agentSpec = kind === null ? undefined : AGENT_SPECS[kind];
+  if (markers.length > 0 && !agentSpec) {
     warnings.push(`${display}: kit agent markers found but the home name matches no known agent format; skipping agents/`);
-  } else {
+  } else if (agentSpec) {
+    const kitAgents = join(kitRoot, ...agentSpec.dir);
     for (const marker of markers) {
-      const file = `${marker.name.slice(AGENT_MARKER_PREFIX.length)}.${extension}`;
+      const file = `${marker.name.slice(AGENT_MARKER_PREFIX.length)}.${agentSpec.extension}`;
       items++;
       compared.add(join("agents", file));
-      comparePath(join(kitRoot, "agents", file), join(home, "agents", file), join(display, "agents", file), findings);
+      comparePath(join(kitAgents, file), join(home, "agents", file), join(display, "agents", file), findings);
     }
   }
 
-  const ruleMarker = basename(home) === CLAUDE_HOME_NAME && !isNonDirectory(join(home, dirname(RULE_MARKER)))
+  const hasRuleFile = kind === "claude" || kind === "antigravity";
+  const ruleMarker = hasRuleFile && !isNonDirectory(join(home, dirname(RULE_MARKER)))
     ? markerState(join(home, RULE_MARKER), join(display, RULE_MARKER))
     : "unowned";
   if (ruleMarker !== "unowned") items++;
@@ -1408,28 +1463,29 @@ function installFindings(kitRoot: string, homeArg: string): InstallResult {
   findings.push(...conflicts);
 
   const absent = (rel: string) => !compared.has(rel) && kindOf(join(home, rel), join(display, rel)) === "missing";
-  const kitOnly: string[] = [];
-  if (absent("CORE_RULES.md")) kitOnly.push("CORE_RULES.md");
-  if (absent("references")) kitOnly.push("references");
+  const kitOnly: MissingKitItem[] = [];
+  if (absent("CORE_RULES.md")) kitOnly.push({ kitPath: join(kitRoot, "CORE_RULES.md"), installRel: "CORE_RULES.md" });
+  if (absent("references")) kitOnly.push({ kitPath: join(kitRoot, "references"), installRel: "references" });
   const kitSkills = join(kitRoot, "skills");
   for (const entry of listEntriesIfPresent(kitSkills, kitSkills)) {
-    if (entry.isDirectory() && absent(join("skills", entry.name))) kitOnly.push(join("skills", entry.name));
+    if (entry.isDirectory() && absent(join("skills", entry.name))) {
+      kitOnly.push({ kitPath: join(kitSkills, entry.name), installRel: join("skills", entry.name) });
+    }
   }
-  if (extension) {
-    const kitAgents = join(kitRoot, "agents");
+  if (agentSpec) {
+    const kitAgents = join(kitRoot, ...agentSpec.dir);
     for (const entry of listEntriesIfPresent(kitAgents, kitAgents)) {
-      if (entry.isFile() && entry.name.endsWith(`.${extension}`) && absent(join("agents", entry.name))) {
-        kitOnly.push(join("agents", entry.name));
+      if (entry.isFile() && entry.name.endsWith(`.${agentSpec.extension}`) && absent(join("agents", entry.name))) {
+        kitOnly.push({ kitPath: join(kitAgents, entry.name), installRel: join("agents", entry.name) });
       }
     }
   }
-  for (const rel of kitOnly) {
-    const kitPath = join(kitRoot, rel);
-    for (const path of filesUnder(kitPath, join(display, rel), kindOf(kitPath, kitPath))) {
+  for (const { kitPath, installRel } of kitOnly) {
+    for (const path of filesUnder(kitPath, join(display, installRel), kindOf(kitPath, kitPath))) {
       findings.push({ check: "install-drift", path, detail: "missing in install" });
     }
   }
-  findings.push(...coreRulesDeliveryFindings(kitRoot, home, display, ruleMarker));
+  findings.push(...coreRulesDeliveryFindings(kitRoot, home, display, kind, ruleMarker));
   return { findings, items };
 }
 
