@@ -166,7 +166,7 @@ Use lists, not tables. Confine writes to the resolved kit/task roots, listed lin
   - `done-unarchived`: path, terminal status, and archive outcome: applied, declined, collision, or backlogged judgment item.
   - `started-in-backlog`: path and live or unjudgeable status; the user decides whether location or lifecycle is wrong.
   - `unknown-status`: plan path and unrecognized value for manual remapping.
-  - `legacy-result-status`: result path and value as inert inventory; propose no repair (`task-lifecycle.md` § *`result.md` — no status field*).
+  - `legacy-result-status`: result path and value as inert inventory; propose no repair (`./references/workflow/task-lifecycle.md` § *`result.md` — no status field*).
   - `dead-anchor`: checked step with unresolved result evidence.
   - `dead-citation`: citing file and target as written, including plain store-document paths. A dead checked-step link also appears under dead-anchor; it is one defect detected twice.
   - `citation-form`: one line per citing file with a count, not one per link. Keep replacement details in the JSON worklist.

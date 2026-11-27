@@ -41,6 +41,6 @@ Use with `./mermaid-flowchart.md` or the matching sequence, class, ER, or state 
 ## Before returning a diagram
 
 - Run `npx -y @mermaid-js/mermaid-cli -i d.mmd -o d.svg`. Passing requires exit 0 and an SVG on disk; parse failure exits 1 without output.
-- Rendering misses some traps. Where the type has a sheet, reread the source against its § *Traps*.
+- Rendering misses some traps. Where the type has a sheet (`./mermaid-flowchart.md`, `./mermaid-sequence.md`, `./mermaid-class.md`, `./mermaid-er.md`, or `./mermaid-state.md`), reread the source against its § *Traps*.
 - Deliver an unrendered diagram only when tooling is unavailable, stating the skipped validation and reason.
 - Read labels for the audience: expand first-use acronyms and remove unfamiliar internal shorthand.

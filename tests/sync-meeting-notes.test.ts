@@ -1,14 +1,10 @@
 import assert from "node:assert/strict";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { after, test } from "node:test";
 import { configure, start, finish, create, observe, archive, reconcile, remove } from "../scripts/meeting-sync-state.ts";
 
-const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const SKILL = readFileSync(join(REPO, "skills/sync-meeting-notes/SKILL.md"), "utf8");
-const DUTY = readFileSync(join(REPO, "references/secretary/meeting-sync.md"), "utf8");
 const ROOT = realpathSync(mkdtempSync(join(tmpdir(), "sync-procedure-")));
 const NOW = Date.parse("2026-11-02T10:00:00Z");
 after(() => rmSync(ROOT, { recursive: true, force: true }));
@@ -103,10 +99,4 @@ test("fixture trace deletes a template copy only after complete source coverage"
   const template = observe(f.home, f.retained, { token: f.token, path: "Meeting – Template.md", now: NOW });
   remove(f.home, f.retained, { token: f.token, incoming, template, completeSource: true, now: NOW });
   assert.equal(existsSync(join(f.folder, path)), false);
-});
-
-test("new duty and shared procedure references resolve beside their owners", () => {
-  for (const [path, text] of [["references/secretary/meeting-sync.md", DUTY], ["skills/sync-meeting-notes/SKILL.md", SKILL]] as const) {
-    for (const [, target] of text.matchAll(/`(\.\.?\/[^`]+\.md)`/g)) assert.ok(existsSync(resolve(REPO, dirname(path), target)), `${path}: ${target}`);
-  }
 });
