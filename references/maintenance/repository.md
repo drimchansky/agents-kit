@@ -97,7 +97,7 @@ Run the suite covering each changed surface:
 - `scripts/silence-watch.ts` or `references/scripts/silence-watch.md`: `node --test tests/silence-watch.test.ts`.
 - `scripts/orca-status-timer.ts` or `references/scripts/orca-status-timer.md`: `node --test tests/orca-status-timer.test.ts tests/start-orca.test.ts`.
 - `scripts/pr-comments.ts`: `node --test tests/pr-comments.test.ts`.
-- `scripts/dup-check.ts` or its `corpus.ts` import: `node --test tests/dup-check.test.ts`.
+- `scripts/dup-check.ts` or its `corpus.ts` import: `node --test tests/dup-check.test.ts tests/corpus-links.test.ts`.
 - `scripts/worktree-merge.ts`: `node --test tests/worktree-merge.test.ts`.
 - `scripts/secretary-state.ts` or `references/scripts/secretary-state.md`: `node --test tests/secretary-state.test.ts`, plus the start-secretary suite, which runs the skill's helper commands.
 - `scripts/meeting-sync-state.ts` or `references/scripts/meeting-sync-state.md`: `node --test tests/meeting-sync-state.test.ts tests/sync-meeting-notes.test.ts tests/start-secretary.test.ts`.
@@ -106,11 +106,12 @@ Run the suite covering each changed surface:
 - `scripts/lifecycle-constants.ts`: health-check, task-move, task-state, commit-scan, sweep-scope, and templates suites, which cover its seven importers.
 - `references/templates/` and the three scripts its suite drives: `node --test tests/templates.test.ts`.
 - `skills/review-pr-loop/SKILL.md` or `references/workflow/delegated-waiting.md`: `node --test tests/review-pr-loop.test.ts`.
-- `references/engineering/review-evidence.md`, `references/engineering/review.md`, `references/workflow/user-facing-messages.md`, `references/workflow/reviewer-contract.md`, `references/workflow/reviewer-session.md`, `references/workflow/verify-pipeline.md`, `references/workflow/executor-contract.md`, `references/workflow/executor-coordinator.md`, `references/workflow/fix-findings-recovery.md`, `references/workflow/pr-lookup.md`, `references/workflow/pr-description.md`, `references/workflow/review-delta.md`, `references/workflow/skill-conventions.md`, `skills/review-code/SKILL.md`, `skills/review-code-triage-verify/SKILL.md`, `skills/review-docs/SKILL.md`, `skills/publish-pr-review/SKILL.md`, `skills/update-pr-description/SKILL.md`, `skills/review-pr-loop/SKILL.md`, `skills/triage-findings/SKILL.md`, `skills/triage-findings-verify/SKILL.md`, `skills/fix-findings/SKILL.md`, or `skills/fix-findings-reconcile/SKILL.md`: `node --test tests/review-evidence.test.ts`.
+- `references/engineering/review-evidence.md`, `references/engineering/review.md`, `references/workflow/skill-conventions.md`, `skills/publish-pr-review/SKILL.md`, `skills/review-code/SKILL.md`, `skills/review-code-triage-verify/SKILL.md`, or `skills/review-pr-loop/SKILL.md`: `node --test tests/review-evidence.test.ts`.
 - `skills/init-config/SKILL.md`, `skills/start-secretary/SKILL.md`, `references/workflow/secretary-contract.md`, `references/secretary/runbook-maintenance.md`, `agents/secretary.md`, `agents/secretary.toml`, `agents/antigravity/secretary.md`, `references/workflow/skill-conventions.md`, or `references/workflow/domain-packs.md`: `node --test tests/start-secretary.test.ts`.
-- `skills/start-group/SKILL.md`, `references/workflow/skill-conventions.md`, `references/workflow/domain-packs.md`, or a file the skill cites, such as `references/workflow/task-store.md`, `references/workflow/context-schema.md`, or `references/workflow/reconciliation.md`: `node --test tests/start-group.test.ts`.
-- `skills/start-orca/SKILL.md`, `references/workflow/orca-worker.md`, or a file either cites: `node --test tests/start-orca.test.ts`.
+- `skills/start-group/SKILL.md`, `references/workflow/skill-conventions.md`, or `references/workflow/domain-packs.md`: `node --test tests/start-group.test.ts`.
+- `skills/start-orca/SKILL.md`, `references/workflow/orca-worker.md`, or `references/scripts/orca-status-timer.md`: `node --test tests/start-orca.test.ts`.
 - Invocation-gate changes: `node --test tests/invocation-gate.test.ts`. This checks that no SKILL.md frontmatter or `agents/` policy file closes a host door, and that the `**Confirm-gated skills:**` roster in `references/workflow/skill-conventions.md` matches the skills carrying the `**Model invocation:**` line.
+- Any corpus Markdown file (`skills/*/SKILL.md`, `references/**/*.md`, `CORE_RULES.md`, or `AGENTS.md`), including links, headings, section citations, `references/workflow/domain-packs.md`, `references/workflow/skill-conventions.md`, or `<!-- cold -->` markers: `node --test tests/corpus-links.test.ts`.
 
 Helper rationale belongs in its `references/maintenance/scripts.md` section. Skills invoking helpers cite the contract path.
 
@@ -136,7 +137,7 @@ Semantic registries remain maintained for these reasons:
 - `references/workflow/task-lifecycle.md` propagate list: `resume-task-reconcile`, `review-task-reconcile`, and `fix-findings-reconcile` act on status fields without citing this file.
 - `references/workflow/context-schema.md` consumer registry: readers use section names without citing the schema. They include review-task, implement-task, resume-task, reconcile-task, reconciliation's annotation rows, reconciliation-sweep's scope rows, and the reconcile composites. Producers refine-idea, choose-approach, plan-task, and decompose-task cite it and remain derivable.
 - `references/workflow/skill-conventions.md` § *Current members*: entries author classification reasons. Register each new member there.
-- That file's § *The invocation gate*: confirm-gated skills are searchable by their `**Model invocation:**` line, but the skills gating their own write another way and the placement criteria are authored. Record every confirm gate added or removed.
+- `references/workflow/skill-conventions.md` § *The invocation gate*: confirm-gated skills are searchable by their `**Model invocation:**` line, but the skills gating their own write another way and the placement criteria are authored. Record every confirm gate added or removed.
 - `references/workflow/executor-coordinator.md` § *Bindings*: defines each consumer's unit, packet, fallback, and merge order. `references/workflow/executor-contract.md` § *Consumers* holds each consumer's edit surface.
 - `references/workflow/reviewer-contract.md` § *Consumers*: defines authorized reviewer launchers and consumers, checked by § *Launch packet*.
 - `references/workflow/secretary-contract.md` § *Consumers*: defines the one authorized secretary launcher.
@@ -145,7 +146,7 @@ Semantic registries remain maintained for these reasons:
 - `references/workflow/domain-packs.md` § *The split*: classifies methodology-only spine skills rather than enumerating citations.
 - `references/engineering/verification.md` gate-runner parenthetical: domain resolution reaches consumers without a direct citation. Fix-findings, implement-task, and implement also cite it directly. Commit cites § *What a boundary records* only to read a boundary's `manifest written` line, not to run the recipe.
 - `references/documentation/verification.md` gate-runner parenthetical: reached by domain resolution and fix-findings' per-fix routing. Review-docs cites it to distinguish its judgment pass from mechanical tiers, not to run those tiers.
-- `references/engineering/exploration.md` loader gloss: refine-idea reaches the recipe through ideation.md's § *Ground in what exists*, without citing this path.
+- `references/engineering/exploration.md` loader gloss: refine-idea reaches the recipe through `references/workflow/ideation.md` § *Ground in what exists*, without citing this path.
 - `references/engineering/execution.md` loader sentence: implement and fix-findings resolve the execution recipe through the shared loop.
 
 Sanctioned copies require these mirror updates:

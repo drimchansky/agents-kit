@@ -24,7 +24,9 @@ If scope, done, or an essential constraint prevents testable criteria, ask up to
 
 Before creating a folder or writing files, assess delivery independence under `./references/workflow/decomposition.md` § *Part-quality bar*. An explicit one-task request or tightly coupled work continues at Destination.
 
-For work warranting several tickets and decided under `./references/workflow/decomposition.md` § *Source intake*, run `../decompose-task/SKILL.md` with the request as its source. That skill owns the chat-only proposal, confirmation, creation, and final report. Only a confirmed split ends this single-ticket flow. Every other outcome continues at Destination, with undecided matters kept under **Open questions**. <!-- cold -->
+Check whether work warrants several tickets and is decided under `./references/workflow/decomposition.md` § *Source intake*.
+
+When it is, run `../decompose-task/SKILL.md` with the request as its source. That skill owns the chat-only proposal, confirmation, creation, and final report. Only a confirmed split ends this single-ticket flow. Every other outcome continues at Destination, with undecided matters kept under **Open questions**. <!-- cold -->
 
 Pass a parent directory when the request supplies one: a non-task directory or missing path as given, or a task folder's own parent. The proposal states that a supplied task folder stays as it is. A file target passes none, so `decompose-task` selects the default container. For a file target, or a request with neither path nor task intent, the proposal also states that each part becomes a task folder with `ticket.md` and a seeded `CONTEXT.md`.
 

@@ -50,7 +50,7 @@ For an address-management group, a shared admin-only permission rule belongs her
 The user and `start-group` author the file's sections. `implement-task` and reconcilers may correct the file under **Surface material contradictions before dependent work** below. It may hold these sections, each optional; a group file without them stays valid:
 
 - `## Direction`: where the group's work is heading.
-- `## Scope`: what the group covers, one line per direct child task. `start-group` writes these lines, and its § *Brief* reports their drift from the child tasks on disk.
+- `## Scope`: what the group covers, one line per direct child task. `start-group` writes these lines, and `start-group` § *Brief* reports their drift from the child tasks on disk.
 - `## Decisions`: group-wide current rules and standing facts, one line each, citing the `GROUP_LOG.md` entry that names its sources or the task record that holds the evidence.
 - `## Open Questions`: group questions, each with a `GQ<n>` id, its addressee, and a parenthesized outreach slot. After each `start-group` change set other than a compaction, it lists only unanswered and waiting questions. A waiting question's answer awaits its record in `DECISIONS.md` or an ancestor group. Its entry states that answer and names that file.
 

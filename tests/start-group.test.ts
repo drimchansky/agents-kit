@@ -1,6 +1,6 @@
 import assert from "node:assert";
-import { existsSync, lstatSync, readFileSync, readlinkSync, realpathSync } from "node:fs";
-import { basename, dirname, join, relative, resolve } from "node:path";
+import { lstatSync, readFileSync, readlinkSync, realpathSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
@@ -30,20 +30,6 @@ function frontmatter(text: string): Map<string, string> {
     if (match) fields.set(match[1], match[2].replace(/^(["'])(.*)\1$/, "$2"));
   }
   return fields;
-}
-
-function headings(text: string): string[] {
-  const titles: string[] = [];
-  let fenced = false;
-  for (const line of text.split("\n")) {
-    if (line.startsWith("```")) fenced = !fenced;
-    else if (!fenced && /^#+ /.test(line)) titles.push(line.replace(/^#+ /, ""));
-  }
-  return titles;
-}
-
-function names(titles: readonly string[], heading: string): boolean {
-  return titles.some((title) => title === heading || title.startsWith(`${heading} (`));
 }
 
 test("frontmatter names the skill and carries a description", () => {
@@ -80,52 +66,14 @@ test("skill-conventions and domain-packs register the skill as a pack-free stand
   assert.match(packFree, /^ {2}- `start-group` /m);
 });
 
-test("every section the skill cites exists in its owner", () => {
-  const owners = new Map<string, Set<string>>();
-  for (const [, path, withSection] of SKILL.matchAll(/`(\.\.?\/[^`\s]+\.md)`( § \*)?/g)) {
-    const file = resolve(SKILL_DIR, path);
-    assert.ok(existsSync(file), `cited file exists: ${path}`);
-    if (withSection === undefined) continue;
-    const owner = relative(REPO_DIR, realpathSync(file));
-    owners.set(basename(owner), (owners.get(basename(owner)) ?? new Set()).add(owner));
-  }
-  const ownerOf = (cited: string): string | undefined => {
-    if (/^\.\.?\//.test(cited)) return relative(REPO_DIR, realpathSync(resolve(SKILL_DIR, cited)));
-    const paths = owners.get(cited);
-    return paths?.size === 1 ? [...paths][0] : undefined;
-  };
-  const ownTitles = headings(SKILL);
-  const ownerTitles = new Map<string, string[]>();
-  const titlesOf = (owner: string): string[] => {
-    if (!ownerTitles.has(owner)) ownerTitles.set(owner, headings(readFileSync(join(REPO_DIR, owner), "utf8")));
-    return ownerTitles.get(owner)!;
-  };
-  const sectioned = new Set<string>();
-  for (const line of SKILL.split("\n")) {
-    let nearest: string | undefined;
-    for (const match of line.matchAll(/`([^`\s]+\.md)`( § \*([^*]+)\*)?|§ \*([^*]+)\*/g)) {
-      const [, cited, withSection, heading, bare] = match;
-      if (cited !== undefined) {
-        const owner = ownerOf(cited);
-        if (withSection !== undefined) {
-          assert.ok(owner, `${cited} § ${heading} names one owner the skill cites by full path with a section`);
-          assert.ok(names(titlesOf(owner), heading), `${owner} has § ${heading}`);
-          sectioned.add(owner);
-        }
-        if (owner) nearest = owner;
-        continue;
-      }
-      if (names(ownTitles, bare)) continue;
-      assert.ok(nearest && names(titlesOf(nearest), bare), `§ ${bare} names a skill heading or one in ${nearest ?? "an owner its line cites before it"}`);
-      sectioned.add(nearest!);
-    }
-  }
+test("the skill cites required workflow sections", () => {
   for (const owner of [
     "references/workflow/task-store.md",
     "references/workflow/context-schema.md",
     "references/workflow/reconciliation.md",
     "references/workflow/skill-conventions.md",
   ]) {
-    assert.ok(sectioned.has(owner), `the skill cites a section of ${owner}`);
+    const escaped = owner.replaceAll(".", "\\.");
+    assert.match(SKILL, new RegExp(`\`\\./${escaped}\` § \\*[^*]+\\*`), `the skill cites a section of ${owner}`);
   }
 });

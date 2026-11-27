@@ -11,8 +11,8 @@ The coordinator supplies:
 - Context unavailable to the executor, with absolute paths. For reachable files, give paths and non-obvious facts; otherwise provide verbatim content.
 - Prior user decisions and agreed boundaries.
 - The `../../CORE_RULES.md` excerpts below, verbatim, only when the coordinator's session did not start with the always-on core rules. Those rules come from the `setup.ts` Claude Code rule file `~/.claude/rules/agents-kit-core-rules.md`, the Antigravity rule file `~/.gemini/config/rules/agents-kit-core-rules.md`, or the marked core-rules block in `~/.codex/AGENTS.md`. Reading `CORE_RULES.md` during the session does not count.
-    - Relevant § *Ask Before Assuming* text.
-    - The entry template and dependency-problem paragraphs of § *NOTICED BUT NOT TOUCHING*.
+    - Relevant `../../CORE_RULES.md` § *Ask Before Assuming* text.
+    - The entry template and dependency-problem paragraphs of `../../CORE_RULES.md` § *NOTICED BUT NOT TOUCHING*.
 - Domain guidance: universal per-unit sections verbatim, including code-style Comments for code and documentation's link sweep for documents; overlays/triggered pack files as absolute paths, or explicit `none`.
 - Required checks: the criterion and every domain per-unit check (`./execution-loop.md` § *Two verification tiers*). Each names its owner (`executor` by default, or `coordinator`), exact command/procedure, assertion, passing condition, absolute execution root, and needed capability. Preserve assertions and passing conditions when assigning ownership or retargeting paths. Every check leaves the runner's cache on (`../engineering/boundary-scope.md` § *Never disable the runner's cache*).
 - Silence-watch command `node <kit-root>/scripts/silence-watch.ts` or `none (<reason>)`, which the coordinator supplies under `./delegated-waiting.md` § *Shell commands*. Before awaiting any background shell command, including a required check, arm its watch under `./delegated-waiting.md` § *Shell commands*.

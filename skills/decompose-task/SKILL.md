@@ -17,7 +17,7 @@ Phase 2 runs `../prepare-ticket/SKILL.md`'s full protocol per part with five ove
 
 - **Core Rules blocks**: this skill's block covers the pipeline; the inner read of the project's `AGENTS.md` and `CLAUDE.md` does not repeat.
 - **Clarifying questions**: `prepare-ticket`'s per-ticket round folds into Phase 1's clarification and confirmation. A gap discovered only at drafting time is asked then, not guessed.
-- **Decomposition assessment**: skip `prepare-ticket`'s § *3. Assess decomposition*; draft only the part Phase 1 already confirmed.
+- **Decomposition assessment**: skip `prepare-ticket` § *3. Assess decomposition*; draft only the part Phase 1 already confirmed.
 - **Handoff**: `prepare-ticket`'s Handoff blocks are dropped; this skill's Output composes one block for the whole run.
 - **Destination resolution**: write `ticket.md` directly into the part folder Phase 2 just created; bypass `./references/workflow/task-destinations.md`'s *Destination paths* inference.
 
