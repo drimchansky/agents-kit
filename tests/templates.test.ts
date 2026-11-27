@@ -85,10 +85,15 @@ function build(): void {
   writeFileSync(join(TASK_DIR, "CONTEXT.md"), `${fill(template("CONTEXT.md"))}\n## Recommended Direction\n\nReuse the download path.\n\n## Key Assumptions to Validate\n\n- [ ] The active filter is available at download time.\n\n## MVP Scope\n\n- **In:** current filter\n- **Out:** scheduled exports\n\n## Not Doing (and Why)\n\n- Scheduled exports require a separate flow.\n\n## Open Questions\n\n- Which rows are archived? [Issue](https://tracker.example.invalid/archive)\n\n## References\n\n- [Spec](https://docs.example.invalid/export)\n`);
   writeFileSync(join(TASK_DIR, "goals.md"), fill(template("goals.md")));
   writeFileSync(join(TASK_DIR, "plan.md"), planText());
+  writeFileSync(join(TASK_DIR, "history.md"), fill(template("history.md")));
   writeFileSync(join(TASK_DIR, "result.md"), fill(template("result.md"))
+    .replace("## Step N —", "## Step 1 —")
+    .replace("## Checkpoint after Step N", "## Checkpoint after Step 2")
     .replace(/^- G3 —.*$/m, "- G3 — pending external (awaiting observed release)")
     .replace(/^- G4 —.*$/m, "- G4 — pending decision (scope unresolved)")
-    .replace(/^- G5 —.*\n?/m, ""));
+    .replace(/^- G5 —.*\n?/m, "")
+    .replace(/^## In review\n[\s\S]*?(?=^## Live verification)/m, "")
+    .replace(/^\*\*Completed:\*\*.*\n?/m, ""));
 }
 
 function buildMinimal(): void {
@@ -105,6 +110,10 @@ function buildInReview(): void {
   writeFileSync(join(REVIEW_DIR, "goals.md"), fill(template("goals.md")));
   writeFileSync(join(REVIEW_DIR, "plan.md"), planText().replace("**Status:** executing", "**Status:** in-review"));
   writeFileSync(join(REVIEW_DIR, "result.md"), fill(template("result.md")
+    .replace("## Step N —", "## Step 1 —")
+    .replace("## Checkpoint after Step N", "## Checkpoint after Step 2")
+    .replace(/^## Blocked\n[\s\S]*?(?=^## Live verification)/m, "")
+    .replace(/^\*\*Completed:\*\*.*\n?/m, "")
     .replace(/^- G<n> —.*$/m, `- G3 — the [release](${AWAITED}), verified by the release owner`)));
 }
 
@@ -118,7 +127,9 @@ build();
 buildMinimal();
 buildInReview();
 
-test("a folder filled from the five templates parses as a live task", () => {
+test("a folder filled from the core and history templates parses as a live task", () => {
+  const history = readFileSync(join(TASK_DIR, "history.md"), "utf8");
+  assert.match(history, /^## 2026-01-05 — filled in$/m);
   const state = run<TaskState>(TASK_STATE, TASK_DIR);
   assert.equal(state.plan.status, "executing");
   assert.deepEqual(state.goalCoverage.uncoveredGoals, []);

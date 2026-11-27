@@ -3,7 +3,7 @@
 Reports task health and install drift for `maintain`.
 
 ```
-node scripts/health-check.ts [--stale-days N] [--result-max-kb N] [--task-max-kb N] [--record-max-kb N] <root> [<root>...]
+node scripts/health-check.ts [--stale-days N] [--task-max-kb N] [--record-max-kb N] <root> [<root>...]
 node scripts/health-check.ts --installs <kit-root> <home> [<home>...]
 ```
 
@@ -11,21 +11,25 @@ node scripts/health-check.ts --installs <kit-root> <home> [<home>...]
 
 `unreadablePaths` names absolute paths under walked roots that could not be opened, deduplicated across passes. Treat scanned as a floor when coverage is incomplete; empty findings do not establish a clean store. Unlistable citation targets outside every walked root are excluded from this store-coverage measure.
 
-**Emitted `check` values.** Tasks: `stale`, `done-unarchived`, `started-in-backlog`, `unknown-status`, `legacy-result-status`, `dead-anchor`, `dead-citation`, `citation-form`, `goal-id`, `no-current-state`, `oversized-result`, `oversized-task`, `oversized-record`, `duplicate-slug`, and `nested-task`. `--installs` walks no tasks and emits only `install-drift`.
+**Emitted `check` values.** Tasks: `stale`, `done-unarchived`, `started-in-backlog`, `unknown-status`, `legacy-result-status`, `dead-anchor`, `dead-citation`, `citation-form`, `goal-id`, `result-shape`, `no-current-state`, `oversized-task`, `oversized-record`, `duplicate-slug`, and `nested-task`. `--installs` walks no tasks and emits only `install-drift`.
 
-**Archived and backlogged folders.** Archived tasks count in scanned but receive only duplicate-slug, nested-task, dead-citation, and citation-form checks. Backlogged tasks are exempt only from stale (`../workflow/task-backlog.md`). Both remain subject to slug uniqueness because discovery can resolve them (`../workflow/task-layout.md` § *Discovery rules for skills*).
+**Archived and backlogged folders.** Archived tasks count in scanned but receive only duplicate-slug, nested-task, dead-citation, citation-form, and result-shape checks. Backlogged tasks are exempt only from stale (`../workflow/task-backlog.md`). Both remain subject to slug uniqueness because discovery can resolve them (`../workflow/task-layout.md` § *Discovery rules for skills*).
 
 `nested-task` alone descends into claimed tasks, including archived ones, listing hidden task descendants (`../workflow/task-store.md` § *Shared group context*). Apply container-before-recognition classification (§ *The root registry* there), regardless of misfiled role files.
 
 `done-unarchived` includes terminal tasks in Backlog. `started-in-backlog` covers a plan past to-do, a plan without parseable status, or a planless folder holding result.md.
 
-Age uses the newest `.md` mtime; unreadable files contribute nothing, potentially making a folder look older. Cloning or bulk touches reset ages, so a young mtime does not prove recent work.
+Age uses the newest scanned `.md` mtime; unreadable files contribute nothing, potentially making a folder look older. Cloning or bulk touches reset ages, so a young mtime does not prove recent work.
 
 `duplicate-slug` spans all roots recursively: one finding per colliding folder, retaining its root and naming peers by absolute directory.
 
+`dead-anchor` reports a checked step whose last result link outside inline code fails to reach its own level-2 step record. The detail distinguishes a missing anchor from an anchor that resolves to another heading.
+
 **`goal-id` validates goal definitions and task-local references** with `scripts/goal-structure.ts`. It reads task Markdown through `scripts/task-repair.ts`'s walk, the one `scripts/task-state.ts` uses. It includes subfolders and reports scan gaps as `incomplete-reference-scan`, including a goals file that exists but cannot be read. Walk read failures also enter `unreadablePaths`; symlinks and non-UTF-8 files are gaps without being read failures. Reference findings read `<code> <id> in <file>:<line>`; scan gaps read `incomplete-reference-scan in <file>`. `goal-id` also reports task-state's plan Scope and step Goal citations: retired IDs as `retired-goal-reference`, and unknown IDs the prose scan skips, such as one in inline code. It reads these through `scripts/task-state.ts`'s `taskState`, so the two tools agree on `task-state.md`'s retired-goal rule.
 
-**The two citation checks read every `.md` file sitting directly in the task folder.**
+**`result-shape` reports each [loader shape diagnostic](./task-state.md) for `result.md`, including in Archive and Backlog.** It uses the status of `plan.md` when present. Findings read `<code> <detail> in result.md:<line>`, with line 0 for a required section that is absent. `goal-id` reports goal diagnostics only.
+
+**The two citation checks skip task history and the observations ledger.** History contributes no mtime or folder bytes. Folder statistics count the ledger by its file metadata without opening it.
 
 For `dead-citation`, read inline Markdown links with no `<scheme>:` prefix and no bare `#fragment`. Remove fragments, percent-decode targets, and resolve each segment by exact directory-listing case, regardless of filesystem case folding. Leading `/` resolves from the walked root; other link targets resolve from the task folder. Reference-style definitions are not read.
 
@@ -60,11 +64,9 @@ Store-root and outside-store targets receive notes, not replacements or empty pa
 
 **Walk rules.** Prune node_modules and dotted names except `.agents` at every depth. Directory entries are listed once and passed down; citation resolution may list them again. Coverage paths are deduplicated. Archive anywhere below the store root marks all descendants archived, even Backlog beneath it. Backlog applies only to the immediate parent; tasks under groups or Archive inside it are not parked (`../workflow/task-archiving.md` § *Already archived is asked of the whole path up to the store*).
 
-**What a scan reads.** Apply `./task-state.md`'s shared comment/fence classification to structural task-file reading. Read status only above the first `##`-or-deeper heading. Step links resolving to tombstone bullets in a Compacted stub count as resolved (`../workflow/reconciliation-compaction.md`).
+**What a scan reads.** Apply `./task-state.md`'s shared comment/fence classification to structural task-file reading. Read status only above the first `##`-or-deeper heading.
 
-**The size trigger has one measure.** Oversized-result uses `scripts/task-state.ts`'s exported `resultSize`, matching that script's compaction-plan due measurement.
-
-**The two budget measures have no second reader.** Oversized-task sums on-disk bytes of direct `.md` files, excluding ticket.md and legacy `*.ticket.md`. Oversized-record measures each result `## Step`, `## Full Run`, or `## Reconciliation` section through the line before the next level-2 heading, including fences. Both trigger strictly above budget, default from `scripts/lifecycle-constants.ts`, accept their respective flags, and exempt archived tasks.
+**The two budget measures have no second reader.** Oversized-task sums on-disk bytes of direct `.md` files, excluding ticket.md and legacy `*.ticket.md`. Oversized-record measures each keyed step section in the result through the line before the next level-2 heading, including fences. Both trigger strictly above budget, default from `scripts/lifecycle-constants.ts`, accept their respective flags, and exempt archived tasks.
 
 **`--installs` mode** compares marked kit items and kit items wholly absent from a home. An unreadable marker is a coverage gap, not proof of user ownership; compare that item anyway. Ignore `.DS_Store`, `.localized`, `Thumbs.db`, and `._*` sidecars, not dotfiles generally. Marked staging entries are interrupted installs. Compare two symlinks by target; a link on only one side is drift. `setup.ts` preserves skill symlinks and materializes reference symlinks.
 

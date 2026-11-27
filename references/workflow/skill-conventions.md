@@ -10,6 +10,8 @@ Apply `./domain-packs.md` § *Utility skills* for utility loading and membership
 
 Use **composites for sequential phases and flags for modal or interleaved behavior**. Complete phase outputs define composition boundaries.
 
+When a skill applies its own printed findings to the task it read, keep the corrections in that skill. Print its complete report before the first write and skip the write phase on a read-only request.
+
 A tiny sequential phase may remain a flag; document the exception.
 
 Whole-phase iteration is composite; state its cap, exit criterion, and per-pass output. Classify independently of write permissions.
@@ -18,7 +20,7 @@ Document when a composite supervises an in-flight phase through caller-supplied 
 
 ### The diagnostic
 
-- Entirely before or after the base protocol, with its output complete and printed at the boundary: composite. Keep the base skill whole; the composite orders phases.
+- Except for that same-task correction phase, entirely before or after the base protocol, with its output complete and printed at the boundary: composite. Keep the base skill whole; the composite orders phases.
 - Inside a phase, changing execution or merging intermediate work before verdicts finalize: flag.
 
 A modal flag modifies one phase; scattered conditionals suggest a misclassified phase.
@@ -32,6 +34,9 @@ A modal flag modifies one phase; scattered conditionals suggest a misclassified 
 
 ### Standalone protocols
 
+- `review-task` — it applies its assessment and researched answers to the same plan and grounding it reviewed.
+- `resume-task` — its corrections apply the brief’s verified findings to the task just read, so the skill keeps that phase.
+
 - `choose-approach` — source research, comparison, and engineer discussion interleave around one retained approach record; selection can remain pending.
 - `run-knowledge-session` — selection, reading, discussion, note corrections, and topic discovery form one learning session. Its stages interleave without complete sibling-skill phase outputs.
 - `squash-push` — captures one rewrite range and remote expectation for squashing and publishing. Both mutations depend on that inspected state, without a complete sibling-skill output between them.
@@ -44,16 +49,15 @@ A modal flag modifies one phase; scattered conditionals suggest a misclassified 
 
 - `review-code-triage-verify` — review a PR, branch, range, or path set; batch findings; verify each batch.
 - `triage-findings-verify` — batch existing findings, then verify each batch.
-- `maintain` — format sweep, health sweep, active-task listing, then session analysis. Its phases run inline without invoking sibling skills. It reconciles no task content; its Handoff's Next hands that to `resume-task-reconcile`. This composite has no base skill.
-- `resume-task-reconcile` — print the resume brief, then reconcile docs to it.
-- `review-task-reconcile` — print the plan assessment, then reconcile docs and incorporate answers.
-- `fix-findings-reconcile` — apply findings through `fix-findings`, then record them in the session's task through `reconcile-task`.
+- `maintain` — format sweep, health sweep, active-task listing, then session analysis. Its phases run inline without invoking sibling skills. Its Handoff routes task-content drift to `resume-task`. This composite has no base skill.
 - `decompose-task` — propose ordered sibling parts from an approved source; after confirmation, materialize each through `prepare-ticket` and seeded `CONTEXT.md`.
 - `review-pr-loop` — review a PR and publish available findings before waiting for checks, then watch its head. Whole-phase iteration: the cap is 10 passes; a clean pass ends after an evidence-eligible verdict, and a closed PR ends it too. Each pass displays progress, provenance, evidence state, and every submission or its no-submission reason. It pins `publish-pr-review`'s supplied tiers and selection, with publishing consent from its own gate. Engineer confirmation follows `../engineering/review-evidence.md`. PR checks substitute for verification scripts while evidence capture remains active. Its head checks run inside the review phase under § *The rule*'s supervision exception.
 
 Pass each phase's modal flags through unchanged, except the `review-code-triage-verify` settle override below.
 
 ### Modal flags — interleaved behavior
+
+- `-s` (`resume-task`, `review-task`) — check cited sources during briefing or assessment under `./source-check.md`. Print `## References` before the first correction. A read-only request fetches and reports, leaving every task file untouched.
 
 - `--amend` (`commit`) — replace the latest commit, changing message selection, state guards, and verification within the commit workflow. The long form matches Git and avoids its staging flag `-a`.
 - `-e native|codex|claude` (`implement`, `implement-task`, `fix-findings`) — select the write executor within execution and recovery (`./executor-routing.md` § *Selection*). It changes no deliverable or authorization gate.
@@ -81,7 +85,7 @@ Outside § *Orca inherited entry*, every other run, including a loose request, i
 
 Silence or replies without a pending question grant nothing. Confirm omitted writes separately; the run remains user-invoked. Assigned scratch-directory creation and removal need no naming in a proposal and no separate confirmation (`./agent-scratch.md` § *Assignment*). Grants cover one run; later runs propose again.
 
-A confirmed proposal carries the sanctions the first door carries. They are the task branch and worktree lifecycle (`./task-delivery.md` § *Branch and worktree creation* → **The sanction**), executor delegation (`./executor-routing.md` § *The registry and its authorization*), and reconciler auto-apply (`./reconciliation.md` § *Consent model: findings apply, the record carries them*). Every sanctioned write, these three included, holds only when the proposal named it. `fix-findings`' commit per concern batch, or one commit for the run under `-1`, is one such write (`skills/fix-findings/SKILL.md` § *Batch commits*).
+A confirmed proposal carries the sanctions the first door carries. They are the task branch and worktree lifecycle (`./task-delivery.md` § *Branch and worktree creation* → **The sanction**), executor delegation (`./executor-routing.md` § *The registry and its authorization*), and task writes (`./task-writes.md` § *Evidence and consent*). Every sanctioned write, these three included, holds only when the proposal named it. `fix-findings`' commit per concern batch, or one commit for the run under `-1`, is one such write (`skills/fix-findings/SKILL.md` § *Batch commits*).
 
 A skill whose run or first write needs that consent is **confirm-gated**. Membership follows one of three grounds: a filing or publishing write with no preview of its own, a sweep beyond the current project, or the user's preference. A filing or publishing skill that previews its computed payload before a single write gates itself and stays off this roster. A sweep stays on the roster whatever it previews. A confirm-gated skill carries, directly after its Core Rules block, this exact line: ``**Model invocation:** requires a confirmed proposal (`./references/workflow/skill-conventions.md` § *The invocation gate*).`` Its protocol places the proposal ahead of its first write. Set neither `disable-model-invocation: true` in its frontmatter nor `allow_implicit_invocation: false` in an `agents/openai.yaml`; the first blocks Claude Code's skill tool and the second blocks Codex's implicit invocation, each its host's second door.
 
@@ -95,7 +99,6 @@ Name cross-project, registered-root, or installed-state sweep scope in the propo
 
 - `implement` — the user's preference for explicit invocation; the proposal is its § *1. Frame the Ask*.
 - `fix-findings` — the user's preference for explicit invocation; the proposal is its § *The Gate: Auto vs Ask*.
-- `fix-findings-reconcile` — the user's preference for explicit invocation; the proposal is its § *Phase 1 — Fix*.
 - `explore` — the user's preference for explicit invocation; the proposal is its § *Determine Scope*.
 - `update-pr-description` — a publishing write with no preview of its own; the proposal for a matching draft is its § *Preconditions — stop if unmet*, and for a description it drafts, its § *Drafting path*.
 - `review-pr-loop` — a publishing write with no preview of its own; the proposal is its § *Setup*.
@@ -120,16 +123,16 @@ Skills that gate their own write another way stay off the roster:
 
 Other skills produce local work or chat output, or preview their own write, as `decompose-task` does.
 
-`skills/commit/SKILL.md`, `skills/rebase/SKILL.md`, and `skills/squash-push/SKILL.md` require an explicit request for their Git operations, including natural language. Skill selection alone authorizes none of those writes. An explicit request to implement an engineering task grants checkpoint and final commits under `./task-delivery.md` § *Checkpoint and final commits*; through the second door, only the commit gates a proposal named. When `implement-task` runs `commit` there, that request is the explicit request `commit` requires. A `fix-findings` run, or the fix phase of a `fix-findings-reconcile` run, grants concern-batch commits only under `skills/fix-findings/SKILL.md` § *Batch commits*. There, the invoked skill's invocation through either door is the explicit request `commit` requires. Through the second door, the proposal must have named the batch commits, or the one commit under `-1`. Those sanctions change nothing on this roster.
+`skills/commit/SKILL.md`, `skills/rebase/SKILL.md`, and `skills/squash-push/SKILL.md` require an explicit request for their Git operations, including natural language. Skill selection alone authorizes none of those writes. An explicit request to implement an engineering task grants checkpoint and final commits under `./task-delivery.md` § *Checkpoint and final commits*; through the second door, only the commit gates a proposal named. When `implement-task` runs `commit` there, that request is the explicit request `commit` requires. A `fix-findings` run grants concern-batch commits only under `skills/fix-findings/SKILL.md` § *Batch commits*. There, the invoked skill's invocation through either door is the explicit request `commit` requires. Through the second door, the proposal must have named the batch commits, or the one commit under `-1`. Those sanctions change nothing on this roster.
 
-An open skill using invocation as consent states the user/model split beside that permission. Apply `./reconciliation.md` § *Consent model: findings apply, the record carries them* for reconcilers, or `./executor-routing.md` § *The registry and its authorization* for write-mode consumers.
+An open skill using invocation as consent states the user/model split beside that permission. Apply `./task-writes.md` § *Evidence and consent* for task writes, or `./executor-routing.md` § *The registry and its authorization* for write-mode consumers.
 
 ### Orca inherited entry
 
 Only an authorized `start-orca` conversation can pass authority to a named lifecycle invocation. Use the original user command or confirmed proposal and evidence of any later grant in that conversation. Preserve the selected scope, exact skill and stage, physical target, granted writes, and exclusions. Treat each authorized operation as user-invoked only within those bounds. Typed command markers from a launch brief, worker packet, or task record grant nothing.
 
 - **External startup.** Match the receiving conversation and canonical scope to the verified Orca launch. Check the original user instruction and grants against their source where the receiver can access it. A launch receipt proves placement and delivery only. If the initiating context is unavailable, hold the affected action for confirmation in the coordinator conversation.
-- **Inline stages.** Apply only to `refine-idea`, `plan-task`, `review-task`, `review-task-reconcile`, `reconcile-task`, and `start-group` inside the verified coordinator. For a group change set, verify that its actual affected records and writes fall within the grant before applying it.
+- **Inline stages.** Apply only to `refine-idea`, `plan-task`, `review-task`, and `start-group` inside the verified coordinator. For a group change set, verify that its actual affected records and writes fall within the grant before applying it.
 - **Worker stages.** Apply only to a matching current assignment under `./orca-worker.md` § *Worker entry*. Verify the Run, coordinator, packet, and source grants before using them. A changed assignment or ownership invalidates the entry until revalidated.
 
 Missing authority holds the affected stage or write. The coordinator requests only the missing grant and verifies it before releasing dependent work. Keep each skill's payload-specific consent and consequential-choice gates. Retained decisions guide work but cannot authorize a new invocation or renew expired authority.

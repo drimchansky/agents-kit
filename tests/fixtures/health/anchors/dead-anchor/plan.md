@@ -6,7 +6,7 @@
 
 ### Step 1 — Good anchor
 
-- [x] **What:** Synthetic step whose result anchor resolves. ([result](./result.md#step-1--good-anchor))
+- [x] **What:** Synthetic step with a literal `([result](…))` example and a resolving result link. ([result](./result.md#step-1--good-anchor))
 - **Verify:** none
 
 ### Step 2 — Dead anchor

@@ -11,13 +11,14 @@ import {
   LIVE_STATUSES,
   PLAN_VOCAB,
   RECORD_MAX_KB as DEFAULT_RECORD_MAX_KB,
-  RESULT_MAX_KB as DEFAULT_RESULT_MAX_KB,
   TASK_MAX_KB as DEFAULT_TASK_MAX_KB,
+  TASK_HISTORY_FILE,
+  skipsTaskMarkdown,
   TERMINAL_STATUSES,
   UNSTARTED_STATUS,
 } from "./lifecycle-constants.ts";
-import { resultSize, taskState } from "./task-state.ts";
-import { markdownLines, sameDiagnostic, validateGoalStructure, type StructureDiagnostic } from "./goal-structure.ts";
+import { lastResultLink, RESULT_STEP_TITLE, resultShapeDiagnostics, resultStepByAnchor, taskState } from "./task-state.ts";
+import { markdownLines, sameDiagnostic, validateGoalStructure, withoutCodeSpans, type StructureDiagnostic } from "./goal-structure.ts";
 import { readTaskMarkdown, type TaskMarkdown } from "./task-repair.ts";
 
 process.stdout.on("error", (err: NodeJS.ErrnoException) => {
@@ -29,12 +30,10 @@ const DAY_MS = 86_400_000;
 const CURRENT_STATE = /^##[ \t]+Current state\b/im;
 const COMPLETED_LINE = /^[ \t]*(?:[-*+][ \t]+)?\*\*Completed:\*\*[ \t]*\d{4}-\d{2}-\d{2}\b/i;
 const STEP_HEADING = /^#{2,6}[ \t]+Step\b/i;
-const RECORD_TITLE = /^(?:Step|Full Run|Reconciliation)\b/;
 const TICKET_FILE = "ticket.md";
 const HEADING = /^#{1,6}[ \t]+(.+?)[ \t]*#*$/;
 const HEADING_LEVEL = /^(#{1,6})[ \t]/;
 const CHECKED_STEP = /^[ \t]*-[ \t]+\[[xX]\]/;
-const RESULT_LINK = /\(\[result\]\(([^()]*)\)\)/g;
 const LINK_TARGET = /\]\([ \t]*(?:<([^<>\n]*)>|((?:[^()\s>]|\([^()\s]*\))+))/g;
 const TRAILING_NOISE = /[>\].,;:!?]+$/;
 const TARGET_SCHEME = /^[A-Za-z][A-Za-z0-9+.-]*:/;
@@ -79,8 +78,8 @@ type TaskCheck =
   | "dead-citation"
   | "citation-form"
   | "goal-id"
+  | "result-shape"
   | "no-current-state"
-  | "oversized-result"
   | "oversized-task"
   | "oversized-record"
   | "duplicate-slug"
@@ -284,7 +283,7 @@ type MarkdownTexts = ReadonlyMap<string, string | null>;
 function markdownTexts(dir: string, display: string, entries: readonly Dirent[]): MarkdownTexts {
   const texts = new Map<string, string | null>();
   for (const entry of entries) {
-    if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+    if (!entry.isFile() || skipsTaskMarkdown(entry.name) || !entry.name.endsWith(".md")) continue;
     texts.set(entry.name, fileText(join(dir, entry.name), join(display, entry.name)));
   }
   return texts;
@@ -343,7 +342,7 @@ function folderStats(dir: string, entries: readonly Dirent[]): FolderStats {
   let updated = 0;
   let markdownBytes = 0;
   for (const entry of entries) {
-    if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+    if (!entry.isFile() || entry.name === TASK_HISTORY_FILE || !entry.name.endsWith(".md")) continue;
     const stats = statsOrNull(join(dir, entry.name));
     if (stats === null) continue;
     if (stats.mtimeMs > updated) updated = stats.mtimeMs;
@@ -552,46 +551,6 @@ function nestedTaskFinding(task: Task): UnrootedFinding | null {
   };
 }
 
-function slugify(heading: string): string {
-  return heading.trim().toLowerCase().replace(/[^\p{L}\p{N} _-]/gu, "").replace(/ /g, "-");
-}
-
-const COMPACTED_HEADING = /^Compacted\b/;
-const TOMBSTONE_BULLET = /^[ \t]*-[ \t]+(.+?)[ \t]*$/;
-
-function headingSlugs(text: string): Set<string> {
-  const seen = new Map<string, number>();
-  const slugs = new Set<string>();
-
-  const taken = new Set<string>();
-  let inCompacted = false;
-  for (const line of liveLines(text)) {
-    const heading = line.match(HEADING);
-    if (heading) {
-      inCompacted = COMPACTED_HEADING.test(heading[1]);
-      const base = slugify(heading[1]);
-      if (!base) continue;
-      let count = seen.get(base) ?? 0;
-      let slug = count === 0 ? base : `${base}-${count}`;
-      while (taken.has(slug)) {
-        count++;
-        slug = `${base}-${count}`;
-      }
-      seen.set(base, count + 1);
-      taken.add(slug);
-      slugs.add(slug);
-      continue;
-    }
-    if (!inCompacted) continue;
-    const tombstone = line.match(TOMBSTONE_BULLET);
-    if (tombstone) {
-      const slug = slugify(tombstone[1]);
-      if (slug) slugs.add(slug);
-    }
-  }
-  return slugs;
-}
-
 function stepLabel(heading: string): string {
   const step = heading.match(/^Step[ \t]+(\d+[a-z]*)/i);
   return step ? `Step ${step[1]}` : clip(heading, 40);
@@ -600,7 +559,7 @@ function stepLabel(heading: string): string {
 function anchorFindings(task: Task): UnrootedFinding[] {
   const out: UnrootedFinding[] = [];
   if (!task.plan?.text) return out;
-  const slugCache = new Map<string, Set<string> | null>();
+  let stepByAnchor: Map<string, string | null> | undefined;
   const report = (step: string, detail: string) => out.push({ check: "dead-anchor", path: task.path, detail: `${step}: ${detail}` });
   let step: string | null = null;
   for (const line of liveLines(task.plan.text)) {
@@ -610,12 +569,12 @@ function anchorFindings(task: Task): UnrootedFinding[] {
       continue;
     }
     if (step == null || !CHECKED_STEP.test(line)) continue;
-    const matches = [...line.matchAll(RESULT_LINK)];
-    if (matches.length === 0) {
+    const link = lastResultLink(line);
+    if (!link) {
       report(step, "checked step missing result link");
       continue;
     }
-    const target = matches[matches.length - 1][1].trim();
+    const target = link[1].trim();
     const hash = target.indexOf("#");
     if (hash === -1) {
       report(step, `result link missing anchor: ${target}`);
@@ -640,12 +599,14 @@ function anchorFindings(task: Task): UnrootedFinding[] {
       report(step, `result link must target the task result file: ${target}`);
       continue;
     }
-    if (!slugCache.has(targetPath)) {
-      const text = fileText(targetPath, join(task.path, file));
-      slugCache.set(targetPath, text == null ? null : headingSlugs(text));
+    if (task.result.text === null) continue;
+    stepByAnchor ??= resultStepByAnchor(task.result.text);
+    const resultStep = stepByAnchor.get(anchor);
+    if (resultStep === undefined) {
+      report(step, `anchor not found: #${anchor} in ${file}`);
+    } else if (resultStep === null || `step ${resultStep}` !== step.toLowerCase()) {
+      report(step, `anchor does not target this step's result record: #${anchor} in ${file}`);
     }
-    const slugs = slugCache.get(targetPath);
-    if (slugs && !slugs.has(anchor)) report(step, `anchor not found: #${anchor} in ${file}`);
   }
   return out;
 }
@@ -814,43 +775,6 @@ function storeLevelFindings(
   return out;
 }
 
-function backtickRuns(line: string): Span[] {
-  const runs: Span[] = [];
-  let at = 0;
-  while (at < line.length) {
-    if (line[at] !== "`") {
-      at++;
-      continue;
-    }
-    let end = at;
-    while (end < line.length && line[end] === "`") end++;
-    runs.push([at, end]);
-    at = end;
-  }
-  return runs;
-}
-
-function withoutCodeSpans(line: string): string {
-  if (!line.includes("`")) return line;
-  const runs = backtickRuns(line);
-  const width = (run: Span): number => run[1] - run[0];
-  let blanked = line;
-  let index = 0;
-  while (index < runs.length) {
-    const open = runs[index];
-    let closing = index + 1;
-    while (closing < runs.length && width(runs[closing]) !== width(open)) closing++;
-    if (closing === runs.length) {
-      index++;
-      continue;
-    }
-    const spanEnd = runs[closing][1];
-    blanked = blanked.slice(0, open[0]) + " ".repeat(spanEnd - open[0]) + blanked.slice(spanEnd);
-    index = closing + 1;
-  }
-  return blanked;
-}
-
 function withoutHtmlComments(lines: Iterable<string>): string[] {
   const raw = [...lines];
   const live = raw.join("\n");
@@ -939,6 +863,16 @@ function hasEntry(path: string): boolean {
   }
 }
 
+function resultShapeFindings(task: Task): UnrootedFinding[] {
+  if (task.result?.file !== "result.md" || task.result.text === null) return [];
+  const status = task.plan?.file === "plan.md" ? task.plan.value : null;
+  return resultShapeDiagnostics(task.result.text, status).map((diagnostic) => ({
+    check: "result-shape",
+    path: task.path,
+    detail: `${diagnostic.code} ${diagnostic.detail} in ${diagnostic.file}:${diagnostic.line}`,
+  }));
+}
+
 function goalIdFindings(task: Task): UnrootedFinding[] {
   const goalsText = task.goals?.text ?? null;
   const goalsFile = task.goals?.file ?? "goals.md";
@@ -1011,17 +945,6 @@ function currentStateFinding(task: Task): UnrootedFinding | null {
   };
 }
 
-function oversizedResultFinding(task: Task, resultMaxKb: number): UnrootedFinding | null {
-  if (!task.result?.text) return null;
-  const size = resultSize(task.result.text, resultMaxKb);
-  if (!size.over) return null;
-  return {
-    check: "oversized-result",
-    path: task.path,
-    detail: `${task.result.file} is ${size.kb.toFixed(1)} KB, over the ${resultMaxKb} KB compaction trigger`,
-  };
-}
-
 function oversizedTaskFinding(task: Task, taskMaxKb: number): UnrootedFinding | null {
   if (task.markdownBytes <= taskMaxKb * 1024) return null;
   return {
@@ -1054,7 +977,7 @@ function oversizedRecordFindings(task: Task, recordMaxKb: number): UnrootedFindi
     const title = live ? visible.match(HEADING)?.[1] : undefined;
     if (title !== undefined && visible.match(HEADING_LEVEL)?.[1].length === 2) {
       close();
-      if (RECORD_TITLE.test(title)) {
+      if (RESULT_STEP_TITLE.test(title)) {
         heading = title;
         section = [line];
       }
@@ -1433,11 +1356,10 @@ function installFindings(kitRoot: string, homeArg: string): InstallResult {
   return { findings, items };
 }
 
-type NumericKey = "staleDays" | "resultMaxKb" | "taskMaxKb" | "recordMaxKb";
+type NumericKey = "staleDays" | "taskMaxKb" | "recordMaxKb";
 
 const NUMERIC_OPTIONS: readonly { flag: string; key: NumericKey; fallback: number }[] = [
   { flag: "--stale-days", key: "staleDays", fallback: DEFAULT_STALE_DAYS },
-  { flag: "--result-max-kb", key: "resultMaxKb", fallback: DEFAULT_RESULT_MAX_KB },
   { flag: "--task-max-kb", key: "taskMaxKb", fallback: DEFAULT_TASK_MAX_KB },
   { flag: "--record-max-kb", key: "recordMaxKb", fallback: DEFAULT_RECORD_MAX_KB },
 ];
@@ -1446,7 +1368,6 @@ interface Options {
   readonly roots: string[];
   readonly installs: boolean;
   readonly staleDays: number;
-  readonly resultMaxKb: number;
   readonly taskMaxKb: number;
   readonly recordMaxKb: number;
 }
@@ -1455,7 +1376,6 @@ function parseArgs(argv: readonly string[]): Options {
   const roots: string[] = [];
   const values: Record<NumericKey, number> = {
     staleDays: DEFAULT_STALE_DAYS,
-    resultMaxKb: DEFAULT_RESULT_MAX_KB,
     taskMaxKb: DEFAULT_TASK_MAX_KB,
     recordMaxKb: DEFAULT_RECORD_MAX_KB,
   };
@@ -1493,7 +1413,7 @@ function parseArgs(argv: readonly string[]): Options {
   return { roots, installs, ...values };
 }
 
-const { roots, installs, staleDays, resultMaxKb, taskMaxKb, recordMaxKb } = parseArgs(process.argv.slice(2));
+const { roots, installs, staleDays, taskMaxKb, recordMaxKb } = parseArgs(process.argv.slice(2));
 
 const now = Date.now();
 const findings: Finding[] = [];
@@ -1525,7 +1445,7 @@ if (installs) {
   }
 } else {
   if (roots.length === 0) {
-    warnings.push("no task root given; usage: node scripts/health-check.ts [--stale-days N] [--result-max-kb N] [--task-max-kb N] [--record-max-kb N] <root> [<root>...]");
+    warnings.push("no task root given; usage: node scripts/health-check.ts [--stale-days N] [--task-max-kb N] [--record-max-kb N] <root> [<root>...]");
   }
 
   const bySlug = new Map<string, SlugHolder[]>();
@@ -1574,6 +1494,7 @@ if (installs) {
     const rootFindings: UnrootedFinding[] = [];
     scanned += tasks.length;
     for (const task of tasks) {
+      rootFindings.push(...resultShapeFindings(task));
       const single = [
         staleFinding(task, now, staleDays),
         doneUnarchivedFinding(task),
@@ -1584,7 +1505,6 @@ if (installs) {
       if (!task.archived) {
         single.push(
           currentStateFinding(task),
-          oversizedResultFinding(task, resultMaxKb),
           oversizedTaskFinding(task, taskMaxKb),
           unknownStatusFinding(task),
           legacyResultStatusFinding(task),

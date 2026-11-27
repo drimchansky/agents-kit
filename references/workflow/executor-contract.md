@@ -71,7 +71,7 @@ Only these consumers issue coordinator packets.
 
 ### implement-task
 
-- **Edit surface:** Touches paths, else What's scope. Exclude task folders/records, GROUP_CONTEXT files, and `GROUP_LOG.md`, which only `start-group` writes; grounding corrections and records belong to the coordinator.
+- **Edit surface:** Touches paths, else What's scope. Exclude task folders/records, GROUP_CONTEXT files, and `GROUP_HISTORY.md`, which only `start-group` writes; grounding corrections and records belong to the coordinator.
 
 ### implement
 

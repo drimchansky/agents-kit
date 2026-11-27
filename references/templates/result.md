@@ -1,5 +1,7 @@
 # Result: <plan title>
 
+<!-- agents-kit: migrated task result -->
+
 **Plan:** [./plan.md](./plan.md)
 **Goals:** [./goals.md](./goals.md)
 **Context:** [./CONTEXT.md](./CONTEXT.md)
@@ -8,20 +10,18 @@
 ## Current state
 _Updated: YYYY-MM-DD_
 - **Status:** executing — <one line: where things stand; for done, distinguish accepted scope from later confirmed delivery>
-- **Pointers:** <branch `…` (base `…`), PR #… (url), SHA …, ticket …, plus the `SHA <sha> (recorded YYYY-MM-DD)` watermark entry when one is present — or "none yet">
+- **Pointers:** <branch `…` (base `…`), PR #… (url), SHA …, ticket … — or "none yet">
 - **Next:** <one current action, or `none`; refresh after confirmed delivery changes even when plan Status is done>
 
 ---
-
-## Decision log
-
-- YYYY-MM-DD — <decision label> (→ <dated result anchor / dated CONTEXT or plan anchor / DECISIONS.md #N>; preserve an original pre-result anchor)
 
 ## Step N — <step title>
 
 **Verified:** <per required check: `executor` or `coordinator`, coordinator assignment/re-run reason where applicable, command/observation, status, and evidence path/anchor or short diagnostic. Retain pending/open checks with their definition, owner, and missing capability. Summarize the report; do not copy output tails.>
 
 **Health:** <this step's boundary outcome and evidence location; omit when a checkpoint or batch record owns it>
+
+**Commit:** <SHA covering this step, when established>
 
 **Shipped:**
 
@@ -40,28 +40,6 @@ _Updated: YYYY-MM-DD_
 
 ---
 
-## Full Run — <date>
-
-**Verified:** <each step's required checks with proof owner, coordinator assignment/re-run reason where applicable, status, and evidence location; retain pending/open definitions and missing capabilities. Group shared checks without losing step identity or failures. Summarize executor reports.>
-
-**Health:** <the full-plan tail boundary and any mid-run boundary once each, with outcome and evidence location>
-
-**Shipped:**
-
-- <five bullets at most across all steps; wider changes summarized by directory>
-
-**Sources:** <as above, across all steps; otherwise omit>
-
-**Executed:** <one `Step N …` entry per step with an explicit engine selection or a deviation from the default launch; otherwise omit>
-
-**Deviations from plan:** <if any>
-
-**Grounding corrected:** <one `Step N …` entry per correction, as above; otherwise omit>
-
-**Notes:** <surprises, gotchas, follow-ups>
-
----
-
 ## Checkpoint after Step N
 
 **Asserted:** <which named assertions ran — e.g. the e2e flow exercised>
@@ -73,17 +51,19 @@ _Updated: YYYY-MM-DD_
 
 ---
 
-## Final implementation commit — YYYY-MM-DD
+## Final implementation commit
 
 **Health:** <link to the final implementation boundary's owning section; record shared evidence once>
 **Commit:** <SHA `<sha>`; `none — no task changes`; `failed — <reason>`; or `not run — final health failed`; omit this section when final commits were not authorized>
-**Notes:** <failure, signing hand-over, or dated resume settlement; otherwise omit>
+**Notes:** <failure, signing hand-over, or resume settlement; otherwise omit>
 
 ---
 
 ## Acceptance
 
 **Verified against:** [./goals.md](./goals.md)
+
+**Health:** <finalization boundary evidence, or a link to the section that records it>
 
 - G1 — met (verified by <command / behavior observed>)
 - G2 — met with caveats (<what's caveated and why>)
@@ -93,12 +73,19 @@ _Updated: YYYY-MM-DD_
 
 ---
 
-## In review — YYYY-MM-DD
-
-**In review:** <omit this section when no outside verification remains>
+## In review
 
 - G<n> — <what is awaited, who or what verifies it>
 - <engineering target / environment> — <pending check>; owner <who>; next <action/evidence awaited>; goal <G<n> if one exists>
+
+---
+
+## Blocked
+
+**Cause:** <external wait or unresolved failure>
+**Tried:** <steps taken to clear it>
+**Awaiting:** <evidence, dependency, or decision needed to resume>
+**Health:** <last passing boundary and its coverage, or none>
 
 ---
 
@@ -108,3 +95,11 @@ _Updated: YYYY-MM-DD_
 - <target / environment> — not applicable (<repository evidence for absent deployment or environment>)
 
 ---
+
+## Open findings
+
+- <finding, pending decision, or unfinished work> — <owner>; <evidence and next action>
+
+---
+
+**Completed:** YYYY-MM-DD

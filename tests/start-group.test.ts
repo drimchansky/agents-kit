@@ -123,7 +123,7 @@ test("every section the skill cites exists in its owner", () => {
   for (const owner of [
     "references/workflow/task-store.md",
     "references/workflow/context-schema.md",
-    "references/workflow/reconciliation.md",
+    "references/workflow/task-writes.md",
     "references/workflow/skill-conventions.md",
   ]) {
     assert.ok(sectioned.has(owner), `the skill cites a section of ${owner}`);

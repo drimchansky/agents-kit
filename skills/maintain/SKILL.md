@@ -10,7 +10,7 @@ argument-hint: '[kit path and/or task-root path — defaults to the registered r
 
 **Model invocation:** requires a confirmed proposal (`./references/workflow/skill-conventions.md` § *The invocation gate*).
 
-Run four phases in order: kit task-format sweep, health sweep, active-task listing, and session analysis. Work on task envelopes, lifecycle bookkeeping, store artifacts, and session logs. Resolve no Domain pack, invoke no sibling skill, and reconcile no task content; hand that work to `resume-task-reconcile` in the Handoff's Next.
+Run four phases in order: kit task-format sweep, health sweep, active-task listing, and session analysis. Work on task envelopes, lifecycle bookkeeping, store artifacts, and session logs. Handle task-content drift in the Handoff's Next under `resume-task`. Run the maintenance phases without loading a domain pack or invoking another skill.
 
 Report first. Apart from assigned scratch-directory creation and removal (`./references/workflow/agent-scratch.md` § *Assignment*), only the `.maintain-last-run` marker updates without confirmation, as derived run metadata. Preview and confirm every other mutation separately, or hand it off: format fixes, archive moves, installation, worktree removals, findings-file writes, and folder removals. Detection authorizes reporting, never automatic document edits or deletion.
 
@@ -74,10 +74,10 @@ Run the four probes below. Interpret `scripts/health-check.ts` JSON through `./r
 **Tasks:**
 
 ```
-node <kit-root>/scripts/health-check.ts --result-max-kb <KB> --task-max-kb <KB> --record-max-kb <KB> <kit-root>/.agents/tasks <every resolved task root>
+node <kit-root>/scripts/health-check.ts --task-max-kb <KB> --record-max-kb <KB> <kit-root>/.agents/tasks <every resolved task root>
 ```
 
-Pass all roots in one run, including the kit's canonical root exactly once regardless of registration. Read the compaction trigger from `./references/workflow/reconciliation-compaction.md` § *Compaction (size trigger)*. Read folder and record budgets from `./references/workflow/task-layout.md` § *One task, one flat folder*. Pass those current values; retain the script's default stale threshold by omitting `--stale-days`.
+Pass all roots in one run, including the kit's canonical root exactly once regardless of registration. Read folder and record budgets from `./references/workflow/task-layout.md` § *One task, one flat folder*. Pass those current values; retain the script's default stale threshold by omitting `--stale-days`.
 
 Attribute each finding by its absolute `root`, never its basename-prefixed display `path`. Report ages with the caveat that `.md` mtimes reset on cloning or bulk touches; youth is not evidence of recent work.
 
@@ -114,11 +114,11 @@ On one confirmation, move exactly the previewed batch; declining moves nothing. 
 
 **Gate — remove the worktree husks.** Preview each eligible path, branch, and merge proof; label branch-only entries as having no worktree. Confirm **per item**, never as a batch. Exclude terminal-but-unmerged entries. On confirmation, use the resolved path, checks, order, and unforced commands in `./references/workflow/task-delivery-edges.md` § *Removal*. Branch-only candidates run `git branch -d` alone. Report refusals without forcing cleanup. If worktree removal succeeded before branch deletion failed, report partial cleanup and the surviving branch. Declining removes nothing. With no removable candidate, skip this gate and its contract load. <!-- cold -->
 
-## Phase 3 — List the active tasks (no reconcile)
+## Phase 3 — List the active tasks
 
 List kit task leaves through Phase 1's group traversal, excluding Archive and Backlog case-insensitively (`task-archiving.md`, `task-backlog.md`). Read terminal states from `./references/workflow/status-transitions.md` at run time and include non-terminal plans. Recognized folders without a plan count as active; label them `no plan yet`.
 
-Use paths for grouped tasks whose slugs cannot resolve in an unregistered canonical root (`./references/workflow/task-layout.md` § *Discovery rules for skills*). Omit groups, strays, and needs-judgment folders. This phase only lists the handoff set; it reconciles no content and reads no task Domain.
+Use paths for grouped tasks whose slugs cannot resolve in an unregistered canonical root (`./references/workflow/task-layout.md` § *Discovery rules for skills*). Omit groups, strays, and needs-judgment folders. This phase only lists the handoff set; it reads no task Domain.
 
 ## Phase 4 — Session analysis (Claude + Codex logs)
 
@@ -169,8 +169,9 @@ Use lists, not tables. Confine writes to the resolved kit/task roots, listed lin
   - `dead-citation`: citing file and target as written, including plain store-document paths. A dead checked-step link also appears under dead-anchor; it is one defect detected twice.
   - `citation-form`: one line per citing file with a count, not one per link. Keep replacement details in the JSON worklist.
   - `goal-id`: the reported defect: a malformed or duplicate definition, or `<code> <id> in <file>:<line>` for an unknown, retired, malformed, outside, or ambiguous reference, or `incomplete-reference-scan in <file>` for an unread file.
+  - `result-shape`: file, section, and diagnostic.
   - `no-current-state`: live result lacking its Current-state block.
-  - `oversized-result`, `oversized-task`, `oversized-record`: affected result, folder, or section and measured budget. Propose no compaction or rewrite here.
+  - `oversized-task`, `oversized-record`: affected folder or section and measured budget.
   - `duplicate-slug`: each colliding folder and its peers, labelled by root; propose no move or rename.
   - `nested-task`: claimed folder and hidden task descendants; propose no move.
   - `coverage`: when unreadable is non-zero, name every absolute `unreadablePaths` entry as unseen coverage and attribute it by path.
@@ -196,9 +197,10 @@ Close with one Handoff block for the whole run (`./references/workflow/user-faci
 
 Use a bare slug only where `./references/workflow/task-layout.md` § *One task, one flat folder* resolves it. For grouped tasks in an unregistered canonical root, use paths. Resolve duplicate-slug ambiguity before other slug-based handoffs.
 
-- Route oversized results to `/reconcile-task <slug>` for confirmed compaction. Route an `oversized-task` or `oversized-record` finding there for trimming only when the same task also reports `oversized-result`, meaning compaction is due (`./references/workflow/reconciliation-compaction.md` § *Compaction (size trigger)*). Report every other `oversized-task` or `oversized-record` finding as accepted, with no route. Documentation deliverables in an oversized folder may need their author.
-- Route dead-anchor, goal-id, no-current-state, and active tasks to `/resume-task-reconcile <slug>` for content reconciliation and cited-link checks. Route a no-plan task by its `approaches.md` decision under `./references/workflow/task-approaches.md` § *Other readers and writers*, using `/choose-approach <slug>` or `/plan-task <slug>`. Use `/plan-task <slug>` for a no-plan task without a comparison.
-- Route dead-citation there only when the composite writes its citing file. Hand-repair deliverables and skipped-plan tasks (`./references/workflow/reconciliation-docs-to-reality.md`; `./references/workflow/reconciliation.md` § *Skipped plans are exempt*).
+- For `result-shape`, identify the format under `./references/workflow/task-layout.md` § *Result format before writing*. Report legacy records as needing hand repair, with no route. Route damaged current records to `/resume-task <slug>` for evidence-based repair, or `/implement-task <slug>` when execution must establish a blocker or pending verification. If the format is uncertain, report the diagnostic and the evidence needed to choose a route. Use the same disposition for related link and Current state findings.
+- Report folder and record size findings as accepted, with no route. Documentation deliverables in an oversized folder may need their author.
+- Route remaining dead-anchor, goal-id, no-current-state, and active tasks to `/resume-task <slug>` for task drift, adding `-s` only when the user requests a source check. Route a no-plan task by its `approaches.md` decision under `./references/workflow/task-approaches.md` § *Other readers and writers*, using `/choose-approach <slug>` or `/plan-task <slug>`. Use `/plan-task <slug>` for a no-plan task without a comparison.
+- Route dead-citation there only when `resume-task` may correct its citing file. Hand-repair deliverables and skipped-plan tasks under `./references/workflow/task-writes.md`.
 - Hand-rewrite citation-form findings under `./references/workflow/one-home.md` § *One home per fact*. An outside-store target requires moving it into a walked root or registering its root. A citation to the store root itself must name something it holds; neither case is fixed by rewriting form alone.
 - Let the user decide stale tasks: `/resume-task <slug>` or archive once finished. For started-in-backlog, activate with `mv` under `./references/workflow/task-backlog.md` if work is underway, otherwise repair lifecycle. Archive backlogged terminal tasks by hand out of Backlog once confirmed.
 - Hand-rename duplicate slugs and repoint citations. Hand-rename or relocate nested-task content to restore discovery. Resolve judgment folders manually; remove strays only after confirmation.

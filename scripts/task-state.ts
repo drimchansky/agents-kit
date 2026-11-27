@@ -1,30 +1,33 @@
 #!/usr/bin/env node
-import { createHash, randomUUID } from "node:crypto";
-import { closeSync, constants, fstatSync, linkSync, lstatSync, mkdirSync, openSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync, type Dirent, type Stats } from "node:fs";
-import { homedir } from "node:os";
+import { readdirSync, readFileSync, realpathSync, type Dirent } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { ARCHIVE_DIR, BACKLOG_DIR, PLAN_VOCAB, RESULT_MAX_KB } from "./lifecycle-constants.ts";
-import { GOAL_FIELD, markdownLines, parseGoalDefinitions, sameDiagnostic, SCOPE_HEADING, validateGoalStructure, type StructureReport } from "./goal-structure.ts";
+import { ARCHIVE_DIR, BACKLOG_DIR, PLAN_VOCAB } from "./lifecycle-constants.ts";
+import { GOAL_FIELD, markdownLines, parseGoalDefinitions, sameDiagnostic, SCOPE_HEADING, validateGoalStructure, withoutCodeSpans, type StructureDiagnostic, type StructureReport } from "./goal-structure.ts";
 import { readTaskMarkdown, repairTask, type StructureValidator, type TaskMarkdown } from "./task-repair.ts";
 
 const PLAN_FILE = "plan.md";
 const RESULT_FILE = "result.md";
 const GOALS_FILE = "goals.md";
-const COMPACTION_FLAG = "--compaction-plan";
-const SNAPSHOT_FLAG = "--compaction-snapshot";
 const REPAIR_FLAG = "--repair";
 const USAGE = [
   "usage: node scripts/task-state.ts <task-dir>",
-  "       node scripts/task-state.ts --compaction-plan <task-dir>",
-  "       node scripts/task-state.ts --compaction-snapshot <task-dir>",
   "       node scripts/task-state.ts --repair <task-dir>",
 ].join("\n");
-const SNAPSHOT_DIR = [".local", "state", "agents-kit", "compaction"];
-const SNAPSHOT_HASH_DIGITS = 12;
 const HEADING = /^#{1,6}[ \t]+(.+?)[ \t]*#*$/;
 const STEP_TITLE = /^Step[ \t]+(\d+[a-z]*)\b[ \t]*[—–:-]?[ \t]*(.*)$/i;
 const CHECKPOINT_TITLE = /^Checkpoint after Step[ \t]+(\d+[a-z]*)\b/i;
+export const RESULT_STEP_TITLE = /^Step[ \t]+(\d+[A-Za-z]*)[ \t]+—[ \t]+\S/;
+const RESULT_CHECKPOINT_TITLE = /^Checkpoint after Step[ \t]+(\d+[A-Za-z]*)$/;
+const RESULT_SECTION_TITLES = new Set([
+  "Current state",
+  "Final implementation commit",
+  "Acceptance",
+  "In review",
+  "Blocked",
+  "Live verification",
+  "Open findings",
+]);
 const CURRENT_STATE_TITLE = /^current state\b/i;
 const CHECKBOX = /^[ \t]*-[ \t]+\[([ xX])\]/;
 const WHAT_FIELD = /^[ \t]*-[ \t]+\[[ xX]\][ \t]*\*\*What:?\*\*:?[ \t]*(.*)$/i;
@@ -39,15 +42,8 @@ const STEPS_RUN = /\bSteps[ \t]+\d+[a-z]*(?:[ \t]*-[ \t]*\d+[a-z]*)?\b/gi;
 const STEP_NUMBER = /^\d+[a-z]*$/i;
 const REGEXP_SPECIAL = /[.*+?^${}()|[\]\\]/g;
 const RESULT_LINK = /\(\[result\]\(([^()]*)\)\)/g;
-const COMPACTED_HEADING = /^Compacted\b/;
-const TOMBSTONE_BULLET = /^[ \t]*-[ \t]+(.+?)[ \t]*$/;
 const HEADING_LEVEL = /^(#{1,6})[ \t]/;
 const BLOCK_CLOSE = /^[ \t]*---[ \t]*$/;
-const PAUSE_KINDS: readonly { readonly status: string; readonly heading: RegExp; readonly label: RegExp }[] = [
-  { status: "blocked", heading: /^blocked\b/i, label: /^[ \t]*\*\*blocked:?\*\*/i },
-  { status: "in-review", heading: /^in[ \t]+review\b/i, label: /^[ \t]*\*\*in[ \t]+review:?\*\*/i },
-];
-
 const STATUS_PATTERNS = [
   /^\*\*Status\b[^:*\n]*:?\*\*:?[ \t]*(.+)$/im,
   /^\*\*Status\b[^:\n]*:[ \t]*(.+)$/im,
@@ -179,7 +175,7 @@ function statusHeader(text: string): string | null {
   return null;
 }
 
-function readPlanStatus(text: string): FileStatus {
+export function readPlanStatus(text: string): FileStatus {
   const cleaned = statusHeader(text);
   if (cleaned === null) return { file: PLAN_FILE, status: null, statusRaw: null };
   const token = firstToken(cleaned).replace(/[^a-z-]/g, "");
@@ -208,26 +204,18 @@ export function slugAllocator(): (heading: string) => string | null {
   };
 }
 
-function headingSlugs(text: string): Set<string> {
+export function resultStepByAnchor(text: string): Map<string, string | null> {
   const allocate = slugAllocator();
-  const slugs = new Set<string>();
-  let inCompacted = false;
+  const steps = new Map<string, string | null>();
   for (const line of liveLines(text)) {
     const heading = headingText(line);
-    if (heading !== null) {
-      inCompacted = COMPACTED_HEADING.test(heading);
-      const slug = allocate(heading);
-      if (slug !== null) slugs.add(slug);
-      continue;
-    }
-    if (!inCompacted) continue;
-    const tombstone = line.match(TOMBSTONE_BULLET);
-    if (tombstone) {
-      const slug = slugify(tombstone[1]);
-      if (slug) slugs.add(slug);
-    }
+    if (heading === null) continue;
+    const slug = allocate(heading);
+    if (slug === null) continue;
+    const number = line.match(HEADING_LEVEL)?.[1].length === 2 ? heading.match(RESULT_STEP_TITLE)?.[1] : null;
+    steps.set(slug, number?.toLowerCase() ?? null);
   }
-  return slugs;
+  return steps;
 }
 
 interface ResultLink {
@@ -235,10 +223,15 @@ interface ResultLink {
   readonly anchor: string | null;
 }
 
+export function lastResultLink(line: string) {
+  const markup = withoutCodeSpans(line);
+  return [...line.matchAll(RESULT_LINK)].findLast((match) => markup.startsWith(match[0], match.index));
+}
+
 function resultLink(line: string): ResultLink | null {
-  const matches = [...line.matchAll(RESULT_LINK)];
-  if (matches.length === 0) return null;
-  const target = matches[matches.length - 1][1].trim();
+  const match = lastResultLink(line);
+  if (!match) return null;
+  const target = match[1].trim();
   const hash = target.indexOf("#");
   const file = (hash === -1 ? target : target.slice(0, hash)).trim().replace(/^\.\//, "");
   const anchor = hash === -1 ? "" : target.slice(hash + 1).trim();
@@ -326,7 +319,7 @@ function readScopeLine(line: string, delivered: Set<string>, deferred: Set<strin
   return [...cited];
 }
 
-function parsePlan(text: string, siblingTasks: readonly string[]): ParsedPlan {
+export function parsePlan(text: string, siblingTasks: readonly string[]): ParsedPlan {
   const citation = taskCitation(siblingTasks);
   const steps: DraftStep[] = [];
   const checkpoints: string[] = [];
@@ -410,16 +403,50 @@ function checkpointOutcomes(text: string): Map<string, string> {
   for (const line of liveLines(text)) {
     const heading = headingText(line);
     if (heading !== null) {
-      current = heading.match(CHECKPOINT_TITLE)?.[1].toLowerCase() ?? null;
+      const level = line.match(HEADING_LEVEL)![1].length;
+      if (level <= 2) current = level === 2 ? heading.match(RESULT_CHECKPOINT_TITLE)?.[1].toLowerCase() ?? null : null;
       continue;
     }
-    if (current === null || outcomes.has(current)) continue;
+    if (current === null) continue;
     const outcome = line.match(OUTCOME_FIELD);
     if (!outcome) continue;
     const token = firstToken(outcome[1]);
     if (token) outcomes.set(current, token);
   }
   return outcomes;
+}
+
+export function resultShapeDiagnostics(resultText: string, planStatus: string | null): StructureDiagnostic[] {
+  const diagnostics: StructureDiagnostic[] = [];
+  const seen = new Set<string>();
+
+  for (const { visible, live, number } of markdownLines(resultText)) {
+    if (!live || visible.match(HEADING_LEVEL)?.[1].length !== 2) continue;
+    const heading = headingText(visible);
+    if (heading === null) continue;
+    const step = heading.match(RESULT_STEP_TITLE);
+    const checkpoint = heading.match(RESULT_CHECKPOINT_TITLE);
+    const key = step ? `Step ${step[1].toLowerCase()}`
+      : checkpoint ? `Checkpoint after Step ${checkpoint[1].toLowerCase()}`
+      : RESULT_SECTION_TITLES.has(heading) ? heading
+      : null;
+    if (key === null) {
+      diagnostics.push({ code: "unknown-result-section", file: RESULT_FILE, line: number, detail: heading });
+    } else if (seen.has(key)) {
+      diagnostics.push({ code: "duplicate-result-record", file: RESULT_FILE, line: number, detail: key });
+    } else {
+      seen.add(key);
+    }
+  }
+
+  const required = planStatus === "done" ? "Acceptance"
+    : planStatus === "in-review" ? "In review"
+    : planStatus === "blocked" ? "Blocked"
+    : null;
+  if (required !== null && !seen.has(required)) {
+    diagnostics.push({ code: "missing-result-section", file: RESULT_FILE, line: 0, detail: required });
+  }
+  return diagnostics;
 }
 
 function currentStateBlock(text: string): string | null {
@@ -443,7 +470,8 @@ function currentStateBlock(text: string): string | null {
 
 export function taskState(input: TaskStateInput): TaskState {
   const plan = parsePlan(input.planText, input.siblingTasks ?? []);
-  const slugs = input.resultText === null ? null : headingSlugs(input.resultText);
+  const planStatus = readPlanStatus(input.planText);
+  const stepByAnchor = input.resultText === null ? null : resultStepByAnchor(input.resultText);
   const outcomes = input.resultText === null ? new Map<string, string>() : checkpointOutcomes(input.resultText);
   const parsedGoals = input.goalsText === null ? null : parseGoalDefinitions(input.goalsText);
   const ids = parsedGoals === null ? [] : [...new Set(parsedGoals.definitions.map((goal) => goal.id))];
@@ -456,7 +484,7 @@ export function taskState(input: TaskStateInput): TaskState {
     checked: step.checked,
     anchor: step.link?.anchor ?? null,
     anchorResolves: step.checked
-      ? step.link?.file === RESULT_FILE && step.link.anchor !== null && slugs !== null && slugs.has(step.link.anchor)
+      ? step.link?.file === RESULT_FILE && step.link.anchor !== null && stepByAnchor?.get(step.link.anchor) === step.number
       : null,
     goals: step.goals,
     goalEscape: step.goalEscape,
@@ -500,9 +528,11 @@ export function taskState(input: TaskStateInput): TaskState {
     })),
   ];
 
+  const shapeDiagnostics = input.resultText === null ? [] : resultShapeDiagnostics(input.resultText, planStatus.status);
+  const diagnostics = [...validated.diagnostics, ...coverageDiagnostics, ...shapeDiagnostics];
   return {
     taskDir: input.taskDir,
-    plan: readPlanStatus(input.planText),
+    plan: planStatus,
     result:
       input.resultText === null
         ? null
@@ -530,106 +560,8 @@ export function taskState(input: TaskStateInput): TaskState {
         inBoth: ids.filter((id) => plan.delivered.has(id) && plan.deferred.has(id)),
       },
     },
-    structure: { reliable: validated.reliable && coverageDiagnostics.length === 0, diagnostics: [...validated.diagnostics, ...coverageDiagnostics] },
+    structure: { reliable: validated.reliable && diagnostics.length === 0, diagnostics },
     currentState: input.resultText === null ? null : currentStateBlock(input.resultText),
-  };
-}
-
-export interface ResultSize {
-  readonly bytes: number;
-  readonly kb: number;
-  readonly over: boolean;
-}
-
-export function resultSize(text: string, maxKb: number): ResultSize {
-  const bytes = Buffer.byteLength(text, "utf8");
-  return { bytes, kb: bytes / 1024, over: bytes > maxKb * 1024 };
-}
-
-export type KeepRule =
-  | "current-state"
-  | "decision-log"
-  | "acceptance"
-  | "health-boundary"
-  | "live-verification"
-  | "reconciliation"
-  | "compacted"
-  | "pause";
-
-export interface ResultSection {
-  readonly heading: string;
-  readonly anchor: string | null;
-}
-
-export interface KeptSection extends ResultSection {
-  readonly rule: KeepRule;
-}
-
-export interface CompactionSections {
-  readonly keep: readonly KeptSection[];
-  readonly removable: readonly ResultSection[];
-}
-
-const KEEP_SECTIONS: readonly { readonly rule: KeepRule; readonly match: RegExp }[] = [
-  { rule: "current-state", match: CURRENT_STATE_TITLE },
-  { rule: "decision-log", match: /^decision log\b/i },
-  { rule: "acceptance", match: /^acceptance\b/i },
-  { rule: "health-boundary", match: /^health boundar(?:y|ies)\b/i },
-  { rule: "live-verification", match: /^live verification\b/i },
-  { rule: "reconciliation", match: /^reconciliation\b/i },
-  { rule: "compacted", match: COMPACTED_HEADING },
-];
-
-interface DraftSection {
-  readonly heading: string;
-  readonly anchor: string | null;
-  rule: KeepRule | null;
-  pause: string | null;
-}
-
-function pauseKind(text: string, field: "heading" | "label"): string | null {
-  return PAUSE_KINDS.find((kind) => kind[field].test(text))?.status ?? null;
-}
-
-export function compactionSections(resultText: string, planStatus: string | null): CompactionSections {
-  const allocate = slugAllocator();
-  const sections: DraftSection[] = [];
-  let current: DraftSection | null = null;
-  for (const line of liveLines(resultText)) {
-    const heading = headingText(line);
-    if (heading !== null) {
-      const anchor = allocate(heading);
-      const level = line.match(HEADING_LEVEL)?.[1].length ?? 0;
-      if (level < 2) current = null;
-      if (level !== 2) continue;
-      current = {
-        heading,
-        anchor,
-        rule: KEEP_SECTIONS.find((candidate) => candidate.match.test(heading))?.rule ?? null,
-        pause: pauseKind(heading, "heading"),
-      };
-      sections.push(current);
-      continue;
-    }
-    if (current !== null && current.pause === null) current.pause = pauseKind(line, "label");
-  }
-
-  const reconciliations = sections.filter((section) => section.rule === "reconciliation");
-  for (const superseded of reconciliations.slice(0, -1)) superseded.rule = null;
-
-  if (planStatus !== null) {
-    const pauses = sections.filter((section) => section.pause === planStatus && section.rule === null);
-    const active = pauses[pauses.length - 1];
-    if (active !== undefined) active.rule = "pause";
-  }
-
-  return {
-    keep: sections
-      .filter((section) => section.rule !== null)
-      .map((section) => ({ heading: section.heading, anchor: section.anchor, rule: section.rule as KeepRule })),
-    removable: sections
-      .filter((section) => section.rule === null)
-      .map((section) => ({ heading: section.heading, anchor: section.anchor })),
   };
 }
 
@@ -653,131 +585,8 @@ function readOptional(path: string): string | null {
   }
 }
 
-export interface CompactionPlan {
-  readonly taskDir: string;
-  readonly resultFile: string;
-  readonly bytes: number;
-  readonly maxKb: number;
-  readonly due: boolean;
-  readonly keep: readonly KeptSection[];
-  readonly removable: readonly ResultSection[];
-  readonly resultSha256: string;
-  readonly planStatus: string | null;
-}
-
-function compactionPlan(taskDir: string): CompactionPlan {
-  const { fd, content } = readCompactionResult(taskDir);
-  closeSync(fd);
-  const resultText = content.toString("utf8");
-  const planText = readOptional(join(taskDir, PLAN_FILE));
-  const planStatus = planText === null ? null : readPlanStatus(planText).status;
-  const size = resultSize(resultText, RESULT_MAX_KB);
-  const sections = compactionSections(resultText, planStatus);
-  return {
-    taskDir,
-    resultFile: RESULT_FILE,
-    bytes: size.bytes,
-    maxKb: RESULT_MAX_KB,
-    due: size.over,
-    keep: sections.keep,
-    removable: sections.removable,
-    resultSha256: createHash("sha256").update(content).digest("hex"),
-    planStatus,
-  };
-}
-
-export interface CompactionSnapshot {
-  readonly path: string;
-  readonly bytes: number;
-  readonly sha256: string;
-}
-
 function reason(err: unknown): string {
   return (err as NodeJS.ErrnoException).code ?? (err as Error).message;
-}
-
-function readCompactionResult(taskDir: string): { fd: number; content: Buffer; source: Stats } {
-  let fd: number | undefined;
-  try {
-    fd = openSync(join(taskDir, RESULT_FILE), constants.O_RDONLY | constants.O_NOFOLLOW);
-    const content = readFileSync(fd);
-    const source = fstatSync(fd);
-    return { fd, content, source };
-  } catch (err) {
-    if (fd !== undefined) closeSync(fd);
-    throw new Exit(1, `${taskDir} has no readable ${RESULT_FILE}: ${reason(err)}`);
-  }
-}
-
-function readExisting(path: string, source: Stats, afterRead?: () => void): Buffer | null {
-  let fd: number | undefined;
-  try {
-    const stat = lstatSync(path, { throwIfNoEntry: false });
-    if (stat === undefined) return null;
-    if (!stat.isFile()) throw new Exit(2, `snapshot ${path} is not a regular file; left unchanged.`);
-    fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW);
-    const opened = fstatSync(fd);
-    if (opened.dev === source.dev && opened.ino === source.ino) throw new Exit(2, `snapshot ${path} is the same file as ${RESULT_FILE}; left unchanged.`);
-    const content = readFileSync(fd);
-    afterRead?.();
-    const current = lstatSync(path);
-    if (current.dev !== opened.dev || current.ino !== opened.ino) throw new Exit(2, `snapshot ${path} was replaced; snapshot is not accepted; entries left unchanged.`);
-    return content;
-  } catch (err) {
-    if (err instanceof Exit) throw err;
-    throw new Exit(2, `cannot read snapshot ${path}: ${reason(err)}`);
-  } finally {
-    if (fd !== undefined) closeSync(fd);
-  }
-}
-
-function publish(temp: string, path: string): boolean {
-  try {
-    linkSync(temp, path);
-    return true;
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === "EEXIST") return false;
-    throw err;
-  }
-}
-
-export function compactionSnapshot(taskDir: string, options: { beforePublish?: () => void; afterFinalRead?: () => void } = {}): CompactionSnapshot {
-  const resultPath = join(taskDir, RESULT_FILE);
-  const { fd, content, source } = readCompactionResult(taskDir);
-  try {
-    const sha256 = createHash("sha256").update(content).digest("hex");
-    const dir = join(homedir(), ...SNAPSHOT_DIR);
-    const path = join(dir, `${basename(taskDir)}-${sha256.slice(0, SNAPSHOT_HASH_DIGITS)}.md`);
-    let existing = readExisting(path, source);
-    if (existing === null) {
-      const temp = join(dir, `.${randomUUID()}.tmp`);
-      let published: boolean;
-      try {
-        mkdirSync(dir, { recursive: true, mode: 0o700 });
-        writeFileSync(temp, content, { mode: 0o600, flag: "wx" });
-        options.beforePublish?.();
-        published = publish(temp, path);
-      } catch (err) {
-        throw new Exit(2, `cannot write snapshot ${path}: ${reason(err)}`);
-      } finally {
-        rmSync(temp, { force: true });
-      }
-      if (!published) existing = readExisting(path, source);
-    }
-    if (existing !== null && !existing.equals(content)) throw new Exit(2, `snapshot ${path} already holds other bytes; left unchanged.`);
-    const written = readExisting(path, source, options.afterFinalRead);
-    if (written === null || !written.equals(content)) throw new Exit(2, `snapshot ${path} does not match ${RESULT_FILE} on re-read.`);
-    let current: Stats;
-    try {
-      current = lstatSync(resultPath);
-    } catch (err) {
-      throw new Exit(2, `cannot confirm ${resultPath} identity for snapshot ${path}: ${reason(err)}`);
-    }
-    if (current.dev !== source.dev || current.ino !== source.ino) throw new Exit(2, `${resultPath} was replaced; snapshot ${path} is not accepted; entries left unchanged.`);
-    return { path, bytes: content.length, sha256 };
-  } finally {
-    closeSync(fd);
-  }
 }
 
 function folderEntries(dir: string): Dirent[] {
@@ -806,10 +615,8 @@ function main(): void {
   });
 
   const args = process.argv.slice(2);
-  const compacting = args[0] === COMPACTION_FLAG;
-  const snapshotting = args[0] === SNAPSHOT_FLAG;
   const repairing = args[0] === REPAIR_FLAG;
-  const positional = compacting || snapshotting || repairing ? args.slice(1) : args;
+  const positional = repairing ? args.slice(1) : args;
   if (positional.length !== 1) throw new Exit(2, USAGE);
   const taskDir = resolve(positional[0]);
 
@@ -852,10 +659,6 @@ function main(): void {
     process.stdout.write(JSON.stringify({ ...repaired.report, unresolved, state }) + "\n");
     if (repaired.failed) process.exitCode = 2;
     else if (unresolved.length > 0) process.exitCode = 1;
-  } else if (compacting) {
-    process.stdout.write(JSON.stringify(compactionPlan(taskDir)) + "\n");
-  } else if (snapshotting) {
-    process.stdout.write(JSON.stringify(compactionSnapshot(taskDir)) + "\n");
   } else {
     const planText = readOptional(join(taskDir, PLAN_FILE));
     if (planText === null) throw new Exit(1, `${taskDir} has no readable ${PLAN_FILE}.`);

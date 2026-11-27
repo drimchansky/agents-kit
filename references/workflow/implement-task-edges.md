@@ -6,7 +6,7 @@ Read the applicable branch when triggered. `implement-task §N` refers to that s
 
 First check placement. Slug discovery may resolve Archive (`./task-layout.md`). If archived, stop and have the user move the folder out with manual `mv`, then rerun; archiving is one-way.
 
-Otherwise take the registered `skipped → executing` edge (`./task-lifecycle.md` § *Status values*). Create a missing `result.md` under implement-task §3; preserve existing results and append the revival record under §5. Point the plan's `**Result:**` line at `./result.md`. Rewrite `## Current state` under §5 for the revived plan and any approach hold before returning to §3's reload.
+Otherwise take the registered `skipped → executing` edge (`./task-lifecycle.md` § *Status values*). Create a missing `result.md` under implement-task §3; keep existing step records and record the user's revival decision under `./task-history.md`. Point the plan's `**Result:**` line at `./result.md`. Rewrite `## Current state` under §5 for the revived plan and any approach hold before returning to §3's reload.
 
 ## Activating a backlogged task
 
@@ -46,7 +46,7 @@ At a checkpoint, run its assertions after every batch step finishes, then one he
 - Before a revision removes, defers, or renumbers a step, apply `./task-siblings.md` § *Revising a cited plan*.
 - Revise affected scope/steps in place, adding needed units or removing obsolete ones. Keep numbers stable where possible; insert `Step 3a`/`Step 3b`.
 - Record what changed and why in the affected step's Deviations from plan, naming each citing step raised.
-- Abandonment requires explicit confirmation before setting skipped (`./task-lifecycle.md`). Record the reason and stop, retaining the plan.
+- Abandonment requires explicit confirmation before setting skipped (`./task-lifecycle.md`). Put the reason in Current state if a result exists and append the decision under `./task-history.md`.
 
 ## An open criterion leg
 
@@ -60,26 +60,12 @@ When the user accepts an option containing their verification leg, keep it open 
 
 ### Verification-only continuation
 
-When local implementation is complete and only named downstream checks or explicitly open verification legs remain, verify them without re-entering or recreating a task branch solely to observe delivery (`./task-delivery-edges.md` § *Verification source after delivery*). A pending authorized implementation commit still belongs to implementation; settle it under `./task-delivery.md` § *Checkpoint and final commits* before entering this path. Such a leg may leave its step unchecked; verify the leg, then record and check off the step through implement-task §4 when its criterion passes. Set that step section's `**Executed:**` line to `verification-only continuation`. A step a reconciler left unchecked under `./reconciliation.md` § *Strengthen only on verified evidence* takes this path too, even while later steps remain. Check it off as above, then resume the remaining steps through §4. A merged or removed branch does not stop this path. Select the finalization health surface through that section: an affected deployable engineering target needs its intended delivered source, while documentation and supported local-only work use current work-product health. When required source proof or its matching health surface is unavailable, keep `in-review` and record the missing proof, owner, and next action in In review and Current state. Missing source proof is pending, not a failed health boundary. A defect found by an actual source-health or live check takes the existing unmet-work path below. A repair needing implementation uses § *Task worktree* and its branch decision; observation grants no new Git or deployment write permission.
+When local implementation is complete and only named downstream checks or explicitly open verification legs remain, verify them without re-entering or recreating a task branch solely to observe delivery (`./task-delivery-edges.md` § *Verification source after delivery*). A pending authorized implementation commit still belongs to implementation; settle it under `./task-delivery.md` § *Checkpoint and final commits* before entering this path. Such a leg may leave its step unchecked; verify the leg, then record and check off the step through implement-task §4 when its criterion passes. Set that step section's `**Executed:**` line to `verification-only continuation`. Use `./task-progress.md` for the checkbox and `./task-result.md` for the verified step's record. If later implementation steps remain, resume them through §4 after verifying the outstanding step. A merged or removed branch does not stop this path. Select the finalization health surface through that section: an affected deployable engineering target needs its intended delivered source, while documentation and supported local-only work use current work-product health. When required source proof or its matching health surface is unavailable, keep `in-review` and record the missing proof, owner, and next action in In review and Current state. Missing source proof is pending, not a failed health boundary. A defect found by an actual source-health or live check takes the existing unmet-work path below. A repair needing implementation uses § *Task worktree* and its branch decision; observation grants no new Git or deployment write permission.
 
-For reported external verification, re-gate pending goals against the best available proxy: confirmation, receipt, or reported live state (`./acceptance-criteria.md`). Change each passing Acceptance tag to met and append its confirmation, retaining the original evidence. Independently re-check each engineering live target under `../engineering/acceptance-gate.md`; a reported green state or healthy workload without the expected release is insufficient. Record new observations and retain unresolved checks in In review (`./task-lifecycle.md` § *Companion result file*).
+For reported external verification, re-gate pending goals against the best available proxy: confirmation, receipt, or reported live state (`./acceptance-criteria.md`). Update each verified goal's Acceptance entry with its current verdict and supporting confirmation. Independently re-check each engineering live target under `../engineering/acceptance-gate.md`; a reported green state or healthy workload without the expected release is insufficient. Record new observations and retain unresolved checks in In review (`./task-lifecycle.md` § *Companion result file*).
 
-A goal named by In review because a Grounding corrected record rewrote it requires live verification, not a proxy. Append its verdict beside the external goals; unmet or a failed live check returns the plan to executing. A semantic goal edit this run retains implement-task § *Correcting Grounding Where It's Wrong*'s later-run gate. If a future rollout or missing access remains, stay in-review without Completed. Once every check passes or has a supported N/A, run fresh integrated health on the selected surface (`./task-delivery-edges.md` § *Verification source after delivery*; `./execution-loop.md` § *Health boundaries*). An unrelated checkout or historical boundary cannot prove delivered-source health when that source is required.
+A goal named by In review because a Grounding corrected record rewrote it requires live verification, not a proxy. Update its own Acceptance entry; unmet or a failed live check returns the plan to executing. A semantic goal edit this run retains implement-task § *Correcting Grounding Where It's Wrong*'s later-run gate. If a future rollout or missing access remains, stay in-review without Completed. Once every check passes or has a supported N/A, run fresh integrated health on the selected surface (`./task-delivery-edges.md` § *Verification source after delivery*; `./execution-loop.md` § *Health boundaries*). An unrelated checkout or historical boundary cannot prove delivered-source health when that source is required.
 
-After success, append the evidence before advancing:
+Write the successful finalization boundary in Acceptance's `**Health:**` field on the domain's required evidence format. Finalize through implement-task §§7–8. Remove In review, add Completed, and refresh Current state with the observed delivery and cleanup outcome. If the boundary fails, return to executing, remove In review and take §4 Blocked, recording the failure and last passing boundary. Review findings requiring implementation also return to executing.
 
-```markdown
-## Health boundary — YYYY-MM-DD
-
-**Trigger:** later-run `in-review → done` finalization
-**Health:** <the boundary on the selected finalization surface, recorded to the shape the resolved domain fixes (`../engineering/verification.md` § *What a boundary records* for code)>
-
----
-```
-
-Finalize only through implement-task §§7–8 and add Completed. Refresh Current state from the observed release and cleanup outcome without rewriting original Acceptance evidence. A failed boundary produces no success section or finalization: take `in-review → executing`, then §4 Blocked, recording failure and the last green boundary. Review findings requiring changes likewise return to executing.
-
-**Worktree removal comes last** on both this path and direct finalization, after boundary and status updates (`./task-delivery-edges.md` § *Removal*).
-
-- Observed merged PR and clean tree: remove worktree/local branch and record both in this path's dated section, or the direct run's record.
-- Dirty, unpushed, or unmerged work: refuse removal and record why there; finalization still stands. Preserve the work without forced removal.
+**Worktree removal comes last** on this path and on direct finalization (`./task-delivery-edges.md` § *Removal*). Update Current state's Pointers after removal. If removal is refused, retain the branch and record the reason with the pointer.

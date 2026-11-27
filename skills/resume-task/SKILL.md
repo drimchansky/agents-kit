@@ -1,7 +1,7 @@
 ---
 name: resume-task
-description: Use when asked to resume, catch up on, brief, hand off, status of, or check progress on a task folder (canonically under `.agents/tasks/`) — produces a chat-only briefing. Writes only proven goal-identifier repairs.
-argument-hint: "[task slug or path; defaults to the session's task]"
+description: Use when asked to resume, catch up on, brief, hand off, status of, or check progress on a task folder (canonically under `.agents/tasks/`) — prints a brief, then writes its settled corrections to the task. A read-only request produces the brief without edits.
+argument-hint: "[task slug or path; defaults to the session's task] [-s]"
 ---
 
 ## Core Rules
@@ -9,17 +9,19 @@ argument-hint: "[task slug or path; defaults to the session's task]"
 1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 2. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core. This skill mostly observes; pull in deeper pack files only if you dig into a step's work. If the domain has no pack, run the neutral methodology and say so.
 
-Brief status, completed work, drift, and next action in chat. Apply `./references/workflow/task-layout.md` § *Reading a resolved folder*, including proven identifier repair on either invocation route and its read-only exemption. Beyond that repair and a user-confirmed Backlog activation (`./references/workflow/implement-task-edges.md` § *Activating a backlogged task*), edit no task file, code, or Git state; execute no plan work.
+Print the full brief before the first edit or folder move. Then apply settled findings to the task's own files. An explicit read-only request ends with the brief. Execute no plan work and change no work products or Git state.
 
-Run no reference sweep. `resume-task-reconcile` and `review-task-reconcile` sweep cited links (`./references/workflow/reconciliation-sweep.md` § *Scope*); this citation marks the boundary and is not loaded on any path. <!-- cold -->
+Compare the task with current artifacts. Read a cited external source only when needed to verify a specific claim. Create no briefing file.
 
-Quote `observations.md` with its dates as cached observations, never live state. Claim verification may read URL-hosted domain artifacts under the domain's `verification.md`. Create no `BRIEF.md` or scratch briefing file.
+## Flags
+
+- `-s`: check the task's cited sources under `./references/workflow/source-check.md` while assembling the brief. Print its References section before the first correction. On a read-only request, report the check and skip all writes. Without the flag, skip this source check.
 
 ## When to Use
 
 **Use when** returning to a task, handing off, reviewing progress, or checking whether current work still matches the plan.
 
-**Skip when** findings need write-back or cited-reference freshness → `resume-task-reconcile`; session discoveries need recording → `reconcile-task`; execution, acceptance, or blocker resolution is needed → `implement-task`; feasibility is the question → `review-task`. With no task, suggest `refine-idea` or `plan-task`. For a fresh plan with no result, read the plan directly.
+**Skip when** execution, acceptance, or blocker resolution is needed → `implement-task`; feasibility is the question → `review-task`. With no task, suggest `refine-idea` or `plan-task`. For a fresh plan with no result, read the plan directly.
 
 ## Process
 
@@ -27,62 +29,57 @@ Quote `observations.md` with its dates as cached observations, never live state.
 
 Use **resolve-current-or-ask** in `./references/workflow/task-layout.md` § *Discovery rules for skills*. Accept a full `plan.md` path directly; ask on ambiguous resolution.
 
-For a folder under Backlog, offer activation using `./references/workflow/implement-task-edges.md` § *Activating a backlogged task*. Only explicit confirmation permits the whole-folder move. <!-- cold -->
+For a folder under Backlog, offer activation using `./references/workflow/implement-task-edges.md` § *Activating a backlogged task*. Move the folder only after printing the brief and receiving explicit confirmation on a writable run. <!-- cold -->
 
 ### 2. Load Artifacts
 
-Apply `./references/workflow/task-layout.md` § *Reading a resolved folder*, including current inherited group grounding. Report its repair, or `structure.diagnostics` from a read-only load, before using the report. When no readable plan exists, say so. Read any `approaches.md` and test each approach-wait entry in `CONTEXT.md` under `./references/workflow/task-approaches.md` § *Approach-wait entries*. Check for execution holds and route the handoff under that file's § *Other readers and writers*. Cite a selected comparison's dated decision in the brief. For a planless task without a comparison, keep the `plan-task` handoff. Do not present coverage as complete when structure is unreliable.
+Use the read-only loader command in `./references/workflow/task-layout.md` § *Reading a resolved folder* for the initial brief on every run. Load current inherited group grounding. Report `structure.diagnostics` and keep this pre-edit baseline. Defer even proven identifier repairs until the correction phase. When no readable plan exists, say so. Read any `approaches.md` and test each approach-wait entry in `CONTEXT.md` under `./references/workflow/task-approaches.md` § *Approach-wait entries*. Check for execution holds and route the handoff under that file's § *Other readers and writers*. Cite a selected comparison's dated decision in the brief. For a planless task without a comparison, keep the `plan-task` handoff. Do not present coverage as complete when structure is unreliable.
 
-Then read what the brief needs beyond the report:
+Open only the task artifacts listed below for the brief. Keep the source ledger out of all artifact reads and content searches. Only the requested `-s` check reads that ledger.
+
 
 - `goals.md`: the full Goals list by `G<n>`, including unresolved markers.
-- `result.md`: orient from `currentState`, then read the latest Step or Full Run. Capture every Blocked block and any Acceptance section verbatim. Read goal verdicts in Reconciliation entries too; use the latest verdict by ID across Acceptance and Reconciliation. Capture the most recent In review section verbatim as the active pending list; skip earlier, superseded ones (`./references/workflow/task-lifecycle.md` § *Companion result file*). Treat the digest as derived, unverified metadata. Ignore its legacy Status header (`./references/workflow/task-lifecycle.md` § *`result.md` — no status field*).
-- `CONTEXT.md`: the Domain header, Open Questions, and dated decision anchors cited by current guidance.
-- `plan.md`: the next step's `**Depends on:**` line, Due, Lead time, and touched paths, plus Open Questions and cited dated decision anchors. Take status and goal-file state from the report.
+- `result.md`: orient from Current state. Read the relevant step and checkpoint records, the final commit record, Acceptance, Live verification, and Open findings under `./references/workflow/task-result.md`. Capture the active Blocked or In review section verbatim. Read each goal's last verdict in Acceptance. Verify the digest against the underlying records.
+- `CONTEXT.md`: Domain, current grounding and Open Questions.
+- `plan.md`: Scope, pending steps, Verify, Depends on, Due, Lead time, touched paths, and Open Questions. Take status and goal-file state from the report.
 - `approaches.md`, when present: current decision, unresolved questions, and original dated selection evidence. Surface pending discussion without treating it as an approved approach.
 - `ticket.md`, when present: the ask and acceptance criteria.
-- `observations.md`, when present: dated cached observations (`./references/workflow/task-observations.md`). Absence is normal. <!-- cold -->
 
 Flag missing context as an incomplete scaffold and missing goals as preventing acceptance. Check `./references/workflow/task-lifecycle.md` § *Status values* and § *Companion result file* for missing companions or required sections. Report `skipped` as abandoned; a missing result there is expected. Report a valid blocked pause with its cause and in-review with its awaited external goals and engineering live checks.
 
 ### 3. Reconstruct State from Checkboxes
 
-Use the report's ordered steps, checkboxes, next pending step/body, checkpoint outcomes, and result-anchor resolution. A null checkpoint outcome means not run. A checked step with `anchorResolves: false` has unbacked evidence: report drift. Prefer checkboxes over conflicting plan prose and note the disagreement.
+Use the report's ordered steps, checkboxes, next pending step/body, checkpoint outcomes, and result-anchor resolution. A null checkpoint outcome means not run. For a checked step with `anchorResolves: false`, report the unresolved link. Determine whether it warrants repair under `./references/workflow/task-layout.md` § *Result format before writing*. Prefer checkboxes over conflicting plan prose and note the disagreement.
 
 ### 4. Drift Check Against Current Reality
 
 Observe current artifacts even when the result is recent; history alone cannot verify present behavior. Partition claims:
 
 - **Done/shipped**: claims in Shipped blocks or checked steps. Verify each still holds; lost behavior is drift.
-- **Pending**: unchecked work may be absent without drift. An already-existing pending artifact warrants `info`.
-- **Current state**: compare the gloss and Next against markers and completed actions, including delivery after `done`. Tag stale claims `warn` even if Pointers are current. Check local branch/SHA pointers against the repository. Fetch no external-system pointer; quote its dated observation or state it was not checked. A stale digest alone proves no lifecycle or acceptance change (`./references/workflow/reconciliation.md` § *Current state refresh*).
+- **Commit coverage**: for each checked step with a Commit field, compare the verified work with the contents of its recorded SHA. Use the last Commit field in a merged record. If that revision lacks the verified work, report the mismatch and propose removing the field. Keep a currently verified step checked. A newer commit containing the work supplies no replacement here.
+- **Pending**: unchecked work may be absent without drift. If the pending work appears in current artifacts, run the authored Verify and domain per-unit checks before proposing to check it. A path or prior commit alone proves no outcome.
+- **Current state**: compare the gloss and Next against markers and completed actions, including delivery after `done`. Tag stale claims `warn` even if Pointers are current. Check local branch/SHA pointers against the repository. State which external pointers went unchecked. A stale digest alone proves no lifecycle or acceptance change.
 
-Compare current inherited constraints with ticket scope, context direction and assumptions, pending steps, shipped claims, and met goals. Quote both conflicting statements and sources. Cite group paths from the selected root and task sections, step numbers, or goal IDs. Tag contradictions `warn`, or `block` when a pending step cannot run as written. A changed chain alone creates no finding. Propose no edits to group files or the plan (`./references/workflow/task-store.md` § *Shared group context*).
+Compare current inherited constraints with ticket scope, context direction and assumptions, pending steps, shipped claims, and met goals. Quote both conflicting statements and sources. Cite group paths from the selected root and task sections, step numbers, or goal IDs. Tag contradictions `warn`, or `block` when a pending step cannot run as written. A changed chain alone creates no finding. Apply the grounding and group-write terms in `./references/workflow/task-writes.md` to an established conflict.
 
 For code claims, apply `./references/engineering/exploration.md` § *Blast-radius / drift verification (used by review and resume)*. Other domains use their own artifacts and verification recipe.
 
-With Acceptance present, re-check every `met` goal on a done plan. The one reduced check requires a watermark, no commits after it, and a clean tree: re-run the cheapest met goal's verifying action and name the branch. On an executing plan, spot-check reachable met goals. Missing Acceptance on done is `block`; a met goal that no longer holds is `warn`. Carry `pending external` and engineering pending checks as outstanding with what is awaited; neither is drift nor unmet. Historically completed tasks follow `./references/engineering/acceptance-gate.md` § *Acceptance-gate recipe*.
+With Acceptance present, re-check every `met` goal on a done plan. On an executing plan, spot-check reachable met goals. For a current-format task, missing Acceptance on done is `block`; a met goal that no longer holds is `warn`. Carry `pending external` and engineering pending checks as outstanding with what is awaited; neither is drift nor unmet. Historically completed tasks follow `./references/engineering/acceptance-gate.md` § *Acceptance-gate recipe*.
 
 Tag findings `info` (FYI), `warn` (review before resuming), or `block` (update required before execution). Always render Drift since plan, with `No drift detected.` when clean.
 
-Run `node <kit-root>/scripts/commit-scan.ts <task folder>` for commits since watermark. Resolve `<kit-root>` through `./references/workflow/task-store.md` § *Resolving `<kit-root>`*; CLI/JSON: `./references/scripts/commit-scan.md`. <!-- cold -->
-
-Read the reported range; do not re-derive it. Report each returned commit and nominated steps. Include every `candidate` in `steps`, even when its nominating SHAs fall beyond the returned 20 commits. State the cap against `total`. Nominations are leads, never completion evidence (`./references/workflow/reconciliation-commits.md`).
-
-This brief never seeds, re-seeds, or advances a watermark, and never runs a candidate's Verify criterion. Follow `./references/workflow/reconciliation-commits.md` § *Read/write split*.
-
-Render Commits since watermark by scan state:
-
-- `ok`: the commit list or explicit empty-range line, naming any `refFallback`.
-- `no-watermark`: missing baseline; nothing scanned.
-- `orphaned`: watermark no longer an ancestor of the resolved ref; nothing scanned.
-- `no-checkout`: for a store task acting on the session's repository, render `Unscanned` and name that repository. The script cannot reach it from the folder; resolve it under `./references/workflow/reconciliation-commits.md` § *The scan*. Omit the section only when no repository answers or the checkout holds none of the plan's paths.
-
-Unavailable kit root, script, or Node also renders Unscanned with the reason; never imply an empty range.
-
 ### 5. Produce the Brief
 
-Print the template to chat; its closing Handoff follows `./references/workflow/user-facing-messages.md` § *Blocks*. Stop after the brief; execution belongs to `implement-task`.
+Print every applicable section of the template from the pre-edit state. Show the evidence for each proposed correction. On a read-only request or skipped plan, stop with the Handoff and leave every file byte-identical.
+
+### 6. Apply corrections
+
+Apply `./references/workflow/task-writes.md` and `./references/workflow/task-progress.md` to the printed findings. On a model-invoked run, ask before each correction and wait for its answer. Name the affected files and the required Current state refresh. On a user-invoked run apply settled corrections. Refer unresolved impactful choices to the user and preserve them with their options and owner.
+
+- After the brief, run the loader's identifier repair only for authorized corrections. If its atomic repair would include an unapproved mapping, hold it. Report the loader outcome under the task-layout contract before relying on repaired identities.
+- Clear unbacked checkboxes and lower disproved lifecycle or goal claims under the progress gate. Verify pending steps before checking them. Apply the progress gate's verification-only Commit rule to existing and newly checked steps. Apply the closing gate if verified advances leave no step open.
+- An informational observation alone changes no marker. Report absent goals or context to plan-task. For a cleared external blocker refresh the pointer and route execution to implement-task.
+- Apply settled answers at their owning files. Refresh stale Current state and Open findings from the resulting evidence. Print the change list and one Handoff naming remaining decisions and their owners.
 
 ## Output Template
 
@@ -100,9 +97,9 @@ Print the template to chat; its closing Handoff follows `./references/workflow/u
 
 ## Goals
 
-- G1 — <goal verbatim, preserving (external)> — _<latest verdict by ID across Acceptance and Reconciliation>_
+- G1 — <goal verbatim, preserving (external)> — _<latest verdict by ID in Acceptance>_
 
-<Keep met-with-caveats notes and pending-external requirements. Without a recorded verdict in either place, use not yet checked; unresolved-marked goals use unresolved.>
+<Keep met-with-caveats notes and pending-external requirements. Without a recorded verdict, use not yet checked; unresolved-marked goals use unresolved.>
 
 ## Done
 
@@ -118,11 +115,11 @@ Print the template to chat; its closing Handoff follows `./references/workflow/u
 
 ## Blocked
 
-<Every Blocked block verbatim>
+<The active Blocked section verbatim>
 
 ## In review
 
-<The most recent In review section verbatim, including awaited external goals>
+<The active In review section verbatim, including awaited external goals>
 
 ## Drift since plan
 
@@ -130,26 +127,14 @@ Print the template to chat; its closing Handoff follows `./references/workflow/u
 
 <When clean: No drift detected.>
 
-## Commits since watermark
+## Open findings
 
-- <SHA, date, paths, nominated steps; pending candidate or checked info>
-
-<Or one of these lines, following Step 4:>
-
-No commits since <sha> touch a step's paths.
-No watermark recorded — baseline missing; nothing scanned. A reconcile run seeds it.
-Watermark <sha> is no longer an ancestor of <ref> — orphaned; nothing scanned. A reconcile run re-seeds it.
-Unscanned — the task acts on <repo>, which the scan cannot reach from a store-resident folder.
+<Current unresolved findings, evidence, owner, and next action.>
 
 ## Open questions
 
 <Deduplicate context/plan/comparison questions and unresolved goals. Replace questions the result already answers with their answers.>
 
-**Handoff**
-- **Done:** <a goal-identifier repair the load applied; otherwise omit>
-- **Know:** <the task's handoff token; `block` and `warn` drift and stale Current-state claims that change the next action, in brief; after a dialog, that each answer to an Open questions entry remains only in the conversation>
-- **Awaiting you:** <point at the Open questions entries still unanswered where one blocks the next step; name any approach hold and what it awaits>
-- **Next:** <for an approach hold, use `/choose-approach` or `/plan-task` as Step 2 directs. Otherwise name the first file, step, or drift item and its paste-ready command, such as `/implement-task`. When the user answered Open questions entries in the dialog, name `/reconcile-task` as the command that records those answers.>
 ```
 
-Omit empty sections except Drift since plan. Commits since watermark follows Step 4's rendering conditions.
+Omit empty sections except Drift since plan. Close after the corrections, or after the brief on a read-only run, with the Handoff from `./references/workflow/user-facing-messages.md` § *Blocks*. Name confirmed changes, the task token, actionable drift, unresolved decisions and approach holds. Give the first executable next action and its command.

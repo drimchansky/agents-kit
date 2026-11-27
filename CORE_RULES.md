@@ -34,6 +34,7 @@ When the work has a domain, such as engineering for code changes, layer that dom
 
 ## Workflow
 
+- When a task is established and no skill is running, update the owning task file in the same turn under `references/workflow/task-writes.md` for settled decisions, answers, references, and verified progress, including Current state and Open findings.
 - When starting task or code work: read the task's `CONTEXT.md` and relevant project docs. Also read the working repository's `AGENTS.md` and `CLAUDE.md` where they are not already in context.
 - When acting in a browser UI: read `references/workflow/browser-tools.md`. Apply its shared sections and the current host's notes.
 - When stored personal or work knowledge is relevant: consult `references/workflow/runbook.md`.

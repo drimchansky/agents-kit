@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { chmodSync, closeSync, lstatSync, openSync, readFileSync, readdirSync, realpathSync, renameSync, statSync, unlinkSync, writeSync, type Dirent } from "node:fs";
 import { join, relative } from "node:path";
-import { holdsRoleFile, WALK_SKIP_DIRS } from "./lifecycle-constants.ts";
+import { holdsRoleFile, skipsTaskMarkdown, WALK_SKIP_DIRS } from "./lifecycle-constants.ts";
 import { adjacentGoalMentions, anchorLines, fieldGoalTokens, indentedBlockLines, parseGoalDefinitions, sameDiagnostic, scanGoalReferences, validateGoalStructure, type StructureDiagnostic, type StructureReport } from "./goal-structure.ts";
 
 interface Snapshot {
@@ -161,6 +161,7 @@ function snapshotTask(taskDir: string): TaskSnapshot {
       const name = prefix ? `${prefix}/${entry.name}` : entry.name;
       const path = join(dir, entry.name);
       if (entry.name.startsWith(".") || WALK_SKIP_DIRS.has(entry.name)) continue;
+      if (!entry.isDirectory() && skipsTaskMarkdown(name)) continue;
       if (entry.isSymbolicLink()) {
         if (entry.name.endsWith(".md") || targetsDirectory(path)) gaps.push(name);
         continue;

@@ -1,6 +1,6 @@
 # Documentation Verification
 
-For documentation tasks run by `implement-task`, `implement`, `review-task`, `resume-task`, and `reconcile-task`, and for documentation fixes run by `fix-findings`. Apply the shared loop in `../workflow/execution-loop.md`.
+For documentation tasks run by `implement-task`, `implement`, `review-task`, and `resume-task`, and for documentation fixes run by `fix-findings`. Apply the shared loop in `../workflow/execution-loop.md`.
 
 ## Documentation mapping to the shared verification tiers
 

@@ -30,7 +30,7 @@ node <kit-root>/scripts/worktree-merge.ts baseline <tree> --out <scratch>/health
 
 The narrowing-class test decides only what the delta narrows, never whether the manifest is written. Where discovery finds no linter, no formatter, and no graph-aware test or build runner, every class takes the whole tree (§ *Per check class*) and the delta narrows nothing.
 
-Two later-run boundaries have no in-session green reference, so they take § *CI scope*: the `in-review → done` finalization (`../workflow/implement-task-edges.md` § *Reaching done from in-review*) and the pre-advance boundary of `../workflow/reconciliation.md`.
+Two later-run boundaries have no in-session green reference, so they take § *CI scope*: the `in-review → done` finalization (`../workflow/implement-task-edges.md` § *Reaching done from in-review*) and the pre-advance boundary under `../workflow/task-progress.md`.
 
 **The prune set** is the project's build, coverage, and cache output (`dist/`, `coverage/`, `.nx/`, `.turbo/`, `.eslintcache`, `playwright-report/`, `test-results/`) restricted to paths the project neither tracks nor git-ignores; on a Git checkout the walk already drops ignored untracked paths on both sides, so the set is usually empty. Name what remains, and every output directory on a tree outside a checkout, or it reads as a delta at every later boundary. Never prune a tracked output directory: that drops a real change before § *Widening* can see it (`../scripts/worktree-merge.md` owns both guards).
 

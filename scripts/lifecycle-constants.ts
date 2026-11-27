@@ -4,12 +4,17 @@ export const PLAN_VOCAB: ReadonlySet<string> = new Set(["to-do", "executing", "b
 export const UNSTARTED_STATUS = "to-do";
 export const TERMINAL_STATUSES: ReadonlySet<string | null> = new Set<string | null>(["done", "skipped"]);
 export const LIVE_STATUSES: ReadonlySet<string> = new Set([...PLAN_VOCAB].filter((status) => !TERMINAL_STATUSES.has(status)));
-export const RESULT_MAX_KB = 20;
 export const TASK_MAX_KB = 64;
 export const RECORD_MAX_KB = 2;
-const ROLE_FILES: readonly string[] = ["CONTEXT.md", "goals.md", "plan.md", "result.md", "ticket.md"];
+export const ROLE_FILES: readonly string[] = ["CONTEXT.md", "goals.md", "plan.md", "result.md", "ticket.md"];
 const ROLE_SUFFIXES: readonly string[] = [".plan.md", ".result.md", ".spec.md", ".ticket.md"];
-export const NON_DELIVERABLE_FILES: ReadonlySet<string> = new Set(["observations.md", "approaches.md"]);
+export const TASK_HISTORY_FILE = "history.md";
+export const TASK_OBSERVATIONS_FILE = "observations.md";
+export const NON_DELIVERABLE_FILES: ReadonlySet<string> = new Set([TASK_OBSERVATIONS_FILE, "approaches.md", TASK_HISTORY_FILE]);
+
+export function skipsTaskMarkdown(file: string): boolean {
+  return file === TASK_OBSERVATIONS_FILE || file === TASK_HISTORY_FILE;
+}
 
 export function holdsRoleFile(fileNames: readonly string[]): boolean {
   return fileNames.some((name) => ROLE_FILES.includes(name) || ROLE_SUFFIXES.some((suffix) => name.endsWith(suffix) && name !== suffix));

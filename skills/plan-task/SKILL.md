@@ -19,17 +19,17 @@ Write `goals.md` (acceptance) and `plan.md` (execution) into the resolved task f
 
 ## Inputs
 
-The user's request with any constraints or prior discussion; a slug or destination path when given; the folder's `CONTEXT.md` and, when present, `ticket.md` and `approaches.md`. Their content is read-only here, apart from the loader's identifier repair in `CONTEXT.md` (§ *Invariants*).
+The user's request with any constraints or prior discussion; a slug or destination path when given; the folder's `CONTEXT.md` and, when present, `ticket.md` and `approaches.md`. Read these artifacts under § *Invariants*. Record settled context answers under § *10. Flag Open Questions*.
 
 ## Invariants
 
 - **One folder, fixed names.** `goals.md` and `plan.md` land beside `CONTEXT.md` in the folder Step 2 resolves, one plan per folder, no slug prefix.
 - **Slug.** The folder name is 2–5 lowercase kebab-case words capturing the gist (`add-csv-export`). Derive it; do not ask. Pick a more specific one when it collides with a different effort's folder.
 - **Multi-part efforts.** Assess independently useful, verifiable delivery seams before drafting steps (`./references/workflow/task-siblings.md`). Apply `./references/workflow/decomposition.md`'s one-task boundary when deciding whether to propose siblings through `decompose-task`; materialize a confirmed cut only after its proposal.
-- **Existing content.** Keep `approaches.md` byte-for-byte unchanged throughout this run. An existing `CONTEXT.md` and hand-authored goal acceptance wording are read, not rewritten. The loader's proven identifier repair is the sole exception for `CONTEXT.md` and `goals.md` (`./references/workflow/task-authorship.md`). `ticket.md` is `/prepare-ticket`'s. Refine `plan.md` through conversation and write it once, unless the user asks for revisions in place. A requested in-place revision applies `./references/workflow/task-siblings.md` § *Revising a cited plan* before it removes, defers, or renumbers a step.
+- **Existing content.** Keep `approaches.md` byte-for-byte unchanged throughout this run. Preserve existing context apart from settled answers at their home and proven identifier repairs. Preserve hand-authored goal acceptance wording, allowing only the loader's proven identifier repair (`./references/workflow/task-authorship.md`). `ticket.md` is `/prepare-ticket`'s. Refine `plan.md` through conversation and write it once, unless the user asks for revisions in place. A requested in-place revision applies `./references/workflow/task-siblings.md` § *Revising a cited plan* before it removes, defers, or renumbers a step.
 - **One home per fact.** Cite what the folder already records; the plan carries only this pass's deltas (`./references/workflow/one-home.md` § *One home per fact*).
 
-`goals.md` is a static acceptance input: a `## Goals` list of `G<n>` criteria, no description prose, no `**Status:**` field (`./references/workflow/task-goals.md`). Its proven identifier repair changes no acceptance wording. The reconcilers and `implement-task` may edit semantic content as a judged edit; the latter grades it in the next run (`./references/workflow/task-authorship.md`).
+`goals.md` is a static acceptance input: a `## Goals` list of `G<n>` criteria, no description prose, no `**Status:**` field (`./references/workflow/task-goals.md`). Its proven identifier repair changes no acceptance wording. Apply `./references/workflow/task-authorship.md` for semantic edits and `./references/workflow/task-progress.md` for their later verification.
 
 ## Planning Process
 
@@ -119,7 +119,7 @@ Only risks specific to this task: the concrete scenario, its likelihood given ex
 
 ### 10. Flag Open Questions
 
-`## Open Questions` holds only questions that arose during planning and are not in CONTEXT's `## Open Questions`; cite those. An answer to one CONTEXT tracks is surfaced in chat; a reconciler annotates it later (`./references/workflow/reconciliation.md` § *Annotation formats*). <!-- cold -->
+`## Open Questions` holds only questions that arose during planning and are not in CONTEXT's `## Open Questions`; cite those. When this run settles a context question, replace its prompt at its context home with the current rule and a one-line reason. Apply `./references/workflow/task-writes.md` in this run, appending the original question, options, choice, basis and source to task history. Cite the live rule from the plan only where needed. Leave an unresolved question open.
 
 ## Scaling Plan Depth
 
@@ -135,7 +135,7 @@ For code, `./references/engineering/planning.md` gives file-count proxies.
 
 **`goals.md`**: copy `./references/templates/goals.md`; `(external)` and `_(unresolved: …)_` are its optional bullet glosses.
 
-**`plan.md`**: copy `./references/templates/plan.md`, adapting the layout to task size. Its link-headers point at `./CONTEXT.md` and `./goals.md`. When the folder holds a ticket, add `**Ticket:** [./ticket.md](./ticket.md)`. A doc task's `**Deliverable:**` names the file `./references/workflow/doc-task-files.md` assigns. Keep `**Result:** not yet started` until execution creates `result.md`. Add `## Exploration Findings`, `## Approach`, `## Risks`, and `## Open Questions` only when they contain this pass's content. A choice already retained in `approaches.md` keeps its original dated anchor; cite it without copying history. Other settled choices' evidence takes the dated decision heading in `./references/workflow/context-schema.md` § *Field notes*. Omit empty optional fields, sections, and literal template prompts.
+**`plan.md`**: copy `./references/templates/plan.md`, adapting the layout to task size. Its link-headers point at `./CONTEXT.md` and `./goals.md`. When the folder holds a ticket, add `**Ticket:** [./ticket.md](./ticket.md)`. A doc task's `**Deliverable:**` names the file `./references/workflow/doc-task-files.md` assigns. Keep `**Result:** not yet started` until execution creates `result.md`. Add `## Exploration Findings`, `## Approach`, `## Risks`, and `## Open Questions` only when they contain this pass's content. A choice already retained in `approaches.md` keeps its original dated anchor; cite it without copying history. Another settled choice keeps its current rule and one-line reason in the plan. Append its evidence to task history under `./references/workflow/task-history.md`, applying `./references/workflow/task-writes.md` as Step 10 does. Omit empty optional fields, sections, and literal template prompts.
 
 Place each Step 8 checkpoint after the step it follows, under a `### Checkpoint after Step N` heading where N is that step's number. Beneath it, list each end-to-end outcome as a plain bullet without a `- [ ]` checkbox. Keep that exact heading: `task-state`, `implement-task`, and checkpoint commits match it, so other wording silently drops the gate.
 
@@ -145,13 +145,13 @@ The plan starts at `to-do`; `implement-task` flips each `- [ ]` and drives the s
 
 After writing both files, close the chat with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
 
-- **Done:** `goals.md` and `plan.md` written, each pointing at its file, plus a scaffolded `CONTEXT.md` or the loader's applied repair.
-- **Know:** the task's handoff token, unresolved loader diagnostics, live-verification targets left pending, a missing `./ticket.md` citation, and an answer to a CONTEXT open question that awaits a reconciler.
+- **Done:** `goals.md` and `plan.md` written, each pointing at its file, plus any scaffolded context, answered context questions and their history entries, or loader repairs.
+- **Know:** the task's handoff token, unresolved loader diagnostics, live-verification targets left pending, and a missing `./ticket.md` citation.
 - **Awaiting you:** goals marked `_(unresolved: …)_` and `## Open Questions` entries that gate a step, pointing at their files.
 - **Next:** `/review-task` for a Large or Complex plan, or one with integration points, shared changes, or new patterns; `/implement-task` otherwise. Both resolve the session's task, so the command prints bare and Know carries the handoff token (`./references/workflow/user-facing-messages.md` § *Blocks*).
 
 A run that Step 5 holds writes no `plan.md` (`./references/workflow/task-approaches.md` § *Other readers and writers*). It may write `goals.md` once Step 7 selects the one-task boundary (Step 3). Close it with the same Handoff block, changing three entries:
 
-- **Done:** `goals.md` only when this run wrote it, plus a scaffolded `CONTEXT.md` or the loader's applied repair.
+- **Done:** `goals.md` only when this run wrote it, plus any scaffolded context, answered context questions and their history entries, or loader repairs.
 - **Awaiting you:** also the deciding questions in the current decision of `approaches.md`, the open approach-wait entry in `CONTEXT.md`, or the evidence contradicting its selection, pointing at its file.
 - **Next:** `/choose-approach`, which also resolves the session's task and prints bare.

@@ -4,16 +4,6 @@ Maintainer-only helper contracts, rationale, and mirror notes. Before editing a 
 
 Paths are source-root-relative unless explicitly linked.
 
-## `scripts/commit-scan.ts`
-
-Contract: `references/scripts/commit-scan.md`.
-
-**Why branch existence goes through `git for-each-ref`.** Compare exact refnames from its output. `rev-parse --verify --quiet` gives missing branches and broken repositories the same silent failure. Since `for-each-ref` patterns match prefixes, exact comparison also prevents `refs/heads/feat/x` from satisfying `refs/heads/feat`.
-
-**Why the commit log carries a NUL record separator.** `--pretty=format:%x00%h %ad %s` prefixes commit headers with a byte no path can contain. Readers split records there instead of guessing which `--name-only` lines are headers. `-c core.quotepath=false` prevents C-quoted non-ASCII paths from failing step-name matching. The closing `--` prevents interpreting the range as a path. Otherwise the command matches `references/workflow/reconciliation-commits.md`.
-
-Checkout discrimination mirrors `worktree-merge.ts`'s `checkoutHolding`: only "not a git repository" yields reportable `no-checkout`; other Git failures refuse. Change both copies together. Markdown readers follow the mirror obligation under § *`scripts/health-check.ts`*.
-
 ## `scripts/corpus.ts`
 
 Imports supply the corpus for `dup-check.ts`; this module has no CLI. `corpusFiles(root, handlers)` returns sorted absolute paths, with callers deciding how to handle unreadable entries.
@@ -86,11 +76,9 @@ This pure module parses goal definitions and scans task-local Markdown reference
 
 Contract: `references/scripts/health-check.md`.
 
-**Why `oversized-result` imports `task-state.ts` and not the other way round.** This script's CLI runs at module scope; importing it would start a walk. `task-state.ts` guards direct execution and exposes pure `resultSize`, so both tools can share that measure safely. `oversized-task` and `oversized-record` have no second script or compaction plan to coordinate; their measures stay here and in fixtures.
-
 **Markdown reading.** `goal-structure.ts`'s `markdownLines` classifies comments before opening fences. It preserves original text and UTF-16 offsets beside equal-width comment-masked structural text. Comment delimiters inside real fences, code spans, and quotations cannot change comment state. Blockquote comments stay inside their quoted context. A closing fence matches the opener's marker, at least its length, with only trailing whitespace and no greater indentation. Relative indentation accommodates list fences beyond CommonMark's flat 0–3 columns. Status scanning stops at the first `##`-or-deeper heading, bounding the header (`references/workflow/doc-task-files.md`).
 
-Anchor slugs lowercase, retain letters/digits/hyphens/underscores/spaces, then replace each space with a hyphen. Repeated headings receive `-1`, `-2`, …, advancing past allocated slugs. Tombstone bullets under `## Compacted` remain valid step anchors (`references/workflow/reconciliation-compaction.md`).
+Anchor slugs lowercase, retain letters/digits/hyphens/underscores/spaces, then replace each space with a hyphen. Repeated headings receive `-1`, `-2`, …, advancing past allocated slugs.
 
 **The store walk.** `collect`, `nestedTaskDirs`, and task-move's registered-root search use `classifyWalkEntry` (§ *`scripts/lifecycle-constants.ts`*). This shares prunes, container-before-recognition ordering, and stopping at claimed folders. Root sets still differ intentionally in two ways. Move searches nested registered roots independently; this walk folds them into containers (§ *Why physical identity is settled before ambiguity is*). Move searches the canonical root one level deep; this walk recurses into groups. Each difference can expose a task to only one tool. Check these two causes before treating conflicting slug resolution and scan counts as defects.
 
@@ -104,7 +92,7 @@ The store scan initially takes the contiguous path characters around a filename.
 
 Measure depth and fallback paths from the root holding the target, not the citing task. Slug uniqueness spans all roots. Measuring from the citer would falsely label targets in another root outside the store, producing an unfixable recommendation. Name the target's root when different; reserve outside-store notes for targets no walked root contains. This requires finishing all root walks before citation checking. `dead-citation` and `citation-form` stay separate because broken targets permit mechanical repair, while nonconformant forms require deciding which task was intended.
 
-**Markdown mirrors.** Health-check, task-state, task-move, commit-scan, and sweep-scope import `goal-structure.ts`'s line classifier. Task-repair consumes its reference and anchor scans. Heading allocation, status, steps, and section bounds remain caller-owned readers. Change each affected reader together; they must agree on anchors, terminal status, nominated steps, sweep section bounds, and link grammar. Raw text remains available for Current state and record-size reporting. The reference scan mirrors health-check's citation blockquote skip, including lazy continuation lines; only the reference scan ends a quote at a fence line. A line-start comment ends a quote in both only when it leaves its line blank. The classifier strips a trailing CR without shifting original-file offsets.
+**Markdown mirrors.** Health-check, task-state, task-move, and sweep-scope import `goal-structure.ts`'s line classifier. Task-repair consumes its reference and anchor scans. Health-check and task-state share the heading allocator. Status, steps, and section bounds remain caller-owned readers. Change each affected reader together; they must agree on anchors, terminal status, sweep section bounds, and link grammar. Raw text remains available for Current state and record-size reporting. The reference scan mirrors health-check's citation blockquote skip, including lazy continuation lines; only the reference scan ends a quote at a fence line. A line-start comment ends a quote in both only when it leaves its line blank. The classifier strips a trailing CR without shifting original-file offsets.
 
 Both citation readers import `angledTargetText` from `lifecycle-constants.ts`. Shared code prevents the angle-target padding rule from drifting again. Health-check retains paired-comment citation filtering over original live lines, so an unclosed opener remains readable there. It blanks inline code and skips blockquotes, then percent-decodes targets to resolve paths. Sweep-scope instead percent-encodes interior spaces so URLs match its ledger. Preserve these deliberate differences while keeping the shared literal angle-target interpretation.
 
@@ -280,25 +268,13 @@ Markdown mirrors follow § *`scripts/health-check.ts`*.
 
 **Why the entry check goes through `realpath`.** Only a direct run reads task files. Tests import the pure layer, so a module-scope walk would introduce filesystem effects on import. The symlinked-invocation mismatch and normalization are the same as § *`scripts/pr-comments.ts`* describes.
 
-The `structure` report adds reliability and diagnostics without changing the existing coverage fields. The direct CLI scans supplementary task Markdown before reporting; pure callers can supply those documents. It also lists sibling task folders for `dependsOn`; pure callers pass them as `siblingTasks`, and without them `dependsOn` removes no task citation. `--repair` writes task files, and `--compaction-snapshot` writes only under `~/.local/state/agents-kit/compaction/`. Default and `--compaction-plan` invocations remain read-only. Its command and output contract live in `references/scripts/task-state.md`.
-
-**Why the snapshot copies raw bytes.** Decoding would replace invalid UTF-8 with U+FFFD, so the copy could not restore the original file. Hashing those same bytes keeps the name tied to the content the copy holds.
-
-**Why the name uses the slug and a content hash.** The path stays valid after the folder moves, and same-slug tasks with different content get different files.
-
-**Why a snapshot path holding other bytes is refused.** Copies land whole through a hard link, so a mismatch there means a hash-prefix collision or an outside edit. Overwriting it could destroy the text another task's compaction note names. Another writer can create the path between the existence check and publication. `renameSync` would replace that entry silently, and the re-read would then see the helper's own bytes. `linkSync` fails with `EEXIST` instead, and the helper compares the entry it finds. A home on a filesystem without hard links therefore cannot take snapshots. The exported `compactionSnapshot` accepts an in-process `beforePublish` test hook that runs just before the link.
-
-**Why the source descriptor stays open through the identity check.** Reading bytes and identity through one descriptor prevents separate path lookups from observing different files. Keeping it open prevents inode reuse before the final check. A writer can replace result.md with identical bytes and hard-link the replacement to the snapshot path. Comparing against the original inode alone would accept that link. Rechecking result.md's device and inode before success detects the replacement and refuses the snapshot with exit 2. The refusal preserves both entries instead of risking removal of another writer's file.
-
-**Why each snapshot read rechecks the path.** A writer can replace the snapshot path with a hard link to result.md after the snapshot descriptor opens. The descriptor still yields the old copy's bytes, and a later byte comparison accepts the alias. After reading, compare the path's device and inode with the open descriptor's identity; a mismatch refuses with exit 2, preserving both entries. The exported `compactionSnapshot` accepts an in-process `afterFinalRead` test hook after the final descriptor read and before this path recheck. The pre-write check in `references/workflow/reconciliation-compaction.md` also rejects aliasing introduced after the helper returns.
-
-**Why neither compaction mode reads Git.** Compaction recovers removed text from the snapshot, so tracked, untracked, ignored, and uncommitted results follow the same path.
+The `structure` report adds reliability and diagnostics without changing the existing coverage fields. The direct CLI scans supplementary task Markdown before reporting; pure callers can supply those documents. It also lists sibling task folders for `dependsOn`; pure callers pass them as `siblingTasks`, and without them `dependsOn` removes no task citation. `--repair` writes task files. The default invocation is read-only. Its command and output contract live in `references/scripts/task-state.md`.
 
 ## `scripts/task-repair.ts`
 
 The repair entry point remains separate from task-state's pure readers. Task-state hands repair its full structure report as the validator, so a remap cannot open a coverage gap; importing task-state here would form a cycle. A fresh numeric ID requires a tracked goals file and reachable, non-shallow Git history reaching its creation. Scan historical goal bullets across that history, and reserve IDs listed under `## Retired`; current maximum alone cannot prove non-reuse. Normalize physical paths before looking up a nested task in Git history, since macOS aliases `/var` to `/private/var`.
 
-Read every task-local Markdown file before proposing a remap, because an unread file could hold a reference the remap would miss. Write only the four core role files: other documents may be authored, published, or already sent, so their references block a remap instead. Its walk also feeds task-state's ordinary CLI and health-check's `goal-id`, so all three read the same documents and scan gaps. The walk skips subfolders holding a role file; health-check reports those as `nested-task`, except a subfolder named Archive or Backlog, which its walk treats as a lifecycle container. Compare normalized goal identities so decoration cannot hide duplicate definitions. No persistent transaction record exists, so a crash between renames leaves old references for the next structural scan to diagnose. Staging-file sweeping keys on the writer PID so a concurrent repair's files survive. The staging, inventory, and rollback mechanics live in `references/scripts/task-state.md`.
+Use `skipsTaskMarkdown` for the Markdown walk, goal scan, and health content reads. It skips the task-root history and observations ledger. Both are outside deliverable candidates through `NON_DELIVERABLE_FILES`. Folder statistics also skip history. Read other task-local Markdown before proposing a remap, because an unread file could hold a reference the remap would miss. Write only the four core role files: other documents may be authored, published, or already sent, so their references block a remap instead. Its walk also feeds task-state's ordinary CLI and health-check's `goal-id`, so all three read the same documents and scan gaps. The walk skips subfolders holding a role file; health-check reports those as `nested-task`, except a subfolder named Archive or Backlog, which its walk treats as a lifecycle container. Compare normalized goal identities so decoration cannot hide duplicate definitions. No persistent transaction record exists, so a crash between renames leaves old references for the next structural scan to diagnose. Staging-file sweeping keys on the writer PID so a concurrent repair's files survive. The staging, inventory, and rollback mechanics live in `references/scripts/task-state.md`.
 
 ## `scripts/worktree-merge.ts`
 
@@ -313,8 +289,6 @@ Reject options unsupported by their subcommand. `discard` takes none, preventing
 One `check-ignore` call filters the full walk. Pass paths over `--stdin` to avoid overflowing argv, with NUL delimiters both ways (`-z`) for newline-bearing filenames. Read replies with unbounded `maxBuffer`; a large ignored cache can exceed Node's 1 MiB default. Failing there would break precisely the trees the filter should drop. Exit 1 means no matches, a successful filter. Only "not a git repository" on stderr yields no checkout; other failures refuse instead of reporting an unfiltered tree. Collect leaves first, filter, then hash so ignored caches cost no hashing.
 
 Normalize receipt and removal worktree paths through `realpath`. This makes `/private/tmp` receipts match `/tmp` removal requests on macOS. When physical resolution fails, retain the merely resolved path. Without normalization, equivalent temp paths would wrongly fail the gate.
-
-`checkoutHolding`'s Git-error discrimination mirrors `commit-scan.ts`: distinguish no checkout from a failed run. Update both in the same edit.
 
 **Why `index` hashes live bytes rather than reading blobs.** One read of each file yields both the manifest's SHA-256 and the index's blob id. That proves the index equals the measured bytes without `git cat-file` holding every blob in memory. A file changed since the manifest fails the comparison instead of passing on stale bytes.
 

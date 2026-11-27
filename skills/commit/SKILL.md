@@ -13,7 +13,7 @@ This skill does not load the engineering pack; its own check gate below governs 
 
 A user's request to commit, by `/commit` or in natural language, is the explicit permission `references/engineering/rules.md` requires. Model selection of this skill alone is not. This skill stages nothing, pushes nothing, and creates no branches. Ordinary mode creates a new commit from the staged change; amend mode replaces only the captured latest commit. Tool permissions never widen those limits.
 
-When `implement-task`, `fix-findings`, or `fix-findings-reconcile` runs this skill, its permission follows `./references/workflow/skill-conventions.md` § *The invocation gate*, and the mode is always ordinary. <!-- cold -->
+When `implement-task` or `fix-findings` runs this skill, its permission follows `./references/workflow/skill-conventions.md` § *The invocation gate*, and the mode is always ordinary. <!-- cold -->
 
 ## Amend mode
 
