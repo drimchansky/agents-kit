@@ -4,8 +4,8 @@
 
 ## Steps
 
-### Step 1 — Padded step
+### Step 1 — Padded record
 
-- [ ] **What:** Synthetic step whose full-run record crosses a lowered record budget.
+- [ ] **What:** Synthetic step whose step record crosses a lowered record budget.
 - **Verify:** none (fixture)
 - **Goal:** G1

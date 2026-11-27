@@ -1,6 +1,6 @@
 ---
 name: fix-findings
-description: Use when asked to fix code or documentation findings from a session review, PR comments, or a pasted or saved list. Applies eligible Confirmed and non-functional fixes automatically; other actionable fixes ask the user to pick from analyzed options with a recommendation. Commits each concern batch through the commit skill, or the whole run as one commit under -1; never pushes or replies to sources.
+description: Use when asked to fix code or documentation findings from a session review, PR comments, or a pasted or saved list. Applies eligible Confirmed and non-functional fixes automatically; other actionable fixes ask the user to pick from analyzed options with a recommendation. Records the outcome in an established task when the reviewed work belongs to it. Commits each concern batch through the commit skill, or the whole run as one commit under -1; never pushes or replies to sources.
 argument-hint: '[source] [-e native|codex|claude] [-1 (one health boundary and one commit for the whole run)]'
 ---
 
@@ -40,6 +40,16 @@ Check external PR, file, and pasted findings against the current work product. A
 
 Once per run, before classifying session findings, apply **Check the PR-form reviewed head** in `./references/workflow/pr-lookup.md`.
 
+## Task ownership
+
+Use the task already established in this session only when one of these proves ownership:
+
+- The reviewed branch or PR matches the task's result Pointers.
+- The review started on the task folder.
+- The reviewed document is the task's deliverable or a path named in its plan.
+
+Without proof, fix the work without writing any task file. With proof, identify the folder before proposing the run. Check the plan Status without repairing identifiers. Omit task writes for a skipped task or an explicit read-only task request.
+
 ## The Gate: Auto vs Ask
 
 Process concern batches in source order. Within a concern batch, process findings in dependency order, then severity order (critical, major, minor), or source order when severity is absent. A finding with a known prerequisite in a later concern batch joins that batch. Use that order for execution, executor packets, and merges (`./references/workflow/executor-coordinator.md` § *Bindings*). <!-- cold -->
@@ -60,7 +70,7 @@ Treat a file named only as a proposed remedy as outside the reviewed files for A
 
 **`Pre-existing` findings.** In the same batched round, ask one question whether to include the selected actionable findings labeled `Pre-existing` (`./references/engineering/review.md` § *Pre-existing findings*). A `Pre-existing` finding the user named individually, by number, anchor, or quoted text, counts as included and stays out of the question. Route included findings like any other finding. Ask an included finding's option question after the inclusion answer. An included finding routed to Ask counts as an initial Ask finding. Report excluded ones under **Decided** as excluded `Pre-existing` findings.
 
-A model-invoked run (`./references/workflow/skill-conventions.md` § *The invocation gate*) proposes the whole run as one question once that classification stands: the findings it will fix, the Auto fixes it will apply unasked, the executors it will launch for those fixes and for each option the Ask round approves, and a commit per concern batch, or one commit for the run under `-1`. It holds every edit, launch, staging, and commit until that answer. A user-invoked run has passed it; the Ask round below runs through either door.
+A model-invoked run (`./references/workflow/skill-conventions.md` § *The invocation gate*) proposes the whole run as one question once that classification stands: the findings it will fix, the Auto fixes it will apply unasked, the executors it will launch for those fixes and for each option the Ask round approves, and a commit per concern batch, or one commit for the run under `-1`. For a proven task, name its folder and the writes under § *Task record* in the same proposal. Hold every write, launch, staging, and commit until the operator confirms. A user-invoked run has passed it; the Ask round below runs through either door.
 
 Ask the inclusion question and the Ask round under `../../CORE_RULES.md` § *Ask Before Assuming*.
 
@@ -75,7 +85,7 @@ Post-approval choices follow `./references/workflow/fix-findings-recovery.md` §
 Use `./references/workflow/execution-loop.md` with these bindings:
 
 - **Source:** one finding and its chosen fix option: the Auto option or the option the user picked. Its criterion is that the named problem no longer reproduces, checked against the finding's evidence. Use the supplied root cause and reproduction path when present. Run each applicable unit-outcome tier (`./references/workflow/execution-loop.md` § *Two verification tiers*). Code checks include touched comments and an available formatter; documentation checks include applicable claim checks and a whole-deliverable link sweep (`./references/documentation/verification.md` § *Unit outcome — every unit*).
-- **Record:** the chat report in § *Output* and each concern batch's commit, or the run's one commit under `-1` (§ *Batch commits*). Make no task bookkeeping or status edit. Edit a task-folder document only when it is a selected finding's work product.
+- **Record:** the chat report in § *Output* and each concern batch's commit, or the run's one commit under `-1` (§ *Batch commits*). The coordinator records the outcome for a proven task under § *Task record* after the batch commits. Keep task bookkeeping outside executor packets and fix commits.
 - **Blocked:** restore an immediate failure's pre-fix state and report `fix failed (reverted): <reason>`. A pending impactful choice restores the same way and lists the finding Awaiting decision (§ *Content baseline and immediate outcomes*). Final-outcome failures use `./references/workflow/fix-findings-recovery.md` § *Dependency-safe recovery*. Independent findings may continue after recovery. <!-- cold -->
 - **Acceptance:** re-read every selected finding against the live tree and place it in exactly one report bucket. For code fixes, apply `./references/engineering/acceptance-gate.md` to affected deployable targets independently of the finding wording. A green local fix remains retained and eligible for its authorized batch commit while live delivery is pending; report local proof and pending delivery separately, without claiming overall completion.
 - **Health boundaries:** use § *Integrated health boundary* once per concern batch, or once per boundary group when coalesced, after its serial and parallel fixes settle and before its commit. Red-boundary recovery follows `./references/workflow/fix-findings-recovery.md`. <!-- cold -->
@@ -130,6 +140,16 @@ Build each packet under the `fix-findings` binding in `./references/workflow/exe
 Use `./references/workflow/fix-findings-recovery.md` § *Delegation mechanics* for launch, intake, parallel batching, and fallback. <!-- cold -->
 
 The coordinator retains the auto/ask decision, option analysis, the batched ask and its decisions, immediate-evidence intake (`./references/workflow/executor-coordinator.md` § *Write-mode routing*), final-integrated checks, health, recovery, batch commits, and report buckets.
+
+## Task record
+
+When the run produces report buckets and task ownership and consent are established, load the folder under `./references/workflow/task-layout.md` § *Reading a resolved folder*. Apply `./references/workflow/task-writes.md` to that task. Report a loader stop with its recovery state and retain the fix outcomes. A stop before classification yields no task write.
+
+Close fixed, withdrawn, resolved, skipped, and rejected findings, and `Pre-existing` findings excluded through the inclusion question. In Open findings keep deferred, failed, still-failing, uncertified, and unattempted work with its evidence and next action. Keep findings the run's selection excluded and Untouched triage `verify` entries there too. Assign repairs to fix-findings, including selection-excluded findings, and redesign to plan-task. Assign inconclusive findings, triage `verify` entries, and moved anchors to verify-issue, and external edits to the user. Keep an unresolved or deferred choice with its options, recommendation, and decision owner.
+
+When a landed fix changes the tree, move each live check passed only on the previous build out of Live verification. Mark each external goal proven only there pending external in Acceptance. Put each affected check and goal in In review while the plan is in-review, or in Open findings for any other Status. Name the target, earlier revision, owner and next check on the new revision. Preserve the plan Status and a done plan's Completed line on this evidence. A run without a landed tree-changing commit creates no pending item on these grounds.
+
+Apply `./references/workflow/task-progress.md` to progress this run independently proved or disproved. Refresh Current state from the resulting records, including landed SHAs and the remaining action. Include the task change list with the report.
 
 ## Output
 

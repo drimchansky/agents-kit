@@ -1,13 +1,11 @@
 import assert from "node:assert";
 import { spawnSync } from "node:child_process";
-import { createHash } from "node:crypto";
-import { chmodSync, existsSync, linkSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, dirname, join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { after, test } from "node:test";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { RESULT_MAX_KB } from "../scripts/lifecycle-constants.ts";
-import { compactionSections, compactionSnapshot, Exit, taskState, type CompactionPlan, type CompactionSnapshot, type TaskState } from "../scripts/task-state.ts";
+import { taskState, type TaskState } from "../scripts/task-state.ts";
 import { repairTask } from "../scripts/task-repair.ts";
 import { carriesStatusHeader, markdownLines, parseGoalDefinitions, scanGoalReferences } from "../scripts/goal-structure.ts";
 
@@ -20,7 +18,6 @@ const HOME_ROOT = mkdtempSync(join(tmpdir(), "agents-kit-task-state-home-"));
 const HELPER_HOME = join(HOME_ROOT, "default");
 const HELPER_ENV = { ...process.env, HOME: HELPER_HOME };
 const FENCE = "```";
-const TRIGGER_BYTES = RESULT_MAX_KB * 1024;
 
 mkdirSync(HELPER_HOME);
 after(() => {
@@ -50,8 +47,8 @@ interface Run {
   readonly stderr: string;
 }
 
-function run(args: readonly string[], home = HELPER_HOME): Run {
-  const child = spawnSync(process.execPath, [SCRIPT, ...args], { encoding: "utf8", env: { ...process.env, HOME: home } });
+function run(args: readonly string[]): Run {
+  const child = spawnSync(process.execPath, [SCRIPT, ...args], { encoding: "utf8", env: HELPER_ENV });
   return { status: child.status, stdout: child.stdout, stderr: child.stderr };
 }
 
@@ -120,6 +117,99 @@ _Updated:_ 2026-01-01
 ---
 `;
 
+test("a fixed-shape result has no shape diagnostics", () => {
+  const result = MIXED_RESULT + "\n## Checkpoint after Step 2\n\n**Outcome:** failed\n**Outcome:** passed\n";
+  const state = parse(MIXED_PLAN, result, GOALS);
+  assert.deepStrictEqual(state.structure.diagnostics, []);
+  assert.strictEqual(state.structure.reliable, true);
+  assert.deepStrictEqual(state.checkpoints, [{ afterStep: "2", outcome: "passed" }]);
+});
+
+test("result keys normalize step suffixes while preserving heading keyword case", () => {
+  const plan = [
+    "### Step 3A — Verify",
+    "- [x] **What:** verify ([result](./result.md#step-3a--verify-1))",
+    "- **Goal:** none (infra/refactor)",
+    "### Checkpoint after Step 3a",
+  ].join("\n");
+  const result = [
+    "## Step 3a — Verify",
+    "## Step 3A — Verify",
+    "## Checkpoint after Step 3a",
+    "**Outcome:** failed",
+    "## Checkpoint after Step 3A",
+    "**Outcome:** passed",
+    "## step 3A — Verify",
+    "## Checkpoint after step 3A",
+    "**Outcome:** failed",
+  ].join("\n");
+  const state = parse(plan, result, "## Goals\n");
+  assert.deepStrictEqual(state.steps.map(({ number, anchorResolves }) => [number, anchorResolves]), [["3a", true]]);
+  assert.deepStrictEqual(state.checkpoints, [{ afterStep: "3a", outcome: "passed" }]);
+  assert.deepStrictEqual(state.structure.diagnostics.map(({ code, detail }) => [code, detail]), [
+    ["duplicate-result-record", "Step 3a"],
+    ["duplicate-result-record", "Checkpoint after Step 3a"],
+    ["unknown-result-section", "step 3A — Verify"],
+    ["unknown-result-section", "Checkpoint after step 3A"],
+  ]);
+});
+
+test("a checkpoint keeps the latest nested retry until the next top-level record or document heading", () => {
+  for (const boundary of ["## Acceptance", "# Appendix"]) {
+    const result = [
+      MIXED_RESULT,
+      "## Checkpoint after Step 2",
+      "**Outcome:** passed",
+      "### Retry",
+      "#### Checks",
+      "**Outcome:** failed",
+      boundary,
+      "**Outcome:** passed",
+    ].join("\n");
+    assert.deepStrictEqual(parse(MIXED_PLAN, result, GOALS).checkpoints, [{ afterStep: "2", outcome: "failed" }]);
+  }
+});
+
+test("result shape reports unsupported headings and repeated section keys", () => {
+  const extra = [
+    "## Step 1 — Renamed step",
+    "## Acceptance",
+    "## Acceptance",
+    "## Checkpoint after Step 2",
+    "## Reconciliation — 2026-01-01",
+    "## Decision log",
+    "## Final implementation commit — 2026-01-01",
+    "## In review — 2026-01-01",
+    "### Nested notes",
+    FENCE, "## Example heading", FENCE,
+    "<!--", "## Hidden heading", "-->",
+  ].join("\n");
+  const state = parse(MIXED_PLAN, `${MIXED_RESULT}\n## Checkpoint after Step 2\n${extra}\n`, GOALS);
+  assert.deepStrictEqual(state.structure.diagnostics.map(({ code, file, detail }) => [code, file, detail]), [
+    ["duplicate-result-record", "result.md", "Step 1"],
+    ["duplicate-result-record", "result.md", "Acceptance"],
+    ["duplicate-result-record", "result.md", "Checkpoint after Step 2"],
+    ["unknown-result-section", "result.md", "Reconciliation — 2026-01-01"],
+    ["unknown-result-section", "result.md", "Decision log"],
+    ["unknown-result-section", "result.md", "Final implementation commit — 2026-01-01"],
+    ["unknown-result-section", "result.md", "In review — 2026-01-01"],
+  ]);
+  assert.strictEqual(state.structure.reliable, false);
+});
+
+test("result shape checks required sections without requiring Current state or Completed", () => {
+  const result = MIXED_RESULT.replace(/## Current state[\s\S]*?(?=## Step 1)/, "");
+  for (const [status, detail] of [["done", "Acceptance"], ["in-review", "In review"], ["blocked", "Blocked"]]) {
+    const plan = MIXED_PLAN.replace("**Status:** executing", `**Status:** ${status}`);
+    assert.deepStrictEqual(parse(plan, result, GOALS).structure.diagnostics, [
+      { code: "missing-result-section", file: "result.md", line: 0, detail },
+    ]);
+    const withRequiredSection = parse(plan, `${result}\n## ${detail}\n`, GOALS);
+    assert.deepStrictEqual(withRequiredSection.structure.diagnostics, []);
+    assert.strictEqual(withRequiredSection.currentState, null);
+  }
+});
+
 test("reports steps, statuses, next pending step, and coverage for a mixed plan", () => {
   const state = report(folder("mixed", { plan: MIXED_PLAN, result: MIXED_RESULT, goals: GOALS }));
 
@@ -171,6 +261,16 @@ test("a fully checked plan has no next pending step", () => {
   assert.strictEqual(state.nextPendingStep, null);
 });
 
+test("the last result link outside inline code supplies the checked step's anchor", () => {
+  const link = "([result](./result.md#step-1--first-thing))";
+  const example = "``one ` " + link + "``";
+  const onlyExample = parse(MIXED_PLAN.replace(link, example), MIXED_RESULT).steps[0];
+  assert.strictEqual(onlyExample.anchor, null);
+  assert.strictEqual(onlyExample.anchorResolves, false);
+  const withEvidence = parse(MIXED_PLAN.replace(link, link + " " + example.replace("first-thing", "example")), MIXED_RESULT).steps[0];
+  assert.strictEqual(withEvidence.anchorResolves, true);
+});
+
 test("an untouched plan reports its first step as pending", () => {
   const state = parse(MIXED_PLAN.replace("- [x] **What:** do the first thing", "- [ ] **What:** do the first thing"));
   assert.deepStrictEqual(state.steps.map((step) => step.checked), [false, false]);
@@ -209,7 +309,7 @@ test("the Current state block ends at its closing rule, or at the next section h
 });
 
 test("the CLI reports a committed fixture's Current state block", () => {
-  const state = report(join(REPO_DIR, "tests", "fixtures", "health", "anchors", "oversized-result"));
+  const state = report(join(REPO_DIR, "tests", "fixtures", "health", "anchors", "dead-anchor"));
   const block = state.currentState ?? "";
   assert.match(block, /^## Current state\n/);
   assert.match(block, /\*\*Next:\*\* none\n\n---$/);
@@ -277,7 +377,7 @@ test("checkpoints carry the result outcome, or null until they run", () => {
   assert.deepStrictEqual(state.goalCoverage.orphanSteps, []);
 });
 
-test("result anchors resolve against headings and compaction tombstones", () => {
+test("result anchors resolve only against live step records", () => {
   const plan = `# Plan: anchors
 
 **Status:** executing
@@ -289,9 +389,9 @@ test("result anchors resolve against headings and compaction tombstones", () => 
 - [x] **What:** one ([result](./result.md#step-1--live-section))
 - **Goal:** G1
 
-### Step 2 — Compacted section
+### Step 2 — Nested duplicate heading
 
-- [x] **What:** two ([result](./result.md#step-2--compacted-section))
+- [x] **What:** two ([result](./result.md#flag_live_mode-2))
 - **Goal:** G1
 
 ### Step 3 — Missing section
@@ -317,9 +417,9 @@ test("result anchors resolve against headings and compaction tombstones", () => 
 
 ---
 
-## Compacted
-
-- Step 2 — Compacted section
+### FLAG_LIVE_MODE
+#### FLAG_LIVE_MODE-1
+##### FLAG_LIVE_MODE
 
 ---
 
@@ -332,12 +432,22 @@ ${FENCE}
     state.steps.map((step) => [step.number, step.anchor, step.anchorResolves]),
     [
       ["1", "step-1--live-section", true],
-      ["2", "step-2--compacted-section", true],
+      ["2", "flag_live_mode-2", false],
       ["3", "step-3--missing-section", false],
       ["4", null, false],
       ["5", "step-5--link-outside-the-result-file", false],
     ],
   );
+});
+
+test("checked steps require their own level-2 record at the allocated anchor", () => {
+  const state = report(join(REPO_DIR, "tests", "fixtures", "health", "anchors", "step-records"));
+  assert.deepStrictEqual(state.steps.map((step) => [step.number, step.anchorResolves]), [
+    ["1", false], ["2", false], ["2a", true], ["3", false], ["4", true],
+  ]);
+  assert.deepStrictEqual(state.structure.diagnostics.filter((item) => item.code === "missing-result-anchor").map((item) => item.detail), [
+    "Step 1", "Step 2", "Step 3",
+  ]);
 });
 
 test("a folder with no result file resolves no anchor", () => {
@@ -470,21 +580,31 @@ test("ID-like vocabulary in the ticket or the deliverable is not a structural de
   assert.deepStrictEqual(report(dir).structure.diagnostics.map((item) => [item.code, item.file]), [["malformed-goal-reference", "notes.md"]]);
 });
 
-for (const file of ["approaches.md", "observations.md"]) {
-  test(`a stray status header leaves ${file} goal references diagnosed`, () => {
-    const text = "# Notes\n\n**Status:** draft\n\n## Findings\n\nOption A1 covers G9.\n";
-    const dir = folder(`stray-status-${file.replace(/\W/g, "-")}`, {
-      goals: "## Goals\n- G1 — first\n",
-      plan: "## Scope\n- delivered: G1\n## Steps\n### Step 1 — First\n- [ ] **What:** first\n- **Goal:** G1\n",
-    });
-    writeFileSync(join(dir, file), text);
-    writeFileSync(join(dir, "adr.md"), text);
-    assert.deepStrictEqual(report(dir).structure, {
-      reliable: false,
-      diagnostics: [{ code: "unknown-goal-reference", file, line: 7, detail: "G9" }],
-    });
+test("a stray status header leaves approach goal references diagnosed", () => {
+  const text = "# Notes\n\n**Status:** draft\n\n## Findings\n\nOption A1 covers G9.\n";
+  const dir = folder("stray-status-approaches", {
+    goals: "## Goals\n- G1 — first\n",
+    plan: "## Scope\n- delivered: G1\n## Steps\n### Step 1 — First\n- [ ] **What:** first\n- **Goal:** G1\n",
   });
-}
+  writeFileSync(join(dir, "approaches.md"), text);
+  writeFileSync(join(dir, "adr.md"), text);
+  assert.deepStrictEqual(report(dir).structure, {
+    reliable: false,
+    diagnostics: [{ code: "unknown-goal-reference", file: "approaches.md", line: 7, detail: "G9" }],
+  });
+});
+
+test("load and identifier repair skip the task observations ledger", () => {
+  const dir = folder("observations-ledger", { goals: "## Goals\n- G1 — first\n", plan: "## Scope\n- delivered: G1\n" });
+  const before = report(dir);
+  const repair = run(["--repair", dir]);
+  const text = "**Status:** draft\nG999 is mentioned in an old title.\n";
+  writeFileSync(join(dir, "observations.md"), text);
+  assert.deepStrictEqual(report(dir), before);
+  assert.deepStrictEqual(run(["--repair", dir]), repair);
+  assert.deepStrictEqual(scanGoalReferences("observations.md", text), []);
+  assert.ok(scanGoalReferences("evidence/observations.md", text).length > 0);
+});
 
 test("structural validation covers duplicates, anchors, and every task Markdown reference", () => {
   const dir = folder("structural-references", {
@@ -670,19 +790,19 @@ test("comment delimiters in real fence info strings leave later task structure a
   }
 });
 
-test("commented fences leave checked anchors, lifecycle status, and allocated pause identities aligned", () => {
+test("commented fences leave checked anchors and lifecycle status aligned", () => {
   for (const marker of [FENCE, "~~~"]) for (const eol of ["\n", "\r\n"]) {
     const comment = `<!-- illustrative\n${marker}\n**Status:** done\n## Blocked\n## Step 1 — Work\n-->\n`;
     const planText = (comment + "**Status:** blocked\n## Scope\n- delivered: G1\n## Steps\n### Step 1 — Work\n- [x] **What:** done ([result](./result.md#step-1--work-1))\n- **Goal:** G1\n").replaceAll("\n", eol);
     const resultText = ("## Current state\nWaiting.\n" + comment + "## Step 1 — Work\n### Blocked\n## Blocked\n**Blocked:** old\n" + comment + "## Step 1 — Work\n## Blocked\n**Blocked:** active\n").replaceAll("\n", eol);
     const state = taskState({ taskDir: "/fixture", planText, resultText, goalsText: "## Goals\n- G1 — done\n" });
     assert.strictEqual(state.plan.status, "blocked");
-    assert.strictEqual(state.structure.reliable, true);
+    assert.deepStrictEqual(state.structure.diagnostics.map(({ code, detail }) => [code, detail]), [
+      ["duplicate-result-record", "Step 1"],
+      ["duplicate-result-record", "Blocked"],
+    ]);
     assert.deepStrictEqual(state.steps.map((step) => [step.number, step.anchor, step.anchorResolves]), [["1", "step-1--work-1", true]]);
     assert.strictEqual(state.currentState, "## Current state\nWaiting.\n" + comment.trimEnd());
-    const sections = compactionSections(resultText, state.plan.status);
-    assert.strictEqual(sections.keep.find((section) => section.rule === "pause")?.anchor, "blocked-2");
-    assert.deepStrictEqual(sections.removable.map((section) => section.anchor), ["step-1--work", "blocked-1", "step-1--work-1"]);
   }
 });
 
@@ -1077,25 +1197,20 @@ test("repair leaves the ticket, deliverables, and supplementary documents unchan
   }
 });
 
-test("a remap inside a heading or tombstone that defines an anchor writes nothing", () => {
-  for (const [label, result, line] of [
-    ["heading", "## Current state\nPending.\n\n---\n\n## Step 1 — Deliver G4a\nDone.\n", 6],
-    ["tombstone", "## Current state\nPending.\n\n---\n\n## Compacted\n- Step 1 — Deliver G4a\n", 7],
-  ] as const) {
-    const dir = historicalRepairFolder(`repair-anchor-${label}`);
-    writeFileSync(join(dir, "result.md"), result);
-    writeFileSync(join(dir, "plan.md"), "## Scope\n- delivered: G1, G4a\n## Steps\n### Step 1 — Work\n- [x] **What:** work ([result](./result.md#step-1--deliver-g4a))\n- **Goal:** G4a\n");
-    const files = ["goals.md", "plan.md", "CONTEXT.md", "result.md"];
-    const before = files.map((name) => readFileSync(join(dir, name)));
-    const attempted = run(["--repair", dir]);
-    assert.strictEqual(attempted.status, 1, `${label}: ${attempted.stderr}${attempted.stdout}`);
-    const repaired = JSON.parse(attempted.stdout);
-    assert.deepStrictEqual(repaired.applied, [], label);
-    assert.ok(repaired.unresolved.some((item: { code: string; file: string; line: number }) =>
-      item.code === "blocked-goal-remap" && item.file === "result.md" && item.line === line), `${label}: ${JSON.stringify(repaired.unresolved)}`);
-    for (const [index, name] of files.entries()) assert.ok(readFileSync(join(dir, name)).equals(before[index]), `${label}: ${name}`);
-    assert.strictEqual(report(dir).steps[0].anchorResolves, true, label);
-  }
+test("a remap inside a heading that defines an anchor writes nothing", () => {
+  const dir = historicalRepairFolder("repair-anchor-heading");
+  writeFileSync(join(dir, "result.md"), "## Current state\nPending.\n\n---\n\n## Step 1 — Deliver G4a\nDone.\n");
+  writeFileSync(join(dir, "plan.md"), "## Scope\n- delivered: G1, G4a\n## Steps\n### Step 1 — Work\n- [x] **What:** work ([result](./result.md#step-1--deliver-g4a))\n- **Goal:** G4a\n");
+  const files = ["goals.md", "plan.md", "CONTEXT.md", "result.md"];
+  const before = files.map((name) => readFileSync(join(dir, name)));
+  const attempted = run(["--repair", dir]);
+  assert.strictEqual(attempted.status, 1, attempted.stderr + attempted.stdout);
+  const repaired = JSON.parse(attempted.stdout);
+  assert.deepStrictEqual(repaired.applied, []);
+  assert.ok(repaired.unresolved.some((item: { code: string; file: string; line: number }) =>
+    item.code === "blocked-goal-remap" && item.file === "result.md" && item.line === 6), JSON.stringify(repaired.unresolved));
+  for (const [index, name] of files.entries()) assert.ok(readFileSync(join(dir, name)).equals(before[index]), name);
+  assert.strictEqual(report(dir).steps[0].anchorResolves, true);
 });
 
 test("a mention the scan skips because a slash, hyphen, or underscore joins it blocks a fresh remap", () => {
@@ -1588,7 +1703,7 @@ test("repair loads read a non-UTF-8 plan or result directly for state, marking t
   assert.strictEqual(repairState(latinPlan, "plan.md").steps.length, 1);
 });
 
-test("ordinary and compaction CLI modes leave artifact bytes unchanged", () => {
+test("the read-only CLI leaves artifact bytes unchanged", () => {
   const dir = folder("repair-audit", {
     goals: "## Goals\n- G1: — first\n",
     plan: "**Status:** to-do\n## Scope\n- delivered: G1\n",
@@ -1596,7 +1711,6 @@ test("ordinary and compaction CLI modes leave artifact bytes unchanged", () => {
   });
   const before = ["goals.md", "plan.md", "result.md"].map((file) => readFileSync(join(dir, file)));
   assert.strictEqual(run([dir]).status, 0);
-  assert.strictEqual(run(["--compaction-plan", dir]).status, 0);
   for (const [index, file] of ["goals.md", "plan.md", "result.md"].entries()) {
     assert.ok(readFileSync(join(dir, file)).equals(before[index]));
   }
@@ -1765,7 +1879,7 @@ test("an unproved reference-style target remains ambiguous", () => {
 test("goals listed under Retired stay valid in task history without Git", () => {
   const goals = "## Goals\n- G1 — current\n\n## Retired\n- G2 — earlier outcome (retired 2026-01-02: folded into G1)\n";
   const plan = "## Decision log\n- 2026-01-02 — G2 was folded into G1.\n\n## Scope\n- delivered: G1\n## Steps\n### Step 1 — Work\n- [x] **What:** work ([result](./result.md#step-1--work))\n- **Goal:** G1\n";
-  const result = "## Current state\nG1 replaced G2.\n\n---\n\n### Step 1 — Work\nChecked G2 before retiring it.\n\n## Reconciliation — 2026-01-02\n- Retired G2.\n\n**In review:**\n- G2 — superseded.\n\n## Acceptance\n- G2 — met in the original delivery.\n";
+  const result = "## Current state\nG1 replaced G2.\n\n---\n\n## Step 1 — Work\nChecked G2 before retiring it.\n\n## Acceptance\n- G2 — met in the original delivery.\n";
   const dir = folder("retired-list", { goals, plan, result });
   writeFileSync(join(dir, "CONTEXT.md"), "## Decisions\nG2 had an earlier acceptance path.\n");
 
@@ -2203,11 +2317,8 @@ test("a complete empty comment closes on its own line", () => {
   assert.strictEqual(parse("<!-->\n**Status:** executing\n").plan.status, "executing");
 });
 
-test("an unpaired comment opener leaves protected sections and the Current state bound intact", () => {
+test("an unpaired comment opener leaves the Current state bound intact", () => {
   const resultText = "## Current state\nStill strips <!-- markers.\n\n---\n\n## Step 1 — Work\nFixed the <!-- parser.\n## Decision log\n- Kept it.\n## Blocked\n**Blocked:** waiting\n";
-  const sections = compactionSections(resultText, "blocked");
-  assert.deepStrictEqual(sections.keep.map((section) => section.anchor), ["current-state", "decision-log", "blocked"]);
-  assert.deepStrictEqual(sections.removable.map((section) => section.anchor), ["step-1--work"]);
   assert.strictEqual(parse(MIXED_PLAN, resultText, GOALS).currentState, "## Current state\nStill strips <!-- markers.\n\n---");
 });
 
@@ -2247,14 +2358,6 @@ test("a folder with no plan.md reports nothing and exits 1", () => {
   assert.match(child.stderr, /has no readable plan\.md/);
 });
 
-test("--compaction-plan on a folder with no result.md reports nothing and exits 1", () => {
-  const dir = folder("plan-only", { plan: MIXED_PLAN });
-  const child = run(["--compaction-plan", dir]);
-  assert.strictEqual(child.status, 1, `expected exit 1, got ${child.status}`);
-  assert.strictEqual(child.stdout, "");
-  assert.match(child.stderr, /has no readable result\.md/);
-});
-
 test("a missing directory is the same nothing-to-report exit", () => {
   const child = run([join(TEST_ROOT, "nowhere")]);
   assert.strictEqual(child.status, 1, `expected exit 1, got ${child.status}`);
@@ -2268,89 +2371,6 @@ test("a wrong argument count is a usage error", () => {
     assert.match(child.stderr, /usage: node scripts\/task-state\.ts <task-dir>/);
   }
 });
-
-const COMPACTION_PLAN = `# Plan: compaction fixture
-
-**Status:** executing
-
-## Steps
-
-### Step 1 — First thing
-
-- [x] **What:** do the first thing ([result](./result.md#step-1--first-thing))
-- **Goal:** none (infra/refactor)
-`;
-
-const COMPACTION_RESULT = `# Result: compaction fixture
-
-**Plan:** [./plan.md](./plan.md)
-
-## Current state
-
-_Updated:_ 2026-01-04
-
----
-
-## Compacted — 2025-12-01
-
-- Step 0 — An older step
-
-full text in git history (pre-compaction state).
-
----
-
-## Step 1 — First thing
-
-**Verified:** it happened
-
-### Evidence
-
-the transcript this collapse exists for
-
----
-
-## Reconciliation — 2025-12-20
-
-- superseded by the entry below
-
----
-
-## Blocked — 2026-01-01
-
-**Blocked:** waiting on the vendor
-
----
-
-## Review — 2026-01-03
-
-**In review:** awaiting the client's sign-off
-
----
-
-## Reconciliation — 2026-01-04
-
-- the latest entry
-
----
-
-## Decision log
-
-- chose the smaller cut
-
----
-
-## Acceptance
-
-- G1 — met
-
----
-
-## Health boundary — 2026-01-04
-
-**Trigger:** tail
-
----
-`;
 
 function git(cwd: string, args: readonly string[]): string {
   const child = spawnSync("git", ["-C", cwd, ...args], { encoding: "utf8" });
@@ -2370,474 +2390,6 @@ function checkout(name: string): string {
   git(dir, ["config", "commit.gpgsign", "false"]);
   return dir;
 }
-
-function sized(base: string, bytes: number): string {
-  const padding = bytes - Buffer.byteLength(base, "utf8");
-  assert.ok(padding >= 0, `${bytes} bytes is smaller than the fixture itself`);
-  return base + "x".repeat(padding);
-}
-
-function plan(dir: string): CompactionPlan {
-  const child = run(["--compaction-plan", dir]);
-  assert.strictEqual(child.status, 0, `expected exit 0, got ${child.status}: ${child.stderr}`);
-  return JSON.parse(child.stdout) as CompactionPlan;
-}
-
-test("compaction plans hash the raw result bytes and detect changes hidden by UTF-8 decoding", () => {
-  const dir = folder("compaction-input-hash", {});
-  const content = Buffer.concat([Buffer.from("## Step 1\r\nNarrative\r\n"), Buffer.from([0xff])]);
-  writeFileSync(join(dir, "result.md"), content);
-  const before = plan(dir);
-  const child = run(["--compaction-snapshot", dir]);
-  assert.strictEqual(child.status, 0, child.stderr);
-  const snapshot = JSON.parse(child.stdout) as CompactionSnapshot;
-  assert.strictEqual(before.resultSha256, createHash("sha256").update(content).digest("hex"));
-  assert.strictEqual(before.resultSha256, snapshot.sha256);
-  content[content.length - 1] = 0xfe;
-  writeFileSync(join(dir, "result.md"), content);
-  assert.notStrictEqual(plan(dir).resultSha256, before.resultSha256);
-});
-
-test("compaction plans report the plan status used to protect active pauses", () => {
-  const dir = folder("compaction-input-status", { result: COMPACTION_RESULT });
-  assert.strictEqual(plan(dir).planStatus, null);
-  mkdirSync(join(dir, "plan.md"));
-  assert.strictEqual(plan(dir).planStatus, null);
-  rmSync(join(dir, "plan.md"), { recursive: true });
-  writeFileSync(join(dir, "plan.md"), "**Status:** blocked\n");
-  const blocked = plan(dir);
-  assert.strictEqual(blocked.planStatus, "blocked");
-  writeFileSync(join(dir, "plan.md"), "**Status:** in-review\n");
-  const inReview = plan(dir);
-  assert.strictEqual(inReview.planStatus, "in-review");
-  assert.strictEqual(inReview.resultSha256, blocked.resultSha256);
-  assert.notDeepStrictEqual(inReview.keep, blocked.keep);
-});
-
-test("a result under the trigger is not due for compaction", () => {
-  const dir = folder("compaction-small", { plan: COMPACTION_PLAN, result: COMPACTION_RESULT });
-  const report = plan(dir);
-  assert.strictEqual(report.due, false);
-  assert.strictEqual(report.maxKb, RESULT_MAX_KB);
-  assert.ok(report.bytes < TRIGGER_BYTES, `expected under ${TRIGGER_BYTES} bytes, got ${report.bytes}`);
-});
-
-test("compaction keeps the Live verification section as completion evidence", () => {
-  const sections = compactionSections("## Current state\nDone.\n\n## Step 1 — Work\nDid it.\n\n## Live verification\n- prod — release 1.2 observed healthy\n", "done");
-  assert.deepStrictEqual(sections.keep, [
-    { heading: "Current state", anchor: "current-state", rule: "current-state" },
-    { heading: "Live verification", anchor: "live-verification", rule: "live-verification" },
-  ]);
-  assert.deepStrictEqual(sections.removable, [{ heading: "Step 1 — Work", anchor: "step-1--work" }]);
-});
-
-test("a test-assembled compaction keeps compaction sections and duplicate or nested step anchors resolving as before", () => {
-  const protectedSections = [
-    "## Current state\n\nWaiting on approval.\n\n",
-    "## Compacted — 2025-12-01\n\n- Step 0 — Legacy\n\nfull text in git history (pre-compaction state).\n\n",
-    "## Decision log\n\nKeep this choice.\n\n",
-    "## Acceptance\n\nG1 evidence remains.\n\n",
-    "## Health boundary\n\nPassed.\n\n",
-    "## Live verification\n\nObserved locally.\n\n",
-    "## Reconciliation — 2026-11-01\n\nLatest findings.\n\n",
-    "## Blocked — Approval\n\n**Blocked:** latest approval at https://example.invalid/current\n\n",
-  ];
-  const olderHeadings = "## Step 1 — Work\n\n### Example\n\n#### Example-1\n\n##### Example\n\n";
-  const newerHeadings = "## Step 1 — Work\n\n### Example\n\n";
-  const older = olderHeadings + "Older narrative. ".repeat(100) + "\n\n";
-  const newer = newerHeadings + "Newer narrative. ".repeat(100) + "\n\n";
-  const note = "Compacted 2026-11-01; full text in git history (pre-compaction state).\n\n";
-  const paused = "## Blocked — Approval\n\n**Blocked:** superseded approval\n\n";
-  const assemble = (first: string, second: string): string =>
-    "# Result\n\n" + protectedSections[0] + first + second + paused + protectedSections.slice(1).join("");
-  const before = assemble(older, newer);
-  const sections = compactionSections(before, "blocked");
-  const anchors = ["step-1--work", "example", "example-1", "example-2", "step-1--work-1", "example-3", "step-0--legacy"];
-  const planText = "# Plan\n**Status:** blocked\n## Scope\n- In scope: G1\n## Steps\n" + anchors.map((anchor, index) =>
-    `### Step ${index + 1} — Evidence\n- [x] **What:** retained ([result](./result.md#${anchor}))\n- **Goal:** G1\n`,
-  ).join("\n");
-  const read = (resultText: string): TaskState => taskState({ taskDir: "/fixture", planText, resultText, goalsText: "## Goals\n- G1 — evidence survives\n" });
-  assert.ok(read(before).structure.reliable);
-  assert.ok(read(before).steps.every((step) => step.anchorResolves));
-  assert.deepStrictEqual(sections.removable.map((section) => section.anchor), ["step-1--work", "step-1--work-1", "blocked--approval"]);
-  assert.strictEqual(sections.keep.find((section) => section.rule === "pause")?.anchor, "blocked--approval-1");
-  for (const [first, second] of [[olderHeadings + note, newer], [older, newerHeadings + note], [olderHeadings + note, newerHeadings + note]]) {
-    const after = assemble(first, second);
-    assert.deepStrictEqual(compactionSections(after, "blocked"), sections);
-    assert.deepStrictEqual(read(after).steps, read(before).steps);
-    assert.ok(read(after).structure.reliable);
-    const repeated = after.replaceAll("Compacted 2026-11-01;", "Compacted 2026-11-02;");
-    assert.deepStrictEqual(compactionSections(repeated, "blocked"), sections);
-    assert.deepStrictEqual(read(repeated).steps, read(before).steps);
-  }
-});
-
-test("a committed and an untracked copy of one oversized result report the same compaction plan", () => {
-  const repo = checkout("compaction-commit-state");
-  const committed = join(repo, "committed");
-  const untracked = join(repo, "untracked");
-  for (const dir of [committed, untracked]) {
-    mkdirSync(dir, { recursive: true });
-    writeFileSync(join(dir, "plan.md"), COMPACTION_PLAN);
-    writeFileSync(join(dir, "result.md"), sized(COMPACTION_RESULT, TRIGGER_BYTES + 1));
-  }
-  git(repo, ["add", "-f", "--", "committed/plan.md", "committed/result.md"]);
-  git(repo, ["commit", "-q", "-m", "the pre-compaction state"]);
-
-  const [fromCommitted, fromUntracked] = [committed, untracked].map(plan);
-  for (const report of [fromCommitted, fromUntracked]) {
-    assert.deepStrictEqual(Object.keys(report), ["taskDir", "resultFile", "bytes", "maxKb", "due", "keep", "removable", "resultSha256", "planStatus"]);
-  }
-  const verdict = ({ due, keep, removable }: CompactionPlan) => ({ due, keep, removable });
-  assert.deepStrictEqual(verdict(fromUntracked), verdict(fromCommitted));
-  assert.strictEqual(fromCommitted.due, true);
-  assert.strictEqual(fromCommitted.bytes, TRIGGER_BYTES + 1);
-  assert.deepStrictEqual(fromCommitted.keep, [
-    { heading: "Current state", anchor: "current-state", rule: "current-state" },
-    { heading: "Compacted — 2025-12-01", anchor: "compacted--2025-12-01", rule: "compacted" },
-    { heading: "Reconciliation — 2026-01-04", anchor: "reconciliation--2026-01-04", rule: "reconciliation" },
-    { heading: "Decision log", anchor: "decision-log", rule: "decision-log" },
-    { heading: "Acceptance", anchor: "acceptance", rule: "acceptance" },
-    { heading: "Health boundary — 2026-01-04", anchor: "health-boundary--2026-01-04", rule: "health-boundary" },
-  ]);
-  assert.deepStrictEqual(fromCommitted.removable, [
-    { heading: "Step 1 — First thing", anchor: "step-1--first-thing" },
-    { heading: "Reconciliation — 2025-12-20", anchor: "reconciliation--2025-12-20" },
-    { heading: "Blocked — 2026-01-01", anchor: "blocked--2026-01-01" },
-    { heading: "Review — 2026-01-03", anchor: "review--2026-01-03" },
-  ]);
-});
-
-function snapshotHome(name: string): string {
-  const home = join(HOME_ROOT, name);
-  rmSync(home, { recursive: true, force: true });
-  mkdirSync(home, { recursive: true });
-  return home;
-}
-
-function snapshotDir(home: string): string {
-  return join(home, ".local", "state", "agents-kit", "compaction");
-}
-
-function snapshot(dir: string, home: string): CompactionSnapshot {
-  const child = run(["--compaction-snapshot", dir], home);
-  assert.strictEqual(child.status, 0, `expected exit 0, got ${child.status}: ${child.stderr}`);
-  return JSON.parse(child.stdout) as CompactionSnapshot;
-}
-
-function snapshotPath(dir: string, home: string, original: Buffer): string {
-  const sha256 = createHash("sha256").update(original).digest("hex");
-  return join(snapshotDir(home), `${basename(dir)}-${sha256.slice(0, 12)}.md`);
-}
-
-function assertCopy(report: CompactionSnapshot, dir: string, home: string, original: Buffer): void {
-  const sha256 = createHash("sha256").update(original).digest("hex");
-  const path = snapshotPath(dir, home, original);
-  assert.deepStrictEqual(report, { path, bytes: original.length, sha256 });
-  assert.ok(readFileSync(path).equals(original), `${path} differs from ${join(dir, "result.md")}`);
-}
-
-function assertLinkedSnapshotRefused(name: string, link: (target: string, path: string) => void, refusal: RegExp): void {
-  const home = snapshotHome(name);
-  const dir = folder(name, { result: COMPACTION_RESULT });
-  const result = join(dir, "result.md");
-  const path = snapshotPath(dir, home, Buffer.from(COMPACTION_RESULT));
-  mkdirSync(snapshotDir(home), { recursive: true });
-  link(result, path);
-  const before = lstatSync(path);
-
-  const child = run(["--compaction-snapshot", dir], home);
-  assert.strictEqual(child.status, 2, `expected exit 2, got ${child.status}: ${child.stderr}`);
-  assert.strictEqual(child.stdout, "");
-  assert.match(child.stderr, refusal);
-  assert.strictEqual(readFileSync(result, "utf8"), COMPACTION_RESULT);
-  const after = lstatSync(path);
-  assert.strictEqual(after.isSymbolicLink(), before.isSymbolicLink());
-  assert.strictEqual(after.ino, before.ino);
-  assert.deepStrictEqual(readdirSync(snapshotDir(home)), [basename(path)]);
-}
-
-function snapshotInProcess(dir: string, home: string, beforePublish?: () => void, afterFinalRead?: () => void): CompactionSnapshot {
-  const previous = process.env.HOME;
-  process.env.HOME = home;
-  try {
-    return compactionSnapshot(dir, { beforePublish, afterFinalRead });
-  } finally {
-    if (previous === undefined) delete process.env.HOME;
-    else process.env.HOME = previous;
-  }
-}
-
-test("an untracked and a Git-ignored result each snapshot byte for byte under the home's state directory", () => {
-  const home = snapshotHome("snapshot-git-state");
-  const repo = checkout("snapshot-git-state");
-  writeFileSync(join(repo, ".gitignore"), "ignored/\n");
-  git(repo, ["add", "-f", "--", ".gitignore"]);
-  git(repo, ["commit", "-q", "-m", "ignore one task"]);
-  const copies = ["untracked", "ignored"].map((name) => {
-    const dir = join(repo, name);
-    mkdirSync(dir, { recursive: true });
-    const original = Buffer.from(sized(COMPACTION_RESULT.replace("compaction fixture", `${name} fixture`), TRIGGER_BYTES + 1));
-    writeFileSync(join(dir, "result.md"), original);
-    return { dir, original };
-  });
-
-  const previous = process.umask(0o022);
-  try {
-    for (const { dir, original } of copies) {
-      const written = snapshot(dir, home);
-      assertCopy(written, dir, home, original);
-      assert.strictEqual(statSync(written.path).mode & 0o777, 0o600, written.path);
-    }
-  } finally {
-    process.umask(previous);
-  }
-  assert.strictEqual(readdirSync(snapshotDir(home)).length, 2);
-  assert.strictEqual(statSync(snapshotDir(home)).mode & 0o777, 0o700);
-});
-
-test("a result holding invalid UTF-8 snapshots its raw bytes", () => {
-  const home = snapshotHome("snapshot-raw-bytes");
-  const dir = folder("snapshot-raw-bytes", {});
-  const original = Buffer.concat([Buffer.from("# Result\n\n## Step 1 — Work\n"), Buffer.from([0xff, 0xfe, 0xc3, 0x28, 0x0a])]);
-  writeFileSync(join(dir, "result.md"), original);
-
-  assertCopy(snapshot(dir, home), dir, home, original);
-});
-
-test("a rerun on unchanged bytes reuses the existing snapshot", () => {
-  const home = snapshotHome("snapshot-rerun");
-  const dir = folder("snapshot-rerun", { result: COMPACTION_RESULT });
-  const first = snapshot(dir, home);
-  const before = statSync(first.path);
-
-  const second = snapshot(dir, home);
-  const after = statSync(second.path);
-  assert.deepStrictEqual(second, first);
-  assert.strictEqual(after.ino, before.ino);
-  assert.strictEqual(after.mtimeMs, before.mtimeMs);
-  assert.deepStrictEqual(readdirSync(snapshotDir(home)), [basename(first.path)]);
-});
-
-test("a snapshot path already holding other bytes exits 2 and keeps them", () => {
-  const home = snapshotHome("snapshot-mismatch");
-  const dir = folder("snapshot-mismatch", { result: COMPACTION_RESULT });
-  const path = snapshot(dir, home).path;
-  writeFileSync(path, "edited elsewhere\n");
-
-  const child = run(["--compaction-snapshot", dir], home);
-  assert.strictEqual(child.status, 2);
-  assert.strictEqual(child.stdout, "");
-  assert.match(child.stderr, /other bytes/);
-  assert.strictEqual(readFileSync(path, "utf8"), "edited elsewhere\n");
-});
-
-test("a snapshot path symlinked to result.md exits 2 and leaves result.md unchanged", () => {
-  assertLinkedSnapshotRefused("snapshot-symlink", symlinkSync, /not a regular file/);
-});
-
-test("a snapshot path hard-linked to result.md exits 2 and leaves result.md unchanged", () => {
-  assertLinkedSnapshotRefused("snapshot-hard-link", linkSync, /same file as result\.md/);
-});
-
-test("a same-bytes result replacement hard-linked to the snapshot before publication exits 2 and keeps both entries", () => {
-  const home = snapshotHome("snapshot-replaced-source");
-  const dir = folder("snapshot-replaced-source", { result: COMPACTION_RESULT });
-  const result = join(dir, "result.md");
-  const path = snapshotPath(dir, home, Buffer.from(COMPACTION_RESULT));
-  let replacementIno: number | undefined;
-
-  assert.throws(
-    () => snapshotInProcess(dir, home, () => {
-      const replacement = join(dir, "replacement.md");
-      writeFileSync(replacement, COMPACTION_RESULT);
-      renameSync(replacement, result);
-      linkSync(result, path);
-      replacementIno = statSync(result).ino;
-    }),
-    (err: unknown) => err instanceof Exit && err.code === 2 && err.message.includes(result) && err.message.includes(path),
-  );
-  assert.strictEqual(readFileSync(result, "utf8"), COMPACTION_RESULT);
-  assert.strictEqual(readFileSync(path, "utf8"), COMPACTION_RESULT);
-  assert.strictEqual(lstatSync(result).ino, replacementIno);
-  assert.strictEqual(lstatSync(path).ino, replacementIno);
-  assert.deepStrictEqual(readdirSync(snapshotDir(home)), [basename(path)]);
-});
-
-test("a result replaced before publication exits 2 even when the snapshot is an independent copy", () => {
-  const home = snapshotHome("snapshot-replaced-independent");
-  const dir = folder("snapshot-replaced-independent", { result: COMPACTION_RESULT });
-  const result = join(dir, "result.md");
-  const path = snapshotPath(dir, home, Buffer.from(COMPACTION_RESULT));
-
-  assert.throws(
-    () => snapshotInProcess(dir, home, () => {
-      const replacement = join(dir, "replacement.md");
-      writeFileSync(replacement, COMPACTION_RESULT);
-      renameSync(replacement, result);
-    }),
-    (err: unknown) => err instanceof Exit && err.code === 2 && err.message.includes(result) && err.message.includes(path),
-  );
-  assert.strictEqual(readFileSync(result, "utf8"), COMPACTION_RESULT);
-  assert.strictEqual(readFileSync(path, "utf8"), COMPACTION_RESULT);
-  assert.notStrictEqual(lstatSync(result).ino, lstatSync(path).ino);
-  assert.deepStrictEqual(readdirSync(snapshotDir(home)), [basename(path)]);
-});
-
-test("a snapshot replaced with a hard link to result.md during the final re-read exits 2 and keeps both entries", () => {
-  const home = snapshotHome("snapshot-replaced-final-read");
-  const dir = folder("snapshot-replaced-final-read", { result: COMPACTION_RESULT });
-  const result = join(dir, "result.md");
-  const path = snapshotPath(dir, home, Buffer.from(COMPACTION_RESULT));
-  const original = lstatSync(result);
-
-  assert.throws(
-    () => snapshotInProcess(dir, home, undefined, () => {
-      rmSync(path);
-      linkSync(result, path);
-    }),
-    (err: unknown) => err instanceof Exit && err.code === 2 && err.message.includes(path) && /was replaced/.test(err.message),
-  );
-  assert.strictEqual(readFileSync(result, "utf8"), COMPACTION_RESULT);
-  assert.strictEqual(readFileSync(path, "utf8"), COMPACTION_RESULT);
-  assert.strictEqual(lstatSync(result).ino, original.ino);
-  assert.strictEqual(lstatSync(path).ino, original.ino);
-  assert.deepStrictEqual(readdirSync(snapshotDir(home)), [basename(path)]);
-});
-
-test("a snapshot path another writer fills with other bytes before publication exits 2 and keeps them", () => {
-  const home = snapshotHome("snapshot-raced-other");
-  const dir = folder("snapshot-raced-other", { result: COMPACTION_RESULT });
-  const path = snapshotPath(dir, home, Buffer.from(COMPACTION_RESULT));
-
-  assert.throws(
-    () => snapshotInProcess(dir, home, () => writeFileSync(path, "written elsewhere\n")),
-    (err: unknown) => err instanceof Exit && err.code === 2 && /other bytes/.test(err.message),
-  );
-  assert.strictEqual(readFileSync(path, "utf8"), "written elsewhere\n");
-  assert.strictEqual(readFileSync(join(dir, "result.md"), "utf8"), COMPACTION_RESULT);
-  assert.deepStrictEqual(readdirSync(snapshotDir(home)), [basename(path)]);
-});
-
-test("a snapshot path another writer fills with the same bytes before publication is reused", () => {
-  const home = snapshotHome("snapshot-raced-same");
-  const dir = folder("snapshot-raced-same", { result: COMPACTION_RESULT });
-  const original = Buffer.from(COMPACTION_RESULT);
-  const path = snapshotPath(dir, home, original);
-  let raced: number | undefined;
-
-  const written = snapshotInProcess(dir, home, () => {
-    writeFileSync(path, original);
-    raced = statSync(path).ino;
-  });
-  assertCopy(written, dir, home, original);
-  assert.strictEqual(statSync(path).ino, raced);
-  assert.deepStrictEqual(readdirSync(snapshotDir(home)), [basename(path)]);
-});
-
-test("an unwritable state directory exits 2 and leaves result.md unchanged", { skip: process.getuid?.() === 0 && "root writes paths whose bits deny it" }, () => {
-  const home = snapshotHome("snapshot-unwritable");
-  const state = snapshotDir(home);
-  mkdirSync(state, { recursive: true });
-  const dir = folder("snapshot-unwritable", { plan: COMPACTION_PLAN, result: COMPACTION_RESULT });
-  chmodSync(state, 0o500);
-  try {
-    const child = run(["--compaction-snapshot", dir], home);
-    assert.strictEqual(child.status, 2);
-    assert.strictEqual(child.stdout, "");
-    assert.match(child.stderr, /cannot write snapshot/);
-    assert.deepStrictEqual(readdirSync(state), []);
-  } finally {
-    chmodSync(state, 0o700);
-  }
-  assert.strictEqual(readFileSync(join(dir, "result.md"), "utf8"), COMPACTION_RESULT);
-});
-
-test("--compaction-snapshot on a folder with no result.md exits 1 and writes nothing", () => {
-  const home = snapshotHome("snapshot-missing");
-  const dir = folder("snapshot-missing", { plan: COMPACTION_PLAN });
-
-  const child = run(["--compaction-snapshot", dir], home);
-  assert.strictEqual(child.status, 1);
-  assert.strictEqual(child.stdout, "");
-  assert.match(child.stderr, /result\.md/);
-  assert.deepStrictEqual(readdirSync(home), []);
-});
-
-test("--compaction-plan on a symlinked result.md exits 1 with empty stdout", () => {
-  const dir = folder("compaction-linked-source", {});
-  const target = join(dir, "target.md");
-  writeFileSync(target, sized(COMPACTION_RESULT, TRIGGER_BYTES + 1));
-  symlinkSync(target, join(dir, "result.md"));
-
-  const child = run(["--compaction-plan", dir]);
-  assert.strictEqual(child.status, 1);
-  assert.strictEqual(child.stdout, "");
-  assert.match(child.stderr, /no readable result\.md/);
-});
-
-test("--compaction-snapshot on a symlinked result.md exits 1 and writes nothing", () => {
-  const home = snapshotHome("snapshot-linked-source");
-  const dir = folder("snapshot-linked-source", {});
-  const target = join(dir, "target.md");
-  writeFileSync(target, COMPACTION_RESULT);
-  symlinkSync(target, join(dir, "result.md"));
-
-  const child = run(["--compaction-snapshot", dir], home);
-  assert.strictEqual(child.status, 1);
-  assert.strictEqual(child.stdout, "");
-  assert.match(child.stderr, /no readable result\.md/);
-  assert.strictEqual(readFileSync(target, "utf8"), COMPACTION_RESULT);
-  assert.ok(lstatSync(join(dir, "result.md")).isSymbolicLink());
-  assert.deepStrictEqual(readdirSync(home), []);
-});
-
-test("the active pause section is the one the plan's status owes, and only the most recent", () => {
-  const blocked = compactionSections(COMPACTION_RESULT, "blocked");
-  assert.deepStrictEqual(
-    blocked.keep.filter((section) => section.rule === "pause").map((section) => section.heading),
-    ["Blocked — 2026-01-01"],
-  );
-  assert.ok(blocked.removable.some((section) => section.heading === "Review — 2026-01-03"));
-
-  const inReview = compactionSections(COMPACTION_RESULT, "in-review");
-  assert.deepStrictEqual(
-    inReview.keep.filter((section) => section.rule === "pause").map((section) => section.heading),
-    ["Review — 2026-01-03"],
-  );
-  assert.ok(inReview.removable.some((section) => section.heading === "Blocked — 2026-01-01"));
-
-  const older = COMPACTION_RESULT.replace(
-    "## Review — 2026-01-03\n\n**In review:** awaiting the client's sign-off",
-    "## Blocked — 2026-01-03\n\n**Blocked:** waiting on the vendor again",
-  );
-  assert.deepStrictEqual(
-    compactionSections(older, "blocked").keep.filter((section) => section.rule === "pause").map((section) => section.heading),
-    ["Blocked — 2026-01-03"],
-  );
-});
-
-test("the compaction trigger reads the same bytes health-check's oversized-result verdict does", () => {
-  const root = join(TEST_ROOT, "measure");
-  rmSync(root, { recursive: true, force: true });
-  const sizes = { "at-trigger": TRIGGER_BYTES, "over-trigger": TRIGGER_BYTES + 1 };
-  for (const [name, bytes] of Object.entries(sizes)) {
-    const dir = join(root, name);
-    mkdirSync(dir, { recursive: true });
-    writeFileSync(join(dir, "plan.md"), COMPACTION_PLAN);
-    writeFileSync(join(dir, "result.md"), sized(COMPACTION_RESULT, bytes));
-  }
-
-  const walk = spawnSync(process.execPath, [HEALTH_CHECK, root], { encoding: "utf8", env: HELPER_ENV });
-  assert.strictEqual(walk.status, 0, `health-check failed: ${walk.stderr}`);
-  const oversized = (JSON.parse(walk.stdout).findings as { check: string; path: string }[])
-    .filter((finding) => finding.check === "oversized-result")
-    .map((finding) => finding.path);
-
-  assert.deepStrictEqual(oversized, ["measure/over-trigger"]);
-  assert.strictEqual(plan(join(root, "at-trigger")).due, false);
-  assert.strictEqual(plan(join(root, "over-trigger")).due, true);
-});
 
 test("a line-start comment after an unclosed code span or quotation still hides its fence", () => {
   const cases = ["We ship 'em after review.", "Intro with a stray ` tick.", "he said \"maybe."].flatMap((previous) => [FENCE, "~~~"].map((marker) => [previous, marker]));
@@ -2902,15 +2454,34 @@ test("the reference scan still reads text after a comment closer on a structural
   assert.deepStrictEqual(read, [[["G4a", 1, null]], [["G4a", 3, null]]]);
 });
 
-test("an unclosed comment opener on a heading line does not hide the next line's pause label", () => {
-  const result = "## Current state\nWaiting.\n\n## Step 1 — Work\nDid it.\n\n## Step 2 — Notes <!-- since\n**Blocked:** awaiting approval -->\n";
-  const sections = compactionSections(result, "blocked");
-  assert.deepStrictEqual(sections.keep.filter((section) => section.rule === "pause").map((section) => section.heading), ["Step 2 — Notes <!-- since"]);
-  assert.ok(!sections.removable.some((section) => section.heading.startsWith("Step 2")));
-  assert.deepStrictEqual(sections.removable.map((section) => section.heading), ["Step 1 — Work"]);
-});
-
 test("a heading's unclosed comment opener leaves its own line and the next one visible", () => {
   const lines = [...markdownLines("# Plan\n## Step 2 — Notes <!-- since\n**Blocked:** awaiting approval -->\nAfter.\n")];
   assert.deepStrictEqual(lines.slice(1).map(({ text, visible, live }) => [visible === text, live]), [[true, true], [true, true], [true, true], [true, true]]);
+});
+
+test("task state and the goal-reference scan skip task history", () => {
+  const dir = folder("skip-task-history", { plan: MIXED_PLAN, goals: GOALS });
+  const before = report(dir);
+  const history = "**Status:** published\n**Published:** [historical](https://history.invalid)\n- G999 — [missing](./missing.md)\n" + "x".repeat(100 * 1024);
+  writeFileSync(join(dir, "history.md"), history);
+  assert.deepStrictEqual(report(dir), before);
+  assert.deepStrictEqual(scanGoalReferences("history.md", history), []);
+  assert.ok(scanGoalReferences("notes/history.md", "Goal G3 is required.\n").length > 0);
+});
+
+test("a goal reference in a subfolder history file blocks a fresh-ID remap", () => {
+  for (const file of ["notes/log.md", "notes/history.md"]) {
+    const dir = historicalRepairFolder(`repair-subfolder-${file.replace(/\W/g, "-")}`);
+    mkdirSync(join(dir, "notes"), { recursive: true });
+    writeFileSync(join(dir, file), "The author requires G4a.\n");
+    const files = ["goals.md", "plan.md", "CONTEXT.md", "result.md", file];
+    const before = files.map((name) => readFileSync(join(dir, name)));
+    const attempted = run(["--repair", dir]);
+    assert.strictEqual(attempted.status, 1, `${file}: ${attempted.stderr}${attempted.stdout}`);
+    const repaired = JSON.parse(attempted.stdout);
+    assert.deepStrictEqual(repaired.applied, [], file);
+    assert.ok(repaired.unresolved.some((item: { code: string; file: string; line: number; detail: string }) =>
+      item.code === "blocked-goal-remap" && item.file === file && item.line === 1 && item.detail === "G4a"), `${file}: ${JSON.stringify(repaired.unresolved)}`);
+    for (const [index, name] of files.entries()) assert.ok(readFileSync(join(dir, name)).equals(before[index]), `${file}: ${name}`);
+  }
 });

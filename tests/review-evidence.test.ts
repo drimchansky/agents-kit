@@ -28,7 +28,6 @@ const SOURCES = [
   "skills/triage-findings/SKILL.md",
   "skills/triage-findings-verify/SKILL.md",
   "skills/fix-findings/SKILL.md",
-  "skills/fix-findings-reconcile/SKILL.md",
 ];
 const OWNERS = [...SOURCES, "references/workflow/skill-conventions.md"];
 
@@ -41,13 +40,6 @@ function headings(path: string): string[] {
     .split("\n")
     .filter((line) => /^#+ /.test(line))
     .map((line) => line.replace(/^#+ /, ""));
-}
-
-function section(path: string, heading: string): string {
-  const level = /^#+/.exec(heading)?.[0].length ?? 0;
-  const body = source(path).split(`\n${heading}\n`)[1];
-  assert.ok(body !== undefined, `${path} has ${heading}`);
-  return body.split(new RegExp(`\\n#{1,${level}} `))[0];
 }
 
 test("every approval producer cites the evidence owner", () => {
@@ -78,15 +70,4 @@ test("section citations among the review and publication sources resolve to thei
     }
   }
   assert.ok(checked > 0, "the review sources cite sections among themselves");
-});
-
-test("skill-conventions registers fix-findings-reconcile as a composite, and its confirm-gated roster entry names an existing section of the skill", () => {
-  const conventions = "references/workflow/skill-conventions.md";
-  assert.match(section(conventions, "### Composites — sequential phases"), /^- `fix-findings-reconcile` — /m);
-  const roster = source(conventions).split("**Confirm-gated skills:**\n")[1]?.trimStart().split("\n\n")[0] ?? "";
-  const entry = roster.split("\n").find((line) => line.startsWith("- `fix-findings-reconcile` — "));
-  assert.ok(entry, "the confirm-gated roster lists fix-findings-reconcile");
-  const heading = /§ \*([^*]+)\*\.$/.exec(entry)?.[1];
-  assert.ok(heading, "the fix-findings-reconcile roster entry names its proposal section");
-  assert.ok(headings("skills/fix-findings-reconcile/SKILL.md").includes(heading), `fix-findings-reconcile has § ${heading}`);
 });

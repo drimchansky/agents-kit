@@ -6,7 +6,6 @@ import { dirname, join, resolve } from "node:path";
 import { after, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { ledgerTags, urlsIn, type Citation, type SweepScope } from "../scripts/sweep-scope.ts";
-import { compactionSections } from "../scripts/task-state.ts";
 
 const TESTS_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_DIR = resolve(TESTS_DIR, "..");
@@ -135,7 +134,7 @@ _Updated:_ 2026-01-04
 
 ---
 
-## Blocked — 2026-01-04
+## Blocked
 
 **Blocked:** the vendor has not answered ${PAUSE_ONLY}
 
@@ -216,51 +215,29 @@ test("the pause section is swept only while the plan's status owes it", () => {
   );
 });
 
-test("two pause sections under one heading sweep only the active one", () => {
-  const superseded = "https://vendor.invalid/ticket/8";
-  const result = RESULT.replace(
-    "## Blocked — 2026-01-04",
-    `## Blocked\n\n**Blocked:** the first wait ${superseded}\n\n---\n\n## Blocked`,
-  );
-  const dir = folder("pause-twice", {
-    context: CONTEXT,
-    plan: PLAN.replace("**Status:** executing", "**Status:** blocked"),
-    ticket: TICKET,
-    result,
-    observations: LEDGER,
-    deliverable: { file: "adr.md", text: DELIVERABLE },
-  });
-  const scope = report(dir);
-  assert.ok(!scope.citations.some((citation) => citation.url === superseded), "the superseded pause was swept");
-  assert.deepStrictEqual(
-    cited(scope, PAUSE_ONLY).occurrences.map((occurrence) => occurrence.surface),
-    ["plan-open-questions", "result-pause"],
-  );
+test("the plan status selects the matching fixed pause heading", () => {
+  const result = `## Blocked\n${SHARED}\n## In review\n${PAUSE_ONLY}\n`;
+  const scope = report(folder("review-pause", { plan: "**Status:** in-review\n", result }));
+  assert.deepStrictEqual(scope.citations.map((citation) => [citation.url, citation.occurrences[0].section]),
+    [[PAUSE_ONLY, "In review"]]);
 });
 
-test("a test-assembled compaction keeps the active duplicate pause and its swept citation across repeated notes", () => {
-  const older = `## Step 1 — Work\n### Blocked\n\n${"Old narrative. ".repeat(100)}\n`;
-  const newer = `## Step 1 — Work\n\n${"New narrative. ".repeat(100)}\n`;
-  const pauses = `## Blocked\n**Blocked:** old ${SHARED}\n## Blocked\n**Blocked:** active ${PAUSE_ONLY}\n`;
-  const before = "## Current state\nWaiting.\n" + older + newer + pauses;
-  const after = "## Current state\nWaiting.\n## Step 1 — Work\nCompacted 2026-11-01; full text in git history (pre-compaction state).\n### Blocked\n## Step 1 — Work\nCompacted 2026-11-01; full text in git history (pre-compaction state).\n" + pauses;
-  const expected = [{ url: PAUSE_ONLY, tag: null, occurrences: [{ surface: "result-pause", file: "result.md", section: "Blocked", text: `**Blocked:** active ${PAUSE_ONLY}` }] }];
-  for (const [index, result] of [before, after, after.replaceAll("2026-11-01;", "2026-11-02;")].entries()) {
-    const scope = report(folder(`compaction-pause-${index}`, { plan: "**Status:** blocked\n", result }));
-    assert.strictEqual(scope.planStatus, "blocked");
-    assert.deepStrictEqual(scope.citations, expected);
+test("repeated or dated wait headings supply no active pause", () => {
+  for (const [index, result] of [
+    `## Blocked\n${SHARED}\n## Blocked\n${PAUSE_ONLY}\n`,
+    `## Blocked — 2026-01-04\n${PAUSE_ONLY}\n`,
+  ].entries()) {
+    const scope = report(folder(`ambiguous-pause-${index}`, { plan: "**Status:** blocked\n", result }));
+    assert.deepStrictEqual(scope.citations, []);
   }
 });
 
-test("sweeping agrees with compaction on the active duplicate pause across a commented fence", () => {
+test("commented and nested headings do not displace the fixed pause", () => {
   for (const marker of [FENCE, "~~~"]) for (const eol of ["\n", "\r\n"]) {
-    const comment = `<!-- illustrative\n${marker}\n## Blocked\n**Blocked:** hidden ${SHARED}\n-->\n`;
-    const result = ("## Current state\nWaiting.\n## Step 1 — Work\n### Blocked\n## Blocked\n**Blocked:** old " + SHARED + "\n" + comment + "## Blocked\n**Blocked:** active " + PAUSE_ONLY + "\n").replaceAll("\n", eol);
-    const scope = report(folder(`comment-fence-pause-${marker[0]}-${eol.length}`, { plan: (comment + "**Status:** blocked\n").replaceAll("\n", eol), result }));
-    const pause = compactionSections(result, scope.planStatus).keep.find((section) => section.rule === "pause");
-    assert.strictEqual(pause?.anchor, "blocked-2");
-    assert.deepStrictEqual(scope.citations.map((citation) => [citation.url, citation.occurrences.map((occurrence) => [occurrence.surface, occurrence.section, occurrence.text])]),
-      [[PAUSE_ONLY, [["result-pause", "Blocked", `**Blocked:** active ${PAUSE_ONLY}`]]]]);
+    const comment = `<!-- illustrative\n${marker}\n## Blocked\n${SHARED}\n-->\n`;
+    const result = (`## Step 1 — Work\n### Blocked\n${SHARED}\n${comment}## Blocked\n${PAUSE_ONLY}\n`).replaceAll("\n", eol);
+    const scope = report(folder(`comment-fence-pause-${marker[0]}-${eol.length}`, { plan: "**Status:** blocked\n", result }));
+    assert.deepStrictEqual(scope.citations.map((citation) => citation.url), [PAUSE_ONLY]);
   }
 });
 
@@ -277,18 +254,18 @@ test("an occurrence's text masks an inline comment", () => {
     [`**Blocked:** see ${PAUSE_ONLY}${" ".repeat(19)}before Friday`]);
 });
 
-test("a pause section whose heading yields no anchor is still swept by its label", () => {
+test("a pause field under an unrelated heading stays outside the check", () => {
   const dir = folder("pause-no-anchor", {
     context: CONTEXT,
     plan: PLAN.replace("**Status:** executing", "**Status:** blocked"),
     ticket: TICKET,
-    result: RESULT.replace("## Blocked — 2026-01-04", "## ⏳"),
+    result: RESULT.replace("## Blocked", "## ⏳"),
     observations: LEDGER,
     deliverable: { file: "adr.md", text: DELIVERABLE },
   });
   assert.deepStrictEqual(
     cited(report(dir), PAUSE_ONLY).occurrences.map((occurrence) => occurrence.surface),
-    ["plan-open-questions", "result-pause"],
+    ["plan-open-questions"],
   );
 });
 
@@ -465,10 +442,21 @@ test("a folder holding no role file is a usage error, and so is a wrong argument
   }
 });
 
-test("an unclosed comment opener on a pause heading line still sweeps the next line's citation", () => {
-  const result = `## Current state\nWaiting.\n## Step 2 — Notes <!-- since\n**Blocked:** awaiting approval at ${PAUSE_ONLY} -->\n`;
+test("a pause field after a heading with a literal comment opener stays outside the fixed pause", () => {
+  const result = `## Step 2 — Notes <!-- since\n**Blocked:** awaiting approval at ${PAUSE_ONLY} -->\n`;
   const scope = report(folder("heading-opener-pause", { plan: "**Status:** blocked\n", result }));
-  assert.strictEqual(compactionSections(result, scope.planStatus).keep.find((section) => section.rule === "pause")?.heading, "Step 2 — Notes <!-- since");
-  assert.deepStrictEqual(scope.citations.map((citation) => [citation.url, citation.occurrences.map((occurrence) => [occurrence.surface, occurrence.section, occurrence.text])]),
-    [[PAUSE_ONLY, [["result-pause", "Step 2 — Notes <!-- since", `**Blocked:** awaiting approval at ${PAUSE_ONLY} -->`]]]]);
+  assert.deepStrictEqual(scope.citations, []);
+});
+
+test("sweep scope skips task history and refuses a history-only folder", () => {
+  const dir = folder("skip-task-history", { plan: PLAN });
+  const historyOnly = folder("history-only", {});
+  const before = run([dir]);
+  const history = "**Status:** published\n**Published:** [historical](https://history.invalid)\n- G999 — [missing](./missing.md)\n" + "x".repeat(100 * 1024);
+  writeFileSync(join(dir, "history.md"), history);
+  writeFileSync(join(historyOnly, "history.md"), history);
+  assert.strictEqual(before.status, 0);
+  assert.deepStrictEqual(run([dir]), before);
+  assert.strictEqual(run([historyOnly]).status, 2);
+  assert.match(run([historyOnly]).stderr, /is not a task folder/);
 });

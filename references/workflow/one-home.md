@@ -8,15 +8,15 @@ Within a task folder, record each fact in one file and cite it from siblings:
 - **Grounding**: `CONTEXT.md` holds the problem, direction and rationale, assumptions, scope reasons, references, and pre-planning questions. With a ticket, cite its problem statement instead of restating it.
 - **Approach comparison and selection**: optional `approaches.md` retains research and dated engineer decisions under `./task-approaches.md`, including superseded choices.
 - **Acceptance**: `goals.md`, cited by `G<n>` (`./task-goals.md`).
-- **Execution**: `plan.md` holds steps, Verify criteria, checkpoints, execution risks, and planning-time findings, decisions, and questions absent from context.
-- **History**: `result.md` records what happened.
-- **Answers**: choices retained in `approaches.md` follow `./task-approaches.md`; for other decisions, put current guidance beside the question or requirement. Preserve a settled choice's original wording, rejected alternatives, and selection basis under a dated decision heading (`./context-schema.md` § *Field notes*) in the owning context or plan when no result exists; cite that anchor from current guidance. With a result, keep the decision evidence in its dated history and cite it. `start-group` writes no result, so it records a decision about one task under a dated heading in that task's context even when a result exists. A later result Decision log points to the original anchor rather than copying the choice.
+- **Execution**: `plan.md` holds steps, Verify criteria, checkpoints, execution risks, and planning-time findings and questions absent from context.
+- **Records**: `result.md` holds current execution evidence.
+- **Answers**: put the current rule and its reason at the question or requirement. Preserve its evidence in [task history](./task-history.md). Approach comparisons follow `./task-approaches.md`.
 
 **External-system facts** separate durable identifiers from observed state. Keep identifiers on the citing surface: delivery identifiers in result Current-state Pointers, awaited items in active Blocked/In review, grounding URLs in context References, execution URLs in plan steps, upstream URLs in ticket References, and published URLs in deliverable Published (`./doc-task-files.md`).
 
-State such as open, merged, green, or deployed is world-truth. For fetchable citations on actionable surfaces, the docs-to-reality composites' sweep puts dated observations in `observations.md` (`./reconciliation-sweep.md` § *Scope*, `./task-observations.md`). A link fact a `reconcile-task` session observed goes to its home instead: Current-state Pointers, a broken-link annotation, or the answered question. Bare branch/SHA pointers have no URL-keyed ledger line; derive their state from the repository.
+Record a confirmed change where it affects the task: delivery in Current-state Pointers, a broken link at its citation, or an answer at its question. For an explicit source check, record dated URL observations under `./source-check.md`. Read bare branch and SHA state from the repository.
 
-Elsewhere, system state appears only timestamped in the Current-state digest or a dated log entry, never as undated durable prose. Refresh a stale digest from confirmed evidence, including delivery after a task reached done; preserve the original Acceptance and plan lifecycle (`./reconciliation.md` § *Current state refresh*). Only the composites' sweep re-derives reference state and rewrites the ledger (`./reconciliation-sweep.md` § *Ledger*). `resume-task` quotes cached dates and checks on-disk claims without sweeping citations.
+Timestamp observed state and refresh Current state after confirmed delivery changes, including after completion. Preserve accepted scope and apply the progress gate to any marker change (`./task-writes.md`, `./task-progress.md`).
 
 **Citations:**
 
@@ -26,6 +26,6 @@ Elsewhere, system state appears only timestamped in the Current-state digest or 
 
 `review-task` flags duplicated grounding, verbatim or reworded. Keep its home and replace the sibling copy with a citation.
 
-Across independent sibling tasks, duplicate needed grounding into each context when no applicable shared home exists (`./task-siblings.md`). In a registered ancestor chain, put standing constraints needed by child tasks in `GROUP_CONTEXT.md` (`./task-store.md` § *Shared group context*). Keep each child's own decisions and progress at its task home, except for `./task-store.md` § *Shared group context*'s done record. Name and source inherited facts by root-relative path so each task remains complete; do not copy them into every folder.
+Across independent sibling tasks, duplicate needed grounding into each context when no applicable shared home exists (`./task-siblings.md`). In a registered ancestor chain, put standing constraints needed by child tasks in `GROUP_CONTEXT.md` (`./task-store.md` § *Shared group context*). Keep a child-specific rule in that child's context and its decision evidence in task history. Keep the child's progress at its task home, except for `./task-store.md` § *Shared group context*'s done record. Name and source inherited facts by root-relative path so each task remains complete; do not copy them into every folder.
 
 Apply the same rule to the kit's prose corpus, defined in `references/maintenance/scripts.md` § *`scripts/corpus.ts`*. Use `scripts/dup-check.ts` to find cross-file restatements; its contract and deliberate-copy allow-file rules are in that file's `scripts/dup-check.ts` section.

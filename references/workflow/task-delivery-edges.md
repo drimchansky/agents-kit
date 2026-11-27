@@ -21,7 +21,7 @@ Read the result's Pointers branch and match `branch refs/heads/<branch>` in `git
 
 ## Verification source after delivery
 
-Before later `in-review → done` finalization, `implement-task` and both reconciliation directions select the fresh health surface by domain and affected target (`../engineering/acceptance-gate.md` § *Resolve live targets*). Documentation runs its domain health on the current deliverable set. Engineering work with a supported absence of affected deployed runtimes runs engineering health on the current work product and retains its evidence-backed live-check N/A disposition. Neither case requires a deployment identity merely because the task is in-review.
+Before later `in-review → done` finalization, task writers select the fresh health surface by domain and affected target (`../engineering/acceptance-gate.md` § *Resolve live targets*). Documentation runs its domain health on the current deliverable set. Engineering work with a supported absence of affected deployed runtimes runs engineering health on the current work product and retains its evidence-backed live-check N/A disposition. Neither case requires a deployment identity merely because the task is in-review.
 
 For each affected deployable engineering target, identify its implementation repository and delivered source commit behind the intended build from the result's delivery pointer and release path. A removed-branch marker or a green workload alone does not identify source. Correlate that commit and build with the observed release before claiming a live check passed. Use the same source to select the fresh finalization health surface, even after main advances past the merge.
 
@@ -59,15 +59,13 @@ git branch -d <branch>
 
 Never force worktree removal or replace `-d` with `-D`. Record the actual outcome. After successful removal, retain `` branch `<branch>` (removed YYYY-MM-DD; merged at <sha>) `` in Current-state Pointers. Keep a recorded base as the marker's last item: `` branch `<branch>` (removed YYYY-MM-DD; merged at <sha>; base `<base>`) ``.
 
-`scripts/commit-scan.ts` matches this removed marker, a sanctioned copy per `references/maintenance/repository.md` § *Consumer lists*.
-
 If worktree removal succeeds but branch deletion fails, record partial cleanup and name the surviving branch. Finalize anyway; do not force deletion to complete the record. A predicate or preflight refusal likewise records its reason, leaves both in place, and does not prevent finalization.
 
 **Who removes:**
 
 - `implement-task` finalization, directly to done or from in-review.
 - `maintain`'s kit-scoped backstop lists leftover worktrees and recorded branches without worktrees. Apply the same predicates and require per-item confirmation. Terminal status alone qualifies for reporting, never removal.
-- Reconcilers perform no Git writes. Their verified status advances leave delivery artifacts for a later implement-task pass or the backstop.
+- A task-record write grants no Git action. A verified status advance outside `implement-task` leaves delivery artifacts for a later implement-task pass or the backstop.
 
 ## Proposing an observed branch convention
 

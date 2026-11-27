@@ -714,7 +714,7 @@ describe("the fixture store, scanned once", () => {
     );
   });
 
-  test("an archived task produces no findings", () => {
+  test("an archived task is exempt from age and filing checks", () => {
     const { report } = storeRun;
     assert.strictEqual(
       findingDetail(report, "done-unarchived", "store/Archive/done-archived"),
@@ -726,7 +726,8 @@ describe("the fixture store, scanned once", () => {
       "",
       "archived task must not be reported stale",
     );
-    assert.strictEqual(findingCount(report), 9, "total finding count");
+    assert.strictEqual(findingCount(report, "result-shape"), 3);
+    assert.strictEqual(findingCount(report), 12, "total finding count");
   });
 });
 
@@ -864,8 +865,8 @@ describe("the anchor fixtures, scanned once", () => {
   test("a checked step whose anchor is missing from the result file is reported, a resolving one is not", () => {
     const { report, stderr } = anchorsRun;
     assert.strictEqual(stderr, "", "the anchor fixtures must produce no warnings");
-    assert.strictEqual(report.scanned, 14, "scanned count for the anchor fixtures");
-    assert.strictEqual(findingCount(report, "dead-anchor"), 6, "dead-anchor finding count");
+    assert.strictEqual(report.scanned, 13, "scanned count for the anchor fixtures");
+    assert.strictEqual(findingCount(report, "dead-anchor"), 9, "dead-anchor finding count");
     assert.deepStrictEqual(
       findingDetails(report, "dead-anchor", "anchors/dead-anchor"),
       [
@@ -883,6 +884,14 @@ describe("the anchor fixtures, scanned once", () => {
       "Step 1: checked step missing result link",
       "dead-anchor detail for a step with no result link",
     );
+  });
+
+  test("checked steps require their own level-2 record at the allocated anchor", () => {
+    assert.deepStrictEqual(findingDetails(anchorsRun.report, "dead-anchor", "anchors/step-records"), [
+      "Step 1: anchor does not target this step's result record: #current-state in ./result.md",
+      "Step 2: anchor does not target this step's result record: #step-2a--verify in ./result.md",
+      "Step 3: anchor does not target this step's result record: #step-3--retry in ./result.md",
+    ]);
   });
 
   test("a checked step linking a file the folder does not hold is reported", () => {
@@ -959,15 +968,6 @@ describe("the anchor fixtures, scanned once", () => {
     );
   });
 
-  test("a step link whose section a Compacted stub tombstones is documented state, not a dead anchor", () => {
-    const { report } = anchorsRun;
-    assert.strictEqual(
-      findingDetail(report, "dead-anchor", "anchors/compacted-tombstone"),
-      "",
-      "an anchor named by a ## Compacted tombstone bullet must resolve",
-    );
-  });
-
   test("archived folders are exempt from the content checks", () => {
     const { report } = anchorsRun;
     assert.deepStrictEqual(
@@ -992,9 +992,10 @@ describe("the anchor fixtures, scanned once", () => {
     );
   });
 
-  test("an archived folder and a legacy done result without ## Current state produce no findings", () => {
+  test("result shape findings add to the anchor fixtures without requiring Current state", () => {
     const { report } = anchorsRun;
-    assert.strictEqual(findingCount(report), 14, "total finding count for the anchor fixtures");
+    assert.strictEqual(findingCount(report, "result-shape"), 3);
+    assert.strictEqual(findingCount(report), 20, "total finding count for the anchor fixtures");
   });
 
   test("a dead link is reported under dead-citation wherever it sits, a dead step link twice over", () => {
@@ -1008,7 +1009,7 @@ describe("the anchor fixtures, scanned once", () => {
         "anchors/missing-target — plan.md: link target ./gone.result.md#step-1--vanished resolves to nothing",
       ],
       "a checked step's own dead link is checked like any other, while the backticked ([result](…)) " +
-        "example on the compacted-tombstone step raises nothing",
+        "example on the good-anchor step raises nothing",
     );
     assert.strictEqual(
       findingDetail(report, "dead-anchor", "anchors/missing-target"),
@@ -1016,31 +1017,43 @@ describe("the anchor fixtures, scanned once", () => {
       "a checked step's dead link is both a dead anchor and a dead citation",
     );
   });
+});
 
-  test("--result-max-kb reports a result over the given trigger and stays quiet at the default", () => {
-    const { report: atDefault } = anchorsRun;
-    assert.strictEqual(
-      findingCount(atDefault, "oversized-result"),
-      0,
-      "oversized-result count at the default threshold",
-    );
-    const { report } = runCheck(["--result-max-kb", "1", ANCHORS]);
-    assert.strictEqual(
-      findingCount(report, "oversized-result"),
-      1,
-      "oversized-result count at a lowered threshold",
-    );
-    assert.strictEqual(
-      findingDetail(report, "oversized-result", "anchors/oversized-result"),
-      "result.md is 1.6 KB, over the 1 KB compaction trigger",
-      "oversized-result detail carries the actual size",
-    );
-    assert.strictEqual(
-      findingDetail(report, "oversized-result", "anchors/Archive/archived-violations"),
-      "",
-      "an archived oversized result must stay silent even at a lowered threshold",
-    );
-  });
+test("result shape findings reach live, backlogged, and archived tasks apart from goal IDs", () => {
+  const root = join(TEST_ROOT, "result-shape-store");
+  const cases = [
+    ["live", "executing", "## Reconciliation — 2026-01-01\n", "unknown-result-section Reconciliation — 2026-01-01 in result.md:1"],
+    ["Backlog/parked", "to-do", "## Acceptance\n\n## Acceptance\n", "duplicate-result-record Acceptance in result.md:3"],
+    ["Archive/finished", "done", "## Current state\n", "missing-result-section Acceptance in result.md:0"],
+    ["Archive/accepted", "done", "## Acceptance\n", undefined],
+  ] as const;
+  for (const [name, status, result] of cases) {
+    const dir = join(root, name);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, "goals.md"), "## Goals\n- G1 — delivered\n");
+    writeFileSync(join(dir, "plan.md"), `**Status:** ${status}\n`);
+    writeFileSync(join(dir, "result.md"), result);
+  }
+  const { report } = runCheck([root]);
+  for (const [name, , , detail] of cases) {
+    const path = `result-shape-store/${name}`;
+    assert.deepStrictEqual(findingDetails(report, "result-shape", path), detail === undefined ? [] : [detail]);
+    assert.deepStrictEqual(findingDetails(report, "goal-id", path), []);
+  }
+});
+
+test("uppercase step suffixes resolve anchors and count toward the result record budget", () => {
+  const root = join(TEST_ROOT, "suffixes");
+  const dir = join(root, "task");
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, "plan.md"), "### Step 3a — Verify\n- [x] **What:** verify ([result](./result.md#step-3a--verify))\n");
+  writeFileSync(join(dir, "result.md"), `## Step 3A — Verify\n${"x".repeat(1100)}\n`);
+  const { report } = runCheck(["--record-max-kb", "1", root]);
+  assert.deepStrictEqual(findingDetails(report, "dead-anchor", "suffixes/task"), []);
+  assert.deepStrictEqual(findingDetails(report, "result-shape", "suffixes/task"), []);
+  assert.deepStrictEqual(findingDetails(report, "oversized-record", "suffixes/task"), [
+    'result.md section "Step 3A — Verify" is 1.1 KB, over the 1 KB record budget',
+  ]);
 });
 
 test("goal references in task Markdown share the structural validator and archived tasks stay exempt", () => {
@@ -1133,6 +1146,19 @@ test("goal-id counts a nested Markdown read failure as unreadable", (t: TestCont
   assert.deepStrictEqual(report.unreadablePaths, [locked]);
 });
 
+test("a checked step needs a result link outside its inline examples", () => {
+  const root = join(TEST_ROOT, "literal-anchors");
+  const dir = join(root, "task");
+  mkdirSync(dir, { recursive: true });
+  const example = "``one ` ([result](./result.md#step-1--one))``";
+  writeFileSync(join(dir, "plan.md"), "**Status:** executing\n### Step 1 — One\n- [x] **What:** " + example +
+    "\n### Step 2 — Two\n- [x] **What:** two ([result](./result.md#step-2--two)) " + example + "\n");
+  writeFileSync(join(dir, "result.md"), "## Step 1 — One\nOne.\n## Step 2 — Two\nTwo.\n");
+  assert.deepStrictEqual(findingDetails(runCheck([root]).report, "dead-anchor", "literal-anchors/task"), [
+    "Step 1: checked step missing result link",
+  ]);
+});
+
 test("a CRLF plan resolves its checked-step anchors, so a fenced-only heading is a dead anchor", () => {
   const root = join(TEST_ROOT, "crlf-anchors");
   const live = join(root, "live");
@@ -1145,27 +1171,6 @@ test("a CRLF plan resolves its checked-step anchors, so a fenced-only heading is
     "Step 1: anchor not found: #step-1--work in ./result.md",
   ]);
   assert.deepStrictEqual(findingDetails(report, "no-current-state", "crlf-anchors/live"), []);
-});
-
-test("health-check resolves every retained duplicate and nested anchor before and after body compaction", () => {
-  const root = join(TEST_ROOT, "compaction-round-trip");
-  const anchors = ["step-1--work", "example", "example-1", "example-2", "step-1--work-1", "step-0--legacy"];
-  const plan = "# Plan\n**Status:** executing\n## Scope\n- delivered: G1\n## Steps\n" + anchors.map((anchor, index) =>
-    `### Step ${index + 1} — Evidence\n- [x] **What:** done ([result](./result.md#${anchor}))\n- **Goal:** G1\n`,
-  ).join("\n");
-  const headings = ["## Step 1 — Work\n### Example\n#### Example-1\n##### Example\n", "## Step 1 — Work\n"];
-  for (const [name, compacted] of [["before", []], ["older", [0]], ["newer", [1]], ["both", [0, 1]]] as const) {
-    const dir = join(root, name);
-    mkdirSync(dir, { recursive: true });
-    writeFileSync(join(dir, "goals.md"), "## Goals\n- G1 — evidence survives\n");
-    writeFileSync(join(dir, "plan.md"), plan);
-    writeFileSync(join(dir, "result.md"), "## Current state\nExecuting.\n" + headings.map((heading, index) =>
-      heading + (compacted.some((selected) => selected === index) ? "Compacted 2026-11-01; full text in git history (pre-compaction state).\n" : "Narrative. ".repeat(100) + "\n"),
-    ).join("") + "## Compacted — 2025-12-01\n- Step 0 — Legacy\n");
-  }
-  const { report } = runCheck([root]);
-  assert.strictEqual(report.scanned, 4);
-  assert.deepStrictEqual(report.findings.filter((finding) => ["dead-anchor", "dead-citation", "goal-id"].includes(finding.check)), []);
 });
 
 test("health-check agrees on terminal status and checked duplicate anchors after comment-contained fences", () => {
@@ -1181,7 +1186,8 @@ test("health-check agrees on terminal status and checked duplicate anchors after
   const { report } = runCheck([root]);
   assert.strictEqual(report.scanned, 4);
   assert.strictEqual(findingCount(report, "done-unarchived"), 4);
-  assert.deepStrictEqual(report.findings.filter((finding) => finding.check !== "done-unarchived"), []);
+  assert.strictEqual(findingCount(report, "result-shape"), 8);
+  assert.deepStrictEqual(report.findings.filter((finding) => !["done-unarchived", "result-shape"].includes(finding.check)), []);
 });
 
 test("health-check keeps fences and later anchors live after an unpaired comment opener", () => {
@@ -1546,23 +1552,23 @@ test("a slug citation across two walked roots is named from the root that holds 
 
 test("the folder and record budgets fire only past their thresholds, and never under Archive/", () => {
   const { report: atDefaults } = runCheck(BUDGETS_ARGS);
-  assert.strictEqual(findingCount(atDefaults), 0, "the budget fixtures raise nothing at the committed defaults");
+  assert.deepStrictEqual(atDefaults.findings, []);
 
   const { report } = runCheck(LOWERED_BUDGET_ARGS);
   assert.strictEqual(findingCount(report, "oversized-task"), 1, "oversized-task count at a lowered budget");
   assert.strictEqual(
     findingDetail(report, "oversized-task", "budgets/over-budget"),
-    "folder holds 3.5 KB of .md excluding ticket.md, over the 1 KB folder budget",
+    "folder holds 3.6 KB of .md excluding ticket.md, over the 1 KB folder budget",
     "oversized-task measures the non-ticket .md bytes, not everything the folder holds",
   );
   assert.strictEqual(findingCount(report, "oversized-record"), 2, "oversized-record count at a lowered budget");
   assert.deepStrictEqual(
     findingDetails(report, "oversized-record", "budgets/over-budget"),
     [
-      'result.md section "Full Run — Padded record" is 1.5 KB, over the 1 KB record budget',
-      'result.md section "Reconciliation — 2020-01-02" is 1.4 KB, over the 1 KB record budget',
+      'result.md section "Step 1 — Padded record" is 1.4 KB, over the 1 KB record budget',
+      'result.md section "Step 2 — Additional evidence" is 1.4 KB, over the 1 KB record budget',
     ],
-    "oversized-record names each offending Full Run or Reconciliation section and its size",
+    "oversized-record names each oversized step section and its size",
   );
   for (const check of ["oversized-task", "oversized-record"]) {
     assert.strictEqual(
@@ -2393,7 +2399,7 @@ test("a rejected flag value re-enters the roots only when it names something on 
     "a malformed flag value is not reported as store the sweep did not see",
   );
 
-  for (const flag of ["--result-max-kb", "--task-max-kb", "--record-max-kb"]) {
+  for (const flag of ["--task-max-kb", "--record-max-kb"]) {
     const { report: afterEmptyValue } = runCheck([flag, "", STORE]);
     assert.strictEqual(
       afterEmptyValue.scanned,
@@ -2423,4 +2429,34 @@ test("a missing root argument still emits parseable JSON and warns on stderr", (
   assert.strictEqual(findingCount(report), 0, "finding count with no root given");
   assert.strictEqual(report.scanned, 0, "scanned count with no root given");
   assert.ok(stderr.length > 0, "a missing root argument must warn on stderr");
+});
+
+test("health reports are unchanged by task history and ignore history-only folders", () => {
+  const root = join(TEST_ROOT, "history-store");
+  const live = join(root, "live");
+  const historyOnly = join(root, "history-only");
+  mkdirSync(live, { recursive: true });
+  mkdirSync(historyOnly);
+  writeFileSync(join(live, "goals.md"), "## Goals\n- G1 — expected result\n");
+  writeFileSync(join(live, "plan.md"), "**Status:** to-do\n");
+  const before = runCheck([root]);
+  const history = "**Status:** published\n**Published:** [historical](https://history.invalid)\n- G999 — [missing](./missing.md)\n" + "x".repeat(100 * 1024);
+  writeFileSync(join(live, "history.md"), history);
+  writeFileSync(join(historyOnly, "history.md"), history);
+  assert.strictEqual(before.report.scanned, 1);
+  assert.deepStrictEqual(runCheck([root]), before);
+});
+
+test("health skips contents of the observations ledger but counts its file size", () => {
+  const root = join(TEST_ROOT, "ledger-store");
+  const task = join(root, "active");
+  mkdirSync(task, { recursive: true });
+  writeFileSync(join(task, "goals.md"), "## Goals\n- G1 — first\n");
+  writeFileSync(join(task, "plan.md"), "**Status:** to-do\n## Scope\n- delivered: G1\n");
+  const before = runCheck([root]).report;
+  writeFileSync(join(task, "observations.md"), "- G999 — [missing](./missing.md)\n" + "x".repeat(100 * 1024));
+  const after = runCheck([root]).report;
+  assert.strictEqual(findingCount(after, "goal-id"), findingCount(before, "goal-id"));
+  assert.strictEqual(findingCount(after, "dead-citation"), findingCount(before, "dead-citation"));
+  assert.strictEqual(findingCount(after, "oversized-task"), 1);
 });

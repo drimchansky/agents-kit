@@ -1,4 +1,4 @@
-import { holdsRoleFile, NON_DELIVERABLE_FILES } from "./lifecycle-constants.ts";
+import { holdsRoleFile, NON_DELIVERABLE_FILES, skipsTaskMarkdown } from "./lifecycle-constants.ts";
 
 export interface GoalDefinition {
   readonly id: string;
@@ -16,7 +16,7 @@ export interface GoalReference {
 }
 
 export interface StructureDiagnostic {
-  readonly code: "missing-goals-file" | "malformed-goal-id" | "duplicate-goal-id" | "unknown-goal-reference" | "retired-goal-reference" | "blocked-goal-remap" | "malformed-goal-reference" | "outside-goal-reference" | "ambiguous-goal-reference" | "missing-result-anchor" | "incomplete-reference-scan" | "orphan-step" | "missing-goal-partition" | "conflicting-goal-partition";
+  readonly code: "missing-goals-file" | "malformed-goal-id" | "duplicate-goal-id" | "unknown-goal-reference" | "retired-goal-reference" | "blocked-goal-remap" | "malformed-goal-reference" | "outside-goal-reference" | "ambiguous-goal-reference" | "missing-result-anchor" | "incomplete-reference-scan" | "orphan-step" | "missing-goal-partition" | "conflicting-goal-partition" | "unknown-result-section" | "duplicate-result-record" | "missing-result-section";
   readonly file: string;
   readonly line: number;
   readonly detail: string;
@@ -52,8 +52,6 @@ const LIST_START = /^[ \t]*(?:[-*+]|1[.)])[ \t]/;
 const THEMATIC_BREAK = /^[ \t]*(?:(?:\*[ \t]*){3,}|(?:-[ \t]*){3,}|(?:_[ \t]*){3,})$/;
 export const SCOPE_HEADING = /^##[ \t]+Scope\b/;
 export const GOAL_FIELD = /^[ \t]*[-*+]?[ \t]*\*\*Goal:?\*\*:?[ \t]*(.*)$/i;
-const COMPACTED_HEADING = /^#{1,6}[ \t]+Compacted\b/;
-const TOMBSTONE_BULLET = /^[ \t]*-[ \t]/;
 
 function classifyTarget(file: string, rawTarget: string, nestedTasks: readonly string[]): "outside" | "ambiguous" | null {
   let target = rawTarget.trim().replace(/^<|>$/g, "");
@@ -169,6 +167,10 @@ interface LiveLine {
   readonly live: boolean;
 }
 
+export function withoutCodeSpans(line: string): string {
+  return line.replace(/(?<!`)(`+)(?!`).*?(?<!`)\1(?!`)/g, (span) => " ".repeat(span.length));
+}
+
 export function* markdownLines(text: string): Generator<LiveLine> {
   let fence: { indent: number; char: string; length: number } | null = null;
   const state = inlineState();
@@ -216,13 +218,8 @@ function authoredElsewhere(file: string, text: string): boolean {
 
 export function anchorLines(text: string): Set<number> {
   const lines = new Set<number>();
-  let compacted = false;
   for (const line of markdownLines(text)) {
-    if (!line.live) continue;
-    if (HEADING.test(line.visible)) {
-      compacted = COMPACTED_HEADING.test(line.visible);
-      lines.add(line.number);
-    } else if (compacted && TOMBSTONE_BULLET.test(line.visible)) lines.add(line.number);
+    if (line.live && HEADING.test(line.visible)) lines.add(line.number);
   }
   return lines;
 }
@@ -518,6 +515,7 @@ function referenceDefinitions(text: string): { definitions: Map<string, string |
 }
 
 export function scanGoalReferences(file: string, text: string, nestedTasks: readonly string[] = []): GoalReference[] {
+  if (skipsTaskMarkdown(file)) return [];
   const references: GoalReference[] = [];
   const { definitions } = referenceDefinitions(text);
   for (const { line, searchable, carriedUntil, openers } of searchableLines(file, text)) {

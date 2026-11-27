@@ -1,6 +1,6 @@
-# The Observations File: Optional, Derived, Rewritten by the Sweep
+# The Observations File: Optional, Derived, Rewritten by the Source Check
 
-`observations.md` records one dated line per external URL cited from an actionable surface (`./reconciliation-sweep.md` § *Scope*). Only the docs-to-reality composites' sweep rewrites it wholesale (§ *Ledger* there); do not append or hand-maintain it. Absence means no sweep or no actionable citation, never a gap. It carries `_Swept:_`, no Status, and no companion-result obligation (`./task-lifecycle.md`).
+Only the `-s` source check reads or writes `observations.md`. Use [Source check](./source-check.md) for its scope, comparison, and rewrite. This optional file has a Swept date and one dated line per cited URL. It has no Status or companion-result obligation.
 
 ```markdown
 # Observations: <task title>
@@ -14,8 +14,4 @@ _Swept: YYYY-MM-DD_
 - [block] [Spec doc](https://docs.google.com/document/d/…) — 404, gone (observed YYYY-MM-DD)
 ```
 
-Keep swept state here; other surfaces cite or timestamp its digest, or date a session observation at its home, under `./one-home.md` § *One home per fact*. A pointer moved from the ≤1 KB Current-state block into historical log leaves sweep scope. Each URL is a ledger key; the identifier remains on its original citing surface.
-
-Quote every observation with its date as cache, never live verification. Only the next sweep refreshes it.
-
-Before rewriting, read the prior ledger. A fetch establishing nothing preserves its previous observation, date, and tag, adding the dated failed attempt. Preserve warn/block severity on failed fetches (`./reconciliation-sweep.md` § *Tags*). Without prior state, record only the attempt as info.
+Each URL is a ledger key. Keep the identifier on the surface that cites it. Date each observation and each later failed attempt separately so a reader can tell when the source was last verified.

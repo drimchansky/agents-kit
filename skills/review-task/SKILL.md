@@ -1,7 +1,7 @@
 ---
 name: review-task
-description: Use when asked to review, validate, or sanity-check a task's plan — confirms the direction is right and still in sync with CONTEXT.md, the goals, and current reality, and surfaces any drift between task artifacts (ticket, CONTEXT, goals, plan, result) and the work itself. Writes only proven goal-identifier repairs.
-argument-hint: "[task slug or path; defaults to the session's task] [-x (cross-vendor grounding probe)]"
+description: Use when asked to review, validate, or sanity-check a task's plan — confirms the direction is right and still in sync with CONTEXT.md, the goals, and current reality, and surfaces any drift between task artifacts (ticket, CONTEXT, goals, plan, result) and the work itself. Prints the assessment, then writes its settled corrections to the task. Read-only requests leave all files untouched.
+argument-hint: "[task slug or path; defaults to the session's task] [-x (cross-vendor grounding probe)] [-s]"
 ---
 
 ## Core Rules
@@ -9,9 +9,11 @@ argument-hint: "[task slug or path; defaults to the session's task] [-x (cross-v
 1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 2. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core, plus the pack file each phase calls for (`exploration.md`, `verification.md`, …). If the domain has no pack, run the neutral methodology and say so.
 
-Validate the plan against reality; report feasibility, gaps, and questions. Apply `./references/workflow/task-layout.md` § *Reading a resolved folder*, including proven identifier repair on either invocation route and its read-only exemption. Beyond repair, implement or redesign nothing and write no file. Route redesign to `plan-task`.
+Assess the plan against current artifacts. Print the entire assessment before the first edit, including loader repairs. Apply settled findings to task files afterward. Route redesign to `plan-task` and implementation to `implement-task`.
 
 ## Flags
+
+- `-s`: check cited sources under `./references/workflow/source-check.md` while assembling the assessment. Print its References section before the first correction. A read-only request still reports the check.
 
 - `-x`: add one read-only cross-vendor grounding probe in Step 2. Apply `./references/workflow/probe-cross-check.md`, `./references/workflow/probe-shape-grounding.md`, `./references/workflow/agent-fanout.md`, and `./references/workflow/probe-engines-cross-vendor.md`. Off by default. Record its outcome on the Plan Summary's `Cross-check:` line. <!-- cold -->
 
@@ -19,7 +21,7 @@ Validate the plan against reality; report feasibility, gaps, and questions. Appl
 
 Resolve the folder using **resolve-current-or-ask** in `./references/workflow/task-layout.md`; accept a full `plan.md` path directly.
 
-Run the loader in `./references/workflow/task-layout.md` § *Reading a resolved folder* first and report its repair, or `structure.diagnostics` from a read-only load. Then read `plan.md`, `goals.md`, and `CONTEXT.md` in full, plus `ticket.md` and `result.md` when present. Read any `approaches.md` current decision and cited evidence under `./references/workflow/task-approaches.md`. The plan is the review subject. This whole-file read overrides only the loader's selective-read rule.
+Start with the read-only loader under `./references/workflow/task-layout.md` § *Reading a resolved folder* on every invocation. Report its structure diagnostics. Leave identifier repairs until after the assessment and the required consent. Then read `plan.md`, `goals.md`, and `CONTEXT.md` in full, plus `ticket.md` and `result.md` when present. Read any `approaches.md` current decision and cited evidence under `./references/workflow/task-approaches.md`. The plan is the review subject. Open only these listed task artifacts for the assessment. Exclude the source ledger from ordinary batch reads and content searches, including question probes. Only an explicit `-s` check reads it. This whole-file read overrides only the loader's selective-read rule.
 
 Before assessment, read applicable `GROUP_CONTEXT.md` files from disk, root-to-task, using `./references/workflow/task-store.md` § *Shared group context*. Resolve the chain from the folder's current location on every run. Outside registered roots, no group context applies.
 
@@ -29,7 +31,7 @@ The ticket supplies the upstream ask (`./references/workflow/ticket-format.md`);
 
 **Use when** validating a new or existing plan before execution, especially its integration points, shared changes, and new patterns.
 
-**Skip when** findings should also be applied → `review-task-reconcile`; execution is already requested → `implement-task`; or review exceeds the value of a trivial plan or clear bug fix.
+**Skip when** execution is already requested → `implement-task`; or review exceeds the value of a trivial plan or clear bug fix.
 
 ## Review Process
 
@@ -92,14 +94,14 @@ Compare these pairs for substantive contradictions:
 - **ticket ↔ goals**, when present: each ticket criterion maps to at least one goal, and no goal contradicts ticket scope (`./references/workflow/ticket-format.md` § *Ticket → goals*).
 - **ticket ↔ context**, when present: flag a re-prosed Problem Statement that has diverged from the ticket. Suggest a citation to `./ticket.md` (`./references/workflow/one-home.md` § *One home per fact*).
 - **context ↔ goals**: compare goals against Not Doing, MVP Scope, Recommended Direction, and Key Assumptions.
-- **context ↔ plan**: compare scope and assumptions, including unsettled assumptions treated as settled. Flag duplicated grounding content, verbatim or reworded. Suggest keeping its home and replacing copies with citations, preserving interleaved plan-time deltas (`./references/workflow/one-home.md`). Citations with refinements or re-verification notes are conformant. The reconcile composite routes this as a judgment item.
+- **context ↔ plan**: compare scope and assumptions, including unsettled assumptions treated as settled. Flag duplicated grounding content, verbatim or reworded. Suggest keeping its home and replacing copies with citations, preserving interleaved plan-time deltas (`./references/workflow/one-home.md`). Citations with refinements or re-verification notes are conformant.
 - **approaches ↔ plan**, when present: compare steps and Approach against the selected dated decision. Flag a conflicting plan, a pending recommendation treated as selection, or a plan an open approach-wait entry in `CONTEXT.md` holds (`./references/workflow/task-approaches.md` § *Approach-wait entries*). Cite both locations and route selection changes to `choose-approach`; plan redesign remains `plan-task`'s. A superseded choice is historical evidence, not the current instruction.
 - **goals ↔ plan**: inspect `scopePartition.missingFromPartition` and `inBoth` from Step 5. Every goal must belong to exactly one delivered/deferred partition.
-- **plan ↔ result**, when present: compare recorded completion with checkboxes and step numbers. Compare Current state's narrative and Next with dated result evidence and current Pointers, including post-completion delivery. Report a stale digest without changing lifecycle or Acceptance. Check the companion requirements in `./references/workflow/task-lifecycle.md` § *Companion result file*.
-- **inherited group context ↔ task artifacts**: compare constraints against ticket scope, goals, context, and every step. Quote both statements and sources; cite the group path from the selected root. Report only task-local consequences; propose no edit above the folder. A contradiction-free chain produces no finding.
+- **plan ↔ result**, when present: compare recorded completion with checkboxes and step numbers. Compare Current state's narrative and Next with the fixed result records and current Pointers, including post-completion delivery. Report a stale digest without changing lifecycle or Acceptance. Check the companion requirements in `./references/workflow/task-lifecycle.md` § *Companion result file*.
+- **inherited group context ↔ task artifacts**: compare constraints against ticket scope, goals, context, and every step. Quote both statements and sources; cite the group path from the selected root. Name the task-local consequences. Apply the group-write terms in `./references/workflow/task-writes.md` to a verified change in the shared constraint. A contradiction-free chain produces no finding.
 - **status fields**: validate only the plan's lifecycle vocabulary and required companion sections (`./references/workflow/task-lifecycle.md`). Ignore legacy Status headers in context or result. Absence of result is conformant only for `to-do` or `skipped`; this check still runs when the plan/result pair cannot.
 
-Report actual drift, not stylistic differences. Do not rewrite either artifact.
+Report substantive drift with its evidence before proposing corrections.
 
 ### 7. Identify Gaps
 
@@ -136,6 +138,19 @@ Re-check each classification before adopting it:
 Promote surviving candidates into numbered Questions. Their originating sections retain the finding and cite its question number.
 
 Research inline when an engine is unavailable, a probe dies, or a question arrives after launch, including Step 8 candidates. Count these under the outcome line's skipped segment, with reasons. Research rejected classifications inline too, counting them in the separate rejected-classification segment. A probe does not block the assessment; research remains required for every candidate. Use the exact outcome grammar in `./references/workflow/probe-shape-options-research.md`.
+
+### 10. Apply the assessment
+
+Print every applicable section through Confirmed before changing any file. Include `## References` from the source check only with `-s`. Preserve the pre-edit assessment. On an explicit read-only request or skipped plan, end with its Handoff.
+
+For a writable run, use `./references/workflow/task-writes.md` and `./references/workflow/task-progress.md`. On a model-invoked run, ask before each correction and wait for the answer. Name the affected files, history entries and Current state refresh. Hold an identifier repair if the loader would apply a mapping the user has not approved.
+
+- Use verified step reach and settled scope decisions for missing or conflicting goal partitions. Add a goal for an uncovered ticket requirement under the durable ID rules. Retire a goal or change the ask only on evidence that the requirement changed.
+- Repoint stale or missing step citations to the goal the step delivers. Use the infrastructure escape when it applies, or add a warranted goal. Send step removal to plan-task.
+- Apply the assessment's concrete rewrite of a vague Verify criterion. Record its prior and new wording in task history. A settled clarification can correct What, Verify, or Scope within the finding. Apply supported goal-quality rewrites and clear settled unresolved markers. Route an unsettled redesign to plan-task.
+- Resolve contradictory grounding with its current evidence, preserving the superseded wording in history. Replace repeated plan grounding with a citation and retain plan-specific refinements. Refer approach selection to choose-approach and infeasible or conflicting steps requiring redesign to plan-task.
+- Route each numbered question to its owning context or plan section. Reuse the assessment's research, trade-offs and recommendation. Record confirmed answers and declined options. Keep unanswered choices with their options under Open Questions and name the owner. A disproved finding needs no edit.
+- Repair unbacked step, goal and lifecycle claims. Re-prove every marker advanced in this run using the progress gate. Refresh Current state and Open findings, then print the files and sections changed, with their evidence.
 
 ## Output Structure
 
@@ -177,9 +192,4 @@ List the aspects verified and ready to execute.
 
 ### Handoff
 
-Close the review with the Handoff block (`./references/workflow/user-facing-messages.md` § *Blocks*):
-
-- **Done:** step verdicts and goal coverage, pointing at **Feasibility Assessment** and **Acceptance Coverage**; drift found, pointing at **Cross-File Drift**; a goal-identifier repair the loader applied.
-- **Know:** the task's handoff token, then what limits the evidence: hand-mapped coverage, unrepaired diagnostics from a read-only load, a skipped or contradicting `Cross-check:`, and research the `Question research:` line counts as skipped. After a dialog, say that each answer to a **Questions** entry remains only in the conversation.
-- **Awaiting you:** point at the **Questions** entries still unanswered, which already carry the researched options.
-- **Next:** `/implement-task` when no step needs redesign, `/plan-task` when one does, or `/review-task-reconcile` to write drift and gap corrections back. When the user answered **Questions** entries in the dialog, name `/review-task-reconcile` as the command that records those answers. Before `/implement-task` or `/plan-task`, `/choose-approach` takes a pending comparison, an open approach-wait entry, or a selection change that **Cross-File Drift** flags.
+Use the Handoff in `./references/workflow/user-facing-messages.md` § *Blocks* after corrections, or after the read-only assessment. Name the verified outcomes, changes applied and remaining questions with their owners. Report evidence limits, the handoff token, and any skipped research or cross-check. Route execution to implement-task, redesign to plan-task, and a pending or changed approach selection to choose-approach.

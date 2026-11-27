@@ -2,15 +2,14 @@
 import { readFileSync, readdirSync, realpathSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { angledTargetText, holdsRoleFile, NON_DELIVERABLE_FILES } from "./lifecycle-constants.ts";
+import { angledTargetText, holdsRoleFile, NON_DELIVERABLE_FILES, TASK_OBSERVATIONS_FILE } from "./lifecycle-constants.ts";
 import { carriesStatusHeader, markdownLines } from "./goal-structure.ts";
-import { compactionSections, slugAllocator, taskState } from "./task-state.ts";
+import { resultShapeDiagnostics, taskState } from "./task-state.ts";
 
 const CONTEXT_FILE = "CONTEXT.md";
 const PLAN_FILE = "plan.md";
 const TICKET_FILE = "ticket.md";
 const RESULT_FILE = "result.md";
-const LEDGER_FILE = "observations.md";
 const USAGE = "usage: node scripts/sweep-scope.ts <task-dir>";
 
 const HEADING = /^#{1,6}[ \t]+(.+?)[ \t]*#*$/;
@@ -143,16 +142,14 @@ interface Scoped {
 
 function* scopedLines(
   text: string,
-  opens: (heading: string, level: number, anchor: string | null) => Surface | null,
+  opens: (heading: string, level: number) => Surface | null,
 ): Generator<Scoped> {
-  const allocate = slugAllocator();
   let open: { surface: Surface; section: string; level: number } | null = null;
   for (const line of liveLines(text)) {
     const heading = headingText(line);
     if (heading !== null) {
-      const anchor = allocate(heading);
       const level = line.match(HEADING_LEVEL)?.[1].length ?? 0;
-      const surface = opens(heading, level, anchor);
+      const surface = opens(heading, level);
       if (surface !== null) open = { surface, section: heading, level };
       else if (open !== null && level <= open.level) open = null;
       continue;
@@ -161,9 +158,13 @@ function* scopedLines(
   }
 }
 
-function activePause(resultText: string, planStatus: string | null): { anchor: string | null; heading: string } | null {
-  const section = compactionSections(resultText, planStatus).keep.find((section) => section.rule === "pause");
-  return section === undefined ? null : { anchor: section.anchor, heading: section.heading };
+function activePause(resultText: string, planStatus: string | null): string | null {
+  const title = planStatus === "blocked" ? "Blocked" : planStatus === "in-review" ? "In review" : null;
+  if (title === null) return null;
+  const repeated = resultShapeDiagnostics(resultText, planStatus).some(
+    (diagnostic) => diagnostic.code === "duplicate-result-record" && diagnostic.detail === title,
+  );
+  return repeated ? null : title;
 }
 
 function occurrencesIn(file: string, scoped: Iterable<Scoped>): Occurrence[] {
@@ -209,10 +210,10 @@ function inScopeOccurrences(texts: TaskText, deliverable: string | null, planSta
   }
   if (texts.result !== null) {
     const pause = activePause(texts.result, planStatus);
-    found.push(...occurrencesIn(RESULT_FILE, scopedLines(texts.result, (heading, level, anchor) =>
+    found.push(...occurrencesIn(RESULT_FILE, scopedLines(texts.result, (heading, level) =>
       level === 2 && CURRENT_STATE_HEADING.test(heading)
         ? "result-pointers"
-        : level === 2 && pause !== null && (pause.anchor === null ? heading === pause.heading : anchor === pause.anchor)
+        : level === 2 && heading === pause
           ? "result-pause"
           : null)));
   }
@@ -246,7 +247,7 @@ function sweepScope(
     planStatus,
     deliverable,
     deliverableCandidates: [...deliverableCandidates],
-    ledger: texts.ledger === null ? null : LEDGER_FILE,
+    ledger: texts.ledger === null ? null : TASK_OBSERVATIONS_FILE,
     citations: [...byUrl].map(([url, occurrences]) => ({ url, tag: tags.get(url) ?? null, occurrences })),
   };
 }
@@ -261,6 +262,10 @@ function readOptional(path: string): string | null {
   }
 }
 
+export function deliverableFileName(file: string): boolean {
+  return !file.includes("/") && file.endsWith(".md") && !holdsRoleFile([file]) && !NON_DELIVERABLE_FILES.has(file);
+}
+
 function scope(taskDir: string): SweepScope {
   let names: string[];
   try {
@@ -271,7 +276,7 @@ function scope(taskDir: string): SweepScope {
   if (!holdsRoleFile(names)) throw new Exit(2, `${taskDir} is not a task folder. ${USAGE}`);
 
   const deliverables = names
-    .filter((name) => name.endsWith(".md") && !holdsRoleFile([name]) && !NON_DELIVERABLE_FILES.has(name))
+    .filter(deliverableFileName)
     .sort()
     .map((file) => ({ file, text: readOptional(join(taskDir, file)) }))
     .filter((candidate): candidate is { file: string; text: string } =>
@@ -289,7 +294,7 @@ function scope(taskDir: string): SweepScope {
       ticket: readOptional(join(taskDir, TICKET_FILE)),
       result: readOptional(join(taskDir, RESULT_FILE)),
       deliverable: deliverable?.text ?? null,
-      ledger: readOptional(join(taskDir, LEDGER_FILE)),
+      ledger: readOptional(join(taskDir, TASK_OBSERVATIONS_FILE)),
     },
     deliverable?.file ?? null,
     deliverables.map((candidate) => candidate.file),
