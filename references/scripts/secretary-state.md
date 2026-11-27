@@ -42,7 +42,9 @@ Every command except `wake` also accepts `--expect-runbook <physical-root>` or t
 
 A stopped, superseded, or unknown attempt can append no `attempt-stopped`, `review-completed`, `proposal`, or `correction`; each is refused. While a proposal has an unsettled apply intent, its new revisions and decisions are refused.
 
-**Apply.** `apply` writes one accepted revision to its one target. A change to several files is several proposals, each with its own decision and outcome; no multi-file transaction exists. Under the lock, it requires:
+## Apply
+
+`apply` writes one accepted revision to its one target. A change to several files is several proposals, each with its own decision and outcome; no multi-file transaction exists. Under the lock, it requires:
 
 - the active attempt to be an `apply` job with that token;
 - the proposal to be pending at revision `<n>`, accepted, and not conflicted;
@@ -62,11 +64,15 @@ An `apply-intent` without its result marks the pointer `intent`. The next `apply
 
 A recovered hold exits 1 with its recorded seq and no stdout, ending the attempt. A fresh apply job revalidates the target and cited evidence before retrying under the retained acceptance.
 
-**Hold.** `hold` ends an `apply` attempt without writing. It appends an `apply-result` with outcome `held`, `observed` null, and `recovered` false, then prints `{event}`. `<n>` is a revision at or below the pending one. Holding the pending revision requires its acceptance, marks the pointer `held`, and keeps that acceptance for a later apply. Any active `apply` attempt may hold an older revision, whichever attempt recorded the newer one. Holding an older revision needs no acceptance and leaves the pointer unchanged. A recorded conflict refuses a hold only while its revision is pending. An unsettled intent refuses every hold of its proposal.
+## Hold
+
+`hold` ends an `apply` attempt without writing. It appends an `apply-result` with outcome `held`, `observed` null, and `recovered` false, then prints `{event}`. `<n>` is a revision at or below the pending one. Holding the pending revision requires its acceptance, marks the pointer `held`, and keeps that acceptance for a later apply. Any active `apply` attempt may hold an older revision, whichever attempt recorded the newer one. Holding an older revision needs no acceptance and leaves the pointer unchanged. A recorded conflict refuses a hold only while its revision is pending. An unsettled intent refuses every hold of its proposal.
 
 **Credential guard.** Append refuses a payload when any field name or decoded string matches a high-confidence credential shape. Apply and hold scan their event payloads, and apply scans the body before writing it. The classes are `private-key`, `aws-access-key-id`, `github-token`, `slack-token`, `jwt`, `url-password`, and `api-key`. The refusal names the class and field, never the value. Access methods and credential-manager key names pass.
 
-**Status.** stdout is `{id,runbook,ready,reason,lastSeq,processedSeq,lastReview,activeAttempt,review,pendingTotal,pending,next}`. `id` is the store's directory name. The rest comes from the derived checkpoint, which records the processed position, last review, active attempt, pending pointers, latest rejections, and every started token. `activeAttempt` is `{attempt,owner,job,at,seq}`. Each pointer is `{proposal,revision,target,seq,bodyHash,bodyBytes,decision,decisionSeq,apply}`, in proposal order. A new revision replaces its pointer and clears its decision and apply state. `rejected` removes the pointer; `accepted` and `deferred` keep it pending. `apply` is null or `{state,attempt,seq}`, naming the latest apply event for that revision. Its `state` is `intent` for an unsettled write, `conflict`, or `held`. A non-null `next` is the `--cursor` for the remaining pointers. No pointer is dropped to fit a page.
+## Status
+
+stdout is `{id,runbook,ready,reason,lastSeq,processedSeq,lastReview,activeAttempt,review,pendingTotal,pending,next}`. `id` is the store's directory name. The rest comes from the derived checkpoint, which records the processed position, last review, active attempt, pending pointers, latest rejections, and every started token. `activeAttempt` is `{attempt,owner,job,at,seq}`. Each pointer is `{proposal,revision,target,seq,bodyHash,bodyBytes,decision,decisionSeq,apply}`, in proposal order. A new revision replaces its pointer and clears its decision and apply state. `rejected` removes the pointer; `accepted` and `deferred` keep it pending. `apply` is null or `{state,attempt,seq}`, naming the latest apply event for that revision. Its `state` is `intent` for an unsettled write, `conflict`, or `held`. A non-null `next` is the `--cursor` for the remaining pointers. No pointer is dropped to fit a page.
 
 `review` is `{due,dueAt,blockedBy,wake}`, computed from the checkpoint and the clock:
 

@@ -35,7 +35,7 @@ Flag redesign when the repair exceeds the finding or reconciliation's write surf
 Write task docs only: no code, Git, or external-system mutation. The compaction snapshot below is the one write outside the task folder and its inherited group files. Each edit maps to a printed finding, except these sweep, watermark, and compaction writes:
 
 - Composites rewrite/remove observations.md under `./reconciliation-sweep.md`; reconcile-task never writes it (`./reconciliation-session-to-docs.md` § *Write surface*).
-- Seed/re-seed watermarks under `./reconciliation-commits.md` § *Degenerate cases*; advance them under its § *The record*.
+- Seed/re-seed watermarks under `./reconciliation-commits.md` § *Degenerate cases*; advance them under its § *The record — reconcile phase only*.
 - On a confirmed compaction, reconcile-task snapshots result.md under `~/.local/state/agents-kit/compaction/`, then collapses only approved sections (`./reconciliation-compaction.md`). The snapshot is kit run state that compaction notes cite; never delete it as scratch.
 
 Read-only verification grants no work-product edit permission.
@@ -118,7 +118,7 @@ Re-report untagged findings while disk or Reconciliation shows them. Report unre
 - Omit lines that only report unchanged state, such as untouched status, checkboxes, goals, or pause sections, or a loader without repairs.
 - Judged edits include `— chose <reading> over <reading>: <deciding evidence>`, plus the required grounding quotes and external-surface details. Each decision appears once, in its judged-edit row. Where a result exists, cite its dated record from concise current guidance instead of retaining alternatives in the live goal or direction.
 - Write `**Health:**` only when an advance required a fresh boundary. Record that boundary once with its required reference, delta, command results, and manifest evidence (`../engineering/verification.md` § *What a boundary records*).
-- Write `**Commits:**` for a scanned range, seed, or re-seed, with the watermark and explicit 20-commit cap (`./reconciliation-commits.md` § *The record*). Omit it when the scan reports `no-checkout`.
+- Write `**Commits:**` for a scanned range, seed, or re-seed, with the watermark and explicit 20-commit cap (`./reconciliation-commits.md` § *The record — reconcile phase only*). Omit it when the scan reports `no-checkout`.
 - Preserve older evidence unless compaction is separately confirmed.
 
 ```markdown
@@ -194,7 +194,7 @@ Preserve existing step numbers in both directions. Permitted insertions use Step
 4. Apply settled judged fixes in that order, then goals, ticket, and groups. Record each judged edit as it lands.
 5. Present unresolved impactful choices after reusing their existing research. Apply answered edits in the same order; keep unanswered ones under Awaiting decision.
 6. Refresh Current state.
-7. Print the change list below. With no actionable findings, print `Nothing to reconcile.` and write only a composite's sweep ledger or a confirmed compaction's `result.md` and snapshot. Append no empty Reconciliation section or watermark advance (`./reconciliation-commits.md` § *The record*).
+7. Print the change list below. With no actionable findings, print `Nothing to reconcile.` and write only a composite's sweep ledger or a confirmed compaction's `result.md` and snapshot. Append no empty Reconciliation section or watermark advance (`./reconciliation-commits.md` § *The record — reconcile phase only*).
 
 ```markdown
 ## Reconciliation applied

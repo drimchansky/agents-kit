@@ -30,7 +30,7 @@ Run `review-docs` at checkpoints and before publishing (`./rules.md` § *Before 
 
 ## Stop-the-Line (when a verification tier or assertion fails)
 
-Apply `../workflow/execution-loop.md` § *Stop-the-Line*. Localize the failure to the document, source, or mapping. Correct the claim, reopen the source, or repair the mapping; vague wording cannot clear a substance error.
+Apply `../workflow/execution-loop.md` § *Stop-the-Line: when either tier fails*. Localize the failure to the document, source, or mapping. Correct the claim, reopen the source, or repair the mapping; vague wording cannot clear a substance error.
 
 Record corrections with date, change, and reason under the consumer's Record binding. Also use the document's annotation convention when present.
 

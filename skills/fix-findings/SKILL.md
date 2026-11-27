@@ -42,7 +42,7 @@ Once per run, before classifying session findings, apply **Check the PR-form rev
 
 ## The Gate: Auto vs Ask
 
-Process concern batches in source order. Within a concern batch, process findings in dependency order, then severity order (critical, major, minor), or source order when severity is absent. A finding with a known prerequisite in a later concern batch joins that batch. Use that order for execution, executor packets, and merges (`./references/workflow/executor-coordinator.md` § *Bindings*). <!-- cold -->
+Process concern batches in source order. Within a concern batch, process findings in dependency order, then severity order (critical, major, minor), or source order when severity is absent. A finding with a known prerequisite in a later concern batch joins that batch. Use that order for execution, executor packets, and merges (`./references/workflow/executor-coordinator.md` § *Bindings*).
 
 Before execution, known dependencies are source- or user-declared dependencies and overlaps between chosen options' declared blast-radius surfaces. Recovery uses the recorded-change-set definition in `./references/workflow/fix-findings-recovery.md` § *Dependency-safe recovery*. Do not infer other cascade dependencies. <!-- cold -->
 
@@ -68,7 +68,7 @@ Hold all fix edits, executor launches, staging, and commits until the inclusion 
 
 If the run ends while waiting, report unanswered findings under Awaiting decision. Report held Auto and approved fixes under Untouched as `not attempted` (§ *Output*).
 
-Post-approval choices follow `./references/workflow/fix-findings-recovery.md` § *Approved decisions and changed evidence*.
+Post-approval choices follow `./references/workflow/fix-findings-recovery.md` § *Approved decisions and changed evidence*. <!-- cold -->
 
 ## Applying Fixes
 
@@ -99,7 +99,7 @@ When a concern batch retains fixes, run one integrated boundary after its final 
 
 The concern-batch baseline is the engineering reference. For the first concern batch it carries no in-session green result. Where `./references/engineering/boundary-scope.md` § *CI-green start* applies, write its start manifest when that baseline is captured. Until a boundary goes green, the start manifest is the reference for the commands it covers, in every concern batch. A later concern batch's baseline carries the preceding boundary's green result only when it holds exactly the bytes that boundary evaluated. The recipe's scope follows from that reference. Sweep every retained local documentation deliverable and in-scope companion document for links and cross-references.
 
-**Coalesced boundary.** Under `-1`, every concern batch joins one boundary group. Without `-1`, the batches that begin with batch commits off form one boundary group. A group runs no per-batch boundary; it runs one after its last member's final outcome sweep, over every member's retained fixes. Its reference is its first member's concern-batch baseline, the only baseline it captures, or the start manifest for the commands that manifest covers. Its change sets are its members' recorded change sets in processing order. Wherever this skill or `./references/workflow/fix-findings-recovery.md` names a concern batch's baseline, change sets, or boundary, a member reads its group's. Each member still runs its own final outcome sweep on the shared tree at that member's end. Recovery, restoration, attribution, and the Fixed condition span the group, and a member's finding takes the current batch's recovery control. Deferral keeps member identity: a deferred finding carries to the group's boundary under a batch's conditions and holds no later member's start. Under `-1`, § *Batch commits* commits the group once.
+**Coalesced boundary.** Under `-1`, every concern batch joins one boundary group. Without `-1`, the batches that begin with batch commits off form one boundary group. A group runs no per-batch boundary; it runs one after its last member's final outcome sweep, over every member's retained fixes. Its reference is its first member's concern-batch baseline, the only baseline it captures, or the start manifest for the commands that manifest covers. Its change sets are its members' recorded change sets in processing order. Wherever this skill or `./references/workflow/fix-findings-recovery.md` names a concern batch's baseline, change sets, or boundary, a member reads its group's. Each member still runs its own final outcome sweep on the shared tree at that member's end. Recovery, restoration, attribution, and the Fixed condition span the group, and a member's finding takes the current batch's recovery control. Deferral keeps member identity: a deferred finding carries to the group's boundary under a batch's conditions and holds no later member's start. Under `-1`, § *Batch commits* commits the group once. <!-- cold -->
 
 A finding is **Fixed** only when its final-integrated outcome passes and every applicable check in its concern batch's boundary is green on that batch's unchanged final tree. Report the commit outcome under **Commits** (§ *Output*); landing is not a Fixed condition.
 

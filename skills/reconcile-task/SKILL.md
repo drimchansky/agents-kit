@@ -36,7 +36,8 @@ Open the folder per `./references/workflow/task-layout.md` § *Reading a resolve
 - `CONTEXT.md`: the exact wording of its prose sections; compare, do not paraphrase.
 - `plan.md`: every step's **What** / **Verify** wording and the `## Scope` partition.
 - `ticket.md` (when present): the ask and its criteria, wording noted exactly; writable on the added terms above.
-- **The deliverable** (doc tasks; resolved per `./references/workflow/doc-task-files.md` without the plan's optional `**Deliverable:**` header): a read-only baseline. Never written here; findings on it route by `./references/workflow/reconciliation-session-to-docs.md` § *`reconcile-task` — session findings*. <!-- cold -->
+- **The deliverable** (doc tasks; resolved per `./references/workflow/doc-task-files.md` without the plan's optional `**Deliverable:**` header): a read-only baseline. <!-- cold -->
+  Never written here; findings on it route by `./references/workflow/reconciliation-session-to-docs.md` § *`reconcile-task` — session findings*.
 - `result.md`: the `currentState` block for orientation, then the latest step or full-run section and any `**Blocked:**` or `## Acceptance` block. Read the most recent `**In review:**` section as the active pending list; treat earlier ones as superseded history (`./references/workflow/task-lifecycle.md` § *Companion result file*). The plan holds the only lifecycle status (`./references/workflow/task-lifecycle.md` § *`result.md` — no status field*). A missing result is noted; work recorded this session may create it (that file's § *Companion result file*).
 
 A `skipped` plan stops here per `./references/workflow/reconciliation.md` § *Skipped plans are exempt*. A plan with no `goals.md` is a gap to surface; never fabricate goals.

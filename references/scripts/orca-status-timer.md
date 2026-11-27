@@ -24,7 +24,9 @@ token: <token>
 
 The process records the send result and exits: 0 when the send exited 0, and 1 otherwise. It never retries a send. A failed send stays visible only through `status`.
 
-**Status.** stdout is `{run,timer}`. `timer` is null when the Run has no timer. Otherwise it is `{run,token,at,armedAt,pid,orca,state,result}`. `state` is one of:
+## Status
+
+stdout is `{run,timer}`. `timer` is null when the Run has no timer. Otherwise it is `{run,token,at,armedAt,pid,orca,state,result}`. `state` is one of:
 
 - `pending`: the process is waiting for its deadline.
 - `sending`: the process claimed the token and the send has not finished.

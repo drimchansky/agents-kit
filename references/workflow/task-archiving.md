@@ -16,9 +16,13 @@ An existing archive may contain unrelated user content; add beside it. Refuse an
 
 Match Backlog case-insensitively (`./task-backlog.md`). Only the immediate parent triggers this exception; higher Backlog names do not. The helper and a user's manual move use this destination.
 
-**Already archived is asked of the whole path up to the store, not of the immediate parent alone.** An Archive container anywhere between task and its containing registered or canonical `.agents/tasks` root means already archived. Refuse both archiving and parking, naming that container. Ignore an archive name above the store root. Without a containing store, inspect the whole path. Backlog differs: only the immediate parent establishes parked state.
+## Already archived is asked of the whole path up to the store
 
-**Recognizing the directory is case-insensitive.** Create new containers as `Archive/`; recognize existing spellings case-insensitively in scans, slug fallbacks, destination guards, and refusal checks. `maintain` normalizes stray lowercase spelling.
+Check the whole path up to the store, not the immediate parent alone. An Archive container anywhere between task and its containing registered or canonical `.agents/tasks` root means already archived. Refuse both archiving and parking, naming that container. Ignore an archive name above the store root. Without a containing store, inspect the whole path. Backlog differs: only the immediate parent establishes parked state.
+
+## Recognizing the directory is case-insensitive
+
+Create new containers as `Archive/`; recognize existing spellings case-insensitively in scans, slug fallbacks, destination guards, and refusal checks. `maintain` normalizes stray lowercase spelling.
 
 `ARCHIVE_DIR` in `scripts/lifecycle-constants.ts` is a sanctioned copy per `references/maintenance/repository.md` § *Consumer lists*.
 

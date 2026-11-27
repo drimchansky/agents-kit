@@ -26,7 +26,7 @@ The shape of a recorded code-domain boundary, cited by every consumer's `**Healt
 
 ## Stop-the-Line (when either tier fails)
 
-`../workflow/execution-loop.md` § *Stop-the-Line* is the rule and its triage order. In code: localize with `git bisect` where the failure is a regression, and fix the root cause, not the symptom (fix the JOIN, not the UI deduplication).
+`../workflow/execution-loop.md` § *Stop-the-Line: when either tier fails* is the rule and its triage order. In code: localize with `git bisect` where the failure is a regression, and fix the root cause, not the symptom (fix the JOIN, not the UI deduplication).
 
 Guard against recurrence with a regression test that fails without the fix and passes with it, proving the red half before the fix lands wherever that order is yours (`./execution.md` § *Prove-It pattern*). Never edit the shared tree back to the broken state to get that red, and never `git stash` for it (`./rules.md` forbids mutating Git state unasked). Use a throwaway `git worktree` (detached with `--detach`, no branch, no commit) seeded from the shared tree as `../workflow/parallel-batch.md`'s batches are, the fix withheld and the test carried in, and remove it after. A red from an absent test or a missing module is not the red half. Where even that is unavailable, record the guard as proved forward-only, a gap the report surfaces rather than a cleared step.
 
