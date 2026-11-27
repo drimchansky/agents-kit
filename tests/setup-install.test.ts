@@ -14,7 +14,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { homedir, tmpdir } from "node:os";
-import { basename, delimiter, dirname, join, resolve, sep } from "node:path";
+import { basename, delimiter, dirname, join, relative, resolve, sep } from "node:path";
 import { after, before, describe, test, type TestContext } from "node:test";
 import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
@@ -22,6 +22,8 @@ import { isDeepStrictEqual } from "node:util";
 const TESTS_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_DIR = resolve(TESTS_DIR, "..");
 const SETUP = join(REPO_DIR, "setup.ts");
+const AGENTS_DIR = join(REPO_DIR, "agents");
+const ANTIGRAVITY_AGENTS_DIR = join(REPO_DIR, "antigravity", "agents");
 const MAX_BUFFER_BYTES = 64 * 1024 * 1024;
 const MARKER = ".agents-kit";
 const CORE_RULES_MARKER = ".agents-kit-core-rules";
@@ -43,8 +45,12 @@ const TEST_ROOT_PREFIX = join(tmpdir(), "agents-kit-setup-install.");
 const TEST_ROOT = mkdtempSync(TEST_ROOT_PREFIX);
 const OPERATOR_HOME = resolve(homedir());
 const RULE_FILE = "agents-kit-core-rules.md";
+const ANTIGRAVITY_RULE_FRONTMATTER =
+  "---\ntrigger: always_on\ndescription: \"Always-on core rules for agents-kit.\"\n---\n\n";
+const ANTIGRAVITY_RULE_LIMIT = 24_000;
 const RULE_FILE_SKIP = `  skipped (not kit-managed): rules/${RULE_FILE}`;
 const USER_RULE_FILE = "user-owned Claude rule file\n";
+const USER_ANTIGRAVITY_RULE_FILE = "user-owned Antigravity rule file\n";
 const HOOK_EVENT = "SubagentStart";
 const HOOK_MATCHER = "^(Explore|Plan)$";
 const HOOK_TOKEN = "agents-kit-core-rules";
@@ -110,6 +116,9 @@ const CONFLICT_ENTRIES: readonly string[] = [
   join(".claude", "references", "user.txt"),
   ".codex",
   join(".codex", "CORE_RULES.md"),
+  ".gemini",
+  join(".gemini", "config"),
+  join(".gemini", "config", "CORE_RULES.md"),
 ];
 
 const USER_LINK_SKILL = "user-owned linked skill\n";
@@ -120,10 +129,13 @@ const USER_RETIRED_SKILL = "user-owned retired-name skill\n";
 const USER_LIVE_SKILL = "user-owned live-name skill\n";
 const USER_CLAUDE_EXECUTOR = "user-owned Claude executor\n";
 const USER_CODEX_EXECUTOR = "user-owned Codex executor\n";
+const USER_ANTIGRAVITY_EXECUTOR = "user-owned Antigravity executor\n";
 const UNRELATED_CLAUDE_AGENT = "unrelated Claude agent\n";
 const UNRELATED_CODEX_AGENT = "unrelated Codex agent\n";
+const UNRELATED_ANTIGRAVITY_AGENT = "unrelated Antigravity agent\n";
 const USER_CLAUDE_REFERENCE = "user-owned Claude references\n";
 const USER_CODEX_CORE_RULES = "user-owned Codex core rules\n";
+const USER_ANTIGRAVITY_CORE_RULES = "user-owned Antigravity core rules\n";
 type PathKind = "absent" | "directory" | "file" | "symlink" | "other";
 
 interface Scenario {
@@ -131,6 +143,7 @@ interface Scenario {
   readonly home: string;
   readonly claude: string;
   readonly codex: string;
+  readonly antigravity: string;
 }
 
 interface SetupRun {
@@ -141,15 +154,20 @@ interface SetupRun {
 interface CleanInstall {
   readonly claudeAgent: readonly string[];
   readonly codexAgent: readonly string[];
+  readonly antigravityAgent: readonly string[];
   readonly foreignFormats: readonly string[];
   readonly claudePayload: readonly string[];
   readonly codexPayload: readonly string[];
+  readonly antigravityPayload: readonly string[];
   readonly claudeRuleFile: readonly string[];
   readonly codexRuleFile: readonly string[];
+  readonly antigravityRuleFile: readonly string[];
   readonly codexBlock: readonly string[];
   readonly claudeBlock: readonly string[];
+  readonly antigravityBlock: readonly string[];
   readonly settingsCreated: readonly string[];
   readonly codexSettings: readonly string[];
+  readonly antigravitySettings: readonly string[];
   readonly hookOutput: readonly string[];
   readonly rerun: readonly string[];
 }
@@ -170,13 +188,16 @@ interface DoctorProbe {
 interface ManagedReinstall {
   readonly claudeAgent: readonly string[];
   readonly codexAgent: readonly string[];
+  readonly antigravityAgent: readonly string[];
   readonly payload: readonly string[];
   readonly ruleFile: readonly string[];
+  readonly antigravityRuleFile: readonly string[];
 }
 
-interface PreservedPair {
+interface PreservedHomes {
   readonly claude: readonly string[];
   readonly codex: readonly string[];
+  readonly antigravity: readonly string[];
 }
 
 interface CollisionRun {
@@ -189,16 +210,18 @@ interface LiveNameCollision {
   readonly recovery: readonly string[];
 }
 
-interface ExecutorCollision extends PreservedPair {
+interface ExecutorCollision extends PreservedHomes {
   readonly skips: number;
   readonly unrelatedClaude: readonly string[];
   readonly unrelatedCodex: readonly string[];
+  readonly unrelatedAntigravity: readonly string[];
   readonly reinstall: CollisionRun;
 }
 
 interface OrphanRecovery {
   readonly claudeAgent: readonly string[];
   readonly codexAgent: readonly string[];
+  readonly antigravityAgent: readonly string[];
   readonly unrelated: readonly string[];
 }
 
@@ -233,7 +256,13 @@ function frozen<T>(value: T): T {
 function scenarioPaths(name: string): Scenario {
   const root = join(TEST_ROOT, name);
   const home = join(root, "home");
-  return { root, home, claude: join(home, ".claude"), codex: join(home, ".codex") };
+  return {
+    root,
+    home,
+    claude: join(home, ".claude"),
+    codex: join(home, ".codex"),
+    antigravity: join(home, ".gemini", "config"),
+  };
 }
 
 function useScenario(name: string): Scenario {
@@ -249,7 +278,7 @@ function useScenario(name: string): Scenario {
 }
 
 function hostHomes(scenario: Scenario): readonly string[] {
-  return [scenario.claude, scenario.codex];
+  return [scenario.claude, scenario.codex, scenario.antigravity];
 }
 
 function pathKind(path: string): PathKind {
@@ -334,18 +363,18 @@ function symlinksUnder(root: string): string[] {
     .filter((path) => pathKind(path) === "symlink");
 }
 
-function agentSources(extension: string): string[] {
-  return readdirSync(join(REPO_DIR, "agents"))
+function agentSources(extension: string, dir = AGENTS_DIR): string[] {
+  return readdirSync(dir)
     .filter((name) => !name.startsWith(".") && name.endsWith(`.${extension}`))
     .sort();
 }
 
-function agentProblems(hostHome: string, extension: string): string[] {
-  const sources = agentSources(extension);
-  if (sources.length === 0) return [`the kit ships no agents/*.${extension} definition to install`];
+function agentProblems(hostHome: string, extension: string, dir = AGENTS_DIR): string[] {
+  const sources = agentSources(extension, dir);
+  if (sources.length === 0) return [`the kit ships no ${relative(REPO_DIR, dir)}/*.${extension} definition to install`];
   return sources.flatMap((sourceName) => [
     ...markerProblems(join(hostHome, "agents", `${AGENT_MARKER_PREFIX}${basename(sourceName, `.${extension}`)}`)),
-    ...copyProblems(join(REPO_DIR, "agents", sourceName), join(hostHome, "agents", sourceName)),
+    ...copyProblems(join(dir, sourceName), join(hostHome, "agents", sourceName)),
   ]);
 }
 
@@ -353,6 +382,7 @@ function foreignFormatProblems(scenario: Scenario): string[] {
   return [
     ...agentSources("toml").flatMap((name) => absenceProblems(join(scenario.claude, "agents", name))),
     ...agentSources("md").flatMap((name) => absenceProblems(join(scenario.codex, "agents", name))),
+    ...agentSources("toml").flatMap((name) => absenceProblems(join(scenario.antigravity, "agents", name))),
   ];
 }
 
@@ -371,11 +401,15 @@ function sharedPayloadProblems(hostHome: string): string[] {
   return problems;
 }
 
-function ruleFileProblems(hostHome: string): string[] {
-  return [
-    ...markerProblems(join(hostHome, "rules", CORE_RULES_MARKER)),
-    ...copyProblems(join(REPO_DIR, "CORE_RULES.md"), join(hostHome, "rules", RULE_FILE)),
-  ];
+function ruleFileProblems(hostHome: string, frontmatter = ""): string[] {
+  const target = join(hostHome, "rules", RULE_FILE);
+  const marker = markerProblems(join(hostHome, "rules", CORE_RULES_MARKER));
+  if (frontmatter === "") return [...marker, ...copyProblems(join(REPO_DIR, "CORE_RULES.md"), target)];
+  const expected = `${frontmatter}${readFileSync(join(REPO_DIR, "CORE_RULES.md"), "utf8")}`;
+  const byteLimit = Buffer.byteLength(expected, "utf8") <= ANTIGRAVITY_RULE_LIMIT
+    ? []
+    : [`the Antigravity rule file holds ${Buffer.byteLength(expected, "utf8")} bytes, over the ${ANTIGRAVITY_RULE_LIMIT}-byte limit`];
+  return [...marker, ...contentProblems(target, expected), ...byteLimit];
 }
 
 function ruleFileAbsenceProblems(hostHome: string): string[] {
@@ -530,23 +564,33 @@ function observeCleanInstall(scenario: Scenario): CleanInstall {
   const install = {
     claudeAgent: agentProblems(scenario.claude, "md"),
     codexAgent: agentProblems(scenario.codex, "toml"),
+    antigravityAgent: agentProblems(scenario.antigravity, "md", ANTIGRAVITY_AGENTS_DIR),
     foreignFormats: foreignFormatProblems(scenario),
     claudePayload: sharedPayloadProblems(scenario.claude),
     codexPayload: sharedPayloadProblems(scenario.codex),
+    antigravityPayload: sharedPayloadProblems(scenario.antigravity),
     claudeRuleFile: ruleFileProblems(scenario.claude),
     codexRuleFile: ruleFileAbsenceProblems(scenario.codex),
+    antigravityRuleFile: ruleFileProblems(scenario.antigravity, ANTIGRAVITY_RULE_FRONTMATTER),
     codexBlock: contentProblems(codexAgents, `${CODEX_BLOCK}\n`),
     claudeBlock: absenceProblems(join(scenario.claude, "AGENTS.md")),
+    antigravityBlock: absenceProblems(join(scenario.antigravity, "AGENTS.md")),
     settingsCreated: [
       ...kitEntryProblems(kitEntry),
       ...contentProblems(settings, settingsText({ hooks: { [HOOK_EVENT]: [kitEntry] } })),
     ],
     codexSettings: absenceProblems(join(scenario.codex, "settings.json")),
+    antigravitySettings: absenceProblems(join(scenario.antigravity, "settings.json")),
     hookOutput: hookOutputProblems(scenario.home, kitEntry),
   };
   return {
     ...install,
-    rerun: rerunProblems(scenario.home, [join(scenario.claude, "rules", RULE_FILE), settings, codexAgents]),
+    rerun: rerunProblems(scenario.home, [
+      join(scenario.claude, "rules", RULE_FILE),
+      join(scenario.antigravity, "rules", RULE_FILE),
+      settings,
+      codexAgents,
+    ]),
   };
 }
 
@@ -607,18 +651,24 @@ function observeManagedReinstall(scenario: Scenario): ManagedReinstall {
   runSetup(scenario.home);
   for (const name of agentSources("md")) writeFileSync(join(scenario.claude, "agents", name), "stale managed Claude definition\n");
   for (const name of agentSources("toml")) writeFileSync(join(scenario.codex, "agents", name), "stale managed Codex definition\n");
+  for (const name of agentSources("md", ANTIGRAVITY_AGENTS_DIR)) {
+    writeFileSync(join(scenario.antigravity, "agents", name), "stale managed Antigravity definition\n");
+  }
   for (const home of hostHomes(scenario)) {
     writeFileSync(join(home, "skills", "translate", "SKILL.md"), "stale managed skill\n");
     writeFileSync(join(home, "references", "workflow", "executor-contract.md"), "stale managed reference\n");
     writeFileSync(join(home, "CORE_RULES.md"), "stale managed core rules\n");
   }
   writeFileSync(join(scenario.claude, "rules", RULE_FILE), "stale managed rule file\n");
+  writeFileSync(join(scenario.antigravity, "rules", RULE_FILE), "stale managed Antigravity rule file\n");
   runSetup(scenario.home);
   return {
     claudeAgent: agentProblems(scenario.claude, "md"),
     codexAgent: agentProblems(scenario.codex, "toml"),
+    antigravityAgent: agentProblems(scenario.antigravity, "md", ANTIGRAVITY_AGENTS_DIR),
     payload: hostHomes(scenario).flatMap((home) => sharedPayloadProblems(home)),
     ruleFile: ruleFileProblems(scenario.claude),
+    antigravityRuleFile: ruleFileProblems(scenario.antigravity, ANTIGRAVITY_RULE_FRONTMATTER),
   };
 }
 
@@ -637,7 +687,7 @@ function observeRetiredSkill(scenario: Scenario): string[] {
   ];
 }
 
-function observeUserOwnedSkill(scenario: Scenario): PreservedPair {
+function observeUserOwnedSkill(scenario: Scenario): PreservedHomes {
   runSetup(scenario.home);
   for (const home of hostHomes(scenario)) {
     const skill = join(home, "skills", RETIRED_SKILL);
@@ -648,6 +698,7 @@ function observeUserOwnedSkill(scenario: Scenario): PreservedPair {
   return {
     claude: preservedSkillProblems(scenario.claude, RETIRED_SKILL, USER_RETIRED_SKILL),
     codex: preservedSkillProblems(scenario.codex, RETIRED_SKILL, USER_RETIRED_SKILL),
+    antigravity: preservedSkillProblems(scenario.antigravity, RETIRED_SKILL, USER_RETIRED_SKILL),
   };
 }
 
@@ -675,12 +726,14 @@ function observeLiveNameCollision(scenario: Scenario, collidingSkill: string): L
 function writeUnrelatedAgents(scenario: Scenario): void {
   writeFileSync(join(scenario.claude, "agents", "bystander.md"), UNRELATED_CLAUDE_AGENT);
   writeFileSync(join(scenario.codex, "agents", "bystander.toml"), UNRELATED_CODEX_AGENT);
+  writeFileSync(join(scenario.antigravity, "agents", "bystander.md"), UNRELATED_ANTIGRAVITY_AGENT);
 }
 
 function preservedUnrelatedProblems(scenario: Scenario): string[] {
   return [
     ...contentProblems(join(scenario.claude, "agents", "bystander.md"), UNRELATED_CLAUDE_AGENT),
     ...contentProblems(join(scenario.codex, "agents", "bystander.toml"), UNRELATED_CODEX_AGENT),
+    ...contentProblems(join(scenario.antigravity, "agents", "bystander.md"), UNRELATED_ANTIGRAVITY_AGENT),
   ];
 }
 
@@ -695,16 +748,20 @@ function observeExecutorCollision(scenario: Scenario): ExecutorCollision {
   runSetup(scenario.home);
   rmSync(join(scenario.claude, "agents", EXECUTOR_MARKER));
   rmSync(join(scenario.codex, "agents", EXECUTOR_MARKER));
+  rmSync(join(scenario.antigravity, "agents", EXECUTOR_MARKER));
   writeFileSync(join(scenario.claude, "agents", "executor.md"), USER_CLAUDE_EXECUTOR);
   writeFileSync(join(scenario.codex, "agents", "executor.toml"), USER_CODEX_EXECUTOR);
+  writeFileSync(join(scenario.antigravity, "agents", "executor.md"), USER_ANTIGRAVITY_EXECUTOR);
   writeUnrelatedAgents(scenario);
   const log = runSetup(scenario.home);
   const collision = {
     skips: countMatchingLines(log, EXECUTOR_SKIP),
     claude: preservedExecutorProblems(scenario.claude, "md", USER_CLAUDE_EXECUTOR),
     codex: preservedExecutorProblems(scenario.codex, "toml", USER_CODEX_EXECUTOR),
+    antigravity: preservedExecutorProblems(scenario.antigravity, "md", USER_ANTIGRAVITY_EXECUTOR),
     unrelatedClaude: contentProblems(join(scenario.claude, "agents", "bystander.md"), UNRELATED_CLAUDE_AGENT),
     unrelatedCodex: contentProblems(join(scenario.codex, "agents", "bystander.toml"), UNRELATED_CODEX_AGENT),
+    unrelatedAntigravity: contentProblems(join(scenario.antigravity, "agents", "bystander.md"), UNRELATED_ANTIGRAVITY_AGENT),
   };
   const rerunLog = runSetup(scenario.home);
   return {
@@ -714,14 +771,15 @@ function observeExecutorCollision(scenario: Scenario): ExecutorCollision {
       problems: [
         ...preservedExecutorProblems(scenario.claude, "md", USER_CLAUDE_EXECUTOR),
         ...preservedExecutorProblems(scenario.codex, "toml", USER_CODEX_EXECUTOR),
+        ...preservedExecutorProblems(scenario.antigravity, "md", USER_ANTIGRAVITY_EXECUTOR),
         ...preservedUnrelatedProblems(scenario),
       ],
     },
   };
 }
 
-function orphanAgents(hostHome: string, extension: string): void {
-  for (const name of agentSources(extension)) {
+function orphanAgents(hostHome: string, extension: string, dir = AGENTS_DIR): void {
+  for (const name of agentSources(extension, dir)) {
     rmSync(join(hostHome, "agents", name));
     writeFileSync(join(hostHome, "agents", `${AGENT_MARKER_PREFIX}${basename(name, `.${extension}`)}`), "");
   }
@@ -732,10 +790,12 @@ function observeOrphanRecovery(scenario: Scenario): OrphanRecovery {
   writeUnrelatedAgents(scenario);
   orphanAgents(scenario.claude, "md");
   orphanAgents(scenario.codex, "toml");
+  orphanAgents(scenario.antigravity, "md", ANTIGRAVITY_AGENTS_DIR);
   runSetup(scenario.home);
   return {
     claudeAgent: agentProblems(scenario.claude, "md"),
     codexAgent: agentProblems(scenario.codex, "toml"),
+    antigravityAgent: agentProblems(scenario.antigravity, "md", ANTIGRAVITY_AGENTS_DIR),
     unrelated: preservedUnrelatedProblems(scenario),
   };
 }
@@ -743,16 +803,20 @@ function observeOrphanRecovery(scenario: Scenario): OrphanRecovery {
 function observeWholeHomeConflict(scenario: Scenario): RefusedRun {
   const reference = join(scenario.claude, "references", "user.txt");
   const coreRules = join(scenario.codex, "CORE_RULES.md");
+  const antigravityRules = join(scenario.antigravity, "CORE_RULES.md");
   mkdirSync(dirname(reference), { recursive: true });
   mkdirSync(scenario.codex, { recursive: true });
+  mkdirSync(scenario.antigravity, { recursive: true });
   writeFileSync(reference, USER_CLAUDE_REFERENCE);
   writeFileSync(coreRules, USER_CODEX_CORE_RULES);
+  writeFileSync(antigravityRules, USER_ANTIGRAVITY_CORE_RULES);
   const run = spawnSetup(scenario.home);
   return {
     ...run,
     problems: [
       ...contentProblems(reference, USER_CLAUDE_REFERENCE),
       ...contentProblems(coreRules, USER_CODEX_CORE_RULES),
+      ...contentProblems(antigravityRules, USER_ANTIGRAVITY_CORE_RULES),
       ...unchangedTreeProblems(scenario.home, CONFLICT_ENTRIES),
     ],
   };
@@ -840,16 +904,19 @@ function claudeRuleFile(scenario: Scenario): string {
   return join(scenario.claude, "rules", RULE_FILE);
 }
 
-function observeRuleOwner(scenario: Scenario): CollisionRun & SetupRun {
-  const ruleFile = claudeRuleFile(scenario);
+function antigravityRuleFile(scenario: Scenario): string {
+  return join(scenario.antigravity, "rules", RULE_FILE);
+}
+
+function observeRuleOwner(scenario: Scenario, ruleFile: string, content: string): CollisionRun & SetupRun {
   mkdirSync(dirname(ruleFile), { recursive: true });
-  writeFileSync(ruleFile, USER_RULE_FILE);
+  writeFileSync(ruleFile, content);
   const run = spawnSetup(scenario.home);
   return {
     ...run,
     skips: countExactLines(run.log, RULE_FILE_SKIP),
     problems: [
-      ...contentProblems(ruleFile, USER_RULE_FILE),
+      ...contentProblems(ruleFile, content),
       ...absenceProblems(join(dirname(ruleFile), CORE_RULES_MARKER)),
     ],
   };
@@ -1057,6 +1124,16 @@ after(() => {
   rmSync(TEST_ROOT, { recursive: true, force: true });
 });
 
+test("the repository agents/ directory holds no subdirectory for the Claude Code plugin scan to register", () => {
+  const subdirectories = readdirSync(AGENTS_DIR, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => join("agents", entry.name));
+  assertNoProblems(
+    subdirectories,
+    "the Claude Code plugin scans agents/ recursively, so every definition under a subdirectory of agents/ would register as a plugin agent",
+  );
+});
+
 describe("a clean install into an empty home", () => {
   const scenario = useScenario("clean-install");
   let clean: CleanInstall;
@@ -1064,26 +1141,35 @@ describe("a clean install into an empty home", () => {
     clean = frozen(observeCleanInstall(scenario));
   });
 
-  test("clean install agent definitions match their sources in both homes", () => {
+  test("clean install agent definitions match their sources in all three homes", () => {
     assertNoProblems(clean.claudeAgent, "a clean install must deploy every Claude agent under its marker");
     assertNoProblems(clean.codexAgent, "a clean install must deploy every Codex agent under its marker");
+    assertNoProblems(clean.antigravityAgent, "a clean install must deploy every Antigravity agent under its marker");
   });
 
   test("clean install excludes foreign native agent formats", () => {
     assertNoProblems(clean.foreignFormats, "each host takes only the agent format it consumes");
   });
 
-  test("shared skills, references, and CORE_RULES.md install unchanged in both homes", () => {
+  test("shared skills, references, and CORE_RULES.md install unchanged in all three homes", () => {
     assertNoProblems(clean.claudePayload, "the Claude home must hold the kit payload byte for byte");
     assertNoProblems(clean.codexPayload, "the Codex home must hold the kit payload byte for byte");
+    assertNoProblems(clean.antigravityPayload, "the Antigravity home must hold the kit payload byte for byte");
   });
 
   test("Claude clean install places CORE_RULES.md in rules/ under its marker", () => {
     assertNoProblems(clean.claudeRuleFile, "a clean install must deliver the core rules as a marked Claude rule file");
   });
 
-  test("Codex clean install receives no Claude rule file", () => {
-    assertNoProblems(clean.codexRuleFile, "only the Claude home loads rules/ instruction files");
+  test("Antigravity clean install places CORE_RULES.md in rules/ with always_on frontmatter under its marker", () => {
+    assertNoProblems(
+      clean.antigravityRuleFile,
+      "a clean install must deliver the core rules as a marked Antigravity always_on rule file",
+    );
+  });
+
+  test("Codex clean install receives no Claude or Antigravity rule file", () => {
+    assertNoProblems(clean.codexRuleFile, "Codex does not load rules/ instruction files");
   });
 
   test("a second run leaves the always-on core-rules files byte-identical", () => {
@@ -1094,8 +1180,9 @@ describe("a clean install into an empty home", () => {
     assertNoProblems(clean.settingsCreated, "a clean install must create settings.json with the Explore/Plan hook");
   });
 
-  test("Codex clean install receives no settings.json hook", () => {
+  test("Codex and Antigravity clean installs receive no settings.json hook", () => {
     assertNoProblems(clean.codexSettings, "only the Claude home runs SubagentStart hooks");
+    assertNoProblems(clean.antigravitySettings, "Antigravity does not receive a Claude settings.json hook");
   });
 
   test("the installed SubagentStart command prints the rule file as additionalContext", () => {
@@ -1106,11 +1193,12 @@ describe("a clean install into an empty home", () => {
     assertNoProblems(clean.codexBlock, "a clean install must deliver the core rules between the kit markers");
   });
 
-  test("the Claude home receives no AGENTS.md block", () => {
+  test("Claude and Antigravity homes receive no AGENTS.md block", () => {
     assertNoProblems(clean.claudeBlock, "only the Codex home reads its global AGENTS.md");
+    assertNoProblems(clean.antigravityBlock, "Antigravity delivers core rules via rules/, not AGENTS.md");
   });
 
-  test("both hosts install regular secretary duties with their contract citations, permission fields, and no helper scripts", () => {
+  test("all three hosts install regular secretary duties and no helper scripts, and only Claude Code and Codex install a secretary adapter", () => {
     for (const home of hostHomes(scenario)) {
       for (const duty of ["runbook-maintenance", "meeting-sync"]) {
         const relative = join("references", "secretary", `${duty}.md`);
@@ -1124,11 +1212,18 @@ describe("a clean install into an empty home", () => {
       assert.match(coordinator, /<kit-root>\/scripts\/meeting-sync-state\.ts/);
       assert.match(coordinator, /task-store\.md.*Resolving `<kit-root>`/);
       assert.strictEqual(pathKind(join(home, "scripts")), "absent");
-      const extension = home === scenario.claude ? "md" : "toml";
+      if (home === scenario.antigravity) {
+        assert.strictEqual(pathKind(join(home, "agents", "secretary.md")), "absent", "Antigravity has no secretary adapter");
+        continue;
+      }
+      const extension = home === scenario.codex ? "toml" : "md";
       const adapter = readFileSync(join(home, "agents", `secretary.${extension}`), "utf8");
       assert.match(adapter, /secretary-contract\.md/);
-      if (extension === "md") assert.match(adapter, /^disallowedTools: Write, Edit, NotebookEdit, Agent, SendMessage, Monitor, TaskStop$/m);
-      else assert.doesNotMatch(adapter, /^(?:sandbox_mode|approval_policy|approvals_reviewer|default_permissions|permissions|network_access)\s*=/m);
+      if (home === scenario.claude) {
+        assert.match(adapter, /^disallowedTools: Write, Edit, NotebookEdit, Agent, SendMessage, Monitor, TaskStop$/m);
+      } else {
+        assert.doesNotMatch(adapter, /^(?:sandbox_mode|approval_policy|approvals_reviewer|default_permissions|permissions|network_access)\s*=/m);
+      }
     }
   });
 
@@ -1169,17 +1264,19 @@ describe("a managed reinstall over edited kit-owned files", () => {
     managed = frozen(observeManagedReinstall(scenario));
   });
 
-  test("managed reinstall agent definitions match their sources in both homes", () => {
+  test("managed reinstall agent definitions match their sources in all three homes", () => {
     assertNoProblems(managed.claudeAgent, "a reinstall must restore every edited Claude agent");
     assertNoProblems(managed.codexAgent, "a reinstall must restore every edited Codex agent");
+    assertNoProblems(managed.antigravityAgent, "a reinstall must restore every edited Antigravity agent");
   });
 
   test("managed reinstall refreshes the unchanged shared payload", () => {
     assertNoProblems(managed.payload, "a reinstall must restore every edited marker-owned payload");
   });
 
-  test("managed reinstall refreshes the Claude rule file", () => {
-    assertNoProblems(managed.ruleFile, "a rerun must restore an edited marker-owned rule file");
+  test("managed reinstall refreshes the Claude and Antigravity rule files", () => {
+    assertNoProblems(managed.ruleFile, "a rerun must restore an edited marker-owned Claude rule file");
+    assertNoProblems(managed.antigravityRuleFile, "a rerun must restore an edited marker-owned Antigravity rule file");
   });
 });
 
@@ -1197,14 +1294,15 @@ describe("a reinstall after a marked skill leaves the source set", () => {
 
 describe("a reinstall beside an unmarked user skill", () => {
   const scenario = useScenario("user-owned-skill");
-  let userSkill: PreservedPair;
+  let userSkill: PreservedHomes;
   before(() => {
     userSkill = frozen(observeUserOwnedSkill(scenario));
   });
 
-  test("an unmarked user-owned skill directory is byte-preserved in both homes", () => {
+  test("an unmarked user-owned skill directory is byte-preserved in all three homes", () => {
     assertNoProblems(userSkill.claude, "an unmarked Claude skill directory is the user's, not the kit's");
     assertNoProblems(userSkill.codex, "an unmarked Codex skill directory is the user's, not the kit's");
+    assertNoProblems(userSkill.antigravity, "an unmarked Antigravity skill directory is the user's, not the kit's");
   });
 });
 
@@ -1218,7 +1316,7 @@ describe("a user directory at a live skill name, then removed", () => {
   });
 
   test("an unmarked directory at a live skill name is reported, preserved, and never entered", () => {
-    assert.strictEqual(liveName.collision.skips, 2, "both homes must report the colliding skill name skipped");
+    assert.strictEqual(liveName.collision.skips, 3, "all three homes must report the colliding skill name skipped");
     assertNoProblems(liveName.collision.problems, "a user directory at a shipped skill name must be left untouched");
   });
 
@@ -1234,19 +1332,21 @@ describe("unmarked executor definitions beside unrelated agents, installed twice
     executor = frozen(observeExecutorCollision(scenario));
   });
 
-  test("unmarked executor collisions are reported and byte-preserved in both homes", () => {
-    assert.strictEqual(executor.skips, 2, "both homes must report their executor collision skipped");
+  test("unmarked executor collisions are reported and byte-preserved in all three homes", () => {
+    assert.strictEqual(executor.skips, 3, "all three homes must report their executor collision skipped");
     assertNoProblems(executor.claude, "an unmarked Claude executor is the user's file");
     assertNoProblems(executor.codex, "an unmarked Codex executor is the user's file");
+    assertNoProblems(executor.antigravity, "an unmarked Antigravity executor is the user's file");
   });
 
-  test("unrelated agents remain byte-preserved in both homes", () => {
+  test("unrelated agents remain byte-preserved in all three homes", () => {
     assertNoProblems(executor.unrelatedClaude, "a Claude agent the kit never ships is out of its reach");
     assertNoProblems(executor.unrelatedCodex, "a Codex agent the kit never ships is out of its reach");
+    assertNoProblems(executor.unrelatedAntigravity, "an Antigravity agent the kit never ships is out of its reach");
   });
 
   test("native collisions and unrelated agents remain byte-preserved on reinstall", () => {
-    assert.strictEqual(executor.reinstall.skips, 2, "the collisions must stay skipped on a second run");
+    assert.strictEqual(executor.reinstall.skips, 3, "the collisions must stay skipped on a second run");
     assertNoProblems(executor.reinstall.problems, "a rerun must not reclaim what the first run refused");
   });
 });
@@ -1258,9 +1358,10 @@ describe("agent markers whose definitions were removed", () => {
     orphan = frozen(observeOrphanRecovery(scenario));
   });
 
-  test("orphan-marker recovery agent definitions match their sources in both homes", () => {
+  test("orphan-marker recovery agent definitions match their sources in all three homes", () => {
     assertNoProblems(orphan.claudeAgent, "a marker without its payload must reinstall every Claude agent");
     assertNoProblems(orphan.codexAgent, "a marker without its payload must reinstall every Codex agent");
+    assertNoProblems(orphan.antigravityAgent, "a marker without its payload must reinstall every Antigravity agent");
   });
 
   test("orphan recovery leaves unrelated native agents unchanged", () => {
@@ -1360,13 +1461,27 @@ describe("an unmarked Claude rule file", () => {
   const scenario = useScenario("rule-owner");
   let ruleOwner: CollisionRun & SetupRun;
   before(() => {
-    ruleOwner = frozen(observeRuleOwner(scenario));
+    ruleOwner = frozen(observeRuleOwner(scenario, claudeRuleFile(scenario), USER_RULE_FILE));
   });
 
   test("an unmarked Claude rule file is reported, preserved, and left unmarked", () => {
     assertRefusal(ruleOwner, `${RULE_SKIP}${claudeRuleFile(scenario)}`, "an unmarked rule file prevents installation");
     assert.strictEqual(ruleOwner.skips, 1, "the Claude home must report the rule file skipped");
     assertNoProblems(ruleOwner.problems, "a same-named rule file without the marker is the user's");
+  });
+});
+
+describe("an unmarked Antigravity rule file", () => {
+  const scenario = useScenario("antigravity-rule-owner");
+  let ruleOwner: CollisionRun & SetupRun;
+  before(() => {
+    ruleOwner = frozen(observeRuleOwner(scenario, antigravityRuleFile(scenario), USER_ANTIGRAVITY_RULE_FILE));
+  });
+
+  test("an unmarked Antigravity rule file is reported, preserved, and left unmarked", () => {
+    assertRefusal(ruleOwner, `${RULE_SKIP}${antigravityRuleFile(scenario)}`, "an unmarked Antigravity rule file prevents installation");
+    assert.strictEqual(ruleOwner.skips, 1, "the Antigravity home must report the rule file skipped");
+    assertNoProblems(ruleOwner.problems, "a same-named Antigravity rule file without the marker is the user's");
   });
 });
 

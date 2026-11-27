@@ -73,11 +73,12 @@ A detail naming a user action marks drift that `setup.ts` cannot clear. Every ot
 Once any kit marker shows `setup.ts` ran, the home's name selects its always-on core-rules checks. A markerless home keeps its one `never installed` line instead. Each check reports `install-drift`:
 
 - `.claude/rules/agents-kit-core-rules.md` is missing or differs from the kit's `CORE_RULES.md`. Its marker `rules/.agents-kit-core-rules` counts toward `scanned`. A same-named unmarked file or symlinked rule file is drift that `setup.ts` never replaces.
+- `.gemini/config/rules/agents-kit-core-rules.md` is missing or differs from the `always_on` YAML frontmatter plus the kit's `CORE_RULES.md`. Its marker `rules/.agents-kit-core-rules` counts toward `scanned`, and the same unmarked, symlink, and directory checks apply.
 - `.claude/settings.json` lacks the kit `SubagentStart` entry, or holds a kit entry unlike the one `setup.ts` writes. A kit entry holds the exact command `setup.ts` writes; a command that only names the rule file is the user's. A second kit entry also differs. The comparison is structural, so key order and other settings never count.
 - `.claude/settings.json` is not valid JSON, or holds no `hooks.SubagentStart` list. `setup.ts` refuses to merge into it. A `null` `hooks` or `hooks.SubagentStart` counts as absent, so the kit entry reads as missing.
 - `.codex/AGENTS.md` lacks the marked core-rules block, or the block differs from the start marker, a newline, the kit's `CORE_RULES.md`, and the end marker. Any other marker count or order is drift that `setup.ts` refuses to repair.
 - `.codex/AGENTS.override.md` is a file with non-whitespace text. Codex then reads it instead of `AGENTS.md`, hiding the block. An empty or whitespace-only override hides nothing.
-- `.claude/settings.json`, `.codex/AGENTS.md`, or `.claude/rules` is a dangling symlink. `setup.ts` cannot write through it, so the user repairs or removes the link.
-- `.claude/rules` exists but is not a directory after following links. `setup.ts` cannot create the rule file, so the user moves it aside. The rule marker is then neither read nor counted toward `scanned`.
+- `.claude/settings.json`, `.codex/AGENTS.md`, `.claude/rules`, or `.gemini/config/rules` is a dangling symlink. `setup.ts` cannot write through it, so the user repairs or removes the link.
+- `.claude/rules` or `.gemini/config/rules` exists but is not a directory after following links. `setup.ts` cannot create the rule file, so the user moves it aside. The rule marker is then neither read nor counted toward `scanned`.
 - `.claude/settings.json` or `.codex/AGENTS.md` is a directory, or a link to one. `setup.ts` cannot write it, so the user moves it aside.
-- A marked `.claude/rules/agents-kit-core-rules.md` is a directory, or a link to one. `setup.ts` cannot write it, so the user moves it aside.
+- A marked `.claude/rules/agents-kit-core-rules.md` or `.gemini/config/rules/agents-kit-core-rules.md` is a directory, or a link to one. `setup.ts` cannot write it, so the user moves it aside.

@@ -25,11 +25,14 @@ import { fileURLToPath } from "node:url";
 const REPO_DIR = dirname(fileURLToPath(import.meta.url));
 const CLAUDE_HOME = join(homedir(), ".claude");
 const CODEX_HOME = join(homedir(), ".codex");
-const HOMES: readonly string[] = [CLAUDE_HOME, CODEX_HOME];
+const ANTIGRAVITY_HOME = join(homedir(), ".gemini", "config");
+const HOMES: readonly string[] = [CLAUDE_HOME, CODEX_HOME, ANTIGRAVITY_HOME];
 const MARKER = ".agents-kit";
 const CORE_RULES_MARKER = ".agents-kit-core-rules";
 const RULE_NAME = "agents-kit-core-rules";
 const RULE_FILE = `${RULE_NAME}.md`;
+const ANTIGRAVITY_RULE_FRONTMATTER =
+  "---\ntrigger: always_on\ndescription: \"Always-on core rules for agents-kit.\"\n---\n\n";
 const HOOK_EVENT = "SubagentStart";
 const HOOK_SCRIPT = `const p=require("path").join(require("os").homedir(),".claude","rules","${RULE_FILE}");process.stdout.write(JSON.stringify({hookSpecificOutput:{hookEventName:"${HOOK_EVENT}",additionalContext:require("fs").readFileSync(p,"utf8")}}))`;
 const HOOK_ENTRY = {
@@ -41,7 +44,15 @@ const BLOCK_END = "<!-- agents-kit:core-rules:end -->";
 const AGENT_MARKER_PREFIX = ".agents-kit-";
 const SKILL_STAGING_PREFIX = ".agents-kit-staging.";
 const REFERENCES_STAGING_PREFIX = ".agents-kit-references.staging.";
-const AGENT_EXTENSIONS = new Map([[".claude", "md"], [".codex", "toml"]]);
+interface AgentSourceSpec {
+  readonly dir: string;
+  readonly extension: string;
+}
+const AGENT_SPECS = new Map<string, AgentSourceSpec>([
+  [CLAUDE_HOME, { dir: join(REPO_DIR, "agents"), extension: "md" }],
+  [CODEX_HOME, { dir: join(REPO_DIR, "agents"), extension: "toml" }],
+  [ANTIGRAVITY_HOME, { dir: join(REPO_DIR, "antigravity", "agents"), extension: "md" }],
+]);
 let skippedItems = false;
 
 type JsonObject = { [key: string]: unknown };
@@ -180,7 +191,7 @@ function installCoreRules(homeDir: string): void {
   console.log("  CORE_RULES.md");
 }
 
-function installRuleFile(homeDir: string): void {
+function installRuleFile(homeDir: string, frontmatter = ""): void {
   const rulesDir = join(homeDir, "rules");
   const target = join(rulesDir, RULE_FILE);
   const marker = join(rulesDir, CORE_RULES_MARKER);
@@ -192,7 +203,9 @@ function installRuleFile(homeDir: string): void {
       return;
     }
     touchMarker(marker);
-    copyFileSync(join(REPO_DIR, "CORE_RULES.md"), target);
+    const source = join(REPO_DIR, "CORE_RULES.md");
+    if (frontmatter === "") copyFileSync(source, target);
+    else writeFileSync(target, Buffer.concat([Buffer.from(frontmatter, "utf8"), readFileSync(source)]));
   } catch (error) {
     reportSkipped(`Skipping the rule file: ${target} could not be installed (${String(error)}). Fix the path and rerun.`);
     return;
@@ -295,25 +308,25 @@ function installCodexBlock(homeDir: string): void {
 }
 
 function installAgents(homeDir: string): void {
-  const agentExtension = AGENT_EXTENSIONS.get(basename(homeDir));
-  if (agentExtension === undefined) return;
+  const spec = AGENT_SPECS.get(homeDir);
+  if (spec === undefined) return;
   const agentsDir = join(homeDir, "agents");
   mkdirSync(agentsDir, { recursive: true });
   const markerNames = readdirSync(agentsDir)
     .filter((name) => name.startsWith(AGENT_MARKER_PREFIX) && isFile(join(agentsDir, name)))
     .sort();
   for (const markerName of markerNames) {
-    const installed = `${markerName.slice(AGENT_MARKER_PREFIX.length)}.${agentExtension}`;
+    const installed = `${markerName.slice(AGENT_MARKER_PREFIX.length)}.${spec.extension}`;
     rmSync(join(agentsDir, installed), { force: true });
     rmSync(join(agentsDir, markerName), { force: true });
   }
-  const sourceNames = readdirSync(join(REPO_DIR, "agents"))
-    .filter((name) => !name.startsWith(".") && name.endsWith(`.${agentExtension}`))
+  const sourceNames = readdirSync(spec.dir)
+    .filter((name) => !name.startsWith(".") && name.endsWith(`.${spec.extension}`))
     .sort();
   for (const sourceName of sourceNames) {
-    const source = join(REPO_DIR, "agents", sourceName);
+    const source = join(spec.dir, sourceName);
     if (!isFile(source)) continue;
-    const name = basename(sourceName, `.${agentExtension}`);
+    const name = basename(sourceName, `.${spec.extension}`);
     const target = join(agentsDir, sourceName);
     if (existsSync(target) || isSymlink(target)) {
       console.log(`  skipped (not kit-managed): agents/${name}`);
@@ -343,6 +356,7 @@ function installHome(homeDir: string): void {
     installSubagentHook(homeDir);
   }
   if (homeDir === CODEX_HOME) installCodexBlock(homeDir);
+  if (homeDir === ANTIGRAVITY_HOME) installRuleFile(homeDir, ANTIGRAVITY_RULE_FRONTMATTER);
 }
 
 for (const home of HOMES) installHome(home);

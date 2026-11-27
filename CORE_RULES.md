@@ -1,6 +1,6 @@
 # Rules
 
-The agent home is `~/.claude` in Claude Code and `~/.codex` in Codex. Every `references/` path below resolves under that home from any working directory.
+The agent home is `~/.claude` in Claude Code, `~/.codex` in Codex, and `~/.gemini/config` in Antigravity. Every `references/` path below resolves under that home from any working directory.
 
 > **Priority**: Follow established project patterns unless evidence shows a concrete quality problem. Explicit requirements and invariants prevail. Resolve consequential departures under Ask Before Assuming.
 
