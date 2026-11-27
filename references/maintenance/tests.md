@@ -111,5 +111,3 @@ Run this procedure only when live model calls are requested. It exercises `skill
     - Group stop and resume: the same conditions hold for a group Run and its children.
     - Status timer: a real 15-minute wake with no other event produces one status and arms the next timer. Stop cancels the timer. A stale lookalike wake gets no status. Resume arms exactly one timer.
 6. **Teardown.** Stop and release only the workers this run owns, through the coordinator that owns them. Cancel owned timers. Runs stay retained, because Orca has no scoped delete. Remove fixture state, then restore the saved config bytes and confirm their hash.
-
-The task-migrate suite builds disposable task folders and a temporary snapshot home. Exercise the preview and apply CLI, then check the converted records with the task-state and health readers. Keep the historical evidence, changed-input refusal, and second-apply assertions independent of the migration's own report.

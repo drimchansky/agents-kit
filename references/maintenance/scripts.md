@@ -316,9 +316,3 @@ Coverage and source-completeness attestations belong to the sync skill. The help
 Interruption guarantees cover process failure, not power-loss durability. External filesystem writers remain subject to the race limits in the caller contract.
 
 Its lock copies `scripts/secretary-state.ts`'s lock, a sanctioned copy per `references/maintenance/repository.md` § *Consumer lists*. Change both together.
-
-## `scripts/task-migrate.ts`
-
-The temporary store migration uses the task loader's step parser, Markdown reader and heading allocator. Preserve the source bytes of displaced sections. Bind the preview to the inputs and proposed outputs before publishing replacements. Runtime inputs, reports, and recovery are in `references/scripts/task-migrate.md`.
-
-When a group has an old log, conversion preserves its bytes at the start of group history and appends the original Decisions sections. A group without an old log gets no new history. Publish history before replacing live records or removing a source file.

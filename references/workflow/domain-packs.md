@@ -46,7 +46,6 @@ Default absent Domain to `engineering`. Load requested phase files from `referen
   - `archive-task`, `backlog-task`, and `maintain` operate on task envelopes and store artifacts. Read `task-layout.md`, its filing/role-file satellites, and `task-lifecycle.md`. Archive uses location and terminal-state rules; backlog uses location and unstarted-entry rules; maintain uses format and registry rules.
   - `prepare-ticket` writes a domain-neutral upstream artifact before a Domain marker exists; apply `ticket-format.md` and `task-layout.md`.
   - `prepare-epic` writes a domain-neutral epic description as a standalone file, not a task role file; read `task-layout.md` and `task-store.md` to resolve source tasks and conventions.
-  - `migrate-tasks` converts task records and group files under their shared contracts without loading a task domain.
   - `init-config` writes machine paths and secretary-duty settings in the global configuration and touches no task.
   - `start-secretary` dispatches runbook maintenance and meeting sync under `secretary-contract.md`, with one retained session and no task writes.
   - `start-orca` coordinates one task or group. Each invoked lifecycle skill resolves its own domain.

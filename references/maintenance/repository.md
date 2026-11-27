@@ -35,7 +35,7 @@ Run-time helper contracts live in `references/scripts/<name>.md`. This section h
 
 **Zero dependencies; direct Node type stripping.** The supported floor is stated in root `AGENTS.md` § *The `.ts` sources are unchecked by design*.
 
-**Exit conventions.** `task-move.ts`, `task-state.ts`, `pr-comments.ts`, `dup-check.ts`, `worktree-merge.ts`, `secretary-state.ts`, and `meeting-sync-state.ts` share 0/1/2. Zero completes the job; 1 reports a decided outcome; 2 means the run could not reach that decision. `sweep-scope.ts` and `task-migrate.ts` use 0 for a completed report and 2 for an error. `health-check.ts` and `session-triage.ts` always exit 0, keeping reports parseable when part of the corpus is unreadable. `silence-watch.ts` runs until stopped. It exits 2 on bad usage and 0 at its first notice after its stdout reader closes. `orca-status-timer.ts` commands exit 0 or 2; its detached timer process exits 1 after recording a failed send.
+**Exit conventions.** `task-move.ts`, `task-state.ts`, `pr-comments.ts`, `dup-check.ts`, `worktree-merge.ts`, `secretary-state.ts`, and `meeting-sync-state.ts` share 0/1/2. Zero completes the job; 1 reports a decided outcome; 2 means the run could not reach that decision. `sweep-scope.ts` uses 0 for a completed report and 2 for an error. `health-check.ts` and `session-triage.ts` always exit 0, keeping reports parseable when part of the corpus is unreadable. `silence-watch.ts` runs until stopped. It exits 2 on bad usage and 0 at its first notice after its stdout reader closes. `orca-status-timer.ts` commands exit 0 or 2; its detached timer process exits 1 after recording a failed send.
 
 **Piped stdout is asynchronous.** After emitting JSON, let the module end so buffered output flushes. Calling `process.exit` would truncate reports exceeding the pipe buffer, often 64 KB. Swallow EPIPE and ENOTCONN from readers closing early so that unawaited stream error does not change the promised status.
 
@@ -88,9 +88,8 @@ Run the suite covering each changed surface:
 - `setup.ts`: `node --test tests/setup-install.test.ts`.
 - `scripts/health-check.ts`: `node --test tests/health-check.test.ts`.
 - `scripts/task-move.ts`: `node --test tests/task-move.test.ts`.
-- `scripts/task-migrate.ts`: `node --test tests/task-migrate.test.ts`.
-- `scripts/task-state.ts`: `node --test tests/task-state.test.ts`, plus health-check, sweep-scope and task-migrate suites for its exported helpers.
-- `scripts/goal-structure.ts`: task-state, health-check, sweep-scope, task-move, task-migrate, and templates suites; its reference classification also governs task-repair.
+- `scripts/task-state.ts`: `node --test tests/task-state.test.ts`, plus health-check and sweep-scope suites for its exported helpers.
+- `scripts/goal-structure.ts`: task-state, health-check, sweep-scope, task-move, and templates suites; its reference classification also governs task-repair.
 - `scripts/task-repair.ts`: task-state, health-check, and sweep-scope suites, because task-state imports it for the direct CLI.
 - `scripts/sweep-scope.ts`: `node --test tests/sweep-scope.test.ts`.
 - `scripts/session-triage.ts`: `node --test tests/session-triage.test.ts`.
@@ -103,7 +102,7 @@ Run the suite covering each changed surface:
 - `scripts/meeting-sync-state.ts` or `references/scripts/meeting-sync-state.md`: `node --test tests/meeting-sync-state.test.ts tests/sync-meeting-notes.test.ts tests/start-secretary.test.ts`.
 - `skills/sync-meeting-notes/SKILL.md` or `references/secretary/meeting-sync.md`: `node --test tests/sync-meeting-notes.test.ts tests/start-secretary.test.ts tests/invocation-gate.test.ts`.
 - `scripts/executor-run.ts`, `references/scripts/executor-run.md`, or `agents/executor.md`: `node --test tests/executor-run.test.ts`.
-- `scripts/lifecycle-constants.ts`: health-check, task-move, task-state, sweep-scope, task-migrate, and templates suites, which cover its seven importers.
+- `scripts/lifecycle-constants.ts`: health-check, task-move, task-state, sweep-scope, and templates suites, which cover its six importers.
 - `references/templates/` and the three scripts its suite drives: `node --test tests/templates.test.ts`.
 - `skills/review-pr-loop/SKILL.md` or `references/workflow/delegated-waiting.md`: `node --test tests/review-pr-loop.test.ts`.
 - `references/engineering/review-evidence.md`, `references/engineering/review.md`, `references/workflow/user-facing-messages.md`, `references/workflow/reviewer-contract.md`, `references/workflow/reviewer-session.md`, `references/workflow/verify-pipeline.md`, `references/workflow/executor-contract.md`, `references/workflow/executor-coordinator.md`, `references/workflow/fix-findings-recovery.md`, `references/workflow/pr-lookup.md`, `references/workflow/pr-description.md`, `references/workflow/review-delta.md`, `references/workflow/skill-conventions.md`, `skills/review-code/SKILL.md`, `skills/review-code-triage-verify/SKILL.md`, `skills/review-docs/SKILL.md`, `skills/publish-pr-review/SKILL.md`, `skills/update-pr-description/SKILL.md`, `skills/review-pr-loop/SKILL.md`, `skills/triage-findings/SKILL.md`, `skills/triage-findings-verify/SKILL.md`, or `skills/fix-findings/SKILL.md`: `node --test tests/review-evidence.test.ts`.
@@ -160,7 +159,6 @@ These seven homes carry eight mirror notes because scripts cannot consume prose 
 
 - `scripts/health-check.ts`: `PLAN_VOCAB`, `LIVE_STATUSES`, `TERMINAL_STATUSES`, `UNSTARTED_STATUS`, `RECORD_MAX_KB`, `TASK_MAX_KB`, `ARCHIVE_DIR`, `BACKLOG_DIR`, `classifyWalkEntry`, `angledTargetText`, `TASK_HISTORY_FILE`, `skipsTaskMarkdown`.
 - `scripts/task-move.ts`: `PLAN_VOCAB`, `TERMINAL_STATUSES`, `UNSTARTED_STATUS`, `ARCHIVE_DIR`, `BACKLOG_DIR`, `TASK_STORE_DIR`, `holdsRoleFile`, `classifyWalkEntry`.
-- `scripts/task-migrate.ts`: `ROLE_FILES`, `holdsRoleFile`, `WALK_SKIP_DIRS`.
 - `scripts/task-state.ts`: `PLAN_VOCAB`, `ARCHIVE_DIR`, `BACKLOG_DIR`.
 - `scripts/sweep-scope.ts`: `holdsRoleFile`, `angledTargetText`, `NON_DELIVERABLE_FILES`, `TASK_OBSERVATIONS_FILE`.
 - `scripts/task-repair.ts`: `holdsRoleFile`, `WALK_SKIP_DIRS`, `skipsTaskMarkdown`.

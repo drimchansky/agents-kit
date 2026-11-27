@@ -97,7 +97,6 @@ Name cross-project, registered-root, or installed-state sweep scope in the propo
 
 **Confirm-gated skills:**
 
-- `migrate-tasks` — a sweep over the canonical and registered roots; its proposal is § *Propose the sweep*.
 - `implement` — the user's preference for explicit invocation; the proposal is its § *1. Frame the Ask*.
 - `fix-findings` — the user's preference for explicit invocation; the proposal is its § *The Gate: Auto vs Ask*.
 - `explore` — the user's preference for explicit invocation; the proposal is its § *Determine Scope*.
