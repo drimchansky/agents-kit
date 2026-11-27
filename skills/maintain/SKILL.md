@@ -20,7 +20,7 @@ Every phase runs inline under its cited contracts. Print one progress line (`./r
 
 ## Setup — resolve targets
 
-Resolve and existence-check targets, then print one setup line with paths and labels: the kit root, every task root, and the two install homes `~/.claude` and `~/.codex`. That line is the sweep's scope proposal; it also names the `.maintain-last-run` write under `~/.local/state/agents-kit/` and the `git fetch origin <default-branch>` the removal predicate may run in the kit repository. A model-invoked run (`./references/workflow/skill-conventions.md` § *The invocation gate*) asks it as a question and sweeps nothing before the confirmation; a user-invoked run has passed it. The per-item write confirms above stay through either door. Read `./references/workflow/task-store.md` § *The root registry*.
+Resolve and existence-check targets, then print one setup line with paths and labels: the kit root, every task root, and the three install homes `~/.claude`, `~/.codex`, and `~/.gemini/config`. That line is the sweep's scope proposal; it also names the `.maintain-last-run` write under `~/.local/state/agents-kit/` and the `git fetch origin <default-branch>` the removal predicate may run in the kit repository. A model-invoked run (`./references/workflow/skill-conventions.md` § *The invocation gate*) asks it as a question and sweeps nothing before the confirmation; a user-invoked run has passed it. The per-item write confirms above stay through either door. Read `./references/workflow/task-store.md` § *The root registry*.
 
 - **Kit root:** use the source checkout, with an argument holding `setup.ts` overriding configuration. When resolving the configured checkout, apply `./references/workflow/task-store.md` § *Resolving `<kit-root>`* without its plugin fallback. No installed home or plugin root can substitute: later phases act on the checkout's task store and Git state. <!-- cold -->
 - **Task roots:** use all configured `taskRoots` with their labels; other path arguments add task roots. Name each absent registered path as skipped and continue with the rest.
@@ -29,7 +29,7 @@ Without configuration, name `~/.config/agents-kit/config.json` and `/init-config
 
 Keep run state under `~/.local/state/agents-kit/`, including `.maintain-last-run` and session-findings files. Neither task roots nor the configuration directory hold this state.
 
-Phase 2 always checks `~/.claude` and `~/.codex`; these are fixed install homes, not arguments or questions. Report an absent home as uninstalled. When `${CLAUDE_PLUGIN_ROOT}` is an absolute path, the plugin manages `~/.claude`: leave it out of the install check and report it as plugin-managed.
+Phase 2 always checks `~/.claude`, `~/.codex`, and `~/.gemini/config`; these are fixed install homes, not arguments or questions. Report an absent home as uninstalled. When `${CLAUDE_PLUGIN_ROOT}` is an absolute path, the plugin manages `~/.claude`: leave it out of the install check and report it as plugin-managed.
 
 ## Phase 1 — Format-conformance sweep (kit)
 
@@ -84,12 +84,12 @@ Attribute each finding by its absolute `root`, never its basename-prefixed displ
 **Installs:**
 
 ```
-node <kit-root>/scripts/health-check.ts --installs <kit-root> ~/.claude ~/.codex
+node <kit-root>/scripts/health-check.ts --installs <kit-root> ~/.claude ~/.codex ~/.gemini/config
 ```
 
 Read marker-owned comparisons and kit items wholly absent from each home. User-installed paths remain outside comparison; classify reported conflicts under the setup-rerun gate below. A markerless home receives one `never installed` line, including any conflict, rather than a finding per kit file.
 
-An installed home also reports drift in its always-on core rules. In `~/.claude`, that covers the rule file `rules/agents-kit-core-rules.md` and the Explore/Plan `SubagentStart` entry in `settings.json`. In `~/.codex`, it covers the marked core-rules block in `AGENTS.md` and a non-empty `AGENTS.override.md` that hides it. A missing hook entry often means a synced `settings.json` copy replaced the installed one.
+An installed home also reports drift in its always-on core rules. In `~/.claude`, that covers the rule file `rules/agents-kit-core-rules.md` and the Explore/Plan `SubagentStart` entry in `settings.json`. In `~/.codex`, it covers the marked core-rules block in `AGENTS.md` and a non-empty `AGENTS.override.md` that hides it. In `~/.gemini/config`, it covers `rules/agents-kit-core-rules.md` with its `always_on` frontmatter. A missing hook entry often means a synced `settings.json` copy replaced the installed one.
 
 **Uncommitted work:** read `git worktree list --porcelain` once from the kit root for this probe and the husk probe. Run `git -C <root> status --porcelain` for the kit, each task root inside a repository, and every listed linked worktree. Deduplicate paths already covered. Include worktrees belonging to no kit task. A root below a repository's top level still reports that repository. Report dirty paths only.
 
@@ -110,7 +110,7 @@ When the health helper or Node is unavailable, skip both script probes and state
 
 On one confirmation, move exactly the previewed batch; declining moves nothing. A plain `mv` may perform the contracted whole-folder move. Change no contents or internal `./` links.
 
-**Gate — rerun `setup.ts`.** Withhold this gate when the plugin manages `~/.claude`: `setup.ts` always writes both homes, so every skill would be listed twice. Report any Codex drift with that reason. Preview drifted paths grouped by home. Before confirmation, warn that `node <kit-root>/setup.ts` replaces installed skills and references beneath live sessions, including this one. Also warn that it rewrites `~/.claude/rules/agents-kit-core-rules.md` and the core-rules block in `~/.codex/AGENTS.md`. It also rewrites `~/.claude/settings.json` as reformatted JSON holding the kit's `SubagentStart` entry. Label every drift whose health-check detail names a user action as the user's fix in the preview. A `setup.ts` rerun cannot clear it; see `./references/scripts/health-check.md` § *`--installs` mode* for the cases. Run only on confirmation and only as a whole installation; there is no per-path mode. Declining leaves both homes unchanged. Retain drift findings in Output either way.
+**Gate — rerun `setup.ts`.** Withhold this gate when the plugin manages `~/.claude`: `setup.ts` always writes all three homes, so every Claude skill would be listed twice. Report any Codex or Antigravity drift with that reason. Preview drifted paths grouped by home. Before confirmation, warn that `node <kit-root>/setup.ts` replaces installed skills and references beneath live sessions, including this one. Also warn that it rewrites `~/.claude/rules/agents-kit-core-rules.md`, `~/.gemini/config/rules/agents-kit-core-rules.md`, and the core-rules block in `~/.codex/AGENTS.md`. It also rewrites `~/.claude/settings.json` as reformatted JSON holding the kit's `SubagentStart` entry. Label every drift whose health-check detail names a user action as the user's fix in the preview. A `setup.ts` rerun cannot clear it; see `./references/scripts/health-check.md` § *`--installs` mode* for the cases. Run only on confirmation and only as a whole installation; there is no per-path mode. Declining leaves all three homes unchanged. Retain drift findings in Output either way.
 
 **Gate — remove the worktree husks.** Preview each eligible path, branch, and merge proof; label branch-only entries as having no worktree. Confirm **per item**, never as a batch. Exclude terminal-but-unmerged entries. On confirmation, use the resolved path, checks, order, and unforced commands in `./references/workflow/task-delivery-edges.md` § *Removal*. Branch-only candidates run `git branch -d` alone. Report refusals without forcing cleanup. If worktree removal succeeded before branch deletion failed, report partial cleanup and the surviving branch. Declining removes nothing. With no removable candidate, skip this gate and its contract load. <!-- cold -->
 

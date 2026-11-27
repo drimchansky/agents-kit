@@ -132,7 +132,7 @@ test("the confirm-gated roster names an existing proposal section for start-secr
   }
 });
 
-test("both secretary adapters carry the role name and contract citation the launch checks read and no override keys", () => {
+test("all three secretary adapters carry the role name and contract citation the launch checks read and no override keys", () => {
   const codex = readFileSync(join(REPO_DIR, "agents", "secretary.toml"), "utf8");
   assert.match(codex, /^name = "secretary"$/m);
   assert.match(codex, /developer_instructions = """[\s\S]*secretary-contract\.md/);
@@ -141,6 +141,12 @@ test("both secretary adapters carry the role name and contract citation the laun
   assert.match(body, /`references\/workflow\/secretary-contract\.md`/, "the Claude adapter's body carries the citation the effective-definition check reads");
   assert.doesNotMatch(header, /^tools:/m, "an allowlist would drop the connectors the secretary reads");
   assert.match(header, /^name: secretary$/m, "the Claude adapter carries the role name the effective-definition check selects by");
+  const [agyHeader, agyBody = ""] = readFileSync(join(REPO_DIR, "agents", "antigravity", "secretary.md"), "utf8").split("\n---\n");
+  assert.match(agyBody, /`~\/\.gemini\/config\/references\/workflow\/secretary-contract\.md`/, "the Antigravity adapter's body carries the contract citation");
+  assert.match(agyHeader, /^name: secretary$/m, "the Antigravity adapter carries the role name");
+  assert.match(agyHeader, /^subagent: true$/m, "the Antigravity adapter is invokable as a subagent");
+  assert.match(agyHeader, /^mainAgent: false$/m, "the Antigravity adapter is subagent-only");
+  assert.doesNotMatch(agyHeader, /^(?:tools|commandExecutionPolicy):/m, "the Antigravity adapter inherits parent permissions and connectors");
 });
 
 test("the runbook report renders only the duty's reply headings and its unavailable-evidence class", () => {

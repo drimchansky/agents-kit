@@ -40,6 +40,8 @@ const AGENT_MARKER_PREFIX = ".agents-kit-";
 const STAGING_PREFIX = ".agents-kit-staging.";
 const RULE_FILE = join("rules", "agents-kit-core-rules.md");
 const RULE_MARKER = join("rules", CORE_RULES_MARKER);
+const ANTIGRAVITY_RULE_FRONTMATTER =
+  "---\ntrigger: always_on\ndescription: \"Always-on core rules for agents-kit.\"\n---\n\n";
 const HOOK_EVENT = "SubagentStart";
 const KIT_HOOK_COMMAND =
   `node -e 'const p=require("path").join(require("os").homedir(),".claude","rules","agents-kit-core-rules.md");` +
@@ -81,6 +83,17 @@ const ABSENT_HOME = join(TEST_ROOT, "absent", ".claude");
 const DELIVERY = join(INSTALLS, "delivery");
 const CLEAN_CLAUDE_HOME = join(DELIVERY, "clean", ".claude");
 const CLEAN_CODEX_HOME = join(DELIVERY, "clean", ".codex");
+const CLEAN_ANTIGRAVITY_HOME = join(DELIVERY, "clean", ".gemini", "config");
+const AGY_RULE_MISSING_HOME = join(DELIVERY, "agy-rule-missing", ".gemini", "config");
+const AGY_RULE_DIFFERS_HOME = join(DELIVERY, "agy-rule-differs", ".gemini", "config");
+const AGY_RULE_UNMARKED_HOME = join(DELIVERY, "agy-rule-unmarked", ".gemini", "config");
+const AGY_RULE_SYMLINK_HOME = join(DELIVERY, "agy-rule-symlink", ".gemini", "config");
+const AGY_RULE_DIRECTORY_HOME = join(DELIVERY, "agy-rule-directory", ".gemini", "config");
+const AGY_RULES_DANGLING_HOME = join(DELIVERY, "agy-rules-dangling", ".gemini", "config");
+const AGY_RULES_FILE_HOME = join(DELIVERY, "agy-rules-file", ".gemini", "config");
+const AGY_AGENT_DIFFERS_HOME = join(DELIVERY, "agy-agent-differs", ".gemini", "config");
+const AGY_AGENT_MISSING_HOME = join(DELIVERY, "agy-agent-missing", ".gemini", "config");
+const FRESH_ANTIGRAVITY_HOME = join(TEST_ROOT, "fresh-agy", ".gemini", "config");
 const RULE_MISSING_HOME = join(DELIVERY, "rule-missing", ".claude");
 const RULE_DIFFERS_HOME = join(DELIVERY, "rule-differs", ".claude");
 const RULE_UNMARKED_HOME = join(DELIVERY, "rule-unmarked", ".claude");
@@ -305,7 +318,10 @@ function kitBlock(): string {
 }
 
 function writeCleanHome(home: string): void {
-  const extension = basename(home) === ".claude" ? "md" : "toml";
+  const isAntigravity = basename(home) === "config" && basename(dirname(home)) === ".gemini";
+  const isClaude = basename(home) === ".claude";
+  const extension = isClaude || isAntigravity ? "md" : "toml";
+  const kitAgentsDir = isAntigravity ? join(KIT, "agents", "antigravity") : join(KIT, "agents");
   mkdirSync(join(home, "skills"), { recursive: true });
   for (const name of readdirSync(join(KIT, "skills"))) {
     copyFixture(join(KIT, "skills", name), join(home, "skills", name));
@@ -316,11 +332,11 @@ function writeCleanHome(home: string): void {
   copyFileSync(join(KIT, "CORE_RULES.md"), join(home, "CORE_RULES.md"));
   writeFileSync(join(home, CORE_RULES_MARKER), "");
   mkdirSync(join(home, "agents"));
-  for (const file of readdirSync(join(KIT, "agents")).filter((name) => name.endsWith(`.${extension}`))) {
-    copyFileSync(join(KIT, "agents", file), join(home, "agents", file));
+  for (const file of readdirSync(kitAgentsDir).filter((name) => name.endsWith(`.${extension}`))) {
+    copyFileSync(join(kitAgentsDir, file), join(home, "agents", file));
     writeFileSync(join(home, "agents", `${AGENT_MARKER_PREFIX}${basename(file, `.${extension}`)}`), "");
   }
-  if (extension === "md") {
+  if (isClaude) {
     mkdirSync(join(home, "rules"));
     writeFileSync(join(home, RULE_MARKER), "");
     copyFileSync(join(KIT, "CORE_RULES.md"), join(home, RULE_FILE));
@@ -328,6 +344,13 @@ function writeCleanHome(home: string): void {
       hookEntry("echo user-subagent", "general-purpose"),
       { hooks: [{ command: KIT_HOOK_COMMAND, type: "command" }], matcher: "^(Explore|Plan)$" },
     ]);
+  } else if (isAntigravity) {
+    mkdirSync(join(home, "rules"));
+    writeFileSync(join(home, RULE_MARKER), "");
+    writeFileSync(
+      join(home, RULE_FILE),
+      `${ANTIGRAVITY_RULE_FRONTMATTER}${readFileSync(join(KIT, "CORE_RULES.md"), "utf8")}`,
+    );
   } else {
     writeFileSync(join(home, "AGENTS.md"), `${USER_CODEX_LINE}\n${kitBlock()}\n`);
   }
@@ -336,6 +359,16 @@ function writeCleanHome(home: string): void {
 function writeDeliveryFixtures(): void {
   for (const home of [
     CLEAN_CLAUDE_HOME,
+    CLEAN_ANTIGRAVITY_HOME,
+    AGY_RULE_MISSING_HOME,
+    AGY_RULE_DIFFERS_HOME,
+    AGY_RULE_UNMARKED_HOME,
+    AGY_RULE_SYMLINK_HOME,
+    AGY_RULE_DIRECTORY_HOME,
+    AGY_RULES_DANGLING_HOME,
+    AGY_RULES_FILE_HOME,
+    AGY_AGENT_DIFFERS_HOME,
+    AGY_AGENT_MISSING_HOME,
     RULE_MISSING_HOME,
     RULE_DIFFERS_HOME,
     RULE_UNMARKED_HOME,
@@ -411,6 +444,23 @@ function writeDeliveryFixtures(): void {
   writeFileSync(join(OVERRIDE_HOME, "AGENTS.override.md"), "Temporary global override.\n");
   writeFileSync(join(EMPTY_OVERRIDE_HOME, "AGENTS.override.md"), "");
   writeFileSync(join(BLANK_OVERRIDE_HOME, "AGENTS.override.md"), "\n  \n\t\n");
+
+  rmSync(join(AGY_RULE_MISSING_HOME, "rules"), { recursive: true });
+  writeFileSync(join(AGY_RULE_DIFFERS_HOME, RULE_FILE), readFileSync(join(KIT, "CORE_RULES.md"), "utf8"));
+  rmSync(join(AGY_RULE_UNMARKED_HOME, RULE_MARKER));
+  writeFileSync(join(AGY_RULE_UNMARKED_HOME, RULE_FILE), "MY OWN RULES\n");
+  rmSync(join(AGY_RULE_SYMLINK_HOME, RULE_FILE));
+  writeFileSync(join(AGY_RULE_SYMLINK_HOME, "user-rules.md"), "MY OWN RULES\n");
+  symlinkSync(join(AGY_RULE_SYMLINK_HOME, "user-rules.md"), join(AGY_RULE_SYMLINK_HOME, RULE_FILE));
+  rmSync(join(AGY_RULE_DIRECTORY_HOME, RULE_FILE));
+  mkdirSync(join(AGY_RULE_DIRECTORY_HOME, RULE_FILE));
+  rmSync(join(AGY_RULES_DANGLING_HOME, "rules"), { recursive: true });
+  symlinkSync(join(AGY_RULES_DANGLING_HOME, "absent-rules"), join(AGY_RULES_DANGLING_HOME, "rules"));
+  rmSync(join(AGY_RULES_FILE_HOME, "rules"), { recursive: true });
+  writeFileSync(join(AGY_RULES_FILE_HOME, "rules"), "not a directory\n");
+  writeFileSync(join(AGY_AGENT_DIFFERS_HOME, "agents", "kept-agent.md"), "stale antigravity agent\n");
+  rmSync(join(AGY_AGENT_MISSING_HOME, "agents", "kept-agent.md"));
+  rmSync(join(AGY_AGENT_MISSING_HOME, "agents", `${AGENT_MARKER_PREFIX}kept-agent`));
 }
 
 function writeInstallFixtures(): void {
@@ -429,6 +479,9 @@ function writeInstallFixtures(): void {
   mkdirSync(join(KIT, "skills", "never-deployed"), { recursive: true });
   writeFileSync(join(KIT, "skills", "never-deployed", "SKILL.md"), "new\n");
   writeFileSync(join(KIT, "agents", "never-deployed.md"), "new\n");
+  mkdirSync(join(KIT, "agents", "antigravity"), { recursive: true });
+  writeFileSync(join(KIT, "agents", "antigravity", "kept-agent.md"), "antigravity kept agent\n");
+  mkdirSync(FRESH_ANTIGRAVITY_HOME, { recursive: true });
 
   mkdirSync(join(CONFLICT_HOME, "skills", "kept-skill"), { recursive: true });
   mkdirSync(join(CONFLICT_HOME, "references"), { recursive: true });
@@ -1741,12 +1794,16 @@ describe("each single-home --installs fixture, compared once", () => {
     RULES_FILE_HOME, RULES_FILE_LINK_HOME, SETTINGS_DIRECTORY_HOME,
     BLOCK_UNMATCHED_HOME, BLOCK_REVERSED_HOME, AGENTS_DANGLING_HOME,
     AGENTS_DIRECTORY_HOME, OVERRIDE_HOME,
+    AGY_RULE_UNMARKED_HOME, AGY_RULE_SYMLINK_HOME, AGY_RULE_DIRECTORY_HOME,
+    AGY_RULES_DANGLING_HOME, AGY_RULES_FILE_HOME,
   ];
   const rerunHomes = [
     CLAUDE_HOME, CODEX_HOME, STAGING_HOME, MATERIALIZED_HOME, PARTIAL_HOME,
     FRESH_HOME, ABSENT_HOME, RULE_MISSING_HOME, RULE_DIFFERS_HOME,
     HOOK_MISSING_HOME, SETTINGS_MISSING_HOME, HOOK_DIFFERS_HOME,
     HOOK_DOUBLED_HOME, BLOCK_MISSING_HOME, BLOCK_DIFFERS_HOME,
+    AGY_RULE_MISSING_HOME, AGY_RULE_DIFFERS_HOME, AGY_AGENT_DIFFERS_HOME,
+    AGY_AGENT_MISSING_HOME, FRESH_ANTIGRAVITY_HOME,
   ];
   const homeRuns = new Map<string, CheckRun>();
   before(() => {
@@ -2009,14 +2066,52 @@ describe("each single-home --installs fixture, compared once", () => {
       "Codex reads the override instead of AGENTS.md",
     );
   });
+
+  test("Antigravity rule-file and agent drift report under .gemini/config", () => {
+    assertOnlyDrift(AGY_RULE_MISSING_HOME, ".gemini/config/rules/agents-kit-core-rules.md", "missing in install", "missing Antigravity rule file");
+    assertOnlyDrift(AGY_RULE_DIFFERS_HOME, ".gemini/config/rules/agents-kit-core-rules.md", "differs from kit source", "Antigravity rule file lacking always_on frontmatter");
+    assertOnlyDrift(
+      AGY_RULE_UNMARKED_HOME,
+      ".gemini/config/rules/agents-kit-core-rules.md",
+      "present but not kit-owned — setup.ts never replaces it; move it aside and rerun setup.ts",
+      "unmarked Antigravity rule file",
+    );
+    assertOnlyDrift(
+      AGY_RULE_SYMLINK_HOME,
+      ".gemini/config/rules/agents-kit-core-rules.md",
+      "present but not kit-owned — setup.ts never replaces it; move it aside and rerun setup.ts",
+      "symlinked Antigravity rule file",
+    );
+    assertOnlyDrift(
+      AGY_RULE_DIRECTORY_HOME,
+      ".gemini/config/rules/agents-kit-core-rules.md",
+      "a directory — setup.ts cannot write it; move it aside and rerun setup.ts",
+      "directory at Antigravity rule file",
+    );
+    assertOnlyDrift(
+      AGY_RULES_DANGLING_HOME,
+      ".gemini/config/rules",
+      "dangling symlink — setup.ts cannot write through it; repair or remove the link and rerun setup.ts",
+      "dangling Antigravity rules link",
+    );
+    assertOnlyDrift(
+      AGY_RULES_FILE_HOME,
+      ".gemini/config/rules",
+      "not a directory — setup.ts cannot create the rule file; move it aside and rerun setup.ts",
+      "regular file at Antigravity rules dir",
+    );
+    assertOnlyDrift(AGY_AGENT_DIFFERS_HOME, ".gemini/config/agents/kept-agent.md", "differs from kit source", "edited Antigravity agent");
+    assertOnlyDrift(AGY_AGENT_MISSING_HOME, ".gemini/config/agents/kept-agent.md", "missing in install", "missing Antigravity agent");
+    assertOnlyDrift(FRESH_ANTIGRAVITY_HOME, ".gemini/config", "no kit markers — never installed", "never-installed Antigravity home");
+  });
 });
 
-test("a clean install reports no drift in either home, its core-rules delivery included", () => {
-  const { report, stderr } = runCheck(["--installs", KIT, CLEAN_CLAUDE_HOME, CLEAN_CODEX_HOME]);
+test("a clean install reports no drift in all three homes, their core-rules delivery included", () => {
+  const { report, stderr } = runCheck(["--installs", KIT, CLEAN_CLAUDE_HOME, CLEAN_CODEX_HOME, CLEAN_ANTIGRAVITY_HOME]);
   assert.strictEqual(stderr, "", "a clean install must produce no warnings");
   assert.deepStrictEqual(report.findings, [], "user hooks, user lines, and key order must not read as drift");
   assert.strictEqual(report.unreadable, 0, "a clean install leaves nothing unread");
-  assert.strictEqual(report.scanned, 14, "eight Claude Code items, its marked rule file included, and six Codex items");
+  assert.strictEqual(report.scanned, 21, "eight Claude Code items, six Codex items, and seven Antigravity items");
 });
 
 test("an empty or whitespace-only AGENTS.override.md hides nothing", () => {
