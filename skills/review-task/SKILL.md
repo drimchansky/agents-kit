@@ -13,7 +13,8 @@ Validate the plan against reality; report feasibility, gaps, and questions. Appl
 
 ## Flags
 
-- `-x`: add one read-only cross-vendor grounding probe in Step 2. Apply `./references/workflow/probe-cross-check.md`, `./references/workflow/probe-shape-grounding.md`, `./references/workflow/agent-fanout.md`, and `./references/workflow/probe-engines-cross-vendor.md`. Off by default. Record its outcome on the Plan Summary's `Cross-check:` line. <!-- cold -->
+- `-x`: add one read-only cross-vendor grounding probe in Step 2. Apply `./references/workflow/probe-cross-check.md`, `./references/workflow/probe-shape-grounding.md`, and `./references/workflow/probe-engines-cross-vendor.md`. Off by default. Record its outcome on the Plan Summary's `Cross-check:` line. <!-- cold -->
+  The probe follows `./references/workflow/agent-fanout.md`.
 
 ## Locate the Plan
 
@@ -107,7 +108,7 @@ Check failure modes and boundaries, actor transitions, required inputs, dependen
 
 For Due/Lead time, confirm each lead time fits its own and dependent deadlines, including early starts for long-lead work. For Touches, verify coverage and claimed disjointness against actual edits; engineering traps are in `./references/engineering/planning.md` (Declaring edit surfaces).
 
-Check cadence against `plan-task` § *Add Checkpoints*. Flag missing, misplaced, vague, or health-shaped assertions. Each engineering checkpoint names an end-to-end outcome; integrated health checks belong at the adjacent health boundary (`./references/engineering/planning.md` § *Checkpoints*).
+Check cadence against `plan-task` § *8. Add Checkpoints*. Flag missing, misplaced, vague, or health-shaped assertions. Each engineering checkpoint names an end-to-end outcome; integrated health checks belong at the adjacent health boundary (`./references/engineering/planning.md` § *Checkpoints*).
 
 For an engineering plan, assess `## Live verification` against `./references/engineering/acceptance-gate.md` § *Resolve live targets*. Trace frontend, backend, and deployed library consumers independently; check preprod/prod dispositions, expected-release identity, workload health, live behavior, and browser journeys where applicable. Flag unknown targets, missing access, or an unsupported `not applicable` disposition as pending, even if no live goal is cited.
 

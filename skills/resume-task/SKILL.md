@@ -9,7 +9,9 @@ argument-hint: "[task slug or path; defaults to the session's task]"
 1. Apply the working repository's `AGENTS.md` and `CLAUDE.md`, reading any not already in context.
 2. Load the domain pack: once `CONTEXT.md` is resolved, take its `**Domain:**` (default `engineering`) and apply `./references/<domain>/rules.md` on top of the core. This skill mostly observes; pull in deeper pack files only if you dig into a step's work. If the domain has no pack, run the neutral methodology and say so.
 
-Brief status, completed work, drift, and next action in chat. Apply `./references/workflow/task-layout.md` § *Reading a resolved folder*, including proven identifier repair on either invocation route and its read-only exemption. Beyond that repair and a user-confirmed Backlog activation (`./references/workflow/implement-task-edges.md` § *Activating a backlogged task*), edit no task file, code, or Git state; execute no plan work.
+Brief status, completed work, drift, and next action in chat. Apply `./references/workflow/task-layout.md` § *Reading a resolved folder*, including proven identifier repair on either invocation route and its read-only exemption. Beyond that repair and a user-confirmed Backlog activation, edit no task file, code, or Git state; execute no plan work.
+
+Backlog activation follows `./references/workflow/implement-task-edges.md` § *Activating a backlogged task*. <!-- cold -->
 
 Run no reference sweep. `resume-task-reconcile` and `review-task-reconcile` sweep cited links (`./references/workflow/reconciliation-sweep.md` § *Scope*); this citation marks the boundary and is not loaded on any path. <!-- cold -->
 
@@ -65,7 +67,8 @@ With Acceptance present, re-check every `met` goal on a done plan. The one reduc
 
 Tag findings `info` (FYI), `warn` (review before resuming), or `block` (update required before execution). Always render Drift since plan, with `No drift detected.` when clean.
 
-Run `node <kit-root>/scripts/commit-scan.ts <task folder>` for commits since watermark. Resolve `<kit-root>` through `./references/workflow/task-store.md` § *Resolving `<kit-root>`*; CLI/JSON: `./references/scripts/commit-scan.md`. <!-- cold -->
+Run `node <kit-root>/scripts/commit-scan.ts <task folder>` for commits since watermark. Resolve `<kit-root>` through `./references/workflow/task-store.md` § *Resolving `<kit-root>`*.
+When the scan exits 2, or the brief needs a field the states below do not name, read its CLI and JSON contract in `./references/scripts/commit-scan.md`. <!-- cold -->
 
 Read the reported range; do not re-derive it. Report each returned commit and nominated steps. Include every `candidate` in `steps`, even when its nominating SHAs fall beyond the returned 20 commits. State the cap against `total`. Nominations are leads, never completion evidence (`./references/workflow/reconciliation-commits.md`).
 

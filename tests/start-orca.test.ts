@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync, realpathSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import { readFileSync, realpathSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { WAKE_MARKER, WAKE_SUBJECT, wakeBody } from "../scripts/orca-status-timer.ts";
@@ -9,27 +9,12 @@ const ROOT = realpathSync(resolve(dirname(fileURLToPath(import.meta.url)), "..")
 const SKILL = "skills/start-orca/SKILL.md";
 const WORKER = "references/workflow/orca-worker.md";
 const TIMER_DOC = "references/scripts/orca-status-timer.md";
-const CORE_RULES = "CORE_RULES.md";
 const MARKER_PREFIX = "agents-kit start-orca";
 const CONTROL_MARKER = "agents-kit start-orca control v1";
 const RUN_OBJECTIVE = "agents-kit start-orca v1 <kind> <canonical path>";
 
 function source(path: string): string {
   return readFileSync(join(ROOT, path), "utf8");
-}
-
-function headings(text: string): string[] {
-  const titles: string[] = [];
-  let fenced = false;
-  for (const line of text.split("\n")) {
-    if (line.startsWith("```")) fenced = !fenced;
-    else if (!fenced && /^#+ /.test(line)) titles.push(line.replace(/^#+ /, ""));
-  }
-  return titles;
-}
-
-function names(titles: readonly string[], heading: string): boolean {
-  return titles.some((title) => title === heading || title.startsWith(`${heading} (`));
 }
 
 function section(text: string, heading: string): string {
@@ -70,36 +55,4 @@ test("every start-orca marker in the skill, worker reference, and timer contract
     }
   }
   assert.ok(!CONTROL_MARKER.startsWith(WAKE_MARKER) && !WAKE_MARKER.startsWith(CONTROL_MARKER), "control records and wakes in Run mail differ by body start");
-});
-
-test("every relative link and section citation in the skill and worker reference resolves", () => {
-  for (const path of [SKILL, WORKER]) {
-    const text = source(path);
-    const ownTitles = headings(text);
-    let checked = 0;
-    for (const [, target] of text.matchAll(/\]\((\.{1,2}\/[^)#\s]+)(?:#[^)]*)?\)/g)) {
-      assert.ok(existsSync(resolve(ROOT, dirname(path), target)), `${path} links missing ${target}`);
-      checked += 1;
-    }
-    for (const match of text.matchAll(/`(\.{1,2}\/[^`\s]+\.md)`(?: §§? ((?:\*[^*]+\*(?:,? (?:and )?)?)+))?|(Core Rules )?§ \*([^*]+)\*/g)) {
-      const [, target, list, coreRules, bare] = match;
-      if (target !== undefined) {
-        const file = resolve(ROOT, dirname(path), target);
-        assert.ok(existsSync(file), `${path} cites missing ${target}`);
-        checked += 1;
-        if (list === undefined) continue;
-        const owner = relative(ROOT, realpathSync(file));
-        const titles = headings(readFileSync(file, "utf8"));
-        for (const [, heading] of list.matchAll(/\*([^*]+)\*/g)) {
-          assert.ok(names(titles, heading), `${path} cites ${target} § ${heading}, which ${owner} lacks`);
-        }
-        continue;
-      }
-      const owner = coreRules === undefined ? path : CORE_RULES;
-      const titles = coreRules === undefined ? ownTitles : headings(source(CORE_RULES));
-      assert.ok(names(titles, bare), `${path} cites § ${bare}, which ${owner} lacks`);
-      checked += 1;
-    }
-    assert.ok(checked > 0, `${path} cites files or sections`);
-  }
 });

@@ -12,10 +12,14 @@ Location alone means parked; add no lifecycle status. Whole-folder moves, preser
 
 Creating a fresh folder directly under Backlog is permitted and needs no Archive-style destination confirmation (`./task-destinations.md` § *Destination paths*).
 
-**Recognizing the directory is case-insensitive.** Create `Backlog/`; recognize every existing spelling case-insensitively for scans, slug fallback, and already-parked checks. Only the task's immediate parent establishes parked state. `maintain` normalizes stray lowercase spelling.
+## Recognizing the directory is case-insensitive
+
+Create `Backlog/`; recognize every existing spelling case-insensitively for scans, slug fallback, and already-parked checks. Only the task's immediate parent establishes parked state. `maintain` normalizes stray lowercase spelling.
 
 `BACKLOG_DIR` in `scripts/lifecycle-constants.ts` is a sanctioned copy per `references/maintenance/repository.md` § *Consumer lists*.
 
-**Planning acts in place; execution activates first.** `refine-idea`, `choose-approach`, and `plan-task` work on parked folders without moving them. `implement-task` and `resume-task` offer activation and proceed only after user confirmation moves the folder to its container's parent. Activation is a plain `mv`, offered or manual; a terminal task may instead archive out. Resolving a Backlog slug never activates it.
+## Planning acts in place; execution activates first
+
+`refine-idea`, `choose-approach`, and `plan-task` work on parked folders without moving them. `implement-task` and `resume-task` offer activation and proceed only after user confirmation moves the folder to its container's parent. Activation is a plain `mv`, offered or manual; a terminal task may instead archive out. Resolving a Backlog slug never activates it.
 
 `backlog-task` performs the inbound move through the guarded helper. A permitted manual move lands the same folder. Neither parking nor activation changes group inheritance (`./task-store.md` § *Shared group context*). Read the current chain after activation under `./task-layout.md` § *Reading a resolved folder*; no context rewrite or snapshot accompanies the move.

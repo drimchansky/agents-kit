@@ -10,7 +10,9 @@ Open the idea up before narrowing it.
 2. **Ask 3–5 sharpening questions**, no more: who is this for, what does success look like, what are the real constraints, what has been tried, why now. Do not proceed until the target user and rough success picture can inform a direction.
 3. **Generate 5–8 variations** through the lenses that fit: inversion (the opposite), constraint removal, audience shift, combination with an adjacent idea, simplification (10× simpler), the 10× version, the expert lens. Push beyond the initial ask; each variation has a reason to exist.
 
-**Ground in what exists:** cite specifics from the domain's existing structure, patterns, and prior art rather than speaking in the abstract. For code, that means grep, file reads, and codebase search (`../engineering/exploration.md`).
+### Ground in what exists
+
+Cite specifics from the domain's existing structure, patterns, and prior art rather than speaking in the abstract. For code, that means grep, file reads, and codebase search (`../engineering/exploration.md`).
 
 ## Phase 2 — Converge
 

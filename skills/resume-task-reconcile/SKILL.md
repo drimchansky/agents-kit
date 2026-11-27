@@ -43,7 +43,7 @@ Apply the brief's findings per `./references/workflow/reconciliation.md` and `./
 
 Run the reference sweep per `./references/workflow/reconciliation-sweep.md` in this phase, since the brief sweeps nothing; print its `## References` block after the brief and before any reconciliation edit. It is this pipeline's only source of dead-link and reference-answered-question findings, and it never substitutes for Phase 1's claim-level verification.
 
-A judged finding follows § *Consent model: findings apply, the record carries them*. Grounding and external-surface records retain their required quotes. State moves only through § *Strengthen only on verified evidence*. Watermark writes retain their `./references/workflow/reconciliation-commits.md` route. A deliverable's `**Published:**` line remains Yours to apply.
+A judged finding follows `./references/workflow/reconciliation.md` § *Consent model: findings apply, the record carries them*. Grounding and external-surface records retain their required quotes. State moves only through `./references/workflow/reconciliation.md` § *Strengthen only on verified evidence*. Watermark writes retain their `./references/workflow/reconciliation-commits.md` route. A deliverable's `**Published:**` line remains Yours to apply.
 
 Findings that need real work (code changes, re-running the acceptance gate, clearing a blocker) stay unfixed, listed as *Needs work* under "Not reconciled" with the next skill named (`implement-task`, `plan-task`).
 

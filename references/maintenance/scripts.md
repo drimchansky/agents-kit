@@ -268,7 +268,9 @@ Apply this policy to the canonical root, registry file, and all registered roots
 
 Path arguments use `boundingRoot`'s tolerant registry read. They need only a containing bound, not a complete uniqueness search. An unreadable registry falls back to `.agents/tasks` with no registry warning. The path route promises one refusal line, and its result does not depend on reporting registry completeness.
 
-**Why physical identity is settled before ambiguity is.** Overlapping registrations can find one folder through several paths. Key matches by physical identity so ambiguity counts folders rather than discovery routes. Collapse only aliases of the same resolved root; search nested registered roots independently. Outer walks may prune dotted or `node_modules` ancestors, or stop at a role-bearing parent. Folding nested roots into their containers would make hidden tasks unresolvable by slug. Search surviving roots in identity order so candidate ordering is stable across differently ordered registries. Sorting affects the refusal's presentation, not deduplication.
+### Why physical identity is settled before ambiguity is
+
+Overlapping registrations can find one folder through several paths. Key matches by physical identity so ambiguity counts folders rather than discovery routes. Collapse only aliases of the same resolved root; search nested registered roots independently. Outer walks may prune dotted or `node_modules` ancestors, or stop at a role-bearing parent. Folding nested roots into their containers would make hidden tasks unresolvable by slug. Search surviving roots in identity order so candidate ordering is stable across differently ordered registries. Sorting affects the refusal's presentation, not deduplication.
 
 Store-walk behavior and fence/status mirrors follow § *`scripts/health-check.ts`*.
 

@@ -1,6 +1,6 @@
 # Decomposition: One Approved Ask into Sibling Tasks
 
-How an approved ADR, an accepted RFC, or an epic-scale ask can become ordered sibling task folders, each entering the workflow as its own ticket-first task. `plan-task` § *Multi-part efforts* and `task-siblings.md` say when to propose a split and where confirmed siblings live; this file says how to choose and land the cut.
+How an approved ADR, an accepted RFC, or an epic-scale ask can become ordered sibling task folders, each entering the workflow as its own ticket-first task. `plan-task` § *Invariants* and `task-siblings.md` say when to propose a split and where confirmed siblings live; this file says how to choose and land the cut.
 
 The source has already settled *what* to build (`refine-idea` is the tool when it has not); each confirmed part then gets its own `plan-task` → `implement-task` lifecycle. The method proposes first and materializes only after confirmation: the cut is the user's call. An explicit one-task request stays in one folder with bounded steps and checkpoints.
 

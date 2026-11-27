@@ -24,7 +24,9 @@ token: <token>
 
 The process records the send result and exits: 0 when the send exited 0, and 1 otherwise. It never retries a send. A failed send stays visible only through `status`.
 
-**Status.** stdout is `{run,timer}`. `timer` is null when the Run has no timer. Otherwise it is `{run,token,at,armedAt,pid,orca,state,result}`. `state` is one of:
+## Status
+
+stdout is `{run,timer}`. `timer` is null when the Run has no timer. Otherwise it is `{run,token,at,armedAt,pid,orca,state,result}`. `state` is one of:
 
 - `pending`: the process is waiting for its deadline.
 - `sending`: the process claimed the token and the send has not finished.
@@ -35,7 +37,9 @@ The process records the send result and exits: 0 when the send exited 0, and 1 o
 
 `result` is null until the send finishes. Then it is `{outcome,at,status,signal,error,stdout,stderr}`, with the outcome `sent` or `failed` and the last 4096 characters of each output stream. Status never creates state.
 
-**Cancel.** `cancel` claims the current token so its process can no longer send. It prints `{run,timer,process}`, with `timer` viewed after the claim. When the Run has no timer, `timer` and `process` are null. `process` is one of:
+## Cancel
+
+`cancel` claims the current token so its process can no longer send. It prints `{run,timer,process}`, with `timer` viewed after the claim. When the Run has no timer, `timer` and `process` are null. `process` is one of:
 
 - `stopped`: the recorded process was signalled and is gone.
 - `signalled`: the recorded process was signalled and was still present after two seconds. It can no longer send.
@@ -44,6 +48,10 @@ The process records the send result and exits: 0 when the send exited 0, and 1 o
 
 Cancel signals a process only when its command line names this Run and token. It never signals another process.
 
-**State.** Timers live under `~/.local/state/agents-kit/orca-status-timer/<run-id>/`, with directories `0700` and files `0600`. `current.json` names the current token. Each token keeps its timer record, claim, and send result beside it. `arm` removes earlier tokens' files once their processes are gone. The state belongs to the coordinator's session; nothing restarts a timer after its process ends.
+## State
 
-**Exit status.** `arm`, `status`, and `cancel` exit 0 after printing their JSON. Exit 2 means bad usage, a past deadline, unreadable or malformed timer state, or a failure to write state or start the process. A refusal writes one reason to stderr and nothing to stdout. The timer process exits 1 after recording a failed send.
+Timers live under `~/.local/state/agents-kit/orca-status-timer/<run-id>/`, with directories `0700` and files `0600`. `current.json` names the current token. Each token keeps its timer record, claim, and send result beside it. `arm` removes earlier tokens' files once their processes are gone. The state belongs to the coordinator's session; nothing restarts a timer after its process ends.
+
+## Exit status
+
+`arm`, `status`, and `cancel` exit 0 after printing their JSON. Exit 2 means bad usage, a past deadline, unreadable or malformed timer state, or a failure to write state or start the process. A refusal writes one reason to stderr and nothing to stdout. The timer process exits 1 after recording a failed send.

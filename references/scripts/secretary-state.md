@@ -42,7 +42,9 @@ Every command except `wake` also accepts `--expect-runbook <physical-root>` or t
 
 A stopped, superseded, or unknown attempt can append no `attempt-stopped`, `review-completed`, `proposal`, or `correction`; each is refused. While a proposal has an unsettled apply intent, its new revisions and decisions are refused.
 
-**Apply.** `apply` writes one accepted revision to its one target. A change to several files is several proposals, each with its own decision and outcome; no multi-file transaction exists. Under the lock, it requires:
+## Apply
+
+`apply` writes one accepted revision to its one target. A change to several files is several proposals, each with its own decision and outcome; no multi-file transaction exists. Under the lock, it requires:
 
 - the active attempt to be an `apply` job with that token;
 - the proposal to be pending at revision `<n>`, accepted, and not conflicted;
@@ -62,11 +64,17 @@ An `apply-intent` without its result marks the pointer `intent`. The next `apply
 
 A recovered hold exits 1 with its recorded seq and no stdout, ending the attempt. A fresh apply job revalidates the target and cited evidence before retrying under the retained acceptance.
 
-**Hold.** `hold` ends an `apply` attempt without writing. It appends an `apply-result` with outcome `held`, `observed` null, and `recovered` false, then prints `{event}`. `<n>` is a revision at or below the pending one. Holding the pending revision requires its acceptance, marks the pointer `held`, and keeps that acceptance for a later apply. Any active `apply` attempt may hold an older revision, whichever attempt recorded the newer one. Holding an older revision needs no acceptance and leaves the pointer unchanged. A recorded conflict refuses a hold only while its revision is pending. An unsettled intent refuses every hold of its proposal.
+## Hold
 
-**Credential guard.** Append refuses a payload when any field name or decoded string matches a high-confidence credential shape. Apply and hold scan their event payloads, and apply scans the body before writing it. The classes are `private-key`, `aws-access-key-id`, `github-token`, `slack-token`, `jwt`, `url-password`, and `api-key`. The refusal names the class and field, never the value. Access methods and credential-manager key names pass.
+`hold` ends an `apply` attempt without writing. It appends an `apply-result` with outcome `held`, `observed` null, and `recovered` false, then prints `{event}`. `<n>` is a revision at or below the pending one. Holding the pending revision requires its acceptance, marks the pointer `held`, and keeps that acceptance for a later apply. Any active `apply` attempt may hold an older revision, whichever attempt recorded the newer one. Holding an older revision needs no acceptance and leaves the pointer unchanged. A recorded conflict refuses a hold only while its revision is pending. An unsettled intent refuses every hold of its proposal.
 
-**Status.** stdout is `{id,runbook,ready,reason,lastSeq,processedSeq,lastReview,activeAttempt,review,pendingTotal,pending,next}`. `id` is the store's directory name. The rest comes from the derived checkpoint, which records the processed position, last review, active attempt, pending pointers, latest rejections, and every started token. `activeAttempt` is `{attempt,owner,job,at,seq}`. Each pointer is `{proposal,revision,target,seq,bodyHash,bodyBytes,decision,decisionSeq,apply}`, in proposal order. A new revision replaces its pointer and clears its decision and apply state. `rejected` removes the pointer; `accepted` and `deferred` keep it pending. `apply` is null or `{state,attempt,seq}`, naming the latest apply event for that revision. Its `state` is `intent` for an unsettled write, `conflict`, or `held`. A non-null `next` is the `--cursor` for the remaining pointers. No pointer is dropped to fit a page.
+## Credential guard
+
+Append refuses a payload when any field name or decoded string matches a high-confidence credential shape. Apply and hold scan their event payloads, and apply scans the body before writing it. The classes are `private-key`, `aws-access-key-id`, `github-token`, `slack-token`, `jwt`, `url-password`, and `api-key`. The refusal names the class and field, never the value. Access methods and credential-manager key names pass.
+
+## Status
+
+stdout is `{id,runbook,ready,reason,lastSeq,processedSeq,lastReview,activeAttempt,review,pendingTotal,pending,next}`. `id` is the store's directory name. The rest comes from the derived checkpoint, which records the processed position, last review, active attempt, pending pointers, latest rejections, and every started token. `activeAttempt` is `{attempt,owner,job,at,seq}`. Each pointer is `{proposal,revision,target,seq,bodyHash,bodyBytes,decision,decisionSeq,apply}`, in proposal order. A new revision replaces its pointer and clears its decision and apply state. `rejected` removes the pointer; `accepted` and `deferred` keep it pending. `apply` is null or `{state,attempt,seq}`, naming the latest apply event for that revision. Its `state` is `intent` for an unsettled write, `conflict`, or `held`. A non-null `next` is the `--cursor` for the remaining pointers. No pointer is dropped to fit a page.
 
 `review` is `{due,dueAt,blockedBy,wake}`, computed from the checkpoint and the clock:
 
@@ -76,12 +84,22 @@ A recovered hold exits 1 with its recorded seq and no stdout, ending the attempt
 
 `ready` is false when the checkpoint disagrees with history, with reason `missing-checkpoint`, `checkpoint-behind`, `checkpoint-ahead`, or `checkpoint-malformed`. Status then exits 0 with null `review`, empty `pending`, and null `pendingTotal`. Append, apply, and hold exit 1 until `recover` completes. An empty store is ready. Reads never create the store.
 
-**Rejected.** `rejected [--cursor <target>]` prints `{rejected,next}`. Each entry is `{target,proposal,revision,bodyHash,seq}`: the latest rejected revision for that target and its decision's seq, in target order. A later rejection for the same target replaces it. A non-null `next` is the `--cursor` for the remaining targets. The list holds one entry per target, so its size follows the runbook's file count, not history length. A store that is not ready exits 1.
+## Rejected
 
-**Recover.** `recover` rebuilds the checkpoint from history in bounded calls. stdout is `{ready,reason,processedSeq,lastSeq,complete}`. One call reduces at most 1000 events after the furthest saved position, in seq order. A behind checkpoint and the progress file `recovery.json` are saved positions when they do not pass `lastSeq`. A missing, ahead, or malformed checkpoint gives no position, so replay starts at seq 1. An incomplete call saves its reduction to `recovery.json` and reports `complete` false. Only a complete reduction replaces `state.json`, then removes the progress file. A ready store reports `complete` true and changes no record, removing only a leftover progress file. Recovery reads history and bodies but never modifies or deletes them. A malformed or missing committed event exits 2 naming its location and keeps the saved progress. Unsettled `apply-intent` events return as pointers in the `intent` state.
+`rejected [--cursor <target>]` prints `{rejected,next}`. Each entry is `{target,proposal,revision,bodyHash,seq}`: the latest rejected revision for that target and its decision's seq, in target order. A later rejection for the same target replaces it. A non-null `next` is the `--cursor` for the remaining targets. The list holds one entry per target, so its size follows the runbook's file count, not history length. A store that is not ready exits 1.
 
-**History.** stdout is `{events,next}`: committed events after `--after`, default 0, in seq order. `--type` filters by any of the eight types. `--proposal` keeps that proposal's proposal, decision, `apply-intent`, and `apply-result` events. One call reads at most 1000 events. A non-null `next` is the `--after` that resumes the scan. `event --seq` returns `{event}` for one seq. A malformed event file, a mismatched seq, or a gap exits 2 naming its location; dependent work holds.
+## Recover
 
-**Body.** stdout is `{hash,bytes,offset,length,text,next}`, at most `--limit` bytes of a stored body from `--offset`. The limit ranges from 4 to 16384 and defaults to 16384. Chunks end on UTF-8 character boundaries and shrink when escaping would exceed the output ceiling. A non-null `next` is the following offset. An offset inside a character or beyond the body exits 2.
+`recover` rebuilds the checkpoint from history in bounded calls. stdout is `{ready,reason,processedSeq,lastSeq,complete}`. One call reduces at most 1000 events after the furthest saved position, in seq order. A behind checkpoint and the progress file `recovery.json` are saved positions when they do not pass `lastSeq`. A missing, ahead, or malformed checkpoint gives no position, so replay starts at seq 1. An incomplete call saves its reduction to `recovery.json` and reports `complete` false. Only a complete reduction replaces `state.json`, then removes the progress file. A ready store reports `complete` true and changes no record, removing only a leftover progress file. Recovery reads history and bodies but never modifies or deletes them. A malformed or missing committed event exits 2 naming its location and keeps the saved progress. Unsettled `apply-intent` events return as pointers in the `intent` state.
 
-**Lock.** Append, apply, hold, recover, status, and rejected hold a short `lock/` directory. It is published by renaming a prepared directory that already records its owner's pid, start time, and token. A lock whose owner pid is gone is reclaimed by the one contender that claims its owner record; an empty leftover `lock/` is replaced. A live holder, or a lock with no readable owner record, makes the command retry for about two seconds, then exit 2. History, event, and body reads take no lock, and idle time holds none.
+## History
+
+stdout is `{events,next}`: committed events after `--after`, default 0, in seq order. `--type` filters by any of the eight types. `--proposal` keeps that proposal's proposal, decision, `apply-intent`, and `apply-result` events. One call reads at most 1000 events. A non-null `next` is the `--after` that resumes the scan. `event --seq` returns `{event}` for one seq. A malformed event file, a mismatched seq, or a gap exits 2 naming its location; dependent work holds.
+
+## Body
+
+stdout is `{hash,bytes,offset,length,text,next}`, at most `--limit` bytes of a stored body from `--offset`. The limit ranges from 4 to 16384 and defaults to 16384. Chunks end on UTF-8 character boundaries and shrink when escaping would exceed the output ceiling. A non-null `next` is the following offset. An offset inside a character or beyond the body exits 2.
+
+## Lock
+
+Append, apply, hold, recover, status, and rejected hold a short `lock/` directory. It is published by renaming a prepared directory that already records its owner's pid, start time, and token. A lock whose owner pid is gone is reclaimed by the one contender that claims its owner record; an empty leftover `lock/` is replaced. A live holder, or a lock with no readable owner record, makes the command retry for about two seconds, then exit 2. History, event, and body reads take no lock, and idle time holds none.

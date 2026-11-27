@@ -140,7 +140,7 @@ In SKILL.md, skip citations marked same-line `<!-- cold -->` on typical invocati
 
 State each cold citation's trigger beside it: flag, file presence, or conditional branch. The marker supplies no condition.
 
-One marker covers its line. Separate differing triggers. Every citation of a file must be marked for it to stay cold; one unmarked citation makes it hot.
+One marker covers its line. Separate differing triggers. A SKILL.md marks every citation of a file cold, or none. When any citation of the file is reached on most runs or states no trigger, leave all its citations unmarked. Mark them all cold only when every citation's trigger is conditional.
 
 Conditions reached on most runs stay hot, including routine health boundaries. Extract conditional guidance before marking it cold.
 

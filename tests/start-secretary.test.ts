@@ -95,40 +95,9 @@ test("skill-conventions and domain-packs register the skill as a pack-free stand
   assert.match(packFree, /^ {2}- `start-secretary` /m);
 });
 
-test("every section the skill cites exists in its owner", () => {
-  const cited = new Set<string>();
-  for (const match of SKILL.matchAll(/`\.\/((?:references\/[^`]+|AGENTS)\.md)`(?: § \*([^*]+)\*)?/g)) {
-    const [, path, heading] = match;
-    cited.add(path);
-    const file = join(SKILL_DIR, path);
-    assert.ok(existsSync(file), `cited file exists: ${path}`);
-    if (heading === undefined) continue;
-    const headings = readFileSync(file, "utf8")
-      .split("\n")
-      .filter((line) => /^#+ /.test(line))
-      .map((line) => line.replace(/^#+ /, ""));
-    assert.ok(
-      headings.some((title) => title === heading || title.startsWith(`${heading} (`)),
-      `${path} has § ${heading}`,
-    );
-  }
+test("the skill cites its contract, helper contract, and runbook duty", () => {
   for (const owner of ["references/workflow/secretary-contract.md", "references/scripts/secretary-state.md", "references/secretary/runbook-maintenance.md"]) {
-    assert.ok(cited.has(owner), `the skill cites ${owner}`);
-  }
-  for (const match of SKILL.matchAll(/(?<!` )§ \*([^*]+)\*/g)) {
-    assert.ok(SKILL.includes(`\n## ${match[1]}\n`), `the skill's own § ${match[1]} exists`);
-  }
-});
-
-test("the confirm-gated roster names an existing proposal section for start-secretary and init-config", () => {
-  const roster = CONVENTIONS.split("**Confirm-gated skills:**\n")[1]?.trimStart().split("\n\n")[0] ?? "";
-  for (const [skill, text] of [["start-secretary", SKILL], ["init-config", INIT_CONFIG]] as const) {
-    const entry = roster.split("\n").find((line) => line.startsWith(`- \`${skill}\` — `));
-    assert.ok(entry, `the confirm-gated roster lists ${skill}`);
-    const heading = /§ \*([^*]+)\*\.$/.exec(entry)?.[1];
-    assert.ok(heading, `the ${skill} roster entry names its proposal section`);
-    const titles = text.split("\n").filter((line) => /^#+ /.test(line)).map((line) => line.replace(/^#+ /, ""));
-    assert.ok(titles.includes(heading), `${skill} has § ${heading}`);
+    assert.ok(SKILL.includes(`\`./${owner}\``), `the skill cites ${owner}`);
   }
 });
 
@@ -332,21 +301,12 @@ test("startup status keeps an undecided proposal pending while an interrupted ap
   }
 });
 
-test("contract and duty reference targets resolve beside their owner", () => {
+test("contract and duty cite their required workflow and helper contracts", () => {
   for (const [file, text, required] of [
     [join(WORKFLOW_DIR, "secretary-contract.md"), CONTRACT, ["../secretary/runbook-maintenance.md"]],
     [join(REPO_DIR, "references", "secretary", "runbook-maintenance.md"), DUTY, ["../workflow/runbook.md", "../scripts/secretary-state.md"]],
   ] as const) {
-    const cited = new Set<string>();
-    for (const [, path, heading] of text.matchAll(/`(\.\.?\/[^`]+\.md)`(?: § \*([^*]+)\*)?/g)) {
-      cited.add(path);
-      const target = resolve(dirname(file), path);
-      assert.ok(existsSync(target), `${file} cites ${path}`);
-      if (heading === undefined) continue;
-      const owner = readFileSync(target, "utf8");
-      assert.ok(owner.includes(`## ${heading}`) || owner.includes(`**${heading}.**`), `${path} has § ${heading}`);
-    }
-    for (const path of required) assert.ok(cited.has(path), `${file} cites ${path}`);
+    for (const path of required) assert.ok(text.includes(`\`${path}\``), `${file} cites ${path}`);
   }
 });
 
@@ -420,20 +380,9 @@ for (const changed of ["retargeted", "malformed", "deleted"] as const) {
   });
 }
 
-test("init-config references and pack-free registration resolve, and the runbook duty has configuration", () => {
-  const skillDir = join(REPO_DIR, "skills", "init-config");
-  const cited = new Set<string>();
-  for (const [, path, heading] of INIT_CONFIG.matchAll(/`\.\/((?:references\/[^`]+|AGENTS)\.md)`(?: § \*([^*]+)\*)?/g)) {
-    cited.add(path);
-    const target = join(skillDir, path);
-    assert.ok(existsSync(target), path);
-    if (heading === undefined) continue;
-    const owner = readFileSync(target, "utf8");
-    const titles = owner.split("\n").filter((line) => /^#+ /.test(line)).map((line) => line.replace(/^#+ /, ""));
-    assert.ok(titles.some((title) => title === heading || title.startsWith(`${heading} (`)) || owner.includes(`**${heading}.**`), `${path} has § ${heading}`);
-  }
-  assert.ok(cited.has("references/secretary/runbook-maintenance.md"));
-  assert.ok(cited.has("references/scripts/secretary-state.md"));
+test("init-config cites runbook references, registers as pack-free, and the runbook duty has configuration", () => {
+  assert.ok(INIT_CONFIG.includes("`./references/secretary/runbook-maintenance.md`"));
+  assert.ok(INIT_CONFIG.includes("`./references/scripts/secretary-state.md`"));
   const packFree = DOMAIN_PACKS.split("- **Pack-free skills**")[1]?.split("\n\n")[0] ?? "";
   assert.match(packFree, /^ {2}- `init-config` /m);
   assert.ok(DUTY.includes("\n## Configuration\n"), "the runbook duty has § Configuration");

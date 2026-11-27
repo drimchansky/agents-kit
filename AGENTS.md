@@ -9,7 +9,7 @@ Keep runtime instructions focused on model actions:
 - Delete Don't Rationalize, Verification, Red flags, and CRITICAL scaffolding. Keep Core Rules and longer contract titles such as Verification cadence.
 - Remove rationale, design history, and repeated ownership/loading commentary.
 - Preserve each invariant beside the action it guards. Replace defensive branch lists with their invariant unless omission risks a wrong write, Git mutation, deletion, or false report.
-- Put direct owner pointers beside their actions and retain cold markers. Keep helper, suite, and installer rationale in the corresponding maintenance reference.
+- Put direct owner pointers beside their actions. Retain cold markers only where `references/workflow/skill-conventions.md` § *Cold citations* allows them. Keep helper, suite, and installer rationale in the corresponding maintenance reference.
 - Write one idea per sentence, aiming for 20 words. Avoid em-dash chains and "X is what Y" constructions. Reserve `never` and `MUST` for invariants. Add no size script or ratchet.
 
 ## Ownership

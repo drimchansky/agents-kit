@@ -33,13 +33,13 @@ An explicit read-only request passes through to Phase 1 and suppresses Phase 2 w
 
 **Use when** the plan needs a sanity check and you intend to act on it in the same sitting, the review's Questions should be settled and written into the docs, or `review-task` already produced an assessment and the answer is "apply that".
 
-**Skip when** you only want the assessment → `review-task`; the plan needs redesign, not repair → `plan-task`; you want status rather than feasibility → `resume-task` or `resume-task-reconcile`; the information came out of this session's conversation rather than the docs disagreeing with reality → `reconcile-task`; the plan is `skipped` → terminal and exempt (§ *Skipped plans are exempt*), so Phase 1 reports it as abandoned and Phase 2 writes nothing.
+**Skip when** you only want the assessment → `review-task`; the plan needs redesign, not repair → `plan-task`; you want status rather than feasibility → `resume-task` or `resume-task-reconcile`; the information came out of this session's conversation rather than the docs disagreeing with reality → `reconcile-task`; the plan is `skipped` → terminal and exempt (`./references/workflow/reconciliation.md` § *Skipped plans are exempt*), so Phase 1 reports it as abandoned and Phase 2 writes nothing.
 
 ## Phase 1 — Review
 
 Execute `../review-task/SKILL.md` end to end against the resolved task folder, passing `-x` through when given, and print its assessment in full: every output section except its Handoff, including the always-rendered Goal Quality, Acceptance Coverage, and Cross-File Drift sections and its numbered Questions. `review-task` sweeps no citations of its own (the **docs → reality** direction definition opening `./references/workflow/reconciliation.md`); the folder's cited links are Phase 2's.
 
-The assessment prints before any reconciliation edit and is never regenerated afterwards (§ *Sequence and output*). If Phase 2 fails hard, the assessment stands as printed.
+The assessment prints before any reconciliation edit and is never regenerated afterwards (`./references/workflow/reconciliation.md` § *Sequence and output*). If Phase 2 fails hard, the assessment stands as printed.
 
 ## Phase 2 — Reconcile
 
@@ -47,7 +47,7 @@ Apply the assessment's findings per `./references/workflow/reconciliation.md` an
 
 Run the reference sweep, `./references/workflow/reconciliation-sweep.md`, in this phase, its `## References` block printed before any reconciliation edit. It is this pipeline's only source of dead-link and reference-answered-question findings.
 
-Route every numbered Question through § *Consent model: findings apply, the record carries them*. Reuse `review-task`'s researched options, trade-offs, and recommendation without repeating research. An entry whose options exceed the finding is redesign and goes to `plan-task`. A ruling never attests work; advances still require § *Strengthen only on verified evidence*. Disproved findings need no action. A deliverable's `**Published:**` line remains Yours to apply.
+Route every numbered Question through `./references/workflow/reconciliation.md` § *Consent model: findings apply, the record carries them*. Reuse `review-task`'s researched options, trade-offs, and recommendation without repeating research. An entry whose options exceed the finding is redesign and goes to `plan-task`. A ruling never attests work; advances still require `./references/workflow/reconciliation.md` § *Strengthen only on verified evidence*. Disproved findings need no action. A deliverable's `**Published:**` line remains Yours to apply.
 
 Findings that need real work (a step to rethink, code changes) stay unfixed, listed as *Needs work* under "Not reconciled" with the next skill named (`plan-task`, `implement-task`).
 
